@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>hello-wasm example</title>
+    </head>
+    <body>
+    <script>
+        let websocket = new WebSocket('ws://localhost:8123');
+        let open = new Promise(resolve => websocket.onopen = resolve);
+
+        websocket.binaryType = 'arrayBuffer';
+
+        window.send_data = function(bytes) {
+            open.then(() => websocket.send(bytes));
+        };
+
+    </script>
+    <script type="module">
+        import init, {main} from "./client/pkg/lotus_client.js";
+
+        init().then(() => {
+            main();
+        });
+    </script>
+    </body>
+</html>

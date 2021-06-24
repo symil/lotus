@@ -1,8 +1,7 @@
 use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
+use lotus_common::traits::{player::Player, world::World, request::Request};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
 use tungstenite::{Message, WebSocket, accept};
-
-use crate::traits::{player::Player, request::Request, world::World};
 
 pub struct Connection<P : Player> {
     open: bool,
@@ -68,6 +67,7 @@ impl<P, R, W> Server<P, R, W>
                                 println!("{}", &text);
                             },
                             Message::Binary(bytes) => {
+                                dbg!(&bytes);
                                 if let Some(request) = R::deserialize(&bytes) {
                                     self.world.on_player_request(&mut connection.player, &request);
                                 }

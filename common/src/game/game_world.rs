@@ -19,4 +19,9 @@ impl World<GamePlayer, GameRequest> for GameWorld {
     fn on_player_disconnect(&mut self, player: &mut GamePlayer) {
         println!("disconnected: {}", &player.username);
     }
+
+    fn on_player_request(&mut self, player: &mut GamePlayer, request: &GameRequest) {
+        println!("request from: {}", &player.username);
+        println!("{:?}", &request);
+    }
 }
