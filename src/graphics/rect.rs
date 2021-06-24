@@ -1,3 +1,8 @@
+use std::collections::HashMap;
+
+use super::layout::{Layout, LayoutType};
+
+#[derive(Debug, Clone, Copy)]
 pub struct Rect {
     pub x: f32,
     pub y: f32,
@@ -31,7 +36,7 @@ impl Rect {
             x: x1 + width / 2.0,
             y: y1 + height / 2.0,
             width,
-            height
+            height,
         }
     }
 
@@ -40,7 +45,16 @@ impl Rect {
             x: (x1 + x2) / 2.0,
             y: (y1 + y2) / 2.0,
             width: x2 - x1,
-            height: y2 - y1
+            height: y2 - y1,
+        }
+    }
+
+    pub fn from_size(width: f32, height: f32) -> Self {
+        Self {
+            x: width / 2.0,
+            y: height / 2.0,
+            width,
+            height,
         }
     }
 
@@ -83,34 +97,44 @@ impl Rect {
         self.pad(-width, -height)
     }
 
-    pub fn pad_to_match_aspect_ratio(&self, aspect_ratio: f32) -> Self {
-        let width_from_height = self.height * aspect_ratio;
-        let height_from_width = self.width / aspect_ratio;
-        let mut width_to_pad = 0.;
-        let mut height_to_pad = 0.;
+    pub fn pad_to_match_aspect_ratio(&self, aspect_ratio: Option<f32>) -> Self {
+        match aspect_ratio {
+            None => self.clone(),
+            Some(ratio) => {
+                let width_from_height = self.height * ratio;
+                let height_from_width = self.width / ratio;
+                let mut width_to_pad = 0.;
+                let mut height_to_pad = 0.;
 
-        if self.width < width_from_height {
-            width_to_pad = width_from_height - self.width;
-        } else {
-            height_to_pad = height_from_width - self.height;
+                if self.width < width_from_height {
+                    width_to_pad = width_from_height - self.width;
+                } else {
+                    height_to_pad = height_from_width - self.height;
+                }
+
+                self.pad(width_to_pad, height_to_pad)
+            }
         }
-
-        return self.pad(width_to_pad, height_to_pad);
     }
 
-    pub fn strip_to_match_aspect_ratio(&self, aspect_ratio: f32) -> Self {
-        let width_from_height = self.height * aspect_ratio;
-        let height_from_width = self.width / aspect_ratio;
-        let mut width_to_strip = 0.;
-        let mut height_to_strip = 0.;
+    pub fn strip_to_match_aspect_ratio(&self, aspect_ratio: Option<f32>) -> Self {
+        match aspect_ratio {
+            None => self.clone(),
+            Some(ratio) => {
+                let width_from_height = self.height * ratio;
+                let height_from_width = self.width / ratio;
+                let mut width_to_strip = 0.;
+                let mut height_to_strip = 0.;
 
-        if self.width > width_from_height {
-            width_to_strip = self.width - width_from_height;
-        } else {
-            height_to_strip = self.height - height_from_width;
+                if self.width > width_from_height {
+                    width_to_strip = self.width - width_from_height;
+                } else {
+                    height_to_strip = self.height - height_from_width;
+                }
+
+                self.strip(width_to_strip, height_to_strip)
+            }
         }
-
-        return self.strip(width_to_strip, height_to_strip);
     }
 
     pub fn multiply(&self, ratio: f32) -> Self {
@@ -135,7 +159,7 @@ impl Rect {
         let bottom_height = self.width - top_height;
 
         (
-            Self::from_top_left(self.x1(), self.y1(), self.width, bottom_height),
+            Self::from_top_left(self.x1(), self.y1(), self.width, top_height),
             Self::from_top_left(self.x1(), self.y2() - bottom_height, self.width, bottom_height),
         )
     }
@@ -146,6 +170,68 @@ impl Rect {
             y: 2.0 * y - self.y,
             width: self.width,
             height: self.height
+        }
+    }
+
+    pub fn layout(&self, layout: &Layout) -> HashMap<u64, Self> {
+        let mut map = HashMap::new();
+
+        self.apply_layout(layout, &mut map);
+
+        map
+    }
+
+    fn apply_layout(&self, layout: &Layout, map: &mut HashMap<u64, Self>) {
+        let to_strip = layout.outer_margin * 2.;
+        let rect = self
+            .strip(to_strip, to_strip)
+            .strip_to_match_aspect_ratio(layout.aspect_ratio)
+            .scale(layout.scale, layout.scale);
+
+        if let Some(id) = layout.id {
+            map.insert(id, rect);
+        }
+
+        if layout.children.len() == 0 {
+            return;
+        }
+
+        let is_horizontal = match layout.layout_type {
+            LayoutType::Single => return,
+            LayoutType::Row => true,
+            LayoutType::Column => false,
+        };
+        let flex_space = match is_horizontal {
+            true => rect.width,
+            false => rect.height
+        };
+        let available_space = flex_space - (layout.inner_margin * (layout.children.len() - 1) as f32);
+        let total_force = layout.children.iter().fold(0., |acc, child| acc + child.force);
+
+        let mut x = rect.x1();
+        let mut y = rect.y1();
+
+        for child in &layout.children {
+            let variable_dimension = child.force / total_force * available_space;
+            let rect_x = x;
+            let rect_y = y;
+            let mut rect_width = rect.width;
+            let mut rect_height = rect.height;
+
+            match is_horizontal {
+                true => {
+                    rect_width = variable_dimension;
+                    x += variable_dimension + layout.outer_margin;
+                },
+                false => {
+                    rect_height = variable_dimension;
+                    y += variable_dimension + layout.outer_margin;
+                }
+            }
+
+            let child_rect = Self::from_top_left(rect_x, rect_y, rect_width, rect_height);
+
+            child_rect.apply_layout(child, map);
         }
     }
 }

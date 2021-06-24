@@ -1,23 +1,42 @@
-use std::{collections::HashMap, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
+use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
-use tungstenite::{WebSocket, Message, accept};
+use tungstenite::{Message, WebSocket, accept};
 
-pub struct Connection {
-    id: u128,
+use crate::traits::{player::Player, request::Request, world::World};
+
+pub struct Connection<P : Player> {
+    open: bool,
     websocket: WebSocket<TcpStream>,
-    open: bool
+    player: P,
 }
 
-pub struct Server {
+pub struct Server<P, R, W>
+    where
+        P : Player,
+        R : Request,
+        W : World<P, R>
+{
     rng: ThreadRng,
-    connections: HashMap<u128, Connection>
+    connections: HashMap<u128, Connection<P>>,
+    world: W,
+
+    // wtf rust
+    _r: PhantomData<R>,
 }
 
-impl Server {
-    pub fn new() -> Self {
+impl<P, R, W> Server<P, R, W>
+    where
+        P : Player,
+        R : Request,
+        W : World<P, R>
+{
+    pub fn new(world: W) -> Self {
         Self {
             rng: thread_rng(),
-            connections: HashMap::new()
+            connections: HashMap::new(),
+            world,
+
+            _r: PhantomData
         }
     }
 
@@ -30,12 +49,13 @@ impl Server {
         loop {
             match server.accept() {
                 Ok((stream, _addr)) => {
+                    let open = true;
                     let id : u128 = self.rng.gen();
                     let websocket = accept(stream).unwrap();
-                    let open = true;
+                    let mut player = P::from_id(id);
 
-                    println!("connected: {}", id);
-                    self.connections.insert(id, Connection { id, websocket, open });
+                    self.world.on_player_connect(&mut player);
+                    self.connections.insert(id, Connection { open, websocket, player });
                 },
                 Err(_) => {},
             }
@@ -47,13 +67,16 @@ impl Server {
                             Message::Text(text) => {
                                 println!("{}", &text);
                             },
-                            Message::Binary(_) => todo!(),
-                            Message::Close(_) => {},
+                            Message::Binary(bytes) => {
+                                if let Some(request) = R::deserialize(&bytes) {
+                                    self.world.on_player_request(&mut connection.player, &request);
+                                }
+                            },
                             _ => {}
                         }
                     },
                     Err(_) => {
-                        println!("disconnected: {}", connection.id);
+                        self.world.on_player_disconnect(&mut connection.player);
                         connection.open = false;
                     },
                 }
@@ -62,6 +85,8 @@ impl Server {
             self.connections.retain(|_id, connection| {
                 connection.open
             });
+
+            self.world.update();
 
             sleep(Duration::from_millis(5));
         }
