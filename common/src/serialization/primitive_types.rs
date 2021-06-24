@@ -8,7 +8,7 @@ impl Serializable for bool {
         });
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, usize)> {
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
         if bytes.len() < 1 {
             None
         } else {
@@ -17,7 +17,7 @@ impl Serializable for bool {
                 _ => true
             };
 
-            Some((value, 1))
+            Some((value, &bytes[1..]))
         }
     }
 }
@@ -30,16 +30,16 @@ macro_rules! make_primitive_type_serializable {
                     bytes.extend_from_slice(&value.to_le_bytes());
                 }
 
-                fn read_bytes(bytes: &[u8]) -> Option<(Self, usize)> {
+                fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
                     const SIZE : usize = std::mem::size_of::<$t>();
 
                     if bytes.len() < SIZE {
                         None
                     } else {
                         let mut arr : [u8; SIZE] = [0; SIZE];
-                        arr.copy_from_slice(&bytes);
+                        arr.copy_from_slice(&bytes[..SIZE]);
 
-                        Some((<$t>::from_le_bytes(arr), SIZE))
+                        Some((<$t>::from_le_bytes(arr), &bytes[SIZE..]))
                     }
                 }
             }

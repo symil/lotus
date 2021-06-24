@@ -1,6 +1,8 @@
+#![allow(unused_assignments)]
+
 use proc_macro::{TokenStream};
 use quote::quote;
-use syn::{self, Data, Fields};
+use syn::{self, Data, Fields, Ident};
 
 #[proc_macro_derive(Serializable)]
 pub fn serializable_macro_derive(input: TokenStream) -> TokenStream {
@@ -12,44 +14,149 @@ pub fn serializable_macro_derive(input: TokenStream) -> TokenStream {
     impl_serializable_macro(&ast)
 }
 
+// https://docs.rs/syn/1.0.73/syn/struct.DeriveInput.html
 fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
-
-    let mut serialize_statements = vec![];
+    let mut serialize = quote! { };
+    let mut deserialize = quote! { None };
 
     match &ast.data {
         Data::Struct(data_struct) => {
             match &data_struct.fields {
                 Fields::Named(named_fields) => {
+                    let mut serialize_lines = vec![];
+                    let mut deserialize_lines = vec![];
+
                     for field in &named_fields.named {
                         let name = &field.ident.as_ref().unwrap();
                         let ty = &field.ty;
 
-                        serialize_statements.push(quote! {
+                        serialize_lines.push(quote! {
                             <#ty>::write_bytes(&value.#name, bytes);
                         });
+
+                        deserialize_lines.push(quote! {
+                            #name: match <#ty>::read_bytes(current_bytes) {
+                                Some((value, next_bytes)) => {
+                                    current_bytes = next_bytes;
+                                    value
+                                },
+                                None => {
+                                    return None;
+                                }
+                            }
+                        });
+                    }
+
+                    serialize = quote! { #(#serialize_lines)* };
+                    deserialize = quote! {
+                        let mut current_bytes = bytes;
+
+                        Some((Self {
+                            #(#deserialize_lines),*
+                        }, current_bytes))
                     }
                 },
-                Fields::Unnamed(fields) => {
-                    
-                },
-                Fields::Unit => {}
+                Fields::Unnamed(_fields) => todo!(),
+                Fields::Unit => todo!()
             }
         },
         Data::Enum(data_enum) => {
+            // TODO: change encoding size depending on the number of fields in the enum
+            let mut serialize_lines = vec![];
+            let mut deserialize_lines = vec![];
 
+            for i in 0..data_enum.variants.len() {
+                let n = i as u8;
+                let variant = &data_enum.variants[i];
+                let name = &variant.ident;
+
+                match &variant.fields {
+                    Fields::Named(_fields_named) => todo!(),
+                    Fields::Unnamed(fields_unnamed) => {
+                        let mut sub_vars = vec![];
+                        let mut sub_serialize_lines = vec![];
+                        let mut sub_deserialize_lines = vec![];
+                        let mut j : usize = 0;
+
+                        for field in &fields_unnamed.unnamed {
+                            let ty = &field.ty;
+                            let name = Ident::new(&format!("v_{}", &j), fields_unnamed.paren_token.span); // didn't manage to create a new span, this will do for now
+                            
+                            sub_vars.push(quote! { #name });
+                            sub_serialize_lines.push(quote! { <#ty>::write_bytes(#name, bytes); });
+                            sub_deserialize_lines.push(quote! {
+                                let #name = match <#ty>::read_bytes(current_bytes) {
+                                    None => return None,
+                                    Some((val, new_bytes)) => {
+                                        current_bytes = new_bytes;
+                                        val
+                                    }
+                                };
+                            });
+
+                            j += 1;
+                        }
+
+                        serialize_lines.push(quote! {
+                            Self::#name(#(#sub_vars),*) => {
+                                bytes.push(#n);
+                                #(#sub_serialize_lines)*
+                            }
+                        });
+
+                        deserialize_lines.push(quote! {
+                            #n => {
+                                #(#sub_deserialize_lines)*
+                                Self::#name(#(#sub_vars),*)
+                            }
+                        });
+                    },
+                    Fields::Unit => {
+                        serialize_lines.push(quote! {
+                            Self::#name => {
+                                bytes.push(#n);
+                            }
+                        });
+
+                        deserialize_lines.push(quote! {
+                            #n => Self::#name
+                        });
+                    }
+                }
+            }
+
+            serialize = quote! {
+                match value {
+                    #(#serialize_lines),*
+                }
+            };
+
+            deserialize = quote! {
+                if bytes.len() < 1 {
+                    return None;
+                }
+
+                let n = bytes[0];
+                let mut current_bytes = &bytes[1..];
+
+                Some((match n {
+                    #(#deserialize_lines),*,
+                    _ => return None
+                }, current_bytes))
+            };
         },
-        Data::Union(data_union) => todo!()
+        Data::Union(_data_union) => todo!()
     };
 
     let gen = quote! {
         impl Serializable for #name {
             fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-                #(#serialize_statements)*
+                #serialize
             }
 
-            fn read_bytes(bytes: &[u8]) -> Option<(Self, usize)> {
-                None
+            fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+                #deserialize
             }
         }
     };

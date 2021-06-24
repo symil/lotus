@@ -1,6 +1,6 @@
 pub trait Serializable : Sized {
     fn write_bytes(value: &Self, bytes: &mut Vec<u8>);
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, usize)>;
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])>;
     // TODO: read_unchecked method?
 
     fn serialize(&self) -> Vec<u8> {
