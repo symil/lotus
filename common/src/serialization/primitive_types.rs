@@ -1,3 +1,5 @@
+use std::usize;
+
 use super::serializable::Serializable;
 
 impl Serializable for bool {
@@ -22,7 +24,7 @@ impl Serializable for bool {
     }
 }
 
-macro_rules! make_primitive_type_serializable {
+macro_rules! make_primitive_types_serializable {
     ( $ ( $t:ty ), * ) => {
         $(
             impl Serializable for $t {
@@ -47,4 +49,42 @@ macro_rules! make_primitive_type_serializable {
     }
 }
 
-make_primitive_type_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
+macro_rules! make_size_type_serializable {
+    ($src:ty, $target:ty) => {
+        impl Serializable for $src {
+            fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+                <$target>::write_bytes(&(*value as $target), bytes);
+            }
+
+            fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+                match <$target>::read_bytes(bytes) {
+                    None => None,
+                    Some((value, bytes)) => Some((value as $src, bytes))
+                }
+            }
+        }
+    }
+}
+
+make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
+make_size_type_serializable!(usize, u64);
+
+impl Serializable for String {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        u16::write_bytes(&(value.len() as u16), bytes);
+        bytes.extend_from_slice(value.as_bytes());
+    }
+
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+        let (length, bytes) = match u16::read_bytes(bytes) {
+            Some((len, bytes)) => (len as usize, bytes),
+            None => return None
+        };
+
+        if bytes.len() < length {
+            return None;
+        }
+
+        Some((String::from_utf8_lossy(&bytes[..length]).to_string(), &bytes[length..]))
+    }
+}
