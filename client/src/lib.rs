@@ -1,5 +1,5 @@
 #![allow(unused_unsafe)]
-use lotus_common::{game::game_request::GameRequest, traits::request::Request};
+use lotus_common::{game::game_request::GameRequest, serialization::serializable::Serializable};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -9,10 +9,10 @@ extern {
 
 #[wasm_bindgen]
 pub fn main() {
-    // let request = GameRequest::Login(String::from("Adius"));
-    // let bytes = GameRequest::serialize(&request);
+    let request = GameRequest::Login(String::from("Adius"));
+    let bytes = request.serialize();
 
-    // unsafe {
-    //     send_data(&bytes);
-    // }
+    unsafe {
+        send_data(&bytes);
+    }
 }

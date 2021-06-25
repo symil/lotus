@@ -3,6 +3,8 @@ use crate::serialization::serializable::Serializable;
 
 #[derive(Debug, Clone, Serializable)]
 pub enum GameRequest {
+    Login(String),
+    Logout,
     A,
     B(u8),
     C(u8, u16),
