@@ -118,3 +118,28 @@ impl<T : Serializable> Serializable for Vec<T> {
         Some((result, current_bytes))
     }
 }
+
+impl<T : Serializable, const N : usize> Serializable for [T; N] {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        for item in value {
+            T::write_bytes(item, bytes);
+        }
+    }
+
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+        let mut result : [T; N] = unsafe { std::mem::zeroed() };
+        let mut current_bytes = bytes;
+
+        for i in 0..N {
+            match T::read_bytes(current_bytes) {
+                None => return None,
+                Some((item, new_bytes)) => {
+                    result[i] = item;
+                    current_bytes = new_bytes;
+                }
+            }
+        }
+
+        Some((result, current_bytes))
+    }
+}
