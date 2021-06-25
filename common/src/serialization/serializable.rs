@@ -1,6 +1,8 @@
+use super::read_buffer::ReadBuffer;
+
 pub trait Serializable : Sized {
     fn write_bytes(value: &Self, bytes: &mut Vec<u8>);
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])>;
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self>;
     // TODO: read_unchecked method?
 
     fn serialize(&self) -> Vec<u8> {
@@ -10,11 +12,8 @@ pub trait Serializable : Sized {
     }
 
     fn deserialize(bytes: &[u8]) -> Option<Self> {
-        match Self::read_bytes(bytes) {
-            None => None,
-            Some((value, _)) => Some(value)
-        }
+        let mut buffer = ReadBuffer::new(bytes);
+
+        Self::read_bytes(&mut buffer)
     }
 }
-
-pub use lotus_serializable_derive::Serializable;

@@ -1,5 +1,5 @@
 use crate::{client_api::ClientApi, graphics::graphics::Graphics, traits::entity::Entity};
-use crate::serialization::serializable::Serializable;
+use crate::serialization::*;
 use super::game_player::GamePlayer;
 
 #[derive(Debug, Serializable)]

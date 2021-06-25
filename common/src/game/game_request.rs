@@ -1,5 +1,5 @@
 use crate::{traits::request::Request};
-use crate::serialization::serializable::Serializable;
+use crate::serialization::*;
 
 #[derive(Debug, Clone, Serializable)]
 pub enum GameRequest {

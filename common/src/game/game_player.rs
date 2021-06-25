@@ -1,5 +1,5 @@
 use crate::traits::player::Player;
-use crate::serialization::serializable::Serializable;
+use crate::serialization::*;
 
 #[derive(Debug, Serializable, Clone)]
 pub struct GamePlayer {

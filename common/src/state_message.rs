@@ -1,4 +1,4 @@
-use crate::serialization::serializable::Serializable;
+use crate::serialization::*;
 
 #[derive(Debug, Serializable)]
 pub struct StateMessage<P : Serializable, E : Serializable> {

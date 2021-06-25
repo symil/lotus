@@ -1,26 +1,4 @@
-use super::serializable::Serializable;
-
-impl Serializable for bool {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-        bytes.push(match *value {
-            true => 1,
-            false => 0
-        });
-    }
-
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-        if bytes.len() < 1 {
-            None
-        } else {
-            let value = match bytes[0] {
-                0 => false,
-                _ => true
-            };
-
-            Some((value, &bytes[1..]))
-        }
-    }
-}
+use super::{read_buffer::ReadBuffer, serializable::Serializable};
 
 macro_rules! make_primitive_types_serializable {
     ( $ ( $t:ty ), * ) => {
@@ -30,16 +8,17 @@ macro_rules! make_primitive_types_serializable {
                     bytes.extend_from_slice(&value.to_le_bytes());
                 }
 
-                fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+                fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
                     const SIZE : usize = std::mem::size_of::<$t>();
 
-                    if bytes.len() < SIZE {
-                        None
-                    } else {
-                        let mut arr : [u8; SIZE] = [0; SIZE];
-                        arr.copy_from_slice(&bytes[..SIZE]);
+                    match buffer.read(SIZE) {
+                        None => None,
+                        Some(bytes) => {
+                            let mut arr : [u8; SIZE] = [0; SIZE];
+                            arr.copy_from_slice(bytes);
 
-                        Some((<$t>::from_le_bytes(arr), &bytes[SIZE..]))
+                            Some(<$t>::from_le_bytes(arr))
+                        }
                     }
                 }
             }
@@ -54,10 +33,10 @@ macro_rules! make_size_type_serializable {
                 <$target>::write_bytes(&(*value as $target), bytes);
             }
 
-            fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-                match <$target>::read_bytes(bytes) {
+            fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+                match <$target>::read_bytes(buffer) {
                     None => None,
-                    Some((value, bytes)) => Some((value as $src, bytes))
+                    Some(value) => Some(value as $src)
                 }
             }
         }
@@ -68,23 +47,43 @@ make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i
 make_size_type_serializable!(usize, u64);
 make_size_type_serializable!(isize, i64);
 
+impl Serializable for bool {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        bytes.push(match *value {
+            true => 1,
+            false => 0
+        });
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        match u8::read_bytes(buffer) {
+            None => None,
+            Some(value) => Some({
+                match value {
+                    0 => false,
+                    _ => true
+                }
+            })
+        }
+    }
+}
+
 impl Serializable for String {
     fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
         u16::write_bytes(&(value.len() as u16), bytes);
         bytes.extend_from_slice(value.as_bytes());
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-        let (length, bytes) = match u16::read_bytes(bytes) {
-            Some((len, bytes)) => (len as usize, bytes),
-            None => return None
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let length = match u16::read_bytes(buffer) {
+            None => return None,
+            Some(value) => value as usize
         };
 
-        if bytes.len() < length {
-            return None;
+        match buffer.read(length) {
+            None => None,
+            Some(bytes) => Some(String::from_utf8_lossy(bytes).to_string())
         }
-
-        Some((String::from_utf8_lossy(&bytes[..length]).to_string(), &bytes[length..]))
     }
 }
 
@@ -96,26 +95,24 @@ impl<T : Serializable> Serializable for Vec<T> {
         }
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-        let (count, bytes) = match u32::read_bytes(bytes) {
-            Some((len, bytes)) => (len as usize, bytes),
-            None => return None
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let count = match u32::read_bytes(buffer) {
+            None => return None,
+            Some(value) => value as usize
         };
 
         let mut result = Vec::with_capacity(count);
-        let mut current_bytes = bytes;
 
         for _i in 0..count {
-            match T::read_bytes(current_bytes) {
+            match T::read_bytes(buffer) {
                 None => return None,
-                Some((item, new_bytes)) => {
+                Some(item) => {
                     result.push(item);
-                    current_bytes = new_bytes;
                 }
             }
         }
 
-        Some((result, current_bytes))
+        Some(result)
     }
 }
 
@@ -126,21 +123,19 @@ impl<T : Serializable, const N : usize> Serializable for [T; N] {
         }
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
         let mut result : [T; N] = unsafe { std::mem::zeroed() };
-        let mut current_bytes = bytes;
 
         for i in 0..N {
-            match T::read_bytes(current_bytes) {
+            match T::read_bytes(buffer) {
                 None => return None,
-                Some((item, new_bytes)) => {
+                Some(item) => {
                     result[i] = item;
-                    current_bytes = new_bytes;
                 }
             }
         }
 
-        Some((result, current_bytes))
+        Some(result)
     }
 }
 
@@ -155,25 +150,18 @@ impl<T : Serializable> Serializable for Option<T> {
         }
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-        if bytes.len() < 1 {
-            return None;
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        match u8::read_bytes(buffer) {
+            None => return None,
+            Some(value) => Some(match value {
+                0 => None,
+                1 => match T::read_bytes(buffer) {
+                    None => return None,
+                    Some(item) => Some(item)
+                },
+                _ => return None,
+            }),
         }
-
-        let mut current_bytes = &bytes[1..];
-        let value = match bytes[0] {
-            0 => None,
-            1 => match T::read_bytes(current_bytes) {
-                None => return None,
-                Some((val, new_bytes)) => {
-                    current_bytes = new_bytes;
-                    Some(val)
-                }
-            },
-            _ => return None
-        };
-
-        Some((value, current_bytes))
     }
 }
 
@@ -191,30 +179,20 @@ impl<T : Serializable, E : Serializable> Serializable for Result<T, E> {
         }
     }
 
-    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
-        if bytes.len() < 1 {
-            return None;
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        match u8::read_bytes(buffer) {
+            None => return None,
+            Some(header) => Some(match header {
+                0 => match T::read_bytes(buffer) {
+                    None => return None,
+                    Some(value) => Ok(value)
+                },
+                1 => match E::read_bytes(buffer) {
+                    None => return None,
+                    Some(error) => Err(error)
+                },
+                _ => return None
+            })
         }
-
-        let mut current_bytes = &bytes[1..];
-        let value = match bytes[0] {
-            0 => match T::read_bytes(current_bytes) {
-                None => return None,
-                Some((val, new_bytes)) => {
-                    current_bytes = new_bytes;
-                    Ok(val)
-                }
-            },
-            1 => match E::read_bytes(current_bytes) {
-                None => return None,
-                Some((val, new_bytes)) => {
-                    current_bytes = new_bytes;
-                    Err(val)
-                }
-            },
-            _ => return None
-        };
-
-        Some((value, current_bytes))
     }
 }

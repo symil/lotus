@@ -36,25 +36,18 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                         });
 
                         deserialize_lines.push(quote! {
-                            #name: match <#ty>::read_bytes(current_bytes) {
-                                Some((value, next_bytes)) => {
-                                    current_bytes = next_bytes;
-                                    value
-                                },
-                                None => {
-                                    return None;
-                                }
+                            #name: match <#ty>::read_bytes(buffer) {
+                                None => return None,
+                                Some(value) => value,
                             }
                         });
                     }
 
                     serialize = quote! { #(#serialize_lines)* };
                     deserialize = quote! {
-                        let mut current_bytes = bytes;
-
-                        Some((Self {
+                        Some(Self {
                             #(#deserialize_lines),*
-                        }, current_bytes))
+                        })
                     }
                 },
                 Fields::Unnamed(_fields) => todo!(),
@@ -86,12 +79,9 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                             sub_vars.push(quote! { #name });
                             sub_serialize_lines.push(quote! { <#ty>::write_bytes(#name, bytes); });
                             sub_deserialize_lines.push(quote! {
-                                let #name = match <#ty>::read_bytes(current_bytes) {
+                                let #name = match <#ty>::read_bytes(buffer) {
                                     None => return None,
-                                    Some((val, new_bytes)) => {
-                                        current_bytes = new_bytes;
-                                        val
-                                    }
+                                    Some(value) => value
                                 };
                             });
 
@@ -133,17 +123,13 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
             };
 
             deserialize = quote! {
-                if bytes.len() < 1 {
-                    return None;
+                match u8::read_bytes(buffer) {
+                    None => return None,
+                    Some(header) => Some(match header {
+                        #(#deserialize_lines),*,
+                        _ => return None
+                    })
                 }
-
-                let n = bytes[0];
-                let mut current_bytes = &bytes[1..];
-
-                Some((match n {
-                    #(#deserialize_lines),*,
-                    _ => return None
-                }, current_bytes))
             };
         },
         Data::Union(_data_union) => todo!()
@@ -193,7 +179,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                 #serialize
             }
 
-            fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+            fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
                 #deserialize
             }
         }
