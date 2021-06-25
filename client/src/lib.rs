@@ -1,5 +1,5 @@
 #![allow(unused_unsafe)]
-use lotus_common::{game::{game_entity::GameEntity, game_request::GameRequest}, serialization::serializable::Serializable};
+use lotus_common::{client_api::ClientApi, game::{game_entity::GameEntity, game_player::GamePlayer, game_request::GameRequest}, serialization::serializable::Serializable, state_message::StateMessage, traits::entity::Entity};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -7,6 +7,7 @@ extern {
     pub fn send_message(bytes: &[u8]);
     pub fn read_message() -> Option<Vec<u8>>;
     pub fn log(message: &str);
+    // pub fn draw_graphics(g: &Graphics);
 }
 
 fn send<T : Serializable>(value: &T) {
@@ -31,18 +32,17 @@ pub fn start() {
 
 #[wasm_bindgen]
 pub fn update() {
-    let mut new_ui = None;
+    let message = match receive::<StateMessage<GamePlayer, GameEntity>>() {
+        None => return,
+        Some(message) => message
+    };
 
-    loop {
-        match receive::<GameEntity>() {
-            None => break,
-            Some(ui) => new_ui = Some(ui)
-        }
-    }
+    let client_api = ClientApi {
+        pov: message.player
+    };
 
-    if let Some(ui) = new_ui {
-        let string = format!("UI: {:?}", ui);
+    let graphics = message.ui.render(&client_api);
+    let string = format!("UI: {:?}", graphics);
 
-        unsafe { log(&string) };
-    }
+    unsafe { log(&string) };
 }

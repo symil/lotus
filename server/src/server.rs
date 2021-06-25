@@ -1,5 +1,5 @@
 use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
-use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, traits::{entity::Entity, player::Player, request::Request, world::World}};
+use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, state_message::StateMessage, traits::{entity::Entity, player::Player, request::Request, world::World}};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
 use tungstenite::{Message, WebSocket, accept};
 
@@ -28,9 +28,9 @@ pub struct Server<P, R, E, W>
 
 impl<P, R, E, W> Server<P, R, E, W>
     where
-        P : Player + Serializable,
-        R : Request + Serializable,
-        E : Entity<P> + Serializable,
+        P : Player,
+        R : Request,
+        E : Entity<P>,
         W : World<P, R, E>
 {
     pub fn new(world: W) -> Self {
@@ -95,9 +95,10 @@ impl<P, R, E, W> Server<P, R, E, W>
 
             for (id, ui) in self.api.drain_items() {
                 if let Some(connection) = self.connections.get_mut(&id) {
-                    let bytes = ui.serialize();
+                    let message = StateMessage::new(&connection.player, ui);
+                    let bytes = message.serialize();
 
-                    connection.ui = Some(ui);
+                    connection.ui = Some(message.ui);
                     connection.websocket.write_message(Message::Binary(bytes)).unwrap();
                 }
             }

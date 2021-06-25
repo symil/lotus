@@ -6,3 +6,4 @@ pub mod game;
 pub mod traits;
 pub mod graphics;
 pub mod serialization;
+pub mod state_message;

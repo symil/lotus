@@ -1,6 +1,6 @@
-use crate::{client_api::ClientApi, graphics::graphics::Graphics};
+use crate::{client_api::ClientApi, graphics::graphics::Graphics, serialization::serializable::Serializable};
 
-pub trait Entity<Player> {
+pub trait Entity<Player> : Serializable {
     fn render(&self, _context: &ClientApi<Player>) -> Vec<Graphics> {
         vec![]
     }

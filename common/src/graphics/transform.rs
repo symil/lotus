@@ -1,3 +1,7 @@
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub struct Transform {
     pub tx: f32,
     pub ty: f32,

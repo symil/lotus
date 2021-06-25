@@ -1,5 +1,6 @@
 use super::rect::Rect;
 
+#[derive(Debug, Clone, Copy)]
 pub enum Size {
     Zero,
     Fixed(f32),

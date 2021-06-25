@@ -21,7 +21,10 @@
         };
 
         window.read_message = function() {
-            return messages.shift();
+            let message = messages.pop();
+            messages = [];
+
+            return message;
         };
 
         window.log = function(str) {

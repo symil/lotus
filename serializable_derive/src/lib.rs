@@ -2,7 +2,7 @@
 
 use proc_macro::{TokenStream};
 use quote::quote;
-use syn::{self, Data, Fields, Ident};
+use syn::{self, Data, Fields, GenericParam, Ident, TypeParamBound};
 
 #[proc_macro_derive(Serializable)]
 pub fn serializable_macro_derive(input: TokenStream) -> TokenStream {
@@ -149,8 +149,46 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
         Data::Union(_data_union) => todo!()
     };
 
+    let mut generics_name_list = vec![];
+    let mut generics_def_list = vec![];
+    let mut generics_type = quote! {};
+    let mut generics_impl = quote! {};
+
+    for param in &ast.generics.params {
+        match param {
+            GenericParam::Type(type_param) => {
+                let name = &type_param.ident;
+                let mut paths = vec![];
+
+                generics_name_list.push(quote! { #name });
+
+                for param in &type_param.bounds {
+                    match param {
+                        TypeParamBound::Trait(trait_bound) => {
+                            paths.push(&trait_bound.path);
+                        },
+                        TypeParamBound::Lifetime(_) => todo!(),
+                    }
+                }
+
+                if paths.len() > 0 {
+                    generics_def_list.push(quote! { #name : #(#paths)+* });
+                } else {
+                    generics_def_list.push(quote! { #name });
+                }
+            },
+            GenericParam::Lifetime(_) => todo!(),
+            GenericParam::Const(_) => todo!(),
+        }
+    }
+
+    if generics_name_list.len() > 0 {
+        generics_type = quote! { <#(#generics_name_list),*> };
+        generics_impl = quote! { <#(#generics_def_list),*> };
+    }
+
     let gen = quote! {
-        impl Serializable for #name {
+        impl#generics_impl Serializable for #name#generics_type {
             fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
                 #serialize
             }

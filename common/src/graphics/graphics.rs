@@ -1,32 +1,44 @@
+use wasm_bindgen::prelude::*;
 use super::{color::Color, size::Size, transform::Transform};
 
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum Shape {
     Circle,
     Rectangle,
 }
 
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum Font {
     Arial
 }
 
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum TextHorizontalAlign {
     Left,
     Center,
     Right
 }
 
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum TextVerticalAlign {
     Top,
     Middle,
     Bottom
 }
 
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum Cursor {
     Default,
     Pointer,
     TextEdit,
 }
 
+#[derive(Debug, Clone)]
 pub struct Graphics {
     pub transform: Transform,
     pub x: f32,

@@ -1,7 +1,8 @@
+use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
-
 use super::layout::{Layout, LayoutType};
 
+#[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub struct Rect {
     pub x: f32,
