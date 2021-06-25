@@ -48,6 +48,7 @@ impl<P, R, E, W> Server<P, R, E, W>
         let server = TcpListener::bind("127.0.0.1:8123").unwrap();
         server.set_nonblocking(true).expect("Cannot set non-blocking");
 
+        println!(">>> READY <<<");
         println!("Listening on port 8123...");
 
         loop {
