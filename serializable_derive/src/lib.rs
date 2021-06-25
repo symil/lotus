@@ -32,7 +32,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                         let ty = &field.ty;
 
                         serialize_lines.push(quote! {
-                            <#ty>::write_bytes(&value.#name, bytes);
+                            <#ty>::write_bytes(&value.#name, buffer);
                         });
 
                         deserialize_lines.push(quote! {
@@ -77,7 +77,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                             let name = Ident::new(&format!("v_{}", &j), fields_unnamed.paren_token.span); // didn't manage to create a new span, this will do for now
                             
                             sub_vars.push(quote! { #name });
-                            sub_serialize_lines.push(quote! { <#ty>::write_bytes(#name, bytes); });
+                            sub_serialize_lines.push(quote! { <#ty>::write_bytes(#name, buffer); });
                             sub_deserialize_lines.push(quote! {
                                 let #name = match <#ty>::read_bytes(buffer) {
                                     None => return None,
@@ -90,7 +90,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
 
                         serialize_lines.push(quote! {
                             Self::#name(#(#sub_vars),*) => {
-                                bytes.push(#n);
+                                buffer.write_byte(#n);
                                 #(#sub_serialize_lines)*
                             }
                         });
@@ -105,7 +105,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                     Fields::Unit => {
                         serialize_lines.push(quote! {
                             Self::#name => {
-                                bytes.push(#n);
+                                buffer.write_byte(#n);
                             }
                         });
 
@@ -175,7 +175,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
 
     let gen = quote! {
         impl#generics_impl Serializable for #name#generics_type {
-            fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+            fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
                 #serialize
             }
 

@@ -1,11 +1,11 @@
-use super::{read_buffer::ReadBuffer, serializable::Serializable};
+use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer, serializable::Serializable};
 
 macro_rules! make_primitive_types_serializable {
     ( $ ( $t:ty ), * ) => {
         $(
             impl Serializable for $t {
-                fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-                    bytes.extend_from_slice(&value.to_le_bytes());
+                fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+                    buffer.write(&value.to_le_bytes());
                 }
 
                 fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
@@ -29,8 +29,8 @@ macro_rules! make_primitive_types_serializable {
 macro_rules! make_size_type_serializable {
     ($src:ty, $target:ty) => {
         impl Serializable for $src {
-            fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-                <$target>::write_bytes(&(*value as $target), bytes);
+            fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+                <$target>::write_bytes(&(*value as $target), buffer);
             }
 
             fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
@@ -43,13 +43,13 @@ macro_rules! make_size_type_serializable {
     }
 }
 
-make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
+make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
 make_size_type_serializable!(usize, u64);
 make_size_type_serializable!(isize, i64);
 
 impl Serializable for bool {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-        bytes.push(match *value {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        buffer.write_byte(match *value {
             true => 1,
             false => 0
         });
@@ -69,9 +69,9 @@ impl Serializable for bool {
 }
 
 impl Serializable for String {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-        u16::write_bytes(&(value.len() as u16), bytes);
-        bytes.extend_from_slice(value.as_bytes());
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        u16::write_bytes(&(value.len() as u16), buffer);
+        buffer.write(value.as_bytes());
     }
 
     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
@@ -88,10 +88,10 @@ impl Serializable for String {
 }
 
 impl<T : Serializable> Serializable for Vec<T> {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
-        u32::write_bytes(&(value.len() as u32), bytes);
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        u32::write_bytes(&(value.len() as u32), buffer);
         for item in value {
-            T::write_bytes(item, bytes);
+            T::write_bytes(item, buffer);
         }
     }
 
@@ -117,9 +117,9 @@ impl<T : Serializable> Serializable for Vec<T> {
 }
 
 impl<T : Serializable, const N : usize> Serializable for [T; N] {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
         for item in value {
-            T::write_bytes(item, bytes);
+            T::write_bytes(item, buffer);
         }
     }
 
@@ -140,12 +140,12 @@ impl<T : Serializable, const N : usize> Serializable for [T; N] {
 }
 
 impl<T : Serializable> Serializable for Option<T> {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
         match value {
-            None => bytes.push(0),
-            Some(x) => {
-                bytes.push(1);
-                T::write_bytes(x, bytes);
+            None => buffer.write_byte(0),
+            Some(value) => {
+                buffer.write_byte(1);
+                T::write_bytes(value, buffer);
             }
         }
     }
@@ -166,15 +166,15 @@ impl<T : Serializable> Serializable for Option<T> {
 }
 
 impl<T : Serializable, E : Serializable> Serializable for Result<T, E> {
-    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
         match value {
             Ok(v) => {
-                bytes.push(0);
-                T::write_bytes(v, bytes);
+                buffer.write_byte(0);
+                T::write_bytes(v, buffer);
             },
             Err(e) => {
-                bytes.push(1);
-                E::write_bytes(e, bytes);
+                buffer.write_byte(1);
+                E::write_bytes(e, buffer);
             }
         }
     }
