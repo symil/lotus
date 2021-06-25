@@ -1,9 +1,6 @@
 use crate::{client_api::ClientApi, graphics::graphics::Graphics};
 
-pub trait Entity<Player> : Sized {
-    fn serialize(value: &Self) -> Vec<u8>;
-    fn deserialize(bytes: &[u8]) -> Option<Self>;
-
+pub trait Entity<Player> {
     fn render(&self, _context: &ClientApi<Player>) -> Vec<Graphics> {
         vec![]
     }
