@@ -143,3 +143,78 @@ impl<T : Serializable, const N : usize> Serializable for [T; N] {
         Some((result, current_bytes))
     }
 }
+
+impl<T : Serializable> Serializable for Option<T> {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        match value {
+            None => bytes.push(0),
+            Some(x) => {
+                bytes.push(1);
+                T::write_bytes(x, bytes);
+            }
+        }
+    }
+
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+        if bytes.len() < 1 {
+            return None;
+        }
+
+        let mut current_bytes = &bytes[1..];
+        let value = match bytes[0] {
+            0 => None,
+            1 => match T::read_bytes(current_bytes) {
+                None => return None,
+                Some((val, new_bytes)) => {
+                    current_bytes = new_bytes;
+                    Some(val)
+                }
+            },
+            _ => return None
+        };
+
+        Some((value, current_bytes))
+    }
+}
+
+impl<T : Serializable, E : Serializable> Serializable for Result<T, E> {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        match value {
+            Ok(v) => {
+                bytes.push(0);
+                T::write_bytes(v, bytes);
+            },
+            Err(e) => {
+                bytes.push(1);
+                E::write_bytes(e, bytes);
+            }
+        }
+    }
+
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+        if bytes.len() < 1 {
+            return None;
+        }
+
+        let mut current_bytes = &bytes[1..];
+        let value = match bytes[0] {
+            0 => match T::read_bytes(current_bytes) {
+                None => return None,
+                Some((val, new_bytes)) => {
+                    current_bytes = new_bytes;
+                    Ok(val)
+                }
+            },
+            1 => match E::read_bytes(current_bytes) {
+                None => return None,
+                Some((val, new_bytes)) => {
+                    current_bytes = new_bytes;
+                    Err(val)
+                }
+            },
+            _ => return None
+        };
+
+        Some((value, current_bytes))
+    }
+}

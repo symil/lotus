@@ -10,7 +10,9 @@ pub enum GameRequest {
     E(u32, u32, u32, u32, u32),
     F(String),
     G(Vec<i16>),
-    H([u8; 5], String)
+    H([u8; 5], String),
+    I(Option<u8>),
+    J(Result<String, i16>, u8)
 }
 
 impl Request for GameRequest {
