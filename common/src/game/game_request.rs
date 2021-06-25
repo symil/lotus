@@ -8,7 +8,8 @@ pub enum GameRequest {
     C(u8, u16),
     D(String, String, String),
     E(u32, u32, u32, u32, u32),
-    F(String)
+    F(String),
+    G(Vec<i16>)
 }
 
 impl Request for GameRequest {

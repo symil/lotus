@@ -10,7 +10,7 @@ fn main() {
     
     // let request = GameRequest::D("A".to_string(), "some very long string".to_string(), "LAST ONE".to_string());
     // let request = GameRequest::E(1, 2, 3, 4, 5);
-    let request = GameRequest::F("hello".to_string());
+    let request = GameRequest::G(vec![-1, 1]);
     let bytes = GameRequest::serialize(&request);
     dbg!(&bytes);
     let result : Option<GameRequest> = GameRequest::deserialize(&bytes);

@@ -1,5 +1,3 @@
-use std::usize;
-
 use super::serializable::Serializable;
 
 impl Serializable for bool {
@@ -68,6 +66,7 @@ macro_rules! make_size_type_serializable {
 
 make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
 make_size_type_serializable!(usize, u64);
+make_size_type_serializable!(isize, i64);
 
 impl Serializable for String {
     fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
@@ -86,5 +85,36 @@ impl Serializable for String {
         }
 
         Some((String::from_utf8_lossy(&bytes[..length]).to_string(), &bytes[length..]))
+    }
+}
+
+impl<T : Serializable> Serializable for Vec<T> {
+    fn write_bytes(value: &Self, bytes: &mut Vec<u8>) {
+        u32::write_bytes(&(value.len() as u32), bytes);
+        for item in value {
+            T::write_bytes(item, bytes);
+        }
+    }
+
+    fn read_bytes(bytes: &[u8]) -> Option<(Self, &[u8])> {
+        let (count, bytes) = match u32::read_bytes(bytes) {
+            Some((len, bytes)) => (len as usize, bytes),
+            None => return None
+        };
+
+        let mut result = Vec::with_capacity(count);
+        let mut current_bytes = bytes;
+
+        for _i in 0..count {
+            match T::read_bytes(current_bytes) {
+                None => return None,
+                Some((item, new_bytes)) => {
+                    result.push(item);
+                    current_bytes = new_bytes;
+                }
+            }
+        }
+
+        Some((result, current_bytes))
     }
 }
