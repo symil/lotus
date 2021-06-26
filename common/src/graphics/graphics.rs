@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::*;
+use as_js_string_macro::*;
 use super::{color::Color, size::Size, transform::Transform};
 
 #[wasm_bindgen]
@@ -30,12 +31,13 @@ pub enum TextVerticalAlign {
     Bottom
 }
 
+#[as_js_string]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum Cursor {
     Default,
     Pointer,
-    TextEdit,
+    Text,
 }
 
 #[derive(Debug, Clone)]

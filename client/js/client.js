@@ -31,4 +31,8 @@ export class Client {
     $log(string) {
         console.log(string);
     }
+
+    $logEnum(value) {
+        console.log(value);
+    }
 }

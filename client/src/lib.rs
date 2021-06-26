@@ -1,5 +1,5 @@
 #![allow(unused_unsafe)]
-use lotus_common::{game::{game_view::GameView, game_player::GamePlayer, game_request::GameRequest}, graphics::rect::Rect, serialization::serializable::Serializable, traits::view::View, view_context::ViewContext};
+use lotus_common::{game::{game_view::GameView, game_player::GamePlayer, game_request::GameRequest}, graphics::{graphics::Cursor, rect::Rect}, serialization::serializable::Serializable, traits::view::View, view_context::ViewContext};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -7,6 +7,7 @@ extern {
     pub fn send_message(bytes: &[u8]);
     pub fn read_message() -> Option<Vec<u8>>;
     pub fn log(message: &str);
+    pub fn log_enum(cursor: Cursor);
     // pub fn draw_graphics(g: &Graphics);
 }
 
@@ -27,6 +28,7 @@ fn receive<T : Serializable>() -> Option<T> {
 
 #[wasm_bindgen]
 pub fn start() {
+    unsafe { log_enum(Cursor::Pointer) };
     send(&GameRequest::Login(String::from("Adius")));
 }
 

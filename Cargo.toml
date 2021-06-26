@@ -1,2 +1,2 @@
 [workspace]
-members = ["common", "client", "server", "serializable_derive"]
+members = ["common", "client", "server", "serializable-derive", "as-js-string-macro"]

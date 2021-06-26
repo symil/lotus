@@ -1,6 +1,7 @@
 #![allow(unused_assignments)]
 
 use proc_macro::{TokenStream};
+use proc_macro2::{Span};
 use quote::quote;
 use syn::{self, Data, Fields, GenericParam, Ident, TypeParamBound};
 
@@ -74,7 +75,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
 
                         for field in &fields_unnamed.unnamed {
                             let ty = &field.ty;
-                            let name = Ident::new(&format!("v_{}", &j), fields_unnamed.paren_token.span); // didn't manage to create a new span, this will do for now
+                            let name = Ident::new(&format!("v_{}", &j), Span::call_site()); // didn't manage to create a new span, this will do for now
                             
                             sub_vars.push(quote! { #name });
                             sub_serialize_lines.push(quote! { <#ty>::write_bytes(#name, buffer); });
