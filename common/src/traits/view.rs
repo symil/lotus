@@ -1,8 +1,8 @@
 use std::hash::Hash;
 
-use crate::{view_context::ViewContext, graphics::graphics::Graphics, serialization::serializable::Serializable};
+use crate::{view_context::ViewContext, graphics::graphics::Graphics};
 
-pub trait View<P> : Serializable + Hash {
+pub trait View<P> : Sized + Hash {
     fn root() -> Self;
 
     fn render(&self, _context: &ViewContext<P, Self>) -> Vec<Graphics> {

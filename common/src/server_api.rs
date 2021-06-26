@@ -1,25 +1,21 @@
-use std::marker::PhantomData;
+use crate::traits::{player::Player};
 
-use crate::traits::{player::Player, view::View};
-
-pub struct ServerApi<P, V> {
-    player_uis: Vec<(u128, V)>,
-    _p: PhantomData<P>,
+pub struct ServerApi {
+    players_to_notify: Vec<u128>
 }
 
-impl<P : Player, V : View<P>> ServerApi<P, V> {
+impl ServerApi {
     pub fn new() -> Self {
         Self {
-            player_uis: vec![],
-            _p: PhantomData,
+            players_to_notify: vec![],
         }
     }
 
-    pub fn set_player_ui(&mut self, player: &P, ui: V) {
-        self.player_uis.push((player.get_id(), ui));
+    pub fn notify_player_update<P : Player>(&mut self, player: &P) {
+        self.players_to_notify.push(player.get_id());
     }
 
-    pub fn drain_items(&mut self) -> Vec<(u128, V)> {
-        self.player_uis.drain(..).collect()
+    pub fn drain_players_to_notify(&mut self) -> Vec<u128> {
+        self.players_to_notify.drain(..).collect()
     }
 }

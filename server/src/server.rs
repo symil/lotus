@@ -3,35 +3,32 @@ use lotus_common::{serialization::serializable::Serializable, server_api::Server
 use rand::{Rng, prelude::ThreadRng, thread_rng};
 use tungstenite::{Message, WebSocket, accept};
 
-pub struct Connection<P : Player, E : View<P>> {
+pub struct Connection<P : Player> {
     open: bool,
     websocket: WebSocket<TcpStream>,
     player: P,
-    ui: Option<E>
 }
 
-pub struct Server<P, R, E, W>
+pub struct Server<P, R, W>
     where
         P : Player,
         R : Request,
-        E : View<P>,
-        W : World<P, R, E>
+        W : World<P, R>
 {
     rng: ThreadRng,
-    connections: HashMap<u128, Connection<P, E>>,
-    api: ServerApi<P, E>,
+    connections: HashMap<u128, Connection<P>>,
+    api: ServerApi,
     world: W,
 
     // wtf rust
     _r: PhantomData<R>,
 }
 
-impl<P, R, E, W> Server<P, R, E, W>
+impl<P, R, W> Server<P, R, W>
     where
         P : Player,
         R : Request,
-        E : View<P>,
-        W : World<P, R, E>
+        W : World<P, R>
 {
     pub fn new(world: W) -> Self {
         Self {
@@ -58,10 +55,10 @@ impl<P, R, E, W> Server<P, R, E, W>
                     let id : u128 = self.rng.gen();
                     let websocket = accept(stream).unwrap();
                     let mut player = P::from_id(id);
-                    let ui = None;
 
+                    self.api.notify_player_update(&player);
                     self.world.on_player_connect(&mut player, &mut self.api);
-                    self.connections.insert(id, Connection { open, websocket, player, ui });
+                    self.connections.insert(id, Connection { open, websocket, player });
                 },
                 Err(_) => {},
             }
@@ -94,12 +91,10 @@ impl<P, R, E, W> Server<P, R, E, W>
 
             self.world.update();
 
-            for (id, ui) in self.api.drain_items() {
+            for id in self.api.drain_players_to_notify() {
                 if let Some(connection) = self.connections.get_mut(&id) {
-                    let message = StateMessage::new(&connection.player, ui);
-                    let bytes = message.serialize();
+                    let bytes = connection.player.serialize();
 
-                    connection.ui = Some(message.ui);
                     connection.websocket.write_message(Message::Binary(bytes)).unwrap();
                 }
             }
