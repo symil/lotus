@@ -1,4 +1,4 @@
 pub mod world;
 pub mod player;
 pub mod request;
-pub mod entity;
+pub mod view;

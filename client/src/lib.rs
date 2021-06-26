@@ -1,5 +1,5 @@
 #![allow(unused_unsafe)]
-use lotus_common::{client_api::ClientApi, game::{game_entity::GameEntity, game_player::GamePlayer, game_request::GameRequest}, serialization::serializable::Serializable, state_message::StateMessage, traits::entity::Entity};
+use lotus_common::{game::{game_view::GameView, game_player::GamePlayer, game_request::GameRequest}, graphics::rect::Rect, serialization::serializable::Serializable, state_message::StateMessage, traits::view::View, view_context::ViewContext};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -32,16 +32,19 @@ pub fn start() {
 
 #[wasm_bindgen]
 pub fn update() {
-    let message = match receive::<StateMessage<GamePlayer, GameEntity>>() {
+    let message : StateMessage<GamePlayer, GameView> = match receive() {
         None => return,
         Some(message) => message
     };
 
-    let client_api = ClientApi {
-        pov: message.player
+    let player = message.player;
+    let context = ViewContext {
+        rect: Rect::default(),
+        pov: &player,
+        hovered: None
     };
 
-    let graphics = message.ui.render(&client_api);
+    let graphics = message.ui.render(&context);
     let string = format!("UI: {:?}", graphics);
 
     unsafe { log(&string) };

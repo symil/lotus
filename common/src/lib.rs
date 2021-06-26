@@ -1,6 +1,6 @@
 extern crate lotus_serializable_derive;
 
-pub mod client_api;
+pub mod view_context;
 pub mod server_api;
 pub mod game;
 pub mod traits;

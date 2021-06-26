@@ -236,3 +236,9 @@ impl Rect {
         }
     }
 }
+
+impl Default for Rect {
+    fn default() -> Self {
+        Rect::new(0., 0., 0., 0.)
+    }
+}

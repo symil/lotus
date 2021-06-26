@@ -1,9 +1,9 @@
 use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
-use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, state_message::StateMessage, traits::{entity::Entity, player::Player, request::Request, world::World}};
+use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, state_message::StateMessage, traits::{view::View, player::Player, request::Request, world::World}};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
 use tungstenite::{Message, WebSocket, accept};
 
-pub struct Connection<P : Player, E : Entity<P>> {
+pub struct Connection<P : Player, E : View<P>> {
     open: bool,
     websocket: WebSocket<TcpStream>,
     player: P,
@@ -14,7 +14,7 @@ pub struct Server<P, R, E, W>
     where
         P : Player,
         R : Request,
-        E : Entity<P>,
+        E : View<P>,
         W : World<P, R, E>
 {
     rng: ThreadRng,
@@ -30,7 +30,7 @@ impl<P, R, E, W> Server<P, R, E, W>
     where
         P : Player,
         R : Request,
-        E : Entity<P>,
+        E : View<P>,
         W : World<P, R, E>
 {
     pub fn new(world: W) -> Self {
