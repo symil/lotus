@@ -2,47 +2,29 @@ use wasm_bindgen::prelude::*;
 use as_js_string_macro::*;
 use super::{color::Color, size::Size, transform::Transform};
 
-#[as_js_string(lowercase)]
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
-pub enum Shape {
-    Circle,
-    Rectangle,
+macro_rules! make_enum {
+    ($name:ident : $default:ident $(, $field:ident)*) => {
+        #[as_js_string(lowercase)]
+        #[wasm_bindgen]
+        #[derive(Debug, Clone, Copy)]
+        pub enum $name {
+            $default,
+            $( $field , )*
+        }
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self::$default
+            }
+        }
+    }
 }
 
-#[as_js_string(lowercase)]
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
-pub enum Font {
-    Arial
-}
-
-#[as_js_string(lowercase)]
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
-pub enum TextHorizontalAlign {
-    Left,
-    Center,
-    Right
-}
-
-#[as_js_string(lowercase)]
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
-pub enum TextVerticalAlign {
-    Top,
-    Middle,
-    Bottom
-}
-
-#[as_js_string(lowercase)]
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
-pub enum Cursor {
-    Default,
-    Pointer,
-    Text,
-}
+make_enum! { Shape : Rectangle, Circle, Line }
+make_enum! { Font : Arial }
+make_enum! { TextHorizontalAlign : Center, Left, Right }
+make_enum! { TextVerticalAlign : Middle, Top, Bottom }
+make_enum! { Cursor : Default, Pointer, Text }
 
 #[derive(Debug, Clone)]
 pub struct Graphics {
@@ -66,6 +48,7 @@ pub struct Graphics {
     pub overlay_color: Color,
     pub overlay_alpha: f32,
     pub image_url: Option<String>,
+    pub image_scale: f32,
     pub text: Option<String>,
     pub text_font: Font,
     pub text_size: Size,
@@ -105,6 +88,7 @@ impl Default for Graphics {
             overlay_color: Color::transparent(),
             overlay_alpha: 1.,
             image_url: None,
+            image_scale: 1.,
             text: None,
             text_font: Font::Arial,
             text_size: Size::Zero,

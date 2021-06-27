@@ -1,37 +1,67 @@
+import { Renderer } from './renderer';
+import { toSnakeCase } from './utils';
 import { WindowManager } from './window-manager';
 
 export class Client {
-    constructor(wasm) {
-        this._wasm = wasm;
+    constructor() {
+        this._wasm = null;
         this._webSocket = null;
         this._windowManager = new WindowManager();
+        this._renderer = new Renderer(this._windowManager);
         this._pendingMessages = [];
     }
 
     async start() {
+        this._setupRustInterface();
+        
+        await this._loadWasm();
+        await this._setupConnection();
+        await this._windowManager.start();
+
+        this._wasm.start();
+        this._update();
+    }
+
+    async _loadWasm() {
+        this._wasm = await import('../pkg/lotus_client.js');
+    }
+
+    async _setupConnection() {
         this._webSocket = new WebSocket('ws://localhost:8123');
         this._webSocket.binaryType = 'arraybuffer';
         this._webSocket.onmessage = message => this._onMessage(message);
 
-        await this._windowManager.start();
-
         return new Promise(resolve => this._webSocket.onopen = resolve);
+    }
+
+    _update() {
+        this._wasm.update();
+        requestAnimationFrame(() => this._update());
     }
 
     _onMessage(message) {
         this._pendingMessages.push(new Uint8Array(message.data));
     }
 
-    $sendMessage(bytes) {
-        this._webSocket.send(bytes)
+    _setupRustInterface() {
+        let self = this;
+        let rustInterface = {};
+
+        for (let name of Object.getOwnPropertyNames(Client.prototype)) {
+            if (name.startsWith('$')) {
+                let rustName = toSnakeCase(name.substring(1));
+
+                rustInterface[rustName] = function() {
+                    return self[name](...arguments);
+                };
+            }
+        }
+
+        Object.assign(window, rustInterface);
     }
 
-    $pollMessage() {
-        let message = this._pendingMessages.pop();
-
-        this._pendingMessages = [];
-
-        return message;
+    $log(string) {
+        console.log(string);
     }
 
     $pollEvent() {
@@ -54,7 +84,39 @@ export class Client {
         return event;
     }
 
-    $log(string) {
-        console.log(string);
+    $sendMessage(bytes) {
+        this._webSocket.send(bytes)
+    }
+
+    $pollMessage() {
+        let message = this._pendingMessages.pop();
+
+        this._pendingMessages = [];
+
+        return message;
+    }
+
+    $getWindowWidth() {
+        return this._windowManager.getWidth();
+    }
+
+    $getWindowHeight() {
+        return this._windowManager.getHeight();
+    }
+
+    $getStringId(string) {
+        return this._renderer.getStringId(string);
+    }
+
+    $clearCanvas() {
+        return this._renderer.clear();
+    }
+
+    $draw(primitive) {
+        return this._renderer.draw(primitive);
+    }
+
+    $clearRendererCache() {
+        return this._renderer.clearCache();
     }
 }

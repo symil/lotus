@@ -80,6 +80,14 @@ export class WindowManager {
         this._updateDom();
     }
 
+    getWidth() {
+        return this._canvasWidth;
+    }
+
+    getHeight() {
+        return this._canvasHeight;
+    }
+    
     _updateCanvasRect() {
         let aspectRatio = this._aspectRatio;
         let width = window.innerWidth;
