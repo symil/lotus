@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::*;
 use as_js_string_macro::*;
 use super::{color::Color, size::Size, transform::Transform};
 
+#[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum Shape {
@@ -9,12 +10,14 @@ pub enum Shape {
     Rectangle,
 }
 
+#[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum Font {
     Arial
 }
 
+#[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum TextHorizontalAlign {
@@ -23,6 +26,7 @@ pub enum TextHorizontalAlign {
     Right
 }
 
+#[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum TextVerticalAlign {
@@ -31,7 +35,7 @@ pub enum TextVerticalAlign {
     Bottom
 }
 
-#[as_js_string]
+#[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum Cursor {

@@ -1,13 +1,7 @@
-import { EventTarget } from './event-target';
-
 const BUTTON_TO_STRING = ['left', 'middle', 'right'];
 
-export class WindowWrapper extends EventTarget {
+export class WindowManager {
     constructor() {
-        super();
-
-        this.registerEvents(['resize', 'keyDown', 'keyUp', 'mouseInput', 'wheel']);
-
         this._aspectRatio = 16 / 9;
         this._zIndexToCanvas = new Map();
         this._canvaxX = 0;
@@ -15,11 +9,7 @@ export class WindowWrapper extends EventTarget {
         this._canvasWidth = 0;
         this._canvasHeight = 0;
 
-        this._cursorX = 0;
-        this._cursorY = 0;
-        this._buttons = {};
-        this._keys = {};
-
+        this._pendingEvents = [];
         this._initialized = false;
     }
 
@@ -36,15 +26,19 @@ export class WindowWrapper extends EventTarget {
         document.addEventListener('wheel', evt => this._onWheel(evt));
         document.addEventListener('keydown', evt => this._onKeyDown(evt));
         document.addEventListener('keyup', evt => this._onKeyUp(evt));
-        document.addEventListener('visibilitychange', () => this._resetKeys());
+        // document.addEventListener('visibilitychange', () => this._resetKeys());
         document.addEventListener('contextmenu', evt => evt.preventDefault());
 
         this._initialized = true;
         this._onResize();
     }
 
-    init() {
+    start() {
         this._init();
+    }
+
+    pollEvent() {
+        return this._pendingEvents.shift();
     }
 
     getCanvasContext(zIndex) {
@@ -86,7 +80,7 @@ export class WindowWrapper extends EventTarget {
         this._updateDom();
     }
 
-    _updateCanvasBox() {
+    _updateCanvasRect() {
         let aspectRatio = this._aspectRatio;
         let width = window.innerWidth;
         let height = window.innerHeight;
@@ -142,138 +136,78 @@ export class WindowWrapper extends EventTarget {
             return;
         }
 
-        this._updateCanvasBox();
+        this._updateCanvasRect();
 
         for (let { canvas } of this._zIndexToCanvas.values()) {
             this._updateCanvas(canvas);
         }
 
         this._updateDom();
-
-        this.triggerEvent('resize');
+        this._emit('window', 'resize');
     }
 
-    _emit(eventName, payload) {
-        this.triggerEvent(eventName, payload);
-    }
-
-    _getXY(evt) {
-        let x1 = this._canvasBox.x1;
-        let y1 = this._canvasBox.y1;
-        let realToVirtualRatio = this._virtualWidth / this._canvasBox.width;
-        let x = (evt.clientX - x1) * realToVirtualRatio;
-        let y = (evt.clientY - y1) * realToVirtualRatio;
-
-        this._realX = evt.clientX - x1;
-        this._realY = evt.clientY - y1;
-
-        return { x, y };
-    }
-
-    _triggerMouseEvent(payload) {
-        this._x = payload.x;
-        this._y = payload.y;
-
-        if (payload.action === 'down') {
-            this._buttons[payload.button] = true;
-        } else if (payload.action === 'up') {
-            this._buttons[payload.button] = false;
-        }
-
-        this._emit('mouseInput', payload);
+    _emit(type, payload) {
+        this._pendingEvents.push({ type, payload });
     }
 
     _onMouseMove(evt) {
-        this._triggerMouseEvent({
+        this._emit('mouse', {
             action: 'move',
-            ...this._getXY(evt),
-            button: null,
-            domEvent: evt
+            button: 'none',
+            x: evt.clientX - this._canvasX,
+            y: evt.clientY - this._canvasY,
         });
     }
 
     _onMouseDown(evt) {
-        this._triggerMouseEvent({
+        this._emit('mouse', {
             action: 'down',
-            ...this._getXY(evt),
             button: BUTTON_TO_STRING[evt.button],
-            domEvent: evt
+            x: evt.clientX - this._canvasX,
+            y: evt.clientY - this._canvasY,
         });
     }
 
     _onMouseUp(evt) {
-        this._triggerMouseEvent({
+        this._emit('mouse', {
             action: 'up',
-            ...this._getXY(evt),
             button: BUTTON_TO_STRING[evt.button],
-            domEvent: evt
+            x: evt.clientX - this._canvasX,
+            y: evt.clientY - this._canvasY,
         });
     }
 
     _onKeyDown(evt) {
-        this._keys[evt.code] = true;
-
-        this.triggerEvent('keyDown', evt);
-    }
-
-    _onKeyUp(evt) {
-        this._keys[evt.code] = false;
-
-        this.triggerEvent('keyUp', evt);
-    }
-
-    _onWheel(evt) {
-        this.triggerEvent('wheel', evt);
-    }
-
-    _resetKeys() {
-        for (let [code, pressed] of Object.entries(this._keys)) {
-            if (pressed) {
-                let evt = {
-                    code,
-                    key: '',
-                    repeat: false,
-                    altKey: false,
-                    ctrlKey: false,
-                    metaKey: false,
-                    shiftKey: false,
-                    domEvent: null
-                };
-
-                this._keys[code] = false;
-
-                this.triggerEvent('keyUp', evt);
-            }
-        }
-    }
-
-    emit(payload) {
-        this._triggerMouseEvent(payload);
-    }
-
-    emitDummyMove() {
-        this._triggerMouseEvent({
-            action: 'move',
-            x: this._x,
-            y: this._y,
-            button: null,
-            domEvent: null
+        this._emit('keyboard', {
+            action: 'down',
+            code: evt.code,
+            text: getText(evt),
+            ctrl: evt.ctrlKey,
+            shift: evt.shiftKey,
+            alt: evt.altKey
         });
     }
 
-    getCursorPosition() {
-        return { x: this._x, y: this._y };
+    _onKeyUp(evt) {
+        this._emit('keyboard', {
+            action: 'up',
+            code: evt.code,
+            text: getText(evt),
+            ctrl: evt.ctrlKey,
+            shift: evt.shiftKey,
+            alt: evt.altKey
+        });
     }
 
-    getRealCursorPosition() {
-        return { x: this._realX, y: this._realY };
+    _onWheel(evt) {
+        // TODO
     }
+}
 
-    isMouseButtonPressed(button) {
-        return !!this._buttons[button];
-    }
-
-    isKeyPressed(code) {
-        return this._keys[code];
+function getText(evt) {
+    if (evt.key.length === 1) {
+        return evt.key;
+    } else {
+        return null;
     }
 }

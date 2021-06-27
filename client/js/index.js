@@ -1,16 +1,16 @@
 import { Client } from './client.js';
 
 async function main() {
-    let { start, update } = await import('../pkg/lotus_client.js');
-    let client = new Client();
+    let wasm = await import('../pkg/lotus_client.js');
+    let client = new Client(wasm);
 
     setupGlobalApi(client);
 
     await client.start();
 
-    start();
+    wasm.start();
 
-    setInterval(update, 200);
+    setInterval(wasm.update, 200);
 }
 
 function toSnakeCase(string) {

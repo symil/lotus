@@ -1,6 +1,10 @@
+import { WindowManager } from './window-manager';
+
 export class Client {
-    constructor() {
+    constructor(wasm) {
+        this._wasm = wasm;
         this._webSocket = null;
+        this._windowManager = new WindowManager();
         this._pendingMessages = [];
     }
 
@@ -8,6 +12,8 @@ export class Client {
         this._webSocket = new WebSocket('ws://localhost:8123');
         this._webSocket.binaryType = 'arraybuffer';
         this._webSocket.onmessage = message => this._onMessage(message);
+
+        await this._windowManager.start();
 
         return new Promise(resolve => this._webSocket.onopen = resolve);
     }
@@ -20,7 +26,7 @@ export class Client {
         this._webSocket.send(bytes)
     }
 
-    $readMessage() {
+    $pollMessage() {
         let message = this._pendingMessages.pop();
 
         this._pendingMessages = [];
@@ -28,11 +34,27 @@ export class Client {
         return message;
     }
 
-    $log(string) {
-        console.log(string);
+    $pollEvent() {
+        let event = this._windowManager.pollEvent();
+
+        if (event) {
+            let { type, payload } = event;
+
+            event = new this._wasm.Event();
+
+            if (type === 'mouse') {
+                payload = Object.assign(new this._wasm.MouseEvent(), payload);
+            } else if (type === 'keyboard') {
+                payload = Object.assign(new this._wasm.KeyboardEvent(), payload);
+            }
+
+            event[type] = payload;
+        }
+
+        return event;
     }
 
-    $logEnum(value) {
-        console.log(value);
+    $log(string) {
+        console.log(string);
     }
 }
