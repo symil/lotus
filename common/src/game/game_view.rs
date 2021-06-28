@@ -16,12 +16,12 @@ impl View<GamePlayer> for GameView {
         GameView { rect }
     }
 
+    fn hover(&self, graphics_list: &mut Vec<Graphics>, _context: &ViewContext<GamePlayer, Self>) {
+        graphics_list[0].overlay_color = Color::black().apply_alpha(0.3);
+    }
+
     fn render(&self, _context: &ViewContext<GamePlayer, GameView>) -> Vec<Graphics> {
         vec![
-            graphics! {
-                rect: self.rect,
-                background_color: Color::white()
-            },
             graphics! {
                 rect: self.rect,
                 scale: 0.5,
