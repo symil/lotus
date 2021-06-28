@@ -2,11 +2,12 @@
 pub mod js;
 pub mod draw_primitive;
 pub mod client;
+pub mod default_interaction;
 
 use client::Client;
 use draw_primitive::DrawPrimitive;
 use js::Js;
-use lotus_common::{events::Event, game::{game_view::GameView, game_player::GamePlayer, game_request::GameRequest}, graphics::{color::Color, graphics::{Cursor, Font, Shape, TextHorizontalAlign, TextVerticalAlign}, rect::Rect}, serialization::serializable::Serializable, traits::view::View, view_context::ViewContext};
+use lotus_common::{events::Event, game::{game_view::GameView, game_player::GamePlayer, game_request::GameRequest}, graphics::{color::Color, graphics::{Cursor, Font, Shape, TextHorizontalAlign, TextVerticalAlign}, rect::Rect}, serialization::serializable::Serializable, traits::view::View, client_state::ClientState};
 use wasm_bindgen::prelude::*;
 
 static mut CLIENT : Option<Client<GamePlayer, GameView>> = None;

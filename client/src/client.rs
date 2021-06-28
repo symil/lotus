@@ -1,37 +1,41 @@
-use std::{cmp::max, mem::replace};
+use std::{cmp::max, mem::{replace, zeroed}};
 
-use lotus_common::{graphics::{graphics::Graphics, rect::Rect, size::Size, transform::Transform}, traits::{player::Player, view::View}, view_context::ViewContext};
+use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::Graphics, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, view::View}};
 
-use crate::{draw_primitive::DrawPrimitive, js::Js};
+use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
 #[derive(Debug)]
 pub struct Client<P : Player, V : View<P>> {
+    initialized: bool,
+    state: ClientState<P, V>,
     virtual_width: f32,
     virtual_height: f32,
     virtual_to_real_ratio: f32,
-    player: Option<P>,
     cursor_x: f32,
     cursor_y: f32,
-    hovered: Option<V>,
+    interaction_stack: Vec<Box<dyn Interaction<P, V>>>
 }
 
 impl<P : Player, V : View<P>> Client<P, V> {
     pub fn new(virtual_width: f32, virtual_height: f32) -> Self {
         Self {
+            initialized: false,
+            state: ClientState {
+                logger: Logger::new(|string| Js::log(&string)),
+                user: P::default(),
+                hovered: V::none(),
+            },
             virtual_width,
             virtual_height,
             virtual_to_real_ratio: 0.,
-            player: None,
             cursor_x: 0.,
             cursor_y: 0.,
-            hovered: None,
+            interaction_stack: vec![Box::new(DefaultInteraction)]
         }
     }
 
     pub fn start(&mut self) {
-        let aspect_ratio = self.virtual_width / self.virtual_height;
-
-        Js::set_window_aspect_ratio(aspect_ratio);
+        Js::set_window_aspect_ratio(self.virtual_width / self.virtual_height);
     }
 
     pub fn update(&mut self) {
@@ -40,7 +44,8 @@ impl<P : Player, V : View<P>> Client<P, V> {
         self.virtual_to_real_ratio = real_width / self.virtual_width;
 
         while let Some(player) = Js::poll_message::<P>() {
-            self.player = Some(player);
+            self.initialized = true;
+            self.state.user = player;
         }
 
         while let Some(event) = Js::poll_event() {
@@ -49,30 +54,61 @@ impl<P : Player, V : View<P>> Client<P, V> {
             } else if let Some(mouse_event) = event.mouse {
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
+                self.on_mouse_input(mouse_event);
             } else if let Some(_keyboard_event) = event.keyboard {
 
             }
         }
 
-        if self.player.is_some() {
+        if self.initialized {
             let rect = Rect::from_size(self.virtual_width, self.virtual_height);
             let root = V::root(rect);
             let mut views = vec![];
             
             self.collect_views(root, Transform::identity(), &mut views);
-            self.hovered = self.render_views(views);
+            self.state.hovered = self.render_views(views);
         }
     }
 
-    fn collect_views(&mut self, view: V, current_transform: Transform, list: &mut Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) {
-        let context = &ViewContext {
-            player: self.player.as_ref().unwrap(),
-            hovered: &self.hovered
-        };
+    fn on_mouse_input(&mut self, event: MouseEvent) {
+        let interactions = self.get_active_interactions();
 
-        let view_transform = view.get_transform(context);
-        let graphics_list = view.render(context);
-        let children = view.get_children(context);
+        match event.action {
+            MouseAction::Down => {
+                if !self.state.hovered.is_none() {
+                    for interaction in interactions {
+                        if interaction.is_valid_target(&self.state, &self.state.hovered) {
+                            interaction.on_click(&self.state, &self.state.hovered);
+                        }
+                    }
+                }
+            },
+            _ => {}
+        }
+    }
+
+    fn get_active_interactions(&self) -> Vec<&Box<dyn Interaction<P, V>>> {
+        let mut list = vec![];
+
+        for interaction in &self.interaction_stack {
+            if !interaction.is_active(&self.state) {
+                continue;
+            }
+
+            if interaction.does_grab(&self.state) {
+                list.clear();
+            }
+
+            list.push(interaction);
+        }
+
+        list
+    }
+
+    fn collect_views(&mut self, view: V, current_transform: Transform, list: &mut Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) {
+        let view_transform = view.get_transform(&self.state);
+        let graphics_list = view.render(&self.state);
+        let children = view.get_children(&self.state);
         let transform = current_transform.multiply(&view_transform);
         let mut rect_list = vec![];
         let mut hover_z = -1.;
@@ -85,7 +121,7 @@ impl<P : Player, V : View<P>> Client<P, V> {
                 .transform(&transform)
                 .multiply(self.virtual_to_real_ratio);
 
-            if graphics.detectable && graphics.z > hover_z && rect.contains_point(self.cursor_x, self.cursor_y) {
+            if graphics.detectable && graphics.z > hover_z && rect.contains(self.cursor_x, self.cursor_y) {
                 hover_z = graphics.z;
             }
 
@@ -99,14 +135,15 @@ impl<P : Player, V : View<P>> Client<P, V> {
         }
     }
 
-    fn render_views(&mut self, list: Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) -> Option<V> {
+    fn render_views(&mut self, list: Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) -> V {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
         let mut result = None;
+        let interactions = self.get_active_interactions();
 
-        for i in 0..list.len() {
-            let (_, hover_z, _, _) = &list[i];
-
+        for (i, item) in list.iter().enumerate() {
+            let (_, hover_z, _, _) = item;
+            
             if *hover_z > -1. && *hover_z >= current_z {
                 current_z = *hover_z;
                 hovered_index = i;
@@ -117,11 +154,17 @@ impl<P : Player, V : View<P>> Client<P, V> {
             let (view, _, mut graphics_list, rect_list) = item;
             let is_hovered = hovered_index == i;
 
-            if is_hovered {
-                // TODO
-                let context = ViewContext { player: self.player.as_ref().unwrap(), hovered: &self.hovered };
-                view.hover(&mut graphics_list, &context);
+            for interaction in &interactions {
+                if interaction.is_valid_target(&self.state, &self.state.hovered) {
+                    interaction.highlight_target(&self.state, &self.state.hovered, &mut graphics_list);
 
+                    if is_hovered {
+                        interaction.highlight_target_on_hover(&self.state, &self.state.hovered, &mut graphics_list);
+                    }
+                }
+            }
+
+            if is_hovered {
                 result = Some(view);
             }
 
@@ -163,6 +206,9 @@ impl<P : Player, V : View<P>> Client<P, V> {
             }
         }
 
-        result
+        match result {
+            None => V::none(),
+            Some(view) => view
+        }
     }
 }

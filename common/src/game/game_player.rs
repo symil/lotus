@@ -1,7 +1,7 @@
 use crate::traits::player::Player;
 use crate::serialization::*;
 
-#[derive(Debug, Serializable, Clone)]
+#[derive(Debug, Serializable, Clone, Default)]
 pub struct GamePlayer {
     pub id: u128,
     pub username: String

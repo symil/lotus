@@ -64,7 +64,7 @@ impl Rect {
         Self::from_corners(self.x1().round(), self.y1().round(), self.x2().round(), self.y2().round())
     }
 
-    pub fn contains_point(&self, x: f32, y: f32) -> bool {
+    pub fn contains(&self, x: f32, y: f32) -> bool {
         x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
     }
 

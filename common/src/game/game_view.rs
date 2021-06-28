@@ -1,7 +1,8 @@
 use crate::graphics::color::Color;
 use crate::graphics::rect::Rect;
 use crate::graphics::size::Size;
-use crate::{view_context::ViewContext, graphics::graphics::Graphics, traits::view::View};
+use crate::traits::interaction::Interaction;
+use crate::{client_state::ClientState, graphics::graphics::Graphics, traits::view::View};
 use crate::serialization::*;
 use super::game_player::GamePlayer;
 use crate::graphics;
@@ -16,11 +17,19 @@ impl View<GamePlayer> for GameView {
         GameView { rect }
     }
 
-    fn hover(&self, graphics_list: &mut Vec<Graphics>, _context: &ViewContext<GamePlayer, Self>) {
+    fn none() -> Self {
+        Self { rect: Rect::default() }
+    }
+
+    fn is_none(&self) -> bool {
+        self.rect.width < 0.001
+    }
+
+    fn hover(&self, _state: &ClientState<GamePlayer, Self>, graphics_list: &mut Vec<Graphics>) {
         graphics_list[0].overlay_color = Color::black().apply_alpha(0.3);
     }
 
-    fn render(&self, _context: &ViewContext<GamePlayer, GameView>) -> Vec<Graphics> {
+    fn render(&self, _state: &ClientState<GamePlayer, GameView>) -> Vec<Graphics> {
         vec![
             graphics! {
                 rect: self.rect,
@@ -29,5 +38,10 @@ impl View<GamePlayer> for GameView {
                 background_color: Color::orange()
             }
         ]
+    }
+
+    fn on_click(&self, state: &ClientState<GamePlayer, Self>) -> Option<Box<dyn Interaction<GamePlayer, Self>>> {
+        state.logger.log("click!");
+        None
     }
 }
