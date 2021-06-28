@@ -1,6 +1,4 @@
-use std::{cmp::max, mem::{replace, zeroed}};
-
-use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
+use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
@@ -143,6 +141,8 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
         let mut cursor = Cursor::default();
         let mut result = None;
         let interactions = self.get_active_interactions();
+
+        Js::clear_canvas();
 
         for (i, item) in list.iter().enumerate() {
             let (_, hover_z, graphics_list, _) = item;

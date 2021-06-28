@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["Sylvain Milan <milan.sylvain@gmail.com>"]
 edition = "2018"
 
-[lib]
-crate-type = ["cdylib"]
-path = "src/lib.rs"
+# [lib]
+# crate-type = ["cdylib"]
 
 [dependencies]
 lotus-common = { path = "../common" }

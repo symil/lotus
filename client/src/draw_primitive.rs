@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use lotus_common::graphics::{color::Color, graphics::{Font, Shape, TextHorizontalAlign, TextVerticalAlign}, rect::Rect, transform::Transform};
+use lotus_common::graphics::{color::Color, graphics::{Font, Shape, TextHorizontalAlign, TextVerticalAlign}, rect::Rect};
 
 pub type StringId = i32;
 

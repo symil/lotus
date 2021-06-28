@@ -1,7 +1,6 @@
 use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
-use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, state_message::StateMessage, traits::{view::View, player::Player, request::Request, world::World}};
+use lotus_common::{server_api::ServerApi, traits::{player::Player, request::Request, world::World}};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
-use tungstenite::{Message, WebSocket, Error, accept};
 
 pub struct Connection<P : Player> {
     open: bool,
@@ -45,8 +44,7 @@ impl<P, R, W> Server<P, R, W>
         let server = TcpListener::bind("127.0.0.1:8123").unwrap();
         server.set_nonblocking(true).expect("Cannot set non-blocking");
 
-        println!(">>> READY <<<");
-        println!("Listening on port 8123...");
+        self.world.on_start();
 
         loop {
             match server.accept() {

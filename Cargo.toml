@@ -1,2 +1,14 @@
+[package]
+name = "lotus"
+version = "0.1.0"
+authors = ["Sylvain Milan <milan.sylvain@gmail.com>"]
+edition = "2018"
+
 [workspace]
-members = ["common", "client", "server", "serializable-derive", "as-js-string-macro"]
+
+[dependencies]
+lotus-common = { path = "./common" }
+lotus-client = { path = "./client" }
+lotus-server = { path = "./server" }
+lotus-serializable-derive = { path = "./serializable-derive" }
+as-js-string-macro = { path = "./as-js-string-macro" }

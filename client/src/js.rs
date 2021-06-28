@@ -1,6 +1,7 @@
+#![allow(unused_unsafe)]
+
 use lotus_common::{events::Event, graphics::graphics::Cursor, serialization::Serializable};
 use wasm_bindgen::prelude::*;
-use std::fmt::Debug;
 
 use crate::draw_primitive::{DrawPrimitive, StringId};
 
