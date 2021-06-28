@@ -1,9 +1,10 @@
 use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
-use super::layout::{Layout, LayoutType};
+use super::{layout::{Layout, LayoutType}, transform::Transform};
+use crate::serialization::*;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serializable)]
 pub struct Rect {
     pub x: f32,
     pub y: f32,
@@ -76,12 +77,12 @@ impl Rect {
         }
     }
 
-    pub fn scale(&self, width_ratio: f32, height_ratio: f32) -> Self {
+    pub fn scale(&self, ratio: f32) -> Self {
         Self {
             x: self.x,
             y: self.y,
-            width: self.width * width_ratio,
-            height: self.height * height_ratio
+            width: self.width * ratio,
+            height: self.height * ratio
         }
     }
 
@@ -174,6 +175,13 @@ impl Rect {
         }
     }
 
+    pub fn transform(&self, transform: &Transform) -> Self {
+        let (x, y) = transform.apply(self.x, self.y);
+        let (width, height) = transform.scale(self.width, self.height);
+
+        Self { x, y, width, height }
+    }
+
     pub fn layout(&self, layout: &Layout) -> HashMap<u64, Self> {
         let mut map = HashMap::new();
 
@@ -187,7 +195,7 @@ impl Rect {
         let rect = self
             .strip(to_strip, to_strip)
             .strip_to_match_aspect_ratio(layout.aspect_ratio)
-            .scale(layout.scale, layout.scale);
+            .scale(layout.scale);
 
         if let Some(id) = layout.id {
             map.insert(id, rect);

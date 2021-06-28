@@ -1,7 +1,7 @@
 use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
 use lotus_common::{serialization::serializable::Serializable, server_api::ServerApi, state_message::StateMessage, traits::{view::View, player::Player, request::Request, world::World}};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
-use tungstenite::{Message, WebSocket, accept};
+use tungstenite::{Message, WebSocket, Error, accept};
 
 pub struct Connection<P : Player> {
     open: bool,
@@ -51,6 +51,8 @@ impl<P, R, W> Server<P, R, W>
         loop {
             match server.accept() {
                 Ok((stream, _addr)) => {
+                    stream.set_nonblocking(true).unwrap();
+
                     let open = true;
                     let id : u128 = self.rng.gen();
                     let websocket = accept(stream).unwrap();
@@ -71,6 +73,7 @@ impl<P, R, W> Server<P, R, W>
                                 println!("{}", &text);
                             },
                             Message::Binary(bytes) => {
+                                dbg!(4);
                                 if let Some(request) = R::deserialize(&bytes) {
                                     self.world.on_player_request(&mut connection.player, &request, &mut self.api);
                                 }
@@ -78,9 +81,14 @@ impl<P, R, W> Server<P, R, W>
                             _ => {}
                         }
                     },
-                    Err(_) => {
-                        self.world.on_player_disconnect(&mut connection.player, &mut self.api);
-                        connection.open = false;
+                    Err(error) => {
+                        match error {
+                            Error::ConnectionClosed | Error::AlreadyClosed => {
+                                self.world.on_player_disconnect(&mut connection.player, &mut self.api);
+                                connection.open = false;
+                            },
+                            _ => {}
+                        }
                     },
                 }
             }
@@ -95,7 +103,10 @@ impl<P, R, W> Server<P, R, W>
                 if let Some(connection) = self.connections.get_mut(&id) {
                     let bytes = connection.player.serialize();
 
-                    connection.websocket.write_message(Message::Binary(bytes)).unwrap();
+                    match connection.websocket.write_message(Message::Binary(bytes)) {
+                        Ok(_) => {},
+                        Err(_) => {},
+                    }
                 }
             }
 

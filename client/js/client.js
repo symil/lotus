@@ -96,6 +96,10 @@ export class Client {
         return message;
     }
 
+    $setWindowAspectRatio(aspectRatio) {
+        return this._windowManager.setAspectRatio(aspectRatio);
+    }
+
     $getWindowWidth() {
         return this._windowManager.getWidth();
     }

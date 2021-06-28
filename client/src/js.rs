@@ -10,6 +10,7 @@ extern {
     pub fn poll_event() -> Option<Event>;
     pub fn send_message(bytes: &[u8]);
     pub fn poll_message() -> Option<Vec<u8>>;
+    pub fn set_window_aspect_ratio(aspect_ratio: f32);
     pub fn get_window_width() -> f32;
     pub fn get_window_height() -> f32;
     pub fn get_string_id(string: &str) -> StringId;
@@ -43,6 +44,10 @@ impl Js {
             None => None,
             Some(bytes) => T::deserialize(&bytes)
         }
+    }
+
+    pub fn set_window_aspect_ratio(aspect_ratio: f32) {
+        unsafe { set_window_aspect_ratio(aspect_ratio) };
     }
 
     pub fn get_window_size() -> (f32, f32) {

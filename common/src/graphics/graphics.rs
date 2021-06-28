@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use as_js_string_macro::*;
-use super::{color::Color, size::Size, transform::Transform};
+use super::{color::Color, rect::Rect, size::Size};
 
 macro_rules! make_enum {
     ($name:ident : $default:ident $(, $field:ident)*) => {
@@ -28,7 +28,6 @@ make_enum! { Cursor : Default, Pointer, Text }
 
 #[derive(Debug, Clone)]
 pub struct Graphics {
-    pub transform: Transform,
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -36,13 +35,16 @@ pub struct Graphics {
     pub offset_y: f32,
     pub width: f32,
     pub height: f32,
-    pub aspect_ratio: f32,
+    pub shape: Shape,
+    pub aspect_ratio: Option<f32>,
     pub scale: f32,
     pub angle: f32,
+    pub border_radius: Size,
+    pub border_width: Size,
+    pub border_dash_length: Size,
+    pub border_gap_length: Size,
     pub border_color: Color,
     pub border_alpha: f32,
-    pub border_width: Size,
-    pub border_radius: Size,
     pub background_color: Color,
     pub background_alpha: f32,
     pub overlay_color: Color,
@@ -62,13 +64,19 @@ pub struct Graphics {
     pub text_vertical_align: TextVerticalAlign,
     pub text_bold: bool,
     pub text_italic: bool,
+    pub detectable: bool,
     pub cursor: Cursor,
+}
+
+impl Graphics {
+    pub fn get_rect(&self) -> Rect {
+        Rect::new(self.x, self.y, self.width, self.height)
+    }
 }
 
 impl Default for Graphics {
     fn default() -> Self {
         Self {
-            transform: Transform::default(),
             x: 0.,
             y: 0.,
             z: 0.,
@@ -76,13 +84,16 @@ impl Default for Graphics {
             offset_y: 0.,
             width: 0.,
             height: 0.,
-            aspect_ratio: 0.,
+            shape: Shape::Rectangle,
+            aspect_ratio: None,
             scale: 1.,
             angle: 0.,
             border_color: Color::transparent(),
             border_alpha: 1.,
             border_width: Size::Zero,
             border_radius: Size::Zero,
+            border_dash_length: Size::Zero,
+            border_gap_length: Size::Zero,
             background_color: Color::transparent(),
             background_alpha: 1.,
             overlay_color: Color::transparent(),
@@ -102,7 +113,26 @@ impl Default for Graphics {
             text_vertical_align: TextVerticalAlign::Middle,
             text_bold: false,
             text_italic: false,
+            detectable: true,
             cursor: Cursor::Default,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! graphics {
+    (rect: $rect:expr $(, $name:ident : $value:expr)*) => {
+        {
+            let rect = $rect;
+
+            Graphics {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                $( $name: $value, )*
+                ..Graphics::default()
+            }
         }
     }
 }

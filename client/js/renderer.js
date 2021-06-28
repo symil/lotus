@@ -52,8 +52,8 @@ export class Renderer {
             border_color,
             border_width,
             border_radius,
-            line_dash_length,
-            line_gap_length,
+            border_dash_length,
+            border_gap_length,
             background_color,
             overlay_color,
             image_url,
@@ -129,18 +129,19 @@ export class Renderer {
         }
 
         if (image_url) {
-            let image = this._getImageFromCache(image_url, image_width, image_height);
+            let image = this._getImageFromCache(image_url, Math.round(image_width), Math.round(image_height));
 
             if (image) {
-                let imageX = Math.floor(x - image_width / 2);
-                let imageY = Math.floor(y - image_height / 2);
+                let imageX = Math.floor(x - image.width / 2);
+                let imageY = Math.floor(y - image.height / 2);
 
                 this._ctx.drawImage(image, imageX, imageY);
             }
         }
 
         if (text) {
-            let textImage = this._getTextImageFromCache(text, text_max_width, text_margin, text_size, text_color, text_font, text_bold, text_italic, text_background_color, text_border_color);
+            let textPadding = Math.max(border_radius, text_margin);
+            let textImage = this._getTextImageFromCache(text, text_max_width, textPadding, text_size, text_color, text_font, text_bold, text_italic, text_background_color, text_border_color);
             let textX = x - textImage.width / 2;
             let textY = y - textImage.height / 2;
             let dx = (width - textImage.width) / 2;
@@ -180,8 +181,8 @@ export class Renderer {
         }
 
         if (border_color.a && border_width) {
-            if (line_dash_length && line_gap_length) {
-                this._ctx.setLineDash([line_dash_length, line_gap_length]);
+            if (border_dash_length && border_gap_length) {
+                this._ctx.setLineDash([border_dash_length, border_gap_length]);
             } else {
                 this._ctx.setLineDash([]);
             }
@@ -236,15 +237,17 @@ export class Renderer {
         this._ctx.beginPath();
 
         if (shape === 'rectangle') {
-            if (borderRadius === 0) {
-                this._ctx.rect(x - width / 2, y - height / 2, width, height);
-            } else {
-                let r  = borderRadius;
-                let x1 = x - width / 2;
-                let y1 = y - height / 2;
-                let x2 = x + width / 2;
-                let y2 = y + height / 2;
+            let x1 = Math.round(x - width / 2);
+            let y1 = Math.round(y - height / 2);
+            let x2 = Math.round(x + width / 2);
+            let y2 = Math.round(y + height / 2);
+            let w = x2 - x1;
+            let h = y2 - y1;
+            let r = Math.round(borderRadius);
 
+            if (r === 0) {
+                this._ctx.rect(x1, y1, w, h);
+            } else {
                 this._ctx.moveTo(x1 + r, y1);
                 this._ctx.lineTo(x2 - r, y1);
                 this._ctx.quadraticCurveTo(x2, y1, x2, y1 + r);
