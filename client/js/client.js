@@ -120,6 +120,10 @@ export class Client {
         return this._renderer.draw(primitive);
     }
 
+    $setCursor(cursor) {
+        return this._renderer.setCursor(cursor);
+    }
+
     $clearRendererCache() {
         return this._renderer.clearCache();
     }

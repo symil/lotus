@@ -2,7 +2,7 @@ use crate::client_api::ClientApi;
 use crate::graphics::color::Color;
 use crate::graphics::rect::Rect;
 use crate::graphics::size::Size;
-use crate::{client_state::ClientState, graphics::graphics::Graphics, traits::view::View};
+use crate::{client_state::ClientState, graphics::graphics::{Graphics, Cursor}, traits::view::View};
 use crate::serialization::*;
 use super::game_player::GamePlayer;
 use super::game_request::GameRequest;
@@ -36,7 +36,8 @@ impl View<GamePlayer, GameRequest> for GameView {
                 rect: self.rect,
                 scale: 0.5,
                 border_radius: Size::Virtual(20.),
-                background_color: Color::orange()
+                background_color: Color::orange(),
+                cursor: Cursor::Pointer
             }
         ]
     }

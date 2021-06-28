@@ -1,6 +1,6 @@
 use std::{cmp::max, mem::{replace, zeroed}};
 
-use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::Graphics, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
+use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
@@ -140,15 +140,17 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
     fn render_views(&mut self, list: Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) -> V {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
+        let mut cursor = Cursor::default();
         let mut result = None;
         let interactions = self.get_active_interactions();
 
         for (i, item) in list.iter().enumerate() {
-            let (_, hover_z, _, _) = item;
+            let (_, hover_z, graphics_list, _) = item;
             
             if *hover_z > -1. && *hover_z >= current_z {
                 current_z = *hover_z;
                 hovered_index = i;
+                cursor = graphics_list[0].cursor;
             }
         }
 
@@ -207,6 +209,8 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
                 Js::draw(primitive);
             }
         }
+
+        Js::set_cursor(cursor);
 
         match result {
             None => V::none(),

@@ -1,4 +1,4 @@
-use lotus_common::{events::Event, serialization::Serializable};
+use lotus_common::{events::Event, graphics::graphics::Cursor, serialization::Serializable};
 use wasm_bindgen::prelude::*;
 use std::fmt::Debug;
 
@@ -17,6 +17,7 @@ extern {
 
     pub fn clear_canvas();
     pub fn draw(primitive: DrawPrimitive);
+    pub fn set_cursor(cursor: Cursor);
     pub fn clear_renderer_cache();
 }
 
@@ -67,6 +68,10 @@ impl Js {
 
     pub fn draw(primitive: DrawPrimitive) {
         unsafe { draw(primitive) };
+    }
+
+    pub fn set_cursor(cursor: Cursor) {
+        unsafe { set_cursor(cursor) };
     }
 
     pub fn clear_renderer_cache() {
