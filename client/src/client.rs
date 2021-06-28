@@ -1,30 +1,26 @@
 use std::{cmp::max, mem::{replace, zeroed}};
 
-use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::Graphics, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, view::View}};
+use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::Graphics, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
 #[derive(Debug)]
-pub struct Client<P : Player, V : View<P>> {
+pub struct Client<P : Player, R : Request, V : View<P, R>> {
     initialized: bool,
-    state: ClientState<P, V>,
+    state: ClientState<P, R, V>,
     virtual_width: f32,
     virtual_height: f32,
     virtual_to_real_ratio: f32,
     cursor_x: f32,
     cursor_y: f32,
-    interaction_stack: Vec<Box<dyn Interaction<P, V>>>
+    interaction_stack: Vec<Box<dyn Interaction<P, R, V>>>
 }
 
-impl<P : Player, V : View<P>> Client<P, V> {
+impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
     pub fn new(virtual_width: f32, virtual_height: f32) -> Self {
         Self {
             initialized: false,
-            state: ClientState {
-                logger: Logger::new(|string| Js::log(&string)),
-                user: P::default(),
-                hovered: V::none(),
-            },
+            state: ClientState::new(|string| Js::log(string)),
             virtual_width,
             virtual_height,
             virtual_to_real_ratio: 0.,
@@ -48,16 +44,22 @@ impl<P : Player, V : View<P>> Client<P, V> {
             self.state.user = player;
         }
 
+        let mut api = ClientApi::new();
+
         while let Some(event) = Js::poll_event() {
             if let Some(_) = event.window {
                 Js::clear_renderer_cache();
             } else if let Some(mouse_event) = event.mouse {
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
-                self.on_mouse_input(mouse_event);
+                self.on_mouse_input(mouse_event, &mut api);
             } else if let Some(_keyboard_event) = event.keyboard {
 
             }
+        }
+
+        for request in api.poll_requests() {
+            Js::send_message(&request);
         }
 
         if self.initialized {
@@ -70,7 +72,7 @@ impl<P : Player, V : View<P>> Client<P, V> {
         }
     }
 
-    fn on_mouse_input(&mut self, event: MouseEvent) {
+    fn on_mouse_input(&mut self, event: MouseEvent, api: &mut ClientApi<R>) {
         let interactions = self.get_active_interactions();
 
         match event.action {
@@ -78,7 +80,7 @@ impl<P : Player, V : View<P>> Client<P, V> {
                 if !self.state.hovered.is_none() {
                     for interaction in interactions {
                         if interaction.is_valid_target(&self.state, &self.state.hovered) {
-                            interaction.on_click(&self.state, &self.state.hovered);
+                            interaction.on_click(&self.state, &self.state.hovered, api);
                         }
                     }
                 }
@@ -87,7 +89,7 @@ impl<P : Player, V : View<P>> Client<P, V> {
         }
     }
 
-    fn get_active_interactions(&self) -> Vec<&Box<dyn Interaction<P, V>>> {
+    fn get_active_interactions(&self) -> Vec<&Box<dyn Interaction<P, R, V>>> {
         let mut list = vec![];
 
         for interaction in &self.interaction_stack {

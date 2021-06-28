@@ -23,8 +23,8 @@ extern {
 pub struct Js;
 
 impl Js {
-    pub fn log<T : Debug>(value: &T) {
-        unsafe { log(&format!("{:?}", value)) };
+    pub fn log(message: &str) {
+        unsafe { log(message) };
     }
 
     pub fn poll_event() -> Option<Event> {

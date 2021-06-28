@@ -73,7 +73,6 @@ impl<P, R, W> Server<P, R, W>
                                 println!("{}", &text);
                             },
                             Message::Binary(bytes) => {
-                                dbg!(4);
                                 if let Some(request) = R::deserialize(&bytes) {
                                     self.world.on_player_request(&mut connection.player, &request, &mut self.api);
                                 }
