@@ -150,4 +150,24 @@ macro_rules! graphics {
     };
 }
 
+#[macro_export]
+macro_rules! single_graphics {
+    ($rect:expr, { $($name:ident : $value:expr),* } ) => {
+        {
+            let rect = $rect;
+            let graphics = Graphics {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                $( $name: $value, )*
+                ..Graphics::default()
+            };
+
+            vec![graphics]
+        }
+    };
+}
+
 pub use graphics;
+pub use single_graphics;

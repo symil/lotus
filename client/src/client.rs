@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 
-use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::{RootView, View}}};
+use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::{RectView, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-pub struct Client<P : Player, R : Request, V : RootView + View<P, R>> {
+pub struct Client<P : Player, R : Request, V : RectView + View<P, R>> {
     logger: Logger,
     initialized: bool,
     state: ClientState<P, R>,
@@ -17,7 +17,7 @@ pub struct Client<P : Player, R : Request, V : RootView + View<P, R>> {
     _v: PhantomData<V>
 }
 
-impl<P : Player, R : Request, V : RootView + View<P, R> + 'static> Client<P, R, V> {
+impl<P : Player, R : Request, V : RectView + View<P, R> + 'static> Client<P, R, V> {
     pub fn new(virtual_width: f32, virtual_height: f32) -> Self {
         Self {
             logger: Logger::new(|string| Js::log(string)),
@@ -67,7 +67,7 @@ impl<P : Player, R : Request, V : RootView + View<P, R> + 'static> Client<P, R, 
 
         if self.initialized {
             let rect = Rect::from_size(self.virtual_width, self.virtual_height);
-            let root = Box::new(V::new(rect));
+            let root = V::new(rect);
             let mut views = vec![];
             
             self.collect_views(root, Transform::identity(), &mut views);

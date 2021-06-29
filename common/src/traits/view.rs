@@ -3,8 +3,8 @@
 use crate::{client_api::ClientApi, client_state::ClientState, graphics::{graphics::Graphics, rect::Rect, transform::Transform}};
 use super::{player::Player, request::Request};
 
-pub trait RootView {
-    fn new(rect: Rect) -> Self;
+pub trait RectView {
+    fn new(rect: Rect) -> Box<Self>;
 }
 
 pub trait View<P : Player, R : Request> {
@@ -15,6 +15,23 @@ pub trait View<P : Player, R : Request> {
     fn get_children(&self, state: &ClientState<P, R>) -> Vec<Box<dyn View<P, R>>> { vec![] }
     fn get_transform(&self, state: &ClientState<P, R>) -> Transform { Transform::identity() }
 }
+
+#[macro_export]
+macro_rules! make_view {
+    ($name:ident) => {
+        pub struct $name {
+            pub rect: lotus::Rect,
+        }
+
+        impl RectView for $name {
+            fn new(rect: lotus::Rect) -> Box<Self> {
+                Box::new(Self { rect })
+            }
+        }
+    }
+}
+
+pub use make_view;
 
 // #[macro_export]
 // macro_rules! make_view {

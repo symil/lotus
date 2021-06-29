@@ -74,38 +74,14 @@ export class Renderer {
             text_italic,
         } = primitive;
 
-        // console.log({
-        //     x,
-        //     y,
-        //     z,
-        //     shape,
-        //     width,
-        //     height,
-        //     angle,
-        //     border_color,
-        //     border_width,
-        //     border_radius,
-        //     line_dash_length,
-        //     line_gap_length,
-        //     background_color,
-        //     overlay_color,
-        //     image_url,
-        //     image_width,
-        //     image_height,
-        //     text,
-        //     text_font,
-        //     text_size,
-        //     text_color,
-        //     text_margin,
-        //     text_max_width,
-        //     text_max_height,
-        //     text_background_color,
-        //     text_border_color,
-        //     text_horizontal_align,
-        //     text_vertical_align,
-        //     text_bold,
-        //     text_italic,
-        // });
+        let x1 = x - width / 2;
+        let y1 = y - height / 2;
+        let x2 = x + width / 2;
+        let y2 = y + height / 2;
+
+        if (x2 < 0 || x1 > this._window.getWidth() || y2 < 0 || y1 > this._window.getHeight()) {
+            return;
+        }
         
         this._ctx = this._window.getCanvasContext(z);
         this._ctx.save();
