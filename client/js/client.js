@@ -3,7 +3,9 @@ import { toSnakeCase } from './utils';
 import { WindowManager } from './window-manager';
 
 export class Client {
-    constructor() {
+    constructor({ host, wasm }) {
+        this._host = host;
+        this._wasmPromise = wasm;
         this._wasm = null;
         this._webSocket = null;
         this._windowManager = new WindowManager();
@@ -11,23 +13,29 @@ export class Client {
         this._pendingMessages = [];
     }
 
+    static async start({ host, wasm }) {
+        return await new Client({ host, wasm }).start();
+    }
+
     async start() {
         this._setupRustInterface();
-        
-        await this._loadWasm();
+
+        await this._setupWasm();
         await this._setupConnection();
         await this._windowManager.start();
 
         this._wasm.start();
         this._update();
+
+        return this;
     }
 
-    async _loadWasm() {
-        this._wasm = await import('../pkg/lotus_client.js');
+    async _setupWasm() {
+        this._wasm = await this._wasmPromise;
     }
 
     async _setupConnection() {
-        this._webSocket = new WebSocket('ws://localhost:8123');
+        this._webSocket = new WebSocket(`ws://${this._host}`);
         this._webSocket.binaryType = 'arraybuffer';
         this._webSocket.onmessage = message => this._onMessage(message);
 
