@@ -3,8 +3,7 @@ import { toSnakeCase } from './utils';
 import { WindowManager } from './window-manager';
 
 export class Client {
-    constructor({ host, wasm }) {
-        this._host = host;
+    constructor(wasm) {
         this._wasmPromise = wasm;
         this._wasm = null;
         this._webSocket = null;
@@ -13,8 +12,8 @@ export class Client {
         this._pendingMessages = [];
     }
 
-    static async start({ host, wasm }) {
-        return await new Client({ host, wasm }).start();
+    static async start(wasm) {
+        return await new Client(wasm).start();
     }
 
     async start() {
@@ -35,9 +34,12 @@ export class Client {
     }
 
     async _setupConnection() {
-        this._webSocket = new WebSocket(`ws://${this._host}`);
+        let host = this._wasm.get_host();
+
+        this._webSocket = new WebSocket(`ws://${host}`);
         this._webSocket.binaryType = 'arraybuffer';
         this._webSocket.onmessage = message => this._onMessage(message);
+        this._webSocket.onerror = error => console.error(error);
 
         return new Promise(resolve => this._webSocket.onopen = resolve);
     }
