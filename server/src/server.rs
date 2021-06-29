@@ -1,10 +1,11 @@
-use std::{collections::HashMap, marker::PhantomData, net::{TcpListener, TcpStream}, thread::sleep, time::Duration, u128};
+use std::{collections::HashMap, marker::PhantomData, thread::sleep, time::Duration, u128};
 use lotus_common::{server_api::ServerApi, traits::{player::Player, request::Request, world::World}};
 use rand::{Rng, prelude::ThreadRng, thread_rng};
 
+use crate::websocket_server::{websocket::{Message, State, WebSocket}, websocket_server::{Mode, WebSocketServer}};
+
 pub struct Connection<P : Player> {
-    open: bool,
-    websocket: WebSocket<TcpStream>,
+    websocket: WebSocket,
     player: P,
 }
 
@@ -41,34 +42,31 @@ impl<P, R, W> Server<P, R, W>
     }
 
     pub fn start(&mut self) {
-        let server = TcpListener::bind("127.0.0.1:8123").unwrap();
-        server.set_nonblocking(true).expect("Cannot set non-blocking");
+        let mut websocket_server = WebSocketServer::bind("127.0.0.1:8123", Mode::NonBlocking);
 
         self.world.on_start();
 
         loop {
-            match server.accept() {
-                Ok((stream, _addr)) => {
-                    stream.set_nonblocking(true).unwrap();
-
-                    let open = true;
+            match websocket_server.accept() {
+                Some(websocket) => {
                     let id : u128 = self.rng.gen();
-                    let websocket = accept(stream).unwrap();
-                    let mut player = P::from_id(id);
+                    let player = P::from_id(id);
 
-                    self.api.notify_player_update(&player);
-                    self.world.on_player_connect(&mut player, &mut self.api);
-                    self.connections.insert(id, Connection { open, websocket, player });
+                    self.connections.insert(id, Connection { websocket, player });
                 },
-                Err(_) => {},
+                None => {}
             }
 
             for connection in self.connections.values_mut() {
                 match connection.websocket.read_message() {
-                    Ok(message) => {
+                    Some(message) => {
                         match message {
-                            Message::Text(text) => {
-                                println!("{}", &text);
+                            Message::Connection => {
+                                self.api.notify_player_update(&connection.player);
+                                self.world.on_player_connect(&mut connection.player, &mut self.api);
+                            },
+                            Message::Disconnection | Message::Error => {
+                                self.world.on_player_disconnect(&mut connection.player, &mut self.api);
                             },
                             Message::Binary(bytes) => {
                                 if let Some(request) = R::deserialize(&bytes) {
@@ -78,20 +76,12 @@ impl<P, R, W> Server<P, R, W>
                             _ => {}
                         }
                     },
-                    Err(error) => {
-                        match error {
-                            Error::ConnectionClosed | Error::AlreadyClosed => {
-                                self.world.on_player_disconnect(&mut connection.player, &mut self.api);
-                                connection.open = false;
-                            },
-                            _ => {}
-                        }
-                    },
+                    None => {}
                 }
             }
 
             self.connections.retain(|_id, connection| {
-                connection.open
+                connection.websocket.get_state() != State::Closed
             });
 
             self.world.update();
@@ -100,10 +90,7 @@ impl<P, R, W> Server<P, R, W>
                 if let Some(connection) = self.connections.get_mut(&id) {
                     let bytes = connection.player.serialize();
 
-                    match connection.websocket.write_message(Message::Binary(bytes)) {
-                        Ok(_) => {},
-                        Err(_) => {},
-                    }
+                    connection.websocket.send_binary(&bytes);
                 }
             }
 

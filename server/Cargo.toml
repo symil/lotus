@@ -7,6 +7,6 @@ edition = "2018"
 [dependencies]
 lotus-serializable-derive = { path = "../serializable-derive" }
 lotus-common = { path = "../common" }
-openssl = { version = "0.10", features = ["vendored"] }
 rand = "0.8"
-tokio-tungstenite = "*"
+sha1 = "0.6"
+base64 = "0.13"
