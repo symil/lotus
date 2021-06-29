@@ -121,7 +121,20 @@ impl Default for Graphics {
 
 #[macro_export]
 macro_rules! graphics {
-    (rect: $rect:expr $(, $name:ident : $value:expr)*) => {
+    ($rect:expr) => {
+        {
+            let rect = $rect;
+
+            Graphics {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                ..Graphics::default()
+            }
+        }
+    };
+    ($rect:expr, { $($name:ident : $value:expr),* } ) => {
         {
             let rect = $rect;
 
@@ -134,7 +147,7 @@ macro_rules! graphics {
                 ..Graphics::default()
             }
         }
-    }
+    };
 }
 
 pub use graphics;

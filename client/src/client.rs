@@ -1,22 +1,26 @@
-use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, traits::{interaction::Interaction, player::Player, request::Request, view::View}};
+use std::marker::PhantomData;
+
+use lotus_common::{client_api::ClientApi, client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, logger::Logger, traits::{interaction::Interaction, player::Player, request::Request, view::{RootView, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-#[derive(Debug)]
-pub struct Client<P : Player, R : Request, V : View<P, R>> {
+pub struct Client<P : Player, R : Request, V : RootView + View<P, R>> {
+    logger: Logger,
     initialized: bool,
-    state: ClientState<P, R, V>,
+    state: ClientState<P, R>,
     virtual_width: f32,
     virtual_height: f32,
     virtual_to_real_ratio: f32,
     cursor_x: f32,
     cursor_y: f32,
-    interaction_stack: Vec<Box<dyn Interaction<P, R, V>>>
+    interaction_stack: Vec<Box<dyn Interaction<P, R>>>,
+    _v: PhantomData<V>
 }
 
-impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
+impl<P : Player, R : Request, V : RootView + View<P, R> + 'static> Client<P, R, V> {
     pub fn new(virtual_width: f32, virtual_height: f32) -> Self {
         Self {
+            logger: Logger::new(|string| Js::log(string)),
             initialized: false,
             state: ClientState::new(|string| Js::log(string)),
             virtual_width,
@@ -24,7 +28,8 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
             virtual_to_real_ratio: 0.,
             cursor_x: 0.,
             cursor_y: 0.,
-            interaction_stack: vec![Box::new(DefaultInteraction)]
+            interaction_stack: vec![Box::new(DefaultInteraction)],
+            _v: PhantomData
         }
     }
 
@@ -42,7 +47,7 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
             self.state.user = player;
         }
 
-        let mut api = ClientApi::new();
+        let mut api = ClientApi::new(self.logger.clone());
 
         while let Some(event) = Js::poll_event() {
             if let Some(_) = event.window {
@@ -62,7 +67,7 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
 
         if self.initialized {
             let rect = Rect::from_size(self.virtual_width, self.virtual_height);
-            let root = V::root(rect);
+            let root = Box::new(V::new(rect));
             let mut views = vec![];
             
             self.collect_views(root, Transform::identity(), &mut views);
@@ -77,8 +82,13 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
             MouseAction::Down => {
                 if !self.state.hovered.is_none() {
                     for interaction in interactions {
-                        if interaction.is_valid_target(&self.state, &self.state.hovered) {
-                            interaction.on_click(&self.state, &self.state.hovered, api);
+                        match &self.state.hovered {
+                            Some(hovered) => {
+                                if interaction.is_valid_target(&self.state, &hovered) {
+                                    interaction.on_click(&self.state, &hovered, api);
+                                }
+                            },
+                            None => {}
                         }
                     }
                 }
@@ -87,7 +97,7 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
         }
     }
 
-    fn get_active_interactions(&self) -> Vec<&Box<dyn Interaction<P, R, V>>> {
+    fn get_active_interactions(&self) -> Vec<&Box<dyn Interaction<P, R>>> {
         let mut list = vec![];
 
         for interaction in &self.interaction_stack {
@@ -105,7 +115,7 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
         list
     }
 
-    fn collect_views(&mut self, view: V, current_transform: Transform, list: &mut Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) {
+    fn collect_views(&mut self, view: Box<dyn View<P, R>>, current_transform: Transform, list: &mut Vec<(Box<dyn View<P, R>>, f32, Vec<Graphics>, Vec<Rect>)>) {
         let view_transform = view.get_transform(&self.state);
         let graphics_list = view.render(&self.state);
         let children = view.get_children(&self.state);
@@ -135,7 +145,7 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
         }
     }
 
-    fn render_views(&mut self, list: Vec<(V, f32, Vec<Graphics>, Vec<Rect>)>) -> V {
+    fn render_views(&mut self, list: Vec<(Box<dyn View<P, R>>, f32, Vec<Graphics>, Vec<Rect>)>) -> Option<Box<dyn View<P, R>>> {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
         let mut cursor = Cursor::default();
@@ -145,12 +155,11 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
         Js::clear_canvas();
 
         for (i, item) in list.iter().enumerate() {
-            let (_, hover_z, graphics_list, _) = item;
+            let (_, hover_z, _, _) = item;
             
             if *hover_z > -1. && *hover_z >= current_z {
                 current_z = *hover_z;
                 hovered_index = i;
-                cursor = graphics_list[0].cursor;
             }
         }
 
@@ -159,11 +168,12 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
             let is_hovered = hovered_index == i;
 
             for interaction in &interactions {
-                if interaction.is_valid_target(&self.state, &self.state.hovered) {
-                    interaction.highlight_target(&self.state, &self.state.hovered, &mut graphics_list);
+                if interaction.is_valid_target(&self.state, &view) {
+                    interaction.highlight_target(&self.state, &view, &mut graphics_list);
 
                     if is_hovered {
-                        interaction.highlight_target_on_hover(&self.state, &self.state.hovered, &mut graphics_list);
+                        interaction.highlight_target_on_hover(&self.state, &view, &mut graphics_list);
+                        cursor = graphics_list[0].cursor;
                     }
                 }
             }
@@ -212,9 +222,6 @@ impl<P : Player, R : Request, V : View<P, R>> Client<P, R, V> {
 
         Js::set_cursor(cursor);
 
-        match result {
-            None => V::none(),
-            Some(view) => view
-        }
+        result
     }
 }
