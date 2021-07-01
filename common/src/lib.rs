@@ -6,5 +6,4 @@ pub mod graphics;
 pub mod traits;
 pub mod events;
 pub mod client_state;
-pub mod client_api;
 pub mod server_api;

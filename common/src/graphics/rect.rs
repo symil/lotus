@@ -12,6 +12,12 @@ pub struct Rect {
     pub height: f32,
 }
 
+impl Default for Rect {
+    fn default() -> Self {
+        Rect::new(0., 0., 0., 0.)
+    }
+}
+
 impl Rect {
     pub fn x1(&self) -> f32 {
         self.x - self.width / 2.
@@ -242,11 +248,5 @@ impl Rect {
 
             child_rect.apply_layout(child, map);
         }
-    }
-}
-
-impl Default for Rect {
-    fn default() -> Self {
-        Rect::new(0., 0., 0., 0.)
     }
 }

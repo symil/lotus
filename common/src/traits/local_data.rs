@@ -1,3 +1,3 @@
-pub trait LocalData {
+pub trait LocalData : Default {
     
 }

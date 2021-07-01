@@ -1,19 +1,21 @@
 #![allow(unused_variables)]
 
-use crate::{client_api::ClientApi, client_state::ClientState, graphics::{graphics::Graphics, rect::Rect, transform::Transform}};
-use super::{player::Player, request::Request};
+use std::rc::Rc;
+
+use crate::{client_state::ClientState, graphics::{graphics::Graphics, rect::Rect, transform::Transform}};
+use super::{local_data::LocalData, player::Player, request::Request};
 
 pub trait RectView {
-    fn new(rect: Rect) -> Box<Self>;
+    fn new(rect: Rect) -> Self;
 }
 
-pub trait View<P : Player, R : Request> {
-    fn render(&self, state: &ClientState<P, R>) -> Vec<Graphics> { vec![] }
-    fn hover(&self, state: &ClientState<P, R>, graphics_list: &mut Vec<Graphics>) { }
-    fn is_clickable(&self, state: &ClientState<P, R>) -> bool { true }
-    fn on_click(&self, state: &ClientState<P, R>, api: &mut ClientApi<R>) { }
-    fn get_children(&self, state: &ClientState<P, R>) -> Vec<Box<dyn View<P, R>>> { vec![] }
-    fn get_transform(&self, state: &ClientState<P, R>) -> Transform { Transform::identity() }
+pub trait View<P : Player, R : Request, D : LocalData> {
+    fn render(&self, client: &ClientState<P, R, D>) -> Vec<Graphics> { vec![] }
+    fn hover(&self, client: &ClientState<P, R, D>, graphics_list: &mut Vec<Graphics>) { }
+    fn is_clickable(&self, client: &ClientState<P, R, D>) -> bool { true }
+    fn on_click(&self, client: &mut ClientState<P, R, D>) { }
+    fn get_children(&self, client: &ClientState<P, R, D>) -> Vec<Rc<dyn View<P, R, D>>> { vec![] }
+    fn get_transform(&self, client: &ClientState<P, R, D>) -> Transform { Transform::identity() }
 }
 
 #[macro_export]
@@ -24,8 +26,8 @@ macro_rules! make_view {
         }
 
         impl RectView for $name {
-            fn new(rect: lotus::Rect) -> Box<Self> {
-                Box::new(Self { rect })
+            fn new(rect: lotus::Rect) -> Self {
+                Self { rect }
             }
         }
     }
@@ -62,7 +64,7 @@ pub use make_view;
 //                 }
 //             }
 
-//             fn render(&self, state: &lotus::ClientState<$player, $request, Self>) -> Vec<lotus::Graphics> {
+//             fn render(&self, client: &lotus::ClientState<$player, $request, Self>) -> Vec<lotus::Graphics> {
 //                 match self {
 //                     Self::None => vec![],
 //                     Self::$root_type(view) => view.render(state),
