@@ -12,3 +12,4 @@ lotus-client = { path = "./client" }
 lotus-server = { path = "./server" }
 lotus-serializable-derive = { path = "./serializable-derive" }
 as-js-string-macro = { path = "./as-js-string-macro" }
+lotus-parser = { path = "./parser" }

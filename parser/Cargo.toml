@@ -1,0 +1,10 @@
+[package]
+name = "lotus-parser"
+version = "0.1.0"
+authors = ["Sylvain Milan <milan.sylvain@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lotus-common = { path = "../common" }
+pest = "2.1"
+pest_derive = "2.1"
