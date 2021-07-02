@@ -6,4 +6,4 @@ pub mod write_buffer;
 pub use serializable::Serializable;
 pub use read_buffer::ReadBuffer;
 pub use write_buffer::WriteBuffer;
-pub use lotus_serializable_derive::Serializable;
+pub use lotus_serializable_macro::Serializable;

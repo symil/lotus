@@ -3,15 +3,6 @@
 version = 3
 
 [[package]]
-name = "as-js-string-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -133,12 +124,22 @@ dependencies = [
 name = "lotus"
 version = "0.1.0"
 dependencies = [
- "as-js-string-macro",
+ "lotus-as-js-string-macro",
  "lotus-client",
  "lotus-common",
+ "lotus-parsable-macro",
  "lotus-parser",
- "lotus-serializable-derive",
+ "lotus-serializable-macro",
  "lotus-server",
+]
+
+[[package]]
+name = "lotus-as-js-string-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -154,12 +155,21 @@ dependencies = [
 name = "lotus-common"
 version = "0.1.0"
 dependencies = [
- "as-js-string-macro",
  "getrandom",
  "js-sys",
- "lotus-serializable-derive",
+ "lotus-as-js-string-macro",
+ "lotus-serializable-macro",
  "rand",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "lotus-parsable-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -172,7 +182,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lotus-serializable-derive"
+name = "lotus-serializable-macro"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -186,7 +196,6 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "lotus-common",
- "lotus-serializable-derive",
  "rand",
  "sha1",
 ]

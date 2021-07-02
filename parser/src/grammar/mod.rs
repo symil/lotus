@@ -5,6 +5,6 @@ use pest_derive::*;
 #[grammar = "grammar/grammar.pest"]
 pub struct PestParser;
 
-pub trait FromEntry : Sized {
-    fn from_entry(entry: Pair<Rule>) -> Self;
+pub trait Parsable : Sized {
+    fn parse(entry: Pair<Rule>) -> Self;
 }

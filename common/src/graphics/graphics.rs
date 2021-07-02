@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use as_js_string_macro::*;
+use lotus_as_js_string_macro::*;
 use super::{color::Color, rect::Rect, size::Size};
 
 macro_rules! make_enum {

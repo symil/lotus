@@ -12,6 +12,18 @@ macro_rules! item {
             }
         }
     };
+    (struct $ty:ident { $($field_name:ident : $field_type:ty),* } @$iterator_name:ident => $expr:expr) => {
+        item! {
+            struct $ty {
+                $($field_name: $field_type),*
+            }
+            entry => {
+                let mut $iterator_name = entry.into_inner().peekable();
+
+                $expr
+            }
+        }
+    };
     (enum $ty:ident { $($variant_name:ident $(( $($sub_type:ty),* ))? ),* } $name:ident => $expr:expr) => {
         #[derive(Debug)]
         pub enum $ty {
@@ -24,13 +36,6 @@ macro_rules! item {
             }
         }
     };
-}
-
-#[macro_use]
-macro_rules! iterator {
-    ($entry:expr) => {
-        $entry.into_inner().peekable()
-    }
 }
 
 #[macro_use]
@@ -62,3 +67,4 @@ pub mod type_declaration;
 pub mod identifier;
 pub mod file;
 pub mod type_qualifier;
+pub mod field_declaration;

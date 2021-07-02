@@ -1,11 +1,9 @@
 [package]
 name = "lotus-server"
 version = "0.1.0"
-authors = ["Sylvain Milan <milan.sylvain@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-lotus-serializable-derive = { path = "../serializable-derive" }
 lotus-common = { path = "../common" }
 rand = "0.8"
 sha1 = "0.6"
