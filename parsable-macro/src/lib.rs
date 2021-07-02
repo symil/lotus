@@ -4,8 +4,8 @@ use proc_macro::{TokenStream};
 use quote::quote;
 use syn::*;
 
-#[proc_macro_derive(Parsable)]
-pub fn macro_derive_parsable(input: TokenStream) -> TokenStream {
+#[proc_macro_attribute]
+pub fn macro_derive_parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ast : DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 

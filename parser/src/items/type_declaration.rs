@@ -1,14 +1,22 @@
-use crate::located_data::{LocatedData};
 use super::identifier::Identifier;
 use super::type_qualifier::TypeQualifier;
 use super::field_declaration::FieldDeclaration;
 
+struct TypeDeclaration2 {
+    qualifier: TypeQualifier,
+    name: Identifier,
+    #[parsable(min=1, sep=",", prefix="extends")]
+    extends: Vec<Identifier>,
+    #[parsable(prefix="{", suffix="}")]
+    fields: Vec<FieldDeclaration>
+}
+
 item! {
     struct TypeDeclaration {
-        qualifier: LocatedData<TypeQualifier>,
-        name: LocatedData<Identifier>,
-        extends: Vec<LocatedData<Identifier>>,
-        fields: Vec<LocatedData<FieldDeclaration>>
+        qualifier: TypeQualifier,
+        name: Identifier,
+        extends: Vec<Identifier>,
+        fields: Vec<FieldDeclaration>
     }
 
     @entry => TypeDeclaration {
