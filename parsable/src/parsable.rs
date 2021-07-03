@@ -1,8 +1,4 @@
-use self::{parse_error::ParseError, string_reader::StringReader};
-
-pub mod string_reader;
-pub mod primitive_types;
-pub mod parse_error;
+use crate::{parse_error::ParseError, string_reader::StringReader};
 
 pub trait Parsable : Sized {
     fn parse(reader: &mut StringReader) -> Option<Self>;

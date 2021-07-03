@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::parsable::{Parsable, string_reader::StringReader};
+use crate::{Parsable, string_reader::StringReader};
 
 #[derive(Debug, Default)]
 pub struct DataLocation {

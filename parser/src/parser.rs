@@ -1,6 +1,7 @@
 use std::fs;
 
-use crate::{items::identifier::Number, parsable::Parsable};
+use crate::{items::{identifier::Number, type_qualifier::TypeQualifier}};
+use lotus_parsable::*;
 
 pub struct LotusParser {
     pub current_file_id: usize
@@ -16,7 +17,7 @@ impl LotusParser {
     pub fn parse_root(&mut self, file_path: &str) {
         let unparsed_file = fs::read_to_string(file_path).expect("cannot read file");
 
-        let result = Number::parse_string(&unparsed_file);
+        let result = TypeQualifier::parse_string(&unparsed_file);
 
         match result {
             Ok(value) => { dbg!(value); },

@@ -1,5 +1,6 @@
 use std::ops::{Deref, DerefMut};
-use lotus_parsable_macro::*;
+
+use lotus_parsable::*;
 
 pub struct Identifier {
     pub value: String

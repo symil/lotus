@@ -25,7 +25,7 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
                         field_names.push(field_name);
                         lines.push(quote! {
-                            let #field_name = match <#field_type as crate::Parsable>::parse(reader) {
+                            let #field_name = match <#field_type as lotus_parsable::Parsable>::parse(reader) {
                                 Some(value__) => value__,
                                 None => {
                                     reader.set_index(start_index__);
@@ -60,7 +60,7 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
                         let field_type = &field.ty;
 
                         lines.push(quote! {
-                            if let Some(value) = <#field_type as crate::Parsable>::parse(reader) {
+                            if let Some(value) = <#field_type as lotus_parsable::Parsable>::parse(reader) {
                                 reader.eat_spaces();
                                 return Some(Self::#variant_name(value))
                             }
@@ -111,8 +111,8 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let result = quote! {
         #ast
 
-        impl crate::Parsable for #name {
-            fn parse(reader: &mut crate::parsable::string_reader::StringReader) -> Option<Self> {
+        impl lotus_parsable::Parsable for #name {
+            fn parse(reader: &mut lotus_parsable::StringReader) -> Option<Self> {
                 let start_index__ = reader.get_index();
 
                 #body

@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use super::{Parsable, string_reader::StringReader};
+
+use crate::{parsable::Parsable, string_reader::StringReader};
 
 const NUMBER_PATTERN : &'static str = r"\d+(\.\d*)?";
 

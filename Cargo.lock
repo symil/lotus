@@ -79,6 +79,7 @@ dependencies = [
  "lotus-as-js-string-macro",
  "lotus-client",
  "lotus-common",
+ "lotus-parsable",
  "lotus-parsable-macro",
  "lotus-parser",
  "lotus-serializable-macro",
@@ -116,6 +117,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lotus-parsable"
+version = "0.1.0"
+dependencies = [
+ "lotus-parsable-macro",
+ "regex",
+]
+
+[[package]]
 name = "lotus-parsable-macro"
 version = "0.1.0"
 dependencies = [
@@ -130,8 +139,7 @@ name = "lotus-parser"
 version = "0.1.0"
 dependencies = [
  "lotus-common",
- "lotus-parsable-macro",
- "regex",
+ "lotus-parsable",
 ]
 
 [[package]]

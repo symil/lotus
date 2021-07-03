@@ -13,4 +13,5 @@ lotus-server = { path = "./server" }
 lotus-serializable-macro = { path = "./serializable-macro" }
 lotus-as-js-string-macro = { path = "./as-js-string-macro" }
 lotus-parser = { path = "./parser" }
+lotus-parsable = { path = "./parsable" }
 lotus-parsable-macro = { path = "./parsable-macro" }

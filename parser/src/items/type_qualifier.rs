@@ -4,7 +4,7 @@
 //     View = "view"
 // }
 
-use lotus_parsable_macro::*;
+use lotus_parsable::*;
 
 #[parsable]
 #[derive(Debug)]
