@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use pest::{RuleType, iterators::Pair};
+use crate::parsable::{Parsable, string_reader::StringReader};
 
 #[derive(Debug, Default)]
 pub struct DataLocation {
@@ -16,17 +16,9 @@ pub struct LocatedData<T> {
     pub location: DataLocation,
 }
 
-impl<'i, R : RuleType, T : From<Pair<'i, R>>> From<Pair<'i, R>> for LocatedData<T> {
-    fn from(entry: Pair<'i, R>) -> Self {
-        LocatedData {
-            location: DataLocation {
-                index: entry.as_span().start(),
-                file_name: "",
-                line: 0,
-                column: 0
-            },
-            data: T::from(entry)
-        }
+impl<T : Parsable> Parsable for LocatedData<T> {
+    fn parse(_reader: &mut StringReader) -> Option<Self> {
+        todo!()
     }
 }
 

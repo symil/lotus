@@ -3,32 +3,46 @@
 use proc_macro::{TokenStream};
 use quote::quote;
 use syn::*;
+use proc_macro_error::*;
 
+// https://docs.rs/syn/1.0.73/syn/struct.DeriveInput.html
+#[proc_macro_error]
 #[proc_macro_attribute]
-pub fn macro_derive_parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let ast : DeriveInput = syn::parse(input).unwrap();
+pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
+    let mut ast : DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
-    let body = match &ast.data {
+    let body = match &mut ast.data {
         Data::Struct(data_struct) => {
             match &data_struct.fields {
                 Fields::Named(named_fields) => {
-                    let lines : Vec<proc_macro2::TokenStream> = named_fields.named.iter().map(|field| {
-                        let name = &field.ident.as_ref().unwrap();
-                        let ty = &field.ty;
+                    let mut field_names = vec![];
+                    let mut lines = vec![];
 
-                        quote! {
-                            #name: match <#ty>::parse(entry)
-                        }
-                    }).collect();
+                    for field in named_fields.named.iter() {
+                        let field_name = field.ident.as_ref().unwrap();
+                        let field_type = &field.ty;
+
+                        field_names.push(field_name);
+                        lines.push(quote! {
+                            let #field_name = match <#field_type as crate::Parsable>::parse(reader) {
+                                Some(value__) => value__,
+                                None => {
+                                    reader.set_index(start_index__);
+                                    reader.set_error::<#field_type>();
+                                    return None;
+                                }
+                            };
+                            reader.eat_spaces();
+                        });
+                    }
 
                     quote! {
-                        Self {
-                            #(#lines),*
-                        }
+                        #(#lines)*
+                        Some(Self { #(#field_names),* })
                     }
                 },
-                Fields::Unnamed(_fields) => todo!(),
+                Fields::Unnamed(_) => todo!(),
                 Fields::Unit => todo!()
             }
         },
@@ -37,40 +51,70 @@ pub fn macro_derive_parsable(attr: TokenStream, input: TokenStream) -> TokenStre
 
             for i in 0..data_enum.variants.len() {
                 let variant = &data_enum.variants[i];
-                let name = &variant.ident;
-                let rule_ident = &variant.attrs[0].path; // TODO: check if it exists
+                let variant_name = &variant.ident;
 
                 match &variant.fields {
                     Fields::Named(_fields_named) => todo!(),
                     Fields::Unnamed(fields_unnamed) => {
                         let field = &fields_unnamed.unnamed[0];
-                        let ty = &field.ty;
+                        let field_type = &field.ty;
 
                         lines.push(quote! {
-                            crate::grammar::Rule::#rule_ident => Self::#name(<#ty>::parse(entry))
+                            if let Some(value) = <#field_type as crate::Parsable>::parse(reader) {
+                                reader.eat_spaces();
+                                return Some(Self::#variant_name(value))
+                            }
                         });
                     },
                     Fields::Unit => {
-                        lines.push(quote! {
-                            crate::grammar::Rule::#rule_ident => Self::#name
-                        });
+                        let string = match &variant.discriminant {
+                            Some((_, Expr::Lit(expr_lit))) => {
+                                match &expr_lit.lit {
+                                    Lit::Str(value) => {
+                                        Some(value)
+                                    },
+                                    _ => None
+                                }
+                            },
+                            _ => None
+                        };
+
+                        match string {
+                            Some(lit_str) => {
+                                lines.push(quote! {
+                                    if let Some(_) = reader.read_string(#lit_str) {
+                                        reader.eat_spaces();
+                                        return Some(Self::#variant_name);
+                                    }
+                                });
+                            },
+                            None => emit_call_site_error!("variants with no field must have an associated string literal")
+                        }
                     }
                 }
             }
 
+            for variant in data_enum.variants.iter_mut() {
+                variant.discriminant = None;
+            }
+
             quote! {
-                match entry.as_rule() {
-                    #(#lines),*,
-                    _ => unreachable!()
-                }
+                #(#lines)*
+
+                reader.set_error::<Self>();
+                None
             }
         },
         _ => todo!()
     };
 
     let result = quote! {
-        impl crate::grammar::Parsable for #name {
-            fn parse(entry: pest::iterators::Pair<crate::grammar::Rule>) -> Self {
+        #ast
+
+        impl crate::Parsable for #name {
+            fn parse(reader: &mut crate::parsable::string_reader::StringReader) -> Option<Self> {
+                let start_index__ = reader.get_index();
+
                 #body
             }
         }

@@ -5,5 +5,5 @@ edition = "2018"
 
 [dependencies]
 lotus-common = { path = "../common" }
-pest = "2.1"
-pest_derive = "2.1"
+lotus-parsable-macro = { path = "../parsable-macro" }
+regex = "1"

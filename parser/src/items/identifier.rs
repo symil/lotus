@@ -1,13 +1,8 @@
 use std::ops::{Deref, DerefMut};
+use lotus_parsable_macro::*;
 
-item! {
-    struct Identifier {
-        value: String
-    }
-
-    entry => Identifier {
-        value: entry.as_str().to_string()
-    }
+pub struct Identifier {
+    pub value: String
 }
 
 impl Deref for Identifier {
@@ -22,4 +17,10 @@ impl DerefMut for Identifier {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }    
+}
+
+#[parsable]
+#[derive(Debug)]
+pub struct Number {
+    pub value: f32
 }

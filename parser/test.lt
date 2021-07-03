@@ -1,4 +1,1 @@
-view MyView {
-    text: String,
-    value: Number,
-}
+ 45.6
