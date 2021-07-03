@@ -2,7 +2,10 @@ use std::ops::{Deref, DerefMut};
 
 use lotus_parsable::*;
 
+#[parsable]
+#[derive(Debug)]
 pub struct Identifier {
+    #[parsable(regex = r"\w[_\w\d]*")]
     pub value: String
 }
 
@@ -18,10 +21,4 @@ impl DerefMut for Identifier {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }    
-}
-
-#[parsable]
-#[derive(Debug)]
-pub struct Number {
-    pub value: f32
 }

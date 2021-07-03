@@ -1,12 +1,16 @@
+use lotus_parsable::parsable;
+
 use super::identifier::Identifier;
 use super::type_qualifier::TypeQualifier;
 use super::field_declaration::FieldDeclaration;
 
+#[parsable]
+#[derive(Debug)]
 pub struct TypeDeclaration {
     pub qualifier: TypeQualifier,
     pub name: Identifier,
-    // #[parsable(min=1, sep=",", prefix="extends")]
+    #[parsable(optional=true, prefix="extends", sep=",", min=1)]
     pub extends: Vec<Identifier>,
-    // #[parsable(prefix="{", suffix="}")]
+    #[parsable(brackets="{}", sep=",")]
     pub fields: Vec<FieldDeclaration>
 }

@@ -1,5 +1,6 @@
 use std::{collections::HashMap};
 
+use line_col::LineColLookup;
 use regex::Regex;
 
 use super::parse_error::ParseError;
@@ -8,7 +9,8 @@ pub struct StringReader<'a> {
     regexes: HashMap<&'static str, Regex>,
     string: &'a str,
     index: usize,
-    error: Option<ParseError>
+    error_index: usize,
+    expected: Vec<String>
 }
 
 impl<'a> StringReader<'a> {
@@ -17,18 +19,43 @@ impl<'a> StringReader<'a> {
             regexes: HashMap::new(),
             string,
             index: 0,
-            error: None
+            error_index: 0,
+            expected: vec![]
         }
     }
 
-    pub fn set_error<T>(&mut self) {
-        if self.index >= self.error.as_ref().map_or(0usize, |err| err.index) {
-            self.error = Some(ParseError::new::<T>(self.index));
+    pub fn set_expected_token(&mut self, expected: &str) {
+        if self.index == self.error_index {
+            self.expected.push(expected.to_string());
+        } else if self.index > self.error_index {
+            self.expected = vec![expected.to_string()];
+            self.error_index = self.index;
         }
     }
 
-    pub fn get_error(&self) -> Option<ParseError> {
-        self.error.clone()
+    pub fn get_error(&self) -> ParseError {
+        let mut error_index = self.error_index;
+        let mut backtracked = false;
+
+        while error_index > 0 && is_space(self.string.as_bytes()[error_index - 1] as char) {
+            error_index -= 1;
+            backtracked = true;
+        }
+
+        if backtracked {
+            while error_index < self.string.len() && is_inline_space(self.string.as_bytes()[error_index] as char) {
+                error_index += 1;
+            }
+        }
+
+        let (line, col) = LineColLookup::new(&self.string).get(error_index);
+        let expected = self.expected.clone();
+
+        ParseError { line, col, expected }
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.index == self.string.len()
     }
 
     pub fn get_index(&self) -> usize {
@@ -111,6 +138,13 @@ impl<'a> StringReader<'a> {
 fn is_space(c: char) -> bool {
     match c {
         ' ' | '\n' | '\t' => true,
+        _ => false
+    }
+}
+
+fn is_inline_space(c: char) -> bool {
+    match c {
+        ' ' | '\t' => true,
         _ => false
     }
 }

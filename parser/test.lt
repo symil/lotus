@@ -1,1 +1,4 @@
-view
+struct MyStruct extends Foo {
+    string: String,
+    number: Number
+}
