@@ -120,8 +120,13 @@ impl<'a> StringReader<'a> {
     pub fn read_string(&mut self, string: &'static str) -> Option<&'a str> {
         let length = match self.as_str().starts_with(string) {
             true => string.len(),
-            false => 0
+            false => return None
         };
+
+        // TODO: handle this at compile-time
+        if is_string_alphanum(string) && is_alphanum(self.at(length)) {
+            return None;
+        }
 
         self.advance(length)
     }
@@ -157,4 +162,18 @@ fn is_inline_space(c: char) -> bool {
         ' ' | '\t' => true,
         _ => false
     }
+}
+
+fn is_string_alphanum(string: &str) -> bool {
+    for byte in string.as_bytes() {
+        if !is_alphanum(*byte as char) {
+            return false;
+        }
+    }
+
+    true
+}
+
+fn is_alphanum(c: char) -> bool {
+    (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
 }

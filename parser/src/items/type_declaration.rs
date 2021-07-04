@@ -1,8 +1,8 @@
 use lotus_parsable::parsable;
 
+use super::field_declaration::FieldDeclaration;
 use super::identifier::Identifier;
 use super::type_qualifier::TypeQualifier;
-use super::field_declaration::FieldDeclaration;
 
 #[parsable(located)]
 #[derive(Debug)]

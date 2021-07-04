@@ -18,6 +18,10 @@ pub trait View<P : Player, R : Request, D : LocalData> {
     fn get_transform(&self, client: &ClientState<P, R, D>) -> Transform { Transform::identity() }
 }
 
+pub struct RenderResult<P : Player, R : Request, D : LocalData> {
+    pub children: Vec<Rc<dyn View<P, R, D>>>
+}
+
 #[macro_export]
 macro_rules! make_view {
     ($name:ident) => {

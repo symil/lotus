@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
-use std::collections::HashMap;
-use super::{layout::{Layout, LayoutType}, transform::Transform};
+use super::{transform::Transform};
 use crate::serialization::*;
 
 #[wasm_bindgen]
@@ -105,6 +104,12 @@ impl Rect {
         self.pad(-width, -height)
     }
 
+    pub fn strip_margin(&self, margin: f32) -> Self {
+        let to_stip = margin * 2.;
+
+        self.strip(to_stip, to_stip)
+    }
+
     pub fn pad_to_match_aspect_ratio(&self, aspect_ratio: Option<f32>) -> Self {
         match aspect_ratio {
             None => self.clone(),
@@ -186,67 +191,5 @@ impl Rect {
         let (width, height) = transform.scale(self.width, self.height);
 
         Self { x, y, width, height }
-    }
-
-    pub fn layout(&self, layout: &Layout) -> HashMap<u64, Self> {
-        let mut map = HashMap::new();
-
-        self.apply_layout(layout, &mut map);
-
-        map
-    }
-
-    fn apply_layout(&self, layout: &Layout, map: &mut HashMap<u64, Self>) {
-        let to_strip = layout.outer_margin * 2.;
-        let rect = self
-            .strip(to_strip, to_strip)
-            .strip_to_match_aspect_ratio(layout.aspect_ratio)
-            .scale(layout.scale);
-
-        if let Some(id) = layout.id {
-            map.insert(id, rect);
-        }
-
-        if layout.children.len() == 0 {
-            return;
-        }
-
-        let is_horizontal = match layout.layout_type {
-            LayoutType::Single => return,
-            LayoutType::Row => true,
-            LayoutType::Column => false,
-        };
-        let flex_space = match is_horizontal {
-            true => rect.width,
-            false => rect.height
-        };
-        let available_space = flex_space - (layout.inner_margin * (layout.children.len() - 1) as f32);
-        let total_force = layout.children.iter().fold(0., |acc, child| acc + child.force);
-
-        let mut x = rect.x1();
-        let mut y = rect.y1();
-
-        for child in &layout.children {
-            let variable_dimension = child.force / total_force * available_space;
-            let rect_x = x;
-            let rect_y = y;
-            let mut rect_width = rect.width;
-            let mut rect_height = rect.height;
-
-            match is_horizontal {
-                true => {
-                    rect_width = variable_dimension;
-                    x += variable_dimension + layout.outer_margin;
-                },
-                false => {
-                    rect_height = variable_dimension;
-                    y += variable_dimension + layout.outer_margin;
-                }
-            }
-
-            let child_rect = Self::from_top_left(rect_x, rect_y, rect_width, rect_height);
-
-            child_rect.apply_layout(child, map);
-        }
     }
 }
