@@ -2,7 +2,7 @@ use lotus_parsable::parsable;
 
 use super::identifier::Identifier;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct FieldDeclaration {
     pub name: Identifier,

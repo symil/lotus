@@ -6,7 +6,7 @@
 
 use lotus_parsable::*;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub enum TypeQualifier {
     Struct = "struct",

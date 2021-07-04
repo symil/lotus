@@ -1,6 +1,6 @@
 use lotus_parsable::parsable;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct Boolean {
     pub value: bool

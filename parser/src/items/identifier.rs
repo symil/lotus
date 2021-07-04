@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use lotus_parsable::*;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct Identifier {
     #[parsable(regex = r"[a-zA-Z_][_\w\d]*")]

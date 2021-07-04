@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{items::{expr::{Expr, Operation}, file::LotusFile}};
+use crate::{items::{expr::{Expr}, file::LotusFile}};
 use lotus_parsable::*;
 
 pub struct LotusParser {
@@ -23,13 +23,5 @@ impl LotusParser {
             Ok(value) => { dbg!(value); },
             Err(error) => { println!("{}", error.to_string()) },
         };
-
-        // let file = PestParser::parse(Rule::file, &unparsed_file)
-        //     .expect("unsuccessful parse") // unwrap the parse result
-        //     .next().unwrap(); // get and unwrap the `file` rule; never fails
-        
-        // let parsed_file = LotusFile::from(file);
-
-        // dbg!(parsed_file);
     }
 }

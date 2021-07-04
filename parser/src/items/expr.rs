@@ -2,37 +2,45 @@ use lotus_parsable::parsable;
 
 use super::{boolean::Boolean, identifier::Identifier, number::Number};
 
-#[parsable]
+pub type Expr = Operation;
+
+#[parsable(located)]
 #[derive(Debug)]
-pub enum Expr {
+pub struct Operation {
+    pub first: Operand,
+    pub others: Vec<(BinaryOperator, Operand)>
+}
+
+#[parsable(located)]
+#[derive(Debug)]
+pub enum Operand {
     #[parsable(brackets="()")]
-    Parenthesized(Box<Expr>),
+    Parenthesized(Box<Operation>),
     Number(Number),
     Boolean(Boolean),
     UnaryOperation(Box<UnaryOperation>),
-    Path(PathExpr),
-    BinaryOperation(Box<Operation>),
+    VarPath(VarPath),
 }
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
-pub struct PathExpr {
+pub struct VarPath {
     pub name: Identifier,
     pub path: Vec<PathSegment>
 }
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub enum PathSegment {
     #[parsable(prefix=".")]
     FieldAccess(Identifier),
     #[parsable(brackets="[]")]
-    BracketIndexing(Expr),
+    BracketIndexing(Operation),
     #[parsable(brackets="()", sep=",")]
-    FunctionCall(Vec<Expr>)
+    FunctionCall(Vec<Operation>)
 }
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub enum UnaryOperator {
     Not = "!",
@@ -40,26 +48,27 @@ pub enum UnaryOperator {
     Minus = "-"
 }
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct UnaryOperation {
     pub operator: UnaryOperator,
-    pub operand: Expr
+    pub operand: Operand
 }
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub enum BinaryOperator {
-    Add = "+",
-    Substract = "-",
-    Multiply = "*",
-    Divide = "/"
-}
-
-#[parsable]
-#[derive(Debug)]
-pub struct Operation {
-    pub first: Expr,
-    #[parsable(min=1)]
-    pub others: Vec<(BinaryOperator, Expr)>
+    Plus = "+",
+    Minus = "-",
+    Mult = "*",
+    Div = "/",
+    Mod = "%",
+    And = "&&",
+    Or = "||",
+    Eq = "==",
+    Neq = "!=",
+    Gte = ">=",
+    Gt = ">",
+    Lte = "<=",
+    Lt = "<"
 }

@@ -1,9 +1,9 @@
 use lotus_parsable::parsable;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct Number {
-    pub value: f64
+    pub value: f64,
 }
 
 impl std::ops::Deref for Number {

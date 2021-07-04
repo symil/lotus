@@ -4,7 +4,7 @@ use super::identifier::Identifier;
 use super::type_qualifier::TypeQualifier;
 use super::field_declaration::FieldDeclaration;
 
-#[parsable]
+#[parsable(located)]
 #[derive(Debug)]
 pub struct TypeDeclaration {
     pub qualifier: TypeQualifier,

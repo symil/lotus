@@ -55,10 +55,41 @@ impl Parse for ParsableAttributes {
     }
 }
 
+fn is_type(ty: &Type, name: &str) -> bool {
+    get_type_name(ty) == name
+}
+
+fn get_type_name(ty: &Type) -> String {
+    match ty {
+        Type::Path(type_path) => type_path.path.segments.last().unwrap().ident.to_string(),
+        _ => todo!(),
+    }
+}
+
+struct Wrapper {
+    field: Field
+}
+
+impl Parse for Wrapper {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let field = Field::parse_named(input)?;
+
+        Ok(Self { field })
+    }
+}
+
+fn create_location_field(field_name: &str) -> Field {
+    let string = format!("pub {}: lotus_parsable::DataLocation", field_name);
+    let result : Result<Wrapper> = syn::parse_str(&string);
+
+    result.unwrap().field
+}
+
 // https://docs.rs/syn/1.0.73/syn/struct.DeriveInput.html
 #[proc_macro_error]
 #[proc_macro_attribute]
-pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let located = attr.to_string() == "located";
     let mut ast : DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
 
@@ -71,6 +102,9 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
                     for field in named_fields.named.iter_mut() {
                         let mut attributes = ParsableAttributes::default();
+                        let is_vec = is_type(&field.ty, "Vec");
+                        let is_option = is_type(&field.ty, "Option");
+
                         let field_name = field.ident.as_ref().unwrap();
                         let field_type = &field.ty;
 
@@ -86,15 +120,6 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
                             field.attrs.remove(i);
                         }
-
-                        let is_vec = match field_type {
-                            Type::Path(type_path) => type_path.path.segments.last().unwrap().ident == "Vec",
-                            _ => false,
-                        };
-                        let is_option = match field_type {
-                            Type::Path(type_path) => type_path.path.segments.last().unwrap().ident == "Option",
-                            _ => false,
-                        };
 
                         let optional = is_option || attributes.optional.map_or(false, |value| value);
                         let on_success = quote! { reader__.eat_spaces(); };
@@ -224,11 +249,20 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
                         });
                     }
 
+                    let mut set_location = quote! {};
+
+                    if located {
+                        field_names.push(quote! { location });
+                        named_fields.named.insert(0, create_location_field("location"));
+                        set_location = quote! { let location = lotus_parsable::DataLocation::new(start_index__, reader__.get_index_backtracked()); };
+                    }
+
                     quote! {
                         let mut field_index__ : usize = 0;
                         let mut field_failed__ = false;
                         let mut prefix_ok__ = true;
                         #(#lines)*
+                        #set_location
                         Some(Self { #(#field_names),* })
                     }
 
@@ -242,6 +276,9 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
             for i in 0..data_enum.variants.len() {
                 let variant = &mut data_enum.variants[i];
+
+                // TODO: check if variant should be skipped to avoid recursion
+
                 let variant_name = &variant.ident;
                 let mut attributes = ParsableAttributes::default();
                 let mut parse_prefix = quote! { true };

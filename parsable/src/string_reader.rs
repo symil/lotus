@@ -62,6 +62,16 @@ impl<'a> StringReader<'a> {
         self.index
     }
 
+    pub fn get_index_backtracked(&self) -> usize {
+        let mut index = self.index;
+
+        while index > 0 && is_space(self.string.as_bytes()[index - 1] as char) {
+            index -= 1;
+        }
+
+        index
+    }
+
     pub fn set_index(&mut self, index: usize) {
         self.index = index;
     }
