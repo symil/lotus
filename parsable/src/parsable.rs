@@ -8,7 +8,7 @@ pub trait Parsable : Sized {
         unimplemented!()
     }
 
-    fn get_token_name() -> &'static str {
+    fn get_token_name() -> String {
         get_type_name::<Self>()
     }
 
@@ -21,7 +21,7 @@ pub trait Parsable : Sized {
             Some(value) => match reader.is_finished() {
                 true => Ok(value),
                 false => {
-                    reader.set_expected_token("<EOF>");
+                    reader.set_expected_token("<EOF>".to_string());
                     Err(reader.get_error())
                 }
             },

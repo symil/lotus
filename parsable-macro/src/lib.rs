@@ -118,7 +118,7 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
                                 match reader__.read_string(#prefix) {
                                     Some(_) => reader__.eat_spaces(),
                                     None => {
-                                        reader__.set_expected_token(&format!("{:?}", #prefix));
+                                        reader__.set_expected_token(format!("{:?}", #prefix));
                                         prefix_ok__ = false;
                                         #on_fail;
                                     }
@@ -131,7 +131,7 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
                                 match reader__.read_string(#suffix) {
                                     Some(_) => reader__.eat_spaces(),
                                     None => {
-                                        reader__.set_expected_token(&format!("{:?}", #suffix));
+                                        reader__.set_expected_token(format!("{:?}", #suffix));
                                         #on_fail;
                                     }
                                 };
@@ -241,8 +241,45 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
             let mut lines = vec![];
 
             for i in 0..data_enum.variants.len() {
-                let variant = &data_enum.variants[i];
+                let variant = &mut data_enum.variants[i];
                 let variant_name = &variant.ident;
+                let mut attributes = ParsableAttributes::default();
+                let mut parse_prefix = quote! { true };
+                let mut parse_suffix = quote! { true };
+                let mut parse_method = quote! { parse(reader__) };
+
+                if let Some((i, attr)) = variant.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
+                    let result = syn::parse2::<ParsableAttributes>(attr.tokens.clone());
+
+                    match result {
+                        Ok(value) => attributes = value,
+                        Err(error) => emit_call_site_error!(error)
+                    };
+
+                    variant.attrs.remove(i);
+                }
+
+                if let Some(prefix) = attributes.prefix {
+                    parse_prefix = quote! {
+                        match reader__.read_string(#prefix) {
+                            Some(_) => { reader__.eat_spaces(); true },
+                            None => { reader__.set_expected_token(format!("{:?}", #prefix)); false }
+                        }
+                    };
+                }
+
+                if let Some(suffix) = attributes.suffix {
+                    parse_suffix = quote! {
+                        match reader__.read_string(#suffix) {
+                            Some(_) => { reader__.eat_spaces(); true },
+                            None => { reader__.set_expected_token(format!("{:?}", #suffix)); false }
+                        }
+                    };
+                }
+
+                if let Some(separator) = attributes.sep {
+                    parse_method = quote! { parse_with_separator(reader__, #separator) };
+                }
 
                 match &variant.fields {
                     Fields::Named(_fields_named) => todo!(),
@@ -251,10 +288,21 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
                         let field_type = &field.ty;
 
                         lines.push(quote! {
-                            if let Some(value) = <#field_type as lotus_parsable::Parsable>::parse(reader__) {
-                                reader__.eat_spaces();
-                                return Some(Self::#variant_name(value))
+                            let prefix_ok__ = #parse_prefix;
+
+                            if prefix_ok__ {
+                                if let Some(value) = <#field_type as lotus_parsable::Parsable>::#parse_method {
+                                    reader__.eat_spaces();
+
+                                    let suffix_ok__ = #parse_suffix;
+
+                                    if suffix_ok__ {
+                                        return Some(Self::#variant_name(value))
+                                    }
+                                }
                             }
+
+                            reader__.set_index(start_index__);
                         });
                     },
                     Fields::Unit => {
@@ -304,7 +352,6 @@ pub fn parsable(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
         impl lotus_parsable::Parsable for #name {
             fn parse(reader__: &mut lotus_parsable::StringReader) -> Option<Self> {
-                // println!("PARSE: {}", std::any::type_name::<#name>().split("::").last().unwrap());
                 let start_index__ = reader__.get_index();
 
                 #body

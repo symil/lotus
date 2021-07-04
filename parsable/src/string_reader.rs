@@ -24,11 +24,11 @@ impl<'a> StringReader<'a> {
         }
     }
 
-    pub fn set_expected_token(&mut self, expected: &str) {
+    pub fn set_expected_token(&mut self, expected: String) {
         if self.index == self.error_index {
-            self.expected.push(expected.to_string());
+            self.expected.push(expected);
         } else if self.index > self.error_index {
-            self.expected = vec![expected.to_string()];
+            self.expected = vec![expected];
             self.error_index = self.index;
         }
     }

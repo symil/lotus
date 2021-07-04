@@ -5,7 +5,7 @@ use lotus_parsable::*;
 #[parsable]
 #[derive(Debug)]
 pub struct Identifier {
-    #[parsable(regex = r"\w[_\w\d]*")]
+    #[parsable(regex = r"[a-zA-Z_][_\w\d]*")]
     pub value: String
 }
 

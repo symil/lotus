@@ -1,4 +1,1 @@
-struct MyStruct extends Foo {
-    string: String,
-    number: Number
-}
+1 + 2
