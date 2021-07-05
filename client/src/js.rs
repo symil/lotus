@@ -14,6 +14,7 @@ extern {
     pub fn set_window_aspect_ratio(aspect_ratio: f64);
     pub fn get_window_width() -> f64;
     pub fn get_window_height() -> f64;
+    pub fn set_window_title(title: &str);
     pub fn get_string_id(string: &str) -> StringId;
 
     pub fn clear_canvas();
@@ -57,6 +58,10 @@ impl Js {
             unsafe { get_window_width() },
             unsafe { get_window_height() },
         )
+    }
+
+    pub fn set_window_title(title: &str) {
+        unsafe { set_window_title(title) };
     }
 
     pub fn get_string_id(string: &str) -> StringId {

@@ -59,7 +59,7 @@ export class Client {
 
         for (let name of Object.getOwnPropertyNames(Client.prototype)) {
             if (name.startsWith('$')) {
-                let rustName = toSnakeCase(name.substring(1));
+                let rustName = name.substring(1);
 
                 rustInterface[rustName] = function() {
                     return self[name](...arguments);
@@ -74,7 +74,7 @@ export class Client {
         console.log(string);
     }
 
-    $pollEvent() {
+    $poll_event() {
         let event = this._windowManager.pollEvent();
 
         if (event) {
@@ -94,11 +94,11 @@ export class Client {
         return event;
     }
 
-    $sendMessage(bytes) {
+    $send_message(bytes) {
         this._webSocket.send(bytes)
     }
 
-    $pollMessage() {
+    $poll_message() {
         let message = this._pendingMessages.pop();
 
         this._pendingMessages = [];
@@ -106,23 +106,27 @@ export class Client {
         return message;
     }
 
-    $setWindowAspectRatio(aspectRatio) {
+    $set_window_aspect_ratio(aspectRatio) {
         return this._windowManager.setAspectRatio(aspectRatio);
     }
 
-    $getWindowWidth() {
+    $get_window_width() {
         return this._windowManager.getWidth();
     }
 
-    $getWindowHeight() {
+    $get_window_height() {
         return this._windowManager.getHeight();
     }
 
-    $getStringId(string) {
+    $set_window_title(title) {
+        return this._windowManager.setTitle(title);
+    }
+
+    $get_string_id(string) {
         return this._renderer.getStringId(string);
     }
 
-    $clearCanvas() {
+    $clear_canvas() {
         return this._renderer.clear();
     }
 
@@ -130,11 +134,11 @@ export class Client {
         return this._renderer.draw(primitive);
     }
 
-    $setCursor(cursor) {
+    $set_cursor(cursor) {
         return this._renderer.setCursor(cursor);
     }
 
-    $clearRendererCache() {
+    $clear_renderer_cache() {
         return this._renderer.clearCache();
     }
 }

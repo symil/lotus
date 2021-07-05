@@ -13,12 +13,14 @@ pub struct Client<P : Player, R : Request, D : LocalData> {
     cursor_x: f64,
     cursor_y: f64,
     interaction_stack: Vec<Box<dyn Interaction<P, R, D>>>,
-    create_root: fn() -> Rc<dyn View<P, R, D>>
+    create_root: fn() -> Rc<dyn View<P, R, D>>,
+    window_title: &'static str
 }
 
 pub struct ClientCreateInfo<P : Player, R : Request, D : LocalData> {
     pub vitual_size: (f64, f64),
-    pub create_root: fn() -> Rc<dyn View<P, R, D>>
+    pub create_root: fn() -> Rc<dyn View<P, R, D>>,
+    pub window_title: &'static str
 }
 
 impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
@@ -34,12 +36,14 @@ impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
             cursor_x: 0.,
             cursor_y: 0.,
             interaction_stack: vec![Box::new(DefaultInteraction)],
-            create_root: create_info.create_root
+            create_root: create_info.create_root,
+            window_title: create_info.window_title
         }
     }
 
     pub fn start(&mut self) {
         Js::set_window_aspect_ratio(self.virtual_width / self.virtual_height);
+        Js::set_window_title(self.window_title);
     }
 
     pub fn update(&mut self) {

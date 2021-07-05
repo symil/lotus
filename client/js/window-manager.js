@@ -87,6 +87,10 @@ export class WindowManager {
     getHeight() {
         return this._canvasHeight;
     }
+
+    setTitle(title) {
+        window.document.title = title;
+    }
     
     _updateCanvasRect() {
         let aspectRatio = this._aspectRatio;
