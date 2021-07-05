@@ -73,6 +73,20 @@ impl Rect {
         x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
     }
 
+    pub fn with_center(&self, x: f64, y: f64) -> Self {
+        let width = self.width;
+        let height = self.height;
+
+        Self { x, y, width, height }
+    }
+
+    pub fn with_size(&self, width: f64, height: f64) -> Self {
+        let x = self.x;
+        let y = self.y;
+
+        Self { x, y, width, height }
+    }
+
     pub fn translate(&self, x: f64, y: f64) -> Self {
         Self {
             x: self.x + x,

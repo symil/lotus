@@ -72,6 +72,13 @@ impl Graphics {
     pub fn get_rect(&self) -> Rect {
         Rect::new(self.x, self.y, self.width, self.height)
     }
+
+    pub fn set_rect(&mut self, rect: &Rect) {
+        self.x = rect.x;
+        self.y = rect.y;
+        self.width = rect.width;
+        self.height = rect.height;
+    }
 }
 
 impl Default for Graphics {
@@ -121,6 +128,12 @@ impl Default for Graphics {
 
 #[macro_export]
 macro_rules! graphics {
+    ({ $($name:ident : $value:expr),* }) => {
+        lotus::Graphics {
+            $( $name: $value, )*
+            ..lotus::Graphics::default()
+        }
+    };
     ($rect:expr, { $($name:ident : $value:expr),* } ) => {
         {
             let rect = $rect;
