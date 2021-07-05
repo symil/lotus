@@ -1,10 +1,10 @@
 use std::{mem::{self, take}, rc::Rc};
 
-use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, traits::{interaction::Interaction, local_data::LocalData, player::Player, request::Request, view::{RenderOutput, View}}};
+use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, serialization::Serializable, traits::{interaction::Interaction, view::{RenderOutput, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-pub struct Client<P : Player, R : Request, D : LocalData> {
+pub struct Client<P, R, D> {
     initialized: bool,
     state: Option<ClientState<P, R, D>>,
     virtual_width: f64,
@@ -17,13 +17,18 @@ pub struct Client<P : Player, R : Request, D : LocalData> {
     window_title: &'static str
 }
 
-pub struct ClientCreateInfo<P : Player, R : Request, D : LocalData> {
+pub struct ClientCreateInfo<P, R, D> {
     pub vitual_size: (f64, f64),
     pub create_root: fn() -> Rc<dyn View<P, R, D>>,
     pub window_title: &'static str
 }
 
-impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
+impl<P, R, D> Client<P, R, D>
+    where
+        P : Serializable + Default,
+        R : Serializable,
+        D : Default
+{
     pub fn new(create_info: ClientCreateInfo<P, R, D>) -> Self {
         let (virtual_width, virtual_height) = create_info.vitual_size;
 
@@ -48,13 +53,18 @@ impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
 
     pub fn update(&mut self) {
         let mut state = take(&mut self.state).unwrap();
-        let (window_width, _window_height) = Js::get_window_size();
+        let window_width = Js::get_window_width();
 
         self.virtual_to_real_ratio = window_width / self.virtual_width;
 
-        while let Some(player) = Js::poll_message::<P>() {
-            self.initialized = true;
-            state.user = player;
+        while let Some(bytes) = Js::poll_message() {
+            match P::deserialize(&bytes) {
+                Some(player) => {
+                    self.initialized = true;
+                    state.user = player;
+                },
+                None => {}
+            }
         }
 
         while let Some(event) = Js::poll_event() {
@@ -70,7 +80,7 @@ impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
         }
 
         for request in &mut state.outgoing_requests.drain(..) {
-            Js::send_message(&request);
+            Js::send_message(&request.serialize());
         }
 
         if self.initialized {

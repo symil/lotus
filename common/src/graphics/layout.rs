@@ -1,6 +1,6 @@
 use std::{mem::take, rc::Rc};
 
-use crate::traits::{local_data::LocalData, player::Player, request::Request, view::{View}};
+use crate::traits::{view::{View}};
 
 use super::rect::Rect;
 
@@ -12,7 +12,7 @@ pub enum LayoutType {
 }
 
 #[derive(Debug)]
-pub struct Layout<P : Player, R : Request, D : LocalData> {
+pub struct Layout<P, R, D> {
     pub view: Option<Rc<dyn View<P, R, D>>>,
     pub layout_type: LayoutType,
     pub force: f64,
@@ -23,7 +23,7 @@ pub struct Layout<P : Player, R : Request, D : LocalData> {
     pub children: Vec<Layout<P, R, D>>
 }
 
-impl<P : Player, R : Request, D : LocalData> Default for Layout<P, R, D> {
+impl<P, R, D> Default for Layout<P, R, D> {
     fn default() -> Self {
         Self {
             view: None,
@@ -38,7 +38,7 @@ impl<P : Player, R : Request, D : LocalData> Default for Layout<P, R, D> {
     }
 }
 
-impl<P : Player, R : Request, D : LocalData> Layout<P, R, D> {
+impl<P, R, D> Layout<P, R, D> {
     pub fn apply(&mut self, input: Rect) -> Vec<(Rc<dyn View<P, R, D>>, Rect)> {
         let mut result = vec![];
 

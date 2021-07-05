@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{items::{expr::{Expr}, file::LotusFile}};
+use crate::{items::{expr::{Expr}}};
 use lotus_parsable::*;
 
 pub struct LotusParser {

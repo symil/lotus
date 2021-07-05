@@ -1,7 +1,7 @@
-use crate::traits::{player::Player};
+use std::cell::RefCell;
 
 pub struct ServerApi {
-    players_to_notify: Vec<u128>
+    players_to_notify: Vec<usize>
 }
 
 impl ServerApi {
@@ -11,11 +11,11 @@ impl ServerApi {
         }
     }
 
-    pub fn notify_player_update<P : Player>(&mut self, player: &P) {
-        self.players_to_notify.push(player.get_id());
+    pub fn notify_player_update<P>(&mut self, player: &RefCell<P>) {
+        self.players_to_notify.push(player.as_ptr() as usize);
     }
 
-    pub fn drain_players_to_notify(&mut self) -> Vec<u128> {
+    pub fn drain_players_to_notify(&mut self) -> Vec<usize> {
         self.players_to_notify.drain(..).collect()
     }
 }

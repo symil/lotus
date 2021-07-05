@@ -125,13 +125,13 @@ macro_rules! graphics {
         {
             let rect = $rect;
 
-            Graphics {
+            lotus::Graphics {
                 x: rect.x,
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
                 $( $name: $value, )*
-                ..Graphics::default()
+                ..lotus::Graphics::default()
             }
         }
     };
@@ -143,13 +143,13 @@ macro_rules! add_graphics {
         {
             let rect = $output.parent_rect;
 
-            $output.graphics_list.push(Graphics {
+            $output.graphics_list.push(lotus::Graphics {
                 x: rect.x,
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
                 $( $name: $value, )*
-                ..Graphics::default()
+                ..lotus::Graphics::default()
             });
         }
     };
@@ -157,13 +157,13 @@ macro_rules! add_graphics {
         {
             let rect = $rect;
 
-            $output.graphics_list.push(Graphics {
+            $output.graphics_list.push(lotus::Graphics {
                 x: rect.x,
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
                 $( $name: $value, )*
-                ..Graphics::default()
+                ..lotus::Graphics::default()
             });
         }
     };

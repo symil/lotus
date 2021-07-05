@@ -2,14 +2,14 @@
 use std::rc::Rc;
 
 use crate::{client_state::ClientState, graphics::graphics::Graphics};
-use super::{local_data::LocalData, player::Player, request::Request, view::View};
+use super::{view::View};
 
 pub enum InteractionResult {
     Keep,
     Remove
 }
 
-pub trait Interaction<P : Player, R : Request, D : LocalData> {
+pub trait Interaction<P, R, D> {
     fn is_active(&self, client: &ClientState<P, R, D>) -> bool { true }
     fn does_grab(&self, client: &ClientState<P, R, D>) -> bool { false }
     fn is_valid_target(&self, client: &ClientState<P, R, D>, target: &Rc<dyn View<P, R, D>>) -> bool { false }

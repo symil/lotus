@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
-use lotus_common::{client_state::ClientState, graphics::graphics::Graphics, traits::{interaction::{Interaction, InteractionResult}, local_data::LocalData, player::Player, request::Request, view::View}};
+use lotus_common::{client_state::ClientState, graphics::graphics::Graphics, traits::{interaction::{Interaction, InteractionResult}, view::View}};
 
 #[derive(Debug)]
 pub struct DefaultInteraction;
 
-impl<P : Player, R : Request, D : LocalData> Interaction<P, R, D> for DefaultInteraction {
+impl<P, R, D> Interaction<P, R, D> for DefaultInteraction {
     fn is_valid_target(&self, state: &ClientState<P, R, D>, target: &Rc<dyn View<P, R, D>>) -> bool {
         target.is_clickable(state)
     }
