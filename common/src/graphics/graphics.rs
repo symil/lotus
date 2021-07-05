@@ -28,29 +28,29 @@ make_enum! { Cursor : Default, Pointer, Text }
 
 #[derive(Debug, Clone)]
 pub struct Graphics {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    pub offset_x: f32,
-    pub offset_y: f32,
-    pub width: f32,
-    pub height: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub offset_x: f64,
+    pub offset_y: f64,
+    pub width: f64,
+    pub height: f64,
     pub shape: Shape,
-    pub aspect_ratio: Option<f32>,
-    pub scale: f32,
-    pub angle: f32,
+    pub aspect_ratio: Option<f64>,
+    pub scale: f64,
+    pub angle: f64,
     pub border_radius: Size,
     pub border_width: Size,
     pub border_dash_length: Size,
     pub border_gap_length: Size,
     pub border_color: Color,
-    pub border_alpha: f32,
+    pub border_alpha: f64,
     pub background_color: Color,
-    pub background_alpha: f32,
+    pub background_alpha: f64,
     pub overlay_color: Color,
-    pub overlay_alpha: f32,
+    pub overlay_alpha: f64,
     pub image_url: Option<String>,
-    pub image_scale: f32,
+    pub image_scale: f64,
     pub text: Option<String>,
     pub text_font: Font,
     pub text_size: Size,
@@ -121,19 +121,6 @@ impl Default for Graphics {
 
 #[macro_export]
 macro_rules! graphics {
-    ($rect:expr) => {
-        {
-            let rect = $rect;
-
-            Graphics {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-                ..Graphics::default()
-            }
-        }
-    };
     ($rect:expr, { $($name:ident : $value:expr),* } ) => {
         {
             let rect = $rect;
@@ -151,23 +138,36 @@ macro_rules! graphics {
 }
 
 #[macro_export]
-macro_rules! single_graphics {
-    ($rect:expr, { $($name:ident : $value:expr),* } ) => {
+macro_rules! add_graphics {
+    ($output:expr, { $($name:ident : $value:expr $(,)? ),* } ) => {
         {
-            let rect = $rect;
-            let graphics = Graphics {
+            let rect = $output.parent_rect;
+
+            $output.graphics_list.push(Graphics {
                 x: rect.x,
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
                 $( $name: $value, )*
                 ..Graphics::default()
-            };
+            });
+        }
+    };
+    ($output:expr, $rect:expr, { $($name:ident : $value:expr $(,)?),* } ) => {
+        {
+            let rect = $rect;
 
-            vec![graphics]
+            $output.graphics_list.push(Graphics {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                $( $name: $value, )*
+                ..Graphics::default()
+            });
         }
     };
 }
 
 pub use graphics;
-pub use single_graphics;
+pub use add_graphics;

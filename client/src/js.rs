@@ -11,9 +11,9 @@ extern {
     pub fn poll_event() -> Option<Event>;
     pub fn send_message(bytes: &[u8]);
     pub fn poll_message() -> Option<Vec<u8>>;
-    pub fn set_window_aspect_ratio(aspect_ratio: f32);
-    pub fn get_window_width() -> f32;
-    pub fn get_window_height() -> f32;
+    pub fn set_window_aspect_ratio(aspect_ratio: f64);
+    pub fn get_window_width() -> f64;
+    pub fn get_window_height() -> f64;
     pub fn get_string_id(string: &str) -> StringId;
 
     pub fn clear_canvas();
@@ -48,11 +48,11 @@ impl Js {
         }
     }
 
-    pub fn set_window_aspect_ratio(aspect_ratio: f32) {
+    pub fn set_window_aspect_ratio(aspect_ratio: f64) {
         unsafe { set_window_aspect_ratio(aspect_ratio) };
     }
 
-    pub fn get_window_size() -> (f32, f32) {
+    pub fn get_window_size() -> (f64, f64) {
         (
             unsafe { get_window_width() },
             unsafe { get_window_height() },

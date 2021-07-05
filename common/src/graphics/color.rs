@@ -32,10 +32,10 @@ impl Color {
         ((self.r as u32) << 24) + ((self.g as u32) << 16) + ((self.b as u32) << 8) + (self.a as u32)
     }
 
-    pub fn apply_alpha(&self, alpha: f32) -> Self {
+    pub fn apply_alpha(&self, alpha: f64) -> Self {
         let mut result = self.clone();
 
-        result.a = ((self.a as f32) * alpha).round() as u8;
+        result.a = ((self.a as f64) * alpha).round() as u8;
 
         result
     }

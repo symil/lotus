@@ -5,10 +5,10 @@ use crate::serialization::*;
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, Serializable)]
 pub struct Rect {
-    pub x: f32,
-    pub y: f32,
-    pub width: f32,
-    pub height: f32,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
 }
 
 impl Default for Rect {
@@ -18,27 +18,27 @@ impl Default for Rect {
 }
 
 impl Rect {
-    pub fn x1(&self) -> f32 {
+    pub fn x1(&self) -> f64 {
         self.x - self.width / 2.
     }
 
-    pub fn y1(&self) -> f32 {
+    pub fn y1(&self) -> f64 {
         self.y - self.height / 2.
     }
 
-    pub fn x2(&self) -> f32 {
+    pub fn x2(&self) -> f64 {
         self.x + self.width / 2.
     }
 
-    pub fn y2(&self) -> f32 {
+    pub fn y2(&self) -> f64 {
         self.y + self.height / 2.
     }
 
-    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
+    pub fn new(x: f64, y: f64, width: f64, height: f64) -> Self {
         Self { x, y, width, height }
     }
 
-    pub fn from_top_left(x1: f32, y1: f32, width: f32, height: f32) -> Self {
+    pub fn from_top_left(x1: f64, y1: f64, width: f64, height: f64) -> Self {
         Self {
             x: x1 + width / 2.0,
             y: y1 + height / 2.0,
@@ -47,7 +47,7 @@ impl Rect {
         }
     }
 
-    pub fn from_corners(x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
+    pub fn from_corners(x1: f64, y1: f64, x2: f64, y2: f64) -> Self {
         Self {
             x: (x1 + x2) / 2.0,
             y: (y1 + y2) / 2.0,
@@ -56,7 +56,7 @@ impl Rect {
         }
     }
 
-    pub fn from_size(width: f32, height: f32) -> Self {
+    pub fn from_size(width: f64, height: f64) -> Self {
         Self {
             x: width / 2.0,
             y: height / 2.0,
@@ -69,11 +69,11 @@ impl Rect {
         Self::from_corners(self.x1().round(), self.y1().round(), self.x2().round(), self.y2().round())
     }
 
-    pub fn contains(&self, x: f32, y: f32) -> bool {
+    pub fn contains(&self, x: f64, y: f64) -> bool {
         x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
     }
 
-    pub fn translate(&self, x: f32, y: f32) -> Self {
+    pub fn translate(&self, x: f64, y: f64) -> Self {
         Self {
             x: self.x + x,
             y: self.y + y,
@@ -82,7 +82,7 @@ impl Rect {
         }
     }
 
-    pub fn scale(&self, ratio: f32) -> Self {
+    pub fn scale(&self, ratio: f64) -> Self {
         Self {
             x: self.x,
             y: self.y,
@@ -91,7 +91,7 @@ impl Rect {
         }
     }
 
-    pub fn pad(&self, width: f32, height: f32) -> Self {
+    pub fn pad(&self, width: f64, height: f64) -> Self {
         Self {
             x: self.x,
             y: self.y,
@@ -100,17 +100,17 @@ impl Rect {
         }
     }
 
-    pub fn strip(&self, width: f32, height: f32) -> Self {
+    pub fn strip(&self, width: f64, height: f64) -> Self {
         self.pad(-width, -height)
     }
 
-    pub fn strip_margin(&self, margin: f32) -> Self {
+    pub fn strip_margin(&self, margin: f64) -> Self {
         let to_stip = margin * 2.;
 
         self.strip(to_stip, to_stip)
     }
 
-    pub fn pad_to_match_aspect_ratio(&self, aspect_ratio: Option<f32>) -> Self {
+    pub fn pad_to_match_aspect_ratio(&self, aspect_ratio: Option<f64>) -> Self {
         match aspect_ratio {
             None => self.clone(),
             Some(ratio) => {
@@ -130,7 +130,7 @@ impl Rect {
         }
     }
 
-    pub fn strip_to_match_aspect_ratio(&self, aspect_ratio: Option<f32>) -> Self {
+    pub fn strip_to_match_aspect_ratio(&self, aspect_ratio: Option<f64>) -> Self {
         match aspect_ratio {
             None => self.clone(),
             Some(ratio) => {
@@ -150,7 +150,7 @@ impl Rect {
         }
     }
 
-    pub fn multiply(&self, ratio: f32) -> Self {
+    pub fn multiply(&self, ratio: f64) -> Self {
         Self {
             x: self.x * ratio,
             y: self.y * ratio,
@@ -159,7 +159,7 @@ impl Rect {
         }
     }
 
-    pub fn split_horizontally(&self, left_width: f32) -> (Self, Self) {
+    pub fn split_horizontally(&self, left_width: f64) -> (Self, Self) {
         let right_width = self.width - left_width;
 
         (
@@ -168,7 +168,7 @@ impl Rect {
         )
     }
 
-    pub fn split_vertically(&self, top_height: f32) -> (Self, Self) {
+    pub fn split_vertically(&self, top_height: f64) -> (Self, Self) {
         let bottom_height = self.width - top_height;
 
         (
@@ -177,7 +177,7 @@ impl Rect {
         )
     }
 
-    pub fn symmetry(&self, x: f32, y: f32) -> Self {
+    pub fn symmetry(&self, x: f64, y: f64) -> Self {
         Self {
             x: 2.0 * x - self.x,
             y: 2.0 * y - self.y,

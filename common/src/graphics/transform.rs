@@ -3,10 +3,10 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub struct Transform {
-    pub tx: f32,
-    pub ty: f32,
-    pub sx: f32,
-    pub sy: f32,
+    pub tx: f64,
+    pub ty: f64,
+    pub sx: f64,
+    pub sy: f64,
 }
 
 impl Transform {
@@ -14,28 +14,28 @@ impl Transform {
         Transform { tx: 0., ty: 0., sx: 1., sy: 1. }
     }
 
-    pub fn apply(&self, x: f32, y: f32) -> (f32, f32) {
+    pub fn apply(&self, x: f64, y: f64) -> (f64, f64) {
         (
             x * self.sx + self.tx,
             y * self.sy + self.ty,
         )
     }
 
-    pub fn apply_reverse(&self, x: f32, y: f32) -> (f32, f32) {
+    pub fn apply_reverse(&self, x: f64, y: f64) -> (f64, f64) {
         (
             (x - self.tx) / self.sx,
             (y - self.ty) / self.sy,
         )
     }
 
-    pub fn scale(&self, width: f32, height: f32) -> (f32, f32) {
+    pub fn scale(&self, width: f64, height: f64) -> (f64, f64) {
         (
             width * self.sx,
             height * self.sy
         )
     }
 
-    pub fn scale_reverse(&self, width: f32, height: f32) -> (f32, f32) {
+    pub fn scale_reverse(&self, width: f64, height: f64) -> (f64, f64) {
         (
             width / self.sx,
             height / self.sy

@@ -1,23 +1,30 @@
-use std::{marker::PhantomData, mem::take, rc::Rc};
+use std::{mem::{self, take}, rc::Rc};
 
-use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, traits::{interaction::Interaction, local_data::LocalData, player::Player, request::Request, view::{RectView, View}}};
+use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, traits::{interaction::Interaction, local_data::LocalData, player::Player, request::Request, view::{RenderOutput, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-pub struct Client<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D>> {
+pub struct Client<P : Player, R : Request, D : LocalData> {
     initialized: bool,
     state: Option<ClientState<P, R, D>>,
-    virtual_width: f32,
-    virtual_height: f32,
-    virtual_to_real_ratio: f32,
-    cursor_x: f32,
-    cursor_y: f32,
+    virtual_width: f64,
+    virtual_height: f64,
+    virtual_to_real_ratio: f64,
+    cursor_x: f64,
+    cursor_y: f64,
     interaction_stack: Vec<Box<dyn Interaction<P, R, D>>>,
-    _v: PhantomData<V>
+    create_root: fn() -> Rc<dyn View<P, R, D>>
 }
 
-impl<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D> + 'static> Client<P, R, D, V> {
-    pub fn new(virtual_width: f32, virtual_height: f32) -> Self {
+pub struct ClientCreateInfo<P : Player, R : Request, D : LocalData> {
+    pub vitual_size: (f64, f64),
+    pub create_root: fn() -> Rc<dyn View<P, R, D>>
+}
+
+impl<P : Player, R : Request, D : LocalData> Client<P, R, D> {
+    pub fn new(create_info: ClientCreateInfo<P, R, D>) -> Self {
+        let (virtual_width, virtual_height) = create_info.vitual_size;
+
         Self {
             initialized: false,
             state: Some(ClientState::new(|string| Js::log(string))),
@@ -27,7 +34,7 @@ impl<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D> + 'sta
             cursor_x: 0.,
             cursor_y: 0.,
             interaction_stack: vec![Box::new(DefaultInteraction)],
-            _v: PhantomData
+            create_root: create_info.create_root
         }
     }
 
@@ -64,10 +71,10 @@ impl<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D> + 'sta
 
         if self.initialized {
             let rect = Rect::from_size(self.virtual_width, self.virtual_height);
-            let root = Rc::new(V::new(rect));
+            let root = (self.create_root)();
             let mut views = vec![];
             
-            self.collect_views(&mut state, root, Transform::identity(), &mut views);
+            self.collect_views(&mut state, root, rect, Transform::identity(), &mut views);
             state.hovered = self.render_views(&mut state, views);
         }
 
@@ -109,15 +116,16 @@ impl<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D> + 'sta
         list
     }
 
-    fn collect_views(&mut self, state: &ClientState<P, R, D>, view: Rc<dyn View<P, R, D>>, current_transform: Transform, list: &mut Vec<(Rc<dyn View<P, R, D>>, f32, Vec<Graphics>, Vec<Rect>)>) {
-        let view_transform = view.get_transform(state);
-        let graphics_list = view.render(state);
-        let children = view.get_children(state);
-        let transform = current_transform.multiply(&view_transform);
+    fn collect_views(&mut self, state: &mut ClientState<P, R, D>, view: Rc<dyn View<P, R, D>>, rect: Rect, current_transform: Transform, list: &mut Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>) {
+        let mut output = RenderOutput::new(rect.clone());
+        
+        view.render(state, &rect, &mut output);
+        
+        let transform = current_transform.multiply(&output.transform);
         let mut rect_list = vec![];
         let mut hover_z = -1.;
 
-        for graphics in &graphics_list {
+        for graphics in &output.graphics_list {
             let rect = graphics.get_rect()
                 .translate(graphics.offset_x, graphics.offset_y)
                 .scale(graphics.scale)
@@ -132,14 +140,14 @@ impl<P : Player, R : Request, D : LocalData, V : RectView + View<P, R, D> + 'sta
             rect_list.push(rect);
         }
 
-        list.push((view, hover_z, graphics_list, rect_list));
+        list.push((view, hover_z, mem::take(&mut output.graphics_list), rect_list));
 
-        for child in children {
-            self.collect_views(state, child, transform, list);
+        for (child_view, child_rect) in output.children {
+            self.collect_views(state, child_view, child_rect, transform, list);
         }
     }
 
-    fn render_views(&mut self, state: &ClientState<P, R, D>, list: Vec<(Rc<dyn View<P, R, D>>, f32, Vec<Graphics>, Vec<Rect>)>) -> Option<Rc<dyn View<P, R, D>>> {
+    fn render_views(&mut self, state: &ClientState<P, R, D>, list: Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>) -> Option<Rc<dyn View<P, R, D>>> {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
         let mut cursor = Cursor::default();

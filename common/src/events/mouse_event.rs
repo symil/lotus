@@ -6,8 +6,8 @@ use lotus_as_js_string_macro::*;
 pub struct MouseEvent {
     pub action: MouseAction,
     pub button: MouseButton,
-    pub x: f32,
-    pub y: f32
+    pub x: f64,
+    pub y: f64
 }
 
 #[wasm_bindgen(constructor)]
