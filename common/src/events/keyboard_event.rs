@@ -7,9 +7,9 @@ pub struct KeyboardEvent {
     pub action: KeyboardAction,
     pub code: KeyCode,
     pub text: Option<char>,
-    pub ctrl: bool,
-    pub shift: bool,
-    pub alt: bool,
+    pub ctrl_key: bool,
+    pub shift_key: bool,
+    pub alt_key: bool,
 }
 
 #[wasm_bindgen(constructor)]
@@ -20,16 +20,16 @@ impl KeyboardEvent {
             action: KeyboardAction::None,
             code: KeyCode::None,
             text: None,
-            ctrl: false,
-            shift: false,
-            alt: false
+            ctrl_key: false,
+            shift_key: false,
+            alt_key: false
         }
     }
 }
 
 #[as_js_string(lowercase)]
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum KeyboardAction {
     None,
     Down,
@@ -38,7 +38,7 @@ pub enum KeyboardAction {
 
 #[as_js_string]
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum KeyCode {
     None,
     Escape,

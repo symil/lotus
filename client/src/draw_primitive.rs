@@ -36,6 +36,7 @@ pub struct DrawPrimitive {
     pub text_vertical_align: TextVerticalAlign,
     pub text_bold: bool,
     pub text_italic: bool,
+    pub text_cursor_index: f64,
 }
 
 impl DrawPrimitive {

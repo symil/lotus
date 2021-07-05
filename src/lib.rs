@@ -1,5 +1,5 @@
 pub use lotus_common::graphics::{color::*, graphics::*, layout::*, rect::*, size::*, transform::*, simple_layout::*};
-pub use lotus_common::events::{mouse_event::*, keyboard_event::*, window_event::*};
+pub use lotus_common::events::{mouse_event::*, keyboard_event::*, window_event::*, event_handling::*};
 pub use lotus_common::serialization::*;
 pub use lotus_common::traits::{interaction::*, view::*, world::*};
 pub use lotus_common::{client_state::*, server_api::*};

@@ -9,7 +9,7 @@ export function hashNumbers(a, b) {
 }
 
 export function hashString(string) {
-    let hash = 0;
+    let hash = 1;
 
     for (let i = 0; i < string.length; ++i) {
         let code = string.charCodeAt(i);

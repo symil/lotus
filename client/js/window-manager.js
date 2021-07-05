@@ -194,9 +194,9 @@ export class WindowManager {
             action: 'down',
             code: evt.code,
             text: getText(evt),
-            ctrl: evt.ctrlKey,
-            shift: evt.shiftKey,
-            alt: evt.altKey
+            ctrl_key: evt.ctrlKey,
+            shift_key: evt.shiftKey,
+            alt_key: evt.altKey
         });
     }
 
@@ -205,9 +205,9 @@ export class WindowManager {
             action: 'up',
             code: evt.code,
             text: getText(evt),
-            ctrl: evt.ctrlKey,
-            shift: evt.shiftKey,
-            alt: evt.altKey
+            ctrl_key: evt.ctrlKey,
+            shift_key: evt.shiftKey,
+            alt_key: evt.altKey
         });
     }
 

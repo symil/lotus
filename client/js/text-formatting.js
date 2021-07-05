@@ -11,6 +11,7 @@ export function formatText(parameters) {
         textColor,
         textBold,
         textItalic,
+        textCursorIndex,
         backgroundColor,
         borderColor
     } = parameters;
@@ -43,8 +44,8 @@ export function formatText(parameters) {
     let lineHorizontalAlign = false;
     let previousLineHeight = 0;
     let lastToken = { content: '' };
-
-    let tokens = tokenize(text + '\n', baseTextParams);
+    let suffix = textCursorIndex > -1 ? ' \n' : '\n';
+    let tokens = tokenize(text + suffix, baseTextParams);
 
     for (let token of tokens) {
         setCanvasPropertiesFromToken(ctx, token);
@@ -89,7 +90,7 @@ export function formatText(parameters) {
         if (token.content !== '\n') {
             token.x = x;
 
-            if (token.content !== ' ' || currentLine.length > 0) {
+            if (token.content !== ' ' || currentLine.length > 0 || token === tokens[0]) {
                 currentLine.push(token);
             }
 
@@ -139,9 +140,34 @@ export function formatText(parameters) {
 
     ctx.textBaseline = 'bottom';
 
-    for (let token of tokens) {
-        setCanvasPropertiesFromToken(ctx, token);
-        ctx.fillText(token.content, token.x, token.y);
+    let cursorDone = textCursorIndex < 0;
+    let index = 0;
+
+    for (let line of lines) {
+        for (let token of line.tokens) {
+            setCanvasPropertiesFromToken(ctx, token);
+            ctx.fillText(token.content, token.x, token.y);
+
+            let nextIndex = index + token.content.length;
+
+            if (!cursorDone && textCursorIndex <= nextIndex) {
+                // TODO: properly display the cursor on multi-line texts
+                let subText = text.substring(0, textCursorIndex - index);
+                let subTextWidth = ctx.measureText(subText).width;
+                let cursorWidth = 1;
+                let cursorHeight = token.size * 0.85;
+                let cursorX = token.x + subTextWidth;
+                let cursorY = token.y - token.size * 0.95;
+
+                ctx.rect(Math.round(cursorX), Math.round(cursorY), cursorWidth, Math.round(cursorHeight));
+                ctx.fillStyle = token.color;
+                ctx.fill();
+
+                cursorDone = true;
+            }
+
+            index = nextIndex;
+        }
     }
 
     return canvas;

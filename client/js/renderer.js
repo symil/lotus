@@ -34,6 +34,8 @@ export class Renderer {
     clear() {
         this._window.clear();
         this.setCursor(null);
+
+        // TODO: implement a mechanism to clear cache if needed
     }
 
     setCursor(cursor) {
@@ -72,6 +74,7 @@ export class Renderer {
             text_vertical_align,
             text_bold,
             text_italic,
+            text_cursor_index,
         } = primitive;
 
         let x1 = x - width / 2;
@@ -117,7 +120,7 @@ export class Renderer {
 
         if (text) {
             let textPadding = Math.max(border_radius, text_margin);
-            let textImage = this._getTextImageFromCache(text, text_max_width, textPadding, text_size, text_color, text_font, text_bold, text_italic, text_background_color, text_border_color);
+            let textImage = this._getTextImageFromCache(text, text_max_width, textPadding, text_size, text_color, text_font, text_bold, text_italic, text_cursor_index, text_background_color, text_border_color);
             let textX = x - textImage.width / 2;
             let textY = y - textImage.height / 2;
             let dx = (width - textImage.width) / 2;
@@ -136,19 +139,6 @@ export class Renderer {
             }
 
             this._ctx.drawImage(textImage, Math.floor(textX), Math.floor(textY));
-
-            // TODO: display cursor
-
-            // if (textCursorIndex > -1) {
-            //     let textWidth = this._ctx.measureText(text).width;
-            //     let subText = text.substring(0, textCursorIndex);
-            //     let subTextWidth = this._ctx.measureText(subText).width;
-            //     let cursorX = Math.round(textX - HORIZONTAL_ALIGN_TO_OFFSET_X[textHorizontalAlign] * textWidth + subTextWidth);
-            //     let cursorY = Math.round(textY - VERTICAL_ALIGN_TO_OFFSET_Y[textVerticalAlign] * textSize);
-            //     let cursorBox = Box.from([cursorX, cursorY, 1, textSize * 0.85]);
-
-            //     this._fill(cursorBox, textColor);
-            // }
         }
 
         if (overlay_color.a) {
@@ -173,13 +163,13 @@ export class Renderer {
         this._ctx.restore();
     }
 
-    _getTextImageFromCache(textId, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, backgroundColor, borderColor) {
+    _getTextImageFromCache(textId, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor) {
         let text = this._strings.get(textId);
-        let hash = hashNumberList([textId, maxWidth, padding, textSize, colorToU32(textColor), ...stringToArray(textFont), colorToU32(backgroundColor), colorToU32(borderColor)]);
+        let hash = hashNumberList([textId, maxWidth, padding, textSize, colorToU32(textColor), ...stringToArray(textFont), textCursorIndex, colorToU32(backgroundColor), colorToU32(borderColor)]);
         let image = this._cachedTexts.get(hash);
 
         if (!image) {
-            image = formatText({ text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, backgroundColor, borderColor });
+            image = formatText({ text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor });
             this._cachedTexts.set(hash, image);
         }
 

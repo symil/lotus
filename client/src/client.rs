@@ -1,6 +1,6 @@
 use std::{mem::{self, take}, rc::Rc};
 
-use lotus_common::{client_state::ClientState, events::mouse_event::{MouseAction, MouseEvent}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, serialization::Serializable, traits::{interaction::Interaction, view::{RenderOutput, View}}};
+use lotus_common::{client_state::ClientState, events::{event_handling::EventHandling, keyboard_event::KeyboardEvent, mouse_event::{MouseAction, MouseEvent}}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, serialization::Serializable, traits::{interaction::Interaction, view::{RenderOutput, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
@@ -67,6 +67,8 @@ impl<P, R, D> Client<P, R, D>
             }
         }
 
+        let mut keyboard_events = vec![];
+
         while let Some(event) = Js::poll_event() {
             if let Some(_) = event.window {
                 Js::clear_renderer_cache();
@@ -74,8 +76,8 @@ impl<P, R, D> Client<P, R, D>
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
                 self.on_mouse_input(&mut state, mouse_event);
-            } else if let Some(_keyboard_event) = event.keyboard {
-
+            } else if let Some(keyboard_event) = event.keyboard {
+                keyboard_events.push(keyboard_event);
             }
         }
 
@@ -89,6 +91,7 @@ impl<P, R, D> Client<P, R, D>
             let mut views = vec![];
             
             self.collect_views(&mut state, root, rect, Transform::identity(), &mut views);
+            self.trigger_keyboard_events(&mut state, &views, keyboard_events);
             state.hovered = self.render_views(&mut state, views);
         }
 
@@ -161,6 +164,18 @@ impl<P, R, D> Client<P, R, D>
         }
     }
 
+    fn trigger_keyboard_events(&mut self, state: &mut ClientState<P, R, D>, list: &Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>, keyboard_events: Vec<KeyboardEvent>) {
+        for event in keyboard_events {
+            for (view, _, _, _) in list.iter().rev() {
+                match view.on_keyboard_event(state, &event) {
+                    EventHandling::Propagate => {},
+                    EventHandling::Intercept => break,
+                }
+            }
+        }
+
+    }
+
     fn render_views(&mut self, state: &ClientState<P, R, D>, list: Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>) -> Option<Rc<dyn View<P, R, D>>> {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
@@ -230,6 +245,7 @@ impl<P, R, D> Client<P, R, D>
                     text_vertical_align: graphics.text_vertical_align,
                     text_bold: graphics.text_bold,
                     text_italic: graphics.text_italic,
+                    text_cursor_index: graphics.text_cursor_index.map_or(-1., |value| value as f64)
                 };
 
                 Js::draw(primitive);

@@ -64,6 +64,7 @@ pub struct Graphics {
     pub text_vertical_align: TextVerticalAlign,
     pub text_bold: bool,
     pub text_italic: bool,
+    pub text_cursor_index: Option<usize>,
     pub detectable: bool,
     pub cursor: Cursor,
 }
@@ -120,6 +121,7 @@ impl Default for Graphics {
             text_vertical_align: TextVerticalAlign::Middle,
             text_bold: false,
             text_italic: false,
+            text_cursor_index: None,
             detectable: true,
             cursor: Cursor::Default,
         }
@@ -161,7 +163,7 @@ macro_rules! add_graphics {
                 y: rect.y,
                 width: rect.width,
                 height: rect.height,
-                $( $name: $value, )*
+                $( $name: ($value), )*
                 ..lotus::Graphics::default()
             });
         }

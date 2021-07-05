@@ -2,13 +2,14 @@
 
 use std::rc::Rc;
 
-use crate::{client_state::ClientState, graphics::{graphics::Graphics, rect::Rect, transform::Transform}};
+use crate::{client_state::ClientState, events::{event_handling::EventHandling, keyboard_event::KeyboardEvent}, graphics::{graphics::Graphics, rect::Rect, transform::Transform}};
 
 pub trait View<P, R, D> {
     fn render(&self, client: &mut ClientState<P, R, D>, rect: &Rect, output: &mut RenderOutput<P, R, D>);
     fn is_clickable(&self, client: &ClientState<P, R, D>) -> bool { true }
     fn hover(&self, client: &ClientState<P, R, D>, graphics_list: &mut Vec<Graphics>) { }
     fn on_click(&self, client: &mut ClientState<P, R, D>) { }
+    fn on_keyboard_event(&self, client: &mut ClientState<P, R, D>, event: &KeyboardEvent) -> EventHandling { EventHandling::Propagate }
 }
 
 pub struct RenderOutput<P, R, D> {

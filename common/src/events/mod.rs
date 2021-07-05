@@ -4,6 +4,7 @@ use self::{keyboard_event::KeyboardEvent, mouse_event::MouseEvent, window_event:
 pub mod mouse_event;
 pub mod keyboard_event;
 pub mod window_event;
+pub mod event_handling;
 
 #[wasm_bindgen]
 #[derive(Debug)]
