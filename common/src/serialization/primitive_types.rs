@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer, serializable::Serializable};
 
 macro_rules! make_primitive_types_serializable {
@@ -193,6 +195,51 @@ impl<T : Serializable, E : Serializable> Serializable for Result<T, E> {
                 },
                 _ => return None
             })
+        }
+    }
+}
+
+impl<T : Serializable> Serializable for RefCell<T> {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        T::write_bytes(unsafe { value.as_ptr().as_ref().unwrap() }, buffer);
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        match T::read_bytes(buffer) {
+            Some(value) => Some(RefCell::new(value)),
+            None => None
+        }
+    }
+}
+
+impl<T : Serializable + 'static> Serializable for Rc<T> {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        let addr = Rc::as_ptr(value) as usize;
+
+        usize::write_bytes(&addr, buffer);
+
+        if buffer.register(addr) {
+            buffer.write_byte(1);
+            T::write_bytes(value, buffer);
+        } else {
+            buffer.write_byte(0);
+        }
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let addr = match usize::read_bytes(buffer) {
+            Some(value) => value,
+            None => return None
+        };
+        let byte = buffer.read_byte();
+
+        if byte == 1 {
+            match T::read_bytes(buffer) {
+                Some(value) => Some(buffer.register(addr, value)),
+                None => None
+            }
+        } else {
+            buffer.retrieve(addr)
         }
     }
 }

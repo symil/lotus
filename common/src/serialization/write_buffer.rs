@@ -1,11 +1,19 @@
+use std::{collections::{HashSet}};
+
 pub struct WriteBuffer {
-    bytes: Vec<u8>
+    bytes: Vec<u8>,
+    addresses: HashSet<usize>
+}
+
+pub enum RegisterResult {
+
 }
 
 impl WriteBuffer {
     pub fn new() -> Self {
         Self {
             bytes: vec![],
+            addresses: HashSet::new()
         }
     }
 
@@ -19,5 +27,9 @@ impl WriteBuffer {
 
     pub fn into_bytes(self) -> Vec<u8> {
         self.bytes
+    }
+
+    pub fn register(&mut self, addr: usize) -> bool {
+        self.addresses.insert(addr)
     }
 }
