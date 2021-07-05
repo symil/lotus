@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{any::Any, collections::HashMap, rc::Rc};
 
 pub struct ReadBuffer<'a> {
     bytes: &'a [u8],

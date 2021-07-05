@@ -7,10 +7,12 @@ use super::rect::Rect;
 pub struct SimpleLayout<P, R, D> {
     rect: Rect,
     target: Rect,
+    last: Option<Rect>,
     outer_margin: f64,
     inner_margin: f64,
     dx: f64,
     dy: f64,
+    dynamic: bool,
     fixed_items: Vec<(Rc<dyn View<P, R, D>>, Rect)>,
     movable_items: Vec<(Rc<dyn View<P, R, D>>, Rect)>,
 }
@@ -20,17 +22,39 @@ impl<P, R, D> SimpleLayout<P, R, D> {
         Self {
             rect: rect.clone(),
             target: rect.scale(0.25),
+            last: None,
             outer_margin: 0.,
             inner_margin: 0.,
             dx: 0.,
             dy: 1.,
             fixed_items: vec![],
-            movable_items: vec![]
+            movable_items: vec![],
+            dynamic: true
         }
+    }
+
+    pub fn dynamic(mut self) -> Self {
+        self.dynamic = true;
+        self
+    }
+
+    pub fn fixed(mut self) -> Self {
+        self.dynamic = false;
+        self
     }
 
     pub fn scale(mut self, ratio: f64) -> Self {
         self.target = self.target.scale(ratio);
+        self
+    }
+
+    pub fn scale_x(mut self, ratio: f64) -> Self {
+        self.target.width *= ratio;
+        self
+    }
+
+    pub fn scale_y(mut self, ratio: f64) -> Self {
+        self.target.height *= ratio;
         self
     }
 
@@ -61,40 +85,123 @@ impl<P, R, D> SimpleLayout<P, R, D> {
     }
 
     pub fn move_to(mut self, x: f64, y: f64) -> Self {
+        self.flush();
+        self.last = None;
         self.target.x = self.rect.width * x;
         self.target.y = self.rect.height * y;
         self
     }
 
-    pub fn width(mut self, width: f64, aspect_ratio: f64) -> Self {
+    pub fn resize_from_width(mut self, width: f64, aspect_ratio: f64) -> Self {
         self.target.width = self.rect.width * width;
         self.target.height = self.target.width / aspect_ratio;
         self
     }
 
-    pub fn height(mut self, height: f64, aspect_ratio: f64) -> Self {
+    pub fn resize_from_height(mut self, height: f64, aspect_ratio: f64) -> Self {
         self.target.height = self.rect.height * height;
         self.target.width = self.target.height * aspect_ratio;
         self
     }
 
-    pub fn push<V : View<P, R, D>>(mut self, view: V) -> Self {
+    pub fn push<V : View<P, R, D> + 'static>(mut self, view: V) -> Self {
+        let (dx, dy) = self.snap_target_against_last_item();
+
+        self.target.x += dx;
+        self.target.y += dy;
+
+        if self.dynamic && self.movable_items.len() > 0 {
+            for (_, rect) in self.movable_items.iter_mut() {
+                rect.x -= dx / 2.;
+                rect.y -= dy / 2.;
+            }
+
+            self.target.x -= dx / 2.;
+            self.target.y -= dy / 2.;
+        }
+
+        let (mut dx, mut dy) = self.snap_target_against_edges();
+
+        if self.dynamic {
+            let (dx2, dy2) = self.snap_first_against_edges();
+
+            dx += dx2;
+            dy += dy2;
+
+            for (_, rect) in self.movable_items.iter_mut() {
+                rect.x += dx;
+                rect.y += dy;
+            }
+        }
+
+        self.target.x += dx;
+        self.target.y += dy;
+
+        self.movable_items.push((Rc::new(view), self.target.clone()));
+        self.last = Some(self.target.clone());
+
         self
     }
 
-    pub fn towards(mut self, dx: f64, dy: f64) -> Self {
-        let mut items_to_fix = self.movable_items.drain(..self.movable_items.len() - 1).collect();
-        
-        self.fixed_items.append(&mut items_to_fix);
+    fn snap_target_against_last_item(&self) -> (f64, f64) {
+        match self.last {
+            Some(rect) => {
+                let dx = rect.width / 2. + self.inner_margin + self.target.width / 2.;
+                let dy = rect.height / 2. + self.inner_margin + self.target.height / 2.;
 
+                let mx = dx / self.dx.abs();
+                let my = dy / self.dy.abs();
+                let m = f64::min(mx, my);
+
+                (self.dx * m, self.dy * m)
+            },
+            None => (0., 0.)
+        }
+    }
+
+    fn snap_against_edges(&self, rect: &Rect) -> (f64, f64) {
+        let mut dx : f64 = 0.;
+        let mut dy : f64 = 0.;
+
+        dx = dx.max(self.outer_margin - rect.x1());
+        dx = dx.min(self.rect.width - self.outer_margin - rect.x2());
+
+        dy = dy.max(self.outer_margin - rect.y1());
+        dy = dy.min(self.rect.height - self.outer_margin - rect.y2());
+
+        (dx, dy)
+    }
+
+    fn snap_target_against_edges(&self) -> (f64, f64) {
+        self.snap_against_edges(&self.target)
+    }
+
+    fn snap_first_against_edges(&self) -> (f64, f64) {
+        match self.movable_items.first() {
+            Some((_, rect)) => self.snap_against_edges(rect),
+            None => (0., 0.)
+        }
+    }
+
+    pub fn towards(mut self, dx: f64, dy: f64) -> Self {
+        self.flush();
         self.dx = dx;
         self.dy = dy;
         self
     }
 
+    fn flush(&mut self) {
+        self.fixed_items.append(&mut self.movable_items);
+    }
+
+    pub fn release(mut self) -> Self {
+        self.flush();
+        self
+    }
+
     pub fn load(mut self, output: &mut RenderOutput<P, R, D>) {
+        self.flush();
         output.children.append(&mut self.fixed_items);
-        output.children.append(&mut self.movable_items);
     }
 
     pub fn towards_top(self) -> Self    { self.towards(0., -1.) }
