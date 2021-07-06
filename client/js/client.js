@@ -1,5 +1,4 @@
 import { Renderer } from './renderer';
-import { toSnakeCase } from './utils';
 import { WindowManager } from './window-manager';
 
 export class Client {
@@ -80,12 +79,14 @@ export class Client {
         if (event) {
             let { type, payload } = event;
 
-            event = new this._wasm.Event();
+            event = new this._wasm.UiEvent();
 
             if (type === 'mouse') {
                 payload = Object.assign(new this._wasm.MouseEvent(), payload);
             } else if (type === 'keyboard') {
                 payload = Object.assign(new this._wasm.KeyboardEvent(), payload);
+            } else if (type === 'wheel') {
+                payload = Object.assign(new this._wasm.WheelEvent(), payload);
             }
 
             event[type] = payload;

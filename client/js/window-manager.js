@@ -1,4 +1,5 @@
 const BUTTON_TO_STRING = ['left', 'middle', 'right'];
+const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
 const CLICK_DISTANCE_THRESHOLD = 5;
 
 export class WindowManager {
@@ -227,7 +228,12 @@ export class WindowManager {
     }
 
     _onWheel(evt) {
-        // TODO
+        this._emit('wheel', {
+            delta_x: evt.deltaX,
+            delta_y: evt.deltaY,
+            delta_z: evt.deltaZ,
+            delta_mode: DELTA_MODE_TO_STRING[evt.deltaMode]
+        });
     }
 }
 
