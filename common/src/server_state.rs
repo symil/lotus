@@ -1,12 +1,14 @@
-use std::{cell::RefCell, collections::HashMap, mem::take};
+use std::{cell::RefCell, collections::HashMap, mem::take, time::Instant};
 
-pub struct ServerApi<E> {
-    outgoing_messages: HashMap<usize, Vec<E>>
+pub struct ServerState<E> {
+    clock: Instant,
+    outgoing_messages: HashMap<usize, Vec<E>>,
 }
 
-impl<E> ServerApi<E> {
+impl<E> ServerState<E> {
     pub fn new() -> Self {
         Self {
+            clock: Instant::now(),
             outgoing_messages: HashMap::new(),
         }
     }
@@ -31,5 +33,9 @@ impl<E> ServerApi<E> {
 
     pub fn poll_outgoing_messages(&mut self) -> HashMap<usize, Vec<E>> {
         take(&mut self.outgoing_messages)
+    }
+
+    pub fn get_current_time(&self) -> u128 {
+        self.clock.elapsed().as_millis()
     }
 }

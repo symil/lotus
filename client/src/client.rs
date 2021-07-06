@@ -6,21 +6,21 @@ use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimiti
 
 pub struct Client<P, R, E, D> {
     initialized: bool,
-    state: Option<ClientState<P, R, D>>,
+    state: Option<ClientState<P, R, E, D>>,
     virtual_width: f64,
     virtual_height: f64,
     virtual_to_real_ratio: f64,
     cursor_x: f64,
     cursor_y: f64,
-    interaction_stack: Vec<Box<dyn Interaction<P, R, D>>>,
-    create_root: fn() -> Rc<dyn View<P, R, D>>,
+    interaction_stack: Vec<Box<dyn Interaction<P, R, E, D>>>,
+    create_root: fn() -> Rc<dyn View<P, R, E, D>>,
     window_title: &'static str,
     _e: PhantomData<E>
 }
 
-pub struct ClientCreateInfo<P, R, D> {
+pub struct ClientCreateInfo<P, R, E, D> {
     pub vitual_size: (f64, f64),
-    pub create_root: fn() -> Rc<dyn View<P, R, D>>,
+    pub create_root: fn() -> Rc<dyn View<P, R, E, D>>,
     pub window_title: &'static str
 }
 
@@ -31,7 +31,7 @@ impl<P, R, E, D> Client<P, R, E, D>
         E : Serializable,
         D : Default
 {
-    pub fn new(create_info: ClientCreateInfo<P, R, D>) -> Self {
+    pub fn new(create_info: ClientCreateInfo<P, R, E, D>) -> Self {
         let (virtual_width, virtual_height) = create_info.vitual_size;
 
         Self {
@@ -60,20 +60,19 @@ impl<P, R, E, D> Client<P, R, E, D>
 
         self.virtual_to_real_ratio = window_width / self.virtual_width;
 
-        let mut events = vec![];
+        let mut game_events = vec![];
+        let mut keyboard_events = vec![];
 
         while let Some(bytes) = Js::poll_message() {
             match <ServerMessage<P, E>>::deserialize(&bytes) {
                 Some(mut message) => {
                     self.initialized = true;
                     state.user = Rc::clone(&message.player);
-                    events.append(&mut message.events);
+                    game_events.append(&mut message.events);
                 },
                 None => {}
             }
         }
-
-        let mut keyboard_events = vec![];
 
         while let Some(event) = Js::poll_event() {
             if let Some(_) = event.window {
@@ -98,13 +97,14 @@ impl<P, R, E, D> Client<P, R, E, D>
             
             self.collect_views(&mut state, root, rect, Transform::identity(), &mut views);
             self.trigger_keyboard_events(&mut state, &views, keyboard_events);
+            self.trigger_game_events(&mut state, &views, game_events);
             state.hovered = self.render_views(&mut state, views);
         }
 
         self.state = Some(state);
     }
 
-    fn on_mouse_input(&mut self, state: &mut ClientState<P, R, D>, event: MouseEvent) {
+    fn on_mouse_input(&mut self, state: &mut ClientState<P, R, E, D>, event: MouseEvent) {
         let interactions = self.get_active_interactions(state);
 
         match event.action {
@@ -121,7 +121,7 @@ impl<P, R, E, D> Client<P, R, E, D>
         }
     }
 
-    fn get_active_interactions(&self, state: &ClientState<P, R, D>) -> Vec<&Box<dyn Interaction<P, R, D>>> {
+    fn get_active_interactions(&self, state: &ClientState<P, R, E, D>) -> Vec<&Box<dyn Interaction<P, R, E, D>>> {
         let mut list = vec![];
 
         for interaction in &self.interaction_stack {
@@ -139,7 +139,7 @@ impl<P, R, E, D> Client<P, R, E, D>
         list
     }
 
-    fn collect_views(&mut self, state: &mut ClientState<P, R, D>, view: Rc<dyn View<P, R, D>>, rect: Rect, current_transform: Transform, list: &mut Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>) {
+    fn collect_views(&mut self, state: &mut ClientState<P, R, E, D>, view: Rc<dyn View<P, R, E, D>>, rect: Rect, current_transform: Transform, list: &mut Vec<(Rc<dyn View<P, R, E, D>>, f64, Vec<Graphics>, Vec<Rect>)>) {
         let mut output = RenderOutput::new(rect.clone());
         
         view.render(state, &rect, &mut output);
@@ -170,7 +170,7 @@ impl<P, R, E, D> Client<P, R, E, D>
         }
     }
 
-    fn trigger_keyboard_events(&mut self, state: &mut ClientState<P, R, D>, list: &Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>, keyboard_events: Vec<KeyboardEvent>) {
+    fn trigger_keyboard_events(&mut self, state: &mut ClientState<P, R, E, D>, list: &Vec<(Rc<dyn View<P, R, E, D>>, f64, Vec<Graphics>, Vec<Rect>)>, keyboard_events: Vec<KeyboardEvent>) {
         for event in keyboard_events {
             for (view, _, _, _) in list.iter().rev() {
                 match view.on_keyboard_event(state, &event) {
@@ -179,10 +179,20 @@ impl<P, R, E, D> Client<P, R, E, D>
                 }
             }
         }
-
     }
 
-    fn render_views(&mut self, state: &ClientState<P, R, D>, list: Vec<(Rc<dyn View<P, R, D>>, f64, Vec<Graphics>, Vec<Rect>)>) -> Option<Rc<dyn View<P, R, D>>> {
+    fn trigger_game_events(&mut self, state: &mut ClientState<P, R, E, D>, list: &Vec<(Rc<dyn View<P, R, E, D>>, f64, Vec<Graphics>, Vec<Rect>)>, game_events: Vec<E>) {
+        for event in game_events {
+            for (view, _, _, _) in list.iter().rev() {
+                match view.on_game_event(state, &event) {
+                    EventHandling::Propagate => {},
+                    EventHandling::Intercept => break,
+                }
+            }
+        }
+    }
+
+    fn render_views(&mut self, state: &ClientState<P, R, E, D>, list: Vec<(Rc<dyn View<P, R, E, D>>, f64, Vec<Graphics>, Vec<Rect>)>) -> Option<Rc<dyn View<P, R, E, D>>> {
         let mut current_z = -1.;
         let mut hovered_index = usize::MAX;
         let mut cursor = Cursor::default();

@@ -135,7 +135,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                 }
             };
         },
-        Data::Union(_data_union) => emit_call_site_error!("unions not supported")
+        Data::Union(_data_union) => emit_call_site_error!("unions are not supported")
     };
 
     let mut generics_name_list = vec![];
