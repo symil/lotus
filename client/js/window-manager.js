@@ -1,4 +1,5 @@
 const BUTTON_TO_STRING = ['left', 'middle', 'right'];
+const CLICK_DISTANCE_THRESHOLD = 5;
 
 export class WindowManager {
     constructor() {
@@ -11,6 +12,12 @@ export class WindowManager {
 
         this._pendingEvents = [];
         this._initialized = false;
+
+        this._pressLocation = {
+            left: null,
+            middle: null,
+            right: null
+        };
     }
 
     _init() {
@@ -162,31 +169,39 @@ export class WindowManager {
         this._pendingEvents.push({ type, payload });
     }
 
+    _parseEvent(action, evt) {
+        let button = BUTTON_TO_STRING[evt.button] || 'none';
+        let x = evt.clientX - this._canvasX;
+        let y = evt.clientY - this._canvasY;
+
+        return { action, button, x, y };
+    }
+
     _onMouseMove(evt) {
-        this._emit('mouse', {
-            action: 'move',
-            button: 'none',
-            x: evt.clientX - this._canvasX,
-            y: evt.clientY - this._canvasY,
-        });
+        let { action, button, x, y } = this._parseEvent('move', evt);
+
+        this._emit('mouse', { action, button, x, y });
     }
 
     _onMouseDown(evt) {
-        this._emit('mouse', {
-            action: 'down',
-            button: BUTTON_TO_STRING[evt.button],
-            x: evt.clientX - this._canvasX,
-            y: evt.clientY - this._canvasY,
-        });
+        let { action, button, x, y } = this._parseEvent('down', evt);
+
+        this._pressLocation[button] = { x, y };
+        this._emit('mouse', { action, button, x, y });
     }
 
     _onMouseUp(evt) {
-        this._emit('mouse', {
-            action: 'up',
-            button: BUTTON_TO_STRING[evt.button],
-            x: evt.clientX - this._canvasX,
-            y: evt.clientY - this._canvasY,
-        });
+        let { action, button, x, y } = this._parseEvent('up', evt);
+
+        if (this._pressLocation[button]) {
+            if (distance(this._pressLocation[button], { x, y }) < CLICK_DISTANCE_THRESHOLD) {
+                this._emit('mouse', { action: 'click', button, x, y });
+            }
+
+            this._pressLocation[button] = null;
+        }
+
+        this._emit('mouse', { action, button, x, y });
     }
 
     _onKeyDown(evt) {
@@ -222,4 +237,8 @@ function getText(evt) {
     } else {
         return null;
     }
+}
+
+function distance(p1, p2) {
+    return Math.hypot(p2.x - p1.x, p2.y - p1.y);
 }

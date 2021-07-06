@@ -25,17 +25,18 @@ impl MouseEvent {
 
 #[as_js_string(lowercase)]
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseAction {
     None,
     Move,
     Down,
+    Click,
     Up
 }
 
 #[as_js_string(lowercase)]
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseButton {
     None,
     Left,
