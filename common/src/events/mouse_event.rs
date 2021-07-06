@@ -15,8 +15,8 @@ impl MouseEvent {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            action: MouseAction::None,
-            button: MouseButton::None,
+            action: MouseAction::Move,
+            button: MouseButton::Left,
             x: 0.,
             y: 0.,
         }
@@ -27,7 +27,6 @@ impl MouseEvent {
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseAction {
-    None,
     Move,
     Down,
     Click,
@@ -38,7 +37,6 @@ pub enum MouseAction {
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseButton {
-    None,
     Left,
     Middle,
     Right

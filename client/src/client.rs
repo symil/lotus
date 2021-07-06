@@ -81,10 +81,6 @@ impl<P, R, E, D> Client<P, R, E, D>
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
                 self.on_mouse_input(&mut state, mouse_event);
-
-                if mouse_event.action != MouseAction::Move {
-                    state.log_value(&mouse_event);
-                }
             } else if let Some(keyboard_event) = event.keyboard {
                 keyboard_events.push(keyboard_event);
             }

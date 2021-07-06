@@ -170,7 +170,7 @@ export class WindowManager {
     }
 
     _parseEvent(action, evt) {
-        let button = BUTTON_TO_STRING[evt.button] || 'none';
+        let button = BUTTON_TO_STRING[evt.button] || 'left';
         let x = evt.clientX - this._canvasX;
         let y = evt.clientY - this._canvasY;
 

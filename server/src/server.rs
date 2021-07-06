@@ -57,7 +57,6 @@ impl<P, R, E, W> Server<P, R, E, W>
 
     fn update(&mut self) {
         let mut state = take(&mut self.state).unwrap();
-        // let mut websocket_server = take(&mut self.websocket_server).unwrap();
 
         match self.websocket_server.accept() {
             Some(websocket) => {
