@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use super::{transform::Transform};
-use crate::serialization::*;
+use lotus_serializable::Serializable;
 
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, Serializable)]

@@ -1,10 +1,10 @@
-use std::{fmt::Debug, rc::Rc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 use crate::{logger::Logger, traits::{view::View}};
 
 pub struct ClientState<P, R, D> {
     pub logger: Logger,
-    pub user: P,
+    pub user: Rc<RefCell<P>>,
     pub hovered: Option<Rc<dyn View<P, R, D>>>,
     pub local_data: D,
     pub outgoing_requests: Vec<R>,
@@ -14,7 +14,7 @@ impl<P : Default, R, D : Default> ClientState<P, R, D> {
     pub fn new(log_function: fn(&str)) -> Self {
         Self {
             logger: Logger::new(log_function),
-            user: P::default(),
+            user: Rc::new(RefCell::new(P::default())),
             hovered: None,
             local_data: D::default(),
             outgoing_requests: vec![]

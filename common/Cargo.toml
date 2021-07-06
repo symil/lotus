@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+lotus-serializable = { path = "../serializable" }
 lotus-serializable-macro = { path = "../serializable-macro" }
 lotus-as-js-string-macro = { path = "../as-js-string-macro" }
 wasm-bindgen = "0.2"

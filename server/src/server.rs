@@ -1,5 +1,5 @@
 use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc, thread::sleep, time::Duration};
-use lotus_common::{serialization::Serializable, server_api::ServerApi, traits::{world::World}};
+use lotus_common::{Serializable, server_api::ServerApi, server_message::ServerMessage, traits::{world::World}};
 
 use crate::websocket_server::{websocket::{Message, State, WebSocket}, websocket_server::{Mode, WebSocketServer}};
 
@@ -8,23 +8,24 @@ pub struct Connection<P> {
     player: Rc::<RefCell<P>>,
 }
 
-pub struct Server<P, R, W>
+pub struct Server<P, R, E, W>
     where
-        W : World<P, R>
+        W : World<P, R, E>
 {
     connections: HashMap<usize, Connection<P>>,
-    api: ServerApi,
+    api: ServerApi<E>,
     world: W,
 
     // wtf rust
     _r: PhantomData<R>,
 }
 
-impl<P, R, W> Server<P, R, W>
+impl<P, R, E, W> Server<P, R, E, W>
     where
-        P : Serializable + Default,
+        P : Serializable + Default + 'static,
         R : Serializable,
-        W : World<P, R>
+        E : Serializable,
+        W : World<P, R, E>
 {
     pub fn new(world: W) -> Self {
         Self {
@@ -57,7 +58,7 @@ impl<P, R, W> Server<P, R, W>
                     Some(message) => {
                         match message {
                             Message::Connection => {
-                                self.api.notify_player_update(&connection.player);
+                                self.api.notify_state_update(&connection.player);
                                 self.world.on_player_connect(&mut self.api, &connection.player);
                             },
                             Message::Disconnection | Message::Error => {
@@ -81,9 +82,13 @@ impl<P, R, W> Server<P, R, W>
 
             self.world.update(&mut self.api);
 
-            for id in self.api.drain_players_to_notify() {
+            for (id, events) in self.api.poll_outgoing_messages().into_iter() {
                 if let Some(connection) = self.connections.get_mut(&id) {
-                    let bytes = connection.player.borrow().serialize();
+                    let message = ServerMessage {
+                        player: Rc::clone(&connection.player),
+                        events
+                    };
+                    let bytes = message.serialize();
 
                     connection.websocket.send_binary(&bytes);
                 }

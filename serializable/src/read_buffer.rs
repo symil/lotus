@@ -37,6 +37,7 @@ impl<'a> ReadBuffer<'a> {
         }
     }
 
+    #[allow(unused)]
     pub fn read_unchecked(&mut self, length: usize) -> &[u8] {
         let start = self.cursor;
         let end = self.cursor + length;

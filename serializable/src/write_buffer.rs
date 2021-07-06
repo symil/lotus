@@ -5,10 +5,6 @@ pub struct WriteBuffer {
     addresses: HashSet<usize>
 }
 
-pub enum RegisterResult {
-
-}
-
 impl WriteBuffer {
     pub fn new() -> Self {
         Self {

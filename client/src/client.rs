@@ -1,10 +1,10 @@
-use std::{mem::{self, take}, rc::Rc};
+use std::{marker::PhantomData, mem::{self, take}, rc::Rc};
 
-use lotus_common::{client_state::ClientState, events::{event_handling::EventHandling, keyboard_event::KeyboardEvent, mouse_event::{MouseAction, MouseEvent}}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, serialization::Serializable, traits::{interaction::Interaction, view::{RenderOutput, View}}};
+use lotus_common::{Serializable, client_state::ClientState, events::{event_handling::EventHandling, keyboard_event::KeyboardEvent, mouse_event::{MouseAction, MouseEvent}}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, server_message::ServerMessage, traits::{interaction::Interaction, view::{RenderOutput, View}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-pub struct Client<P, R, D> {
+pub struct Client<P, R, E, D> {
     initialized: bool,
     state: Option<ClientState<P, R, D>>,
     virtual_width: f64,
@@ -14,7 +14,8 @@ pub struct Client<P, R, D> {
     cursor_y: f64,
     interaction_stack: Vec<Box<dyn Interaction<P, R, D>>>,
     create_root: fn() -> Rc<dyn View<P, R, D>>,
-    window_title: &'static str
+    window_title: &'static str,
+    _e: PhantomData<E>
 }
 
 pub struct ClientCreateInfo<P, R, D> {
@@ -23,10 +24,11 @@ pub struct ClientCreateInfo<P, R, D> {
     pub window_title: &'static str
 }
 
-impl<P, R, D> Client<P, R, D>
+impl<P, R, E, D> Client<P, R, E, D>
     where
-        P : Serializable + Default,
+        P : Serializable + Default + 'static,
         R : Serializable,
+        E : Serializable,
         D : Default
 {
     pub fn new(create_info: ClientCreateInfo<P, R, D>) -> Self {
@@ -42,7 +44,8 @@ impl<P, R, D> Client<P, R, D>
             cursor_y: 0.,
             interaction_stack: vec![Box::new(DefaultInteraction)],
             create_root: create_info.create_root,
-            window_title: create_info.window_title
+            window_title: create_info.window_title,
+            _e: PhantomData
         }
     }
 
@@ -57,11 +60,14 @@ impl<P, R, D> Client<P, R, D>
 
         self.virtual_to_real_ratio = window_width / self.virtual_width;
 
+        let mut events = vec![];
+
         while let Some(bytes) = Js::poll_message() {
-            match P::deserialize(&bytes) {
-                Some(player) => {
+            match <ServerMessage<P, E>>::deserialize(&bytes) {
+                Some(mut message) => {
                     self.initialized = true;
-                    state.user = player;
+                    state.user = Rc::clone(&message.player);
+                    events.append(&mut message.events);
                 },
                 None => {}
             }

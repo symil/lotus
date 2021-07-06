@@ -1,4 +1,4 @@
-use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer};
+use crate::{read_buffer::ReadBuffer, write_buffer::WriteBuffer};
 
 pub trait Serializable : Sized {
     fn write_bytes(value: &Self, buffer: &mut WriteBuffer);

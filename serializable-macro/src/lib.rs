@@ -2,9 +2,11 @@
 
 use proc_macro::{TokenStream};
 use proc_macro2::{Span};
+use proc_macro_error::*;
 use quote::quote;
 use syn::{self, Data, Fields, GenericParam, Ident, TypeParamBound};
 
+#[proc_macro_error]
 #[proc_macro_derive(Serializable)]
 pub fn serializable_macro_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree
@@ -51,8 +53,8 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                         })
                     }
                 },
-                Fields::Unnamed(_fields) => todo!(),
-                Fields::Unit => todo!()
+                Fields::Unnamed(_fields) => unreachable!(),
+                Fields::Unit => unreachable!()
             }
         },
         Data::Enum(data_enum) => {
@@ -66,7 +68,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                 let name = &variant.ident;
 
                 match &variant.fields {
-                    Fields::Named(_fields_named) => todo!(),
+                    Fields::Named(_fields_named) => unreachable!(),
                     Fields::Unnamed(fields_unnamed) => {
                         let mut sub_vars = vec![];
                         let mut sub_serialize_lines = vec![];
@@ -133,7 +135,7 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                 }
             };
         },
-        Data::Union(_data_union) => todo!()
+        Data::Union(_data_union) => emit_call_site_error!("unions not supported")
     };
 
     let mut generics_name_list = vec![];
@@ -150,12 +152,17 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                 generics_name_list.push(quote! { #name });
 
                 for param in &type_param.bounds {
-                    match param {
+                    let name = match param {
                         TypeParamBound::Trait(trait_bound) => {
-                            paths.push(&trait_bound.path);
+                            let path = &trait_bound.path;
+                            quote! { #path }
                         },
-                        TypeParamBound::Lifetime(_) => todo!(),
-                    }
+                        TypeParamBound::Lifetime(lifetime) => {
+                            quote! { #lifetime }
+                        },
+                    };
+
+                    paths.push(name);
                 }
 
                 if paths.len() > 0 {
@@ -164,8 +171,8 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
                     generics_def_list.push(quote! { #name });
                 }
             },
-            GenericParam::Lifetime(_) => todo!(),
-            GenericParam::Const(_) => todo!(),
+            GenericParam::Lifetime(_) => emit_call_site_error!("lifetime generic parameters are not supported"),
+            GenericParam::Const(_) => emit_call_site_error!("const generic parameters are not supported"),
         }
     }
 
@@ -176,11 +183,11 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
 
     let gen = quote! {
         impl#generics_impl Serializable for #name#generics_type {
-            fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+            fn write_bytes(value: &Self, buffer: &mut lotus_serializable::WriteBuffer) {
                 #serialize
             }
 
-            fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+            fn read_bytes(buffer: &mut lotus_serializable::ReadBuffer) -> Option<Self> {
                 #deserialize
             }
         }

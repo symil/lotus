@@ -134,6 +134,7 @@ dependencies = [
  "lotus-parsable",
  "lotus-parsable-macro",
  "lotus-parser",
+ "lotus-serializable",
  "lotus-serializable-macro",
  "lotus-server",
 ]
@@ -162,6 +163,7 @@ version = "0.1.0"
 dependencies = [
  "js-sys",
  "lotus-as-js-string-macro",
+ "lotus-serializable",
  "lotus-serializable-macro",
  "wasm-bindgen",
 ]
@@ -195,9 +197,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lotus-serializable"
+version = "0.1.0"
+dependencies = [
+ "lotus-serializable-macro",
+]
+
+[[package]]
 name = "lotus-serializable-macro"
 version = "0.1.0"
 dependencies = [
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
