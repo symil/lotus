@@ -83,7 +83,7 @@ impl Graphics {
         self.height = rect.height;
     }
 
-    pub fn load<P, R, E, D>(mut self, output: &mut RenderOutput<P, R, E, D>) {
+    pub fn load<W, R, E, D>(mut self, output: &mut RenderOutput<W, R, E, D>) {
         if self.width < -0.5 {
             self.x = output.parent_rect.x;
             self.y = output.parent_rect.y;

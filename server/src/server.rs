@@ -3,9 +3,9 @@ use lotus_common::{Serializable, server_message::ServerMessage, server_state::Se
 
 use crate::websocket_server::{websocket::{Message, State, WebSocket}, websocket_server::{Mode, WebSocketServer}};
 
-pub struct Server<U, R, E, W>
+pub struct Server<R, E, W>
     where
-        W : World<U, R, E>
+        W : World<R, E>
 {
     state: Option<ServerState<E>>,
     websocket_server: WebSocketServer,
@@ -13,16 +13,14 @@ pub struct Server<U, R, E, W>
     world: W,
 
     // wtf rust
-    _u: PhantomData<U>,
     _r: PhantomData<R>,
 }
 
-impl<U, R, E, W> Server<U, R, E, W>
+impl<R, E, W> Server<R, E, W>
     where
-        U : Serializable + 'static,
         R : Serializable,
         E : Serializable,
-        W : World<U, R, E>
+        W : World<R, E> + Serializable + 'static
 {
     #[allow(invalid_value)]
     pub fn new(world: W) -> Self {
@@ -31,7 +29,6 @@ impl<U, R, E, W> Server<U, R, E, W>
             websocket_server: unsafe { mem::zeroed() },
             connections: HashMap::new(),
             world,
-            _u: PhantomData,
             _r: PhantomData
         }
     }
@@ -103,7 +100,8 @@ impl<U, R, E, W> Server<U, R, E, W>
         for (id, events) in state.poll_outgoing_messages().into_iter() {
             if let Some(websocket) = self.connections.get_mut(&id) {
                 let message = ServerMessage {
-                    user: self.world.get_user_state(id),
+                    user: id,
+                    world: self.world.get_pov(id),
                     events
                 };
                 let bytes = message.serialize();

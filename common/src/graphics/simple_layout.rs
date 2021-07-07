@@ -4,7 +4,7 @@ use crate::traits::view::{RenderOutput, View};
 
 use super::rect::Rect;
 
-pub struct SimpleLayout<P, R, E, D> {
+pub struct SimpleLayout<W, R, E, D> {
     rect: Rect,
     target: Rect,
     last: Option<Rect>,
@@ -13,11 +13,11 @@ pub struct SimpleLayout<P, R, E, D> {
     dx: f64,
     dy: f64,
     dynamic: bool,
-    fixed_items: Vec<(Rc<dyn View<P, R, E, D>>, Rect)>,
-    movable_items: Vec<(Rc<dyn View<P, R, E, D>>, Rect)>,
+    fixed_items: Vec<(Rc<dyn View<W, R, E, D>>, Rect)>,
+    movable_items: Vec<(Rc<dyn View<W, R, E, D>>, Rect)>,
 }
 
-impl<P, R, E, D> SimpleLayout<P, R, E, D> {
+impl<W, R, E, D> SimpleLayout<W, R, E, D> {
     pub fn new(rect: &Rect) -> Self {
         Self {
             rect: rect.clone(),
@@ -104,7 +104,7 @@ impl<P, R, E, D> SimpleLayout<P, R, E, D> {
         self
     }
 
-    pub fn push<V : View<P, R, E, D> + 'static>(mut self, view: V) -> Self {
+    pub fn push<V : View<W, R, E, D> + 'static>(mut self, view: V) -> Self {
         let (dx, dy) = self.snap_target_against_last_item();
 
         self.target.x += dx;
@@ -199,7 +199,7 @@ impl<P, R, E, D> SimpleLayout<P, R, E, D> {
         self
     }
 
-    pub fn load(mut self, output: &mut RenderOutput<P, R, E, D>) {
+    pub fn load(mut self, output: &mut RenderOutput<W, R, E, D>) {
         self.flush();
         output.children.append(&mut self.fixed_items);
     }
