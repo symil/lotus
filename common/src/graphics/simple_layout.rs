@@ -21,7 +21,7 @@ impl<P, R, E, D> SimpleLayout<P, R, E, D> {
     pub fn new(rect: &Rect) -> Self {
         Self {
             rect: rect.clone(),
-            target: rect.scale(0.25),
+            target: rect.clone(),
             last: None,
             outer_margin: 0.,
             inner_margin: 0.,

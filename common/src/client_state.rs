@@ -1,28 +1,28 @@
-use std::{cell::RefCell, fmt::Debug, mem::take, rc::Rc};
+use std::{fmt::Debug, mem::take, rc::Rc};
 
 use crate::{logger::Logger, traits::{view::View}};
 
-pub struct ClientViews<P, R, E, D> {
-    pub hovered: Option<Rc<dyn View<P, R, E, D>>>,
-    pub hover_stack: Vec<Rc<dyn View<P, R, E, D>>>,
-    pub all: Vec<Rc<dyn View<P, R, E, D>>>,
+pub struct ClientViews<U, R, E, D> {
+    pub hovered: Option<Rc<dyn View<U, R, E, D>>>,
+    pub hover_stack: Vec<Rc<dyn View<U, R, E, D>>>,
+    pub all: Vec<Rc<dyn View<U, R, E, D>>>,
 }
 
-pub struct ClientState<P, R, E, D> {
+pub struct ClientState<U, R, E, D> {
     pub logger: Logger,
-    pub user: Rc<RefCell<P>>,
-    pub hovered: Option<Rc<dyn View<P, R, E, D>>>,
-    pub hover_stack: Vec<Rc<dyn View<P, R, E, D>>>,
-    pub all_views: Vec<Rc<dyn View<P, R, E, D>>>,
+    pub user: U,
+    pub hovered: Option<Rc<dyn View<U, R, E, D>>>,
+    pub hover_stack: Vec<Rc<dyn View<U, R, E, D>>>,
+    pub all_views: Vec<Rc<dyn View<U, R, E, D>>>,
     pub local_data: D,
     pub outgoing_requests: Vec<R>,
 }
 
-impl<P : Default, R, E, D : Default> ClientState<P, R, E, D> {
+impl<U : Default, R, E, D : Default> ClientState<U, R, E, D> {
     pub fn new(log_function: fn(&str)) -> Self {
         Self {
             logger: Logger::new(log_function),
-            user: Rc::new(RefCell::new(P::default())),
+            user: U::default(),
             hovered: None,
             hover_stack: vec![],
             all_views: vec![],
@@ -43,7 +43,7 @@ impl<P : Default, R, E, D : Default> ClientState<P, R, E, D> {
         self.outgoing_requests.push(request);
     }
 
-    pub fn take_views(&mut self) -> ClientViews<P, R, E, D> {
+    pub fn take_views(&mut self) -> ClientViews<U, R, E, D> {
         ClientViews {
             hovered: take(&mut self.hovered),
             hover_stack: take(&mut self.hover_stack),
@@ -51,7 +51,7 @@ impl<P : Default, R, E, D : Default> ClientState<P, R, E, D> {
         }
     }
 
-    pub fn set_views(&mut self, views: ClientViews<P, R, E, D>) {
+    pub fn set_views(&mut self, views: ClientViews<U, R, E, D>) {
         self.hovered = views.hovered;
         self.hover_stack = views.hover_stack;
         self.all_views = views.all;

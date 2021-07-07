@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 use lotus_as_js_string_macro::*;
+use crate::traits::view::RenderOutput;
+
 use super::{color::Color, rect::Rect, size::Size};
 
 macro_rules! make_enum {
@@ -80,6 +82,17 @@ impl Graphics {
         self.width = rect.width;
         self.height = rect.height;
     }
+
+    pub fn load<P, R, E, D>(mut self, output: &mut RenderOutput<P, R, E, D>) {
+        if self.width < -0.5 {
+            self.x = output.parent_rect.x;
+            self.y = output.parent_rect.y;
+            self.width = output.parent_rect.width;
+            self.height = output.parent_rect.height;
+        }
+
+        output.graphics_list.push(self);
+    }
 }
 
 impl Default for Graphics {
@@ -90,8 +103,8 @@ impl Default for Graphics {
             z: 0.,
             offset_x: 0.,
             offset_y: 0.,
-            width: 0.,
-            height: 0.,
+            width: -1.,
+            height: -1.,
             shape: Shape::Rectangle,
             aspect_ratio: None,
             scale: 1.,
@@ -153,36 +166,15 @@ macro_rules! graphics {
 }
 
 #[macro_export]
-macro_rules! add_graphics {
-    ($output:expr, { $($name:ident : $value:expr $(,)? ),* } ) => {
+macro_rules! set_graphics {
+    ($graphics:expr, { $($name:ident : $value:expr),* } ) => {
         {
-            let rect = $output.parent_rect;
-
-            $output.graphics_list.push(lotus::Graphics {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-                $( $name: ($value), )*
-                ..lotus::Graphics::default()
-            });
-        }
-    };
-    ($output:expr, $rect:expr, { $($name:ident : $value:expr $(,)?),* } ) => {
-        {
-            let rect = $rect;
-
-            $output.graphics_list.push(lotus::Graphics {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-                $( $name: $value, )*
-                ..lotus::Graphics::default()
-            });
+            $(
+                $graphics.$name = $value;
+            )*
         }
     };
 }
 
 pub use graphics;
-pub use add_graphics;
+pub use set_graphics;

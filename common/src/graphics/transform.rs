@@ -14,6 +14,15 @@ impl Transform {
         Transform { tx: 0., ty: 0., sx: 1., sy: 1. }
     }
 
+    pub fn new(scale: f64, x: f64, y: f64) -> Self {
+        Self {
+            sx: scale,
+            sy: scale,
+            tx: x,
+            ty: y
+        }
+    }
+
     pub fn apply(&self, x: f64, y: f64) -> (f64, f64) {
         (
             x * self.sx + self.tx,

@@ -13,6 +13,10 @@ impl WriteBuffer {
         }
     }
 
+    pub fn get_index(&self) -> usize {
+        self.bytes.len()
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         self.bytes.push(byte);
     }
@@ -25,6 +29,7 @@ impl WriteBuffer {
         self.bytes
     }
 
+    // returns `true` if the address is registered for the first time
     pub fn register(&mut self, addr: usize) -> bool {
         self.addresses.insert(addr)
     }

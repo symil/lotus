@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc, usize};
 
 use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer, serializable::Serializable};
 
@@ -219,27 +219,50 @@ impl<T : Serializable + 'static> Serializable for Rc<T> {
         usize::write_bytes(&addr, buffer);
 
         if buffer.register(addr) {
-            buffer.write_byte(1);
             T::write_bytes(value, buffer);
         } else {
-            buffer.write_byte(0);
+            panic!("attempt to serialize a cycle of Rc<{}>", std::any::type_name::<T>());
         }
     }
 
     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
-        let addr = match usize::read_bytes(buffer) {
-            Some(value) => value,
+        match T::read_bytes(buffer) {
+            Some(value) => Some(Rc::new(value)),
+            None => None
+        }
+    }
+}
+
+impl<K : Serializable + Eq + Hash, V : Serializable> Serializable for HashMap<K, V> {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        usize::write_bytes(&value.len(), buffer);
+
+        for (key, value) in value.iter() {
+            K::write_bytes(key, buffer);
+            V::write_bytes(value, buffer);
+        }
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let size = match usize::read_bytes(buffer) {
+            Some(size) => size,
             None => return None
         };
-        let byte = buffer.read_byte();
+        let mut hashmap = HashMap::with_capacity(size);
 
-        if byte == 1 {
-            match T::read_bytes(buffer) {
-                Some(value) => Some(buffer.register(addr, value)),
-                None => None
-            }
-        } else {
-            buffer.retrieve(addr)
+        for _i in 0..size {
+            let key = match K::read_bytes(buffer) {
+                Some(key) => key,
+                None => return None
+            };
+            let value = match V::read_bytes(buffer) {
+                Some(value) => value,
+                None => return None
+            };
+
+            hashmap.insert(key, value);
         }
+
+        Some(hashmap)
     }
 }
