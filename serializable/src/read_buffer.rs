@@ -1,9 +1,10 @@
-use std::{any::Any, collections::HashMap, rc::Rc};
+use std::{any::Any, collections::HashMap, rc::{Rc}};
 
 pub struct ReadBuffer<'a> {
     bytes: &'a [u8],
     index: usize,
-    objects: HashMap<usize, Rc<dyn Any>>
+    objects: HashMap<usize, Rc<dyn Any>>,
+    error: bool
 }
 
 impl<'a> ReadBuffer<'a> {
@@ -11,12 +12,21 @@ impl<'a> ReadBuffer<'a> {
         Self {
             bytes,
             index: 0,
-            objects: HashMap::new()
+            objects: HashMap::new(),
+            error: false
         }
     }
 
     pub fn get_index(&self) -> usize {
         self.index
+    }
+
+    pub fn set_error(&mut self) {
+        self.error = true;
+    }
+
+    pub fn get_error(&self) -> bool {
+        self.error
     }
 
     pub fn read_byte(&mut self) -> u8 {
@@ -51,26 +61,21 @@ impl<'a> ReadBuffer<'a> {
         &self.bytes[start..end]
     }
 
-    // unused, keeping it just in case
     pub fn register<T : 'static>(&mut self, addr: usize, value: T) -> Rc<T> {
-        let wrapped = Rc::new(value);
-        let clone = Rc::clone(&wrapped);
+        let rc = Rc::new(value);
+        let clone = Rc::clone(&rc);
 
         self.objects.insert(addr, clone);
 
-        wrapped
+        rc
     }
 
-    // unused, keeping it just in case
     pub fn retrieve<T : 'static>(&mut self, addr: usize) -> Option<Rc<T>> {
-        match self.objects.get(&addr) {
-            Some(value) => {
-                match value.downcast_ref::<Rc<T>>() {
-                    Some(value) => Some(Rc::clone(value)),
-                    None => None
-                }
-            },
-            None => None
+        let value = self.objects.get(&addr)?;
+        
+        match Rc::downcast::<T>(Rc::clone(value)) {
+            Ok(value) => Some(value.clone()),
+            Err(_) => None
         }
     }
 }

@@ -23,6 +23,12 @@ impl MouseEvent {
     }
 }
 
+impl MouseEvent {
+    pub fn is_click(&self) -> bool {
+        self.action == MouseAction::Click
+    }
+}
+
 #[as_js_string(lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]

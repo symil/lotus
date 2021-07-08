@@ -29,7 +29,6 @@ impl WriteBuffer {
         self.bytes
     }
 
-    // returns `true` if the address is registered for the first time
     pub fn register(&mut self, addr: usize) -> bool {
         self.addresses.insert(addr)
     }

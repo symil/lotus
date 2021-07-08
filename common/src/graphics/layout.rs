@@ -12,18 +12,18 @@ pub enum LayoutType {
 }
 
 #[derive(Debug)]
-pub struct Layout<W, R, E, D> {
-    pub view: Option<Rc<dyn View<W, R, E, D>>>,
+pub struct Layout<U, R, E, D> {
+    pub view: Option<Rc<dyn View<U, R, E, D>>>,
     pub layout_type: LayoutType,
     pub force: f64,
     pub inner_margin: f64,
     pub outer_margin: f64,
     pub scale: f64,
     pub aspect_ratio: Option<f64>,
-    pub children: Vec<Layout<W, R, E, D>>
+    pub children: Vec<Layout<U, R, E, D>>
 }
 
-impl<W, R, E, D> Default for Layout<W, R, E, D> {
+impl<U, R, E, D> Default for Layout<U, R, E, D> {
     fn default() -> Self {
         Self {
             view: None,
@@ -38,8 +38,8 @@ impl<W, R, E, D> Default for Layout<W, R, E, D> {
     }
 }
 
-impl<W, R, E, D> Layout<W, R, E, D> {
-    pub fn apply(&mut self, input: Rect) -> Vec<(Rc<dyn View<W, R, E, D>>, Rect)> {
+impl<U, R, E, D> Layout<U, R, E, D> {
+    pub fn apply(&mut self, input: Rect) -> Vec<(Rc<dyn View<U, R, E, D>>, Rect)> {
         let mut result = vec![];
 
         let rect = input
@@ -96,7 +96,7 @@ impl<W, R, E, D> Layout<W, R, E, D> {
         result
     }
 
-    pub fn v<V : View<W, R, E, D> + 'static>(&mut self, value: V) {
+    pub fn v<V : View<U, R, E, D> + 'static>(&mut self, value: V) {
         self.view = Some(Rc::new(value));
     }
 

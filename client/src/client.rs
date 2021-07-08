@@ -4,34 +4,34 @@ use lotus_common::{Serializable, client_state::ClientState, events::{event::Even
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
 
-pub struct Client<W, R, E, D> {
+pub struct Client<U, R, E, D> {
     initialized: bool,
-    state: Option<ClientState<W, R, E, D>>,
+    state: Option<ClientState<U, R, E, D>>,
     virtual_width: f64,
     virtual_height: f64,
     virtual_to_real_ratio: f64,
     cursor_x: f64,
     cursor_y: f64,
-    interaction_stack: Vec<Rc<dyn Interaction<W, R, E, D>>>,
-    create_root: fn() -> Rc<dyn View<W, R, E, D>>,
+    interaction_stack: Vec<Rc<dyn Interaction<U, R, E, D>>>,
+    create_root: fn() -> Rc<dyn View<U, R, E, D>>,
     window_title: &'static str,
     _e: PhantomData<E>
 }
 
-pub struct ClientCreateInfo<W, R, E, D> {
+pub struct ClientCreateInfo<U, R, E, D> {
     pub vitual_size: (f64, f64),
-    pub create_root: fn() -> Rc<dyn View<W, R, E, D>>,
+    pub create_root: fn() -> Rc<dyn View<U, R, E, D>>,
     pub window_title: &'static str
 }
 
-impl<W, R, E, D> Client<W, R, E, D>
+impl<U, R, E, D> Client<U, R, E, D>
     where
-        W : Serializable + Default + 'static,
+        U : Serializable + Default + 'static,
         R : Serializable,
         E : Serializable,
         D : Default
 {
-    pub fn new(create_info: ClientCreateInfo<W, R, E, D>) -> Self {
+    pub fn new(create_info: ClientCreateInfo<U, R, E, D>) -> Self {
         let (virtual_width, virtual_height) = create_info.vitual_size;
 
         Self {
@@ -67,11 +67,10 @@ impl<W, R, E, D> Client<W, R, E, D>
         }
 
         while let Some(bytes) = Js::poll_message() {
-            match <ServerMessage<W, E>>::deserialize(&bytes) {
+            match <ServerMessage<U, E>>::deserialize(&bytes) {
                 Some(message) => {
                     self.initialized = true;
                     state.user = message.user;
-                    state.world = message.world;
 
                     for game_event in message.events {
                         events.push(Event::Game(game_event));
@@ -111,7 +110,7 @@ impl<W, R, E, D> Client<W, R, E, D>
         self.state = Some(state);
     }
 
-    fn get_active_interactions(&self, state: &ClientState<W, R, E, D>) -> Vec<Rc<dyn Interaction<W, R, E, D>>> {
+    fn get_active_interactions(&self, state: &ClientState<U, R, E, D>) -> Vec<Rc<dyn Interaction<U, R, E, D>>> {
         let mut list = vec![];
 
         for interaction in &self.interaction_stack {
@@ -129,7 +128,7 @@ impl<W, R, E, D> Client<W, R, E, D>
         list
     }
 
-    fn trigger_events(&mut self, state: &mut ClientState<W, R, E, D>, interactions: &Vec<Rc<dyn Interaction<W, R, E, D>>>, events: Vec<Event<E>>) {
+    fn trigger_events(&mut self, state: &mut ClientState<U, R, E, D>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, events: Vec<Event<E>>) {
         for event in events {
             match event {
                 Event::Window(_) => Js::clear_renderer_cache(),
@@ -191,7 +190,7 @@ impl<W, R, E, D> Client<W, R, E, D>
             .multiply(self.virtual_to_real_ratio)
     }
 
-    fn collect_views(&mut self, state: &mut ClientState<W, R, E, D>, view: Rc<dyn View<W, R, E, D>>, rect: Rect, current_transform: Transform, views: Vec<ViewState<W, R, E, D>>) -> Vec<ViewState<W, R, E, D>> {
+    fn collect_views(&mut self, state: &mut ClientState<U, R, E, D>, view: Rc<dyn View<U, R, E, D>>, rect: Rect, current_transform: Transform, views: Vec<ViewState<U, R, E, D>>) -> Vec<ViewState<U, R, E, D>> {
         let mut output = RenderOutput::new(rect.clone());
         
         view.render(state, &rect, &mut output);
@@ -222,7 +221,7 @@ impl<W, R, E, D> Client<W, R, E, D>
         result
     }
 
-    fn compute_hover_stack(&mut self, views: &Vec<ViewState<W, R, E, D>>) -> Vec<usize> {
+    fn compute_hover_stack(&mut self, views: &Vec<ViewState<U, R, E, D>>) -> Vec<usize> {
         let mut views_under_cursor : Vec<(usize, f64)> = views.iter().enumerate().filter_map(|(i, view)| {
             if let Some(hitbox) = view.hitbox {
                 match hitbox.contains(self.cursor_x, self.cursor_y) {
@@ -239,7 +238,7 @@ impl<W, R, E, D> Client<W, R, E, D>
         views_under_cursor.into_iter().rev().map(|(index, _)| index).collect()
     }
 
-    fn render_views(&mut self, state: &mut ClientState<W, R, E, D>, views: &mut Vec<ViewState<W, R, E, D>>, interactions: &Vec<Rc<dyn Interaction<W, R, E, D>>>, hovered_index: usize) {
+    fn render_views(&mut self, state: &mut ClientState<U, R, E, D>, views: &mut Vec<ViewState<U, R, E, D>>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, hovered_index: usize) {
         let mut cursor = Cursor::default();
 
         Js::clear_canvas();

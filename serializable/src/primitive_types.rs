@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc, usize};
+use std::{cell::RefCell, collections::HashMap, hash::Hash};
 
 use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer, serializable::Serializable};
 
@@ -205,33 +205,60 @@ impl<T : Serializable> Serializable for RefCell<T> {
     }
 
     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
-        match T::read_bytes(buffer) {
-            Some(value) => Some(RefCell::new(value)),
-            None => None
-        }
+        let value = T::read_bytes(buffer)?;
+
+        Some(RefCell::new(value))
     }
 }
 
-impl<T : Serializable + 'static> Serializable for Rc<T> {
-    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
-        let addr = Rc::as_ptr(value) as usize;
+// impl<T : Serializable + Default + 'static> Serializable for Rc<T> {
+//     fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+//         let addr = buffer.register_rc(value);
 
-        usize::write_bytes(&addr, buffer);
+//         usize::write_bytes(&addr, buffer);
+//         T::write_bytes(value, buffer);
+//     }
 
-        if buffer.register(addr) {
-            T::write_bytes(value, buffer);
-        } else {
-            panic!("attempt to serialize a cycle of Rc<{}>", std::any::type_name::<T>());
-        }
-    }
+//     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+//         let addr = usize::read_bytes(buffer)?;
 
-    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
-        match T::read_bytes(buffer) {
-            Some(value) => Some(Rc::new(value)),
-            None => None
-        }
-    }
-}
+//         let value = Rc::new_cyclic(|value_weak| {
+//             buffer.register_weak(addr, value_weak);
+
+//             let option = T::read_bytes(buffer);
+
+//             match option {
+//                 Some(value) => value,
+//                 None => {
+//                     buffer.set_error();
+//                     // Since there is no `Rc::try_new_cyclic` that could return an Option<T>
+//                     // we still need to return something if the deserialization fails.
+//                     T::default()
+//                 }
+//             }
+//         });
+
+//         if buffer.get_error() {
+//             None
+//         } else {
+//             Some(value)
+//         }
+//     }
+// }
+
+// impl<T : Serializable + 'static> Serializable for Weak<T> {
+//     fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+//         let addr = buffer.get_weak_addr(value);
+
+//         usize::write_bytes(&addr, buffer);
+//     }
+
+//     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+//         let addr = usize::read_bytes(buffer)?;
+        
+//         buffer.retrieve_weak(addr)
+//     }
+// }
 
 impl<K : Serializable + Eq + Hash, V : Serializable> Serializable for HashMap<K, V> {
     fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
