@@ -65,40 +65,44 @@ impl<U, R, E, W> Server<U, R, E, W>
         }
 
         for (id, websocket) in self.connections.iter_mut() {
-            match websocket.read_message() {
-                Some(message) => {
-                    match message {
-                        Message::Connection => {
-                            state.notify_update(*id);
-                            self.world.on_user_connect(&mut state, *id);
-                        },
-                        Message::Disconnection | Message::Error => {
-                            self.world.on_user_disconnect(&mut state, *id);
-                        },
-                        Message::Binary(bytes) => {
-                            if let Some(request) = R::deserialize(&bytes) {
-                                match self.world.on_user_request(&mut state, *id, request) {
-                                    Ok(ids) => {
-                                        for id in ids {
-                                            state.notify_update(id);
-                                        }
-                                    },
-                                    Err(_) => { }
+            loop {
+                match websocket.read_message() {
+                    Some(message) => {
+                        match message {
+                            Message::Connection => {
+                                state.notify_update(*id);
+                                self.world.on_user_connect(&mut state, *id);
+                            },
+                            Message::Disconnection | Message::Error => {
+                                self.world.on_user_disconnect(&mut state, *id);
+                            },
+                            Message::Binary(bytes) => {
+                                if let Some(request) = R::deserialize(&bytes) {
+                                    match self.world.on_user_request(&mut state, *id, request) {
+                                        Ok(ids) => {
+                                            for id in ids {
+                                                state.notify_update(id);
+                                            }
+                                        },
+                                        Err(_) => { }
+                                    }
                                 }
-                            }
-                        },
-                        _ => {}
-                    }
-                },
-                None => {}
+                            },
+                            _ => {}
+                        }
+                    },
+                    None => break
+                }
             }
+        }
+
+        for id in self.world.update(&mut state) {
+            state.notify_update(id);
         }
 
         self.connections.retain(|_id, websocket| {
             websocket.get_state() != State::Closed
         });
-
-        self.world.update(&mut state);
 
         for (id, events) in state.poll_outgoing_messages().into_iter() {
             if let Some(websocket) = self.connections.get_mut(&id) {

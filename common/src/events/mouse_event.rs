@@ -27,6 +27,30 @@ impl MouseEvent {
     pub fn is_click(&self) -> bool {
         self.action == MouseAction::Click
     }
+
+    pub fn is_down(&self) -> bool {
+        self.action == MouseAction::Down
+    }
+
+    pub fn is_up(&self) -> bool {
+        self.action == MouseAction::Up
+    }
+
+    pub fn is_left(&self) -> bool {
+        self.button == MouseButton::Left
+    }
+
+    pub fn is_right(&self) -> bool {
+        self.button == MouseButton::Right
+    }
+
+    pub fn is_middle(&self) -> bool {
+        self.button == MouseButton::Middle
+    }
+
+    pub fn xy(&self) -> (f64, f64) {
+        (self.x, self.y)
+    }
 }
 
 #[as_js_string(lowercase)]

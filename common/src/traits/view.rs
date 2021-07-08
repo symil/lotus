@@ -8,7 +8,7 @@ pub trait View<U, R, E, D> {
     fn render(&self, client: &mut ClientState<U, R, E, D>, rect: &Rect, output: &mut RenderOutput<U, R, E, D>);
     fn hover(&self, client: &mut ClientState<U, R, E, D>, graphics_list: &mut Vec<Graphics>) { }
 
-    fn on_mouse_event(&self, client: &mut ClientState<U, R, E, D>, event: &MouseEvent) -> EventHandling { EventHandling::Propagate }
+    fn on_mouse_event(&self, client: &mut ClientState<U, R, E, D>, event: &MouseEvent, transform: &Transform) -> EventHandling { EventHandling::Propagate }
     fn on_wheel_event(&self, client: &mut ClientState<U, R, E, D>, event: &WheelEvent) -> EventHandling { EventHandling::Propagate }
     fn on_keyboard_event(&self, client: &mut ClientState<U, R, E, D>, event: &KeyboardEvent) -> EventHandling { EventHandling::Propagate }
     fn on_game_event(&self, client: &mut ClientState<U, R, E, D>, event: &E) -> EventHandling { EventHandling::Propagate }
@@ -73,6 +73,16 @@ impl<U, R, E, D> ViewState<U, R, E, D> {
             hitbox_z: 0.,
             graphics_list: vec![],
             transform: Transform::identity()
+        }
+    }
+
+    pub fn clone(&self) -> Self {
+        Self {
+            view: Rc::clone(&self.view),
+            hitbox: self.hitbox.clone(),
+            hitbox_z: self.hitbox_z,
+            graphics_list: vec![],
+            transform: self.transform.clone()
         }
     }
 }

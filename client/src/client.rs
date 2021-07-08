@@ -2,7 +2,7 @@ use std::{marker::PhantomData, mem::{take}, rc::Rc, usize};
 
 use lotus_common::{Serializable, client_state::ClientState, events::{event::Event, event_handling::EventHandling, mouse_event::{MouseAction}, wheel_event::DeltaMode}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, server_message::ServerMessage, traits::{interaction::Interaction, view::{RenderOutput, View, ViewState}}};
 
-use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::Js};
+use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::{Js, JsLogger}};
 
 pub struct Client<U, R, E, D> {
     initialized: bool,
@@ -36,7 +36,7 @@ impl<U, R, E, D> Client<U, R, E, D>
 
         Self {
             initialized: false,
-            state: Some(ClientState::new(|string| Js::log(string))),
+            state: Some(ClientState::new(JsLogger)),
             virtual_width,
             virtual_height,
             virtual_to_real_ratio: 0.,
@@ -97,8 +97,8 @@ impl<U, R, E, D> Client<U, R, E, D>
             self.render_views(&mut state, &mut views, &interactions, hovered_index);
 
             state.hovered = views.get(hovered_index).and_then(|view_state| Some(Rc::clone(&view_state.view)));
-            state.hover_stack = hover_stack_indexes.into_iter().map(|index| Rc::clone(&views[index].view)).collect();
-            state.all_views = views.into_iter().map(|view_state| view_state.view).collect();
+            state.hover_stack = hover_stack_indexes.into_iter().map(|index| views[index].clone()).collect();
+            state.all_views = views;
 
             self.trigger_events(&mut state, &interactions, events);
         }
@@ -132,7 +132,10 @@ impl<U, R, E, D> Client<U, R, E, D>
         for event in events {
             match event {
                 Event::Window(_) => Js::clear_renderer_cache(),
-                Event::Mouse(mouse_event) => {
+                Event::Mouse(mut mouse_event) => {
+                    mouse_event.x /= self.virtual_to_real_ratio;
+                    mouse_event.y /= self.virtual_to_real_ratio;
+
                     self.cursor_x = mouse_event.x;
                     self.cursor_y = mouse_event.y;
 
@@ -181,13 +184,12 @@ impl<U, R, E, D> Client<U, R, E, D>
         }
     }
 
-    fn graphics_to_real_rect(&self, graphics: &Graphics, transform: &Transform) -> Rect {
+    fn graphics_to_hitbox(&self, graphics: &Graphics, transform: &Transform) -> Rect {
         graphics.get_rect()
             .translate(graphics.offset_x, graphics.offset_y)
             .scale(graphics.scale)
             .strip_to_match_aspect_ratio(graphics.aspect_ratio)
             .transform(transform)
-            .multiply(self.virtual_to_real_ratio)
     }
 
     fn collect_views(&mut self, state: &mut ClientState<U, R, E, D>, view: Rc<dyn View<U, R, E, D>>, rect: Rect, current_transform: Transform, views: Vec<ViewState<U, R, E, D>>) -> Vec<ViewState<U, R, E, D>> {
@@ -200,7 +202,7 @@ impl<U, R, E, D> Client<U, R, E, D>
 
         if let Some(graphics) = output.graphics_list.first() {
             if graphics.detectable {
-                let hitbox = self.graphics_to_real_rect(graphics, &transform);
+                let hitbox = self.graphics_to_hitbox(graphics, &transform);
                 
                 view_state.hitbox = Some(hitbox);
                 view_state.hitbox_z = graphics.z;
@@ -261,7 +263,10 @@ impl<U, R, E, D> Client<U, R, E, D>
             }
 
             for graphics in take(&mut item.graphics_list) {
-                let rect = self.graphics_to_real_rect(&graphics, &item.transform);
+                let rect = self
+                    .graphics_to_hitbox(&graphics, &item.transform)
+                    .multiply(self.virtual_to_real_ratio);
+
                 let primitive = DrawPrimitive {
                     x: rect.x,
                     y: rect.y,

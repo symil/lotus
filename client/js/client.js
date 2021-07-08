@@ -73,6 +73,14 @@ export class Client {
         console.log(string);
     }
 
+    $log_time_start(label) {
+        console.time(label);
+    }
+
+    $log_time_end(label) {
+        console.timeEnd(label);
+    }
+
     $poll_event() {
         let event = this._windowManager.pollEvent();
 
@@ -100,11 +108,7 @@ export class Client {
     }
 
     $poll_message() {
-        let message = this._pendingMessages.pop();
-
-        this._pendingMessages = [];
-
-        return message;
+        return this._pendingMessages.shift();
     }
 
     $set_window_aspect_ratio(aspectRatio) {

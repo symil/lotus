@@ -1,6 +1,6 @@
 #![allow(unused_unsafe, dead_code)]
 
-use lotus_common::{events::ui_event::UiEvent, graphics::graphics::Cursor};
+use lotus_common::{events::ui_event::UiEvent, graphics::graphics::Cursor, logger::Logger};
 use wasm_bindgen::prelude::*;
 
 use crate::draw_primitive::{DrawPrimitive, StringId};
@@ -8,6 +8,9 @@ use crate::draw_primitive::{DrawPrimitive, StringId};
 #[wasm_bindgen]
 extern {
     pub fn log(message: &str);
+    pub fn log_time_start(message: &str);
+    pub fn log_time_end(message: &str);
+
     pub fn poll_event() -> Option<UiEvent>;
     pub fn send_message(bytes: &[u8]);
     pub fn poll_message() -> Option<Vec<u8>>;
@@ -27,6 +30,9 @@ pub struct Js;
 
 impl Js {
     pub fn log(message: &str) { unsafe { log(message) } }
+    pub fn log_time_start(message: &str) { unsafe { log_time_start(message) } }
+    pub fn log_time_end(message: &str) { unsafe { log_time_end(message) } }
+
     pub fn poll_event() -> Option<UiEvent> { unsafe { poll_event() } }
     pub fn send_message(bytes: &[u8]) { unsafe { send_message(bytes) } }
     pub fn poll_message() -> Option<Vec<u8>> { unsafe { poll_message() } }
@@ -39,4 +45,20 @@ impl Js {
     pub fn draw(primitive: DrawPrimitive) { unsafe { draw(primitive) } }
     pub fn set_cursor(cursor: Cursor) { unsafe { set_cursor(cursor) } }
     pub fn clear_renderer_cache() { unsafe { clear_renderer_cache() } }
+}
+
+pub struct JsLogger;
+
+impl Logger for JsLogger {
+    fn log(&self, value: &str) {
+        Js::log(value);
+    }
+
+    fn log_time_start(&self, label: &str) {
+        Js::log_time_start(label);
+    }
+
+    fn log_time_end(&self, label: &str) {
+        Js::log_time_end(label);
+    }
 }

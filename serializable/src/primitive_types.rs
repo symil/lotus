@@ -92,26 +92,19 @@ impl Serializable for String {
 impl<T : Serializable> Serializable for Vec<T> {
     fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
         u32::write_bytes(&(value.len() as u32), buffer);
+
         for item in value {
             T::write_bytes(item, buffer);
         }
     }
 
     fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
-        let count = match u32::read_bytes(buffer) {
-            None => return None,
-            Some(value) => value as usize
-        };
+        let count = u32::read_bytes(buffer)? as usize;
 
         let mut result = Vec::with_capacity(count);
 
         for _i in 0..count {
-            match T::read_bytes(buffer) {
-                None => return None,
-                Some(item) => {
-                    result.push(item);
-                }
-            }
+            result.push(T::read_bytes(buffer)?);
         }
 
         Some(result)

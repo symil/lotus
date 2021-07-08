@@ -35,7 +35,7 @@ impl<E> ServerState<E> {
         take(&mut self.outgoing_messages)
     }
 
-    pub fn get_current_time(&self) -> u128 {
-        self.clock.elapsed().as_millis()
+    pub fn get_current_time(&self) -> f64 {
+        self.clock.elapsed().as_millis() as f64 / 1000.
     }
 }

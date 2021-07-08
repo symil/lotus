@@ -60,14 +60,14 @@ impl Transform {
         }
     }
 
-    pub fn divide(&self, other: &Self) -> Self {
-        Self {
-            tx: (self.tx - other.tx) / other.sx,
-            ty: (self.ty - other.ty) / other.sy,
-            sx: self.sx / other.sx,
-            sy: self.sy / other.sy,
-        }
-    }
+    // pub fn divide(&self, other: &Self) -> Self {
+    //     Self {
+    //         tx: (self.tx - other.tx) / other.sx,
+    //         ty: (self.ty - other.ty) / other.sy,
+    //         sx: self.sx / other.sx,
+    //         sy: self.sy / other.sy,
+    //     }
+    // }
 }
 
 impl Default for Transform {
