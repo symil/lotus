@@ -8,4 +8,4 @@ mod located_data;
 pub use parsable::Parsable;
 pub use string_reader::StringReader;
 pub use located_data::*;
-pub use lotus_parsable_macro::*;
+pub use parsable_macro::*;

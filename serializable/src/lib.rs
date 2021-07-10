@@ -8,4 +8,4 @@ pub use read_buffer::ReadBuffer;
 pub use write_buffer::WriteBuffer;
 pub use serializable::Serializable;
 pub use link::Link;
-pub use lotus_serializable_macro::Serializable;
+pub use serializable_macro::Serializable;

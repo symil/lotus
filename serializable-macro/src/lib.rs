@@ -183,11 +183,11 @@ fn impl_serializable_macro(ast: &syn::DeriveInput) -> TokenStream {
 
     let gen = quote! {
         impl#generics_impl Serializable for #name#generics_type {
-            fn write_bytes(value: &Self, buffer: &mut lotus_serializable::WriteBuffer) {
+            fn write_bytes(value: &Self, buffer: &mut serializable::WriteBuffer) {
                 #serialize
             }
 
-            fn read_bytes(buffer: &mut lotus_serializable::ReadBuffer) -> Option<Self> {
+            fn read_bytes(buffer: &mut serializable::ReadBuffer) -> Option<Self> {
                 #deserialize
             }
         }

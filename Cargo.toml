@@ -7,12 +7,10 @@ edition = "2018"
 [workspace]
 
 [dependencies]
-lotus-common = { path = "./common" }
-lotus-client = { path = "./client" }
-lotus-server = { path = "./server" }
-lotus-serializable = { path = "./serializable" }
-lotus-serializable-macro = { path = "./serializable-macro" }
-lotus-as-js-string-macro = { path = "./as-js-string-macro" }
-lotus-parser = { path = "./parser" }
-lotus-parsable = { path = "./parsable" }
-lotus-parsable-macro = { path = "./parsable-macro" }
+lotus-framework = { path = "./lotus-framework" }
+lotus-parser = { path = "./lotus-parser" }
+serializable = { path = "./serializable" }
+serializable-macro = { path = "./serializable-macro" }
+as-js-string-macro = { path = "./as-js-string-macro" }
+parsable = { path = "./parsable" }
+parsable-macro = { path = "./parsable-macro" }

@@ -79,7 +79,7 @@ impl Parse for Wrapper {
 }
 
 fn create_location_field(field_name: &str) -> Field {
-    let string = format!("pub {}: lotus_parsable::DataLocation", field_name);
+    let string = format!("pub {}: parsable::DataLocation", field_name);
     let result : Result<Wrapper> = syn::parse_str(&string);
 
     result.unwrap().field
@@ -171,10 +171,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                         }
 
                         let mut assignment = quote! {
-                            let #field_name = match <#field_type as lotus_parsable::Parsable>::#parse_method {
+                            let #field_name = match <#field_type as parsable::Parsable>::#parse_method {
                                 Some(value) => value,
                                 None => {
-                                    reader__.set_expected_token(<#field_type as lotus_parsable::Parsable>::get_token_name());
+                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
                                     #on_fail
                                 }
                             };
@@ -183,10 +183,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                         if has_prefix && optional {
                             assignment = quote! {
                                 let #field_name = match prefix_ok__ {
-                                    true => match <#field_type as lotus_parsable::Parsable>::#parse_method {
+                                    true => match <#field_type as parsable::Parsable>::#parse_method {
                                         Some(value) => value,
                                         None => {
-                                            reader__.set_expected_token(<#field_type as lotus_parsable::Parsable>::get_token_name());
+                                            reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
                                             #on_fail
                                         }
                                     },
@@ -214,7 +214,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                         if let Some(min) = attributes.min {
                             check.push(quote! {
                                 if !field_failed__ && #field_name.len() < #min {
-                                    reader__.set_expected_token(<#field_type as lotus_parsable::Parsable>::get_token_name());
+                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
                                     #on_fail;
                                 }
                             });
@@ -231,7 +231,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                         if is_vec && has_prefix {
                             check.push(quote! {
                                 if #field_name.is_empty() && prefix_ok__ {
-                                    reader__.set_expected_token(<#field_type as lotus_parsable::Parsable>::get_token_name());
+                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
                                     #on_fail;
                                 }
                             });
@@ -254,7 +254,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                     if located {
                         field_names.push(quote! { location });
                         named_fields.named.insert(0, create_location_field("location"));
-                        set_location = quote! { let location = lotus_parsable::DataLocation::new(start_index__, reader__.get_index_backtracked()); };
+                        set_location = quote! { let location = parsable::DataLocation::new(start_index__, reader__.get_index_backtracked()); };
                     }
 
                     quote! {
@@ -328,7 +328,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                             let prefix_ok__ = #parse_prefix;
 
                             if prefix_ok__ {
-                                if let Some(value) = <#field_type as lotus_parsable::Parsable>::#parse_method {
+                                if let Some(value) = <#field_type as parsable::Parsable>::#parse_method {
                                     reader__.eat_spaces();
 
                                     let suffix_ok__ = #parse_suffix;
@@ -377,7 +377,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             quote! {
                 #(#lines)*
 
-                // reader__.set_expected_token(<Self as lotus_parsable::Parsable>::get_token_name());
+                // reader__.set_expected_token(<Self as parsable::Parsable>::get_token_name());
                 None
             }
         },
@@ -387,8 +387,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     let result = quote! {
         #ast
 
-        impl lotus_parsable::Parsable for #name {
-            fn parse(reader__: &mut lotus_parsable::StringReader) -> Option<Self> {
+        impl parsable::Parsable for #name {
+            fn parse(reader__: &mut parsable::StringReader) -> Option<Self> {
                 let start_index__ = reader__.get_index();
 
                 #body

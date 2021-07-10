@@ -27,6 +27,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "as-js-string-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -130,100 +139,36 @@ dependencies = [
 name = "lotus"
 version = "0.1.0"
 dependencies = [
- "lotus-as-js-string-macro",
- "lotus-client",
- "lotus-common",
- "lotus-parsable",
- "lotus-parsable-macro",
+ "as-js-string-macro",
+ "lotus-framework",
  "lotus-parser",
- "lotus-serializable",
- "lotus-serializable-macro",
- "lotus-server",
+ "parsable",
+ "parsable-macro",
+ "serializable",
+ "serializable-macro",
 ]
 
 [[package]]
-name = "lotus-as-js-string-macro"
+name = "lotus-framework"
 version = "0.1.0"
 dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "lotus-client"
-version = "0.1.0"
-dependencies = [
+ "as-js-string-macro",
+ "base64",
+ "getrandom",
  "js-sys",
- "lotus-common",
+ "rand",
+ "serializable",
+ "serializable-macro",
+ "sha1",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "lotus-common"
-version = "0.1.0"
-dependencies = [
- "js-sys",
- "lotus-as-js-string-macro",
- "lotus-serializable",
- "lotus-serializable-macro",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "lotus-parsable"
-version = "0.1.0"
-dependencies = [
- "backtrace",
- "line-col",
- "lotus-parsable-macro",
- "regex",
-]
-
-[[package]]
-name = "lotus-parsable-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
 name = "lotus-parser"
 version = "0.1.0"
 dependencies = [
- "lotus-common",
- "lotus-parsable",
-]
-
-[[package]]
-name = "lotus-serializable"
-version = "0.1.0"
-dependencies = [
- "lotus-serializable-macro",
-]
-
-[[package]]
-name = "lotus-serializable-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "lotus-server"
-version = "0.1.0"
-dependencies = [
- "base64",
- "getrandom",
- "lotus-common",
- "rand",
- "sha1",
+ "lotus-framework",
+ "parsable",
 ]
 
 [[package]]
@@ -249,6 +194,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a38f2be3697a57b4060074ff41b44c16870d916ad7877c17696e063257482bc7"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "parsable"
+version = "0.1.0"
+dependencies = [
+ "backtrace",
+ "line-col",
+ "parsable-macro",
+ "regex",
+]
+
+[[package]]
+name = "parsable-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -361,6 +326,23 @@ name = "rustc-demangle"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dead70b0b5e03e9c814bcb6b01e03e68f7c57a80aa48c72ec92152ab3e818d49"
+
+[[package]]
+name = "serializable"
+version = "0.1.0"
+dependencies = [
+ "serializable-macro",
+]
+
+[[package]]
+name = "serializable-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "sha1"
