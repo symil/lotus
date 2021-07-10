@@ -9,6 +9,7 @@ export class Client {
         this._windowManager = new WindowManager();
         this._renderer = new Renderer(this._windowManager);
         this._pendingMessages = [];
+        this._startTime = 0;
     }
 
     static async start(wasm) {
@@ -19,6 +20,7 @@ export class Client {
         this._setupRustInterface();
 
         await this._setupWasm();
+        await this._setupClock();
         await this._setupConnection();
         await this._windowManager.start();
 
@@ -41,6 +43,14 @@ export class Client {
         this._webSocket.onerror = error => console.error(error);
 
         return new Promise(resolve => this._webSocket.onopen = resolve);
+    }
+
+    async _setupClock() {
+        this._startTime = this._getCurrentTime();
+    }
+
+    _getCurrentTime() {
+        return Date.now() / 1000;
     }
 
     _update() {
@@ -79,6 +89,10 @@ export class Client {
 
     $log_time_end(label) {
         console.timeEnd(label);
+    }
+
+    $get_current_time() {
+        return this._getCurrentTime() - this._startTime;
     }
 
     $poll_event() {

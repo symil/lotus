@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, mem::{take}, rc::Rc, usize};
 
-use lotus_common::{Serializable, client_state::ClientState, events::{event::Event, event_handling::EventHandling, mouse_event::{MouseAction}, wheel_event::DeltaMode}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, server_message::ServerMessage, traits::{interaction::Interaction, view::{RenderOutput, View, ViewState}}};
+use lotus_common::{Serializable, client_state::ClientState, events::{event::Event, event_handling::EventHandling, mouse_event::{MouseAction}, wheel_event::DeltaMode}, graphics::{graphics::{Cursor, Graphics}, rect::Rect, size::Size, transform::Transform}, server_message::ServerMessage, traits::{interaction::Interaction, transition::TransitionWrapper, view::{RenderOutput, View, ViewState}}};
 
 use crate::{default_interaction::DefaultInteraction, draw_primitive::DrawPrimitive, js::{Js, JsLogger}};
 
@@ -13,6 +13,7 @@ pub struct Client<U, R, E, D> {
     cursor_x: f64,
     cursor_y: f64,
     interaction_stack: Vec<Rc<dyn Interaction<U, R, E, D>>>,
+    transitions: Vec<TransitionWrapper<U, R, E, D>>,
     create_root: fn() -> Rc<dyn View<U, R, E, D>>,
     window_title: &'static str,
     _e: PhantomData<E>
@@ -43,6 +44,7 @@ impl<U, R, E, D> Client<U, R, E, D>
             cursor_x: 0.,
             cursor_y: 0.,
             interaction_stack: vec![Rc::new(DefaultInteraction)],
+            transitions: vec![],
             create_root: create_info.create_root,
             window_title: create_info.window_title,
             _e: PhantomData
@@ -101,6 +103,7 @@ impl<U, R, E, D> Client<U, R, E, D>
             state.all_views = views;
 
             self.trigger_events(&mut state, &interactions, events);
+            self.trigger_transitions(&mut state);
         }
 
         for request in &mut state.outgoing_requests.drain(..) {
@@ -182,6 +185,52 @@ impl<U, R, E, D> Client<U, R, E, D>
                 },
             }
         }
+    }
+
+    fn trigger_transitions(&mut self, state: &mut ClientState<U, R, E, D>) {
+        let current_time = Js::get_current_time();
+
+        for transition in state.transitions_to_add.drain(..) {
+            let id = transition.get_id();
+
+            if id != 0 {
+                for wrapper in &mut self.transitions {
+                    if wrapper.id == id {
+                        wrapper.ended = true;
+                    }
+                }
+            }
+
+            self.transitions.push(TransitionWrapper::new(transition, id));
+        }
+
+        for wrapper in &mut self.transitions {
+            if wrapper.ended {
+                if !wrapper.started {
+                    wrapper.transition.on_start(state);
+                }
+                wrapper.transition.on_end(state);
+                continue;
+            }
+
+            if !wrapper.started {
+                wrapper.started = true;
+                wrapper.start_time = current_time;
+                wrapper.duration = wrapper.transition.get_duration();
+                wrapper.transition.on_start(state);
+            }
+
+            let t = ((current_time - wrapper.start_time) / wrapper.duration).min(1.);
+
+            wrapper.transition.on_progress(state, t);
+
+            if t == 1. {
+                wrapper.ended = true;
+                wrapper.transition.on_end(state);
+            }
+        }
+
+        self.transitions.retain(|wrapper| !wrapper.ended);
     }
 
     fn graphics_to_hitbox(&self, graphics: &Graphics, transform: &Transform) -> Rect {

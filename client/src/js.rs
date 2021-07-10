@@ -19,6 +19,7 @@ extern {
     pub fn set_window_aspect_ratio(aspect_ratio: f64);
     pub fn set_window_title(title: &str);
     pub fn get_string_id(string: &str) -> StringId;
+    pub fn get_current_time() -> f64;
 
     pub fn clear_canvas();
     pub fn draw(primitive: DrawPrimitive);
@@ -41,6 +42,8 @@ impl Js {
     pub fn set_window_aspect_ratio(aspect_ratio: f64) { unsafe { set_window_aspect_ratio(aspect_ratio) } }
     pub fn set_window_title(title: &str) { unsafe { set_window_title(title) } }
     pub fn get_string_id(string: &str) -> StringId { unsafe { get_string_id(string) } }
+    pub fn get_current_time() -> f64 { unsafe { get_current_time() } }
+
     pub fn clear_canvas() { unsafe { clear_canvas() } }
     pub fn draw(primitive: DrawPrimitive) { unsafe { draw(primitive) } }
     pub fn set_cursor(cursor: Cursor) { unsafe { set_cursor(cursor) } }

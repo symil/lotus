@@ -1,6 +1,6 @@
 use std::{fmt::Debug, mem::take, rc::Rc};
 
-use crate::{logger::Logger, traits::{view::{View, ViewState}}};
+use crate::{logger::Logger, traits::{transition::Transition, view::{View, ViewState}}};
 
 pub struct ClientViews<U, R, E, D> {
     pub hover_stack: Vec<ViewState<U, R, E, D>>,
@@ -17,6 +17,7 @@ pub struct ClientState<U, R, E, D> {
     pub hover_stack: Vec<ViewState<U, R, E, D>>,
     pub all_views: Vec<ViewState<U, R, E, D>>,
     pub outgoing_requests: Vec<R>,
+    pub transitions_to_add: Vec<Box<dyn Transition<U, R, E, D>>>
 }
 
 impl<U, R, E, D> ClientState<U, R, E, D>
@@ -32,7 +33,8 @@ impl<U, R, E, D> ClientState<U, R, E, D>
             hover_stack: vec![],
             all_views: vec![],
             local_data: D::default(),
-            outgoing_requests: vec![]
+            outgoing_requests: vec![],
+            transitions_to_add: vec![]
         }
     }
     
@@ -54,6 +56,10 @@ impl<U, R, E, D> ClientState<U, R, E, D>
 
     pub fn send_request(&mut self, request: R) {
         self.outgoing_requests.push(request);
+    }
+
+    pub fn add_transition<T : Transition<U, R, E, D> + 'static>(&mut self, transition: T) {
+        self.transitions_to_add.push(Box::new(transition));
     }
 
     pub fn take_views(&mut self) -> ClientViews<U, R, E, D> {
