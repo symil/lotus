@@ -1,7 +1,6 @@
 use crate::{KeyboardEvent, MouseEvent, WheelEvent, WindowEvent, UiEvent};
 
-
-pub enum Event<GameEvent> {
+pub enum ClientEvent<GameEvent> {
     Window(WindowEvent),
     Mouse(MouseEvent),
     Wheel(WheelEvent),
@@ -9,7 +8,7 @@ pub enum Event<GameEvent> {
     Game(GameEvent)
 }
 
-impl<GameEvent> From<UiEvent> for Event<GameEvent> {
+impl<GameEvent> From<UiEvent> for ClientEvent<GameEvent> {
     fn from(ui_event: UiEvent) -> Self {
         if let Some(window) = ui_event.window {
             Self::Window(window)

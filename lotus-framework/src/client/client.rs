@@ -2,11 +2,11 @@ use std::{marker::PhantomData, mem::{take}, rc::Rc, usize};
 
 use serializable::Serializable;
 
-use crate::{Event, DefaultInteraction, Js, JsLogger, ServerMessage, Rect, Transform, ClientState, EventHandling, MouseAction, DeltaMode, DrawPrimitive, Graphics, Cursor, Size, Interaction, TransitionWrapper, RenderOutput, View, ViewState};
+use crate::{ClientEvent, DefaultInteraction, Js, JsLogger, ServerMessage, Rect, Transform, ClientApi, EventHandling, MouseAction, DeltaMode, DrawPrimitive, Graphics, Cursor, Size, Interaction, TransitionWrapper, RenderOutput, View, ViewState};
 
 pub struct Client<U, R, E, D> {
     initialized: bool,
-    state: Option<ClientState<U, R, E, D>>,
+    state: Option<ClientApi<U, R, E, D>>,
     virtual_width: f64,
     virtual_height: f64,
     virtual_to_real_ratio: f64,
@@ -37,7 +37,7 @@ impl<U, R, E, D> Client<U, R, E, D>
 
         Self {
             initialized: false,
-            state: Some(ClientState::new(JsLogger)),
+            state: Some(ClientApi::new(JsLogger)),
             virtual_width,
             virtual_height,
             virtual_to_real_ratio: 0.,
@@ -75,7 +75,7 @@ impl<U, R, E, D> Client<U, R, E, D>
                     state.user = message.user;
 
                     for game_event in message.events {
-                        events.push(Event::Game(game_event));
+                        events.push(ClientEvent::Game(game_event));
                     }
                 },
                 None => {
@@ -113,7 +113,7 @@ impl<U, R, E, D> Client<U, R, E, D>
         self.state = Some(state);
     }
 
-    fn get_active_interactions(&self, state: &ClientState<U, R, E, D>) -> Vec<Rc<dyn Interaction<U, R, E, D>>> {
+    fn get_active_interactions(&self, state: &ClientApi<U, R, E, D>) -> Vec<Rc<dyn Interaction<U, R, E, D>>> {
         let mut list = vec![];
 
         for interaction in &self.interaction_stack {
@@ -131,11 +131,11 @@ impl<U, R, E, D> Client<U, R, E, D>
         list
     }
 
-    fn trigger_events(&mut self, state: &mut ClientState<U, R, E, D>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, events: Vec<Event<E>>) {
+    fn trigger_events(&mut self, state: &mut ClientApi<U, R, E, D>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, events: Vec<ClientEvent<E>>) {
         for event in events {
             match event {
-                Event::Window(_) => Js::clear_renderer_cache(),
-                Event::Mouse(mut mouse_event) => {
+                ClientEvent::Window(_) => Js::clear_renderer_cache(),
+                ClientEvent::Mouse(mut mouse_event) => {
                     mouse_event.x /= self.virtual_to_real_ratio;
                     mouse_event.y /= self.virtual_to_real_ratio;
 
@@ -156,7 +156,7 @@ impl<U, R, E, D> Client<U, R, E, D>
                         }
                     }
                 },
-                Event::Wheel(mut wheel_event) => {
+                ClientEvent::Wheel(mut wheel_event) => {
                     if wheel_event.delta_mode == DeltaMode::Pixel {
                         wheel_event.delta_x /= self.virtual_to_real_ratio;
                         wheel_event.delta_y /= self.virtual_to_real_ratio;
@@ -169,14 +169,14 @@ impl<U, R, E, D> Client<U, R, E, D>
                         }
                     }
                 },
-                Event::Keyboard(keyboard_event) => {
+                ClientEvent::Keyboard(keyboard_event) => {
                     for interaction in interactions {
                         if Rc::clone(interaction).on_keyboard_event(state, &keyboard_event) == EventHandling::Intercept {
                             break;
                         }
                     }
                 },
-                Event::Game(game_event) => {
+                ClientEvent::Game(game_event) => {
                     for interaction in interactions {
                         if Rc::clone(interaction).on_game_event(state, &game_event) == EventHandling::Intercept {
                             break;
@@ -187,7 +187,7 @@ impl<U, R, E, D> Client<U, R, E, D>
         }
     }
 
-    fn trigger_transitions(&mut self, state: &mut ClientState<U, R, E, D>) {
+    fn trigger_transitions(&mut self, state: &mut ClientApi<U, R, E, D>) {
         let current_time = Js::get_current_time();
 
         for transition in state.transitions_to_add.drain(..) {
@@ -241,7 +241,7 @@ impl<U, R, E, D> Client<U, R, E, D>
             .transform(transform)
     }
 
-    fn collect_views(&mut self, state: &mut ClientState<U, R, E, D>, view: Rc<dyn View<U, R, E, D>>, rect: Rect, current_transform: Transform, views: Vec<ViewState<U, R, E, D>>) -> Vec<ViewState<U, R, E, D>> {
+    fn collect_views(&mut self, state: &mut ClientApi<U, R, E, D>, view: Rc<dyn View<U, R, E, D>>, rect: Rect, current_transform: Transform, views: Vec<ViewState<U, R, E, D>>) -> Vec<ViewState<U, R, E, D>> {
         let mut output = RenderOutput::new(rect.clone());
         
         view.render(state, &rect, &mut output);
@@ -289,7 +289,7 @@ impl<U, R, E, D> Client<U, R, E, D>
         views_under_cursor.into_iter().rev().map(|(index, _)| index).collect()
     }
 
-    fn render_views(&mut self, state: &mut ClientState<U, R, E, D>, views: &mut Vec<ViewState<U, R, E, D>>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, hovered_index: usize) {
+    fn render_views(&mut self, state: &mut ClientApi<U, R, E, D>, views: &mut Vec<ViewState<U, R, E, D>>, interactions: &Vec<Rc<dyn Interaction<U, R, E, D>>>, hovered_index: usize) {
         let mut cursor = Cursor::default();
 
         Js::clear_canvas();

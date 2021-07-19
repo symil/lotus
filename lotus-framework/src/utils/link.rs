@@ -1,46 +1,50 @@
-use std::{cell::{Ref, RefCell, RefMut}, fmt::Debug, rc::Rc};
+use std::{cell::{UnsafeCell}, fmt::Debug, mem, rc::Rc};
+use serializable::{ReadBuffer, Serializable, WriteBuffer};
 
-use crate::{ReadBuffer, Serializable, WriteBuffer};
-
-pub struct Link<T> {
+pub struct Link<T : ?Sized> {
     original: bool, 
-    value: Rc<RefCell<Option<T>>>
+    value: Rc<UnsafeCell<Option<Rc<T>>>>
 }
 
 impl<T> Link<T> {
     pub fn empty() -> Self {
-        Self { original: true, value: Rc::new(RefCell::new(None)) }
+        Self { original: true, value: Rc::new(UnsafeCell::new(None)) }
     }
 
     pub fn new(value: T) -> Self {
-        Self { original: true, value: Rc::new(RefCell::new(Some(value))) }
+        Self { original: true, value: Rc::new(UnsafeCell::new(Some(Rc::new(value)))) }
+    }
+
+    pub fn clone(&self) -> Self {
+        Self { original: false, value: Rc::clone(&self.value) }
+    }
+    
+    fn get_opt_mut(&self) -> &mut Option<Rc<T>> {
+        unsafe { mem::transmute(self.value.get()) }
     }
 
     pub fn set(&self, value: T) {
-        *self.value.borrow_mut() = Some(value);
+        *self.get_opt_mut() = Some(Rc::new(value));
     }
 
     pub fn get_addr(&self) -> usize {
         Rc::as_ptr(&self.value) as usize
     }
 
-    pub fn clone(&self) -> Self {
-        Self { original: false, value: Rc::clone(&self.value) }
-    }
-
     pub fn is_empty(&self) -> bool {
-        self.value.borrow().is_none()
+        self.get_opt_mut().is_none()
     }
 
-    pub fn borrow(&self) -> Ref<T> {
-        Ref::map(self.value.borrow(), |option| option.as_ref().unwrap())
+    // TODO: maybe use `unwrap_unchecked`?
+    pub fn borrow(&self) -> &T {
+        self.get_opt_mut().as_ref().unwrap()
     }
 
-    pub fn borrow_mut(&self) -> RefMut<T> {
-        RefMut::map(self.value.borrow_mut(), |option| option.as_mut().unwrap())
+    pub fn borrow_mut(&self) -> &mut T {
+        Rc::get_mut(self.get_opt_mut().as_mut().unwrap()).unwrap()
     }
 
-    pub fn with_ref<F : FnOnce(RefMut<T>)>(&self, f: F) {
+    pub fn with_ref<F : FnOnce(&mut T)>(&self, f: F) {
         let ref_mut = self.borrow_mut();
 
         f(ref_mut)
@@ -58,7 +62,7 @@ impl<T : Debug> Debug for Link<T> {
         if self.original {
             fmt.debug_struct("Link")
                 .field("addr", &format_args!("0x{:X}", self.get_addr()))
-                .field("value", &format_args!("{:?}", self.value.borrow()))
+                .field("value", &format_args!("{:?}", self.borrow()))
                 .finish()
         } else {
             fmt.write_fmt(format_args!("Link [0x{:X}]", self.get_addr()))
@@ -68,7 +72,7 @@ impl<T : Debug> Debug for Link<T> {
 
 impl<T : Serializable + 'static> Serializable for Link<T> {
     fn write_bytes(input: &Self, buffer: &mut WriteBuffer) {
-        match input.value.borrow().as_ref() {
+        match input.get_opt_mut() {
             Some(value) => {
                 let addr = input.get_addr();
 

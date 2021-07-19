@@ -2,25 +2,24 @@ use std::{fmt::Debug, mem::take, rc::Rc};
 
 use crate::{Logger, Transition, View, ViewState};
 
-pub struct ClientViews<U, R, E, D> {
+pub(crate) struct ClientViews<U, R, E, D> {
     pub hover_stack: Vec<ViewState<U, R, E, D>>,
     pub all: Vec<ViewState<U, R, E, D>>,
 }
 
-pub struct ClientState<U, R, E, D> {
-    pub logger: Rc<dyn Logger>,
+pub struct ClientApi<U, R, E, D> {
     pub user: U,
     pub local_data: D,
     pub hovered: Option<Rc<dyn View<U, R, E, D>>>,
 
-    // these fields should only be accessed internally
-    pub hover_stack: Vec<ViewState<U, R, E, D>>,
-    pub all_views: Vec<ViewState<U, R, E, D>>,
-    pub outgoing_requests: Vec<R>,
-    pub transitions_to_add: Vec<Box<dyn Transition<U, R, E, D>>>
+    pub(crate) logger: Rc<dyn Logger>,
+    pub(crate) hover_stack: Vec<ViewState<U, R, E, D>>,
+    pub(crate) all_views: Vec<ViewState<U, R, E, D>>,
+    pub(crate) outgoing_requests: Vec<R>,
+    pub(crate) transitions_to_add: Vec<Box<dyn Transition<U, R, E, D>>>
 }
 
-impl<U, R, E, D> ClientState<U, R, E, D>
+impl<U, R, E, D> ClientApi<U, R, E, D>
     where
         U : Default,
         D : Default
@@ -62,14 +61,14 @@ impl<U, R, E, D> ClientState<U, R, E, D>
         self.transitions_to_add.push(Box::new(transition));
     }
 
-    pub fn take_views(&mut self) -> ClientViews<U, R, E, D> {
+    pub(crate) fn take_views(&mut self) -> ClientViews<U, R, E, D> {
         ClientViews {
             hover_stack: take(&mut self.hover_stack),
             all: take(&mut self.all_views),
         }
     }
 
-    pub fn set_views(&mut self, views: ClientViews<U, R, E, D>) {
+    pub(crate) fn set_views(&mut self, views: ClientViews<U, R, E, D>) {
         self.hover_stack = views.hover_stack;
         self.all_views = views.all;
     }

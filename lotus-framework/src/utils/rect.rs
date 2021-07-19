@@ -34,7 +34,23 @@ impl Rect {
         self.y + self.height / 2.
     }
 
+    pub fn xy(&self) -> (f64, f64) {
+        (self.x, self.y)
+    }
+
+    pub fn wh(&self) -> (f64, f64) {
+        (self.width, self.height)
+    }
+
+    pub fn as_tuple(&self) -> (f64, f64, f64, f64) {
+        (self.x, self.y, self.width, self.height)
+    }
+
     pub fn new(x: f64, y: f64, width: f64, height: f64) -> Self {
+        Self { x, y, width, height }
+    }
+
+    pub fn from_tuple((x, y, width, height): (f64, f64, f64, f64)) -> Self {
         Self { x, y, width, height }
     }
 

@@ -3,13 +3,13 @@ use std::{collections::HashMap, marker::PhantomData, mem::{self, take}, thread::
 use serializable::Serializable;
 
 use super::websocket_server::{Message, State, WebSocket, Mode, WebSocketServer};
-use crate::{ServerMessage, ServerState, Id, World};
+use crate::{ServerMessage, ServerApi, Id, World};
 
 pub struct Server<U, R, E, W>
     where
         W : World<U, R, E>
 {
-    state: Option<ServerState<E>>,
+    api: Option<ServerApi<E>>,
     websocket_server: WebSocketServer,
     connections: HashMap<Id, WebSocket>,
     world: W,
@@ -29,7 +29,7 @@ impl<U, R, E, W> Server<U, R, E, W>
     #[allow(invalid_value)]
     pub fn new(world: W) -> Self {
         Self {
-            state: None,
+            api: None,
             websocket_server: unsafe { mem::zeroed() },
             connections: HashMap::new(),
             world,
@@ -39,12 +39,12 @@ impl<U, R, E, W> Server<U, R, E, W>
     }
 
     pub fn start(&mut self) {
-        let mut state = ServerState::new();
+        let mut api = ServerApi::new();
         let websocket_server = WebSocketServer::bind("127.0.0.1:8123", Mode::NonBlocking);
 
-        self.world.on_start(&mut state);
+        self.world.on_start(&mut api);
 
-        self.state = Some(state);
+        self.api = Some(api);
         self.websocket_server = websocket_server;
 
         loop {
@@ -55,7 +55,7 @@ impl<U, R, E, W> Server<U, R, E, W>
     }
 
     fn update(&mut self) {
-        let mut state = take(&mut self.state).unwrap();
+        let mut api = take(&mut self.api).unwrap();
 
         match self.websocket_server.accept() {
             Some(websocket) => {
@@ -72,18 +72,18 @@ impl<U, R, E, W> Server<U, R, E, W>
                     Some(message) => {
                         match message {
                             Message::Connection => {
-                                state.notify_update(*id);
-                                self.world.on_user_connect(&mut state, *id);
+                                api.notify_update(*id);
+                                self.world.on_user_connect(&mut api, *id);
                             },
                             Message::Disconnection | Message::Error => {
-                                self.world.on_user_disconnect(&mut state, *id);
+                                self.world.on_user_disconnect(&mut api, *id);
                             },
                             Message::Binary(bytes) => {
                                 if let Some(request) = R::deserialize(&bytes) {
-                                    match self.world.on_user_request(&mut state, *id, request) {
+                                    match self.world.on_user_request(&mut api, *id, request) {
                                         Ok(ids) => {
                                             for id in ids {
-                                                state.notify_update(id);
+                                                api.notify_update(id);
                                             }
                                         },
                                         Err(_) => { }
@@ -98,15 +98,15 @@ impl<U, R, E, W> Server<U, R, E, W>
             }
         }
 
-        for id in self.world.update(&mut state) {
-            state.notify_update(id);
+        for id in self.world.update(&mut api) {
+            api.notify_update(id);
         }
 
         self.connections.retain(|_id, websocket| {
             websocket.get_state() != State::Closed
         });
 
-        for (id, events) in state.poll_outgoing_messages().into_iter() {
+        for (id, events) in api.poll_outgoing_messages().into_iter() {
             if let Some(websocket) = self.connections.get_mut(&id) {
                 let message = ServerMessage {
                     user: self.world.get_user_state(id),
@@ -118,6 +118,6 @@ impl<U, R, E, W> Server<U, R, E, W>
             }
         }
 
-        self.state = Some(state);
+        self.api = Some(api);
     }
 }

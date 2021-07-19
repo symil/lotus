@@ -2,12 +2,12 @@ use std::{collections::HashMap, mem::take, time::Instant};
 
 use crate::Id;
 
-pub struct ServerState<E> {
+pub struct ServerApi<E> {
     clock: Instant,
     outgoing_messages: HashMap<Id, Vec<E>>,
 }
 
-impl<E> ServerState<E> {
+impl<E> ServerApi<E> {
     pub fn new() -> Self {
         Self {
             clock: Instant::now(),
@@ -31,11 +31,11 @@ impl<E> ServerState<E> {
         self.retrieve_user_events(id).push(event);
     }
 
-    pub fn poll_outgoing_messages(&mut self) -> HashMap<Id, Vec<E>> {
-        take(&mut self.outgoing_messages)
-    }
-
     pub fn get_current_time(&self) -> f64 {
         self.clock.elapsed().as_millis() as f64 / 1000.
+    }
+
+    pub(crate) fn poll_outgoing_messages(&mut self) -> HashMap<Id, Vec<E>> {
+        take(&mut self.outgoing_messages)
     }
 }

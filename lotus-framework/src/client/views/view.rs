@@ -2,16 +2,16 @@
 
 use std::rc::Rc;
 
-use crate::{ClientState, EventHandling, KeyboardEvent, MouseEvent, WheelEvent, Graphics, Rect, Transform};
+use crate::{ClientApi, EventHandling, KeyboardEvent, MouseEvent, WheelEvent, Graphics, Rect, Transform};
 
 pub trait View<U, R, E, D> {
-    fn render(&self, client: &mut ClientState<U, R, E, D>, rect: &Rect, output: &mut RenderOutput<U, R, E, D>);
-    fn hover(&self, client: &mut ClientState<U, R, E, D>, graphics_list: &mut Vec<Graphics>) { }
+    fn render(&self, client: &mut ClientApi<U, R, E, D>, rect: &Rect, output: &mut RenderOutput<U, R, E, D>);
+    fn hover(&self, client: &mut ClientApi<U, R, E, D>, graphics_list: &mut Vec<Graphics>) { }
 
-    fn on_mouse_event(&self, client: &mut ClientState<U, R, E, D>, event: &MouseEvent, transform: &Transform) -> EventHandling { EventHandling::Propagate }
-    fn on_wheel_event(&self, client: &mut ClientState<U, R, E, D>, event: &WheelEvent) -> EventHandling { EventHandling::Propagate }
-    fn on_keyboard_event(&self, client: &mut ClientState<U, R, E, D>, event: &KeyboardEvent) -> EventHandling { EventHandling::Propagate }
-    fn on_game_event(&self, client: &mut ClientState<U, R, E, D>, event: &E) -> EventHandling { EventHandling::Propagate }
+    fn on_mouse_event(&self, client: &mut ClientApi<U, R, E, D>, event: &MouseEvent, transform: &Transform) -> EventHandling { EventHandling::Propagate }
+    fn on_wheel_event(&self, client: &mut ClientApi<U, R, E, D>, event: &WheelEvent) -> EventHandling { EventHandling::Propagate }
+    fn on_keyboard_event(&self, client: &mut ClientApi<U, R, E, D>, event: &KeyboardEvent) -> EventHandling { EventHandling::Propagate }
+    fn on_game_event(&self, client: &mut ClientApi<U, R, E, D>, event: &E) -> EventHandling { EventHandling::Propagate }
 }
 
 impl<U, R, E, D> std::fmt::Debug for dyn View<U, R, E, D>{

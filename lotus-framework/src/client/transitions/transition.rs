@@ -1,14 +1,14 @@
 #![allow(unused_variables)]
 
-use crate::ClientState;
+use crate::ClientApi;
 
 pub trait Transition<U, R, E, D> {
     fn get_duration(&self) -> f64;
     fn get_id(&self) -> u32 { 0 }
 
-    fn on_start(&mut self, client: &mut ClientState<U, R, E, D>) { }
-    fn on_end(&mut self, client: &mut ClientState<U, R, E, D>) { }
-    fn on_progress(&mut self, client: &mut ClientState<U, R, E, D>, t: f64) { }
+    fn on_start(&mut self, client: &mut ClientApi<U, R, E, D>) { }
+    fn on_end(&mut self, client: &mut ClientApi<U, R, E, D>) { }
+    fn on_progress(&mut self, client: &mut ClientApi<U, R, E, D>, t: f64) { }
 }
 
 pub struct TransitionWrapper<U, R, E, D> {
