@@ -1,24 +1,25 @@
 #![allow(unused_assignments)]
 
 use proc_macro::{TokenStream};
+use proc_macro2::{Span};
 use quote::quote;
 use syn::{*, parse::{Parse, ParseStream}};
 use proc_macro_error::*;
 
 #[derive(Default)]
-struct ParsableAttributes {
+struct FieldAttributes {
     regex: Option<String>,
     prefix: Option<String>,
     suffix: Option<String>,
     min: Option<usize>,
-    sep: Option<String>,
+    separator: Option<String>,
     optional: Option<bool>,
 }
 
-impl Parse for ParsableAttributes {
+impl Parse for FieldAttributes {
     #[allow(unused_must_use)]
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let mut attributes = ParsableAttributes::default();
+        let mut attributes = FieldAttributes::default();
         let content;
 
         parenthesized!(content in input);
@@ -41,8 +42,40 @@ impl Parse for ParsableAttributes {
                     }
                 },
                 "min" => attributes.min = Some(content.parse::<LitInt>()?.base10_parse::<usize>()?),
-                "sep" => attributes.sep = Some(content.parse::<LitStr>()?.value()),
+                "sep" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
+                "separator" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
                 "optional" => attributes.optional = Some(content.parse::<LitBool>()?.value()),
+                _ => {}
+            }
+
+            if !content.is_empty() {
+                content.parse::<Token![,]>()?;
+            }
+        }
+
+        Ok(attributes)
+    }
+}
+
+#[derive(Default)]
+struct RootAttributes {
+    located: bool,
+    name: Option<String>
+}
+
+impl Parse for RootAttributes {
+    fn parse(content: ParseStream) -> syn::Result<Self> {
+        let mut attributes = RootAttributes::default();
+
+        while !content.is_empty() {
+            let name = content.parse::<Ident>()?.to_string();
+
+            match name.as_str() {
+                "located" => attributes.located = true,
+                "name" => {
+                    content.parse::<Token![=]>()?;
+                    attributes.name = Some(content.parse::<LitStr>()?.value())
+                },
                 _ => {}
             }
 
@@ -89,9 +122,26 @@ fn create_location_field(field_name: &str) -> Field {
 #[proc_macro_error]
 #[proc_macro_attribute]
 pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let located = attr.to_string() == "located";
+    let root_attributes = match syn::parse::<RootAttributes>(attr.clone()) {
+        Ok(attributes) => attributes,
+        Err(error) => {
+            emit_call_site_error!(error);
+            RootAttributes::default()
+        }
+    };
+    let located = root_attributes.located;
     let mut ast : DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
+
+    let derive_attribute = syn::Attribute {
+        pound_token: Token![#](Span::call_site()),
+        style: AttrStyle::Outer,
+        bracket_token: syn::token::Bracket { span: Span::call_site() },
+        path: syn::parse_str("derive").unwrap(),
+        tokens: syn::parse_str("(Debug, Clone)").unwrap(),
+    };
+
+    ast.attrs.push(derive_attribute);
 
     let body = match &mut ast.data {
         Data::Struct(data_struct) => {
@@ -101,7 +151,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                     let mut lines = vec![];
 
                     for field in named_fields.named.iter_mut() {
-                        let mut attributes = ParsableAttributes::default();
+                        let mut attributes = FieldAttributes::default();
                         let is_vec = is_type(&field.ty, "Vec");
                         let is_option = is_type(&field.ty, "Option");
 
@@ -111,7 +161,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                         field_names.push(quote! { #field_name });
 
                         if let Some((i, attr)) = field.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
-                            let result = syn::parse2::<ParsableAttributes>(attr.tokens.clone());
+                            let result = syn::parse2::<FieldAttributes>(attr.tokens.clone());
 
                             match result {
                                 Ok(value) => attributes = value,
@@ -138,12 +188,13 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
                         let mut check = vec![];
                         let has_prefix = attributes.prefix.is_some();
+                        let has_suffix = attributes.suffix.is_some();
                         let prefix_parsing = match attributes.prefix {
                             Some(prefix) => quote! {
                                 match reader__.read_string(#prefix) {
                                     Some(_) => reader__.eat_spaces(),
                                     None => {
-                                        reader__.set_expected_token(format!("{:?}", #prefix));
+                                        reader__.set_expected_token(Some(format!("{:?}", #prefix)));
                                         prefix_ok__ = false;
                                         #on_fail;
                                     }
@@ -156,7 +207,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                                 match reader__.read_string(#suffix) {
                                     Some(_) => reader__.eat_spaces(),
                                     None => {
-                                        reader__.set_expected_token(format!("{:?}", #suffix));
+                                        reader__.set_expected_token(Some(format!("{:?}", #suffix)));
                                         #on_fail;
                                     }
                                 };
@@ -166,7 +217,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
                         let mut parse_method = quote! { parse(reader__) };
 
-                        if let Some(separator) = attributes.sep {
+                        if let Some(separator) = attributes.separator {
                             parse_method = quote! { parse_with_separator(reader__, #separator) };
                         }
 
@@ -228,7 +279,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                             });
                         }
 
-                        if is_vec && has_prefix {
+                        if is_vec && has_prefix && !has_suffix {
                             check.push(quote! {
                                 if #field_name.is_empty() && prefix_ok__ {
                                     reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
@@ -280,13 +331,13 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                 // TODO: check if variant should be skipped to avoid recursion
 
                 let variant_name = &variant.ident;
-                let mut attributes = ParsableAttributes::default();
+                let mut attributes = FieldAttributes::default();
                 let mut parse_prefix = quote! { true };
                 let mut parse_suffix = quote! { true };
                 let mut parse_method = quote! { parse(reader__) };
 
                 if let Some((i, attr)) = variant.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
-                    let result = syn::parse2::<ParsableAttributes>(attr.tokens.clone());
+                    let result = syn::parse2::<FieldAttributes>(attr.tokens.clone());
 
                     match result {
                         Ok(value) => attributes = value,
@@ -300,7 +351,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                     parse_prefix = quote! {
                         match reader__.read_string(#prefix) {
                             Some(_) => { reader__.eat_spaces(); true },
-                            None => { reader__.set_expected_token(format!("{:?}", #prefix)); false }
+                            None => { reader__.set_expected_token(Some(format!("{:?}", #prefix))); false }
                         }
                     };
                 }
@@ -309,12 +360,12 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                     parse_suffix = quote! {
                         match reader__.read_string(#suffix) {
                             Some(_) => { reader__.eat_spaces(); true },
-                            None => { reader__.set_expected_token(format!("{:?}", #suffix)); false }
+                            None => { reader__.set_expected_token(Some(format!("{:?}", #suffix))); false }
                         }
                     };
                 }
 
-                if let Some(separator) = attributes.sep {
+                if let Some(separator) = attributes.separator {
                     parse_method = quote! { parse_with_separator(reader__, #separator) };
                 }
 
@@ -361,6 +412,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                                     if let Some(_) = reader__.read_string(#lit_str) {
                                         reader__.eat_spaces();
                                         return Some(Self::#variant_name);
+                                    } else {
+                                        reader__.set_expected_token(Some(format!("{:?}", #lit_str)));
                                     }
                                 });
                             },
@@ -384,6 +437,15 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         _ => todo!()
     };
 
+    let impl_token_name = match root_attributes.name {
+        Some(name) => quote! {
+            fn get_token_name() -> Option<String> {
+                Some(#name.to_string())
+            }
+        },
+        None => quote! { }
+    };
+
     let result = quote! {
         #ast
 
@@ -393,6 +455,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
                 #body
             }
+
+            #impl_token_name
         }
     };
 

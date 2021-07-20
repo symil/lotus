@@ -24,12 +24,14 @@ impl<'a> StringReader<'a> {
         }
     }
 
-    pub fn set_expected_token(&mut self, expected: String) {
-        if self.index == self.error_index {
-            self.expected.push(expected);
-        } else if self.index > self.error_index {
-            self.expected = vec![expected];
-            self.error_index = self.index;
+    pub fn set_expected_token(&mut self, expected: Option<String>) {
+        if let Some(expected) = expected {
+            if self.index == self.error_index {
+                self.expected.push(expected);
+            } else if self.index > self.error_index {
+                self.expected = vec![expected];
+                self.error_index = self.index;
+            }
         }
     }
 

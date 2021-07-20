@@ -2,10 +2,9 @@ use std::ops::{Deref, DerefMut};
 
 use parsable::*;
 
-#[parsable(located)]
-#[derive(Debug)]
+#[parsable(located, name="identifier")]
 pub struct Identifier {
-    #[parsable(regex = r"[a-zA-Z_][_\w\d]*")]
+    #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#)]
     pub value: String
 }
 

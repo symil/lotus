@@ -2,21 +2,24 @@ use std::{cell::{UnsafeCell}, fmt::Debug, mem, rc::Rc};
 use serializable::{ReadBuffer, Serializable, WriteBuffer};
 
 pub struct Link<T : ?Sized> {
-    original: bool, 
+    // original: bool, 
     value: Rc<UnsafeCell<Option<Rc<T>>>>
 }
 
 impl<T> Link<T> {
     pub fn empty() -> Self {
-        Self { original: true, value: Rc::new(UnsafeCell::new(None)) }
+        // Self { original: true, value: Rc::new(UnsafeCell::new(None)) }
+        Self { value: Rc::new(UnsafeCell::new(None)) }
     }
 
     pub fn new(value: T) -> Self {
-        Self { original: true, value: Rc::new(UnsafeCell::new(Some(Rc::new(value)))) }
+        // Self { original: true, value: Rc::new(UnsafeCell::new(Some(Rc::new(value)))) }
+        Self { value: Rc::new(UnsafeCell::new(Some(Rc::new(value)))) }
     }
 
     pub fn clone(&self) -> Self {
-        Self { original: false, value: Rc::clone(&self.value) }
+        // Self { original: false, value: Rc::clone(&self.value) }
+        Self { value: Rc::clone(&self.value) }
     }
     
     fn get_opt_mut(&self) -> &mut Option<Rc<T>> {
@@ -59,14 +62,16 @@ impl<T> Default for Link<T> {
 
 impl<T : Debug> Debug for Link<T> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.original {
-            fmt.debug_struct("Link")
-                .field("addr", &format_args!("0x{:X}", self.get_addr()))
-                .field("value", &format_args!("{:?}", self.borrow()))
-                .finish()
-        } else {
-            fmt.write_fmt(format_args!("Link [0x{:X}]", self.get_addr()))
-        }
+        // if self.original {
+        //     fmt.debug_struct("Link")
+        //         .field("addr", &format_args!("0x{:X}", self.get_addr()))
+        //         .field("value", &format_args!("{:?}", self.borrow()))
+        //         .finish()
+        // } else {
+        //     fmt.write_fmt(format_args!("Link [0x{:X}]", self.get_addr()))
+        // }
+
+        fmt.write_fmt(format_args!("Link [0x{:X}]", self.get_addr()))
     }
 }
 
@@ -99,10 +104,10 @@ impl<T : Serializable + 'static> Serializable for Link<T> {
                 None => {
                     let link = buffer.register(addr, Self::empty());
                     let value = T::read_bytes(buffer)?;
-                    let mut result = Link::clone(&link);
+                    let result = Link::clone(&link);
 
                     result.set(value);
-                    result.original = true;
+                    // result.original = true;
 
                     Some(result)
                 }

@@ -1,1 +1,7 @@
-hello().a + 5
+world {
+    player: Player,
+
+    @do_something(a: num) -> num {
+        
+    }
+}

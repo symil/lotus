@@ -5,14 +5,12 @@ use super::{boolean::Boolean, identifier::Identifier, number::Number};
 pub type Expr = Operation;
 
 #[parsable(located)]
-#[derive(Debug)]
 pub struct Operation {
     pub first: Operand,
     pub others: Vec<(BinaryOperator, Operand)>
 }
 
 #[parsable(located)]
-#[derive(Debug)]
 pub enum Operand {
     #[parsable(brackets="()")]
     Parenthesized(Box<Operation>),
@@ -23,14 +21,18 @@ pub enum Operand {
 }
 
 #[parsable(located)]
-#[derive(Debug)]
 pub struct VarPath {
+    pub prefix: Option<Pound>,
     pub name: Identifier,
     pub path: Vec<PathSegment>
 }
 
 #[parsable(located)]
-#[derive(Debug)]
+pub enum Pound {
+    Pound = "#"
+}
+
+#[parsable(located)]
 pub enum PathSegment {
     #[parsable(prefix=".")]
     FieldAccess(Identifier),
@@ -41,7 +43,6 @@ pub enum PathSegment {
 }
 
 #[parsable(located)]
-#[derive(Debug)]
 pub enum UnaryOperator {
     Not = "!",
     Plus = "+",
@@ -49,15 +50,14 @@ pub enum UnaryOperator {
 }
 
 #[parsable(located)]
-#[derive(Debug)]
 pub struct UnaryOperation {
     pub operator: UnaryOperator,
     pub operand: Operand
 }
 
 #[parsable(located)]
-#[derive(Debug)]
 pub enum BinaryOperator {
+    Pow = "**",
     Plus = "+",
     Minus = "-",
     Mult = "*",
@@ -71,4 +71,13 @@ pub enum BinaryOperator {
     Gt = ">",
     Lte = "<=",
     Lt = "<"
+}
+
+#[parsable(located)]
+pub struct TernaryOperation {
+    pub condition: Operation,
+    #[parsable(prefix="?")]
+    pub if_expr: Operation,
+    #[parsable(prefix=":")]
+    pub else_expr: Operation
 }

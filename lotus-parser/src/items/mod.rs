@@ -1,9 +1,9 @@
-pub mod type_declaration;
+pub mod struct_declaration;
 pub mod identifier;
 pub mod file;
-pub mod type_qualifier;
-pub mod field_declaration;
 pub mod expr;
 pub mod number;
 pub mod boolean;
 pub mod statement;
+pub mod top_level_block;
+pub mod function_declaration;

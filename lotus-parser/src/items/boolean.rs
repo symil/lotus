@@ -1,7 +1,6 @@
 use parsable::parsable;
 
-#[parsable(located)]
-#[derive(Debug)]
+#[parsable(located, name="boolean")]
 pub struct Boolean {
     pub value: bool
 }

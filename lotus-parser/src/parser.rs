@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{items::{expr::{Expr}}};
+use crate::{items::{file::LotusFile}};
 use parsable::*;
 
 pub struct LotusParser {
@@ -17,7 +17,7 @@ impl LotusParser {
     pub fn parse_root(&mut self, file_path: &str) {
         let unparsed_file = fs::read_to_string(file_path).expect("cannot read file");
 
-        let result = Expr::parse_string(&unparsed_file);
+        let result = LotusFile::parse_string(&unparsed_file);
 
         match result {
             Ok(value) => { dbg!(value); },

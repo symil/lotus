@@ -8,8 +8,9 @@ pub trait Parsable : Sized {
         unimplemented!()
     }
 
-    fn get_token_name() -> String {
-        get_type_name::<Self>()
+    fn get_token_name() -> Option<String> {
+        // get_type_name::<Self>()
+        None
     }
 
     fn parse_string(string: &str) -> Result<Self, ParseError> {
@@ -21,12 +22,12 @@ pub trait Parsable : Sized {
             Some(value) => match reader.is_finished() {
                 true => Ok(value),
                 false => {
-                    reader.set_expected_token("<EOF>".to_string());
+                    reader.set_expected_token(Some("<EOF>".to_string()));
                     Err(reader.get_error())
                 }
             },
             None => {
-                reader.set_expected_token(get_type_name::<Self>());
+                reader.set_expected_token(Some(get_type_name::<Self>()));
                 Err(reader.get_error())
             }
         }

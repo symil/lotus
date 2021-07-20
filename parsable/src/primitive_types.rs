@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{parsable::Parsable, string_reader::StringReader, utils::get_type_name};
+use crate::{parsable::Parsable, string_reader::StringReader};
 
 const NUMBER_PATTERN : &'static str = r"\d+(\.\d*)?";
 
@@ -26,8 +26,8 @@ impl Parsable for bool {
 }
 
 impl<T : Parsable> Parsable for Box<T> {
-    fn get_token_name() -> String {
-        get_type_name::<T>()
+    fn get_token_name() -> Option<String> {
+        <T as Parsable>::get_token_name()
     }
 
     fn parse(reader: &mut StringReader) -> Option<Self> {
@@ -39,8 +39,8 @@ impl<T : Parsable> Parsable for Box<T> {
 }
 
 impl<T : Parsable> Parsable for Option<T> {
-    fn get_token_name() -> String {
-        get_type_name::<T>()
+    fn get_token_name() -> Option<String> {
+        <T as Parsable>::get_token_name()
     }
 
     fn parse(reader: &mut StringReader) -> Option<Self> {
@@ -66,8 +66,8 @@ impl<T : Parsable> Parsable for Vec<T> {
         Some(result)
     }
 
-    fn get_token_name() -> String {
-        get_type_name::<T>()
+    fn get_token_name() -> Option<String> {
+        <T as Parsable>::get_token_name()
     }
 
     fn parse_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
@@ -80,7 +80,7 @@ impl<T : Parsable> Parsable for Vec<T> {
             match reader.read_string(separator) {
                 Some(_) => reader.eat_spaces(),
                 None => {
-                    reader.set_expected_token(format!("{:?}", separator));
+                    reader.set_expected_token(Some(format!("{:?}", separator)));
                     break;
                 }
             }
@@ -91,8 +91,11 @@ impl<T : Parsable> Parsable for Vec<T> {
 }
 
 impl<T : Parsable, U : Parsable> Parsable for (T, U) {
-    fn get_token_name() -> String {
-        format!("({}, {})", get_type_name::<T>(), get_type_name::<U>())
+    fn get_token_name() -> Option<String> {
+        let first = <T as Parsable>::get_token_name()?;
+        let second = <U as Parsable>::get_token_name()?;
+
+        Some(format!("({}, {})", first, second))
     }
 
     fn parse(reader: &mut StringReader) -> Option<Self> {
