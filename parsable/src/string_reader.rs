@@ -1,27 +1,47 @@
 use std::{collections::HashMap};
 
-use line_col::LineColLookup;
 use regex::Regex;
-
+use crate::{DataLocation, line_col_lookup::LineColLookup};
 use super::parse_error::ParseError;
 
-pub struct StringReader<'a> {
+pub struct StringReader {
     regexes: HashMap<&'static str, Regex>,
-    string: &'a str,
+    file_name: &'static str,
+    string: String,
+    line_col: LineColLookup,
     index: usize,
     error_index: usize,
     expected: Vec<String>
 }
 
-impl<'a> StringReader<'a> {
-    pub fn new(string: &'a str) -> Self {
+static mut STRINGS : Vec<String> = vec![];
+
+impl StringReader {
+    pub fn new() -> Self {
         Self {
             regexes: HashMap::new(),
-            string,
+            file_name: "",
+            string: String::new(),
+            line_col: LineColLookup::new(""),
             index: 0,
             error_index: 0,
             expected: vec![]
         }
+    }
+
+    pub fn set_content(&mut self, file_content: String, file_name: String) {
+        unsafe { STRINGS.push(file_name) };
+
+        self.file_name = unsafe { &STRINGS.last().unwrap() };
+        self.line_col = LineColLookup::new(&file_content);
+        self.string = file_content;
+        self.index = 0;
+        self.error_index = 0;
+        self.expected = vec![];
+    }
+
+    pub fn get_file_name(&self) -> &'static str {
+        self.file_name
     }
 
     pub fn set_expected_token(&mut self, expected: Option<String>) {
@@ -50,7 +70,7 @@ impl<'a> StringReader<'a> {
             }
         }
 
-        let (line, col) = LineColLookup::new(&self.string).get(error_index);
+        let (line, col) = self.line_col.get(error_index);
         let expected = self.expected.clone();
 
         ParseError { line, col, expected }
@@ -78,7 +98,7 @@ impl<'a> StringReader<'a> {
         self.index = index;
     }
 
-    pub fn advance(&mut self, length: usize) -> Option<&'a str> {
+    pub fn advance(&mut self, length: usize) -> Option<&str> {
         match length {
             0 => None,
             _ => {
@@ -115,11 +135,11 @@ impl<'a> StringReader<'a> {
         }
     }
 
-    pub fn read_function<F : Fn(&str) -> usize>(&mut self, f: F) -> Option<&'a str> {
+    pub fn read_function<F : Fn(&str) -> usize>(&mut self, f: F) -> Option<&str> {
         self.advance(f(self.as_str()))
     }
 
-    pub fn read_string(&mut self, string: &'static str) -> Option<&'a str> {
+    pub fn read_string(&mut self, string: &str) -> Option<&str> {
         let length = match self.as_str().starts_with(string) {
             true => string.len(),
             false => return None
@@ -133,7 +153,7 @@ impl<'a> StringReader<'a> {
         self.advance(length)
     }
 
-    pub fn read_regex(&mut self, pattern: &'static str) -> Option<&'a str> {
+    pub fn read_regex(&mut self, pattern: &'static str) -> Option<&str> {
         let regex = match self.regexes.get(pattern) {
             Some(value) => value,
             None => {
@@ -149,6 +169,14 @@ impl<'a> StringReader<'a> {
         };
 
         self.advance(length)
+    }
+
+    pub fn get_data_location(&self, start: usize) -> DataLocation {
+        let end = self.get_index_backtracked();
+        let file_name = self.file_name;
+        let (line, column) = self.line_col.get(start);
+
+        DataLocation { start, end, file_name, line, column }
     }
 }
 

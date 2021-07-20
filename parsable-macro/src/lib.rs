@@ -305,7 +305,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                     if located {
                         field_names.push(quote! { location });
                         named_fields.named.insert(0, create_location_field("location"));
-                        set_location = quote! { let location = parsable::DataLocation::new(start_index__, reader__.get_index_backtracked()); };
+                        set_location = quote! { let location = reader__.get_data_location(start_index__); };
                     }
 
                     quote! {

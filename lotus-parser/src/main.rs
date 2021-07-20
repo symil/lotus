@@ -1,10 +1,16 @@
-use parser::LotusParser;
+use program::LotusProgram;
 
-mod parser;
+mod program;
 mod items;
+pub mod context;
 
 fn main() {
-    let mut parser = LotusParser::new();
-
-    parser.parse_root("test.lt");
+    match LotusProgram::from_directory("test") {
+        Ok(program) => {
+            dbg!(program);
+        },
+        Err(error) => {
+            println!("{}", error.to_string());
+        }
+    }
 }

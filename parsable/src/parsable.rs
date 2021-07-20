@@ -13,12 +13,10 @@ pub trait Parsable : Sized {
         None
     }
 
-    fn parse_string(string: &str) -> Result<Self, ParseError> {
-        let mut reader = StringReader::new(string);
-
+    fn parse_string(reader: &mut StringReader) -> Result<Self, ParseError> {
         reader.eat_spaces();
 
-        match Self::parse(&mut reader) {
+        match Self::parse(reader) {
             Some(value) => match reader.is_finished() {
                 true => Ok(value),
                 false => {
