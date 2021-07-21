@@ -2,7 +2,7 @@ use parsable::parsable;
 
 use super::{identifier::Identifier, statement::Statement};
 
-#[parsable(located)]
+#[parsable]
 pub struct FunctionDeclaration {
     #[parsable(prefix="fn")]
     pub name: Identifier,
@@ -14,7 +14,7 @@ pub struct FunctionDeclaration {
     pub statements: Vec<Statement>
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct FunctionArgument {
     pub name: Identifier,
     #[parsable(prefix=":")]

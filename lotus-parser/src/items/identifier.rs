@@ -1,8 +1,8 @@
-use std::ops::{Deref, DerefMut};
+use std::{fmt::Display, hash::Hash, ops::{Deref, DerefMut}};
 
 use parsable::*;
 
-#[parsable(located, name="identifier")]
+#[parsable(name="identifier")]
 pub struct Identifier {
     #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#)]
     pub value: String
@@ -20,4 +20,26 @@ impl DerefMut for Identifier {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }    
+}
+
+impl Hash for Identifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl Eq for Identifier {
+    
+}
+
+impl Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.value.fmt(f)
+    }
 }

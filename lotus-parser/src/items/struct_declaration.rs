@@ -2,24 +2,24 @@ use parsable::parsable;
 
 use super::{function_declaration::FunctionArgument, identifier::Identifier, statement::Statement};
 
-#[parsable(located)]
+#[parsable]
 pub struct StructDeclaration {
     pub qualifier: StructQualifier,
-    pub name: Option<Identifier>,
+    pub name: Identifier,
     #[parsable(prefix="extends")]
     pub extends: Option<Identifier>,
     #[parsable(brackets="{}")]
     pub body: StructDeclarationBody
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct StructDeclarationBody {
     #[parsable(sep=",")]
     pub fields: Vec<FieldDeclaration>,
     pub methods: Vec<MethodDeclaration>
 }
 
-#[parsable(located)]
+#[parsable]
 pub enum StructQualifier {
     Struct = "struct",
     View = "view",
@@ -28,14 +28,14 @@ pub enum StructQualifier {
     World = "world"
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct FieldDeclaration {
     pub name: Identifier,
     #[parsable(prefix=":")]
     pub ty: Option<Identifier>
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct MethodDeclaration {
     pub qualifier: Option<MethodQualifier>,
     pub name: Identifier,
@@ -49,7 +49,7 @@ pub struct MethodDeclaration {
     pub statements: Vec<Statement>
 }
 
-#[parsable(located)]
+#[parsable]
 pub enum MethodQualifier {
     Builtin = "@",
     Hook = "`",
@@ -57,7 +57,7 @@ pub enum MethodQualifier {
     After= "\""
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct MethodCondition {
     pub left: Identifier,
     #[parsable(prefix="=")]

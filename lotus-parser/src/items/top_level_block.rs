@@ -1,9 +1,9 @@
 use parsable::parsable;
 use super::{function_declaration::FunctionDeclaration, statement::VarDeclaration, struct_declaration::StructDeclaration};
 
-#[parsable(located)]
+#[parsable]
 pub enum TopLevelBlock {
     StructDeclaration(StructDeclaration),
-    VarDeclaration(VarDeclaration),
+    ConstDeclaration(VarDeclaration),
     FunctionDeclaration(FunctionDeclaration)
 }

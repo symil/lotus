@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-#[parsable(located, name="number")]
+#[parsable(name="number")]
 pub struct Number {
     pub value: f64,
 }

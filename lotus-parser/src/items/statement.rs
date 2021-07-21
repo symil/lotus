@@ -2,7 +2,7 @@ use parsable::parsable;
 
 use super::{expr::{Expr, Operand, Operation}, identifier::Identifier};
 
-#[parsable(located)]
+#[parsable]
 pub enum Statement {
     VarDeclaration(VarDeclaration),
     #[parsable(prefix="return")]
@@ -13,7 +13,7 @@ pub enum Statement {
     For(ForLoop)
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct ForLoop {
     #[parsable(prefix="for")]
     pub var_name: Identifier,
@@ -23,7 +23,7 @@ pub struct ForLoop {
     pub statements: Vec<Statement>
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct IfBranch {
     #[parsable(prefix="if")]
     pub if_branch: Branch,
@@ -33,23 +33,24 @@ pub struct IfBranch {
     pub else_branch: Option<Branch>
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct Branch {
     pub condition: Operation,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
 }
 
-#[parsable(located)]
+#[parsable]
 pub struct VarDeclaration {
-    pub keyword: VarDeclarationKeyword,
+    pub qualifier: VarDeclarationQualifier,
     pub name: Identifier,
     #[parsable(prefix="=")]
     pub value: Operation
 }
 
-#[parsable(located)]
-pub enum VarDeclarationKeyword {
+#[parsable]
+#[derive(PartialEq)]
+pub enum VarDeclarationQualifier {
     Let = "let",
     Const = "const"
 }

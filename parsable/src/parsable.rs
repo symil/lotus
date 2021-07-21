@@ -1,4 +1,4 @@
-use crate::{parse_error::ParseError, string_reader::StringReader, utils::get_type_name};
+use crate::{DataLocation, parse_error::ParseError, string_reader::StringReader, utils::get_type_name};
 
 pub trait Parsable : Sized {
     fn parse(reader: &mut StringReader) -> Option<Self>;
@@ -11,6 +11,10 @@ pub trait Parsable : Sized {
     fn get_token_name() -> Option<String> {
         // get_type_name::<Self>()
         None
+    }
+
+    fn get_location(&self) -> &DataLocation {
+        unimplemented!()
     }
 
     fn parse_string(reader: &mut StringReader) -> Result<Self, ParseError> {

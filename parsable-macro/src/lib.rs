@@ -57,10 +57,15 @@ impl Parse for FieldAttributes {
     }
 }
 
-#[derive(Default)]
 struct RootAttributes {
     located: bool,
     name: Option<String>
+}
+
+impl Default for RootAttributes {
+    fn default() -> Self {
+        Self { located: true, name: None }
+    }
 }
 
 impl Parse for RootAttributes {
@@ -69,13 +74,11 @@ impl Parse for RootAttributes {
 
         while !content.is_empty() {
             let name = content.parse::<Ident>()?.to_string();
+            content.parse::<Token![=]>()?;
 
             match name.as_str() {
-                "located" => attributes.located = true,
-                "name" => {
-                    content.parse::<Token![=]>()?;
-                    attributes.name = Some(content.parse::<LitStr>()?.value())
-                },
+                "located" => attributes.located = content.parse::<LitBool>()?.value(),
+                "name" => attributes.name = Some(content.parse::<LitStr>()?.value()),
                 _ => {}
             }
 
@@ -143,8 +146,16 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
     ast.attrs.push(derive_attribute);
 
+    let mut impl_get_location = quote! { };
+
     let body = match &mut ast.data {
         Data::Struct(data_struct) => {
+            impl_get_location = quote! {
+                fn get_location(&self) -> &parsable::DataLocation {
+                    &self.location
+                }
+            };
+
             match &mut data_struct.fields {
                 Fields::Named(named_fields) => {
                     let mut field_names = vec![];
@@ -457,6 +468,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             }
 
             #impl_token_name
+            #impl_get_location
         }
     };
 
