@@ -14,6 +14,7 @@ struct FieldAttributes {
     min: Option<usize>,
     separator: Option<String>,
     optional: Option<bool>,
+    ignore: bool
 }
 
 impl Parse for FieldAttributes {
@@ -27,25 +28,29 @@ impl Parse for FieldAttributes {
         while !content.is_empty() {
             let name = content.parse::<Ident>()?.to_string();
 
-            content.parse::<Token![=]>()?;
+            if name.as_str() == "ignore" {
+                attributes.ignore = true;
+            } else {
+                content.parse::<Token![=]>()?;
 
-            match name.as_str() {
-                "regex" => attributes.regex = Some(content.parse::<LitStr>()?.value()),
-                "prefix" => attributes.prefix = Some(content.parse::<LitStr>()?.value()),
-                "suffix" => attributes.suffix = Some(content.parse::<LitStr>()?.value()),
-                "brackets" => {
-                    let brackets = content.parse::<LitStr>()?.value();
+                match name.as_str() {
+                    "regex" => attributes.regex = Some(content.parse::<LitStr>()?.value()),
+                    "prefix" => attributes.prefix = Some(content.parse::<LitStr>()?.value()),
+                    "suffix" => attributes.suffix = Some(content.parse::<LitStr>()?.value()),
+                    "brackets" => {
+                        let brackets = content.parse::<LitStr>()?.value();
 
-                    if brackets.len() == 2 {
-                        attributes.prefix = Some((brackets.as_bytes()[0] as char).to_string());
-                        attributes.suffix = Some((brackets.as_bytes()[1] as char).to_string());
-                    }
-                },
-                "min" => attributes.min = Some(content.parse::<LitInt>()?.base10_parse::<usize>()?),
-                "sep" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
-                "separator" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
-                "optional" => attributes.optional = Some(content.parse::<LitBool>()?.value()),
-                _ => {}
+                        if brackets.len() == 2 {
+                            attributes.prefix = Some((brackets.as_bytes()[0] as char).to_string());
+                            attributes.suffix = Some((brackets.as_bytes()[1] as char).to_string());
+                        }
+                    },
+                    "min" => attributes.min = Some(content.parse::<LitInt>()?.base10_parse::<usize>()?),
+                    "sep" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
+                    "separator" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
+                    "optional" => attributes.optional = Some(content.parse::<LitBool>()?.value()),
+                    _ => {}
+                }
             }
 
             if !content.is_empty() {
@@ -121,7 +126,7 @@ fn create_location_field(field_name: &str) -> Field {
     result.unwrap().field
 }
 
-// https://docs.rs/syn/1.0.73/syn/struct.DeriveInput.html
+// https://docs.rs/syn/1.0.74/syn/struct.DeriveInput.html
 #[proc_macro_error]
 #[proc_macro_attribute]
 pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
@@ -143,6 +148,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         path: syn::parse_str("derive").unwrap(),
         tokens: syn::parse_str("(Debug, Clone)").unwrap(),
     };
+
+    // if let Data::Enum(_) = ast.data {
+    //     derive_attribute.tokens = syn::parse_str("(Debug, Clone, Copy, PartialEq)").unwrap();
+    // }
 
     ast.attrs.push(derive_attribute);
 
@@ -299,16 +308,22 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                             });
                         }
 
-                        lines.push(quote! {
-                            field_failed__ = false;
-                            field_index__ = reader__.get_index();
-                            prefix_ok__ = true;
-                            #prefix_parsing
-                            #assignment
-                            #(#check)*
-                            #suffix_parsing
-                            #on_success
-                        });
+                        if attributes.ignore {
+                            lines.push(quote! {
+                                let #field_name = <#field_type as Default>::default();
+                            });
+                        } else {
+                            lines.push(quote! {
+                                field_failed__ = false;
+                                field_index__ = reader__.get_index();
+                                prefix_ok__ = true;
+                                #prefix_parsing
+                                #assignment
+                                #(#check)*
+                                #suffix_parsing
+                                #on_success
+                            });
+                        }
                     }
 
                     let mut set_location = quote! {};

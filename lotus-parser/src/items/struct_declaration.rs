@@ -1,3 +1,5 @@
+use std::{fmt::Display};
+
 use parsable::parsable;
 
 use super::{function_declaration::FunctionArgument, identifier::Identifier, statement::Statement};
@@ -6,10 +8,10 @@ use super::{function_declaration::FunctionArgument, identifier::Identifier, stat
 pub struct StructDeclaration {
     pub qualifier: StructQualifier,
     pub name: Identifier,
-    #[parsable(prefix="extends")]
-    pub extends: Option<Identifier>,
+    #[parsable(prefix=":")]
+    pub parent: Option<Identifier>,
     #[parsable(brackets="{}")]
-    pub body: StructDeclarationBody
+    pub body: StructDeclarationBody,
 }
 
 #[parsable]
@@ -20,6 +22,7 @@ pub struct StructDeclarationBody {
 }
 
 #[parsable]
+#[derive(PartialEq, Copy)]
 pub enum StructQualifier {
     Struct = "struct",
     View = "view",
@@ -28,11 +31,33 @@ pub enum StructQualifier {
     World = "world"
 }
 
+// TODO: include this in `parsable` macro
+impl Display for StructQualifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            StructQualifier::Struct => "struct",
+            StructQualifier::View => "view",
+            StructQualifier::Entity => "entity",
+            StructQualifier::Event => "event",
+            StructQualifier::World => "world",
+        };
+
+        write!(f, "{}", string)
+    }
+}
+
 #[parsable]
 pub struct FieldDeclaration {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub ty: Option<Identifier>
+    pub type_name: Identifier,
+    pub suffix: Option<TypeSuffix>
+    // TODO: default value
+}
+
+#[parsable]
+pub enum TypeSuffix {
+    Array = "[]"
 }
 
 #[parsable]

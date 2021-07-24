@@ -8,6 +8,12 @@ pub struct Identifier {
     pub value: String
 }
 
+impl Identifier {
+    pub fn is(&self, value: &str) -> bool {
+        self.value == value
+    }
+}
+
 impl Deref for Identifier {
     type Target = String;
 
@@ -19,7 +25,7 @@ impl Deref for Identifier {
 impl DerefMut for Identifier {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
-    }    
+    }
 }
 
 impl Hash for Identifier {
