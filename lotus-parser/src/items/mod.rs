@@ -1,7 +1,7 @@
 pub mod struct_declaration;
 pub mod identifier;
 pub mod file;
-pub mod expr;
+pub mod expression;
 pub mod number;
 pub mod boolean;
 pub mod statement;

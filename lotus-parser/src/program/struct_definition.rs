@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier, TypeSuffix}};
+use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier}};
+
+use super::expression_type::{ExpressionType, Mutability, TypeKind};
 
 pub struct StructDefinition {
     pub name: Identifier,
@@ -10,7 +12,7 @@ pub struct StructDefinition {
 }
 
 impl StructDefinition {
-    pub fn add_field(&mut self, name: &Identifier, type_name: &Identifier, kind: FieldKind) {
+    pub fn add_field(&mut self, name: &Identifier, type_name: &Identifier, type_kind: TypeKind) {
         let primitive_type = match type_name.value.as_str() {
             "num" => FieldType::Numerical,
             "bool" => FieldType::Boolean,
@@ -22,8 +24,8 @@ impl StructDefinition {
         self.fields.insert(name.clone(), FieldDetails {
             name: name.clone(),
             type_name: type_name.clone(),
+            type_kind,
             primitive_type,
-            kind,
             offset
         });
     }
@@ -33,22 +35,17 @@ impl StructDefinition {
 pub struct FieldDetails {
     pub name: Identifier,
     pub type_name: Identifier,
+    pub type_kind: TypeKind,
     pub primitive_type: FieldType,
-    pub kind: FieldKind,
     pub offset: usize,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum FieldKind {
-    Single,
-    Array
-}
-
-impl FieldKind {
-    pub fn from_suffix(suffix: &Option<TypeSuffix>) -> Self {
-        match suffix {
-            Some(_) => FieldKind::Array,
-            None => FieldKind::Single,
+impl FieldDetails {
+    pub fn get_expr_type(&self) -> ExpressionType {
+        ExpressionType {
+            type_name: self.type_name.clone(),
+            type_kind: self.type_kind,
+            mutability: Mutability::Mutable,
         }
     }
 }

@@ -2,7 +2,7 @@ use parsable::parsable;
 
 use super::{boolean::Boolean, identifier::Identifier, number::Number};
 
-pub type Expr = Operation;
+pub type Expression = Operation;
 
 #[parsable]
 pub struct Operation {
@@ -31,14 +31,14 @@ pub struct VarPath {
 #[derive(PartialEq, Copy)]
 pub enum VarPrefix {
     This = "#",
-    Other = "$"
+    Payload = "$"
 }
 
 impl std::fmt::Display for VarPrefix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let string = match self {
             VarPrefix::This => "#",
-            VarPrefix::Other => "$",
+            VarPrefix::Payload => "$",
         };
 
         write!(f, "{}", string)

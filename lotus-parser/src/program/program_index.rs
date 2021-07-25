@@ -1,7 +1,7 @@
 use std::{collections::{HashMap}};
 
-use crate::{program::struct_definition::{FieldKind, FieldType, StructDefinition}, items::{expr::{VarPrefix}, file::LotusFile, function_declaration::{FunctionArgument, FunctionDeclaration}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier}, top_level_block::TopLevelBlock}};
-use super::error::Error;
+use crate::{items::{expression::{Expression, Operand, PathSegment, VarPrefix}, file::LotusFile, function_declaration::{FunctionArgument, FunctionDeclaration}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::struct_definition::{FieldType, StructDefinition}};
+use super::{context::Context, error::Error, expression_type::{ExpressionType, TypeKind}, function_definition::FunctionDefinition};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world",
@@ -9,13 +9,15 @@ const KEYWORDS : &'static[&'static str] = &[
 
 #[derive(Default)]
 pub struct ProgramIndex {
-    pub world_name: Option<Identifier>,
-    pub user_name: Option<Identifier>,
+    pub world_type_name: Option<Identifier>,
+    pub user_type_name: Option<Identifier>,
     pub struct_declarations: HashMap<Identifier, StructDeclaration>,
     pub function_declarations: HashMap<Identifier, FunctionDeclaration>,
     pub constant_declarations: HashMap<Identifier, VarDeclaration>,
 
-    pub struct_definitions: HashMap<Identifier, StructDefinition>
+    pub struct_definitions: HashMap<Identifier, StructDefinition>,
+    pub function_definitions: HashMap<Identifier, FunctionDefinition>,
+    pub const_definitions: HashMap<Identifier, ExpressionType>,
 }
 
 impl ProgramIndex {
@@ -23,8 +25,12 @@ impl ProgramIndex {
         let mut index = Self::default();
         let mut errors = vec![];
 
-        index.build(files, &mut errors);
+        index.build_index(files, &mut errors);
         index.process_structs(&mut errors);
+        index.process_functions(&mut errors);
+        index.process_constants(&mut errors);
+        index.process_function_bodies(&mut errors);
+
 
         match errors.is_empty() {
             true => Ok(index),
@@ -32,18 +38,12 @@ impl ProgramIndex {
         }
     }
 
-    fn build(&mut self, files: Vec<LotusFile>, errors: &mut Vec<Error>) {
+    fn build_index(&mut self, files: Vec<LotusFile>, errors: &mut Vec<Error>) {
         for file in files {
             for block in file.blocks {
                 let identifier = match &block {
                     TopLevelBlock::StructDeclaration(struct_declaration) => &struct_declaration.name,
-                    TopLevelBlock::ConstDeclaration(const_declaration) => {
-                        if const_declaration.qualifier != VarDeclarationQualifier::Const {
-                            errors.push(Error::located(const_declaration, "global variables must be declared with the `const` qualifier"));
-                        }
-
-                        &const_declaration.name
-                    },
+                    TopLevelBlock::ConstDeclaration(const_declaration) => &const_declaration.name,
                     TopLevelBlock::FunctionDeclaration(function_declaration) => &function_declaration.name,
                 }.clone();
 
@@ -69,7 +69,7 @@ impl ProgramIndex {
         }
 
         if let Some(name) = world_structs.first() {
-            self.world_name = Some(name.clone());
+            self.world_type_name = Some(name.clone());
         }
 
         if user_structs.len() > 1 {
@@ -79,7 +79,109 @@ impl ProgramIndex {
         }
 
         if let Some(name) = user_structs.first() {
-            self.user_name = Some(name.clone());
+            self.user_type_name = Some(name.clone());
+        }
+    }
+
+    fn process_constants(&mut self, errors: &mut Vec<Error>) {
+        for const_declaration in self.constant_declarations.values() {
+            let mut context = Context::new();
+
+            if const_declaration.qualifier != VarDeclarationQualifier::Const {
+                errors.push(Error::located(const_declaration, "global variables must be declared with the `const` qualifier"));
+            }
+
+            if let Some(expr_type) = self.get_expression_type(&const_declaration.value, true, &mut context, errors) {
+                self.const_definitions.insert(const_declaration.name.clone(), expr_type);
+            }
+        }
+    }
+
+    fn get_expression_type(&self, expr: &Expression, is_const: bool, context: &mut Context, errors: &mut Vec<Error>) -> Option<ExpressionType> {
+        let first_operand_type = self.get_operand_type(&expr.first, is_const, context, errors);
+
+        None
+    }
+
+    fn get_operand_type(&self, operand: &Operand, is_const: bool, context: &mut Context, errors: &mut Vec<Error>) -> Option<ExpressionType> {
+        match operand {
+            Operand::Parenthesized(_) => todo!(),
+            Operand::Number(_) => todo!(),
+            Operand::Boolean(_) => todo!(),
+            Operand::UnaryOperation(_) => todo!(),
+            Operand::VarPath(var_path) => {
+                let var_type : Option<ExpressionType> = match &var_path.prefix {
+                    Some(prefix) => {
+                        let prefix_type = match prefix {
+                            VarPrefix::This => {
+                                if context.this().is_none() {
+                                    errors.push(Error::located(prefix, "no `this` value can be referenced in this context"));
+                                }
+
+                                context.this()
+                            },
+                            VarPrefix::Payload => {
+                                if context.payload().is_none() {
+                                    errors.push(Error::located(prefix, "no `payload` value can be referenced in this context"));
+                                }
+
+                                context.payload()
+                            },
+                        };
+
+                        if let Some(prefix_type) = prefix_type {
+                            let type_def = self.struct_definitions.get(&prefix_type.type_name).unwrap();
+
+                            if let Some(field) = type_def.fields.get(&var_path.name) {
+                                Some(field.get_expr_type())
+                            } else {
+                                errors.push(Error::located(&var_path.name, format!("type `{}` does not have a `{}` field", &prefix_type.type_name, &var_path.name)));
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    },
+                    None => {
+                        if is_const {
+                            if let Some(referenced_const) = self.constant_declarations.get(&var_path.name) {
+                                if let Some(_) = context.visit_constant(&var_path.name) {
+                                    errors.push(Error::located(&referenced_const.name, format!("circular reference to `{}`", &referenced_const.name)));
+
+                                    None
+                                } else {
+                                    self.get_expression_type(&referenced_const.value, is_const, context, errors)
+                                }
+                            } else {
+                                errors.push(Error::located(&var_path.name, format!("undefined constant `{}`", &var_path.name)));
+                                None
+                            }
+                        } else {
+                            context.get_var_type(&var_path.name).cloned()
+                        }
+                    }
+                };
+
+                if is_const && !var_path.path.is_empty() {
+                    errors.push(Error::located(&var_path.path[0], "field paths not supported in const expressions"));
+
+                    None
+                } else if let Some(expr_type) = var_type {
+                    let mut final_type = expr_type.clone();
+
+                    for segment in &var_path.path {
+                        match segment {
+                            PathSegment::FieldAccess(_) => todo!(),
+                            PathSegment::BracketIndexing(_) => todo!(),
+                            PathSegment::FunctionCall(_) => todo!(),
+                        }
+                    }
+
+                    Some(final_type)
+                } else {
+                    None
+                }
+            }
         }
     }
 
@@ -99,10 +201,19 @@ impl ProgramIndex {
                 self.collect_struct_fields(&mut struct_def, errors);
             }
         }
+    }
 
+    fn process_functions(&mut self, errors: &mut Vec<Error>) {
+        
+
+    }
+
+    fn process_function_bodies(&mut self, errors: &mut Vec<Error>) {
         for struct_declaration in self.struct_declarations.values() {
             self.validate_struct_methods(struct_declaration, errors);
         }
+
+        // TODO: functions
     }
 
     fn collect_struct_types(&self, struct_name: &Identifier, types: &mut Vec<Identifier>, errors: &mut Vec<Error>) {
@@ -142,7 +253,7 @@ impl ProgramIndex {
                             if self.is_entity_qualifier(field_struct_declaration.qualifier) {
                                 errors.push(Error::located(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &field.type_.name)));
                             } else {
-                                struct_def.add_field(&field.name, &field.type_.name, FieldKind::from_suffix(&field.type_.suffix));
+                                struct_def.add_field(&field.name, &field.type_.name, TypeKind::from_suffix(&field.type_.suffix));
                             }
                         } else {
                             errors.push(Error::located(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &field.type_.name)));
@@ -199,7 +310,7 @@ impl ProgramIndex {
                     self.check_type_name(&method.name, StructQualifier::Event, errors);
 
                     for condition in &method.conditions {
-                        if let Some(VarPrefix::Other) = &condition.left.prefix {
+                        if let Some(VarPrefix::Payload) = &condition.left.prefix {
                             // ok
                         } else {
                             errors.push(Error::located(&condition.left, "left-hand side of event callback condition must be prefixed by $"));

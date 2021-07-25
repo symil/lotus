@@ -1,12 +1,12 @@
 use parsable::parsable;
 
-use super::{expr::{Expr, Operand, Operation}, identifier::Identifier};
+use super::{expression::{Expression, Operand, Operation}, identifier::Identifier};
 
 #[parsable]
 pub enum Statement {
     VarDeclaration(VarDeclaration),
     #[parsable(prefix="return")]
-    Return(Expr),
+    Return(Expression),
     If(IfBranch),
     #[parsable(prefix="while")]
     While(Branch),
