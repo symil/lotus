@@ -28,9 +28,21 @@ pub struct VarPath {
 }
 
 #[parsable]
+#[derive(PartialEq, Copy)]
 pub enum VarPrefix {
     This = "#",
-    Event = "$"
+    Other = "$"
+}
+
+impl std::fmt::Display for VarPrefix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            VarPrefix::This => "#",
+            VarPrefix::Other => "$",
+        };
+
+        write!(f, "{}", string)
+    }
 }
 
 #[parsable]

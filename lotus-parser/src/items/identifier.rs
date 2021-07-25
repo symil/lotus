@@ -3,6 +3,7 @@ use std::{fmt::Display, hash::Hash, ops::{Deref, DerefMut}};
 use parsable::*;
 
 #[parsable(name="identifier")]
+#[derive(Default)]
 pub struct Identifier {
     #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#)]
     pub value: String
@@ -11,6 +12,10 @@ pub struct Identifier {
 impl Identifier {
     pub fn is(&self, value: &str) -> bool {
         self.value == value
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.value.as_str()
     }
 }
 
