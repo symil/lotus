@@ -73,7 +73,7 @@ impl StringReader {
         let (line, col) = self.line_col.get(error_index);
         let expected = self.expected.clone();
 
-        ParseError { line, col, expected }
+        ParseError { line, column: col, expected }
     }
 
     pub fn is_finished(&self) -> bool {

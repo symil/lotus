@@ -52,9 +52,14 @@ impl Display for StructQualifier {
 pub struct FieldDeclaration {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub type_name: Identifier,
-    pub suffix: Option<TypeSuffix>
+    pub type_: Type,
     // TODO: default value
+}
+
+#[parsable]
+pub struct Type {
+    pub name: Identifier,
+    pub suffix: Option<TypeSuffix>
 }
 
 #[parsable]
@@ -66,12 +71,12 @@ pub enum TypeSuffix {
 pub struct MethodDeclaration {
     pub qualifier: Option<MethodQualifier>,
     pub name: Identifier,
-    #[parsable(brackets="[]")]
-    pub condition: Option<MethodCondition>,
+    #[parsable(brackets="[]", separator=",")]
+    pub conditions: Vec<MethodCondition>,
     #[parsable(brackets="()", separator=",", optional=true)]
     pub arguments: Vec<FunctionArgument>,
     #[parsable(prefix="->")]
-    pub return_type: Option<Identifier>,
+    pub return_type: Option<Type>,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
 }

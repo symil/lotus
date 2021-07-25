@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use parsable::{DataLocation, Parsable};
+use parsable::{DataLocation, Parsable, ParseError};
 
 #[derive(Debug, Clone)]
 pub struct Error {
@@ -9,17 +9,30 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn new<S : Deref<Target=str>>(error: S) -> Self {
+    pub fn unlocated<S : Deref<Target=str>>(error: S) -> Self {
         Self {
             location: None,
             error: error.to_string()
         }
     }
 
-    pub fn from<T : Parsable, S : Deref<Target=str>>(data: &T, error: S) -> Self {
+    pub fn located<T : Parsable, S : Deref<Target=str>>(data: &T, error: S) -> Self {
         Self {
             location: Some(data.get_location().clone()),
             error: error.to_string()
+        }
+    }
+
+    pub fn from_parse_error(error: ParseError, file_name: &'static str) -> Self {
+        Self {
+            location: Some(DataLocation {
+                start: 0,
+                end: 0,
+                file_name,
+                line: error.line,
+                column: error.column
+            }),
+            error: format!("expected {}", error.expected.join(" | "))
         }
     }
 

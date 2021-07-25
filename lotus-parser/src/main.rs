@@ -1,19 +1,17 @@
-use program::LotusProgram;
+use program::program::LotusProgram;
 
 mod program;
 mod items;
-mod definitions;
-pub mod context;
-pub mod error;
-mod constants;
 
 fn main() {
-    match LotusProgram::from_directory("test") {
-        Ok(program) => {
-            dbg!(program);
+    match LotusProgram::from_directory_path("test") {
+        Ok(_) => {
+            println!("parse ok");
         },
-        Err(error) => {
-            println!("{}", error.to_string());
+        Err(errors) => {
+            for error in errors {
+                println!("{}", error.to_string());
+            }
         }
     }
 }

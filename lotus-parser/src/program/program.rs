@@ -3,16 +3,18 @@ use std::{fs, path::{PathBuf}};
 use crate::{items::{file::LotusFile}};
 use parsable::*;
 
-#[derive(Debug)]
+use super::{error::Error, program_index::ProgramIndex};
+
 pub struct LotusProgram {
-    pub files: Vec<LotusFile>
+    pub index: ProgramIndex
 }
 
 impl LotusProgram {
-    pub fn from_directory(directory_path: &'static str) -> Result<Self, ParseError> {
+    pub fn from_directory_path(directory_path: &'static str) -> Result<Self, Vec<Error>> {
         let file_paths = read_directory(directory_path);
         let mut parsed_files = vec![];
         let mut string_reader = StringReader::new();
+        let mut errors = vec![];
 
         for path in file_paths {
             let file_content = fs::read_to_string(&path).expect(&format!("cannot read file {:?}", &path));
@@ -20,14 +22,19 @@ impl LotusProgram {
 
             string_reader.set_content(file_content, file_name);
 
-            let lotus_file = LotusFile::parse_string(&mut string_reader)?;
-
-            parsed_files.push(lotus_file);
+            match LotusFile::parse_string(&mut string_reader) {
+                Ok(lotus_file) => parsed_files.push(lotus_file),
+                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, string_reader.get_file_name()))
+            };
         }
 
-        Ok(LotusProgram {
-            files: parsed_files
-        })
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+
+        let index = ProgramIndex::from_parsed_files(parsed_files)?;
+
+        Ok(LotusProgram { index })
     }
 }
 

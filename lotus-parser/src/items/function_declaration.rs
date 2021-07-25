@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{identifier::Identifier, statement::Statement};
+use super::{identifier::Identifier, statement::Statement, struct_declaration::Type};
 
 #[parsable]
 pub struct FunctionDeclaration {
@@ -18,5 +18,5 @@ pub struct FunctionDeclaration {
 pub struct FunctionArgument {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub ty: Identifier
+    pub type_: Type
 }
