@@ -2,7 +2,7 @@ use std::{fmt::Display};
 
 use parsable::parsable;
 
-use super::{expression::{VarPath}, function_declaration::FunctionArgument, identifier::Identifier, statement::Statement};
+use super::{expression::{VarPath}, function_declaration::{FunctionArgument, FunctionSignature}, identifier::Identifier, statement::Statement};
 
 #[parsable]
 #[derive(Default)]
@@ -73,10 +73,7 @@ pub struct MethodDeclaration {
     pub name: Identifier,
     #[parsable(brackets="[]", separator=",")]
     pub conditions: Vec<MethodCondition>,
-    #[parsable(brackets="()", separator=",", optional=true)]
-    pub arguments: Vec<FunctionArgument>,
-    #[parsable(prefix="->")]
-    pub return_type: Option<Type>,
+    pub signature: Option<FunctionSignature>,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
 }

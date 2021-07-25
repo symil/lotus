@@ -2,16 +2,27 @@ use std::collections::HashMap;
 
 use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier}};
 
-use super::expression_type::{ExpressionType, Mutability, TypeKind};
+use super::{expression_type::{ExpressionType, Mutability, TypeKind}, function_definition::FunctionAnnotation};
 
-pub struct StructDefinition {
+pub struct StructAnnotation {
     pub name: Identifier,
     pub qualifier: StructQualifier,
     pub types: Vec<Identifier>,
     pub fields: HashMap<Identifier, FieldDetails>,
+    pub methods: HashMap<Identifier, FunctionAnnotation>
 }
 
-impl StructDefinition {
+impl StructAnnotation {
+    pub fn new(name: &Identifier, qualifier: &StructQualifier) -> Self {
+        Self {
+            name: name.clone(),
+            qualifier: qualifier.clone(),
+            types: vec![],
+            fields: HashMap::new(),
+            methods: HashMap::new()
+        }
+    }
+
     pub fn add_field(&mut self, name: &Identifier, type_name: &Identifier, type_kind: TypeKind) {
         let primitive_type = match type_name.value.as_str() {
             "num" => FieldType::Numerical,

@@ -1,4 +1,4 @@
-use crate::items::{identifier::Identifier, struct_declaration::TypeSuffix};
+use crate::items::{identifier::Identifier, struct_declaration::{Type, TypeSuffix}};
 
 #[derive(Clone, Debug)]
 pub struct ExpressionType {
@@ -8,8 +8,28 @@ pub struct ExpressionType {
 }
 
 impl ExpressionType {
+    pub fn void() -> Self {
+        Self {
+            type_name: Identifier::default(),
+            type_kind: TypeKind::Single,
+            mutability: Mutability::Mutable
+        }
+    }
+
+    pub fn from_type(type_: &Type) -> Self {
+        Self {
+            type_name: type_.name.clone(),
+            type_kind: TypeKind::from_suffix(&type_.suffix),
+            mutability: Mutability::Mutable
+        }
+    }
+
     pub fn is_index(&self) -> bool {
         self.type_name.is("num") && self.type_kind == TypeKind::Single
+    }
+
+    pub fn is_void(&self) -> bool {
+        self.type_name.is("")
     }
 }
 

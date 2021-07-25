@@ -6,12 +6,17 @@ use super::{identifier::Identifier, statement::Statement, struct_declaration::Ty
 pub struct FunctionDeclaration {
     #[parsable(prefix="fn")]
     pub name: Identifier,
+    pub signature: FunctionSignature,
+    #[parsable(brackets="{}")]
+    pub statements: Vec<Statement>
+}
+
+#[parsable]
+pub struct FunctionSignature {
     #[parsable(brackets="()", separator=",")]
     pub arguments: Vec<FunctionArgument>,
     #[parsable(prefix="->")]
-    pub return_type: Option<Identifier>,
-    #[parsable(brackets="{}")]
-    pub statements: Vec<Statement>
+    pub return_type: Option<Type>,
 }
 
 #[parsable]
