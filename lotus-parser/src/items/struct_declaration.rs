@@ -2,7 +2,7 @@ use std::{fmt::Display};
 
 use parsable::parsable;
 
-use super::{expression::{VarPath}, function_declaration::{FunctionArgument, FunctionSignature}, identifier::Identifier, statement::Statement};
+use super::{expression::{VarPath}, function_declaration::{FunctionSignature}, identifier::Identifier, statement::Statement};
 
 #[parsable]
 #[derive(Default)]
@@ -57,7 +57,20 @@ pub struct FieldDeclaration {
 }
 
 #[parsable]
-pub struct Type {
+pub enum Type {
+    Value(ValueType),
+    Function(FunctionType)
+}
+
+#[parsable]
+pub struct FunctionType {
+    #[parsable(brackets="()", separator=",")]
+    pub arguments: Vec<Type>,
+    pub return_value: Option<Box<Type>>
+}
+
+#[parsable]
+pub struct ValueType {
     pub name: Identifier,
     pub suffix: Option<TypeSuffix>
 }

@@ -12,6 +12,7 @@ pub struct Operation {
 
 #[parsable]
 pub enum Operand {
+    // TODO: add anonymous function
     #[parsable(brackets="()")]
     Parenthesized(Box<Operation>),
     Number(Number),
@@ -27,22 +28,11 @@ pub struct VarPath {
     pub path: Vec<PathSegment>
 }
 
-#[parsable]
+#[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
 pub enum VarPrefix {
     This = "#",
     Payload = "$"
-}
-
-impl std::fmt::Display for VarPrefix {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let string = match self {
-            VarPrefix::This => "#",
-            VarPrefix::Payload => "$",
-        };
-
-        write!(f, "{}", string)
-    }
 }
 
 #[parsable]
@@ -55,7 +45,7 @@ pub enum PathSegment {
     FunctionCall(Vec<Operation>)
 }
 
-#[parsable]
+#[parsable(impl_display=true)]
 pub enum UnaryOperator {
     Not = "!",
     Plus = "+",
@@ -68,7 +58,7 @@ pub struct UnaryOperation {
     pub operand: Operand
 }
 
-#[parsable]
+#[parsable(impl_display=true)]
 pub enum BinaryOperator {
     Pow = "**",
     Plus = "+",

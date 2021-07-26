@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, PathSegment, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier}, top_level_block::TopLevelBlock}, program::struct_definition::{FieldType, StructAnnotation}};
-use super::{context::Context, error::Error, expression_type::{ExpressionType, TypeKind}, function_definition::FunctionAnnotation};
+use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::struct_definition::{FieldPrimitiveType, StructAnnotation}};
+use super::{context::Context, error::Error, expression_type::{ExpressionType}, function_definition::FunctionAnnotation};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user"
@@ -35,7 +35,6 @@ impl ProgramIndex {
         index.process_functions_signatures(&mut annotations, &mut errors);
         index.process_constants(&mut annotations, &mut errors);
         index.process_function_bodies(&mut annotations, &mut errors);
-
 
         match errors.is_empty() {
             true => Ok(index),
@@ -150,7 +149,7 @@ impl ProgramIndex {
                             let event_struct_annotation = annotations.structs.get(&method.name).unwrap();
 
                             if let Some(field) = event_struct_annotation.fields.get(&condition.left.name) {
-                                if field.primitive_type != FieldType::Entity {
+                                if field.primitive_type != FieldPrimitiveType::Entity {
                                     errors.push(Error::located(&condition.left.name, format!("cannot match event callback on non-entity field")));
                                 }
                             } else {
@@ -171,7 +170,7 @@ impl ProgramIndex {
                                 let this_struct_annotation = annotations.structs.get(&struct_declaration.name).unwrap();
 
                                 if let Some(field) = this_struct_annotation.fields.get(&var_path.name) {
-                                    if field.primitive_type != FieldType::Entity {
+                                    if field.primitive_type != FieldPrimitiveType::Entity {
                                         errors.push(Error::located(&var_path.name, format!("cannot match event callback on non-entity field")));
                                     }
                                 } else {
@@ -250,7 +249,7 @@ impl ProgramIndex {
             }
 
             let arg_type = match self.check_type_name(&argument.type_.name, errors) {
-                true => ExpressionType::from_type(&argument.type_),
+                true => ExpressionType::from_value_type(&argument.type_),
                 false => ExpressionType::void()
             };
 
@@ -261,7 +260,7 @@ impl ProgramIndex {
 
         if let Some(return_type) = &signature.return_type {
             if self.check_type_name(&return_type.name, errors) {
-                function_annotation.return_type = ExpressionType::from_type(return_type);
+                function_annotation.return_type = ExpressionType::from_value_type(return_type);
             }
         }
     }
@@ -278,79 +277,111 @@ impl ProgramIndex {
             Operand::Number(_) => todo!(),
             Operand::Boolean(_) => todo!(),
             Operand::UnaryOperation(_) => todo!(),
-            Operand::VarPath(var_path) => {
-                let var_type : Option<ExpressionType> = match &var_path.prefix {
-                    Some(prefix) => {
-                        let prefix_type = match prefix {
-                            VarPrefix::This => {
-                                if context.this().is_none() {
-                                    errors.push(Error::located(prefix, "no `this` value can be referenced in this context"));
-                                }
+            Operand::VarPath(var_path) => self.get_var_path_type(var_path, is_const, context, annotations, errors)
+        }
+    }
 
-                                context.this()
-                            },
-                            VarPrefix::Payload => {
-                                if context.payload().is_none() {
-                                    errors.push(Error::located(prefix, "no `payload` value can be referenced in this context"));
-                                }
-
-                                context.payload()
-                            },
-                        };
-
-                        if let Some(prefix_type) = prefix_type {
-                            let type_def = annotations.structs.get(&prefix_type.type_name).unwrap();
-
-                            if let Some(field) = type_def.fields.get(&var_path.name) {
-                                Some(field.get_expr_type())
-                            } else {
-                                errors.push(Error::located(&var_path.name, format!("type `{}` does not have a `{}` field", &prefix_type.type_name, &var_path.name)));
-                                None
-                            }
-                        } else {
-                            None
+    fn get_var_path_type(&self, var_path: &VarPath, is_const: bool, context: &mut Context, annotations: &mut ProgramAnnotations, errors: &mut Vec<Error>) -> Option<ExpressionType> {
+        let var_type : Option<ExpressionType> = match &var_path.prefix {
+            Some(prefix) => {
+                let prefix_type = match prefix {
+                    VarPrefix::This => {
+                        if context.this().is_none() {
+                            errors.push(Error::located(prefix, "no `this` value can be referenced in this context"));
                         }
+
+                        context.this()
                     },
-                    None => {
-                        if is_const {
-                            if let Some(referenced_const) = self.const_declarations.get(&var_path.name) {
-                                if let Some(_) = context.visit_constant(&var_path.name) {
-                                    errors.push(Error::located(&referenced_const.name, format!("circular reference to `{}`", &referenced_const.name)));
-
-                                    None
-                                } else {
-                                    self.get_expression_type(&referenced_const.value, is_const, context, annotations, errors)
-                                }
-                            } else {
-                                errors.push(Error::located(&var_path.name, format!("undefined constant `{}`", &var_path.name)));
-                                None
-                            }
-                        } else {
-                            context.get_var_type(&var_path.name).cloned()
+                    VarPrefix::Payload => {
+                        if context.payload().is_none() {
+                            errors.push(Error::located(prefix, "no `payload` value can be referenced in this context"));
                         }
-                    }
+
+                        context.payload()
+                    },
                 };
 
-                if is_const && !var_path.path.is_empty() {
-                    errors.push(Error::located(&var_path.path[0], "field paths not supported in const expressions"));
+                if let Some(ExpressionType::Single(type_name)) = prefix_type {
+                    let type_def = annotations.structs.get(type_name).unwrap();
 
-                    None
-                } else if let Some(expr_type) = var_type {
-                    let mut final_type = expr_type.clone();
-
-                    for segment in &var_path.path {
-                        match segment {
-                            PathSegment::FieldAccess(_) => todo!(),
-                            PathSegment::BracketIndexing(_) => todo!(),
-                            PathSegment::FunctionCall(_) => todo!(),
-                        }
+                    if let Some(field) = type_def.fields.get(&var_path.name) {
+                        Some(field.get_expr_type())
+                    } else {
+                        errors.push(Error::located(&var_path.name, format!("type `{}` does not have a `{}` field", type_name, &var_path.name)));
+                        None
                     }
-
-                    Some(final_type)
                 } else {
                     None
                 }
+            },
+            None => {
+                if is_const {
+                    if let Some(referenced_const) = self.const_declarations.get(&var_path.name) {
+                        if let Some(_) = context.visit_constant(&var_path.name) {
+                            errors.push(Error::located(&referenced_const.name, format!("circular reference to `{}`", &referenced_const.name)));
+
+                            None
+                        } else {
+                            self.get_expression_type(&referenced_const.value, is_const, context, annotations, errors)
+                        }
+                    } else {
+                        errors.push(Error::located(&var_path.name, format!("undefined constant `{}`", &var_path.name)));
+                        None
+                    }
+                } else {
+                    context.get_var_type(&var_path.name).cloned()
+                }
             }
+        };
+
+        if is_const && !var_path.path.is_empty() {
+            errors.push(Error::located(&var_path.path[0], "field paths are not supported in const expressions"));
+
+            None
+        } else if let Some(expr_type) = var_type {
+            let mut final_type = expr_type.clone();
+
+            for segment in &var_path.path {
+                let next_type : Option<ExpressionType> = match segment {
+                    PathSegment::FieldAccess(field_name) => {
+                        match final_type {
+                            ExpressionType::Void => {
+                                errors.push(Error::located(field_name, format!("void type has no field `{}`", field_name)));
+                                None
+                            },
+                            ExpressionType::Single(type_name) => {
+                                let mut result = None;
+
+                                if let Some(struct_annotation) = annotations.structs.get(&type_name) {
+                                    if let Some(field) = struct_annotation.fields.get(field_name) {
+                                        result = Some(field.get_expr_type());
+                                    }
+                                }
+
+                                if result.is_none() {
+                                    errors.push(Error::located(field_name, format!("type `{}` has no field `{}`", &type_name, field_name)));
+                                }
+
+                                result
+                            },
+                            ExpressionType::Array(_) => todo!(),
+                            ExpressionType::Function(_, _) => todo!(),
+                        }
+                    },
+                    PathSegment::BracketIndexing(_) => todo!(),
+                    PathSegment::FunctionCall(_) => todo!(),
+                };
+
+                if let Some(t) = next_type {
+                    final_type = t;
+                } else {
+                    return None;
+                }
+            }
+
+            Some(final_type)
+        } else {
+            None
         }
     }
 
@@ -378,24 +409,29 @@ impl ProgramIndex {
         }
     }
 
-    fn collect_struct_fields(&self, struct_def: &mut StructAnnotation, errors: &mut Vec<Error>) {
-        for type_name in struct_def.types.clone().iter().rev() {
+    fn collect_struct_fields(&self, struct_annotation: &mut StructAnnotation, errors: &mut Vec<Error>) {
+        for type_name in struct_annotation.types.clone().iter().rev() {
             let struct_declaration = self.struct_declarations.get(type_name).unwrap();
 
             for field in &struct_declaration.body.fields {
                 if self.is_forbidden_identifier(&field.name) {
-                    errors.push(Error::located(&field.name, format!("invalid field name: {}", &field.name)));
+                    errors.push(Error::located(&field.name, format!("forbidden field name: {}", &field.name)));
                 } else {
-                    if !self.is_builtin_type_name(&field.type_.name) {
-                        if let Some(field_struct_declaration) = self.struct_declarations.get(&field.type_.name) {
-                            if self.is_entity_qualifier(field_struct_declaration.qualifier) {
-                                errors.push(Error::located(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &field.type_.name)));
-                            } else {
-                                struct_def.add_field(&field.name, &field.type_.name, TypeKind::from_suffix(&field.type_.suffix));
+                    match &field.type_ {
+                        Type::Value(value_type) => {
+                            if let Some(type_declaration) = self.struct_declarations.get(&value_type.name) {
+                                if self.is_entity_qualifier(type_declaration.qualifier) {
+                                    errors.push(Error::located(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &value_type.name)));
+                                } else {
+                                    struct_annotation.add_field(&field.name, value_type);
+                                }
+                            } else if !self.is_builtin_type_name(&value_type.name) {
+                                errors.push(Error::located(&field.name, format!("undefined type `{}`", &value_type.name)));
                             }
-                        } else {
-                            errors.push(Error::located(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &field.type_.name)));
-                        }
+                        },
+                        Type::Function(function_type) => {
+                            errors.push(Error::located(function_type, format!("invalid field type: <function> (must be `bool`, `num` or an entity)")));
+                        },
                     }
                 }
             }

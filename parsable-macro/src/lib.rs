@@ -64,12 +64,13 @@ impl Parse for FieldAttributes {
 
 struct RootAttributes {
     located: bool,
+    impl_display: bool,
     name: Option<String>
 }
 
 impl Default for RootAttributes {
     fn default() -> Self {
-        Self { located: true, name: None }
+        Self { located: true, impl_display: false, name: None }
     }
 }
 
@@ -83,6 +84,7 @@ impl Parse for RootAttributes {
 
             match name.as_str() {
                 "located" => attributes.located = content.parse::<LitBool>()?.value(),
+                "impl_display" => attributes.impl_display = content.parse::<LitBool>()?.value(),
                 "name" => attributes.name = Some(content.parse::<LitStr>()?.value()),
                 _ => {}
             }
@@ -156,6 +158,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     ast.attrs.push(derive_attribute);
 
     let mut impl_get_location = quote! { };
+    let mut impl_display = quote! { };
 
     let body = match &mut ast.data {
         Data::Struct(data_struct) => {
@@ -350,6 +353,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         },
         Data::Enum(data_enum) => {
             let mut lines = vec![];
+            let mut impl_display_lines = vec![];
 
             for i in 0..data_enum.variants.len() {
                 let variant = &mut data_enum.variants[i];
@@ -442,6 +446,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                                         reader__.set_expected_token(Some(format!("{:?}", #lit_str)));
                                     }
                                 });
+
+                                impl_display_lines.push(quote! {
+                                    #name::#variant_name => #lit_str,
+                                });
                             },
                             None => emit_call_site_error!("variants with no field must have an associated string literal")
                         }
@@ -451,6 +459,21 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
             for variant in data_enum.variants.iter_mut() {
                 variant.discriminant = None;
+            }
+
+            if root_attributes.impl_display {
+                impl_display = quote! {
+                    impl std::fmt::Display for #name {
+                        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                            let string = match self {
+                                #(#impl_display_lines)*
+                                _ => "<?>"
+                            };
+
+                            write!(f, "{}", string)
+                        }
+                    }
+                };
             }
 
             quote! {
@@ -485,6 +508,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             #impl_token_name
             #impl_get_location
         }
+
+        #impl_display
     };
 
     result.into()
