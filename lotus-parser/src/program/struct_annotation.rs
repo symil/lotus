@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier, ValueType}};
 
-use super::{expression_type::{ExpressionType}, function_definition::FunctionAnnotation};
+use super::{expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
 pub struct StructAnnotation {
     pub name: Identifier,

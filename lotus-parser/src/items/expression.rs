@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{boolean::Boolean, identifier::Identifier, number::Number};
+use super::{boolean_literal::BooleanLiteral, identifier::Identifier, number_literal::NumberLiteral};
 
 pub type Expression = Operation;
 
@@ -15,8 +15,8 @@ pub enum Operand {
     // TODO: add anonymous function
     #[parsable(brackets="()")]
     Parenthesized(Box<Operation>),
-    Number(Number),
-    Boolean(Boolean),
+    Number(NumberLiteral),
+    Boolean(BooleanLiteral),
     UnaryOperation(Box<UnaryOperation>),
     VarPath(VarPath),
 }

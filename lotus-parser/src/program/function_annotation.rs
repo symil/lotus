@@ -16,4 +16,8 @@ impl FunctionAnnotation {
             return_type: ExpressionType::void()
         }
     }
+
+    pub fn get_expr_type(&self) -> ExpressionType {
+        ExpressionType::Function(self.arguments.clone(), Box::new(self.return_type.clone()))
+    }
 }

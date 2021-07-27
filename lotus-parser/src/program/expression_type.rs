@@ -3,9 +3,11 @@ use crate::items::{identifier::Identifier, struct_declaration::{ValueType, TypeS
 #[derive(Clone, Debug)]
 pub enum ExpressionType {
     Void,
+    SingleAny,
+    ArrayAny,
     Single(Identifier),
     Array(Identifier),
-    Function(Vec<ExpressionType>, Option<Box<ExpressionType>>)
+    Function(Vec<ExpressionType>, Box<ExpressionType>)
 }
 
 impl ExpressionType {

@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::struct_definition::{FieldPrimitiveType, StructAnnotation}};
-use super::{context::Context, error::Error, expression_type::{ExpressionType}, function_definition::FunctionAnnotation};
+use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, struct_annotation::{FieldPrimitiveType, StructAnnotation}}};
+use super::{context::Context, error::Error, expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user"
@@ -206,8 +206,12 @@ impl ProgramIndex {
 
                         let struct_annotation = annotations.structs.get_mut(&struct_declaration.name).unwrap();
 
+                        if struct_annotation.fields.contains_key(&method.name) {
+                            errors.push(Error::located(&method.name, format!("duplicate method declaration: field `{}` already exists", &method.name)));
+                        }
+
                         if struct_annotation.methods.insert(method.name.clone(), method_annotation).is_some() {
-                            errors.push(Error::located(&method.name, format!("duplicate method declaration `{}`", &method.name)));
+                            errors.push(Error::located(&method.name, format!("duplicate method declaration: method `{}` already exists", &method.name)));
                         }
                     },
                 }
@@ -304,7 +308,11 @@ impl ProgramIndex {
                 if let Some(ExpressionType::Single(type_name)) = prefix_type {
                     let type_def = annotations.structs.get(type_name).unwrap();
 
-                    if let Some(field) = type_def.fields.get(&var_path.name) {
+                    if var_path.name.is("_") {
+                        // special case: `_` refers to the value itself rather than a field
+                        // e.g `#foo` means `self.foo`, but `#_` means `self`
+                        Some(ExpressionType::Single(type_name.clone()))
+                    } else if let Some(field) = type_def.fields.get(&var_path.name) {
                         Some(field.get_expr_type())
                     } else {
                         errors.push(Error::located(&var_path.name, format!("type `{}` does not have a `{}` field", type_name, &var_path.name)));
@@ -355,7 +363,11 @@ impl ProgramIndex {
                                 if let Some(struct_annotation) = annotations.structs.get(&type_name) {
                                     if let Some(field) = struct_annotation.fields.get(field_name) {
                                         result = Some(field.get_expr_type());
+                                    } else if let Some(method) = struct_annotation.methods.get(field_name) {
+                                        result = Some(method.get_expr_type());
                                     }
+                                } else {
+                                    result = get_builtin_field_type(&type_name, field_name);
                                 }
 
                                 if result.is_none() {
@@ -364,8 +376,17 @@ impl ProgramIndex {
 
                                 result
                             },
-                            ExpressionType::Array(_) => todo!(),
-                            ExpressionType::Function(_, _) => todo!(),
+                            ExpressionType::Array(type_name) => get_array_field_type(Some(&type_name), field_name),
+                            ExpressionType::Function(_, _) => {
+                                errors.push(Error::located(field_name, format!("functions have no field `{}`", field_name)));
+                                None
+                            },
+                            ExpressionType::SingleAny => {
+                                errors.push(Error::located(field_name, format!("invalid field access `{}`: cannot infer parent type", field_name)));
+                                None
+                            },
+                            ExpressionType::ArrayAny => get_array_field_type(None, field_name),
+                            
                         }
                     },
                     PathSegment::BracketIndexing(_) => todo!(),
