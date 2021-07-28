@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
 use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}}};
-use super::{error::Error, expression_type::{ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails};
+use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -114,14 +114,14 @@ impl ProgramIndex {
                                     context.error(&method.name, format!("method @{} can only be implemented on a world", &method.name));
                                 }
 
-                                self.check_builtin_method(method, errors);
+                                self.check_builtin_method(method, context);
                             },
                             "trigger" => {
                                 if struct_declaration.qualifier != StructQualifier::Event && struct_declaration.qualifier != StructQualifier::Request {
                                     context.error(&method.name, format!("method @{} can only be implemented on a events and requests", &method.name));
                                 }
 
-                                self.check_builtin_method(method, errors);
+                                self.check_builtin_method(method, context);
                             },
                             _ => {
                                 context.error(method, format!("invalid built-in method name @{}", &method.name));
@@ -129,11 +129,11 @@ impl ProgramIndex {
                         }
                     },
                     Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
-                        if !self.is_entity_qualifier(struct_declaration.qualifier) {
+                        if !self.is_entity_qualifier(&struct_declaration.qualifier) {
                             context.error(method, "event callbacks can only be defined on an entity, world or user");
                         }
 
-                        self.check_struct_qualifier(&method.name, StructQualifier::Event, errors);
+                        self.check_struct_qualifier(&method.name, StructQualifier::Event, context);
 
                         for condition in &method.conditions {
                             if let Some(VarPrefix::Payload) = &condition.left.prefix {
@@ -142,11 +142,21 @@ impl ProgramIndex {
                                 context.error(&condition.left, "left-hand side of event callback condition must be prefixed by $");
                             }
 
-                            let event_struct_annotation = annotations.structs.get(&method.name).unwrap();
+                            let event_struct_annotation = context.structs.get(&method.name).unwrap();
 
                             if let Some(field) = event_struct_annotation.fields.get(&condition.left.name) {
-                                if field.primitive_type != FieldPrimitiveType::Entity {
-                                    context.error(&condition.left.name, format!("cannot match event callback on non-entity field"));
+                                let mut ok = false;
+
+                                if let ExpressionType::Single(ItemType::Struct(struct_name)) = &field.expr_type {
+                                    let field_type = context.structs.get(struct_name).unwrap();
+
+                                    if self.is_entity_qualifier(&field_type.qualifier) {
+                                        ok = true;
+                                    }
+                                }
+
+                                if !ok {
+                                    context.error(&condition.left.name, format!("event callback condition: left-side must refer to an entity field"));
                                 }
                             } else {
                                 context.error(&condition.left.name, format!("event `{}` does not have a `{}` field", &method.name, &condition.left.name));
@@ -163,11 +173,21 @@ impl ProgramIndex {
                                     context.error(&condition.right, "right-hand side of event callback condition must be prefixed by #");
                                 }
 
-                                let this_struct_annotation = annotations.structs.get(&struct_declaration.name).unwrap();
+                                let this_struct_annotation = context.structs.get(&struct_declaration.name).unwrap();
 
                                 if let Some(field) = this_struct_annotation.fields.get(&var_path.name) {
-                                    if field.primitive_type != FieldPrimitiveType::Entity {
-                                        context.error(&var_path.name, format!("cannot match event callback on non-entity field"));
+                                    let mut ok = false;
+
+                                    if let ExpressionType::Single(ItemType::Struct(struct_name)) = &field.expr_type {
+                                        let field_type = context.structs.get(struct_name).unwrap();
+
+                                        if self.is_entity_qualifier(&field_type.qualifier) {
+                                            ok = true;
+                                        }
+                                    }
+
+                                    if !ok {
+                                        context.error(&var_path.name, format!("event callback condition: right-side must refer to an entity field"));
                                     }
                                 } else {
                                     context.error(&var_path.name, format!("entity `{}` does not have a `{}` field", &struct_declaration.name, &var_path.name));
@@ -195,18 +215,27 @@ impl ProgramIndex {
                         }
 
                         if let Some(signature) = &method.signature {
-                            self.process_function_signature(signature, &mut method_annotation, errors);
+                            let (arguments, return_type) = self.process_function_signature(signature, context);
+
+                            method_annotation.arguments = arguments;
+                            method_annotation.return_type = return_type;
                         } else {
                             context.error(&method.name, format!("missing method arguments"));
                         }
 
-                        let struct_annotation = annotations.structs.get_mut(&struct_declaration.name).unwrap();
+                        let struct_annotation = context.structs.get_mut(&struct_declaration.name).unwrap();
+                        let field_exists = struct_annotation.fields.contains_key(&method.name);
+                        let method_exists = struct_annotation.methods.contains_key(&method.name);
 
-                        if struct_annotation.fields.contains_key(&method.name) {
+                        if !field_exists && !method_exists {
+                            struct_annotation.methods.insert(method.name.clone(), method_annotation);
+                        }
+
+                        if field_exists {
                             context.error(&method.name, format!("duplicate method declaration: field `{}` already exists", &method.name));
                         }
 
-                        if struct_annotation.methods.insert(method.name.clone(), method_annotation).is_some() {
+                        if method_exists {
                             context.error(&method.name, format!("duplicate method declaration: method `{}` already exists", &method.name));
                         }
                     },
@@ -216,39 +245,46 @@ impl ProgramIndex {
     }
 
     fn process_functions_signatures(&mut self, context: &mut ProgramContext) {
-        for (function_declaration, function_annotation) in self.function_declarations.values().zip(annotations.functions.values_mut()) {
-            self.process_function_signature(&function_declaration.signature, function_annotation, errors);
+        for function_declaration in self.function_declarations.values() {
+            let (arguments, return_type) = self.process_function_signature(&function_declaration.signature, context);
+            let function_annotation = context.functions.get_mut(&function_declaration.name).unwrap();
+
+            function_annotation.arguments = arguments;
+            function_annotation.return_type = return_type;
         }
     }
 
     fn process_constants(&mut self, context: &mut ProgramContext) {
-        for const_declaration in self.const_declarations.values() {
-            let mut context = ProgramContext::new();
+        context.inside_const_expr = true;
 
+        for const_declaration in self.const_declarations.values() {
             if const_declaration.qualifier != VarDeclarationQualifier::Const {
                 context.error(const_declaration, "global variables must be declared with the `const` qualifier");
             }
 
-            if let Some(expr_type) = self.get_expression_type(&const_declaration.value, true, &mut context, annotations, errors) {
-                *annotations.constants.get_mut(&const_declaration.name).unwrap() = expr_type;
+            if let Some(expr_type) = self.get_expression_type(&const_declaration.value, context) {
+                *context.constants.get_mut(&const_declaration.name).unwrap() = expr_type;
             }
         }
+
+        context.inside_const_expr = false;
     }
 
     fn process_function_bodies(&mut self, context: &mut ProgramContext) {
         // TODO: functions
     }
 
-    fn process_function_signature(&self, signature: &FunctionSignature, function_annotation: &mut FunctionAnnotation, context: &mut ProgramContext) {
+    fn process_function_signature(&self, signature: &FunctionSignature, context: &mut ProgramContext) -> (Vec<ExpressionType>, ExpressionType) {
         let mut arg_names = HashSet::new();
         let mut arguments = vec![];
+        let mut return_type = ExpressionType::Void;
 
         for argument in &signature.arguments {
             if !arg_names.insert(&argument.name) {
                 context.error(&argument.name, format!("duplicate argument: {}", &argument.name));
             }
 
-            let arg_type = match self.check_type_name(&argument.type_.name, errors) {
+            let arg_type = match self.check_type_name(&argument.type_.name, context) {
                 true => ExpressionType::from_value_type(&argument.type_),
                 false => ExpressionType::Void
             };
@@ -256,22 +292,22 @@ impl ProgramIndex {
             arguments.push(arg_type);
         }
 
-        function_annotation.arguments = arguments;
-
-        if let Some(return_type) = &signature.return_type {
-            if self.check_type_name(&return_type.name, errors) {
-                function_annotation.return_type = ExpressionType::from_value_type(return_type);
+        if let Some(return_type_parsed) = &signature.return_type {
+            if self.check_type_name(&return_type_parsed.name, context) {
+                return_type = ExpressionType::from_value_type(return_type_parsed);
             }
         }
+
+        (arguments, return_type)
     }
 
-    fn get_expression_type(&self, expr: &Expression, is_const: bool, context: &mut ProgramContext, context: &mut ProgramContext) -> Option<ExpressionType> {
-        let first_operand_type = self.get_operand_type(&expr.first, is_const, context, annotations, errors);
+    fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let first_operand_type = self.get_operand_type(&expr.first, context);
 
         None
     }
 
-    fn get_operand_type(&self, operand: &Operand, is_const: bool, context: &mut ProgramContext, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {
         match operand {
             Operand::BooleanLiteral(_) => todo!(),
             Operand::NumberLiteral(_) => todo!(),
@@ -279,66 +315,81 @@ impl ProgramIndex {
             Operand::ArrayLiteral(_) => todo!(),
             Operand::Parenthesized(_) => todo!(),
             Operand::UnaryOperation(_) => todo!(),
-            Operand::VarPath(var_path) => self.get_var_path_type(var_path, is_const, context, annotations, errors),
+            Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
         }
     }
 
-    fn get_field_access_type(&self, parent_type: &ExpressionType, is_const: bool, context: &mut ProgramContext, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_field_access_type(&self, parent_type: &ExpressionType, field_name: &Identifier, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let result = match parent_type {
+            ExpressionType::Void => None,
+            ExpressionType::Single(item_type) => match item_type {
+                ItemType::Builtin(builtin_type) => get_builtin_field_type(builtin_type, field_name),
+                ItemType::Struct(struct_name) => {
+                    if struct_name.is("_") {
+                        // special case: `_` refers to the value itself rather than a field
+                        // e.g `#foo` means `self.foo`, but `#_` means `self`
+                        Some(parent_type.clone())
+                    } else if let Some(struct_annotation) = context.structs.get(struct_name) {
+                        if let Some(field) = struct_annotation.fields.get(field_name) {
+                            Some(field.get_expr_type())
+                        } else if let Some(method) = struct_annotation.methods.get(field_name) {
+                            Some(method.get_expr_type())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                },
+                ItemType::Function(_, _) => None,
+            },
+            ExpressionType::Array(item_type) => get_array_field_type(item_type, field_name),
+            ExpressionType::Anonymous(_) => None,
+            
+        };
 
+        if result.is_none() {
+            context.error(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
+        }
+
+        result
     }
 
-    fn get_var_path_type(&self, var_path: &VarPath, is_const: bool, context: &mut ProgramContext, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<ExpressionType> {
         let var_type : Option<ExpressionType> = match &var_path.prefix {
             Some(prefix) => {
-                let prefix_type = match prefix {
+                let prefix_type_opt = match prefix {
                     VarPrefix::This => {
-                        if context.this().is_none() {
+                        if context.get_this_type().is_none() {
                             context.error(prefix, "no `this` value can be referenced in this context");
                         }
 
-                        context.this()
+                        context.get_this_type()
                     },
                     VarPrefix::Payload => {
-                        if context.payload().is_none() {
+                        if context.get_payload_type().is_none() {
                             context.error(prefix, "no `payload` value can be referenced in this context");
                         }
 
-                        context.payload()
+                        context.get_payload_type()
                     },
                 };
 
-                if let Some(ExpressionType::Single(prefix_type)) = prefix_type {
-                    match prefix_type {
-                        ItemType::Builtin(_) => todo!(),
-                        ItemType::Struct(_) => todo!(),
-                        ItemType::Function(_, _) => todo!(),
-                    }
-
-                    let type_def = annotations.structs.get(prefix_type).unwrap();
-
-                    if var_path.name.is("_") {
-                        // special case: `_` refers to the value itself rather than a field
-                        // e.g `#foo` means `self.foo`, but `#_` means `self`
-                        Some(ExpressionType::Single(prefix_type.clone()))
-                    } else if let Some(field) = type_def.fields.get(&var_path.name) {
-                        Some(field.get_expr_type())
-                    } else {
-                        context.error(&var_path.name, format!("type `{}` does not have a `{}` field", prefix_type, &var_path.name));
-                        None
-                    }
+                if let Some(prefix_type) = &prefix_type_opt {
+                    self.get_field_access_type(prefix_type, &var_path.name, context)
                 } else {
                     None
                 }
             },
             None => {
-                if is_const {
+                if context.inside_const_expr {
                     if let Some(referenced_const) = self.const_declarations.get(&var_path.name) {
                         if let Some(_) = context.visit_constant(&var_path.name) {
                             context.error(&referenced_const.name, format!("circular reference to `{}`", &referenced_const.name));
 
                             None
                         } else {
-                            self.get_expression_type(&referenced_const.value, is_const, context, annotations, errors)
+                            self.get_expression_type(&referenced_const.value, context)
                         }
                     } else {
                         context.error(&var_path.name, format!("undefined constant `{}`", &var_path.name));
@@ -350,7 +401,7 @@ impl ProgramIndex {
             }
         };
 
-        if is_const && !var_path.path.is_empty() {
+        if context.inside_const_expr && !var_path.path.is_empty() {
             context.error(&var_path.path[0], "field paths are not supported in const expressions");
 
             None
@@ -359,69 +410,24 @@ impl ProgramIndex {
 
             for segment in &var_path.path {
                 let next_type : Option<ExpressionType> = match segment {
-                    PathSegment::FieldAccess(field_name) => {
-                        match final_type {
-                            ExpressionType::Void => {
-                                context.error(field_name, format!("void type has no field `{}`", field_name));
-                                None
-                            },
-                            ExpressionType::Single(type_name) => {
-                                let mut result = None;
-
-                                if let Some(struct_annotation) = annotations.structs.get(&type_name) {
-                                    if let Some(field) = struct_annotation.fields.get(field_name) {
-                                        result = Some(field.get_expr_type());
-                                    } else if let Some(method) = struct_annotation.methods.get(field_name) {
-                                        result = Some(method.get_expr_type());
-                                    }
-                                } else {
-                                    result = get_builtin_field_type(&type_name, field_name);
-                                }
-
-                                if result.is_none() {
-                                    context.error(field_name, format!("type `{}` has no field `{}`", &type_name, field_name));
-                                }
-
-                                result
-                            },
-                            ExpressionType::Array(type_name) => get_array_field_type(TypeId::Named(type_name), field_name),
-                            ExpressionType::Function(_, _) => {
-                                context.error(field_name, format!("functions have no field `{}`", field_name));
-                                None
-                            },
-                            ExpressionType::SingleAny(_) => {
-                                context.error(field_name, format!("invalid field access `{}`: cannot infer parent type", field_name));
-                                None
-                            },
-                            ExpressionType::ArrayAny(id) => get_array_field_type(TypeId::Anonymous(id), field_name),
-                            
-                        }
-                    },
+                    PathSegment::FieldAccess(field_name) => self.get_field_access_type(&final_type, field_name, context),
                     PathSegment::BracketIndexing(expr) => {
                         let array_item_type = match final_type {
-                            ExpressionType::Array(type_name) => Some(ExpressionType::Single(type_name)),
-                            ExpressionType::ArrayAny(type_id) => Some(ExpressionType::SingleAny(type_id)),
+                            ExpressionType::Array(item_type) => Some(*item_type),
                             _ => {
                                 context.error(expr, format!("bracket indexing target: expected array, got `{}`", final_type)); // TODO: display actual type
                                 None
                             }
                         };
 
-                        let indexing_ok = match self.get_expression_type(expr, is_const, context, annotations, errors) {
+                        let indexing_ok = match self.get_expression_type(expr, context) {
                             Some(expr_type) => {
-                                let mut ok = false;
-
-                                if let ExpressionType::Single(type_name) = &expr_type {
-                                    if type_name.is("num") {
-                                        ok = true;
-                                    }
+                                if let ExpressionType::Single(ItemType::Builtin(BuiltinType::Number)) = &expr_type {
+                                    true
+                                } else {
+                                    context.error(expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Number, &expr_type));
+                                    false
                                 }
-
-                                if !ok {
-                                    context.error(expr, format!("bracket indexing argument: expected `num`, got `{}`", &expr_type));
-                                }
-
-                                ok
                             },
                             None => false,
                         };
@@ -433,17 +439,17 @@ impl ProgramIndex {
                     },
                     PathSegment::FunctionCall(arguments) => {
                         match final_type {
-                            ExpressionType::Function(argument_types, return_type) => {
-                                if arguments.len() != argument_types.len() {
-                                    context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", argument_types.len(), arguments.len()));
+                            ExpressionType::Single(ItemType::Function(expected_arguments, return_type)) => {
+                                if arguments.len() != expected_arguments.len() {
+                                    context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.len()));
                                 }
 
                                 let mut ok = false;
-                                let mut any_type_map : HashMap<u32, Identifier> = HashMap::new();
+                                let mut anonymous_types = HashMap::new();
 
-                                for (i, (arg_expr, expected_type)) in arguments.iter().zip(argument_types.iter()).enumerate() {
-                                    if let Some(actual_type) = self.get_expression_type(arg_expr, is_const, context, annotations, errors) {
-                                        if !expected_type.match_actual(&actual_type, &mut any_type_map) {
+                                for (i, (arg_expr, expected_type)) in arguments.iter().zip(expected_arguments.iter()).enumerate() {
+                                    if let Some(actual_type) = self.get_expression_type(arg_expr, context) {
+                                        if !expected_type.match_actual(&actual_type, &mut anonymous_types) {
                                             context.error(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, actual_type));
                                             ok = false;
                                         }
@@ -454,7 +460,7 @@ impl ProgramIndex {
                                     true => Some(*return_type),
                                     false => None
                                 }
-                            },
+                            }
                             _ => {
                                 context.error(arguments, format!("function call target: expected function, got `{}`", final_type));
                                 None
@@ -476,7 +482,7 @@ impl ProgramIndex {
         }
     }
 
-    fn collect_struct_types(&self, struct_name: &Identifier, types: Vec<Identifier>, context: &mut ProgramContext) -> Vec<Identifier> {
+    fn collect_struct_types(&self, struct_name: &Identifier, mut types: Vec<Identifier>, context: &mut ProgramContext) -> Vec<Identifier> {
         if types.contains(struct_name) {
             context.error(struct_name, format!("circular inheritance: {}", struct_name));
         } else {
@@ -489,7 +495,7 @@ impl ProgramIndex {
                     if parent.qualifier != struct_def.qualifier {
                         context.error(parent_name, format!("a {} cannot inherit from a {}", struct_def.qualifier, parent.qualifier));
                     } else {
-                        self.collect_struct_types(parent_name, types, context);
+                        types = self.collect_struct_types(parent_name, types, context);
                     }
                 } else if self.is_builtin_type_name(parent_name) {
                     context.error(parent_name, format!("cannot inherit from built-in type: {}", parent_name))
@@ -515,16 +521,16 @@ impl ProgramIndex {
                     match &field.type_ {
                         Type::Value(value_type) => {
                             if let Some(type_declaration) = self.struct_declarations.get(&value_type.name) {
-                                if self.is_entity_qualifier(type_declaration.qualifier) {
+                                if self.is_entity_qualifier(&type_declaration.qualifier) {
                                     context.error(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &value_type.name));
                                 } else {
-                                    let field = FieldDetails {
+                                    let field_details = FieldDetails {
                                         name: field.name.clone(),
-                                        type_: ExpressionType::from_value_type(value_type),
+                                        expr_type: ExpressionType::from_value_type(value_type),
                                         offset: fields.len(),
                                     };
 
-                                    if fields.insert(field.name.clone(), field).is_some() {
+                                    if fields.insert(field.name.clone(), field_details).is_some() {
                                         context.error(&field.name, format!("duplicate field declaration: {}", &field.name));
                                     }
                                 }
@@ -553,7 +559,7 @@ impl ProgramIndex {
         }
     }
 
-    fn is_entity_qualifier(&self, qualifier: StructQualifier) -> bool {
+    fn is_entity_qualifier(&self, qualifier: &StructQualifier) -> bool {
         match qualifier {
             StructQualifier::Entity | StructQualifier::World | StructQualifier::User => true,
             _ => false

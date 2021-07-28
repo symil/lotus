@@ -34,12 +34,12 @@ impl ProgramContext {
         self.visited_constants.iter().find(|name| *name == constant_name)
     }
 
-    pub fn this(&self) -> Option<&ExpressionType> {
-        self.this_type.as_ref()
+    pub fn get_this_type(&self) -> Option<ExpressionType> {
+        self.this_type.clone()
     }
 
-    pub fn payload(&self) -> Option<&ExpressionType> {
-        self.payload_type.as_ref()
+    pub fn get_payload_type(&self) -> Option<ExpressionType> {
+        self.payload_type.clone()
     }
 
     pub fn get_var_type(&self, name: &Identifier) -> Option<&ExpressionType> {

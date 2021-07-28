@@ -88,23 +88,23 @@ impl ExpressionType {
         }
     }
 
-    pub fn match_actual(&self, actual: &ExpressionType, any_type_map: &mut HashMap<u32, ExpressionType>) -> bool {
+    pub fn match_actual(&self, actual: &ExpressionType, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
         match self {
             ExpressionType::Void => actual.is_void(),
             ExpressionType::Single(expected_item_type) => match actual {
-                ExpressionType::Single(actual_item_type) => expected_item_type.match_actual(actual_item_type, any_type_map),
+                ExpressionType::Single(actual_item_type) => expected_item_type.match_actual(actual_item_type, anonymous_types),
                 _ => false
             },
             ExpressionType::Array(expected_item_type) => match actual {
-                ExpressionType::Array(actual_item_type) => expected_item_type.match_actual(actual_item_type, any_type_map),
+                ExpressionType::Array(actual_item_type) => expected_item_type.match_actual(actual_item_type, anonymous_types),
                 _ => false
             },
             ExpressionType::Anonymous(id) => {
-                if let Some(expected_type) = any_type_map.get(id) {
+                if let Some(expected_type) = anonymous_types.get(id) {
                     actual == expected_type
                 } else {
                     // TODO: not so sure about that; what happens if an anonymous type is registered?
-                    any_type_map.insert(*id, actual.clone());
+                    anonymous_types.insert(*id, actual.clone());
                     true
                 }
             },
@@ -156,7 +156,7 @@ impl ItemType {
         }
     }
 
-    pub fn match_actual(&self, actual: &ItemType, any_type_map: &mut HashMap<u32, ExpressionType>) -> bool {
+    pub fn match_actual(&self, actual: &ItemType, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
         match self {
             ItemType::Builtin(expected_builtin) => actual.is_builtin(expected_builtin),
             ItemType::Struct(expected_struct) => actual.is_struct(expected_struct),
@@ -171,7 +171,7 @@ impl ItemType {
                             let mut ok = true;
 
                             for (actual_arg_type, expected_arg_type) in actual_argument_types.iter().zip(expected_argument_types.iter()) {
-                                if !expected_arg_type.match_actual(actual_arg_type, any_type_map) {
+                                if !expected_arg_type.match_actual(actual_arg_type, anonymous_types) {
                                     ok = false;
                                 }
                             }
