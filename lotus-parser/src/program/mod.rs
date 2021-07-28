@@ -1,7 +1,7 @@
 pub mod error;
 pub mod program;
 pub mod program_index;
-pub mod context;
+pub mod program_context;
 pub mod struct_annotation;
 pub mod expression_type;
 pub mod function_annotation;

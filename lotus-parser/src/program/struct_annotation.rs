@@ -23,41 +23,27 @@ impl StructAnnotation {
         }
     }
 
-    pub fn add_field(&mut self, name: &Identifier, value_type: &ParsedType) {
-        let primitive_type = match value_type.name.as_str() {
-            "num" => FieldPrimitiveType::Numerical,
-            "bool" => FieldPrimitiveType::Boolean,
-            _ => FieldPrimitiveType::Entity
-        };
+    // pub fn add_field(&mut self, name: &Identifier, value_type: &ParsedType) {
+    //     let primitive_type = match value_type.name.as_str() {
+    //         "num" => FieldPrimitiveType::Numerical,
+    //         "bool" => FieldPrimitiveType::Boolean,
+    //         _ => FieldPrimitiveType::Entity
+    //     };
 
-        let offset = self.fields.values().filter(|field| field.primitive_type == primitive_type).count();
+    //     let offset = self.fields.values().filter(|field| field.primitive_type == primitive_type).count();
 
-        self.fields.insert(name.clone(), FieldDetails {
-            name: name.clone(),
-            type_: ExpressionType::from_value_type(value_type),
-            primitive_type,
-            offset
-        });
-    }
+    //     self.fields.insert(name.clone(), FieldDetails {
+    //         name: name.clone(),
+    //         type_: ExpressionType::from_value_type(value_type),
+    //         primitive_type,
+    //         offset
+    //     });
+    // }
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldDetails {
     pub name: Identifier,
     pub type_: ExpressionType,
-    pub primitive_type: FieldPrimitiveType,
     pub offset: usize,
-}
-
-impl FieldDetails {
-    pub fn get_expr_type(&self) -> ExpressionType {
-        self.type_.clone()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum FieldPrimitiveType {
-    Numerical,
-    Boolean,
-    Entity
 }
