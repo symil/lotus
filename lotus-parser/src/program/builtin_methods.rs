@@ -1,19 +1,16 @@
-use crate::items::identifier::Identifier;
+use crate::{items::identifier::Identifier};
 
-use super::expression_type::ExpressionType;
+use super::expression_type::{BuiltinType, ExpressionType};
 
-pub enum TypeId {
-    Named(Identifier),
-    Anonymous(u32)
-}
-
-pub fn get_builtin_field_type(type_name: &Identifier, _field_name: &Identifier) -> Option<ExpressionType> {
-    match type_name.as_str() {
-        _ => None
+pub fn get_builtin_field_type(builtin_type: &BuiltinType, _field_name: &Identifier) -> Option<ExpressionType> {
+    match builtin_type {
+        BuiltinType::Boolean => None,
+        BuiltinType::Number => None,
+        BuiltinType::String => None,
     }
 }
 
-pub fn get_array_field_type(type_id: TypeId, field_name: &Identifier) -> Option<ExpressionType> {
+pub fn get_array_field_type(item_type: &ExpressionType, field_name: &Identifier) -> Option<ExpressionType> {
     let (args, ret) = match field_name.as_str() {
         "len" => (vec![], Arg::Num),
         "get" => (vec![Arg::Num], Arg::SingleItem),
@@ -23,10 +20,10 @@ pub fn get_array_field_type(type_id: TypeId, field_name: &Identifier) -> Option<
         _ => return None
     };
 
-    let arguments = args.into_iter().map(|arg| arg.into_expr_type(&type_id)).collect();
-    let return_type = ret.into_expr_type(&type_id);
+    let arguments = args.into_iter().map(|arg| arg.into_expr_type(item_type)).collect();
+    let return_type = ret.into_expr_type(item_type);
 
-    Some(ExpressionType::Function(arguments, Box::new(return_type)))
+    Some(ExpressionType::function(arguments, return_type))
 }
 
 enum Arg {
@@ -40,30 +37,23 @@ enum Arg {
 }
 
 impl Arg {
-    pub fn into_expr_type(self, type_id: &TypeId) -> ExpressionType {
-        let expr_single = match type_id {
-            TypeId::Named(type_name) => ExpressionType::Single(type_name.clone()),
-            TypeId::Anonymous(id) => ExpressionType::SingleAny(*id),
-        };
-
-        let expr_array = match type_id {
-            TypeId::Named(type_name) => ExpressionType::Array(type_name.clone()),
-            TypeId::Anonymous(id) => ExpressionType::ArrayAny(*id),
-        };
-
-        let map_ret = match type_id {
-            TypeId::Named(_) => ExpressionType::SingleAny(0),
-            TypeId::Anonymous(id) => ExpressionType::SingleAny(id + 1),
-        };
-
+    pub fn into_expr_type(self, item_type: &ExpressionType) -> ExpressionType {
         match self {
             Arg::Void => ExpressionType::Void,
-            Arg::Num => ExpressionType::Single(Identifier::new("num")),
-            Arg::SingleItem => expr_single,
-            Arg::ArrayItem => expr_array,
-            Arg::ArrayAny => ExpressionType::ArrayAny(0),
-            Arg::BoolCallback => ExpressionType::Function(vec![expr_single], Box::new(ExpressionType::Single(Identifier::new("bool")))),
-            Arg::MapCallback => ExpressionType::Function(vec![expr_single], Box::new(map_ret))
+            Arg::Num => ExpressionType::single_builtin(BuiltinType::Number),
+            Arg::SingleItem => item_type.clone(),
+            Arg::ArrayItem => ExpressionType::array(item_type.clone()),
+            Arg::ArrayAny => ExpressionType::array(ExpressionType::Anonymous(0)),
+            Arg::BoolCallback => ExpressionType::function(
+                vec![item_type.clone()],
+                ExpressionType::single_builtin(BuiltinType::Boolean)
+            ),
+            Arg::MapCallback => ExpressionType::function(
+                vec![item_type.clone()],
+                // picked randomly to avoid conflicts with other anonymous types
+                // TODO: properly solve conflicts
+                ExpressionType::Anonymous(6578436)
+            )
         }
     }
 }

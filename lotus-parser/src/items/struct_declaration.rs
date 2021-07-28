@@ -58,7 +58,7 @@ pub struct FieldDeclaration {
 
 #[parsable]
 pub enum Type {
-    Value(ValueType),
+    Value(ParsedType),
     Function(FunctionType)
 }
 
@@ -70,7 +70,7 @@ pub struct FunctionType {
 }
 
 #[parsable]
-pub struct ValueType {
+pub struct ParsedType {
     pub name: Identifier,
     pub suffix: Option<TypeSuffix>
 }

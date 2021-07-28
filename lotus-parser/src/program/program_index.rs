@@ -1,10 +1,10 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{TypeId, get_array_field_type, get_builtin_field_type}, struct_annotation::{FieldPrimitiveType, StructAnnotation}}};
+use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, struct_annotation::{FieldPrimitiveType, StructAnnotation}}};
 use super::{context::Context, error::Error, expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
 const KEYWORDS : &'static[&'static str] = &[
-    "let", "const", "struct", "view", "entity", "event", "world", "user"
+    "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
 ];
 
 #[derive(Default)]
@@ -61,7 +61,7 @@ impl ProgramIndex {
                         self.struct_declarations.insert(identifier, struct_declaration);
                     },
                     TopLevelBlock::ConstDeclaration(var_declaration) => {
-                        annotations.constants.insert(identifier.clone(), ExpressionType::void());
+                        annotations.constants.insert(identifier.clone(), ExpressionType::Void);
                         self.const_declarations.insert(identifier, var_declaration);
                     },
                     TopLevelBlock::FunctionDeclaration(def) => {
@@ -254,7 +254,7 @@ impl ProgramIndex {
 
             let arg_type = match self.check_type_name(&argument.type_.name, errors) {
                 true => ExpressionType::from_value_type(&argument.type_),
-                false => ExpressionType::void()
+                false => ExpressionType::Void
             };
 
             arguments.push(arg_type);
@@ -277,11 +277,13 @@ impl ProgramIndex {
 
     fn get_operand_type(&self, operand: &Operand, is_const: bool, context: &mut Context, annotations: &mut ProgramAnnotations, errors: &mut Vec<Error>) -> Option<ExpressionType> {
         match operand {
+            Operand::BooleanLiteral(_) => todo!(),
+            Operand::NumberLiteral(_) => todo!(),
+            Operand::StringLiteral(_) => todo!(),
+            Operand::ArrayLiteral(_) => todo!(),
             Operand::Parenthesized(_) => todo!(),
-            Operand::Number(_) => todo!(),
-            Operand::Boolean(_) => todo!(),
             Operand::UnaryOperation(_) => todo!(),
-            Operand::VarPath(var_path) => self.get_var_path_type(var_path, is_const, context, annotations, errors)
+            Operand::VarPath(var_path) => self.get_var_path_type(var_path, is_const, context, annotations, errors),
         }
     }
 
@@ -394,7 +396,7 @@ impl ProgramIndex {
                             ExpressionType::Array(type_name) => Some(ExpressionType::Single(type_name)),
                             ExpressionType::ArrayAny(type_id) => Some(ExpressionType::SingleAny(type_id)),
                             _ => {
-                                errors.push(Error::located(expr, format!("bracket indexing target: expected array, got {}", final_type))); // TODO: display actual type
+                                errors.push(Error::located(expr, format!("bracket indexing target: expected array, got `{}`", final_type))); // TODO: display actual type
                                 None
                             }
                         };
@@ -410,7 +412,7 @@ impl ProgramIndex {
                                 }
 
                                 if !ok {
-                                    errors.push(Error::located(expr, format!("bracket indexing index: expected `num`, got {}", &expr_type)));
+                                    errors.push(Error::located(expr, format!("bracket indexing argument: expected `num`, got `{}`", &expr_type)));
                                 }
 
                                 ok
@@ -424,8 +426,34 @@ impl ProgramIndex {
                         }
                     },
                     PathSegment::FunctionCall(arguments) => {
-                        // TODO
-                        None
+                        match final_type {
+                            ExpressionType::Function(argument_types, return_type) => {
+                                if arguments.len() != argument_types.len() {
+                                    errors.push(Error::located(arguments, format!("function call arguments: expected {} arguments, got `{}`", argument_types.len(), arguments.len())));
+                                }
+
+                                let mut ok = false;
+                                let mut any_type_map : HashMap<u32, Identifier> = HashMap::new();
+
+                                for (i, (arg_expr, expected_type)) in arguments.iter().zip(argument_types.iter()).enumerate() {
+                                    if let Some(actual_type) = self.get_expression_type(arg_expr, is_const, context, annotations, errors) {
+                                        if !expected_type.match_actual(&actual_type, &mut any_type_map) {
+                                            errors.push(Error::located(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, actual_type)));
+                                            ok = false;
+                                        }
+                                    }
+                                }
+
+                                match ok {
+                                    true => Some(*return_type),
+                                    false => None
+                                }
+                            },
+                            _ => {
+                                errors.push(Error::located(arguments, format!("function call target: expected function, got `{}`", final_type)));
+                                None
+                            }
+                        }
                     },
                 };
 
@@ -529,7 +557,7 @@ impl ProgramIndex {
     }
 
     fn is_builtin_type_name(&self, name: &Identifier) -> bool {
-        name.value == "bool" || name.value == "num"
+        name.value == "bool" || name.value == "num" || name.value == "string"
     }
 
     fn check_type_name(&self, name: &Identifier, errors: &mut Vec<Error>) -> bool {

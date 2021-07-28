@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier, ValueType}};
+use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier, ParsedType}};
 
 use super::{expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
@@ -23,7 +23,7 @@ impl StructAnnotation {
         }
     }
 
-    pub fn add_field(&mut self, name: &Identifier, value_type: &ValueType) {
+    pub fn add_field(&mut self, name: &Identifier, value_type: &ParsedType) {
         let primitive_type = match value_type.name.as_str() {
             "num" => FieldPrimitiveType::Numerical,
             "bool" => FieldPrimitiveType::Boolean,

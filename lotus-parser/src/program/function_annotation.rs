@@ -13,11 +13,11 @@ impl FunctionAnnotation {
         Self {
             name: name.clone(),
             arguments: vec![],
-            return_type: ExpressionType::void()
+            return_type: ExpressionType::Void
         }
     }
 
     pub fn get_expr_type(&self) -> ExpressionType {
-        ExpressionType::Function(self.arguments.clone(), Box::new(self.return_type.clone()))
+        ExpressionType::function(self.arguments.clone(), self.return_type.clone())
     }
 }

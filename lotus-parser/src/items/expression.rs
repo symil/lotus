@@ -1,6 +1,8 @@
+use std::ops::Deref;
+
 use parsable::parsable;
 
-use super::{boolean_literal::BooleanLiteral, identifier::Identifier, number_literal::NumberLiteral};
+use super::{boolean_literal::BooleanLiteral, identifier::Identifier, number_literal::NumberLiteral, string_literal::StringLiteral};
 
 pub type Expression = Operation;
 
@@ -13,12 +15,20 @@ pub struct Operation {
 #[parsable]
 pub enum Operand {
     // TODO: add anonymous function
+    BooleanLiteral(BooleanLiteral),
+    NumberLiteral(NumberLiteral),
+    StringLiteral(StringLiteral),
+    ArrayLiteral(ArrayLiteral),
     #[parsable(brackets="()")]
     Parenthesized(Box<Operation>),
-    Number(NumberLiteral),
-    Boolean(BooleanLiteral),
     UnaryOperation(Box<UnaryOperation>),
     VarPath(VarPath),
+}
+
+#[parsable]
+pub struct ArrayLiteral {
+    #[parsable(brackets="[]", separator=",")]
+    items: Vec<Expression>
 }
 
 #[parsable]
@@ -42,7 +52,13 @@ pub enum PathSegment {
     #[parsable(brackets="[]")]
     BracketIndexing(Operation),
     #[parsable(brackets="()", sep=",")]
-    FunctionCall(Vec<Operation>)
+    FunctionCall(ArgumentList)
+}
+
+#[parsable]
+pub struct ArgumentList {
+    #[parsable(brackets="()", sep=",")]
+    pub list: Vec<Operation>
 }
 
 #[parsable(impl_display=true)]
@@ -83,4 +99,12 @@ pub struct TernaryOperation {
     pub if_expr: Operation,
     #[parsable(prefix=":")]
     pub else_expr: Operation
+}
+
+impl Deref for ArgumentList {
+    type Target = Vec<Operation>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.list
+    }
 }
