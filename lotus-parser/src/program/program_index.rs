@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, struct_annotation::{FieldPrimitiveType, StructAnnotation}}};
+use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{TypeId, get_array_field_type, get_builtin_field_type}, struct_annotation::{FieldPrimitiveType, StructAnnotation}}};
 use super::{context::Context, error::Error, expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
 const KEYWORDS : &'static[&'static str] = &[
@@ -376,21 +376,57 @@ impl ProgramIndex {
 
                                 result
                             },
-                            ExpressionType::Array(type_name) => get_array_field_type(Some(&type_name), field_name),
+                            ExpressionType::Array(type_name) => get_array_field_type(TypeId::Named(type_name), field_name),
                             ExpressionType::Function(_, _) => {
                                 errors.push(Error::located(field_name, format!("functions have no field `{}`", field_name)));
                                 None
                             },
-                            ExpressionType::SingleAny => {
+                            ExpressionType::SingleAny(_) => {
                                 errors.push(Error::located(field_name, format!("invalid field access `{}`: cannot infer parent type", field_name)));
                                 None
                             },
-                            ExpressionType::ArrayAny => get_array_field_type(None, field_name),
+                            ExpressionType::ArrayAny(id) => get_array_field_type(TypeId::Anonymous(id), field_name),
                             
                         }
                     },
-                    PathSegment::BracketIndexing(_) => todo!(),
-                    PathSegment::FunctionCall(_) => todo!(),
+                    PathSegment::BracketIndexing(expr) => {
+                        let array_item_type = match final_type {
+                            ExpressionType::Array(type_name) => Some(ExpressionType::Single(type_name)),
+                            ExpressionType::ArrayAny(type_id) => Some(ExpressionType::SingleAny(type_id)),
+                            _ => {
+                                errors.push(Error::located(expr, format!("bracket indexing target: expected array, got {}", final_type))); // TODO: display actual type
+                                None
+                            }
+                        };
+
+                        let indexing_ok = match self.get_expression_type(expr, is_const, context, annotations, errors) {
+                            Some(expr_type) => {
+                                let mut ok = false;
+
+                                if let ExpressionType::Single(type_name) = &expr_type {
+                                    if type_name.is("num") {
+                                        ok = true;
+                                    }
+                                }
+
+                                if !ok {
+                                    errors.push(Error::located(expr, format!("bracket indexing index: expected `num`, got {}", &expr_type)));
+                                }
+
+                                ok
+                            },
+                            None => false,
+                        };
+
+                        match indexing_ok {
+                            true => array_item_type,
+                            false => None
+                        }
+                    },
+                    PathSegment::FunctionCall(arguments) => {
+                        // TODO
+                        None
+                    },
                 };
 
                 if let Some(t) = next_type {

@@ -6,12 +6,12 @@ pub struct StringLiteral {
     pub value: String
 }
 
-impl StringLiteral {
-    pub fn to_actual_string(&self) -> String {
-        // TODO: remove quotes and unescape the string
-        self.value.clone()
-    }
-}
+// impl StringLiteral {
+//     pub fn to_actual_string(&self) -> String {
+//         // TODO: remove quotes and unescape the string
+//         self.value.clone()
+//     }
+// }
 
 impl std::ops::Deref for StringLiteral {
     type Target = String;
