@@ -6,5 +6,5 @@ pub mod struct_annotation;
 pub mod expression_type;
 pub mod function_annotation;
 pub mod builtin_methods;
-pub mod operators;
+pub mod binary_operations;
 pub mod utils;

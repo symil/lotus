@@ -15,6 +15,7 @@ pub struct Operation {
 #[parsable]
 pub enum Operand {
     // TODO: add anonymous function
+    NullLiteral = "null",
     BooleanLiteral(BooleanLiteral),
     NumberLiteral(NumberLiteral),
     StringLiteral(StringLiteral),

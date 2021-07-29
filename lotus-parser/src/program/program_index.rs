@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
 use crate::{items::{expression::{Expression, Operand, Operation, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}, utils::display_join}};
-use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, operators::{OperationTree, get_operator_valid_types}, program_context::ProgramContext, struct_annotation::FieldDetails};
+use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, binary_operations::{OperationTree, get_operator_valid_types}, program_context::ProgramContext, struct_annotation::FieldDetails};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -346,11 +346,12 @@ impl ProgramIndex {
 
     fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {
         match operand {
-            Operand::BooleanLiteral(_) => todo!(),
-            Operand::NumberLiteral(_) => todo!(),
-            Operand::StringLiteral(_) => todo!(),
+            Operand::NullLiteral => Some(ExpressionType::Anonymous(0)),
+            Operand::BooleanLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Boolean)),
+            Operand::NumberLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Number)),
+            Operand::StringLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::String)),
             Operand::ArrayLiteral(_) => todo!(),
-            Operand::Parenthesized(_) => todo!(),
+            Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
             Operand::UnaryOperation(_) => todo!(),
             Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
         }
