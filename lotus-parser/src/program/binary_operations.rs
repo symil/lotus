@@ -63,7 +63,7 @@ fn get_operator_priority(operator: &BinaryOperator) -> usize {
     }
 }
 
-pub fn get_operator_valid_types(operator: &BinaryOperator) -> Vec<ExpressionType> {
+pub fn get_binary_operator_input_types(operator: &BinaryOperator) -> Vec<ExpressionType> {
     match operator {
         BinaryOperator::Plus => vec![
             ExpressionType::single_builtin(BuiltinType::Number),
@@ -74,5 +74,14 @@ pub fn get_operator_valid_types(operator: &BinaryOperator) -> Vec<ExpressionType
         BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![ExpressionType::single_builtin(BuiltinType::Number)],
         BinaryOperator::And | BinaryOperator::Or => vec![ExpressionType::single_builtin(BuiltinType::Boolean)],
         BinaryOperator::Eq | BinaryOperator::Neq => vec![ExpressionType::Anonymous(0)],
+    }
+}
+
+pub fn get_binary_operator_output_type(operator: &BinaryOperator, operand_type: &ExpressionType) -> ExpressionType {
+    match operator {
+        BinaryOperator::Plus | BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => operand_type.clone(),
+        BinaryOperator::And | BinaryOperator::Or => operand_type.clone(),
+        BinaryOperator::Eq | BinaryOperator::Neq => ExpressionType::single_builtin(BuiltinType::Boolean),
+        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => ExpressionType::single_builtin(BuiltinType::Boolean)
     }
 }

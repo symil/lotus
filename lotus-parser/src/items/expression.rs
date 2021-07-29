@@ -29,7 +29,7 @@ pub enum Operand {
 #[parsable]
 pub struct ArrayLiteral {
     #[parsable(brackets="[]", separator=",")]
-    items: Vec<Expression>
+    pub items: Vec<Expression>
 }
 
 #[parsable]

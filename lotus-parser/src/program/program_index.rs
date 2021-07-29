@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, Operation, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}, utils::display_join}};
-use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, binary_operations::{OperationTree, get_operator_valid_types}, program_context::ProgramContext, struct_annotation::FieldDetails};
+use crate::{items::{expression::{ArrayLiteral, Expression, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}, utils::display_join}};
+use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -319,10 +319,11 @@ impl ProgramIndex {
 
                 match (left_type, right_type) {
                     (Some(ltype), Some(rtype)) => {
-                        let operator_valid_types = get_operator_valid_types(operator);
+                        let operator_valid_types = get_binary_operator_input_types(operator);
 
                         let left_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&ltype, &mut HashMap::new()));
                         let right_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&rtype, &mut HashMap::new()));
+                        let same_type = ltype == rtype;
 
                         if !left_ok {
                             context.error(left.get_leftmost(), format!("operator `{}` left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
@@ -332,10 +333,15 @@ impl ProgramIndex {
                             context.error(left.get_leftmost(), format!("operator `{}`, right operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), rtype));
                         }
 
-                        if left_ok && right_ok && ltype != rtype {
+                        if left_ok && right_ok && !same_type {
                             context.error(left.get_leftmost(), format!("operator `{}`: operand types must match (got `{}` and `{}`)", operator, ltype, rtype));
                         }
-                        None
+
+                        if left_ok && right_ok && same_type {
+                            Some(get_binary_operator_output_type(operator, &ltype))
+                        } else {
+                            None
+                        }
                     },
                     _ => None
                 }
@@ -350,10 +356,47 @@ impl ProgramIndex {
             Operand::BooleanLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Boolean)),
             Operand::NumberLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Number)),
             Operand::StringLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::String)),
-            Operand::ArrayLiteral(_) => todo!(),
+            Operand::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
             Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
-            Operand::UnaryOperation(_) => todo!(),
+            Operand::UnaryOperation(unary_operation) => self.get_unary_operation_type(unary_operation, context),
             Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
+        }
+    }
+
+    fn get_unary_operation_type(&self, unary_operation: &UnaryOperation, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let valid_input_types = get_unary_operator_input_types(&unary_operation.operator);
+
+        if let Some(operand_type) = self.get_operand_type(&unary_operation.operand, context) {
+            if valid_input_types.iter().any(|expected| expected.match_actual(&operand_type, &mut HashMap::new())) {
+                Some(get_unary_operator_output_type(&unary_operation.operator, &operand_type))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    fn get_array_literal_type(&self, array_literal: &ArrayLiteral, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let mut all_items_ok = false;
+        let mut final_type = ExpressionType::Anonymous(0);
+
+        for item in &array_literal.items {
+            let mut item_ok = false;
+
+            if let Some(item_type) = self.get_expression_type(item, context) {
+                if final_type.match_actual(&item_type, &mut HashMap::new()) {
+                    final_type = item_type;
+                    item_ok = true;
+                }
+            }
+
+            all_items_ok &= item_ok;
+        }
+
+        match all_items_ok {
+            true => Some(final_type),
+            false => None
         }
     }
 

@@ -8,3 +8,4 @@ pub mod function_annotation;
 pub mod builtin_methods;
 pub mod binary_operations;
 pub mod utils;
+pub mod unary_operations;
