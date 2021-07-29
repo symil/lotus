@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{Expression, Operand, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}}};
-use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails};
+use crate::{items::{expression::{Expression, Operand, Operation, PathSegment, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}, utils::display_join}};
+use super::{error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, operators::{OperationTree, get_operator_valid_types}, program_context::ProgramContext, struct_annotation::FieldDetails};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -302,9 +302,46 @@ impl ProgramIndex {
     }
 
     fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<ExpressionType> {
-        let first_operand_type = self.get_operand_type(&expr.first, context);
+        self.get_operation_type(expr, context)
+    }
 
-        None
+    fn get_operation_type(&self, operation: &Operation, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let operation_tree = OperationTree::from_operation(operation);
+
+        self.get_operation_tree_type(&operation_tree, context)
+    }
+
+    fn get_operation_tree_type(&self, operation_tree: &OperationTree, context: &mut ProgramContext) -> Option<ExpressionType> {
+        match operation_tree {
+            OperationTree::Operation(left, operator, right) => {
+                let left_type = self.get_operation_tree_type(left, context);
+                let right_type = self.get_operation_tree_type(right, context);
+
+                match (left_type, right_type) {
+                    (Some(ltype), Some(rtype)) => {
+                        let operator_valid_types = get_operator_valid_types(operator);
+
+                        let left_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&ltype, &mut HashMap::new()));
+                        let right_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&rtype, &mut HashMap::new()));
+
+                        if !left_ok {
+                            context.error(left.get_leftmost(), format!("operator `{}` left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
+                        }
+
+                        if !right_ok {
+                            context.error(left.get_leftmost(), format!("operator `{}`, right operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), rtype));
+                        }
+
+                        if left_ok && right_ok && ltype != rtype {
+                            context.error(left.get_leftmost(), format!("operator `{}`: operand types must match (got `{}` and `{}`)", operator, ltype, rtype));
+                        }
+                        None
+                    },
+                    _ => None
+                }
+            },
+            OperationTree::Value(operand) => self.get_operand_type(operand, context),
+        }
     }
 
     fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {

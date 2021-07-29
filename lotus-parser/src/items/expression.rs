@@ -76,7 +76,6 @@ pub struct UnaryOperation {
 
 #[parsable(impl_display=true)]
 pub enum BinaryOperator {
-    Pow = "**",
     Plus = "+",
     Minus = "-",
     Mult = "*",

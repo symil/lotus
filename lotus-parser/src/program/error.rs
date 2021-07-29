@@ -9,12 +9,12 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn unlocated<S : Deref<Target=str>>(error: S) -> Self {
-        Self {
-            location: None,
-            error: error.to_string()
-        }
-    }
+    // pub fn unlocated<S : Deref<Target=str>>(error: S) -> Self {
+    //     Self {
+    //         location: None,
+    //         error: error.to_string()
+    //     }
+    // }
 
     pub fn located<T : Parsable, S : Deref<Target=str>>(data: &T, error: S) -> Self {
         Self {
