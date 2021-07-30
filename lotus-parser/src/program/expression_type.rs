@@ -2,6 +2,8 @@ use std::{collections::HashMap, fmt};
 
 use crate::items::{identifier::Identifier, struct_declaration::{ParsedType, TypeSuffix}};
 
+use super::struct_annotation::StructAnnotation;
+
 #[derive(Clone, Debug)]
 pub enum ItemType {
     Builtin(BuiltinType),
@@ -48,11 +50,11 @@ impl ExpressionType {
         }
     }
 
-    pub fn single_builtin(builtin_type: BuiltinType) -> Self {
+    pub fn builtin(builtin_type: BuiltinType) -> Self {
         ExpressionType::Single(ItemType::Builtin(builtin_type))
     }
 
-    pub fn single_struct(name: &Identifier) -> Self {
+    pub fn object(name: &Identifier) -> Self {
         ExpressionType::Single(ItemType::Struct(name.clone()))
     }
 
@@ -92,15 +94,15 @@ impl ExpressionType {
         }
     }
 
-    pub fn match_actual(&self, actual: &ExpressionType, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
+    pub fn match_actual(&self, actual: &ExpressionType, structs: &HashMap<Identifier, StructAnnotation>, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
         match self {
             ExpressionType::Void => actual.is_void(),
             ExpressionType::Single(expected_item_type) => match actual {
-                ExpressionType::Single(actual_item_type) => expected_item_type.match_actual(actual_item_type, anonymous_types),
+                ExpressionType::Single(actual_item_type) => expected_item_type.match_actual(actual_item_type, structs, anonymous_types),
                 _ => false
             },
             ExpressionType::Array(expected_item_type) => match actual {
-                ExpressionType::Array(actual_item_type) => expected_item_type.match_actual(actual_item_type, anonymous_types),
+                ExpressionType::Array(actual_item_type) => expected_item_type.match_actual(actual_item_type, structs, anonymous_types),
                 _ => false
             },
             ExpressionType::Anonymous(id) => {
@@ -160,10 +162,13 @@ impl ItemType {
         }
     }
 
-    pub fn match_actual(&self, actual: &ItemType, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
+    pub fn match_actual(&self, actual: &ItemType, structs: &HashMap<Identifier, StructAnnotation>, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
         match self {
             ItemType::Builtin(expected_builtin) => actual.is_builtin(expected_builtin),
-            ItemType::Struct(expected_struct) => actual.is_struct(expected_struct),
+            ItemType::Struct(expected_struct) => match actual {
+                ItemType::Struct(actual_struct) => structs.get(actual_struct).unwrap().types.contains(expected_struct),
+                _ => false
+            },
             ItemType::Function(expected_argument_types, expected_return_type) => {
                 match actual {
                     ItemType::Function(actual_argument_types, actual_return_type) => {
@@ -175,7 +180,7 @@ impl ItemType {
                             let mut ok = true;
 
                             for (actual_arg_type, expected_arg_type) in actual_argument_types.iter().zip(expected_argument_types.iter()) {
-                                if !expected_arg_type.match_actual(actual_arg_type, anonymous_types) {
+                                if !expected_arg_type.match_actual(actual_arg_type, structs, anonymous_types) {
                                     ok = false;
                                 }
                             }

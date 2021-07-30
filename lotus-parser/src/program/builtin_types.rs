@@ -40,13 +40,13 @@ impl Arg {
     pub fn into_expr_type(self, item_type: &ExpressionType) -> ExpressionType {
         match self {
             Arg::Void => ExpressionType::Void,
-            Arg::Num => ExpressionType::single_builtin(BuiltinType::Number),
+            Arg::Num => ExpressionType::builtin(BuiltinType::Number),
             Arg::SingleItem => item_type.clone(),
             Arg::ArrayItem => ExpressionType::array(item_type.clone()),
             Arg::ArrayAny => ExpressionType::array(ExpressionType::Anonymous(0)),
             Arg::BoolCallback => ExpressionType::function(
                 vec![item_type.clone()],
-                ExpressionType::single_builtin(BuiltinType::Boolean)
+                ExpressionType::builtin(BuiltinType::Boolean)
             ),
             Arg::MapCallback => ExpressionType::function(
                 vec![item_type.clone()],

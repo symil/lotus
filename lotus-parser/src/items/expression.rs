@@ -113,7 +113,8 @@ pub enum BinaryOperator {
     Gte = ">=",
     Gt = ">",
     Lte = "<=",
-    Lt = "<"
+    Lt = "<",
+    Range = ".."
 }
 
 #[parsable]

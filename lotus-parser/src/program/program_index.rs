@@ -295,18 +295,18 @@ impl ProgramIndex {
             for method_declaration in &struct_declaration.body.methods {
                 context.function_return_type = None;
                 context.set_this_type(Some(VarInfo {
-                    expr_type: ExpressionType::single_struct(&struct_declaration.name),
+                    expr_type: ExpressionType::object(&struct_declaration.name),
                     is_const: true
                 }));
                 context.set_payload_type(match &method_declaration.qualifier {
                     Some(MethodQualifier::Builtin) => match get_builtin_method_info(&method_declaration.name).unwrap().1 {
                         BuiltinMethodPayload::None => None,
-                        BuiltinMethodPayload::World => Some(VarInfo::const_var(ExpressionType::single_struct(&self.world_type_name))),
-                        BuiltinMethodPayload::User => Some(VarInfo::const_var(ExpressionType::single_struct(&self.user_type_name))),
+                        BuiltinMethodPayload::World => Some(VarInfo::const_var(ExpressionType::object(&self.world_type_name))),
+                        BuiltinMethodPayload::User => Some(VarInfo::const_var(ExpressionType::object(&self.user_type_name))),
                         BuiltinMethodPayload::ViewInput => todo!(),
                     },
                     Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
-                        Some(VarInfo::const_var(ExpressionType::single_struct(&method_declaration.name)))
+                        Some(VarInfo::const_var(ExpressionType::object(&method_declaration.name)))
                     },
                     None => None,
                 });
@@ -408,9 +408,9 @@ impl ProgramIndex {
 
     fn process_branch(&self, branch: &Branch, context: &mut ProgramContext) {
         if let Some(condition_type) = self.get_expression_type(&branch.condition, context) {
-            let valid_condition_type = ExpressionType::single_builtin(BuiltinType::Boolean);
+            let valid_condition_type = ExpressionType::builtin(BuiltinType::Boolean);
 
-            if !valid_condition_type.match_actual(&condition_type, &mut HashMap::new()) {
+            if !self.expressions_match(&valid_condition_type, &condition_type, context) {
                 context.error(&branch.condition, format!("branch condition: expected `{}`, got `{}`", &valid_condition_type, &condition_type));
             }
         }
@@ -429,7 +429,7 @@ impl ProgramIndex {
             ActionKeyword::Return => {
                 if let Some(expected_return_type) = context.get_return_type() {
                     if let Some(actual_return_type) = self.get_expression_type(&action.value, context) {
-                        if !expected_return_type.match_actual(&actual_return_type, &mut HashMap::new()) {
+                        if !self.expressions_match(&expected_return_type, &actual_return_type, context) {
                             context.error(&action.value, format!("return statement: expected `{}`, got `{}`", expected_return_type, actual_return_type));
                         }
                     }
@@ -473,7 +473,7 @@ impl ProgramIndex {
             if let Some(rvalue_type) = self.get_expression_type(rvalue, context) {
                 if let Some(lvalue_type) = lvalue_type_opt {
                     if is_lvalue_assignable {
-                        if !lvalue_type.match_actual(&rvalue_type, &mut HashMap::new()) {
+                        if !self.expressions_match(&lvalue_type, &rvalue_type, context) {
                             context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", rvalue_type, lvalue_type));
                         } else if let Some(var_name) = self.get_operand_var_name(lvalue) {
                             context.set_var_type(&var_name, rvalue_type);
@@ -547,9 +547,9 @@ impl ProgramIndex {
                     (Some(ltype), Some(rtype)) => {
                         let operator_valid_types = get_binary_operator_input_types(operator);
 
-                        let left_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&ltype, &mut HashMap::new()));
-                        let right_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&rtype, &mut HashMap::new()));
-                        let same_type = ltype == rtype; // TODO: improve that, types should match, not necessarily be the same
+                        let left_ok = operator_valid_types.iter().any(|expected| self.expressions_match(expected, &ltype, context));
+                        let right_ok = operator_valid_types.iter().any(|expected| self.expressions_match(expected, &rtype, context));
+                        let same_type = self.expressions_match(&ltype, &rtype, context);
 
                         if !left_ok {
                             context.error(left.get_leftmost(), format!("operator `{}`, left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
@@ -580,9 +580,9 @@ impl ProgramIndex {
         match operand {
             Operand::VoidLiteral => Some(ExpressionType::Void),
             Operand::NullLiteral => Some(ExpressionType::Anonymous(0)),
-            Operand::BooleanLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Boolean)),
-            Operand::NumberLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Number)),
-            Operand::StringLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::String)),
+            Operand::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
+            Operand::NumberLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Number)),
+            Operand::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
             Operand::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
             Operand::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
             Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
@@ -595,7 +595,7 @@ impl ProgramIndex {
         let valid_input_types = get_unary_operator_input_types(&unary_operation.operator);
 
         if let Some(operand_type) = self.get_operand_type(&unary_operation.operand, context) {
-            if valid_input_types.iter().any(|expected| expected.match_actual(&operand_type, &mut HashMap::new())) {
+            if valid_input_types.iter().any(|expected| self.expressions_match(expected, &operand_type, context)) {
                 Some(get_unary_operator_output_type(&unary_operation.operator, &operand_type))
             } else {
                 None
@@ -618,7 +618,7 @@ impl ProgramIndex {
                     if let Some(actual_type) = value_type_opt {
                         let expected_type = field_info.get_expr_type();
 
-                        if !expected_type.match_actual(&actual_type, &mut HashMap::new()) {
+                        if !self.expressions_match(&expected_type, &actual_type, context) {
                             context.error(field_value, format!("field `{}`: expected type `{}`, got `{}`", field_name, expected_type, actual_type));
                         }
                     }
@@ -627,7 +627,7 @@ impl ProgramIndex {
                 }
             }
 
-            Some(ExpressionType::single_struct(type_name))
+            Some(ExpressionType::object(type_name))
         } else {
             context.error(type_name, format!("undefined object type `{}`", type_name));
             None
@@ -642,7 +642,7 @@ impl ProgramIndex {
             let mut item_ok = false;
 
             if let Some(item_type) = self.get_expression_type(item, context) {
-                if final_type.match_actual(&item_type, &mut HashMap::new()) {
+                if self.expressions_match(&final_type, &item_type, context) {
                     final_type = item_type;
                     item_ok = true;
                 }
@@ -787,7 +787,7 @@ impl ProgramIndex {
 
                                 for (i, (arg_expr, expected_type)) in arguments.iter().zip(expected_arguments.iter()).enumerate() {
                                     if let Some(actual_type) = self.get_expression_type(arg_expr, context) {
-                                        if !expected_type.match_actual(&actual_type, &mut anonymous_types) {
+                                        if !expected_type.match_actual(&actual_type, &context.structs, &mut anonymous_types) {
                                             context.error(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, actual_type));
                                             ok = false;
                                         }
@@ -944,5 +944,8 @@ impl ProgramIndex {
         } else {
             None
         }
+    }
+    fn expressions_match(&self, expected: &ExpressionType, actual: &ExpressionType, context: &ProgramContext) -> bool {
+        expected.match_actual(actual, &context.structs, &mut HashMap::new())
     }
 }
