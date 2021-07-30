@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{ArrayLiteral, Expression, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{VarDeclaration, VarDeclarationQualifier}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, struct_annotation::{StructAnnotation}, utils::display_join}};
+use crate::{items::{expression::{ArrayLiteral, Expression, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, VarDeclarationQualifier, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
 use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
 
 const KEYWORDS : &'static[&'static str] = &[
@@ -23,10 +23,10 @@ impl ProgramIndex {
 
         index.build_index(files, &mut context);
         index.process_structs_fields(&mut context);
-        index.process_structs_method_signature(&mut context);
+        index.process_structs_methods_signatures(&mut context);
         index.process_functions_signatures(&mut context);
         index.process_constants(&mut context);
-        index.process_function_bodies(&mut context);
+        index.process_function_and_method_bodies(&mut context);
 
         match context.errors.is_empty() {
             true => Ok(index),
@@ -103,7 +103,7 @@ impl ProgramIndex {
         }
     }
 
-    fn process_structs_method_signature(&mut self, context: &mut ProgramContext) {
+    fn process_structs_methods_signatures(&mut self, context: &mut ProgramContext) {
         for struct_declaration in self.struct_declarations.values() {
             for method in &struct_declaration.body.methods {
                 match method.qualifier {
@@ -111,20 +111,20 @@ impl ProgramIndex {
                         match method.name.as_str() {
                             "on_user_connect" | "on_user_disconnect" => {
                                 if struct_declaration.qualifier != StructQualifier::World {
-                                    context.error(&method.name, format!("method @{} can only be implemented on a world", &method.name));
+                                    context.error(&method.name, format!("method `@{}` can only be implemented on a world", &method.name));
                                 }
 
                                 self.check_builtin_method(method, context);
                             },
                             "trigger" => {
                                 if struct_declaration.qualifier != StructQualifier::Event && struct_declaration.qualifier != StructQualifier::Request {
-                                    context.error(&method.name, format!("method @{} can only be implemented on a events and requests", &method.name));
+                                    context.error(&method.name, format!("method `@{}` can only be implemented on a events and requests", &method.name));
                                 }
 
                                 self.check_builtin_method(method, context);
                             },
                             _ => {
-                                context.error(method, format!("invalid built-in method name @{}", &method.name));
+                                context.error(method, format!("invalid built-in method name `@{}`", &method.name));
                             }
                         }
                     },
@@ -266,15 +266,218 @@ impl ProgramIndex {
                 *context.constants.get_mut(&const_declaration.name).unwrap() = expr_type;
             }
         }
+    }
 
+    fn process_function_and_method_bodies(&mut self, context: &mut ProgramContext) {
         context.inside_const_expr = false;
+        context.push_scope();
+
+        let mut global_scope = vec![];
+
+        for (const_name, const_type) in context.constants.iter() {
+            global_scope.push((const_name.clone(), const_type.clone()));
+        }
+
+        for (function_name, function_annotation) in context.functions.iter() {
+            global_scope.push((function_name.clone(), function_annotation.get_expr_type()));
+        }
+
+        for (value_name, value_type) in global_scope {
+            context.push_var(value_name, VarInfo {
+                expr_type: value_type,
+                is_const: true
+            });
+        }
+
+        for struct_declaration in self.struct_declarations.values() {
+            for method_declaration in &struct_declaration.body.methods {
+                context.function_return_type = None;
+                context.set_this_type(Some(VarInfo {
+                    expr_type: ExpressionType::single_struct(&struct_declaration.name),
+                    is_const: true
+                }));
+                context.set_payload_type(match &method_declaration.qualifier {
+                    Some(MethodQualifier::Builtin) => None,
+                    Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
+                        Some(VarInfo::const_var(ExpressionType::single_struct(&method_declaration.name)))
+                    },
+                    None => None,
+                });
+                context.push_scope();
+
+                if let Some((arguments, return_type)) = context.get_method_signature(&struct_declaration.name, &method_declaration.name) {
+                    context.function_return_type = Some(return_type);
+
+                    for (arg_name, arg_type) in arguments {
+                        context.push_var(arg_name, VarInfo::mut_var(arg_type));
+                    }
+                }
+
+                self.process_function_body(&method_declaration.statements, context);
+
+                context.pop_scope();
+            }
+        }
+
+        for function_declaration in self.function_declarations.values() {
+            context.function_return_type = None;
+            context.set_this_type(None);
+            context.set_payload_type(None);
+            context.push_scope();
+
+            if let Some((arguments, return_type)) = context.get_function_signatures(&function_declaration.name) {
+                context.function_return_type = Some(return_type);
+
+                for (arg_name, arg_type) in arguments {
+                    context.push_var(arg_name, VarInfo::mut_var(arg_type));
+                }
+            }
+
+            self.process_function_body(&function_declaration.statements, context);
+
+            context.pop_scope();
+        }
+
+        context.push_scope();
     }
 
-    fn process_function_bodies(&mut self, context: &mut ProgramContext) {
-        // TODO: functions
+    fn process_function_body(&self, body: &Vec<Statement>, context: &mut ProgramContext){ 
+        for statement in body {
+            self.process_statement(statement, context);
+        }
     }
 
-    fn process_function_signature(&self, signature: &FunctionSignature, context: &mut ProgramContext) -> (Vec<ExpressionType>, ExpressionType) {
+    fn process_statement(&self, statement: &Statement, context: &mut ProgramContext) {
+        match statement {
+            Statement::VarDeclaration(var_declaration) => self.process_var_declaration(var_declaration, context),
+            Statement::Action(action) => self.process_action(action, context),
+            Statement::If(if_block) => self.process_if_block(if_block, context),
+            Statement::While(while_block) => self.process_while_block(while_block, context),
+            Statement::For(for_block) => self.process_for_block(for_block, context),
+            Statement::Assignment(assignment) => self.process_assignment(assignment, context),
+        }
+    }
+
+    fn process_for_block(&self, for_block: &ForBlock, context: &mut ProgramContext) {        
+        let var_name = &for_block.var_name;
+        let var_exists = context.var_exists(var_name);
+
+        if var_exists {
+            context.error(var_name, format!("for block: variable `{}` already exists in this scope", var_name));
+        }
+
+        context.push_scope();
+
+        if let Some(expr_type) = self.get_expression_type(&for_block.array_expression, context) {
+            if let ExpressionType::Array(item_type) = expr_type {
+                context.push_var(var_name.clone(), VarInfo::const_var(*item_type));
+            } else {
+                context.error(&for_block.array_expression, format!("for block range: expected array, for `{}`", expr_type));
+            }
+        }
+
+        for statement in &for_block.statements {
+            self.process_statement(statement, context);
+        }
+
+        context.pop_scope();
+    }
+
+    fn process_while_block(&self, while_block: &WhileBlock, context: &mut ProgramContext) {
+        self.process_branch(&while_block.while_branch, context);
+    }
+
+    fn process_if_block(&self, if_block: &IfBlock, context: &mut ProgramContext) {
+        self.process_branch(&if_block.if_branch, context);
+
+        for branch in &if_block.else_if_branches {
+            self.process_branch(branch, context);
+        }
+
+        if let Some(else_branch) = &if_block.else_branch {
+            self.process_branch(else_branch, context);
+        }
+    }
+
+    fn process_branch(&self, branch: &Branch, context: &mut ProgramContext) {
+        if let Some(condition_type) = self.get_expression_type(&branch.condition, context) {
+            let valid_condition_type = ExpressionType::single_builtin(BuiltinType::Boolean);
+
+            if !valid_condition_type.match_actual(&condition_type, &mut HashMap::new()) {
+                context.error(&branch.condition, format!("branch condition: expected `{}`, got `{}`", &valid_condition_type, &condition_type));
+            }
+        }
+
+        context.push_scope();
+
+        for statement in &branch.statements {
+            self.process_statement(statement, context);
+        }
+
+        context.pop_scope();
+    }
+
+    fn process_action(&self, action: &Action, context: &mut ProgramContext) {
+        match &action.keyword {
+            ActionKeyword::Return => {
+                if let Some(expected_return_type) = context.get_return_type() {
+                    if let Some(actual_return_type) = self.get_expression_type(&action.value, context) {
+                        if !expected_return_type.match_actual(&actual_return_type, &mut HashMap::new()) {
+                            context.error(&action.value, format!("return statement: expected `{}`, got `{}`", expected_return_type, actual_return_type));
+                        }
+                    }
+                } else {
+                    context.error(action, format!("`return` statement not allowed in this context"));
+                }
+            },
+        }
+    }
+
+    fn process_var_declaration(&self, var_declaration: &VarDeclaration, context: &mut ProgramContext) {
+        let var_name = &var_declaration.name;
+        let var_exists = context.var_exists(&var_declaration.name);
+
+        if var_declaration.qualifier != VarDeclarationQualifier::Let {
+            context.error(&var_declaration.qualifier, format!("local variables must be declared with `{}`", VarDeclarationQualifier::Let));
+        }
+
+        if var_exists {
+            context.error(var_name, format!("duplicate variable declaration: `{}` already exists in this scope", var_name));
+        }
+
+        if let Some(var_type) = self.get_expression_type(&var_declaration.value, context) {
+            if !var_exists {
+                context.push_var(var_name.clone(), VarInfo::mut_var(var_type));
+            }
+        }
+    }
+
+    fn process_assignment(&self, assignment: &Assignment, context: &mut ProgramContext) {
+        let lvalue = &assignment.lvalue;
+        let lvalue_type_opt = self.get_operand_type(lvalue, context);
+
+        if let Some(rvalue) = &assignment.rvalue {
+            let is_lvalue_assignable = self.is_operand_assignable(lvalue);
+
+            if !is_lvalue_assignable {
+                context.error(lvalue, format!("assignment: invalid left-hand side"));
+            }
+
+            if let Some(rvalue_type) = self.get_expression_type(rvalue, context) {
+                if let Some(lvalue_type) = lvalue_type_opt {
+                    if is_lvalue_assignable {
+                        if !lvalue_type.match_actual(&rvalue_type, &mut HashMap::new()) {
+                            context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", rvalue_type, lvalue_type));
+                        } else if let Some(var_name) = self.get_operand_var_name(lvalue) {
+                            context.set_var_type(&var_name, rvalue_type);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn process_function_signature(&self, signature: &FunctionSignature, context: &mut ProgramContext) -> (Vec<(Identifier, ExpressionType)>, ExpressionType) {
         let mut arg_names = HashSet::new();
         let mut arguments = vec![];
         let mut return_type = ExpressionType::Void;
@@ -284,12 +487,13 @@ impl ProgramIndex {
                 context.error(&argument.name, format!("duplicate argument: {}", &argument.name));
             }
 
+            let arg_name = argument.name.clone();
             let arg_type = match self.check_type_name(&argument.type_.name, context) {
                 true => ExpressionType::from_value_type(&argument.type_),
                 false => ExpressionType::Void
             };
 
-            arguments.push(arg_type);
+            arguments.push((arg_name, arg_type));
         }
 
         if let Some(return_type_parsed) = &signature.return_type {
@@ -299,6 +503,20 @@ impl ProgramIndex {
         }
 
         (arguments, return_type)
+    }
+
+    fn is_operand_assignable(&self, operand: &Operand) -> bool {
+        match operand {
+            Operand::VoidLiteral => false,
+            Operand::NullLiteral => false,
+            Operand::BooleanLiteral(_) => false,
+            Operand::NumberLiteral(_) => false,
+            Operand::StringLiteral(_) => false,
+            Operand::ArrayLiteral(_) => false,
+            Operand::Parenthesized(_) => false,
+            Operand::UnaryOperation(_) => false,
+            Operand::VarPath(var_path) => var_path.path.iter().all(|segment| !segment.is_function_call()),
+        }
     }
 
     fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<ExpressionType> {
@@ -323,10 +541,10 @@ impl ProgramIndex {
 
                         let left_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&ltype, &mut HashMap::new()));
                         let right_ok = operator_valid_types.iter().any(|expected| expected.match_actual(&rtype, &mut HashMap::new()));
-                        let same_type = ltype == rtype;
+                        let same_type = ltype == rtype; // TODO: improve that, types should match, not necessarily be the same
 
                         if !left_ok {
-                            context.error(left.get_leftmost(), format!("operator `{}` left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
+                            context.error(left.get_leftmost(), format!("operator `{}`, left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
                         }
 
                         if !right_ok {
@@ -352,6 +570,7 @@ impl ProgramIndex {
 
     fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {
         match operand {
+            Operand::VoidLiteral => Some(ExpressionType::Void),
             Operand::NullLiteral => Some(ExpressionType::Anonymous(0)),
             Operand::BooleanLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Boolean)),
             Operand::NumberLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Number)),
@@ -395,7 +614,7 @@ impl ProgramIndex {
         }
 
         match all_items_ok {
-            true => Some(final_type),
+            true => Some(ExpressionType::array(final_type)),
             false => None
         }
     }
@@ -439,7 +658,7 @@ impl ProgramIndex {
     fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<ExpressionType> {
         let var_type : Option<ExpressionType> = match &var_path.prefix {
             Some(prefix) => {
-                let prefix_type_opt = match prefix {
+                let prefix_var_opt = match prefix {
                     VarPrefix::This => {
                         if context.get_this_type().is_none() {
                             context.error(prefix, "no `this` value can be referenced in this context");
@@ -456,8 +675,8 @@ impl ProgramIndex {
                     },
                 };
 
-                if let Some(prefix_type) = &prefix_type_opt {
-                    self.get_field_access_type(prefix_type, &var_path.name, context)
+                if let Some(prefix_var) = &prefix_var_opt {
+                    self.get_field_access_type(&prefix_var.expr_type, &var_path.name, context)
                 } else {
                     None
                 }
@@ -477,7 +696,7 @@ impl ProgramIndex {
                         None
                     }
                 } else {
-                    context.get_var_type(&var_path.name).cloned()
+                    context.get_var_type(&var_path.name).and_then(|var_info| Some(var_info.expr_type))
                 }
             }
         };
@@ -675,5 +894,17 @@ impl ProgramIndex {
         }
 
         valid
+    }
+
+    fn get_operand_var_name(&self, operand: &Operand) -> Option<Identifier> {
+        if let Operand::VarPath(var_path) = operand {
+            if var_path.prefix.is_none() && var_path.path.is_empty() {
+                Some(var_path.name.clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }

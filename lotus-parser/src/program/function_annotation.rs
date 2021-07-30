@@ -4,7 +4,7 @@ use super::expression_type::ExpressionType;
 
 pub struct FunctionAnnotation {
     pub name: Identifier,
-    pub arguments: Vec<ExpressionType>,
+    pub arguments: Vec<(Identifier, ExpressionType)>,
     pub return_type: ExpressionType
 }
 
@@ -18,6 +18,9 @@ impl FunctionAnnotation {
     }
 
     pub fn get_expr_type(&self) -> ExpressionType {
-        ExpressionType::function(self.arguments.clone(), self.return_type.clone())
+        let arguments = self.arguments.iter().map(|(_, arg)| arg.clone()).collect();
+        let return_type = self.return_type.clone();
+
+        ExpressionType::function(arguments, return_type)
     }
 }

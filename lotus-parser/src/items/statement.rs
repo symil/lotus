@@ -1,30 +1,37 @@
 use parsable::parsable;
 
-use super::{expression::{Expression, Operand, Operation}, identifier::Identifier};
+use super::{expression::{Expression, Operand}, identifier::Identifier};
 
 #[parsable]
 pub enum Statement {
     VarDeclaration(VarDeclaration),
-    #[parsable(prefix="return")]
-    Return(Expression),
-    If(IfBranch),
-    #[parsable(prefix="while")]
-    While(Branch),
-    For(ForLoop)
+    Action(Action),
+    If(IfBlock),
+    While(WhileBlock),
+    For(ForBlock),
+    Assignment(Assignment)
 }
 
 #[parsable]
-pub struct ForLoop {
-    #[parsable(prefix="for")]
-    pub var_name: Identifier,
-    #[parsable(prefix="in")]
-    pub range: Operand,
-    #[parsable(brackets="{}")]
-    pub statements: Vec<Statement>
+pub struct Assignment {
+    pub lvalue: Operand,
+    #[parsable(prefix="=")]
+    pub rvalue: Option<Expression>
 }
 
 #[parsable]
-pub struct IfBranch {
+pub struct Action {
+    pub keyword: ActionKeyword,
+    pub value: Expression
+}
+
+#[parsable]
+pub enum ActionKeyword {
+    Return = "return"
+}
+
+#[parsable]
+pub struct IfBlock {
     #[parsable(prefix="if")]
     pub if_branch: Branch,
     #[parsable(prefix="else if", separator="else if", optional=true)]
@@ -34,8 +41,24 @@ pub struct IfBranch {
 }
 
 #[parsable]
+pub struct WhileBlock {
+    #[parsable(prefix="while")]
+    pub while_branch: Branch
+}
+
+#[parsable]
+pub struct ForBlock {
+    #[parsable(prefix="for")]
+    pub var_name: Identifier,
+    #[parsable(prefix="in")]
+    pub array_expression: Expression,
+    #[parsable(brackets="{}")]
+    pub statements: Vec<Statement>
+}
+
+#[parsable]
 pub struct Branch {
-    pub condition: Operation,
+    pub condition: Expression,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
 }
@@ -45,10 +68,10 @@ pub struct VarDeclaration {
     pub qualifier: VarDeclarationQualifier,
     pub name: Identifier,
     #[parsable(prefix="=")]
-    pub value: Operation
+    pub value: Expression
 }
 
-#[parsable]
+#[parsable(impl_display=true)]
 #[derive(PartialEq)]
 pub enum VarDeclarationQualifier {
     Let = "let",

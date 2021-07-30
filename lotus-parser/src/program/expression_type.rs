@@ -52,6 +52,10 @@ impl ExpressionType {
         ExpressionType::Single(ItemType::Builtin(builtin_type))
     }
 
+    pub fn single_struct(name: &Identifier) -> Self {
+        ExpressionType::Single(ItemType::Struct(name.clone()))
+    }
+
     pub fn array(item_type: ExpressionType) -> Self {
         ExpressionType::Array(Box::new(item_type))
     }

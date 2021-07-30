@@ -15,6 +15,7 @@ pub struct Operation {
 #[parsable]
 pub enum Operand {
     // TODO: add anonymous function
+    VoidLiteral = ";",
     NullLiteral = "null",
     BooleanLiteral(BooleanLiteral),
     NumberLiteral(NumberLiteral),
@@ -54,6 +55,15 @@ pub enum PathSegment {
     BracketIndexing(Operation),
     #[parsable(brackets="()", sep=",")]
     FunctionCall(ArgumentList)
+}
+
+impl PathSegment {
+    pub fn is_function_call(&self) -> bool {
+        match self {
+            PathSegment::FunctionCall(_) => true,
+            _ => false
+        }
+    }
 }
 
 #[parsable]
