@@ -4,6 +4,7 @@ use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier}
 
 use super::{expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
 
+#[derive(Clone)]
 pub struct StructAnnotation {
     pub name: Identifier,
     pub qualifier: StructQualifier,

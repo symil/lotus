@@ -2,6 +2,7 @@ use crate::items::identifier::Identifier;
 
 use super::expression_type::ExpressionType;
 
+#[derive(Clone)]
 pub struct FunctionAnnotation {
     pub name: Identifier,
     pub arguments: Vec<(Identifier, ExpressionType)>,

@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{ArrayLiteral, Expression, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, VarDeclarationQualifier, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
-use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
+use crate::{items::{expression::{ArrayLiteral, Expression, ObjectLiteral, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, VarDeclarationQualifier, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::BuiltinMethodPayload, builtin_types::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
+use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, builtin_methods::get_builtin_method_info, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -9,8 +9,8 @@ const KEYWORDS : &'static[&'static str] = &[
 
 #[derive(Default)]
 pub struct ProgramIndex {
-    pub world_type_name: Option<Identifier>,
-    pub user_type_name: Option<Identifier>,
+    pub world_type_name: Identifier,
+    pub user_type_name: Identifier,
     pub struct_declarations: HashMap<Identifier, StructDeclaration>,
     pub function_declarations: HashMap<Identifier, FunctionDeclaration>,
     pub const_declarations: HashMap<Identifier, VarDeclaration>,
@@ -69,22 +69,34 @@ impl ProgramIndex {
 
         if world_structs.len() > 1 {
             for name in &world_structs {
-                context.error(name, "multiple worlds declared");
+                context.error(name, "multiple world structures declared");
             }
-        }
 
-        if let Some(name) = world_structs.first() {
-            self.world_type_name = Some(name.clone());
+            self.world_type_name = world_structs.first().unwrap().clone();
+        } else if world_structs.is_empty() {
+            let mut default_world_struct = StructDeclaration::default();
+
+            default_world_struct.qualifier = StructQualifier::World;
+            default_world_struct.name = Identifier::new("__DefaultWorld");
+
+            self.world_type_name = default_world_struct.name.clone();
+            self.struct_declarations.insert(default_world_struct.name.clone(), default_world_struct);
         }
 
         if user_structs.len() > 1 {
-            for name in &user_structs {
-                context.error(name, "multiple users declared");
+            for name in &world_structs {
+                context.error(name, "multiple user structures declared");
             }
-        }
 
-        if let Some(name) = user_structs.first() {
-            self.user_type_name = Some(name.clone());
+            self.user_type_name = user_structs.first().unwrap().clone();
+        } else if user_structs.is_empty() {
+            let mut default_user_struct = StructDeclaration::default();
+
+            default_user_struct.qualifier = StructQualifier::World;
+            default_user_struct.name = Identifier::new("__DefaultUser");
+
+            self.user_type_name = default_user_struct.name.clone();
+            self.struct_declarations.insert(default_user_struct.name.clone(), default_user_struct);
         }
     }
 
@@ -108,24 +120,14 @@ impl ProgramIndex {
             for method in &struct_declaration.body.methods {
                 match method.qualifier {
                     Some(MethodQualifier::Builtin) => {
-                        match method.name.as_str() {
-                            "on_user_connect" | "on_user_disconnect" => {
-                                if struct_declaration.qualifier != StructQualifier::World {
-                                    context.error(&method.name, format!("method `@{}` can only be implemented on a world", &method.name));
-                                }
-
-                                self.check_builtin_method(method, context);
-                            },
-                            "trigger" => {
-                                if struct_declaration.qualifier != StructQualifier::Event && struct_declaration.qualifier != StructQualifier::Request {
-                                    context.error(&method.name, format!("method `@{}` can only be implemented on a events and requests", &method.name));
-                                }
-
-                                self.check_builtin_method(method, context);
-                            },
-                            _ => {
-                                context.error(method, format!("invalid built-in method name `@{}`", &method.name));
+                        if let Some((valid_qualifiers, _)) = get_builtin_method_info(&method.name) {
+                            if !valid_qualifiers.iter().any(|qualifier| qualifier == &struct_declaration.qualifier) {
+                                context.error(&method.name, format!("method `@{}` can only be implemented on {}", &method.name, display_join(&valid_qualifiers)));
                             }
+
+                            self.check_builtin_method(method, context);
+                        } else {
+                            context.error(method, format!("invalid built-in method name `@{}`", &method.name));
                         }
                     },
                     Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
@@ -297,7 +299,12 @@ impl ProgramIndex {
                     is_const: true
                 }));
                 context.set_payload_type(match &method_declaration.qualifier {
-                    Some(MethodQualifier::Builtin) => None,
+                    Some(MethodQualifier::Builtin) => match get_builtin_method_info(&method_declaration.name).unwrap().1 {
+                        BuiltinMethodPayload::None => None,
+                        BuiltinMethodPayload::World => Some(VarInfo::const_var(ExpressionType::single_struct(&self.world_type_name))),
+                        BuiltinMethodPayload::User => Some(VarInfo::const_var(ExpressionType::single_struct(&self.user_type_name))),
+                        BuiltinMethodPayload::ViewInput => todo!(),
+                    },
                     Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
                         Some(VarInfo::const_var(ExpressionType::single_struct(&method_declaration.name)))
                     },
@@ -513,6 +520,7 @@ impl ProgramIndex {
             Operand::NumberLiteral(_) => false,
             Operand::StringLiteral(_) => false,
             Operand::ArrayLiteral(_) => false,
+            Operand::ObjectLiteral(_) => false,
             Operand::Parenthesized(_) => false,
             Operand::UnaryOperation(_) => false,
             Operand::VarPath(var_path) => var_path.path.iter().all(|segment| !segment.is_function_call()),
@@ -576,6 +584,7 @@ impl ProgramIndex {
             Operand::NumberLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::Number)),
             Operand::StringLiteral(_) => Some(ExpressionType::single_builtin(BuiltinType::String)),
             Operand::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
+            Operand::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
             Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
             Operand::UnaryOperation(unary_operation) => self.get_unary_operation_type(unary_operation, context),
             Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
@@ -592,6 +601,35 @@ impl ProgramIndex {
                 None
             }
         } else {
+            None
+        }
+    }
+
+    fn get_object_literal_type(&self, object_literal: &ObjectLiteral, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let type_name = &object_literal.type_name;
+
+        if let Some(struct_annotation) = context.structs.get(type_name).cloned() { // TODO: remove this `cloned`
+            for field_initialization in &object_literal.fields {
+                let field_name = &field_initialization.name;
+                let field_value = &field_initialization.value;
+                let value_type_opt = self.get_expression_type(field_value, context);
+
+                if let Some(field_info) = struct_annotation.fields.get(field_name) {
+                    if let Some(actual_type) = value_type_opt {
+                        let expected_type = field_info.get_expr_type();
+
+                        if !expected_type.match_actual(&actual_type, &mut HashMap::new()) {
+                            context.error(field_value, format!("field `{}`: expected type `{}`, got `{}`", field_name, expected_type, actual_type));
+                        }
+                    }
+                } else {
+                    context.error(field_name, format!("type `{}` has no field `{}`", type_name, field_name));
+                }
+            }
+
+            Some(ExpressionType::single_struct(type_name))
+        } else {
+            context.error(type_name, format!("undefined object type `{}`", type_name));
             None
         }
     }

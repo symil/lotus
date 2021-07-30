@@ -15,16 +15,30 @@ pub struct Operation {
 #[parsable]
 pub enum Operand {
     // TODO: add anonymous function
+    #[parsable(brackets="()")]
+    Parenthesized(Box<Operation>),
     VoidLiteral = ";",
     NullLiteral = "null",
     BooleanLiteral(BooleanLiteral),
     NumberLiteral(NumberLiteral),
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
-    #[parsable(brackets="()")]
-    Parenthesized(Box<Operation>),
+    ObjectLiteral(ObjectLiteral),
     UnaryOperation(Box<UnaryOperation>),
     VarPath(VarPath),
+}
+
+#[parsable]
+pub struct ObjectLiteral {
+    pub type_name: Identifier,
+    #[parsable(brackets="{}", separator=",")]
+    pub fields: Vec<FieldInitialization>
+}
+
+#[parsable]
+pub struct FieldInitialization {
+    pub name: Identifier,
+    pub value: Expression
 }
 
 #[parsable]
