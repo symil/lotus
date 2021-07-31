@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, hash::Hash};
+use std::{cell::{RefCell, UnsafeCell}, collections::HashMap, hash::Hash, rc::Rc};
 
 use super::{write_buffer::WriteBuffer, read_buffer::ReadBuffer, serializable::Serializable};
 
@@ -48,6 +48,19 @@ macro_rules! make_size_type_serializable {
 make_primitive_types_serializable!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
 make_size_type_serializable!(usize, u64);
 make_size_type_serializable!(isize, i64);
+
+impl Serializable for char {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        u32::write_bytes(&(*value as u32), buffer);
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        match u32::read_bytes(buffer) {
+            None => None,
+            Some(value) => Some(unsafe { char::from_u32_unchecked(value) })
+        }
+    }
+}
 
 impl Serializable for bool {
     fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
@@ -201,6 +214,31 @@ impl<T : Serializable> Serializable for RefCell<T> {
         let value = T::read_bytes(buffer)?;
 
         Some(RefCell::new(value))
+    }
+}
+
+impl<T : Serializable> Serializable for UnsafeCell<T> {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        T::write_bytes(unsafe { value.get().as_ref().unwrap() }, buffer);
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let value = T::read_bytes(buffer)?;
+
+        Some(UnsafeCell::new(value))
+    }
+}
+
+// Create a new value every time the Rc is serialized, which is ideally not what we want
+impl<T : Serializable + 'static> Serializable for Rc<T> {
+    fn write_bytes(value: &Self, buffer: &mut WriteBuffer) {
+        T::write_bytes(Rc::as_ref(value), buffer);
+    }
+
+    fn read_bytes(buffer: &mut ReadBuffer) -> Option<Self> {
+        let value = T::read_bytes(buffer)?;
+
+        Some(Rc::new(value))
     }
 }
 
