@@ -12,12 +12,24 @@ impl LotusBoolean {
         Self { value }
     }
 
-    pub fn assign(&mut self, other: &LotusValue) {
-        self.value = other.as_boolean().value;
+    pub fn wrap(self) -> LotusValue {
+        LotusValue::boolean(self)
     }
 
-    pub fn is_true(&self) -> bool {
+    pub fn clone(&self) -> Self {
+        Self { value: self.value }
+    }
+
+    pub fn as_bool(&self) -> bool {
         self.value
+    }
+
+    pub fn assign(&mut self, other: &LotusBoolean) {
+        self.value = other.value;
+    }
+
+    pub fn equals(&self, other: &LotusBoolean) -> bool {
+        self.value == other.value
     }
 }
 

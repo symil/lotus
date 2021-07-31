@@ -10,10 +10,6 @@ impl<T : Serializable + Default> ReferenceWrapper<T> {
         Self { data: Rc::new(UnsafeCell::new(data)) }
     }
 
-    pub fn clone(&self) -> Self {
-        Self { data: Rc::clone(&self.data) }
-    }
-
     pub fn get(&self) -> &T {
         // TODO: `unwrap_unchecked`
         unsafe { self.data.get().as_ref().unwrap() }
@@ -31,6 +27,16 @@ impl<T : Serializable + Default> ReferenceWrapper<T> {
 
     pub fn set_outer(&mut self, reference: &ReferenceWrapper<T>) {
         self.data = Rc::clone(&reference.data)
+    }
+
+    pub fn get_addr(&self) -> usize {
+        Rc::as_ptr(&self.data) as usize
+    }
+}
+
+impl<T : Serializable + Default> Clone for ReferenceWrapper<T> {
+    fn clone(&self) -> Self {
+        Self { data: Rc::clone(&self.data) }
     }
 }
 

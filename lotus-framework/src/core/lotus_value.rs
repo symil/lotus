@@ -62,24 +62,36 @@ impl LotusValue {
         }
     }
 
-    pub fn as_boolean(&self) -> &LotusBoolean {
-        unsafe { &self.data.boolean }
+    pub fn as_boolean(&mut self) -> &mut LotusBoolean {
+        unsafe { &mut self.data.boolean }
     }
 
-    pub fn as_number(&self) -> &LotusNumber {
-        unsafe { &self.data.number }
+    pub fn as_number(&mut self) -> &mut LotusNumber {
+        unsafe { &mut self.data.number }
     }
 
-    pub fn as_string(&self) -> &LotusString {
-        unsafe { &self.data.string }
+    pub fn as_string(&mut self) -> &mut LotusString {
+        unsafe { &mut self.data.string }
     }
 
-    pub fn as_array(&self) -> &LotusArray {
-        unsafe { &self.data.array }
+    pub fn as_array(&mut self) -> &mut LotusArray {
+        unsafe { &mut self.data.array }
     }
 
-    pub fn as_object(&self) -> &LotusObject {
-        unsafe { &self.data.object }
+    pub fn as_object(&mut self) -> &mut LotusObject {
+        unsafe { &mut self.data.object }
+    }
+
+    pub fn equals(&self, other: &Self) -> bool {
+        unsafe {
+            match self.ty {
+                LotusValueType::Boolean => self.data.boolean.equals(&other.data.boolean),
+                LotusValueType::Number => self.data.number.equals(&other.data.number),
+                LotusValueType::String => self.data.string.equals(&other.data.string),
+                LotusValueType::Array => self.data.array.equals(&other.data.array),
+                LotusValueType::Object => self.data.object.equals(&other.data.object),
+            }
+        }
     }
 }
 
@@ -122,6 +134,20 @@ impl Drop for LotusValue {
                 LotusValueType::String => ManuallyDrop::drop(&mut self.data.string),
                 LotusValueType::Array => ManuallyDrop::drop(&mut self.data.array),
                 LotusValueType::Object => ManuallyDrop::drop(&mut self.data.object),
+            }
+        }
+    }
+}
+
+impl Clone for LotusValue {
+    fn clone(&self) -> Self {
+        unsafe {
+            match self.ty {
+                LotusValueType::Boolean => Self::boolean(self.data.boolean.clone()),
+                LotusValueType::Number => Self::number(self.data.number.clone()),
+                LotusValueType::String => Self::string(self.data.string.clone()),
+                LotusValueType::Array => Self::array(self.data.array.clone()),
+                LotusValueType::Object => Self::object(self.data.object.clone()),
             }
         }
     }

@@ -3,28 +3,59 @@ use serializable::Serializable;
 
 #[derive(Serializable)]
 pub struct LotusObject {
-    value: ReferenceWrapper<Vec<LotusValue>>
+    value: Option<ReferenceWrapper<Vec<LotusValue>>>
 }
 
 impl LotusObject {
-    pub fn new(fields: Vec<LotusValue>) -> Self {
-        Self {
-            value: ReferenceWrapper::new(fields)
-        }
+    pub fn new_null() -> Self {
+        Self { value: None }
     }
 
-    pub fn assign(&mut self, other: &LotusValue) {
-        self.value.set_outer(&other.as_object().value)
+    pub fn new(fields: Vec<LotusValue>) -> Self {
+        Self { value: Some(ReferenceWrapper::new(fields)) }
+    }
+
+    pub fn wrap(self) -> LotusValue {
+        LotusValue::object(self)
+    }
+
+    pub fn clone(&self) -> Self {
+        Self { value: self.value.clone() }
+    }
+
+    pub fn assign(&mut self, other: &LotusObject) {
+        self.value = other.value.clone();
     }
 
     pub fn get_field(&mut self, offset: usize) -> &mut LotusValue {
-        // TODO: `unwrap_unchecked`
-        self.value.get_mut().get_mut(offset).unwrap()
+        if let Some(fields_ref) = self.value.as_mut() {
+            // TODO: `unwrap_unchecked`
+            fields_ref.get_mut().get_mut(offset).unwrap()
+        } else {
+            panic!("invalid field access of null object");
+        }
+    }
+
+    pub fn equals(&self, other: &Self) -> bool {
+        match (&self.value, &other.value) {
+            (None, None) => true,
+            (None, Some(_)) => false,
+            (Some(_), None) => false,
+            (Some(self_value), Some(other_value)) => self_value.get_addr() == other_value.get_addr(),
+        }
+    }
+
+    pub fn not_equals(&self, other: &Self) -> bool {
+        !self.equals(other)
+    }
+
+    pub fn unary_not(&self) -> bool {
+        self.value.is_none()
     }
 }
 
 impl Default for LotusObject {
     fn default() -> Self {
-        Self::new(vec![])
+        Self::new_null()
     }
 }
