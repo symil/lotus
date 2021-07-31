@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{ArrayLiteral, Expression, ObjectLiteral, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, VarDeclarationQualifier, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::BuiltinMethodPayload, builtin_types::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
+use crate::{items::{expression::{ArrayLiteral, Expression, ObjectLiteral, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::BuiltinMethodPayload, builtin_types::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
 use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, builtin_methods::get_builtin_method_info, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
 
 const KEYWORDS : &'static[&'static str] = &[
@@ -39,7 +39,7 @@ impl ProgramIndex {
             for block in file.blocks {
                 let identifier = match &block {
                     TopLevelBlock::StructDeclaration(struct_declaration) => &struct_declaration.name,
-                    TopLevelBlock::ConstDeclaration(const_declaration) => &const_declaration.name,
+                    TopLevelBlock::ConstDeclaration(const_declaration) => &const_declaration.var_name,
                     TopLevelBlock::FunctionDeclaration(function_declaration) => &function_declaration.name,
                 }.clone();
 
@@ -106,7 +106,7 @@ impl ProgramIndex {
                 context.error(struct_declaration, format!("invalid type name: {}", &struct_declaration.name));
             } else {
                 let struct_types = self.collect_struct_types(&struct_declaration.name, vec![], context);
-                let struct_fields = self.collect_struct_fields(&struct_types, context);
+                let struct_fields = self.collect_struct_fields(&struct_declaration.name, &struct_types, context);
                 let struct_annotation = context.structs.get_mut(&struct_declaration.name).unwrap();
 
                 struct_annotation.types = struct_types;
@@ -260,12 +260,12 @@ impl ProgramIndex {
         context.inside_const_expr = true;
 
         for const_declaration in self.const_declarations.values() {
-            if const_declaration.qualifier != VarDeclarationQualifier::Const {
+            if const_declaration.qualifier.is_none() {
                 context.error(const_declaration, "global variables must be declared with the `const` qualifier");
             }
 
-            if let Some(expr_type) = self.get_expression_type(&const_declaration.value, context) {
-                *context.constants.get_mut(&const_declaration.name).unwrap() = expr_type;
+            if let Some(expr_type) = self.get_expression_type(&const_declaration.init_value, context) {
+                *context.constants.get_mut(&const_declaration.var_name).unwrap() = expr_type;
             }
         }
     }
@@ -441,18 +441,18 @@ impl ProgramIndex {
     }
 
     fn process_var_declaration(&self, var_declaration: &VarDeclaration, context: &mut ProgramContext) {
-        let var_name = &var_declaration.name;
-        let var_exists = context.var_exists(&var_declaration.name);
+        let var_name = &var_declaration.var_name;
+        let var_exists = context.var_exists(&var_declaration.var_name);
 
-        if var_declaration.qualifier != VarDeclarationQualifier::Let {
-            context.error(&var_declaration.qualifier, format!("local variables must be declared with `{}`", VarDeclarationQualifier::Let));
+        if var_declaration.qualifier.is_some() {
+            context.error(&var_declaration.qualifier, format!("local variables cannot have the `const` qualifier"));
         }
 
         if var_exists {
             context.error(var_name, format!("duplicate variable declaration: `{}` already exists in this scope", var_name));
         }
 
-        if let Some(var_type) = self.get_expression_type(&var_declaration.value, context) {
+        if let Some(var_type) = self.get_expression_type(&var_declaration.init_value, context) {
             if !var_exists {
                 context.push_var(var_name.clone(), VarInfo::mut_var(var_type));
             }
@@ -475,8 +475,6 @@ impl ProgramIndex {
                     if is_lvalue_assignable {
                         if !self.expressions_match(&lvalue_type, &rvalue_type, context) {
                             context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", rvalue_type, lvalue_type));
-                        } else if let Some(var_name) = self.get_operand_var_name(lvalue) {
-                            context.set_var_type(&var_name, rvalue_type);
                         }
                     }
                 }
@@ -490,22 +488,22 @@ impl ProgramIndex {
         let mut return_type = ExpressionType::Void;
 
         for argument in &signature.arguments {
-            if !arg_names.insert(&argument.name) {
-                context.error(&argument.name, format!("duplicate argument: {}", &argument.name));
+            let arg_name = argument.name.clone();
+
+            if !arg_names.insert(arg_name.clone()) {
+                context.error(&arg_name, format!("duplicate argument: {}", &arg_name));
             }
 
-            let arg_name = argument.name.clone();
-            let arg_type = match self.check_type_name(&argument.type_.name, context) {
-                true => ExpressionType::from_value_type(&argument.type_),
-                false => ExpressionType::Void
-            };
-
-            arguments.push((arg_name, arg_type));
+            if let Some(arg_type) = self.process_type(&argument.type_, context) {
+                arguments.push((arg_name, arg_type));
+            } else {
+                arguments.push((arg_name, ExpressionType::Void));
+            }
         }
 
-        if let Some(return_type_parsed) = &signature.return_type {
-            if self.check_type_name(&return_type_parsed.name, context) {
-                return_type = ExpressionType::from_value_type(return_type_parsed);
+        if let Some(ret) = &signature.return_type {
+            if let Some(ret_type) = self.process_type(ret, context) {
+                return_type = ret_type;
             }
         }
 
@@ -723,11 +721,11 @@ impl ProgramIndex {
                 if context.inside_const_expr {
                     if let Some(referenced_const) = self.const_declarations.get(&var_path.name) {
                         if let Some(_) = context.visit_constant(&var_path.name) {
-                            context.error(&referenced_const.name, format!("circular reference to `{}`", &referenced_const.name));
+                            context.error(&referenced_const.var_name, format!("circular reference to `{}`", &referenced_const.var_name));
 
                             None
                         } else {
-                            self.get_expression_type(&referenced_const.value, context)
+                            self.get_expression_type(&referenced_const.init_value, context)
                         }
                     } else {
                         context.error(&var_path.name, format!("undefined constant `{}`", &var_path.name));
@@ -846,7 +844,7 @@ impl ProgramIndex {
         types
     }
 
-    fn collect_struct_fields(&self, struct_types: &[Identifier], context: &mut ProgramContext) -> HashMap<Identifier, FieldDetails> {
+    fn collect_struct_fields(&self, final_struct_name: &Identifier, struct_types: &[Identifier], context: &mut ProgramContext) -> HashMap<Identifier, FieldDetails> {
         let mut fields = HashMap::new();
 
         for type_name in struct_types.iter().rev() {
@@ -854,31 +852,32 @@ impl ProgramIndex {
 
             for field in &struct_declaration.body.fields {
                 if self.is_forbidden_identifier(&field.name) {
-                    context.error(&field.name, format!("forbidden field name: {}", &field.name));
+                    if type_name == final_struct_name {
+                        context.error(&field.name, format!("struct `{}`: forbidden field name `{}`", final_struct_name, &field.name));
+                    }
                 } else {
-                    match &field.type_ {
-                        Type::Value(value_type) => {
-                            if let Some(type_declaration) = self.struct_declarations.get(&value_type.name) {
-                                if self.is_entity_qualifier(&type_declaration.qualifier) {
-                                    context.error(&field.name, format!("invalid field type: {} (must be bool, num or an entity)", &value_type.name));
-                                } else {
-                                    let field_details = FieldDetails {
-                                        name: field.name.clone(),
-                                        expr_type: ExpressionType::from_value_type(value_type),
-                                        offset: fields.len(),
-                                    };
+                    if fields.contains_key(&field.name) {
+                        context.error(&field.name, format!("struct `{}`: duplicate field `{}`", final_struct_name, &field.name));
+                    }
 
-                                    if fields.insert(field.name.clone(), field_details).is_some() {
-                                        context.error(&field.name, format!("duplicate field declaration: {}", &field.name));
-                                    }
-                                }
-                            } else if !self.is_builtin_type_name(&value_type.name) {
-                                context.error(&field.name, format!("undefined type `{}`", &value_type.name));
-                            }
-                        },
-                        Type::Function(function_type) => {
-                            context.error(function_type, format!("invalid field type: <function> (accepted: builtin type or entity type)"));
-                        },
+                    if let Some(field_type) = self.process_type(&field.type_, context) {
+                        let ok = match field_type.item_type() {
+                            ItemType::Builtin(_) => true,
+                            ItemType::Struct(struct_name) => self.is_entity_qualifier(&self.struct_declarations.get(struct_name).unwrap().qualifier),
+                            ItemType::Function(_, _) => false,
+                        };
+
+                        if ok {
+                            let field_details = FieldDetails {
+                                name: field.name.clone(),
+                                expr_type: field_type,
+                                offset: fields.len(),
+                            };
+
+                            fields.insert(field.name.clone(), field_details);
+                        } else {
+                            context.error(&field.name, format!("field `{}`: expected `bool`, `num`, `string` or an entity, got `{}`", &field.name, &field_type));
+                        }
                     }
                 }
             }
@@ -906,13 +905,13 @@ impl ProgramIndex {
 
     fn check_struct_qualifier(&self, type_name: &Identifier, required_qualifier: StructQualifier, context: &mut ProgramContext) {
         if self.is_builtin_type_name(type_name) {
-            context.error(type_name, format!("required {} (found {})", required_qualifier, type_name));
+            context.error(type_name, format!("required `{}`, got `{}`", required_qualifier, type_name));
         } else if let Some(struct_def) = self.struct_declarations.get(type_name) {
             if struct_def.qualifier != required_qualifier {
-                context.error(type_name, format!("required {} (found {})", required_qualifier, type_name));
+                context.error(type_name, format!("required `{}` got `{}`", required_qualifier, type_name));
             }
         } else {
-            context.error(type_name, format!("unkown type {}", type_name));
+            context.error(type_name, format!("unkown type `{}`", type_name));
         }
     }
 
@@ -921,31 +920,52 @@ impl ProgramIndex {
     }
 
     fn is_builtin_type_name(&self, name: &Identifier) -> bool {
-        name.value == "bool" || name.value == "num" || name.value == "string"
+        BuiltinType::from_identifier(name).is_some()
     }
 
-    fn check_type_name(&self, name: &Identifier, context: &mut ProgramContext) -> bool {
-        let valid = self.is_builtin_type_name(name) || self.struct_declarations.contains_key(name);
-
-        if !valid {
-            context.error(name, format!("undefined type: {}", name));
-        }
-
-        valid
-    }
-
-    fn get_operand_var_name(&self, operand: &Operand) -> Option<Identifier> {
-        if let Operand::VarPath(var_path) = operand {
-            if var_path.prefix.is_none() && var_path.path.is_empty() {
-                Some(var_path.name.clone())
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
     fn expressions_match(&self, expected: &ExpressionType, actual: &ExpressionType, context: &ProgramContext) -> bool {
         expected.match_actual(actual, &context.structs, &mut HashMap::new())
+    }
+
+    fn process_type(&self, ty: &Type, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let mut result = None;
+
+        match ty {
+            Type::Value(value_type) => {
+                if let Some(expr_type) = ExpressionType::from_value_type(value_type, &self.struct_declarations) {
+                    result = Some(expr_type);
+                } else {
+                    context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
+                }
+            },
+            Type::Function(function_type) => {
+                let mut ok = true;
+                let mut arguments = vec![];
+                let mut return_type = ExpressionType::Void;
+
+                for arg in &function_type.arguments {
+                    if let Some(arg_type) = self.process_type(arg, context) {
+                        arguments.push(arg_type);
+                    } else {
+                        arguments.push(ExpressionType::Void);
+                        ok = false;
+                    }
+                }
+
+                if let Some(ret) = &function_type.return_value {
+                    if let Some(ret_type) = self.process_type(Box::as_ref(ret), context) {
+                        return_type = ret_type;
+                    } else {
+                        ok = false;
+                    }
+                }
+
+                if ok {
+                    result = Some(ExpressionType::function(arguments, return_type));
+                }
+            },
+        };
+
+        result
     }
 }

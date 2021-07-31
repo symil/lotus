@@ -77,12 +77,12 @@ impl ProgramContext {
         self.get_var_ref(name).is_some()
     }
 
-    pub fn set_var_type(&mut self, name: &Identifier, var_type: ExpressionType) {
-        match self.get_var_ref(name) {
-            Some(var_info) => var_info.expr_type = var_type,
-            None => { },
-        }
-    }
+    // pub fn set_var_type(&mut self, name: &Identifier, var_type: ExpressionType) {
+    //     match self.get_var_ref(name) {
+    //         Some(var_info) => var_info.expr_type = var_type,
+    //         None => { },
+    //     }
+    // }
 
     pub fn get_var_type(&mut self, name: &Identifier) -> Option<VarInfo> {
         self.get_var_ref(name).cloned()

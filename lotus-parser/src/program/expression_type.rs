@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use crate::items::{identifier::Identifier, struct_declaration::{ParsedType, TypeSuffix}};
+use crate::items::{identifier::Identifier, struct_declaration::{ValueType, StructDeclaration, TypeSuffix}};
 
 use super::struct_annotation::StructAnnotation;
 
@@ -38,15 +38,29 @@ impl BuiltinType {
 }
 
 impl ExpressionType {
-    pub fn from_value_type(parsed_type: &ParsedType) -> Self {
-        let item_type = match BuiltinType::from_identifier(&parsed_type.name) {
+    pub fn from_value_type(value_type: &ValueType, structs: &HashMap<Identifier, StructDeclaration>) -> Option<Self> {
+        let item_type = match BuiltinType::from_identifier(&value_type.name) {
             Some(builtin_type) => ItemType::Builtin(builtin_type),
-            None => ItemType::Struct(parsed_type.name.clone()),
+            None => match structs.contains_key(&value_type.name) {
+                true => ItemType::Struct(value_type.name.clone()),
+                false => return None,
+            },
         };
 
-        match parsed_type.suffix {
+        let final_type = match value_type.suffix {
             Some(TypeSuffix::Array) => Self::Array(Box::new(Self::Single(item_type))),
             None => Self::Single(item_type),
+        };
+
+        Some(final_type)
+    }
+
+    pub fn item_type(&self) -> &ItemType {
+        match self {
+            ExpressionType::Void => unreachable!(),
+            ExpressionType::Single(item_type) => item_type,
+            ExpressionType::Array(sub_type) => sub_type.item_type(),
+            ExpressionType::Anonymous(_) => unreachable!(),
         }
     }
 

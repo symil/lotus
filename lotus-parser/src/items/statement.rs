@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{expression::{Expression, Operand}, identifier::Identifier};
+use super::{expression::{Expression, Operand}, identifier::Identifier, struct_declaration::{Type}};
 
 #[parsable]
 pub enum Statement {
@@ -65,15 +65,15 @@ pub struct Branch {
 
 #[parsable]
 pub struct VarDeclaration {
-    pub qualifier: VarDeclarationQualifier,
-    pub name: Identifier,
+    pub qualifier: Option<VarDeclarationQualifier>,
+    pub var_type: Type,
+    pub var_name: Identifier,
     #[parsable(prefix="=")]
-    pub value: Expression
+    pub init_value: Expression
 }
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq)]
 pub enum VarDeclarationQualifier {
-    Let = "let",
     Const = "const"
 }
