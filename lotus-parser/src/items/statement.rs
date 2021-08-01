@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{expression::{Expression, Operand}, identifier::Identifier, struct_declaration::{Type}};
+use super::{Expression, Identifier, Operand, Type};
 
 #[parsable]
 pub enum Statement {

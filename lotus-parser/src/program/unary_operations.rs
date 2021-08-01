@@ -1,6 +1,6 @@
-use crate::{items::expression::UnaryOperator, program::expression_type::BuiltinType};
+use crate::{items::UnaryOperator, program::BuiltinType};
 
-use super::expression_type::ExpressionType;
+use super::ExpressionType;
 
 pub fn get_unary_operator_input_types(operator: &UnaryOperator) -> Vec<ExpressionType> {
     match operator {

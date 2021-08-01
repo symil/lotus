@@ -2,9 +2,9 @@ use std::{collections::HashMap, ops::Deref};
 
 use parsable::Parsable;
 
-use crate::items::{identifier::Identifier};
+use crate::items::Identifier;
 
-use super::{error::Error, expression_type::ExpressionType, function_annotation::FunctionAnnotation, struct_annotation::StructAnnotation};
+use super::{Error, ExpressionType, FunctionAnnotation, StructAnnotation};
 
 #[derive(Default)]
 pub struct ProgramContext {

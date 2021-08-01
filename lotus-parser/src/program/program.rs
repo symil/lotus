@@ -1,8 +1,6 @@
 use std::{fs, path::{PathBuf}};
-
-use crate::{items::{file::LotusFile}};
 use parsable::*;
-
+use crate::items::LotusFile;
 use super::{error::Error, program_index::ProgramIndex};
 
 pub struct LotusProgram {

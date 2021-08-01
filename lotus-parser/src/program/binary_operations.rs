@@ -1,5 +1,4 @@
-use crate::{items::expression::{BinaryOperator, Operand, Operation}, program::expression_type::{BuiltinType}};
-use super::expression_type::ExpressionType;
+use crate::{items::{BinaryOperator, Operand, Operation}, program::{BuiltinType, ExpressionType}};
 
 pub enum OperationTree<'a> {
     Operation(Box<OperationTree<'a>>, BinaryOperator, Box<OperationTree<'a>>),

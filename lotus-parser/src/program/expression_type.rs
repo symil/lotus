@@ -1,8 +1,8 @@
 use std::{collections::HashMap, fmt};
 
-use crate::items::{identifier::Identifier, struct_declaration::{ValueType, StructDeclaration, TypeSuffix}};
+use crate::items::{Identifier, StructDeclaration, TypeSuffix, ValueType};
 
-use super::struct_annotation::StructAnnotation;
+use super::StructAnnotation;
 
 #[derive(Clone, Debug)]
 pub enum ItemType {

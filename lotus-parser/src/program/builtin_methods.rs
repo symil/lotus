@@ -1,4 +1,4 @@
-use crate::items::{identifier::Identifier, struct_declaration::StructQualifier};
+use crate::items::{Identifier, StructQualifier};
 
 pub fn get_builtin_method_info(name: &Identifier) -> Option<(Vec<StructQualifier>, BuiltinMethodPayload)> {
     match name.as_str() {

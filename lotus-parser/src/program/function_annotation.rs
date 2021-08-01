@@ -1,6 +1,6 @@
-use crate::items::identifier::Identifier;
+use crate::items::Identifier;
 
-use super::expression_type::ExpressionType;
+use super::ExpressionType;
 
 #[derive(Clone)]
 pub struct FunctionAnnotation {

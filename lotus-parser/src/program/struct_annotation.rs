@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::items::{identifier::Identifier, struct_declaration::{StructQualifier}};
+use crate::items::{Identifier, StructQualifier};
 
-use super::{expression_type::{ExpressionType}, function_annotation::FunctionAnnotation};
+use super::{ExpressionType, FunctionAnnotation};
 
 #[derive(Clone)]
 pub struct StructAnnotation {

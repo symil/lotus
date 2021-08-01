@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{identifier::Identifier, statement::Statement, struct_declaration::{Type}};
+use super::{Identifier, Statement, Type};
 
 #[parsable]
 pub struct FunctionDeclaration {

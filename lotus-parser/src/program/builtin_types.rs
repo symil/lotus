@@ -1,4 +1,4 @@
-use crate::{items::identifier::Identifier};
+use crate::items::Identifier;
 
 use super::expression_type::{BuiltinType, ExpressionType};
 

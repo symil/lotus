@@ -1,4 +1,4 @@
-use program::program::LotusProgram;
+use program::LotusProgram;
 
 mod program;
 mod items;

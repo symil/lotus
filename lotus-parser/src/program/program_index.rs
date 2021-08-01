@@ -1,7 +1,8 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{expression::{ArrayLiteral, Expression, ObjectLiteral, Operand, Operation, PathSegment, UnaryOperation, VarPath, VarPrefix}, file::LotusFile, function_declaration::{FunctionDeclaration, FunctionSignature}, identifier::Identifier, statement::{Action, ActionKeyword, Assignment, Branch, ForBlock, IfBlock, Statement, VarDeclaration, WhileBlock}, struct_declaration::{MethodDeclaration, MethodQualifier, StructDeclaration, StructQualifier, Type}, top_level_block::TopLevelBlock}, program::{builtin_methods::BuiltinMethodPayload, builtin_types::{get_array_field_type, get_builtin_field_type}, expression_type::ItemType, program_context::{VarInfo}, struct_annotation::{StructAnnotation}, utils::display_join}};
-use super::{binary_operations::{OperationTree, get_binary_operator_output_type, get_binary_operator_input_types}, builtin_methods::get_builtin_method_info, error::Error, expression_type::{BuiltinType, ExpressionType}, function_annotation::FunctionAnnotation, program_context::ProgramContext, struct_annotation::FieldDetails, unary_operations::{get_unary_operator_input_types, get_unary_operator_output_type}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+
+use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_unary_operator_input_types, get_unary_operator_output_type};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
