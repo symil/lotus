@@ -1,11 +1,11 @@
 use wasm_bindgen::prelude::*;
-use as_js_string_macro::*;
+use enum_as_string_macro::*;
 
 use crate::{Color, Size, Rect, RenderOutput};
 
 macro_rules! make_enum {
     ($name:ident : $default:ident $(, $field:ident)*) => {
-        #[as_js_string(lowercase)]
+        #[enum_as_string(lowercase)]
         #[wasm_bindgen]
         #[derive(Debug, Clone, Copy)]
         pub enum $name {

@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod lotus_value;
 mod builtin_functions;
 

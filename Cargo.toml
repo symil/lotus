@@ -11,6 +11,6 @@ lotus-framework = { path = "./lotus-framework" }
 lotus-parser = { path = "./lotus-parser" }
 serializable = { path = "./serializable" }
 serializable-macro = { path = "./serializable-macro" }
-as-js-string-macro = { path = "./as-js-string-macro" }
+enum-as-string-macro = { path = "./enum-as-string-macro" }
 parsable = { path = "./parsable" }
 parsable-macro = { path = "./parsable-macro" }

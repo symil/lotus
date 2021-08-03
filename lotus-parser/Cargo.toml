@@ -6,3 +6,4 @@ edition = "2018"
 [dependencies]
 lotus-framework = { path = "../lotus-framework" }
 parsable = { path = "../parsable" }
+enum-as-string-macro = { path = "../enum-as-string-macro" }

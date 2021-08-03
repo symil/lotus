@@ -2,6 +2,7 @@
   "name": "lotus-js-client",
   "version": "0.1.0",
   "description": "",
+  "type": "module",
   "main": "lotus-framework/js/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

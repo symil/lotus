@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use as_js_string_macro::*;
+use enum_as_string_macro::*;
 
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
@@ -53,7 +53,7 @@ impl MouseEvent {
     }
 }
 
-#[as_js_string(lowercase)]
+#[enum_as_string(discriminant, lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseAction {
@@ -63,7 +63,7 @@ pub enum MouseAction {
     Up
 }
 
-#[as_js_string(lowercase)]
+#[enum_as_string(discriminant, lowercase)]
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MouseButton {
