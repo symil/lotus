@@ -1,15 +1,15 @@
-use crate::generation::Wat;
+use crate::{generation::{Imports, MainFunction, Memory, Wat}, merge};
 
 pub fn generate_wat() -> String {
-    let mut expressions = vec![
-        Wat::memory("memory", 100),
-        Wat::function("main", Some("_start"), vec![], None, vec![
-            Wat::const_i32(1),
-            Wat::drop()
-        ])
-    ];
+    let imports = Imports::new();
+    let memory = Memory::new();
+    let main_function = MainFunction::new();
 
-    // dbg!(&expressions);
+    let module = Wat::new("module", merge![
+        imports.get_header(),
+        memory.get_header(),
+        main_function.get_header()
+    ]);
 
-    Wat::module(expressions).to_string()
+    module.to_string(0)
 }
