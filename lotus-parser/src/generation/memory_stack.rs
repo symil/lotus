@@ -44,23 +44,26 @@ impl MemoryStack {
 
     fn get_init_function(&self) -> Wat {
         Wat::declare_function(&self.init_func_name, None, vec![], None, vec![
-            Wat::declare_local_i32("stack_index"),
-            Wat::declare_local_i32("pointed_addr"),
+            // Wat::declare_local_i32("stack_index"),
+            // Wat::declare_local_i32("pointed_addr"),
 
-            Wat::set_local("stack_index", Wat::const_i32(self.stack_start)),
-            Wat::set_local("pointed_addr", Wat::const_i32(self.item_pool_start)),
+            // Wat::set_local("stack_index", Wat::const_i32(self.stack_start)),
+            // Wat::set_local("pointed_addr", Wat::const_i32(self.item_pool_start)),
 
-            Wat::while_loop("stack_index", Wat::const_i32(self.stack_end), ATOMIC_VALUE_SIZE, vec![
-                Wat::mem_set_i32(Wat::get_local("stack_index"), Wat::get_local("pointed_addr")),
-                Wat::increment_local_i32("pointed_addr", self.item_size),
-            ]),
+            // Wat::while_loop("stack_index", Wat::const_i32(self.stack_end), ATOMIC_VALUE_SIZE, vec![
+            //     Wat::mem_set_i32(Wat::get_local("stack_index"), Wat::get_local("pointed_addr")),
+            //     Wat::increment_local_i32("pointed_addr", self.item_size),
+            // ]),
         ])
     }
 
     fn get_alloc_function(&self) -> Wat {
-        Wat::declare_function(&self.alloc_func_name, None, vec![], Some("i32"), vec![
+        Wat::declare_function(&self.alloc_func_name, None, vec![("page_index", "i32")], Some("i32"), vec![
             Wat::declare_local_i32("result"),
-            Wat::set_local("result", Wat::mem_get_i32(Wat::get_global(&self.next_addr_ptr_global_name))),
+            // Wat::if_else(
+            //     wat!["i32.eq", Wat::get_global(&self.next_addr_ptr_global_name), Wat::const_i32(self.stack_end)],
+            // ),
+            // Wat::set_local("result", Wat::mem_get_i32(Wat::get_global(&self.next_addr_ptr_global_name))),
             Wat::increment_global_i32(&self.next_addr_ptr_global_name, ATOMIC_VALUE_SIZE),
             Wat::get_local("result")
         ])

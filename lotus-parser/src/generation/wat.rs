@@ -22,7 +22,7 @@ impl Wat {
         self.arguments.push(value.to_wat())
     }
 
-    pub fn append(&mut self, values: Vec<Wat>) {
+    pub fn extend(&mut self, values: Vec<Wat>) {
         self.arguments.extend(values);
     }
 
@@ -44,8 +44,8 @@ impl Wat {
         wat!["i32.const", value.to_i32()]
     }
 
-    pub fn call(func_name: &str, arguments: Vec<Wat>) -> Self {
-        Wat::new("call", merge![ Wat::var_name(func_name), arguments ])
+    pub fn call<T : ToWatVec>(func_name: &str, arguments: T) -> Self {
+        wat!["call", Wat::var_name(func_name), arguments]
     }
 
     // GLOBALS
@@ -94,12 +94,20 @@ impl Wat {
 
     // MEMORY
 
-    pub fn mem_set_i32<T : ToWat, U : ToWat>(addr: T, value: U) -> Self {
-        wat!["i32.store", addr, value]
+    pub fn mem_set_i32<T : ToWat>(local_var_name: &str, value: T) -> Self {
+        wat!["i32.store", Wat::get_local(local_var_name), value]
     }
 
-    pub fn mem_get_i32<T : ToWat>(addr: T) -> Self {
-        wat!["i32.load", addr]
+    pub fn mem_set_i32_with_offset<O : ToInt, V : ToWat>(local_var_name: &str, offset: O, value: V) -> Self {
+        wat!["i32.store", wat!["i32.add", Wat::get_local(local_var_name), Wat::const_i32(offset)], value]
+    }
+
+    pub fn mem_get_i32(local_var_name: &str) -> Self {
+        wat!["i32.load", Wat::get_local(local_var_name)]
+    }
+
+    pub fn mem_get_i32_with_offset<O : ToInt>(local_var_name: &str, offset: O) -> Self {
+        wat!["i32.load", wat!["i32.add", Wat::get_local(local_var_name), Wat::const_i32(offset)]]
     }
 
     // COMPLEX BLOCKS
@@ -140,30 +148,42 @@ impl Wat {
         func
     }
 
-    pub fn while_loop<T : ToInt>(var_name: &str, end_value: Wat, inc_value: T, statements: Vec<Wat>) -> Wat {
+    pub fn while_loop<T : ToWatVec>(condition: Wat, statements: T) -> Wat {
         wat!["block", Wat::new("loop", merge![
-            vec![
-                wat!["br_if", 1, wat![ "i32.ge_s", Wat::get_local(var_name), end_value ]],
-            ],
+            wat!["br_if", 1, wat!["i32.eqz", condition]],
             statements,
-            vec![
-                Wat::increment_local_i32(var_name, inc_value),
-                wat!["br", 0]
-            ]
+            wat!["br", 0]
         ])]
     }
 
-    pub fn basic_loop(condition: Wat, statements: Vec<Wat>) -> Wat {
-        wat!["block", Wat::new("loop", merge![
-            vec![ wat!["br_if", 1, wat!["eqz", condition]] ],
-            statements,
-            vec![ wat!["br", 0] ]
-        ])]
+    pub fn if_else<T : ToWatVec, U : ToWatVec>(condition: Wat, if_block: T, else_block: U) -> Wat {
+        wat!["block",
+            wat!["block",
+                wat!["br_if", 0, wat!["i32.eqz", condition]],
+                if_block,
+                wat!["br", 1]
+            ],
+            else_block
+        ]
+    }
+
+    // LOG
+
+    pub fn log_var(var_name: &str) -> Wat {
+        Wat::call("log_i32", Wat::get_local(var_name))
+    }
+
+    pub fn log_addr(var_name: &str) -> Wat {
+        Wat::call("log_i32", Wat::mem_get_i32(var_name))
     }
 
     pub fn to_string(&self, indent: usize) -> String {
         if self.arguments.is_empty() {
-            self.keyword.clone()
+            if self.keyword.contains(".") {
+                format!("({})", self.keyword)
+            } else {
+                self.keyword.clone()
+            }
         } else {
             let items = if self.arguments.len() <= 3 {
                 self.arguments.iter().map(|expr| expr.to_string(indent)).collect::<Vec<String>>().join(" ")

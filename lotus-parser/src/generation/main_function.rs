@@ -8,13 +8,19 @@ impl MainFunction {
         Self
     }
 
-    pub fn get_header(&self, module: &WasmModule) -> Vec<Wat> {
+    pub fn get_functions(&self, module: &WasmModule) -> Vec<Wat> {
         vec![
             Wat::declare_function("main", Some("_start"), vec![], None, vec![
                 module.memory.init(),
-                wat!["call", "$log_i32", module.memory.alloc() ],
-                wat!["call", "$log_i32", module.memory.alloc() ],
-                wat!["call", "$log_i32", module.memory.alloc() ],
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                Wat::call("log_i32", module.memory.alloc(Wat::const_i32(65536))),
+                // Wat::call("log_i32", module.memory.alloc(Wat::const_i32(4))),
+                // Wat::call("log_i32", module.memory.alloc(Wat::const_i32(4))),
             ])
         ]
     }

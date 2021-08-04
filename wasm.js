@@ -5,7 +5,8 @@ async function main() {
     let wasi = new WASI();
     let importObject = {
         log: {
-            i32: value => console.log(value)
+            i32: value => console.log(value),
+            special: () => console.log('SPECIAL')
         }
     };
 

@@ -18,6 +18,12 @@ impl ToInt for i32 {
     }
 }
 
+impl ToInt for u32 {
+    fn to_i32(self) -> i32 {
+        self as i32
+    }
+}
+
 impl ToInt for usize {
     fn to_i32(self) -> i32 {
         self as i32
@@ -66,8 +72,8 @@ impl ToWatVec for Vec<Wat> {
     }
 }
 
-impl ToWatVec for Wat {
+impl<T : ToWat> ToWatVec for T {
     fn to_wat_vec(self) -> Vec<Wat> {
-        vec![self]
+        vec![self.to_wat()]
     }
 }

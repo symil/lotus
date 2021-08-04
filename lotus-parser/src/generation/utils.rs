@@ -9,8 +9,8 @@ macro_rules! wat {
             let mut result = keyword.to_wat();
             $(
                 {
-                    let arg = $arg;
-                    result.push(arg);
+                    let arg = $arg.to_wat_vec();
+                    result.extend(arg);
                 }
             )*
 

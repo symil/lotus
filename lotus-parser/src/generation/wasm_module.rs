@@ -1,8 +1,8 @@
 use crate::{merge};
-use super::{Imports, MainFunction, Memory, Wat, ToWatVec};
+use super::{MainFunction, Memory, StdLib, ToWatVec, Wat};
 
 pub struct WasmModule {
-    pub imports: Imports,
+    pub std_lib: StdLib,
     pub memory: Memory,
     pub main_function: MainFunction
 }
@@ -10,7 +10,7 @@ pub struct WasmModule {
 impl WasmModule {
     pub fn new() -> Self {
         Self {
-            imports: Imports::new(),
+            std_lib: StdLib::new(),
             memory: Memory::new(),
             main_function: MainFunction::new()
         }
@@ -18,9 +18,12 @@ impl WasmModule {
 
     pub fn generate_wat(&self) -> String {
         Wat::new("module", merge![
-            self.imports.get_header(),
+            self.std_lib.get_header(),
             self.memory.get_header(),
-            self.main_function.get_header(self)
+
+            self.std_lib.get_functions(),
+            self.memory.get_functions(self),
+            self.main_function.get_functions(self)
         ]).to_string(0)
     }
 }

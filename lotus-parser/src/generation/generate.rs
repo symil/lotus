@@ -1,4 +1,4 @@
-use crate::{generation::{Imports, MainFunction, Memory, Wat, WasmModule}, merge};
+use super::WasmModule;
 
 pub fn generate_wat() -> String {
     WasmModule::new().generate_wat()
