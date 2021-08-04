@@ -1,11 +1,17 @@
 #[macro_export]
-macro_rules! merge {
-    ($($vec:expr),*) => {
+macro_rules! wat {
+    () => {
+        Wat::default()
+    };
+    ($keyword:expr $(,$arg:expr)*) => {
         {
-            let mut result = vec![];
-
+            let keyword = $keyword;
+            let mut result = keyword.to_wat();
             $(
-                result.extend($vec);
+                {
+                    let arg = $arg;
+                    result.push(arg);
+                }
             )*
 
             result
@@ -13,4 +19,20 @@ macro_rules! merge {
     };
 }
 
+#[macro_export]
+macro_rules! merge {
+    ($($vec:expr),*) => {
+        {
+            let mut result = vec![];
+
+            $(
+                result.extend($vec.to_wat_vec());
+            )*
+
+            result
+        }
+    };
+}
+
+pub use wat;
 pub use merge;

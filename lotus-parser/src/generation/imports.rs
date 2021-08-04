@@ -1,4 +1,4 @@
-use super::Wat;
+use super::{Wat, ToWat, ToWatVec};
 
 pub struct Imports;
 

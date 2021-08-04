@@ -8,6 +8,10 @@ pub trait ToWat {
     fn to_wat(self) -> Wat;
 }
 
+pub trait ToWatVec {
+    fn to_wat_vec(self) -> Vec<Wat>;
+}
+
 impl ToInt for i32 {
     fn to_i32(self) -> i32 {
         self
@@ -53,5 +57,17 @@ impl ToWat for i32 {
 impl ToWat for f32 {
     fn to_wat(self) -> Wat {
         Wat::single(self.to_string())
+    }
+}
+
+impl ToWatVec for Vec<Wat> {
+    fn to_wat_vec(self) -> Vec<Wat> {
+        self
+    }
+}
+
+impl ToWatVec for Wat {
+    fn to_wat_vec(self) -> Vec<Wat> {
+        vec![self]
     }
 }

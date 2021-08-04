@@ -4,7 +4,8 @@
 (local.get $name) ;; Retrieve local variable (push its value on the stack)
 
 ;; Memory
-(i32.store (i32.const 45) (i32.const 100)) ;; store `100` at address `46`
+(i32.store (i32.const 46) (i32.const 100)) ;; write value `100` at address `46`
+(i32.load (i32.const 46)) ;; read value at address `46`
 
 ;; Loops
 (block ;; start of block A

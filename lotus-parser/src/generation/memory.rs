@@ -1,9 +1,11 @@
 use crate::{wat, merge};
-use super::{MemoryStack, Wat, ToWat};
+use super::{MemoryStack, Wat, ToWat, ToWatVec};
 
 pub struct Memory {
     stack: MemoryStack
 }
+
+static INIT_MEMORY_FUNC_NAME : &'static str = "init_mem";
 
 impl Memory {
     pub fn new() -> Self {
@@ -14,10 +16,25 @@ impl Memory {
         Self { stack }
     }
 
+    fn get_init_function(&self) -> Wat {
+        Wat::declare_function(INIT_MEMORY_FUNC_NAME, None, vec![], None, vec![
+            self.stack.init()
+        ])
+    }
+
     pub fn get_header(&self) -> Vec<Wat> {
-        merge!(
-            vec![wat!["memory", Wat::export("memory"), 100]],
+        merge![
+            wat!["memory", Wat::export("memory"), 100],
+            self.get_init_function(),
             self.stack.get_header()
-        )
+        ]
+    }
+
+    pub fn init(&self) -> Wat {
+        Wat::call(INIT_MEMORY_FUNC_NAME, vec![])
+    }
+
+    pub fn alloc(&self) -> Wat {
+        self.stack.alloc()
     }
 }
