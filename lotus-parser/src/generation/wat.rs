@@ -1,6 +1,8 @@
 use std::str::FromStr;
 use enum_as_string_macro::*;
-use super::{ToI32, ToWat};
+use crate::merge;
+
+use super::{ToInt, ToWat};
 
 #[derive(Default)]
 pub struct Wat {
@@ -25,8 +27,8 @@ impl Wat {
         self.arguments.extend(values);
     }
 
-    pub fn var_name(name: &str) -> Self {
-        Self::single(format!("${}", name))
+    pub fn var_name(var_name: &str) -> Self {
+        Self::single(format!("${}", var_name))
     }
 
     pub fn string(value: &str) -> Self {
@@ -37,7 +39,7 @@ impl Wat {
         wat!["export", Self::string(name)]
     }
 
-    pub fn const_i32<T : ToI32>(value: T) -> Self {
+    pub fn const_i32<T : ToInt>(value: T) -> Self {
         wat!["i32.const", value.to_i32()]
     }
 
@@ -55,12 +57,12 @@ impl Wat {
         wat!["import", Self::string(namespace), Self::string(sub_namespace), func_content]
     }
 
-    pub fn global_i32(var_name: &str, value: i32) -> Self {
+    pub fn global_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         wat![
             "global",
             Self::var_name(var_name),
             wat!["mut", "i32"],
-            wat!["i32.const", value]
+            wat!["i32.const", value.to_i32()]
         ]
     }
 
@@ -102,12 +104,33 @@ impl Wat {
         wat!["i32.store", addr, value]
     }
 
-    pub fn increment_i32_local<T : ToI32>(var_name: &str, value: T) -> Self {
+    pub fn increment_i32_local<T : ToInt>(var_name: &str, value: T) -> Self {
         Wat::set_local("stack_index", wat![
             "i32.add",
             Wat::get_local("stack_index"),
             Wat::const_i32(value)
         ])
+    }
+
+    pub fn while_loop<T : ToInt>(var_name: &str, end_value: Wat, inc_value: T, statements: Vec<Wat>) -> Wat {
+        wat!["block", Wat::new("loop", merge![
+            vec![
+                wat!["br_if", 1, wat![ "i32.ge_s", Wat::get_local(var_name), end_value ]],
+            ],
+            statements,
+            vec![
+                Wat::increment_i32_local(var_name, inc_value),
+                wat!["br", 0]
+            ]
+        ])]
+    }
+
+    pub fn basic_loop(condition: Wat, statements: Vec<Wat>) -> Wat {
+        wat!["block", Wat::new("loop", merge![
+            vec![ wat!["br_if", 1, wat!["eqz", condition]] ],
+            statements,
+            vec![ wat!["br", 0] ]
+        ])]
     }
 }
 

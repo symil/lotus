@@ -11,7 +11,7 @@ impl MainFunction {
     pub fn get_header(&self) -> Vec<Wat> {
         vec![
             Wat::function("main", Some("_start"), vec![], None, vec![
-                wat!["call", "$log_i32", wat!["i32.const", 23]]
+                wat!["call", "$log_i32", wat!["i32.eqz", wat![ "i32.eqz", wat!["i32.const", 23]]] ]
             ])
         ]
     }

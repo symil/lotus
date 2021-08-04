@@ -1,6 +1,6 @@
 use super::Wat;
 
-pub trait ToI32 {
+pub trait ToInt {
     fn to_i32(self) -> i32;
 }
 
@@ -8,13 +8,13 @@ pub trait ToWat {
     fn to_wat(self) -> Wat;
 }
 
-impl ToI32 for i32 {
+impl ToInt for i32 {
     fn to_i32(self) -> i32 {
         self
     }
 }
 
-impl ToI32 for usize {
+impl ToInt for usize {
     fn to_i32(self) -> i32 {
         self as i32
     }
