@@ -66,15 +66,15 @@ fn get_operator_priority(operator: &BinaryOperator) -> usize {
 pub fn get_binary_operator_input_types(operator: &BinaryOperator) -> Vec<ExpressionType> {
     match operator {
         BinaryOperator::Plus => vec![
-            ExpressionType::builtin(BuiltinType::Number),
+            ExpressionType::builtin(BuiltinType::Integer),
             ExpressionType::builtin(BuiltinType::String),
             ExpressionType::array(ExpressionType::Anonymous(0)),
         ],
-        BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => vec![ExpressionType::builtin(BuiltinType::Number)],
-        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![ExpressionType::builtin(BuiltinType::Number)],
+        BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => vec![ExpressionType::builtin(BuiltinType::Integer)],
+        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![ExpressionType::builtin(BuiltinType::Integer)],
         BinaryOperator::And | BinaryOperator::Or => vec![ExpressionType::builtin(BuiltinType::Boolean)],
         BinaryOperator::Eq | BinaryOperator::Neq => vec![ExpressionType::Anonymous(0)],
-        BinaryOperator::Range => vec![ExpressionType::builtin(BuiltinType::Number)],
+        BinaryOperator::Range => vec![ExpressionType::builtin(BuiltinType::Integer)],
     }
 }
 
@@ -84,6 +84,6 @@ pub fn get_binary_operator_output_type(operator: &BinaryOperator, operand_type: 
         BinaryOperator::And | BinaryOperator::Or => operand_type.clone(),
         BinaryOperator::Eq | BinaryOperator::Neq => ExpressionType::builtin(BuiltinType::Boolean),
         BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => ExpressionType::builtin(BuiltinType::Boolean),
-        BinaryOperator::Range => ExpressionType::array(ExpressionType::builtin(BuiltinType::Number))
+        BinaryOperator::Range => ExpressionType::array(ExpressionType::builtin(BuiltinType::Integer))
     }
 }

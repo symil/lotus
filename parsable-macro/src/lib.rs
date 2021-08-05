@@ -402,22 +402,42 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                 match &variant.fields {
                     Fields::Named(_fields_named) => todo!(),
                     Fields::Unnamed(fields_unnamed) => {
-                        let field = &fields_unnamed.unnamed[0];
-                        let field_type = &field.ty;
+                        let mut value_names = vec![];
+
+                        for i in 0..fields_unnamed.unnamed.len() {
+                            let value_name = Ident::new(&format!("value_{}", i), Span::call_site());
+
+                            value_names.push(quote! { #value_name });
+                        }
+
+                        let mut current_block = quote! {
+                            let suffix_ok__ = #parse_suffix;
+
+                            if suffix_ok__ {
+                                return Some(Self::#variant_name(#(#value_names),*))
+                            }
+                        };
+
+                        for (i, field) in fields_unnamed.unnamed.iter().enumerate().rev() {
+                            let field_type = &field.ty;
+                            let value_name = Ident::new(&format!("value_{}", i), Span::call_site());
+
+                            value_names.insert(0, quote! { #value_name });
+
+                            current_block = quote! {
+                                if let Some(#value_name) = <#field_type as parsable::Parsable>::#parse_method {
+                                    reader__.eat_spaces();
+
+                                    #current_block
+                                }
+                            };
+                        }
 
                         lines.push(quote! {
                             let prefix_ok__ = #parse_prefix;
 
                             if prefix_ok__ {
-                                if let Some(value) = <#field_type as parsable::Parsable>::#parse_method {
-                                    reader__.eat_spaces();
-
-                                    let suffix_ok__ = #parse_suffix;
-
-                                    if suffix_ok__ {
-                                        return Some(Self::#variant_name(value))
-                                    }
-                                }
+                                #current_block
                             }
 
                             reader__.set_index(start_index__);

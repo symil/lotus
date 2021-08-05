@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathRoot, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
 use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_unary_operator_input_types, get_unary_operator_output_type};
 
@@ -513,16 +513,11 @@ impl ProgramIndex {
 
     fn is_operand_assignable(&self, operand: &Operand) -> bool {
         match operand {
-            Operand::VoidLiteral => false,
-            Operand::NullLiteral => false,
-            Operand::BooleanLiteral(_) => false,
-            Operand::NumberLiteral(_) => false,
-            Operand::StringLiteral(_) => false,
-            Operand::ArrayLiteral(_) => false,
-            Operand::ObjectLiteral(_) => false,
-            Operand::Parenthesized(_) => false,
-            Operand::UnaryOperation(_) => false,
-            Operand::VarPath(var_path) => var_path.path.iter().all(|segment| !segment.is_function_call()),
+            Operand::VarPath(var_path) => match var_path.root {
+                PathRoot::Variable(_, _) => var_path.path.iter().all(|segment| !segment.is_function_call()),
+                _ => false
+            },
+            _ => false
         }
     }
 
@@ -532,8 +527,12 @@ impl ProgramIndex {
 
     fn get_operation_type(&self, operation: &Operation, context: &mut ProgramContext) -> Option<ExpressionType> {
         let operation_tree = OperationTree::from_operation(operation);
+        let operation_type = self.get_operation_tree_type(&operation_tree, context);
 
-        self.get_operation_tree_type(&operation_tree, context)
+        match &operation.as_type {
+            Some(ty) => self.process_type(ty, context),
+            None => operation_type,
+        }
     }
 
     fn get_operation_tree_type(&self, operation_tree: &OperationTree, context: &mut ProgramContext) -> Option<ExpressionType> {
@@ -580,7 +579,7 @@ impl ProgramIndex {
             Operand::VoidLiteral => Some(ExpressionType::Void),
             Operand::NullLiteral => Some(ExpressionType::Anonymous(0)),
             Operand::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
-            Operand::NumberLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Number)),
+            Operand::NumberLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
             Operand::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
             Operand::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
             Operand::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
@@ -759,10 +758,10 @@ impl ProgramIndex {
 
                         let indexing_ok = match self.get_expression_type(expr, context) {
                             Some(expr_type) => {
-                                if let ExpressionType::Single(ItemType::Builtin(BuiltinType::Number)) = &expr_type {
+                                if let ExpressionType::Single(ItemType::Builtin(BuiltinType::Integer)) = &expr_type {
                                     true
                                 } else {
-                                    context.error(expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Number, &expr_type));
+                                    context.error(expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Integer, &expr_type));
                                     false
                                 }
                             },

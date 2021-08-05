@@ -1,21 +1,8 @@
-use std::str::FromStr;
-
 use crate::{parsable::Parsable, string_reader::StringReader};
-
-const NUMBER_PATTERN : &'static str = r"\d+(\.\d*)?";
 
 impl Parsable for () {
     fn parse(_reader: &mut StringReader) -> Option<Self> {
         Some(())
-    }
-}
-
-impl Parsable for f64 {
-    fn parse(reader: &mut StringReader) -> Option<Self> {
-        match reader.read_regex(NUMBER_PATTERN) {
-            Some(string) => Some(f64::from_str(string).unwrap()),
-            None => None
-        }
     }
 }
 

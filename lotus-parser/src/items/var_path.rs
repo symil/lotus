@@ -2,13 +2,23 @@ use std::ops::Deref;
 
 use parsable::parsable;
 
-use super::{Expression, Identifier};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, Identifier, IntegerLiteral, ObjectLiteral, StringLiteral};
 
 #[parsable]
 pub struct VarPath {
-    pub prefix: Option<VarPrefix>,
-    pub name: Identifier,
+    pub root: PathRoot,
     pub path: Vec<PathSegment>
+}
+
+#[parsable]
+pub enum PathRoot {
+    BooleanLiteral(BooleanLiteral),
+    FloatLiteral(FloatLiteral),
+    IntegerLiteral(IntegerLiteral),
+    StringLiteral(StringLiteral),
+    ArrayLiteral(ArrayLiteral),
+    ObjectLiteral(ObjectLiteral),
+    Variable(Option<VarPrefix>, Identifier),
 }
 
 #[parsable(impl_display=true)]

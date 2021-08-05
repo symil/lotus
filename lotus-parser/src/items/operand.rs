@@ -1,6 +1,13 @@
 use parsable::parsable;
 
-use super::{ArrayLiteral, BooleanLiteral, Expression, NumberLiteral, ObjectLiteral, StringLiteral, UnaryOperation, VarPath};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, Type, UnaryOperation, VarPath};
+
+#[parsable]
+pub struct AsOperand {
+    pub main: Operand,
+    #[parsable(prefix="as")]
+    pub as_type: Type
+}
 
 #[parsable]
 pub enum Operand {
@@ -8,12 +15,6 @@ pub enum Operand {
     #[parsable(brackets="()")]
     Parenthesized(Box<Expression>),
     VoidLiteral = ";",
-    NullLiteral = "null",
-    BooleanLiteral(BooleanLiteral),
-    NumberLiteral(NumberLiteral),
-    StringLiteral(StringLiteral),
-    ArrayLiteral(ArrayLiteral),
-    ObjectLiteral(ObjectLiteral),
     UnaryOperation(Box<UnaryOperation>),
     VarPath(VarPath),
 }

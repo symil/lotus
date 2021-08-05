@@ -14,7 +14,8 @@ pub enum ItemType {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BuiltinType {
     Boolean,
-    Number,
+    Integer,
+    Float,
     String
 }
 
@@ -30,7 +31,8 @@ impl BuiltinType {
     pub fn from_identifier(identifier: &Identifier) -> Option<Self> {
         match identifier.as_str() {
             "bool" => Some(BuiltinType::Boolean),
-            "num" => Some(BuiltinType::Number),
+            "int" => Some(BuiltinType::Integer),
+            "float" => Some(BuiltinType::Float),
             "string" => Some(BuiltinType::String),
             _ => None
         }
@@ -234,7 +236,8 @@ impl fmt::Display for BuiltinType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             BuiltinType::Boolean => write!(f, "bool"),
-            BuiltinType::Number => write!(f, "num"),
+            BuiltinType::Integer => write!(f, "int"),
+            BuiltinType::Float => write!(f, "float"),
             BuiltinType::String => write!(f, "string"),
         }
     }

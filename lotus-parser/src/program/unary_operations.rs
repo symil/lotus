@@ -5,7 +5,7 @@ use super::ExpressionType;
 pub fn get_unary_operator_input_types(operator: &UnaryOperator) -> Vec<ExpressionType> {
     match operator {
         UnaryOperator::Not => vec![ExpressionType::Anonymous(0)],
-        UnaryOperator::Plus | UnaryOperator::Minus => vec![ExpressionType::builtin(BuiltinType::Number)],
+        UnaryOperator::Plus | UnaryOperator::Minus => vec![ExpressionType::builtin(BuiltinType::Integer)],
     }
 }
 
