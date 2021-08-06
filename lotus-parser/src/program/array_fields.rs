@@ -7,15 +7,15 @@ pub fn process_array_field_access(item_type: &Type, field_name: &Identifier, con
     }
 }
 
-pub fn process_array_method_call(item_type: &Type, method_name: &Identifier, context: &mut ProgramContext) -> Option<(&'static str, Type)> {
+pub fn process_array_method_call(item_type: &Type, method_name: &Identifier, context: &mut ProgramContext) -> Option<(Type, &'static str)> {
     match method_name.as_str() {
         "len" => Some((
-            ARRAY_LENGTH_FUNC_NAME,
             Type::function(vec![], Type::int()),
+            ARRAY_LENGTH_FUNC_NAME,
         )),
         "get" => Some((
-            ARRAY_GET_FUNC_NAME,
             Type::function(vec![Type::int()], item_type.clone()),
+            ARRAY_GET_FUNC_NAME,
         )),
         _ => None
     }

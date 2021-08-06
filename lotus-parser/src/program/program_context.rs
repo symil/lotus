@@ -37,12 +37,12 @@ impl ProgramContext {
         self.function_return_type.clone()
     }
 
-    pub fn get_this_type(&self) -> Option<VarInfo> {
-        self.this_type.clone()
+    pub fn get_this_type(&self) -> Option<Type> {
+        self.this_type.and_then(|info| Some(info.expr_type.clone()))
     }
 
-    pub fn get_payload_type(&self) -> Option<VarInfo> {
-        self.payload_type.clone()
+    pub fn get_payload_type(&self) -> Option<Type> {
+        self.payload_type.and_then(|info| Some(info.expr_type.clone()))
     }
 
     pub fn set_this_type(&mut self, expr_type: Option<VarInfo>) {

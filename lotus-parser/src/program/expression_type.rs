@@ -14,6 +14,7 @@ pub enum ItemType {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BuiltinType {
+    System,
     Pointer,
     Boolean,
     Integer,
@@ -67,6 +68,10 @@ impl Type {
             Type::Array(sub_type) => sub_type.item_type(),
             Type::Any(_) => unreachable!(),
         }
+    }
+
+    pub fn system() -> Self {
+        Type::Single(ItemType::Builtin(BuiltinType::System))
     }
 
     pub fn int() -> Self {
@@ -267,6 +272,7 @@ impl PartialEq for Type {
 impl fmt::Display for BuiltinType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            BuiltinType::System => write!(f, "system"),
             BuiltinType::Pointer => write!(f, "pointer"),
             BuiltinType::Boolean => write!(f, "bool"),
             BuiltinType::Integer => write!(f, "int"),

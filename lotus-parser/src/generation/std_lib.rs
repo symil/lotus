@@ -1,12 +1,10 @@
-use crate::wat;
+use crate::{generation::LOG_I32_FUNC_NAME, wat};
 use super::{Wat, ToWat, ToWatVec};
 
 pub struct StdLib;
 
 const I32_LOG_4 : &'static str = "i32_log_4";
 const I32_POW_4 : &'static str = "i32_pow_4";
-
-const LOG_I32_FUNC_NAME : &'static str = "log_i32";
 
 impl StdLib {
     pub fn new() -> Self {

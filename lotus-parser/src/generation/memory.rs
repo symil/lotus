@@ -1,4 +1,4 @@
-use crate::{wat, merge};
+use crate::{generation::{MEM_ALLOC_FUNC_NAME, MEM_FREE_FUNC_NAME, MEM_INIT_FUNC_NAME}, merge, wat};
 use super::{MemoryStack, ToWat, ToWatVec, WasmModule, Wat};
 
 pub struct Memory;
@@ -29,9 +29,6 @@ const UNINITIALIZED_STACK_MARKER : i32 = -2;
 const TOTAL_MEMORY_HEADER_BYTE_SIZE : usize = ((MAX_STACK_ALLOCATION_COUNT + (STACK_BLOCK_COUNT * STACK_COUNT_PER_BLOCK * STACK_METADATA_SIZE)) * ATOMIC_VALUE_BYTE_SIZE).next_power_of_two();
 const TOTAL_MEMORY_HEADER_PAGE_SIZE : usize = TOTAL_MEMORY_HEADER_BYTE_SIZE / WASM_PAGE_BYTE_SIZE;
 
-const INIT_FUNC_NAME : &'static str = "mem_init";
-const ALLOC_FUNC_NAME : &'static str = "mem_alloc";
-const FREE_FUNC_NAME : &'static str = "mem_free";
 const ALLOC_STACK_FUNC_NAME : &'static str = "mem_alloc_stack";
 const COMPUTE_ADDR_PAGE_INDEX_FUNC_NAME : &'static str = "mem_get_addr_page_index";
 
@@ -57,20 +54,8 @@ impl Memory {
         ]
     }
 
-    pub fn init(&self) -> Wat {
-        Wat::var_name(INIT_FUNC_NAME)
-    }
-
-    pub fn alloc(&self) -> Wat {
-        Wat::var_name(ALLOC_FUNC_NAME)
-    }
-
-    pub fn free(&self) -> Wat {
-        Wat::var_name(FREE_FUNC_NAME)
-    }
-
     fn get_init_function(&self) -> Wat {
-        Wat::declare_function(INIT_FUNC_NAME, None, vec![], None, vec![
+        Wat::declare_function(MEM_INIT_FUNC_NAME, None, vec![], None, vec![
             Wat::declare_local_i32("i"),
             Wat::set_local("i", Wat::const_i32(STACKS_METADATA_BYTE_OFFSET)),
             Wat::while_loop(wat!["i32.lt_u", Wat::get_local("i"), Wat::const_i32(STACKS_METADATA_BYTE_OFFSET + ALL_STACKS_BYTE_SIZE)], vec![
@@ -94,7 +79,7 @@ impl Memory {
     }
 
     fn get_alloc_function(&self, module: &WasmModule) -> Wat {
-        Wat::declare_function(ALLOC_FUNC_NAME, None, vec![("block_size", "i32")], Some("i32"), vec![
+        Wat::declare_function(MEM_ALLOC_FUNC_NAME, None, vec![("block_size", "i32")], Some("i32"), vec![
             Wat::declare_local_i32("i"),
             Wat::declare_local_i32("j"),
             Wat::declare_local_i32("block_size_index"),
@@ -203,7 +188,7 @@ impl Memory {
     }
 
     fn get_free_function(&self, module: &WasmModule) -> Wat {
-        Wat::declare_function(FREE_FUNC_NAME, None, vec![("addr", "i32")], None, vec![
+        Wat::declare_function(MEM_FREE_FUNC_NAME, None, vec![("addr", "i32")], None, vec![
             Wat::declare_local_i32("virtual_page_index"),
             Wat::declare_local_i32("stack_metadata_addr"),
             Wat::declare_local_i32("index_on_stack"),
