@@ -1,4 +1,4 @@
-use crate::{items::{BinaryOperator, Operand, Operation}, program::{BuiltinType, ExpressionType}};
+use crate::{items::{BinaryOperator, Operand, Operation}, program::{BuiltinType, Type}};
 
 pub enum OperationTree<'a> {
     Operation(Box<OperationTree<'a>>, BinaryOperator, Box<OperationTree<'a>>),
@@ -63,27 +63,27 @@ fn get_operator_priority(operator: &BinaryOperator) -> usize {
     }
 }
 
-pub fn get_binary_operator_input_types(operator: &BinaryOperator) -> Vec<ExpressionType> {
+pub fn get_binary_operator_input_types(operator: &BinaryOperator) -> Vec<Type> {
     match operator {
         BinaryOperator::Plus => vec![
-            ExpressionType::builtin(BuiltinType::Integer),
-            ExpressionType::builtin(BuiltinType::String),
-            ExpressionType::array(ExpressionType::Any(0)),
+            Type::builtin(BuiltinType::Integer),
+            Type::builtin(BuiltinType::String),
+            Type::array(Type::Any(0)),
         ],
-        BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => vec![ExpressionType::builtin(BuiltinType::Integer)],
-        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![ExpressionType::builtin(BuiltinType::Integer)],
-        BinaryOperator::And | BinaryOperator::Or => vec![ExpressionType::builtin(BuiltinType::Boolean)],
-        BinaryOperator::Eq | BinaryOperator::Neq => vec![ExpressionType::Any(0)],
-        BinaryOperator::Range => vec![ExpressionType::builtin(BuiltinType::Integer)],
+        BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => vec![Type::builtin(BuiltinType::Integer)],
+        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![Type::builtin(BuiltinType::Integer)],
+        BinaryOperator::And | BinaryOperator::Or => vec![Type::builtin(BuiltinType::Boolean)],
+        BinaryOperator::Eq | BinaryOperator::Neq => vec![Type::Any(0)],
+        BinaryOperator::Range => vec![Type::builtin(BuiltinType::Integer)],
     }
 }
 
-pub fn get_binary_operator_output_type(operator: &BinaryOperator, operand_type: &ExpressionType) -> ExpressionType {
+pub fn get_binary_operator_output_type(operator: &BinaryOperator, operand_type: &Type) -> Type {
     match operator {
         BinaryOperator::Plus | BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => operand_type.clone(),
         BinaryOperator::And | BinaryOperator::Or => operand_type.clone(),
-        BinaryOperator::Eq | BinaryOperator::Neq => ExpressionType::builtin(BuiltinType::Boolean),
-        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => ExpressionType::builtin(BuiltinType::Boolean),
-        BinaryOperator::Range => ExpressionType::array(ExpressionType::builtin(BuiltinType::Integer))
+        BinaryOperator::Eq | BinaryOperator::Neq => Type::builtin(BuiltinType::Boolean),
+        BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => Type::builtin(BuiltinType::Boolean),
+        BinaryOperator::Range => Type::array(Type::builtin(BuiltinType::Integer))
     }
 }

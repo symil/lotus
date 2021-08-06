@@ -58,15 +58,15 @@ impl Memory {
     }
 
     pub fn init(&self) -> Wat {
-        Wat::call(INIT_FUNC_NAME, vec![])
+        Wat::var_name(INIT_FUNC_NAME)
     }
 
-    pub fn alloc(&self, block_size: Wat) -> Wat {
-        Wat::call(ALLOC_FUNC_NAME, vec![block_size])
+    pub fn alloc(&self) -> Wat {
+        Wat::var_name(ALLOC_FUNC_NAME)
     }
 
-    pub fn free(&self, block_addr: Wat) -> Wat {
-        Wat::call(FREE_FUNC_NAME, vec![block_addr])
+    pub fn free(&self) -> Wat {
+        Wat::var_name(FREE_FUNC_NAME)
     }
 
     fn get_init_function(&self) -> Wat {
@@ -112,7 +112,7 @@ impl Memory {
             // TODO (maybe?): check that the requested memory block does not exceed `MAX_ALLOCATED_VALUE_COUNT` values
 
             Wat::set_local("block_size_index",
-                wat!["i32.add", module.std_lib.log_4(Wat::get_local("block_size")), Wat::const_i32(-1)]
+                wat!["i32.add", module.std.log_4(Wat::get_local("block_size")), Wat::const_i32(-1)]
             ), // block_size_index = log4(block_size) - 1
 
             Wat::set_local("metadata_addr_start", wat!["i32.add",
@@ -132,7 +132,7 @@ impl Memory {
                 vec![ // then
                     Wat::set_local("new_stack_addr", Wat::call(ALLOC_STACK_FUNC_NAME, vec![])), // new_stack_addr = alloc_new_stack()
                     Wat::set_local("rounded_block_size",
-                        module.std_lib.pow_4(wat!["i32.add", Wat::get_local("block_size_index"), Wat::const_i32(1)])
+                        module.std.pow_4(wat!["i32.add", Wat::get_local("block_size_index"), Wat::const_i32(1)])
                     ), // rounded_block_size = 4 ** (block_size_index + 1)
 
                     Wat::set_local("block_byte_size", wat!["i32.mul", Wat::get_local("rounded_block_size"), Wat::const_i32(ATOMIC_VALUE_BYTE_SIZE)]),

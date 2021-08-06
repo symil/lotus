@@ -1,17 +1,17 @@
 use crate::{items::UnaryOperator, program::BuiltinType};
 
-use super::ExpressionType;
+use super::Type;
 
-pub fn get_unary_operator_input_types(operator: &UnaryOperator) -> Vec<ExpressionType> {
+pub fn get_unary_operator_input_types(operator: &UnaryOperator) -> Vec<Type> {
     match operator {
-        UnaryOperator::Not => vec![ExpressionType::Any(0)],
-        UnaryOperator::Plus | UnaryOperator::Minus => vec![ExpressionType::builtin(BuiltinType::Integer)],
+        UnaryOperator::Not => vec![Type::Any(0)],
+        UnaryOperator::Plus | UnaryOperator::Minus => vec![Type::builtin(BuiltinType::Integer)],
     }
 }
 
-pub fn get_unary_operator_output_type(operator: &UnaryOperator, input_type: &ExpressionType) -> ExpressionType {
+pub fn get_unary_operator_output_type(operator: &UnaryOperator, input_type: &Type) -> Type {
     match operator {
-        UnaryOperator::Not => ExpressionType::builtin(BuiltinType::Boolean),
+        UnaryOperator::Not => Type::builtin(BuiltinType::Boolean),
         UnaryOperator::Plus | UnaryOperator::Minus => input_type.clone(),
     }
 }

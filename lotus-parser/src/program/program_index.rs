@@ -1,8 +1,8 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, AnyType, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
-use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_system_variable_type, get_unary_operator_input_types, get_unary_operator_output_type};
+use super::{BuiltinType, Error, Type, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, process_array_method_call, get_binary_operator_input_types, get_binary_operator_output_type, process_builtin_field_access, get_builtin_method_info, process_system_variable, get_unary_operator_input_types, get_unary_operator_output_type};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -54,7 +54,7 @@ impl ProgramIndex {
                         self.struct_declarations.insert(identifier, struct_declaration);
                     },
                     TopLevelBlock::ConstDeclaration(var_declaration) => {
-                        context.constants.insert(identifier.clone(), ExpressionType::Void);
+                        context.constants.insert(identifier.clone(), Type::Void);
                         self.const_declarations.insert(identifier, var_declaration);
                     },
                     TopLevelBlock::FunctionDeclaration(def) => {
@@ -148,7 +148,7 @@ impl ProgramIndex {
                             if let Some(field) = event_struct_annotation.fields.get(&condition.left.name) {
                                 let mut ok = false;
 
-                                if let ExpressionType::Single(ItemType::Struct(struct_name)) = &field.expr_type {
+                                if let Type::Single(ItemType::Struct(struct_name)) = &field.expr_type {
                                     let field_type = context.structs.get(struct_name).unwrap();
 
                                     if self.is_entity_qualifier(&field_type.qualifier) {
@@ -177,7 +177,7 @@ impl ProgramIndex {
                                 if let Some(field) = this_struct_annotation.fields.get(&var_path.name) {
                                     let mut ok = false;
 
-                                    if let ExpressionType::Single(ItemType::Struct(struct_name)) = &field.expr_type {
+                                    if let Type::Single(ItemType::Struct(struct_name)) = &field.expr_type {
                                         let field_type = context.structs.get(struct_name).unwrap();
 
                                         if self.is_entity_qualifier(&field_type.qualifier) {
@@ -292,18 +292,18 @@ impl ProgramIndex {
             for method_declaration in &struct_declaration.body.methods {
                 context.function_return_type = None;
                 context.set_this_type(Some(VarInfo {
-                    expr_type: ExpressionType::object(&struct_declaration.name),
+                    expr_type: Type::object(&struct_declaration.name),
                     is_const: true
                 }));
                 context.set_payload_type(match &method_declaration.qualifier {
                     Some(MethodQualifier::Builtin) => match get_builtin_method_info(&method_declaration.name).unwrap().1 {
                         BuiltinMethodPayload::None => None,
-                        BuiltinMethodPayload::World => Some(VarInfo::const_var(ExpressionType::object(&self.world_type_name))),
-                        BuiltinMethodPayload::User => Some(VarInfo::const_var(ExpressionType::object(&self.user_type_name))),
+                        BuiltinMethodPayload::World => Some(VarInfo::const_var(Type::object(&self.world_type_name))),
+                        BuiltinMethodPayload::User => Some(VarInfo::const_var(Type::object(&self.user_type_name))),
                         BuiltinMethodPayload::ViewInput => todo!(),
                     },
                     Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
-                        Some(VarInfo::const_var(ExpressionType::object(&method_declaration.name)))
+                        Some(VarInfo::const_var(Type::object(&method_declaration.name)))
                     },
                     None => None,
                 });
@@ -373,7 +373,7 @@ impl ProgramIndex {
         context.push_scope();
 
         if let Some(expr_type) = self.get_expression_type(&for_block.array_expression, context) {
-            if let ExpressionType::Array(item_type) = expr_type {
+            if let Type::Array(item_type) = expr_type {
                 context.push_var(var_name.clone(), VarInfo::const_var(*item_type));
             } else {
                 context.error(&for_block.array_expression, format!("for block range: expected array, for `{}`", expr_type));
@@ -405,7 +405,7 @@ impl ProgramIndex {
 
     fn process_branch(&self, branch: &Branch, context: &mut ProgramContext) {
         if let Some(condition_type) = self.get_expression_type(&branch.condition, context) {
-            let valid_condition_type = ExpressionType::builtin(BuiltinType::Boolean);
+            let valid_condition_type = Type::builtin(BuiltinType::Boolean);
 
             if !self.expressions_match(&valid_condition_type, &condition_type, context) {
                 context.error(&branch.condition, format!("branch condition: expected `{}`, got `{}`", &valid_condition_type, &condition_type));
@@ -479,10 +479,10 @@ impl ProgramIndex {
         }
     }
 
-    fn process_function_signature(&self, signature: &FunctionSignature, context: &mut ProgramContext) -> (Vec<(Identifier, ExpressionType)>, ExpressionType) {
+    fn process_function_signature(&self, signature: &FunctionSignature, context: &mut ProgramContext) -> (Vec<(Identifier, Type)>, Type) {
         let mut arg_names = HashSet::new();
         let mut arguments = vec![];
-        let mut return_type = ExpressionType::Void;
+        let mut return_type = Type::Void;
 
         for argument in &signature.arguments {
             let arg_name = argument.name.clone();
@@ -494,7 +494,7 @@ impl ProgramIndex {
             if let Some(arg_type) = self.process_type(&argument.type_, context) {
                 arguments.push((arg_name, arg_type));
             } else {
-                arguments.push((arg_name, ExpressionType::Void));
+                arguments.push((arg_name, Type::Void));
             }
         }
 
@@ -517,11 +517,11 @@ impl ProgramIndex {
         }
     }
 
-    fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<Type> {
         self.get_operation_type(expr, context)
     }
 
-    fn get_operation_type(&self, operation: &Operation, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_operation_type(&self, operation: &Operation, context: &mut ProgramContext) -> Option<Type> {
         let operation_tree = OperationTree::from_operation(operation);
         let operation_type = self.get_operation_tree_type(&operation_tree, context);
 
@@ -531,7 +531,7 @@ impl ProgramIndex {
         }
     }
 
-    fn get_operation_tree_type(&self, operation_tree: &OperationTree, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_operation_tree_type(&self, operation_tree: &OperationTree, context: &mut ProgramContext) -> Option<Type> {
         match operation_tree {
             OperationTree::Operation(left, operator, right) => {
                 let left_type = self.get_operation_tree_type(left, context);
@@ -570,16 +570,16 @@ impl ProgramIndex {
         }
     }
 
-    fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<Type> {
         match operand {
-            Operand::VoidLiteral => Some(ExpressionType::Void),
+            Operand::VoidLiteral => Some(Type::Void),
             Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
             Operand::UnaryOperation(unary_operation) => self.get_unary_operation_type(unary_operation, context),
             Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
         }
     }
 
-    fn get_unary_operation_type(&self, unary_operation: &UnaryOperation, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_unary_operation_type(&self, unary_operation: &UnaryOperation, context: &mut ProgramContext) -> Option<Type> {
         let valid_input_types = get_unary_operator_input_types(&unary_operation.operator);
 
         if let Some(operand_type) = self.get_operand_type(&unary_operation.operand, context) {
@@ -593,7 +593,7 @@ impl ProgramIndex {
         }
     }
 
-    fn get_object_literal_type(&self, object_literal: &ObjectLiteral, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_object_literal_type(&self, object_literal: &ObjectLiteral, context: &mut ProgramContext) -> Option<Type> {
         let type_name = &object_literal.type_name;
 
         if let Some(struct_annotation) = context.structs.get(type_name).cloned() { // TODO: remove this `cloned`
@@ -615,16 +615,16 @@ impl ProgramIndex {
                 }
             }
 
-            Some(ExpressionType::object(type_name))
+            Some(Type::object(type_name))
         } else {
             context.error(type_name, format!("undefined object type `{}`", type_name));
             None
         }
     }
 
-    fn get_array_literal_type(&self, array_literal: &ArrayLiteral, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_array_literal_type(&self, array_literal: &ArrayLiteral, context: &mut ProgramContext) -> Option<Type> {
         let mut all_items_ok = false;
-        let mut final_type = ExpressionType::Any(0);
+        let mut final_type = Type::Any(0);
 
         for item in &array_literal.items {
             let mut item_ok = false;
@@ -640,17 +640,17 @@ impl ProgramIndex {
         }
 
         match all_items_ok {
-            true => Some(ExpressionType::array(final_type)),
+            true => Some(Type::array(final_type)),
             false => None
         }
     }
 
-    fn get_field_access_type(&self, parent_type: &ExpressionType, field_name: &Identifier, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_field_access_type(&self, parent_type: &Type, field_name: &Identifier, context: &mut ProgramContext) -> Option<Type> {
         let result = match parent_type {
-            ExpressionType::Void => None,
-            ExpressionType::Single(item_type) => match item_type {
+            Type::Void => None,
+            Type::Single(item_type) => match item_type {
                 ItemType::Null => None,
-                ItemType::Builtin(builtin_type) => get_builtin_field_type(builtin_type, field_name),
+                ItemType::Builtin(builtin_type) => process_builtin_field_access(builtin_type, field_name),
                 ItemType::Struct(struct_name) => {
                     if struct_name.is("_") {
                         // special case: `_` refers to the value itself rather than a field
@@ -670,8 +670,8 @@ impl ProgramIndex {
                 },
                 ItemType::Function(_, _) => None,
             },
-            ExpressionType::Array(item_type) => get_array_field_type(item_type, field_name),
-            ExpressionType::Any(_) => None,
+            Type::Array(item_type) => process_array_method_call(item_type, field_name),
+            Type::Any(_) => None,
             
         };
 
@@ -682,76 +682,24 @@ impl ProgramIndex {
         result
     }
 
-    fn get_path_root_type(&self, path_root: &VarPathRoot, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_path_root_type(&self, path_root: &VarPathRoot, context: &mut ProgramContext) -> Option<Type> {
         match path_root {
-            VarPathRoot::NullLiteral => Some(ExpressionType::Any(0)),
-            VarPathRoot::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
-            VarPathRoot::IntegerLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
-            VarPathRoot::FloatLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Float)),
-            VarPathRoot::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
+            VarPathRoot::NullLiteral => Some(Type::Any(0)),
+            VarPathRoot::BooleanLiteral(_) => Some(Type::builtin(BuiltinType::Boolean)),
+            VarPathRoot::IntegerLiteral(_) => Some(Type::builtin(BuiltinType::Integer)),
+            VarPathRoot::FloatLiteral(_) => Some(Type::builtin(BuiltinType::Float)),
+            VarPathRoot::StringLiteral(_) => Some(Type::builtin(BuiltinType::String)),
             VarPathRoot::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
             VarPathRoot::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
             VarPathRoot::Variable(variable) => self.get_variable_type(variable, context)
         }
     }
 
-    fn get_variable_type(&self, variable: &VarRef, context: &mut ProgramContext) -> Option<ExpressionType> {
-        match &variable.prefix {
-            Some(prefix) => {
-                let prefix_var_opt = match prefix {
-                    VarRefPrefix::This => {
-                        if context.get_this_type().is_none() {
-                            context.error(prefix, "no `this` value can be referenced in this context");
-                        }
-
-                        context.get_this_type()
-                    },
-                    VarRefPrefix::Payload => {
-                        if context.get_payload_type().is_none() {
-                            context.error(prefix, "no `payload` value can be referenced in this context");
-                        }
-
-                        context.get_payload_type()
-                    },
-                    VarRefPrefix::System => {
-                        let result = get_system_variable_type(&variable.name);
-
-                        if result.is_none() {
-                            context.error(prefix, format!("undefined system variable `@{}`", &variable.name));
-                        }
-
-                        return result;
-                    }
-                };
-
-                if let Some(prefix_var) = &prefix_var_opt {
-                    self.get_field_access_type(&prefix_var.expr_type, &variable.name, context)
-                } else {
-                    None
-                }
-            },
-            None => {
-                if context.inside_const_expr {
-                    if let Some(referenced_const) = self.const_declarations.get(&variable.name) {
-                        if let Some(_) = context.visit_constant(&variable.name) {
-                            context.error(&referenced_const.var_name, format!("circular reference to `{}`", &referenced_const.var_name));
-
-                            None
-                        } else {
-                            self.get_expression_type(&referenced_const.init_value, context)
-                        }
-                    } else {
-                        context.error(&variable.name, format!("undefined constant `{}`", &variable.name));
-                        None
-                    }
-                } else {
-                    context.get_var_type(&variable.name).and_then(|var_info| Some(var_info.expr_type))
-                }
-            }
-        }
+    fn get_variable_type(&self, variable: &VarRef, context: &mut ProgramContext) -> Option<Type> {
+        todo!()
     }
 
-    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<Type> {
         let root_type = self.get_path_root_type(&var_path.root, context);
 
         if context.inside_const_expr && !var_path.path.is_empty() {
@@ -762,11 +710,11 @@ impl ProgramIndex {
             let mut final_type = expr_type.clone();
 
             for segment in &var_path.path {
-                let next_type : Option<ExpressionType> = match segment {
+                let next_type : Option<Type> = match segment {
                     VarPathSegment::FieldAccess(field_name) => self.get_field_access_type(&final_type, field_name, context),
                     VarPathSegment::BracketIndexing(expr) => {
                         let array_item_type = match final_type {
-                            ExpressionType::Array(item_type) => Some(*item_type),
+                            Type::Array(item_type) => Some(*item_type),
                             _ => {
                                 context.error(expr, format!("bracket indexing target: expected array, got `{}`", final_type)); // TODO: display actual type
                                 None
@@ -775,7 +723,7 @@ impl ProgramIndex {
 
                         let indexing_ok = match self.get_expression_type(expr, context) {
                             Some(expr_type) => {
-                                if let ExpressionType::Single(ItemType::Builtin(BuiltinType::Integer)) = &expr_type {
+                                if let Type::Single(ItemType::Builtin(BuiltinType::Integer)) = &expr_type {
                                     true
                                 } else {
                                     context.error(expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Integer, &expr_type));
@@ -792,7 +740,7 @@ impl ProgramIndex {
                     },
                     VarPathSegment::FunctionCall(arguments) => {
                         match final_type {
-                            ExpressionType::Single(ItemType::Function(expected_arguments, return_type)) => {
+                            Type::Single(ItemType::Function(expected_arguments, return_type)) => {
                                 if arguments.as_vec().len() != expected_arguments.len() {
                                     context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.as_vec().len()));
                                 }
@@ -880,6 +828,7 @@ impl ProgramIndex {
                     if let Some(field_type) = self.process_type(&field.ty, context) {
                         let ok = match field_type.item_type() {
                             ItemType::Null => false,
+                            ItemType::Pointer => false,
                             ItemType::Builtin(_) => true,
                             ItemType::Struct(struct_name) => self.is_entity_qualifier(&self.struct_declarations.get(struct_name).unwrap().qualifier),
                             ItemType::Function(_, _) => false,
@@ -941,31 +890,31 @@ impl ProgramIndex {
         BuiltinType::from_identifier(name).is_some()
     }
 
-    fn expressions_match(&self, expected: &ExpressionType, actual: &ExpressionType, context: &ProgramContext) -> bool {
+    fn expressions_match(&self, expected: &Type, actual: &Type, context: &ProgramContext) -> bool {
         expected.match_actual(actual, &context.structs, &mut HashMap::new())
     }
 
-    fn process_type(&self, ty: &Type, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn process_type(&self, ty: &AnyType, context: &mut ProgramContext) -> Option<Type> {
         let mut result = None;
 
         match ty {
-            Type::Value(value_type) => {
-                if let Some(expr_type) = ExpressionType::from_value_type(value_type, &self.struct_declarations) {
+            AnyType::Value(value_type) => {
+                if let Some(expr_type) = Type::from_value_type(value_type, &self.struct_declarations) {
                     result = Some(expr_type);
                 } else {
                     context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
                 }
             },
-            Type::Function(function_type) => {
+            AnyType::Function(function_type) => {
                 let mut ok = true;
                 let mut arguments = vec![];
-                let mut return_type = ExpressionType::Void;
+                let mut return_type = Type::Void;
 
                 for arg in &function_type.arguments {
                     if let Some(arg_type) = self.process_type(arg, context) {
                         arguments.push(arg_type);
                     } else {
-                        arguments.push(ExpressionType::Void);
+                        arguments.push(Type::Void);
                         ok = false;
                     }
                 }
@@ -979,7 +928,7 @@ impl ProgramIndex {
                 }
 
                 if ok {
-                    result = Some(ExpressionType::function(arguments, return_type));
+                    result = Some(Type::function(arguments, return_type));
                 }
             },
         };

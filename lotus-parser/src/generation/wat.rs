@@ -36,6 +36,10 @@ impl Wat {
 
     // BASIC
 
+    pub fn nop() -> Self {
+        wat!["nop"]
+    }
+
     pub fn export(name: &str) -> Self {
         wat!["export", Self::string(name)]
     }
@@ -46,6 +50,10 @@ impl Wat {
 
     pub fn call<T : ToWatVec>(func_name: &str, arguments: T) -> Self {
         wat!["call", Wat::var_name(func_name), arguments]
+    }
+
+    pub fn call_no_arg(func_name: &str) -> Self {
+        wat!["call", Wat::var_name(func_name)]
     }
 
     // GLOBALS

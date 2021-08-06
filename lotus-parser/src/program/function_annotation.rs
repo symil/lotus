@@ -1,12 +1,12 @@
 use crate::items::Identifier;
 
-use super::ExpressionType;
+use super::Type;
 
 #[derive(Clone)]
 pub struct FunctionAnnotation {
     pub name: Identifier,
-    pub arguments: Vec<(Identifier, ExpressionType)>,
-    pub return_type: ExpressionType
+    pub arguments: Vec<(Identifier, Type)>,
+    pub return_type: Type
 }
 
 impl FunctionAnnotation {
@@ -14,14 +14,14 @@ impl FunctionAnnotation {
         Self {
             name: name.clone(),
             arguments: vec![],
-            return_type: ExpressionType::Void
+            return_type: Type::Void
         }
     }
 
-    pub fn get_expr_type(&self) -> ExpressionType {
+    pub fn get_expr_type(&self) -> Type {
         let arguments = self.arguments.iter().map(|(_, arg)| arg.clone()).collect();
         let return_type = self.return_type.clone();
 
-        ExpressionType::function(arguments, return_type)
+        Type::function(arguments, return_type)
     }
 }

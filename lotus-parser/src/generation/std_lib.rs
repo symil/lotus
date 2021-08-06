@@ -6,6 +6,8 @@ pub struct StdLib;
 const I32_LOG_4 : &'static str = "i32_log_4";
 const I32_POW_4 : &'static str = "i32_pow_4";
 
+const LOG_I32_FUNC_NAME : &'static str = "log_i32";
+
 impl StdLib {
     pub fn new() -> Self {
         Self
@@ -13,7 +15,7 @@ impl StdLib {
 
     pub fn get_header(&self) -> Vec<Wat> {
         vec![
-            Wat::import_function("log", "i32", "log_i32", vec!["i32"], None),
+            Wat::import_function("log", "i32", LOG_I32_FUNC_NAME, vec!["i32"], None),
             Wat::import_function("log", "special", "log_special", vec![], None),
         ]
     }
@@ -71,5 +73,17 @@ impl StdLib {
 
     pub fn pow_4(&self, n: Wat) -> Wat {
         Wat::call(I32_POW_4, vec![n])
+    }
+
+    pub fn log_i32(&self) -> Wat {
+        Wat::call_no_arg(LOG_I32_FUNC_NAME)
+    }
+
+    pub fn array_length(&self) -> Wat {
+        Wat::call_no_arg("array_length")
+    }
+
+    pub fn array_get(&self) -> Wat {
+        Wat::call_no_arg("array_get")
     }
 }

@@ -1,13 +1,25 @@
-use crate::items::Identifier;
+use crate::{generation::Wat, items::Identifier};
 
-use super::{BuiltinType, ExpressionType};
+use super::{BuiltinType, ProgramContext, Type, Wasm};
 
-pub fn get_system_variable_type(name: &Identifier) -> Option<ExpressionType> {
+pub fn process_system_variable(name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match name.as_str() {
-        "alloc" => Some(ExpressionType::function(vec![ExpressionType::int()], ExpressionType::int())),
-        "free" => Some(ExpressionType::function(vec![ExpressionType::int()], ExpressionType::int())),
-        "log_ptr" => Some(ExpressionType::function(vec![ExpressionType::int()], ExpressionType::Void)),
-        "memory" => Some(ExpressionType::builtin_array(BuiltinType::Integer)),
+        "alloc" => Some(Wasm::typed(
+            Type::function(vec![Type::int()], Type::pointer()),
+            context.wasm.memory.alloc()
+        )),
+        "free" => Some(Wasm::typed(
+            Type::function(vec![Type::pointer()], Type::Void),
+            context.wasm.memory.free()
+        )),
+        "log_ptr" => Some(Wasm::typed(
+            Type::function(vec![Type::pointer()], Type::Void),
+            context.wasm.std.log_i32()
+        )),
+        "memory" => Some(Wasm::typed(
+            Type::pointer(),
+            Wat::const_i32(0)
+        )),
         _ => None
     }
 }

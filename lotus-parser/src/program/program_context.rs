@@ -1,25 +1,23 @@
 use std::{collections::HashMap, ops::Deref};
-
 use parsable::Parsable;
-
-use crate::items::Identifier;
-
-use super::{Error, ExpressionType, FunctionAnnotation, StructAnnotation};
+use crate::{generation::WasmModule, items::Identifier};
+use super::{ConstantAnnotation, Error, Type, FunctionAnnotation, StructAnnotation};
 
 #[derive(Default)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
+    pub wasm: WasmModule,
 
     pub structs: HashMap<Identifier, StructAnnotation>,
     pub functions: HashMap<Identifier, FunctionAnnotation>,
-    pub constants: HashMap<Identifier, ExpressionType>,
+    pub constants: HashMap<Identifier, ConstantAnnotation>,
     
     pub scopes: Vec<HashMap<Identifier, VarInfo>>,
     pub this_type: Option<VarInfo>,
     pub payload_type: Option<VarInfo>,
     pub visited_constants: Vec<Identifier>,
     pub inside_const_expr: bool,
-    pub function_return_type: Option<ExpressionType>
+    pub function_return_type: Option<Type>
 }
 
 impl ProgramContext {
@@ -35,7 +33,7 @@ impl ProgramContext {
         self.visited_constants.iter().find(|name| *name == constant_name)
     }
 
-    pub fn get_return_type(&self) -> Option<ExpressionType> {
+    pub fn get_return_type(&self) -> Option<Type> {
         self.function_return_type.clone()
     }
 
@@ -84,7 +82,7 @@ impl ProgramContext {
     //     }
     // }
 
-    pub fn get_var_type(&mut self, name: &Identifier) -> Option<VarInfo> {
+    pub fn get_var_info(&mut self, name: &Identifier) -> Option<VarInfo> {
         self.get_var_ref(name).cloned()
     }
 
@@ -92,7 +90,7 @@ impl ProgramContext {
         self.scopes.last_mut().unwrap().insert(name.clone(), var_type);
     }
 
-    pub fn get_method_signature(&self, struct_name: &Identifier, method_name: &Identifier) -> Option<(Vec<(Identifier, ExpressionType)>, ExpressionType)> {
+    pub fn get_method_signature(&self, struct_name: &Identifier, method_name: &Identifier) -> Option<(Vec<(Identifier, Type)>, Type)> {
         if let Some(struct_annotation) = self.structs.get(&struct_name) {
             if let Some(method_annotation) = struct_annotation.methods.get(method_name) {
                 Some((method_annotation.arguments.clone(), method_annotation.return_type.clone()))
@@ -104,7 +102,7 @@ impl ProgramContext {
         }
     }
 
-    pub fn get_function_signatures(&self, function_name: &Identifier) -> Option<(Vec<(Identifier, ExpressionType)>, ExpressionType)> {
+    pub fn get_function_signatures(&self, function_name: &Identifier) -> Option<(Vec<(Identifier, Type)>, Type)> {
         if let Some(function_annotation) = self.functions.get(function_name) {
             Some((function_annotation.arguments.clone(), function_annotation.return_type.clone()))
         } else {
@@ -115,16 +113,12 @@ impl ProgramContext {
 
 #[derive(Debug, Clone)]
 pub struct VarInfo {
-    pub expr_type: ExpressionType,
-    pub is_const: bool
+    pub name: Identifier,
+    pub expr_type: Type,
 }
 
 impl VarInfo {
-    pub fn const_var(expr_type: ExpressionType) -> Self {
-        Self { expr_type, is_const: true }
-    }
-
-    pub fn mut_var(expr_type: ExpressionType) -> Self {
-        Self { expr_type, is_const: false }
+    pub fn new(name: Identifier, expr_type: Type) -> Self {
+        Self { name, expr_type }
     }
 }

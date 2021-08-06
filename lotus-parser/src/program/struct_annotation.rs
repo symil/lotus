@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::items::{Identifier, StructQualifier};
 
-use super::{ExpressionType, FunctionAnnotation};
+use super::{Type, FunctionAnnotation};
 
 #[derive(Clone)]
 pub struct StructAnnotation {
@@ -28,12 +28,12 @@ impl StructAnnotation {
 #[derive(Debug, Clone)]
 pub struct FieldDetails {
     pub name: Identifier,
-    pub expr_type: ExpressionType,
+    pub expr_type: Type,
     pub offset: usize,
 }
 
 impl FieldDetails {
-    pub fn get_expr_type(&self) -> ExpressionType {
+    pub fn get_expr_type(&self) -> Type {
         self.expr_type.clone()
     }
 }
