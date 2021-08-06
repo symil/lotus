@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{FunctionSignature, Identifier, Statement, VarPath};
+use super::{FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, VarPath, Variable};
 
 #[parsable]
 pub struct MethodDeclaration {
@@ -11,19 +11,4 @@ pub struct MethodDeclaration {
     pub signature: Option<FunctionSignature>,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
-}
-
-#[parsable]
-pub enum MethodQualifier {
-    Builtin = "@",
-    Hook = "`",
-    Before = "'",
-    After= "\""
-}
-
-#[parsable]
-pub struct MethodCondition {
-    pub left: VarPath,
-    #[parsable(prefix="=")]
-    pub right: Option<VarPath>
 }

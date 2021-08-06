@@ -44,7 +44,7 @@ impl Arg {
             Arg::Int => ExpressionType::builtin(BuiltinType::Integer),
             Arg::SingleItem => item_type.clone(),
             Arg::ArrayItem => ExpressionType::array(item_type.clone()),
-            Arg::ArrayAny => ExpressionType::array(ExpressionType::Anonymous(0)),
+            Arg::ArrayAny => ExpressionType::array(ExpressionType::Any(0)),
             Arg::BoolCallback => ExpressionType::function(
                 vec![item_type.clone()],
                 ExpressionType::builtin(BuiltinType::Boolean)
@@ -53,7 +53,7 @@ impl Arg {
                 vec![item_type.clone()],
                 // picked randomly to avoid conflicts with other anonymous types
                 // TODO: properly solve conflicts
-                ExpressionType::Anonymous(6578436)
+                ExpressionType::Any(6578436)
             )
         }
     }

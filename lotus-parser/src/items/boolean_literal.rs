@@ -2,19 +2,16 @@ use parsable::parsable;
 
 #[parsable(name="boolean")]
 pub struct BooleanLiteral {
-    pub value: bool
+    #[parsable(regex = r"true|false")]
+    pub value: String
 }
 
-impl std::ops::Deref for BooleanLiteral {
-    type Target = bool;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
+impl BooleanLiteral {
+    pub fn to_bool(&self) -> bool {
+        match self.value.as_str() {
+            "true" => true,
+            "false" => false,
+            _ => unreachable!()
+        }
     }
-}
-
-impl std::ops::DerefMut for BooleanLiteral {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.value
-    }    
 }

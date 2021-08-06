@@ -27,20 +27,6 @@ impl Identifier {
     }
 }
 
-impl Deref for Identifier {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-impl DerefMut for Identifier {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.value
-    }
-}
-
 impl Hash for Identifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);

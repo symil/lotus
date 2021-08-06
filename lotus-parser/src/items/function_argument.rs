@@ -3,9 +3,8 @@ use parsable::parsable;
 use super::{Identifier, Type};
 
 #[parsable]
-pub struct FieldDeclaration {
+pub struct FunctionArgument {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub ty: Type,
-    // TODO: default value
+    pub type_: Type
 }

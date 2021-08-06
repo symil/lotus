@@ -6,6 +6,7 @@ use super::StructAnnotation;
 
 #[derive(Clone, Debug)]
 pub enum ItemType {
+    Null,
     Builtin(BuiltinType),
     Struct(Identifier),
     Function(Vec<ExpressionType>, Box<ExpressionType>)
@@ -24,7 +25,7 @@ pub enum ExpressionType {
     Void,
     Single(ItemType),
     Array(Box<ExpressionType>),
-    Anonymous(u32)
+    Any(u32)
 }
 
 impl BuiltinType {
@@ -62,12 +63,20 @@ impl ExpressionType {
             ExpressionType::Void => unreachable!(),
             ExpressionType::Single(item_type) => item_type,
             ExpressionType::Array(sub_type) => sub_type.item_type(),
-            ExpressionType::Anonymous(_) => unreachable!(),
+            ExpressionType::Any(_) => unreachable!(),
         }
+    }
+
+    pub fn int() -> Self {
+        ExpressionType::Single(ItemType::Builtin(BuiltinType::Integer))
     }
 
     pub fn builtin(builtin_type: BuiltinType) -> Self {
         ExpressionType::Single(ItemType::Builtin(builtin_type))
+    }
+
+    pub fn builtin_array(builtin_type: BuiltinType) -> Self {
+        ExpressionType::array(ExpressionType::builtin(builtin_type))
     }
 
     pub fn object(name: &Identifier) -> Self {
@@ -105,7 +114,7 @@ impl ExpressionType {
 
     pub fn is_anonymous(&self, type_id: &u32) -> bool {
         match self {
-            ExpressionType::Anonymous(self_type_id) => self_type_id == type_id,
+            ExpressionType::Any(self_type_id) => self_type_id == type_id,
             _ => false
         }
     }
@@ -121,7 +130,7 @@ impl ExpressionType {
                 ExpressionType::Array(actual_item_type) => expected_item_type.match_actual(actual_item_type, structs, anonymous_types),
                 _ => false
             },
-            ExpressionType::Anonymous(id) => {
+            ExpressionType::Any(id) => {
                 if let Some(expected_type) = anonymous_types.get(id) {
                     actual == expected_type
                 } else {
@@ -141,6 +150,13 @@ impl Default for ExpressionType {
 }
 
 impl ItemType {
+    pub fn is_null(&self) -> bool {
+        match self {
+            ItemType::Null => true,
+            _ => false
+        }
+    }
+
     pub fn is_builtin(&self, builtin_type: &BuiltinType) -> bool {
         match self {
             ItemType::Builtin(self_builtin_type) => self_builtin_type == builtin_type,
@@ -180,8 +196,10 @@ impl ItemType {
 
     pub fn match_actual(&self, actual: &ItemType, structs: &HashMap<Identifier, StructAnnotation>, anonymous_types: &mut HashMap<u32, ExpressionType>) -> bool {
         match self {
+            ItemType::Null => actual.is_null(),
             ItemType::Builtin(expected_builtin) => actual.is_builtin(expected_builtin),
             ItemType::Struct(expected_struct) => match actual {
+                ItemType::Null => true,
                 ItemType::Struct(actual_struct) => structs.get(actual_struct).unwrap().types.contains(expected_struct),
                 _ => false
             },
@@ -214,6 +232,7 @@ impl ItemType {
 impl PartialEq for ItemType {
     fn eq(&self, other: &Self) -> bool {
         match self {
+            ItemType::Null => other.is_null(),
             ItemType::Builtin(value) => other.is_builtin(value),
             ItemType::Struct(value) => other.is_struct(value),
             ItemType::Function(args, ret) => other.is_function(args, ret),
@@ -227,7 +246,7 @@ impl PartialEq for ExpressionType {
             ExpressionType::Void => other.is_void(),
             ExpressionType::Single(value) => other.is_single(value),
             ExpressionType::Array(value) => other.is_array(Box::as_ref(value)),
-            ExpressionType::Anonymous(value) => other.is_anonymous(value),
+            ExpressionType::Any(value) => other.is_anonymous(value),
         }
     }
 }
@@ -246,6 +265,7 @@ impl fmt::Display for BuiltinType {
 impl fmt::Display for ItemType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            ItemType::Null => write!(f, "null"),
             ItemType::Builtin(builtin_type) => write!(f, "{}", builtin_type),
             ItemType::Struct(struct_name) => write!(f, "{}", struct_name),
             ItemType::Function(arguments, return_type) => {
@@ -268,7 +288,7 @@ impl fmt::Display for ExpressionType {
             ExpressionType::Void => write!(f, "<void>"),
             ExpressionType::Single(item_type) => write!(f, "{}", item_type),
             ExpressionType::Array(item_type) => write!(f, "{}[]", item_type),
-            ExpressionType::Anonymous(id) => write!(f, "<any.{}>", id),
+            ExpressionType::Any(id) => write!(f, "<any.{}>", id),
         }
     }
 }

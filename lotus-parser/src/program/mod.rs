@@ -10,6 +10,7 @@ mod binary_operations;
 mod utils;
 mod unary_operations;
 mod builtin_methods;
+mod system_variables;
 
 pub use error::*;
 pub use program::*;
@@ -23,3 +24,4 @@ pub use binary_operations::*;
 pub use utils::*;
 pub use unary_operations::*;
 pub use builtin_methods::*;
+pub use system_variables::*;

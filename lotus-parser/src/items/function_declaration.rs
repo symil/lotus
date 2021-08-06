@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{Identifier, Statement, Type};
+use super::{FunctionSignature, Identifier, Statement, Type};
 
 #[parsable]
 pub struct FunctionDeclaration {
@@ -9,19 +9,4 @@ pub struct FunctionDeclaration {
     pub signature: FunctionSignature,
     #[parsable(brackets="{}")]
     pub statements: Vec<Statement>
-}
-
-#[parsable]
-pub struct FunctionSignature {
-    #[parsable(brackets="()", separator=",")]
-    pub arguments: Vec<FunctionArgument>,
-    #[parsable(prefix="->")]
-    pub return_type: Option<Type>,
-}
-
-#[parsable]
-pub struct FunctionArgument {
-    pub name: Identifier,
-    #[parsable(prefix=":")]
-    pub type_: Type
 }

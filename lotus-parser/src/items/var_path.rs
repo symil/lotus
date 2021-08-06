@@ -12,20 +12,28 @@ pub struct VarPath {
 
 #[parsable]
 pub enum PathRoot {
+    NullLiteral = "null",
     BooleanLiteral(BooleanLiteral),
     FloatLiteral(FloatLiteral),
     IntegerLiteral(IntegerLiteral),
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
     ObjectLiteral(ObjectLiteral),
-    Variable(Option<VarPrefix>, Identifier),
+    Variable(Variable)
+}
+
+#[parsable]
+pub struct Variable {
+    pub prefix: Option<VarPrefix>,
+    pub name: Identifier
 }
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
 pub enum VarPrefix {
     This = "#",
-    Payload = "$"
+    Payload = "$",
+    System = "@"
 }
 
 #[parsable]
@@ -44,6 +52,22 @@ pub struct ArgumentList {
     pub list: Vec<Expression>
 }
 
+impl Variable {
+    pub fn has_this_prefix(&self) -> bool {
+        match self.prefix {
+            Some(VarPrefix::This) => true,
+            _ => false
+        }
+    }
+
+    pub fn has_payload_prefix(&self) -> bool {
+        match self.prefix {
+            Some(VarPrefix::Payload) => true,
+            _ => false
+        }
+    }
+}
+
 impl PathSegment {
     pub fn is_function_call(&self) -> bool {
         match self {
@@ -53,10 +77,8 @@ impl PathSegment {
     }
 }
 
-impl Deref for ArgumentList {
-    type Target = Vec<Expression>;
-
-    fn deref(&self) -> &Self::Target {
+impl ArgumentList {
+    pub fn as_vec(&self) -> &Vec<Expression> {
         &self.list
     }
 }

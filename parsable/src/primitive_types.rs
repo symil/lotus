@@ -6,18 +6,6 @@ impl Parsable for () {
     }
 }
 
-impl Parsable for bool {
-    fn parse(reader: &mut StringReader) -> Option<Self> {
-        if let Some(_) = reader.read_string("true") {
-            Some(true)
-        } else if let Some(_) = reader.read_string("false") {
-            Some(false)
-        } else {
-            None
-        }
-    }
-}
-
 impl<T : Parsable> Parsable for Box<T> {
     fn get_token_name() -> Option<String> {
         <T as Parsable>::get_token_name()

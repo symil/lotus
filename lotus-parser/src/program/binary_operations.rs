@@ -68,12 +68,12 @@ pub fn get_binary_operator_input_types(operator: &BinaryOperator) -> Vec<Express
         BinaryOperator::Plus => vec![
             ExpressionType::builtin(BuiltinType::Integer),
             ExpressionType::builtin(BuiltinType::String),
-            ExpressionType::array(ExpressionType::Anonymous(0)),
+            ExpressionType::array(ExpressionType::Any(0)),
         ],
         BinaryOperator::Minus | BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => vec![ExpressionType::builtin(BuiltinType::Integer)],
         BinaryOperator::Gte | BinaryOperator::Gt | BinaryOperator::Lte | BinaryOperator::Lt => vec![ExpressionType::builtin(BuiltinType::Integer)],
         BinaryOperator::And | BinaryOperator::Or => vec![ExpressionType::builtin(BuiltinType::Boolean)],
-        BinaryOperator::Eq | BinaryOperator::Neq => vec![ExpressionType::Anonymous(0)],
+        BinaryOperator::Eq | BinaryOperator::Neq => vec![ExpressionType::Any(0)],
         BinaryOperator::Range => vec![ExpressionType::builtin(BuiltinType::Integer)],
     }
 }

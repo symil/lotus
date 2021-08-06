@@ -1,8 +1,8 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathRoot, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathRoot, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, Variable, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
-use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_unary_operator_input_types, get_unary_operator_output_type};
+use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_system_variable_type, get_unary_operator_input_types, get_unary_operator_output_type};
 
 const KEYWORDS : &'static[&'static str] = &[
     "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
@@ -139,9 +139,7 @@ impl ProgramIndex {
                         self.check_struct_qualifier(&method.name, StructQualifier::Event, context);
 
                         for condition in &method.conditions {
-                            if let Some(VarPrefix::Payload) = &condition.left.prefix {
-                                // ok
-                            } else {
+                            if !condition.left.has_payload_prefix() {
                                 context.error(&condition.left, "left-hand side of event callback condition must be prefixed by $");
                             }
 
@@ -165,14 +163,12 @@ impl ProgramIndex {
                                 context.error(&condition.left.name, format!("event `{}` does not have a `{}` field", &method.name, &condition.left.name));
                             }
 
-                            if !condition.left.path.is_empty() {
-                                context.error(&condition.left.path[0], format!("paths are not supported on event callback conditions"));
-                            }
+                            // if !condition.left.path.is_empty() {
+                            //     context.error(&condition.left.path[0], format!("paths are not supported on event callback conditions"));
+                            // }
 
                             if let Some(var_path) = &condition.right {
-                                if let Some(VarPrefix::This) = var_path.prefix {
-                                    // ok
-                                } else {
+                                if !var_path.has_this_prefix() {
                                     context.error(&condition.right, "right-hand side of event callback condition must be prefixed by #");
                                 }
 
@@ -196,9 +192,9 @@ impl ProgramIndex {
                                     context.error(&var_path.name, format!("entity `{}` does not have a `{}` field", &struct_declaration.name, &var_path.name));
                                 }
 
-                                if !var_path.path.is_empty() {
-                                    context.error(&var_path.path[0], format!("paths are not supported on event callback conditions"));
-                                }
+                                // if !var_path.path.is_empty() {
+                                //     context.error(&var_path.path[0], format!("paths are not supported on event callback conditions"));
+                                // }
                             } else {
                                 context.error(&condition.left, "right-hand side of event callback condition must not be empty");
                             }
@@ -514,7 +510,7 @@ impl ProgramIndex {
     fn is_operand_assignable(&self, operand: &Operand) -> bool {
         match operand {
             Operand::VarPath(var_path) => match var_path.root {
-                PathRoot::Variable(_, _) => var_path.path.iter().all(|segment| !segment.is_function_call()),
+                PathRoot::Variable(_) => var_path.path.iter().all(|segment| !segment.is_function_call()),
                 _ => false
             },
             _ => false
@@ -577,12 +573,6 @@ impl ProgramIndex {
     fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<ExpressionType> {
         match operand {
             Operand::VoidLiteral => Some(ExpressionType::Void),
-            Operand::NullLiteral => Some(ExpressionType::Anonymous(0)),
-            Operand::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
-            Operand::NumberLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
-            Operand::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
-            Operand::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
-            Operand::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
             Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
             Operand::UnaryOperation(unary_operation) => self.get_unary_operation_type(unary_operation, context),
             Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
@@ -634,7 +624,7 @@ impl ProgramIndex {
 
     fn get_array_literal_type(&self, array_literal: &ArrayLiteral, context: &mut ProgramContext) -> Option<ExpressionType> {
         let mut all_items_ok = false;
-        let mut final_type = ExpressionType::Anonymous(0);
+        let mut final_type = ExpressionType::Any(0);
 
         for item in &array_literal.items {
             let mut item_ok = false;
@@ -659,6 +649,7 @@ impl ProgramIndex {
         let result = match parent_type {
             ExpressionType::Void => None,
             ExpressionType::Single(item_type) => match item_type {
+                ItemType::Null => None,
                 ItemType::Builtin(builtin_type) => get_builtin_field_type(builtin_type, field_name),
                 ItemType::Struct(struct_name) => {
                     if struct_name.is("_") {
@@ -680,7 +671,7 @@ impl ProgramIndex {
                 ItemType::Function(_, _) => None,
             },
             ExpressionType::Array(item_type) => get_array_field_type(item_type, field_name),
-            ExpressionType::Anonymous(_) => None,
+            ExpressionType::Any(_) => None,
             
         };
 
@@ -691,8 +682,21 @@ impl ProgramIndex {
         result
     }
 
-    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<ExpressionType> {
-        let var_type : Option<ExpressionType> = match &var_path.prefix {
+    fn get_path_root_type(&self, path_root: &PathRoot, context: &mut ProgramContext) -> Option<ExpressionType> {
+        match path_root {
+            PathRoot::NullLiteral => Some(ExpressionType::Any(0)),
+            PathRoot::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
+            PathRoot::IntegerLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
+            PathRoot::FloatLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Float)),
+            PathRoot::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
+            PathRoot::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
+            PathRoot::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
+            PathRoot::Variable(variable) => self.get_variable_type(variable, context)
+        }
+    }
+
+    fn get_variable_type(&self, variable: &Variable, context: &mut ProgramContext) -> Option<ExpressionType> {
+        match &variable.prefix {
             Some(prefix) => {
                 let prefix_var_opt = match prefix {
                     VarPrefix::This => {
@@ -709,18 +713,27 @@ impl ProgramIndex {
 
                         context.get_payload_type()
                     },
+                    VarPrefix::System => {
+                        let result = get_system_variable_type(&variable.name);
+
+                        if result.is_none() {
+                            context.error(prefix, format!("undefined system variable `@{}`", &variable.name));
+                        }
+
+                        return result;
+                    }
                 };
 
                 if let Some(prefix_var) = &prefix_var_opt {
-                    self.get_field_access_type(&prefix_var.expr_type, &var_path.name, context)
+                    self.get_field_access_type(&prefix_var.expr_type, &variable.name, context)
                 } else {
                     None
                 }
             },
             None => {
                 if context.inside_const_expr {
-                    if let Some(referenced_const) = self.const_declarations.get(&var_path.name) {
-                        if let Some(_) = context.visit_constant(&var_path.name) {
+                    if let Some(referenced_const) = self.const_declarations.get(&variable.name) {
+                        if let Some(_) = context.visit_constant(&variable.name) {
                             context.error(&referenced_const.var_name, format!("circular reference to `{}`", &referenced_const.var_name));
 
                             None
@@ -728,20 +741,24 @@ impl ProgramIndex {
                             self.get_expression_type(&referenced_const.init_value, context)
                         }
                     } else {
-                        context.error(&var_path.name, format!("undefined constant `{}`", &var_path.name));
+                        context.error(&variable.name, format!("undefined constant `{}`", &variable.name));
                         None
                     }
                 } else {
-                    context.get_var_type(&var_path.name).and_then(|var_info| Some(var_info.expr_type))
+                    context.get_var_type(&variable.name).and_then(|var_info| Some(var_info.expr_type))
                 }
             }
-        };
+        }
+    }
+
+    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<ExpressionType> {
+        let root_type = self.get_path_root_type(&var_path.root, context);
 
         if context.inside_const_expr && !var_path.path.is_empty() {
             context.error(&var_path.path[0], "field paths are not supported in const expressions");
 
             None
-        } else if let Some(expr_type) = var_type {
+        } else if let Some(expr_type) = root_type {
             let mut final_type = expr_type.clone();
 
             for segment in &var_path.path {
@@ -776,14 +793,14 @@ impl ProgramIndex {
                     PathSegment::FunctionCall(arguments) => {
                         match final_type {
                             ExpressionType::Single(ItemType::Function(expected_arguments, return_type)) => {
-                                if arguments.len() != expected_arguments.len() {
-                                    context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.len()));
+                                if arguments.as_vec().len() != expected_arguments.len() {
+                                    context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.as_vec().len()));
                                 }
 
                                 let mut ok = false;
                                 let mut anonymous_types = HashMap::new();
 
-                                for (i, (arg_expr, expected_type)) in arguments.iter().zip(expected_arguments.iter()).enumerate() {
+                                for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
                                     if let Some(actual_type) = self.get_expression_type(arg_expr, context) {
                                         if !expected_type.match_actual(&actual_type, &context.structs, &mut anonymous_types) {
                                             context.error(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, actual_type));
@@ -860,8 +877,9 @@ impl ProgramIndex {
                         context.error(&field.name, format!("struct `{}`: duplicate field `{}`", final_struct_name, &field.name));
                     }
 
-                    if let Some(field_type) = self.process_type(&field.type_, context) {
+                    if let Some(field_type) = self.process_type(&field.ty, context) {
                         let ok = match field_type.item_type() {
+                            ItemType::Null => false,
                             ItemType::Builtin(_) => true,
                             ItemType::Struct(struct_name) => self.is_entity_qualifier(&self.struct_declarations.get(struct_name).unwrap().qualifier),
                             ItemType::Function(_, _) => false,
