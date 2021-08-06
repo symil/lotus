@@ -7,7 +7,9 @@ mod utils;
 mod main_function;
 mod wasm_module;
 mod std_lib;
+mod constants;
 
+pub use constants::*;
 pub use utils::*;
 pub use wat::*;
 pub use memory_stack::*;

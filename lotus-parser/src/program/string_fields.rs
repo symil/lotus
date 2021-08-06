@@ -6,3 +6,9 @@ pub fn process_string_field_access(field_name: &Identifier, context: &mut Progra
         _ => None
     }
 }
+
+pub fn process_string_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<(&'static str, Type)> {
+    match method_name {
+        _ => None
+    }
+}

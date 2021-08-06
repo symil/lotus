@@ -97,6 +97,13 @@ impl Type {
         Type::Single(ItemType::Function(arguments, Box::new(return_type)))
     }
 
+    pub fn as_function(&self) -> (&[Type], &Type) {
+        match self {
+            Type::Single(ItemType::Function(arguments, return_type)) => (arguments, return_type),
+            _ => unreachable!()
+        }
+    }
+
     pub fn is_void(&self) -> bool {
         match self {
             Type::Void => true,

@@ -278,7 +278,7 @@ impl ProgramIndex {
         }
 
         for (function_name, function_annotation) in context.functions.iter() {
-            global_scope.push((function_name.clone(), function_annotation.get_expr_type()));
+            global_scope.push((function_name.clone(), function_annotation.get_type()));
         }
 
         for (value_name, value_type) in global_scope {
@@ -646,40 +646,7 @@ impl ProgramIndex {
     }
 
     fn get_field_access_type(&self, parent_type: &Type, field_name: &Identifier, context: &mut ProgramContext) -> Option<Type> {
-        let result = match parent_type {
-            Type::Void => None,
-            Type::Single(item_type) => match item_type {
-                ItemType::Null => None,
-                ItemType::Builtin(builtin_type) => process_builtin_field_access(builtin_type, field_name),
-                ItemType::Struct(struct_name) => {
-                    if struct_name.is("_") {
-                        // special case: `_` refers to the value itself rather than a field
-                        // e.g `#foo` means `self.foo`, but `#_` means `self`
-                        Some(parent_type.clone())
-                    } else if let Some(struct_annotation) = context.structs.get(struct_name) {
-                        if let Some(field) = struct_annotation.fields.get(field_name) {
-                            Some(field.get_expr_type())
-                        } else if let Some(method) = struct_annotation.methods.get(field_name) {
-                            Some(method.get_expr_type())
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                },
-                ItemType::Function(_, _) => None,
-            },
-            Type::Array(item_type) => process_array_method_call(item_type, field_name),
-            Type::Any(_) => None,
-            
-        };
-
-        if result.is_none() {
-            context.error(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
-        }
-
-        result
+        todo!()
     }
 
     fn get_path_root_type(&self, path_root: &VarPathRoot, context: &mut ProgramContext) -> Option<Type> {
