@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, PathRoot, PathSegment, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPrefix, Variable, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, Type, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
 use super::{BuiltinType, Error, ExpressionType, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, get_array_field_type, get_binary_operator_input_types, get_binary_operator_output_type, get_builtin_field_type, get_builtin_method_info, get_system_variable_type, get_unary_operator_input_types, get_unary_operator_output_type};
 
@@ -510,7 +510,7 @@ impl ProgramIndex {
     fn is_operand_assignable(&self, operand: &Operand) -> bool {
         match operand {
             Operand::VarPath(var_path) => match var_path.root {
-                PathRoot::Variable(_) => var_path.path.iter().all(|segment| !segment.is_function_call()),
+                VarPathRoot::Variable(_) => var_path.path.iter().all(|segment| !segment.is_function_call()),
                 _ => false
             },
             _ => false
@@ -682,38 +682,38 @@ impl ProgramIndex {
         result
     }
 
-    fn get_path_root_type(&self, path_root: &PathRoot, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_path_root_type(&self, path_root: &VarPathRoot, context: &mut ProgramContext) -> Option<ExpressionType> {
         match path_root {
-            PathRoot::NullLiteral => Some(ExpressionType::Any(0)),
-            PathRoot::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
-            PathRoot::IntegerLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
-            PathRoot::FloatLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Float)),
-            PathRoot::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
-            PathRoot::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
-            PathRoot::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
-            PathRoot::Variable(variable) => self.get_variable_type(variable, context)
+            VarPathRoot::NullLiteral => Some(ExpressionType::Any(0)),
+            VarPathRoot::BooleanLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Boolean)),
+            VarPathRoot::IntegerLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Integer)),
+            VarPathRoot::FloatLiteral(_) => Some(ExpressionType::builtin(BuiltinType::Float)),
+            VarPathRoot::StringLiteral(_) => Some(ExpressionType::builtin(BuiltinType::String)),
+            VarPathRoot::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
+            VarPathRoot::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
+            VarPathRoot::Variable(variable) => self.get_variable_type(variable, context)
         }
     }
 
-    fn get_variable_type(&self, variable: &Variable, context: &mut ProgramContext) -> Option<ExpressionType> {
+    fn get_variable_type(&self, variable: &VarRef, context: &mut ProgramContext) -> Option<ExpressionType> {
         match &variable.prefix {
             Some(prefix) => {
                 let prefix_var_opt = match prefix {
-                    VarPrefix::This => {
+                    VarRefPrefix::This => {
                         if context.get_this_type().is_none() {
                             context.error(prefix, "no `this` value can be referenced in this context");
                         }
 
                         context.get_this_type()
                     },
-                    VarPrefix::Payload => {
+                    VarRefPrefix::Payload => {
                         if context.get_payload_type().is_none() {
                             context.error(prefix, "no `payload` value can be referenced in this context");
                         }
 
                         context.get_payload_type()
                     },
-                    VarPrefix::System => {
+                    VarRefPrefix::System => {
                         let result = get_system_variable_type(&variable.name);
 
                         if result.is_none() {
@@ -763,8 +763,8 @@ impl ProgramIndex {
 
             for segment in &var_path.path {
                 let next_type : Option<ExpressionType> = match segment {
-                    PathSegment::FieldAccess(field_name) => self.get_field_access_type(&final_type, field_name, context),
-                    PathSegment::BracketIndexing(expr) => {
+                    VarPathSegment::FieldAccess(field_name) => self.get_field_access_type(&final_type, field_name, context),
+                    VarPathSegment::BracketIndexing(expr) => {
                         let array_item_type = match final_type {
                             ExpressionType::Array(item_type) => Some(*item_type),
                             _ => {
@@ -790,7 +790,7 @@ impl ProgramIndex {
                             false => None
                         }
                     },
-                    PathSegment::FunctionCall(arguments) => {
+                    VarPathSegment::FunctionCall(arguments) => {
                         match final_type {
                             ExpressionType::Single(ItemType::Function(expected_arguments, return_type)) => {
                                 if arguments.as_vec().len() != expected_arguments.len() {

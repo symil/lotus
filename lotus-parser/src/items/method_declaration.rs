@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, VarPath, Variable};
+use super::{FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, VarPath};
 
 #[parsable]
 pub struct MethodDeclaration {

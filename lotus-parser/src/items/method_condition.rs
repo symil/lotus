@@ -1,10 +1,9 @@
 use parsable::parsable;
-
-use super::Variable;
+use super::{VarRef};
 
 #[parsable]
 pub struct MethodCondition {
-    pub left: Variable,
+    pub left: VarRef,
     #[parsable(prefix="=")]
-    pub right: Option<Variable>
+    pub right: Option<VarRef>
 }
