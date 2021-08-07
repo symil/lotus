@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Wasm};
+use crate::program::{ProgramContext, Type, Wasm};
 use super::{BinaryOperation, FullType};
 
 #[parsable]
@@ -11,6 +11,18 @@ pub struct Expression {
 
 impl Expression {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        self.operation.process(context)
+        let mut result = None;
+
+        if let Some(wasm) = self.operation.process(context) {
+            result = match &self.as_type {
+                Some(as_type) => match Type::from_parsed_type(&as_type, context) {
+                    Some(new_type) => Some(Wasm::typed(new_type, wasm.wat)),
+                    None => None
+                },
+                None => Some(wasm),
+            }
+        }
+
+        result
     }
 }

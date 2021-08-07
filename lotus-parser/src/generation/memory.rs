@@ -1,5 +1,5 @@
 use crate::{generation::{MEM_ALLOC_FUNC_NAME, MEM_FREE_FUNC_NAME, MEM_INIT_FUNC_NAME}, merge, wat};
-use super::{MemoryStack, ToWat, ToWatVec, WasmModule, Wat};
+use super::{ToWat, ToWatVec, WasmModule, Wat};
 
 pub struct Memory;
 

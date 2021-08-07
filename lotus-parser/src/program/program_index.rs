@@ -507,56 +507,6 @@ impl ProgramIndex {
         (arguments, return_type)
     }
 
-
-    fn get_operation_type(&self, operation: &BinaryOperation, context: &mut ProgramContext) -> Option<Type> {
-        let operation_tree = OperationTree::from_operation(operation);
-        let operation_type = self.get_operation_tree_type(&operation_tree, context);
-
-        match &operation.as_type {
-            Some(ty) => self.process_type(ty, context),
-            None => operation_type,
-        }
-    }
-
-    fn get_operation_tree_type(&self, operation_tree: &OperationTree, context: &mut ProgramContext) -> Option<Type> {
-        match operation_tree {
-            OperationTree::Operation(left, operator, right) => {
-                let left_type = self.get_operation_tree_type(left, context);
-                let right_type = self.get_operation_tree_type(right, context);
-
-                match (left_type, right_type) {
-                    (Some(ltype), Some(rtype)) => {
-                        let operator_valid_types = get_binary_operator_input_types(operator);
-
-                        let left_ok = operator_valid_types.iter().any(|expected| self.expressions_match(expected, &ltype, context));
-                        let right_ok = operator_valid_types.iter().any(|expected| self.expressions_match(expected, &rtype, context));
-                        let same_type = self.expressions_match(&ltype, &rtype, context);
-
-                        if !left_ok {
-                            context.error(left.get_leftmost(), format!("operator `{}`, left operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), ltype));
-                        }
-
-                        if !right_ok {
-                            context.error(left.get_leftmost(), format!("operator `{}`, right operand: expected {}, got `{}`", operator, display_join(&operator_valid_types), rtype));
-                        }
-
-                        if left_ok && right_ok && !same_type {
-                            context.error(left.get_leftmost(), format!("operator `{}`: operand types must match (got `{}` and `{}`)", operator, ltype, rtype));
-                        }
-
-                        if left_ok && right_ok && same_type {
-                            Some(get_binary_operator_output_type(operator, &ltype))
-                        } else {
-                            None
-                        }
-                    },
-                    _ => None
-                }
-            },
-            OperationTree::Value(operand) => self.get_operand_type(operand, context),
-        }
-    }
-
     fn collect_struct_types(&self, struct_name: &Identifier, mut types: Vec<Identifier>, context: &mut ProgramContext) -> Vec<Identifier> {
         if types.contains(struct_name) {
             context.error(struct_name, format!("circular inheritance: {}", struct_name));
