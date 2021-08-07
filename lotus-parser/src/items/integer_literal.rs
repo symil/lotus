@@ -4,7 +4,7 @@ use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
 
 #[parsable(name="integer")]
 pub struct IntegerLiteral {
-    #[parsable(regex = r"(\d+)|mi")]
+    #[parsable(regex = r"(-?\d+)|mi")]
     pub value: String,
 }
 

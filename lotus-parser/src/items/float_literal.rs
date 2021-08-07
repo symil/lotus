@@ -4,7 +4,7 @@ use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
-    #[parsable(regex = r"(\d+(\.\d*)?f)|nan")]
+    #[parsable(regex = r"(-?\d+(\.\d*)?f)|nan")]
     pub value: String,
 }
 

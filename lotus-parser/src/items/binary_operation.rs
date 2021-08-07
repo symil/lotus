@@ -33,18 +33,21 @@ impl<'a> OperationTree<'a> {
                         let mut result = None;
                         let left_result = operator.process(&left_wasm.ty, context);
                         let right_result = operator.process(&right_wasm.ty, context);
+
+                        // TODO: if operator is `&&` or `||`, convert operands to booleans when possible
+
                         let same_type = left_wasm.ty.is_compatible(&right_wasm.ty, context);
 
                         if !left_result.is_none() {
-                            context.error(left.get_location(), format!("operator `{}`: invalid left operand type `{}`", operator, &left_wasm.ty));
+                            context.error(left.get_location(), format!("operator `{}`: invalid left operand type `{}`", &operator.token, &left_wasm.ty));
                         }
 
                         if !right_result.is_none() {
-                            context.error(right.get_location(), format!("operator `{}`: invalid right operand type `{}`", operator, &right_wasm.ty));
+                            context.error(right.get_location(), format!("operator `{}`: invalid right operand type `{}`", &operator.token, &right_wasm.ty));
                         }
 
                         if left_result.is_some() && right_result.is_some() && !same_type {
-                            context.error(left.get_location(), format!("operator `{}`: operand types must match (got `{}` and `{}`)", operator, &left_wasm.ty, &right_wasm.ty));
+                            context.error(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.token, &left_wasm.ty, &right_wasm.ty));
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {
@@ -69,7 +72,7 @@ impl<'a> OperationTree<'a> {
             (operator.clone(), operand, priority)
         }).collect();
 
-        list.insert(0, (BinaryOperator::Plus, &operation.first, usize::MAX));
+        list.insert(0, (BinaryOperator::default(), &operation.first, usize::MAX));
 
         Self::from_list(&mut list)
     }
