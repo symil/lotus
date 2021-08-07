@@ -1,8 +1,14 @@
 use parsable::parsable;
-use super::{FunctionType, Identifier, ValueType};
+use super::{FunctionType, Identifier, TypeSuffix, ValueType};
 
 #[parsable]
-pub enum AnyType {
+pub struct FullType {
+    pub item: ItemType,
+    pub suffix: Option<TypeSuffix>
+}
+
+#[parsable]
+pub enum ItemType {
     Value(ValueType),
     Function(FunctionType)
 }

@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, AnyType, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, FullType, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
 use super::{BuiltinType, Error, Type, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, process_array_method_call, get_binary_operator_input_types, get_binary_operator_output_type, process_builtin_field_access, get_builtin_method_info, process_system_variable, get_unary_operator_input_types, get_unary_operator_output_type};
 
@@ -858,48 +858,10 @@ impl ProgramIndex {
     }
 
     fn expressions_match(&self, expected: &Type, actual: &Type, context: &ProgramContext) -> bool {
-        expected.match_actual(actual, &context.structs, &mut HashMap::new())
+        expected.is_assignable(actual, &context.structs, &mut HashMap::new())
     }
 
-    fn process_type(&self, ty: &AnyType, context: &mut ProgramContext) -> Option<Type> {
-        let mut result = None;
-
-        match ty {
-            AnyType::Value(value_type) => {
-                if let Some(expr_type) = Type::from_value_type(value_type, &self.struct_declarations) {
-                    result = Some(expr_type);
-                } else {
-                    context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
-                }
-            },
-            AnyType::Function(function_type) => {
-                let mut ok = true;
-                let mut arguments = vec![];
-                let mut return_type = Type::Void;
-
-                for arg in &function_type.arguments {
-                    if let Some(arg_type) = self.process_type(arg, context) {
-                        arguments.push(arg_type);
-                    } else {
-                        arguments.push(Type::Void);
-                        ok = false;
-                    }
-                }
-
-                if let Some(ret) = &function_type.return_value {
-                    if let Some(ret_type) = self.process_type(Box::as_ref(ret), context) {
-                        return_type = ret_type;
-                    } else {
-                        ok = false;
-                    }
-                }
-
-                if ok {
-                    result = Some(Type::function(arguments, return_type));
-                }
-            },
-        };
-
-        result
+    fn process_type(&self, ty: &FullType, context: &mut ProgramContext) -> Option<Type> {
+        todo!()
     }
 }

@@ -4,7 +4,7 @@ mod string_reader;
 mod primitive_types;
 mod parse_error;
 mod data_location;
-pub mod line_col_lookup;
+mod line_col_lookup;
 
 pub use parsable::Parsable;
 pub use string_reader::StringReader;

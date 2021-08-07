@@ -48,6 +48,10 @@ impl Wat {
         wat!["i32.const", value.to_i32()]
     }
 
+    pub fn const_f32(value: f32) -> Self {
+        wat!["f32.const", value]
+    }
+
     pub fn call<T : ToWatVec>(func_name: &str, arguments: T) -> Self {
         wat!["call", Wat::var_name(func_name), arguments]
     }

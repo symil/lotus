@@ -1,5 +1,5 @@
 use std::{collections::HashMap, ops::Deref};
-use parsable::Parsable;
+use parsable::{DataLocation, Parsable};
 use crate::{generation::WasmModule, items::Identifier};
 use super::{ConstantAnnotation, Error, Type, FunctionAnnotation, StructAnnotation};
 
@@ -13,8 +13,8 @@ pub struct ProgramContext {
     pub constants: HashMap<Identifier, ConstantAnnotation>,
     
     pub scopes: Vec<HashMap<Identifier, VarInfo>>,
-    pub this_type: Option<VarInfo>,
-    pub payload_type: Option<VarInfo>,
+    pub this_var: Option<VarInfo>,
+    pub payload_var: Option<VarInfo>,
     pub visited_constants: Vec<Identifier>,
     pub inside_const_expr: bool,
     pub function_return_type: Option<Type>
@@ -25,8 +25,8 @@ impl ProgramContext {
         Self::default()
     }
 
-    pub fn error<T : Parsable, S : Deref<Target=str>>(&mut self, data: &T, error: S) {
-        self.errors.push(Error::located(data, error));
+    pub fn error<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) {
+        self.errors.push(Error::located(location, error));
     }
 
     pub fn visit_constant(&mut self, constant_name: &Identifier) -> Option<&Identifier> {
@@ -37,20 +37,20 @@ impl ProgramContext {
         self.function_return_type.clone()
     }
 
-    pub fn get_this_type(&self) -> Option<Type> {
-        self.this_type.and_then(|info| Some(info.expr_type.clone()))
+    pub fn get_this_type(&self) -> Option<VarInfo> {
+        self.this_var.clone()
     }
 
-    pub fn get_payload_type(&self) -> Option<Type> {
-        self.payload_type.and_then(|info| Some(info.expr_type.clone()))
+    pub fn get_payload_type(&self) -> Option<VarInfo> {
+        self.payload_var.clone()
     }
 
     pub fn set_this_type(&mut self, expr_type: Option<VarInfo>) {
-        self.this_type = expr_type;
+        self.this_var = expr_type;
     }
 
     pub fn set_payload_type(&mut self, expr_type: Option<VarInfo>) {
-        self.payload_type = expr_type;
+        self.payload_var = expr_type;
     }
 
     pub fn push_scope(&mut self) {
@@ -113,12 +113,12 @@ impl ProgramContext {
 
 #[derive(Debug, Clone)]
 pub struct VarInfo {
-    pub name: Identifier,
+    pub wasm_name: Identifier,
     pub expr_type: Type,
 }
 
 impl VarInfo {
-    pub fn new(name: Identifier, expr_type: Type) -> Self {
-        Self { name, expr_type }
+    pub fn new(wasm_name: Identifier, expr_type: Type) -> Self {
+        Self { wasm_name, expr_type }
     }
 }

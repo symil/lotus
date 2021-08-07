@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{ARRAY_GET_FUNC_NAME, Wat}, program::{BuiltinType, ItemType, ProgramContext, Type, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call}};
+use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{ProgramContext, Type, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call}};
 use super::{ArgumentList, Expression, Identifier, VarRef};
 
 #[parsable]
@@ -27,17 +27,17 @@ pub fn process_bracket_indexing(parent_type: &Type, index_expr: &Expression, con
     let mut wat = vec![];
 
     if let Some(index_wasm) = index_expr.process(context) {
-        if let Type::Single(ItemType::Builtin(BuiltinType::Integer)) = &index_wasm.ty {
+        if &index_wasm.ty == &Type::Integer {
             indexing_ok = true;
         } else {
-            context.error(index_expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Integer, &index_wasm.ty));
+            context.error(index_expr, format!("bracket indexing argument: expected `{}`, got `{}`", Type::Integer, &index_wasm.ty));
         }
 
         wat.extend(index_wasm.wat);
     }
 
     if let Type::Array(item_type) = parent_type {
-        wat.push(Wat::call(ARRAY_GET_FUNC_NAME, vec![]));
+        wat.push(Wat::call(ARRAY_GET_I32_FUNC_NAME, vec![]));
         result = Some(Wasm::typed(Box::as_ref(item_type).clone(), wat))
     } else {
         context.error(index_expr, format!("bracket indexing target: expected array, got `{}`", parent_type));

@@ -28,8 +28,8 @@ impl RootVarRef {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.prefix {
             Some(prefix) => {
-                if let Some(prefix_type) = prefix.process(self, context) {
-                    self.var_ref.process_as_field(&prefix_type, context)
+                if let Some(prefix_wasm) = prefix.process(self, context) {
+                    self.var_ref.process_as_field(&prefix_wasm.ty, context)
                 } else {
                     None
                 }

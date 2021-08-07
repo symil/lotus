@@ -18,6 +18,7 @@ mod float_fields;
 mod string_fields;
 mod expr_info;
 mod pointer_fields;
+mod access_type;
 
 pub use error::*;
 pub use program::*;
@@ -39,3 +40,4 @@ pub use float_fields::*;
 pub use string_fields::*;
 pub use expr_info::*;
 pub use pointer_fields::*;
+pub use access_type::*;

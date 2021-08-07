@@ -16,9 +16,9 @@ impl Error {
     //     }
     // }
 
-    pub fn located<T : Parsable, S : Deref<Target=str>>(data: &T, error: S) -> Self {
+    pub fn located<S : Deref<Target=str>>(location: &DataLocation, error: S) -> Self {
         Self {
-            location: Some(data.get_location().clone()),
+            location: Some(location.clone()),
             error: error.to_string()
         }
     }

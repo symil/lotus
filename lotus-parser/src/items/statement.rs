@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{Action, Assignment, Expression, ForBlock, Identifier, IfBlock, Operand, AnyType, VarDeclaration, WhileBlock};
+use super::{Action, Assignment, Expression, ForBlock, Identifier, IfBlock, Operand, FullType, VarDeclaration, WhileBlock};
 
 #[parsable]
 pub enum Statement {

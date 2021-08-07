@@ -1,10 +1,10 @@
 use parsable::parsable;
 
-use super::{Identifier, AnyType};
+use super::{Identifier, FullType};
 
 #[parsable]
 pub struct FunctionArgument {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub type_: AnyType
+    pub type_: FullType
 }

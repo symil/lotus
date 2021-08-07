@@ -1,6 +1,8 @@
-use parsable::{Parsable, parsable};
+use std::ptr::NonNull;
 
-use crate::program::{ProgramContext, Type, Wasm};
+use parsable::{DataLocation, Parsable, parsable};
+
+use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
@@ -11,24 +13,24 @@ pub enum VarRefPrefix {
 }
 
 impl VarRefPrefix {
-    pub fn process<T : Parsable>(&self, location: &T, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, location: &DataLocation, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
-            VarRefPrefix::This => {
-                if context.get_this_type().is_none() {
+            VarRefPrefix::This => match context.get_this_type() {
+                Some(this_var) => Some(Wasm::typed(this_var.expr_type.clone(), Wat::get_local(this_var.wasm_name.as_str()))),
+                None => {
                     context.error(location, "no `this` value can be referenced in this context");
+                    None
                 }
-
-                context.get_this_type()
             },
-            VarRefPrefix::Payload => {
-                if context.get_payload_type().is_none() {
+            VarRefPrefix::Payload => match context.get_payload_type() {
+                Some(payload_var) => Some(Wasm::typed(payload_var.expr_type.clone(), Wat::get_local(payload_var.wasm_name.as_str()))),
+                None => {
                     context.error(location, "no `payload` value can be referenced in this context");
+                    None
                 }
-
-                context.get_payload_type()
             },
             VarRefPrefix::System => {
-                Some(Type::system())
+                Some(Wasm::typed(Type::System, vec![]))
             },
         }
     }

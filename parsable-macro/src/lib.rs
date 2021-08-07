@@ -157,14 +157,18 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
     ast.attrs.push(derive_attribute);
 
-    let mut impl_get_location = quote! { };
     let mut impl_display = quote! { };
+    let mut impl_deref = quote! { };
 
     let body = match &mut ast.data {
         Data::Struct(data_struct) => {
-            impl_get_location = quote! {
-                fn get_location(&self) -> &parsable::DataLocation {
-                    &self.location
+            impl_deref = quote!{
+                impl std::ops::Deref for #name {
+                    type Target = parsable::DataLocation;
+
+                    fn deref(&self) -> &Self::Target {
+                        &self.location
+                    }
                 }
             };
 
@@ -526,8 +530,9 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             }
 
             #impl_token_name
-            #impl_get_location
         }
+
+        #impl_deref
 
         #impl_display
     };

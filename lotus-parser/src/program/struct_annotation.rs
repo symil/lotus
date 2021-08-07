@@ -7,6 +7,7 @@ use super::{Type, FunctionAnnotation};
 #[derive(Clone)]
 pub struct StructAnnotation {
     pub name: Identifier,
+    pub type_id: usize,
     pub qualifier: StructQualifier,
     pub types: Vec<Identifier>,
     pub fields: HashMap<Identifier, FieldDetails>,
@@ -17,6 +18,7 @@ impl StructAnnotation {
     pub fn new(name: &Identifier, qualifier: &StructQualifier) -> Self {
         Self {
             name: name.clone(),
+            type_id: todo!(),
             qualifier: qualifier.clone(),
             types: vec![],
             fields: HashMap::new(),

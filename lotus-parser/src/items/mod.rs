@@ -43,6 +43,7 @@ mod type_suffix;
 mod value_type;
 mod function_type;
 mod root_var_ref;
+mod null_literal;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -89,3 +90,4 @@ pub use type_suffix::*;
 pub use value_type::*;
 pub use function_type::*;
 pub use root_var_ref::*;
+pub use null_literal::*;

@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, AnyType, UnaryOperation, VarPath};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, FullType, UnaryOperation, VarPath};
 
 #[parsable]
 pub enum Operand {
