@@ -15,6 +15,10 @@ pub const ARRAY_SET_F32_FUNC_NAME : &'static str = "array_set_f32";
 
 pub const OBJECT_ALLOC_FUNC_NAME : &'static str = "object_alloc";
 
+pub const CONCAT_ARRAYS_FUNC_NAME : &'static str = "concat_arrays";
+
+pub const STRING_EQUAL_FUNC_NAME : &'static str = "string_concat";
+
 pub const LOG_I32_FUNC_NAME : &'static str = "log_i32";
 
 pub const SELF_VAR_NAME : &'static str = "self";

@@ -45,6 +45,7 @@ mod function_type;
 mod root_var_ref;
 mod null_literal;
 mod item_type;
+mod unary_operator;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -93,3 +94,4 @@ pub use function_type::*;
 pub use root_var_ref::*;
 pub use null_literal::*;
 pub use item_type::*;
+pub use unary_operator::*;

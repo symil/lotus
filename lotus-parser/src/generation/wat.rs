@@ -34,6 +34,10 @@ impl Wat {
         Self::single(format!("\"{}\"", value))
     }
 
+    pub fn inst(name: &str) -> Self {
+        wat![name]
+    }
+
     // BASIC
 
     pub fn nop() -> Self {

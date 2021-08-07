@@ -155,6 +155,10 @@ impl Type {
         }
     }
 
+    pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
+        self.is_assignable(other, context, &mut HashMap::new()) || other.is_assignable(self, context, &mut HashMap::new())
+    }
+
     pub fn is_assignable(&self, actual: &Type, context: &ProgramContext, anonymous_types: &mut HashMap<u32, Type>) -> bool {
         match self {
             Type::Void => actual == &Type::Void,

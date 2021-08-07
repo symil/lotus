@@ -48,7 +48,7 @@ impl VarRef {
 pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     if let AccessType::Set(set_location) = access_type {
         match parent_type {
-            Type::Struct(_) => { },
+            Type::Struct(_) => {},
             _ => {
                 context.error(set_location, format!("cannot set field of non-struct value"));
                 return None;

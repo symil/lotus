@@ -1,6 +1,5 @@
 mod wat;
 mod generate;
-mod memory_stack;
 mod helper_traits;
 mod memory;
 mod utils;
@@ -12,7 +11,6 @@ mod constants;
 pub use constants::*;
 pub use utils::*;
 pub use wat::*;
-pub use memory_stack::*;
 pub use helper_traits::*;
 pub use main_function::*;
 pub use memory::*;

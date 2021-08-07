@@ -1,10 +1,10 @@
 use parsable::parsable;
 
-use super::{Expression, Operand};
+use super::{Expression, VarPath};
 
 #[parsable]
 pub struct Assignment {
-    pub lvalue: Operand,
+    pub lvalue: VarPath,
     #[parsable(prefix="=")]
     pub rvalue: Option<Expression>
 }

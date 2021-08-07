@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}};
 
-use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, Operation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, FullType, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
+use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Expression, ForBlock, FunctionDeclaration, FunctionSignature, Identifier, IfBlock, LotusFile, MethodDeclaration, MethodQualifier, ObjectLiteral, Operand, BinaryOperation, Statement, StructDeclaration, StructQualifier, TopLevelBlock, FullType, UnaryOperation, VarDeclaration, VarPath, VarPathRoot, VarPathSegment, VarRef, VarRefPrefix, WhileBlock}, program::{BuiltinMethodPayload, VarInfo, display_join}};
 
 use super::{BuiltinType, Error, Type, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, process_array_method_call, get_binary_operator_input_types, get_binary_operator_output_type, process_builtin_field_access, get_builtin_method_info, process_system_variable, get_unary_operator_input_types, get_unary_operator_output_type};
 
@@ -507,21 +507,8 @@ impl ProgramIndex {
         (arguments, return_type)
     }
 
-    fn is_operand_assignable(&self, operand: &Operand) -> bool {
-        match operand {
-            Operand::VarPath(var_path) => match var_path.root {
-                VarPathRoot::Variable(_) => var_path.path.iter().all(|segment| !segment.is_function_call()),
-                _ => false
-            },
-            _ => false
-        }
-    }
 
-    fn get_expression_type(&self, expr: &Expression, context: &mut ProgramContext) -> Option<Type> {
-        self.get_operation_type(expr, context)
-    }
-
-    fn get_operation_type(&self, operation: &Operation, context: &mut ProgramContext) -> Option<Type> {
+    fn get_operation_type(&self, operation: &BinaryOperation, context: &mut ProgramContext) -> Option<Type> {
         let operation_tree = OperationTree::from_operation(operation);
         let operation_type = self.get_operation_tree_type(&operation_tree, context);
 
@@ -567,186 +554,6 @@ impl ProgramIndex {
                 }
             },
             OperationTree::Value(operand) => self.get_operand_type(operand, context),
-        }
-    }
-
-    fn get_operand_type(&self, operand: &Operand, context: &mut ProgramContext) -> Option<Type> {
-        match operand {
-            Operand::VoidLiteral => Some(Type::Void),
-            Operand::Parenthesized(expr) => self.get_expression_type(expr, context),
-            Operand::UnaryOperation(unary_operation) => self.get_unary_operation_type(unary_operation, context),
-            Operand::VarPath(var_path) => self.get_var_path_type(var_path, context),
-        }
-    }
-
-    fn get_unary_operation_type(&self, unary_operation: &UnaryOperation, context: &mut ProgramContext) -> Option<Type> {
-        let valid_input_types = get_unary_operator_input_types(&unary_operation.operator);
-
-        if let Some(operand_type) = self.get_operand_type(&unary_operation.operand, context) {
-            if valid_input_types.iter().any(|expected| self.expressions_match(expected, &operand_type, context)) {
-                Some(get_unary_operator_output_type(&unary_operation.operator, &operand_type))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
-    fn get_object_literal_type(&self, object_literal: &ObjectLiteral, context: &mut ProgramContext) -> Option<Type> {
-        let type_name = &object_literal.type_name;
-
-        if let Some(struct_annotation) = context.structs.get(type_name).cloned() { // TODO: remove this `cloned`
-            for field_initialization in &object_literal.fields {
-                let field_name = &field_initialization.name;
-                let field_value = &field_initialization.value;
-                let value_type_opt = self.get_expression_type(field_value, context);
-
-                if let Some(field_info) = struct_annotation.fields.get(field_name) {
-                    if let Some(actual_type) = value_type_opt {
-                        let expected_type = field_info.get_expr_type();
-
-                        if !self.expressions_match(&expected_type, &actual_type, context) {
-                            context.error(field_value, format!("field `{}`: expected type `{}`, got `{}`", field_name, expected_type, actual_type));
-                        }
-                    }
-                } else {
-                    context.error(field_name, format!("type `{}` has no field `{}`", type_name, field_name));
-                }
-            }
-
-            Some(Type::object(type_name))
-        } else {
-            context.error(type_name, format!("undefined object type `{}`", type_name));
-            None
-        }
-    }
-
-    fn get_array_literal_type(&self, array_literal: &ArrayLiteral, context: &mut ProgramContext) -> Option<Type> {
-        let mut all_items_ok = false;
-        let mut final_type = Type::Any(0);
-
-        for item in &array_literal.items {
-            let mut item_ok = false;
-
-            if let Some(item_type) = self.get_expression_type(item, context) {
-                if self.expressions_match(&final_type, &item_type, context) {
-                    final_type = item_type;
-                    item_ok = true;
-                }
-            }
-
-            all_items_ok &= item_ok;
-        }
-
-        match all_items_ok {
-            true => Some(Type::array(final_type)),
-            false => None
-        }
-    }
-
-    fn get_field_access_type(&self, parent_type: &Type, field_name: &Identifier, context: &mut ProgramContext) -> Option<Type> {
-        todo!()
-    }
-
-    fn get_path_root_type(&self, path_root: &VarPathRoot, context: &mut ProgramContext) -> Option<Type> {
-        match path_root {
-            VarPathRoot::NullLiteral => Some(Type::Any(0)),
-            VarPathRoot::BooleanLiteral(_) => Some(Type::builtin(BuiltinType::Boolean)),
-            VarPathRoot::IntegerLiteral(_) => Some(Type::builtin(BuiltinType::Integer)),
-            VarPathRoot::FloatLiteral(_) => Some(Type::builtin(BuiltinType::Float)),
-            VarPathRoot::StringLiteral(_) => Some(Type::builtin(BuiltinType::String)),
-            VarPathRoot::ArrayLiteral(array_literal) => self.get_array_literal_type(array_literal, context),
-            VarPathRoot::ObjectLiteral(object_literal) => self.get_object_literal_type(object_literal, context),
-            VarPathRoot::Variable(variable) => self.get_variable_type(variable, context)
-        }
-    }
-
-    fn get_variable_type(&self, variable: &VarRef, context: &mut ProgramContext) -> Option<Type> {
-        todo!()
-    }
-
-    fn get_var_path_type(&self, var_path: &VarPath, context: &mut ProgramContext) -> Option<Type> {
-        let root_type = self.get_path_root_type(&var_path.root, context);
-
-        if context.inside_const_expr && !var_path.path.is_empty() {
-            context.error(&var_path.path[0], "field paths are not supported in const expressions");
-
-            None
-        } else if let Some(expr_type) = root_type {
-            let mut final_type = expr_type.clone();
-
-            for segment in &var_path.path {
-                let next_type : Option<Type> = match segment {
-                    VarPathSegment::FieldAccess(field_name) => self.get_field_access_type(&final_type, field_name, context),
-                    VarPathSegment::BracketIndexing(expr) => {
-                        let array_item_type = match final_type {
-                            Type::Array(item_type) => Some(*item_type),
-                            _ => {
-                                context.error(expr, format!("bracket indexing target: expected array, got `{}`", final_type)); // TODO: display actual type
-                                None
-                            }
-                        };
-
-                        let indexing_ok = match self.get_expression_type(expr, context) {
-                            Some(expr_type) => {
-                                if let Type::Single(ItemType::Builtin(BuiltinType::Integer)) = &expr_type {
-                                    true
-                                } else {
-                                    context.error(expr, format!("bracket indexing argument: expected `{}`, got `{}`", BuiltinType::Integer, &expr_type));
-                                    false
-                                }
-                            },
-                            None => false,
-                        };
-
-                        match indexing_ok {
-                            true => array_item_type,
-                            false => None
-                        }
-                    },
-                    VarPathSegment::FunctionCall(arguments) => {
-                        match final_type {
-                            Type::Single(ItemType::Function(expected_arguments, return_type)) => {
-                                if arguments.as_vec().len() != expected_arguments.len() {
-                                    context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.as_vec().len()));
-                                }
-
-                                let mut ok = false;
-                                let mut anonymous_types = HashMap::new();
-
-                                for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
-                                    if let Some(actual_type) = self.get_expression_type(arg_expr, context) {
-                                        if !expected_type.match_actual(&actual_type, &context.structs, &mut anonymous_types) {
-                                            context.error(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, actual_type));
-                                            ok = false;
-                                        }
-                                    }
-                                }
-
-                                match ok {
-                                    true => Some(*return_type),
-                                    false => None
-                                }
-                            }
-                            _ => {
-                                context.error(arguments, format!("function call target: expected function, got `{}`", final_type));
-                                None
-                            }
-                        }
-                    },
-                };
-
-                if let Some(t) = next_type {
-                    final_type = t;
-                } else {
-                    return None;
-                }
-            }
-
-            Some(final_type)
-        } else {
-            None
         }
     }
 
