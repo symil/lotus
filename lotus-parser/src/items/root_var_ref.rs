@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::program::{ProgramContext, Wasm};
+use crate::program::{AccessType, ProgramContext, Wasm};
 
 use super::{VarRef, VarRefPrefix};
 
@@ -25,18 +25,16 @@ impl RootVarRef {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.prefix {
             Some(prefix) => {
                 if let Some(prefix_wasm) = prefix.process(self, context) {
-                    self.var_ref.process_as_field(&prefix_wasm.ty, context)
+                    self.var_ref.process_as_field(&prefix_wasm.ty, access_type, context)
                 } else {
                     None
                 }
             },
-            None => {
-                if context.inside_const_expr {
-                    todo!()
+            None => self.var_ref.process_as_variable(access_type, context)
                     // if let Some(referenced_const) = self.const_declarations.get(&self.name) {
                     //     if let Some(_) = context.visit_constant(&self.name) {
                     //         context.error(&referenced_const.var_name, format!("circular reference to `{}`", &referenced_const.var_name));
@@ -49,18 +47,7 @@ impl RootVarRef {
                     //     context.error(&self.name, format!("undefined constant `{}`", &self.name));
                     //     None
                     // }
-                } else {
-                    self.var_ref.process_as_variable(context)
-                    // if let Some(var_info) = context.get_var_info(&self.name) {
-                    //     Some(Wasm::typed(
-                    //         var_info.expr_type.clone(),
-                    //         Wat::var_name(var_info.name.as_str())
-                    //     ))
-                    // } else {
-                    //     None
-                    // }
-                }
-            }
+                
         }
     }
 }

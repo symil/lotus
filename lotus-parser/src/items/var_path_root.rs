@@ -24,24 +24,13 @@ impl VarPathRoot {
         }
     }
 
-    fn get_location(&self) -> &DataLocation {
-        match self {
-            VarPathRoot::NullLiteral(x) => &x.location,
-            VarPathRoot::BooleanLiteral(x) => &x.location,
-            VarPathRoot::FloatLiteral(x) => &x.location,
-            VarPathRoot::IntegerLiteral(x) => &x.location,
-            VarPathRoot::StringLiteral(x) => &x.location,
-            VarPathRoot::ArrayLiteral(x) => &x.location,
-            VarPathRoot::ObjectLiteral(x) => &x.location,
-            VarPathRoot::Variable(x) => &x.location,
-        }
-    }
-
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
-        if access_type == AccessType::Set && self.is_literal() {
-            context.error(self.get_location(), format!("cannot assign value to a literal"));
+        if let AccessType::Set(set_location) = access_type {
+            if self.is_literal() {
+                context.error(set_location, format!("cannot assign value to a literal"));
 
-            return None;
+                return None;
+            }
         }
 
         match self {
@@ -52,7 +41,7 @@ impl VarPathRoot {
             VarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(context),
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
-            VarPathRoot::Variable(_) => todo!(),
+            VarPathRoot::Variable(root_var_ref) => root_var_ref.process(access_type, context),
         }
     }
 }

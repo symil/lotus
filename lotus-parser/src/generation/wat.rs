@@ -92,6 +92,10 @@ impl Wat {
         wat!["local.set", Self::var_name(var_name), value]
     }
 
+    pub fn set_local_from_stack(var_name: &str) -> Self {
+        wat!["local.set", Self::var_name(var_name)]
+    }
+
     pub fn get_local(var_name: &str) -> Self {
         wat!["local.get", Self::var_name(var_name)]
     }

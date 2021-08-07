@@ -1,5 +1,7 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum AccessType {
+use parsable::DataLocation;
+
+#[derive(Debug, Clone, Copy)]
+pub enum AccessType<'a> {
     Get,
-    Set
+    Set(&'a DataLocation)
 }
