@@ -46,6 +46,8 @@ mod root_var_ref;
 mod null_literal;
 mod item_type;
 mod unary_operator;
+mod assignment_operator;
+mod statement_list;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -95,3 +97,5 @@ pub use root_var_ref::*;
 pub use null_literal::*;
 pub use item_type::*;
 pub use unary_operator::*;
+pub use assignment_operator::*;
+pub use statement_list::*;

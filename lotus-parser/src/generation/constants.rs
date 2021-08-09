@@ -1,3 +1,5 @@
+pub const CONSTANTS_INIT_FUNC_NAME : &'static str = "constants_init";
+
 pub const MEM_INIT_FUNC_NAME : &'static str = "mem_init";
 pub const MEM_ALLOC_FUNC_NAME : &'static str = "mem_alloc";
 pub const MEM_FREE_FUNC_NAME : &'static str = "mem_free";
@@ -23,5 +25,6 @@ pub const LOG_I32_FUNC_NAME : &'static str = "log_i32";
 
 pub const SELF_VAR_NAME : &'static str = "self";
 pub const PAYLOAD_VAR_NAME : &'static str = "payload";
+pub const RESULT_VAR_NAME : &'static str = "fn_result__";
 
 pub const NULL_ADDR : i32 = 0;

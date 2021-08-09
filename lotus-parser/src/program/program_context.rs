@@ -17,7 +17,8 @@ pub struct ProgramContext {
     pub payload_var: Option<VarInfo>,
     pub visited_constants: Vec<Identifier>,
     pub inside_const_expr: bool,
-    pub function_return_type: Option<Type>
+    pub function_return_type: Option<Type>,
+    pub function_depth: usize
 }
 
 impl ProgramContext {
@@ -86,7 +87,7 @@ impl ProgramContext {
         self.get_var_ref(name).cloned()
     }
 
-    pub fn push_var(&mut self, name: Identifier, var_type: VarInfo) {
+    pub fn push_var(&mut self, name: &Identifier, var_type: VarInfo) {
         self.scopes.last_mut().unwrap().insert(name.clone(), var_type);
     }
 
@@ -118,7 +119,10 @@ pub struct VarInfo {
 }
 
 impl VarInfo {
-    pub fn new(wasm_name: Identifier, expr_type: Type) -> Self {
-        Self { wasm_name, expr_type }
+    pub fn new(wasm_name: &Identifier, expr_type: &Type) -> Self {
+        Self {
+            wasm_name: wasm_name.clone(),
+            expr_type: expr_type.clone()
+        }
     }
 }

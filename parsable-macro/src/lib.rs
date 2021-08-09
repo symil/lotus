@@ -62,6 +62,7 @@ impl Parse for FieldAttributes {
     }
 }
 
+// TODO: add prefix and suffix
 struct RootAttributes {
     located: bool,
     impl_display: bool,

@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fmt};
-use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}};
+use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, Wat, ToWatVec, ToWat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
 use super::{ProgramContext, StructAnnotation};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -141,6 +141,20 @@ impl Type {
         }
     }
 
+    pub fn is_void(&self) -> bool {
+        match self {
+            Self::Void => true,
+            _ => false
+        }
+    }
+
+    pub fn is_boolean(&self) -> bool {
+        match self {
+            Self::Boolean => true,
+            _ => false
+        }
+    }
+
     pub fn is_struct(&self, struct_name: &Identifier) -> bool {
         match self {
             Type::Struct(self_struct_name) => self_struct_name == struct_name,
@@ -208,6 +222,20 @@ impl Type {
                     true
                 }
             },
+        }
+    }
+
+    pub fn to_bool(&self) -> Option<Wat> {
+        match self {
+            Type::Pointer => Some(wat!["i32.ne", Wat::const_i32(0)]),
+            Type::Boolean => Some(wat!["nop"]),
+            Type::Integer => Some(wat!["i32.ne", Wat::const_i32(i32::MIN)]),
+            Type::Float => Some(wat!["i32.ne", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]]),
+            Type::String => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
+            Type::Struct(_) => Some(wat!["i32.ne", Wat::const_i32(NULL_ADDR)]),
+            Type::Null => Some(Wat::const_i32(0)),
+            Type::Array(_) => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
+            _ => None
         }
     }
 }

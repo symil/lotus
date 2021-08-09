@@ -17,6 +17,7 @@ pub enum UnaryOperatorToken {
 impl UnaryOperator {
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
         let wat_result = match &self.token {
+            UnaryOperatorToken::AsBool => operand_type.to_bool(),
             UnaryOperatorToken::Not => match operand_type {
                 Type::Pointer => Some(wat!["i32.eqz"]),
                 Type::Boolean => Some(wat!["i32.eqz"]),
@@ -26,17 +27,6 @@ impl UnaryOperator {
                 Type::Struct(_) => Some(wat!["i32.eq", Wat::const_i32(NULL_ADDR)]),
                 Type::Null => Some(Wat::const_i32(1)),
                 Type::Array(_) => Some(wat!["i32.eqz", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![])]),
-                _ => None
-            },
-            UnaryOperatorToken::AsBool => match operand_type {
-                Type::Pointer => Some(wat!["i32.ne", Wat::const_i32(0)]),
-                Type::Boolean => Some(wat!["nop"]),
-                Type::Integer => Some(wat!["i32.ne", Wat::const_i32(i32::MIN)]),
-                Type::Float => Some(wat!["i32.ne", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]]),
-                Type::String => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
-                Type::Struct(_) => Some(wat!["i32.ne", Wat::const_i32(NULL_ADDR)]),
-                Type::Null => Some(Wat::const_i32(0)),
-                Type::Array(_) => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
                 _ => None
             },
             UnaryOperatorToken::Plus => match operand_type {
