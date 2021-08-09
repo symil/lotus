@@ -48,6 +48,8 @@ mod item_type;
 mod unary_operator;
 mod assignment_operator;
 mod statement_list;
+mod constant_declaration;
+mod struct_qualifier;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -99,3 +101,5 @@ pub use item_type::*;
 pub use unary_operator::*;
 pub use assignment_operator::*;
 pub use statement_list::*;
+pub use constant_declaration::*;
+pub use struct_qualifier::*;

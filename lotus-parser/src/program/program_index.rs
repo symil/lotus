@@ -4,10 +4,6 @@ use crate::{items::{Action, ActionKeyword, ArrayLiteral, Assignment, Branch, Exp
 
 use super::{BuiltinType, Error, Type, FieldDetails, FunctionAnnotation, ItemType, OperationTree, ProgramContext, StructAnnotation, process_array_method_call, get_binary_operator_input_types, get_binary_operator_output_type, process_builtin_field_access, get_builtin_method_info, process_system_variable, get_unary_operator_input_types, get_unary_operator_output_type};
 
-const KEYWORDS : &'static[&'static str] = &[
-    "let", "const", "struct", "view", "entity", "event", "world", "user", "true", "false"
-];
-
 #[derive(Default)]
 pub struct ProgramIndex {
     pub world_type_name: Identifier,
@@ -98,21 +94,6 @@ impl ProgramIndex {
 
             self.user_type_name = default_user_struct.name.clone();
             self.struct_declarations.insert(default_user_struct.name.clone(), default_user_struct);
-        }
-    }
-
-    fn process_structs_fields(&mut self, context: &mut ProgramContext) {
-        for struct_declaration in self.struct_declarations.values() {
-            if self.is_forbidden_identifier(&struct_declaration.name) {
-                context.error(struct_declaration, format!("invalid type name: {}", &struct_declaration.name));
-            } else {
-                let struct_types = self.collect_struct_types(&struct_declaration.name, vec![], context);
-                let struct_fields = self.collect_struct_fields(&struct_declaration.name, &struct_types, context);
-                let struct_annotation = context.structs.get_mut(&struct_declaration.name).unwrap();
-
-                struct_annotation.types = struct_types;
-                struct_annotation.fields = struct_fields;
-            }
         }
     }
 
@@ -351,17 +332,6 @@ impl ProgramIndex {
         }
     }
 
-    fn process_statement(&self, statement: &Statement, context: &mut ProgramContext) {
-        match statement {
-            Statement::VarDeclaration(var_declaration) => self.process_var_declaration(var_declaration, context),
-            Statement::Action(action) => self.process_action(action, context),
-            Statement::If(if_block) => self.process_if_block(if_block, context),
-            Statement::While(while_block) => self.process_while_block(while_block, context),
-            Statement::For(for_block) => self.process_for_block(for_block, context),
-            Statement::Assignment(assignment) => self.process_assignment(assignment, context),
-        }
-    }
-
     fn process_for_block(&self, for_block: &ForBlock, context: &mut ProgramContext) {        
         let var_name = &for_block.var_name;
         let var_exists = context.var_exists(var_name);
@@ -507,76 +477,6 @@ impl ProgramIndex {
         (arguments, return_type)
     }
 
-    fn collect_struct_types(&self, struct_name: &Identifier, mut types: Vec<Identifier>, context: &mut ProgramContext) -> Vec<Identifier> {
-        if types.contains(struct_name) {
-            context.error(struct_name, format!("circular inheritance: {}", struct_name));
-        } else {
-            types.push(struct_name.clone());
-
-            let struct_def = self.struct_declarations.get(&struct_name).unwrap();
-
-            if let Some(parent_name) = &struct_def.parent {
-                if let Some(parent) = self.struct_declarations.get(parent_name) {
-                    if parent.qualifier != struct_def.qualifier {
-                        context.error(parent_name, format!("a {} cannot inherit from a {}", struct_def.qualifier, parent.qualifier));
-                    } else {
-                        types = self.collect_struct_types(parent_name, types, context);
-                    }
-                } else if self.is_builtin_type_name(parent_name) {
-                    context.error(parent_name, format!("cannot inherit from built-in type: {}", parent_name))
-                } else {
-                    context.error(parent_name, format!("unknown type: {}", parent_name))
-                }
-            }
-        }
-
-        types
-    }
-
-    fn collect_struct_fields(&self, final_struct_name: &Identifier, struct_types: &[Identifier], context: &mut ProgramContext) -> HashMap<Identifier, FieldDetails> {
-        let mut fields = HashMap::new();
-
-        for type_name in struct_types.iter().rev() {
-            let struct_declaration = self.struct_declarations.get(type_name).unwrap();
-
-            for field in &struct_declaration.body.fields {
-                if self.is_forbidden_identifier(&field.name) {
-                    if type_name == final_struct_name {
-                        context.error(&field.name, format!("struct `{}`: forbidden field name `{}`", final_struct_name, &field.name));
-                    }
-                } else {
-                    if fields.contains_key(&field.name) {
-                        context.error(&field.name, format!("struct `{}`: duplicate field `{}`", final_struct_name, &field.name));
-                    }
-
-                    if let Some(field_type) = self.process_type(&field.ty, context) {
-                        let ok = match field_type.item_type() {
-                            ItemType::Null => false,
-                            ItemType::Pointer => false,
-                            ItemType::Builtin(_) => true,
-                            ItemType::Struct(struct_name) => self.is_entity_qualifier(&self.struct_declarations.get(struct_name).unwrap().qualifier),
-                            ItemType::Function(_, _) => false,
-                        };
-
-                        if ok {
-                            let field_details = FieldDetails {
-                                name: field.name.clone(),
-                                expr_type: field_type,
-                                offset: fields.len(),
-                            };
-
-                            fields.insert(field.name.clone(), field_details);
-                        } else {
-                            context.error(&field.name, format!("field `{}`: expected `bool`, `num`, `string` or an entity, got `{}`", &field.name, &field_type));
-                        }
-                    }
-                }
-            }
-        }
-
-        fields
-    }
-
     fn check_builtin_method(&self, method: &MethodDeclaration, context: &mut ProgramContext) {
         if !method.conditions.is_empty() {
             context.error(&method.conditions[0], format!("only event callbacks can have conditions"));
@@ -604,21 +504,5 @@ impl ProgramIndex {
         } else {
             context.error(type_name, format!("unkown type `{}`", type_name));
         }
-    }
-
-    fn is_forbidden_identifier(&self, identifier: &Identifier) -> bool {
-        self.is_builtin_type_name(identifier) || KEYWORDS.contains(&identifier.value.as_str())
-    }
-
-    fn is_builtin_type_name(&self, name: &Identifier) -> bool {
-        BuiltinType::from_identifier(name).is_some()
-    }
-
-    fn expressions_match(&self, expected: &Type, actual: &Type, context: &ProgramContext) -> bool {
-        expected.is_assignable(actual, &context.structs, &mut HashMap::new())
-    }
-
-    fn process_type(&self, ty: &FullType, context: &mut ProgramContext) -> Option<Type> {
-        todo!()
     }
 }

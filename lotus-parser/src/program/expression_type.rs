@@ -61,15 +61,22 @@ impl Type {
         vec![item]
     }
 
+    pub fn builtin_from_str(name: &str) -> Option<Self> {
+        match name {
+            "ptr" => Some(Self::Pointer),
+            "bool" => Some(Self::Boolean),
+            "int" => Some(Self::Integer),
+            "float" => Some(Self::Float),
+            "string" => Some(Self::String),
+            _ => None
+        }
+    }
+
     pub fn from_parsed_type(ty: &FullType, context: &mut ProgramContext) -> Option<Self> {
         let item_type = match &ty.item {
-            ItemType::Value(value_type) => match value_type.name.as_str() {
-                "ptr" => Self::Pointer,
-                "bool" => Self::Boolean,
-                "int" => Self::Integer,
-                "float" => Self::Float,
-                "string" => Self::String,
-                _ => match context.structs.contains_key(&value_type.name) {
+            ItemType::Value(value_type) => match Self::builtin_from_str(value_type.name.as_str()) {
+                Some(builtin_type) => builtin_type,
+                None => match context.structs.contains_key(&value_type.name) {
                     true => Self::Struct(value_type.name.clone()),
                     false => {
                         context.error(&value_type.name, format!("undefined type: {}", &value_type.name));

@@ -3,17 +3,15 @@ use super::Type;
 
 #[derive(Clone)]
 pub struct FunctionAnnotation {
-    pub name: Identifier,
-    pub wasm_name: Identifier,
+    pub wasm_name: String,
     pub arguments: Vec<(Identifier, Type)>,
     pub return_type: Type
 }
 
 impl FunctionAnnotation {
-    pub fn new(name: &Identifier) -> Self {
+    pub fn new(wasm_name: String) -> Self {
         Self {
-            name: name.clone(),
-            wasm_name: Identifier::default(), // TODO
+            wasm_name: wasm_name,
             arguments: vec![],
             return_type: Type::Void
         }
