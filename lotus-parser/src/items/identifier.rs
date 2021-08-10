@@ -25,6 +25,10 @@ impl Identifier {
     pub fn as_str(&self) -> &str {
         self.value.as_str()
     }
+
+    pub fn to_string(&self) -> String {
+        self.value.clone()
+    }
 }
 
 impl Hash for Identifier {

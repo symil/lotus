@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use parsable::parsable;
 use crate::{generation::Wat, program::{AccessType, ProgramContext, Wasm}};
 use super::{AssignmentOperator, Expression, VarPath};
@@ -18,13 +20,17 @@ impl Assignment {
 
             if let Some(left_wasm) = left_wasm_opt {
                 if let Some(right_wasm) = right_wasm_opt {
-                    let mut wat = vec![];
+                    if left_wasm.ty.is_assignable(&right_wasm.ty, context, &mut HashMap::new()) {
+                        let mut wat = vec![];
 
-                    wat.extend(right_wasm.wat);
-                    wat.extend(left_wasm.wat);
-                    wat.push(Wat::inst("drop"));
+                        wat.extend(right_wasm.wat);
+                        wat.extend(left_wasm.wat);
+                        wat.push(Wat::inst("drop"));
 
-                    result = Some(Wasm::untyped(wat));
+                        result = Some(Wasm::untyped(wat));
+                    } else {
+                        context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &right_wasm.ty, &left_wasm.ty));
+                    }
                 }
             }
         } else {

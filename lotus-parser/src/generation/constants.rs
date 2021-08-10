@@ -23,7 +23,7 @@ pub const STRING_EQUAL_FUNC_NAME : &'static str = "string_concat";
 
 pub const LOG_I32_FUNC_NAME : &'static str = "log_i32";
 
-pub const SELF_VAR_NAME : &'static str = "self";
+pub const THIS_VAR_NAME : &'static str = "this";
 pub const PAYLOAD_VAR_NAME : &'static str = "payload";
 pub const RESULT_VAR_NAME : &'static str = "fn_result__";
 

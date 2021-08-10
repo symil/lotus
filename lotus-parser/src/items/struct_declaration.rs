@@ -34,8 +34,24 @@ impl StructDeclaration {
             struct_annotation.name = self.name.clone();
             struct_annotation.type_id = context.structs.len() + 1;
 
-            if context.structs.insert(self.name.clone(), struct_annotation).is_some() {
+            if context.structs.contains_key(&self.name) {
                 context.error(&self.name, format!("duplicate type declaration: `{}`", &self.name));
+            } else {
+                context.structs.insert(self.name.clone(), struct_annotation);
+            }
+
+            if self.qualifier == StructQualifier::World {
+                if let Some(current_world) = context.world_struct_name {
+                    context.error(self, format!("re-declaration of world structure"));
+                } else {
+                    context.world_struct_name = Some(self.name.clone());
+                }
+            } else if self.qualifier == StructQualifier::User {
+                if let Some(current_user) = context.user_struct_name {
+                    context.error(self, format!("re-declaration of user structure"));
+                } else {
+                    context.user_struct_name = Some(self.name.clone());
+                }
             }
         }
     }
@@ -105,8 +121,8 @@ impl StructDeclaration {
                         Type::Float => true,
                         Type::String => true,
                         Type::Null => false,
+                        Type::TypeId => false,
                         Type::Struct(_) => true,
-                        Type::TypeId(_) => false,
                         Type::Function(_, _) => false,
                         Type::Array(_) => unreachable!(),
                         Type::Any(_) => unreachable!(),
@@ -167,7 +183,7 @@ impl StructDeclaration {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process_methods_bodies(&self, context: &mut ProgramContext) -> Option<Wasm> {
         todo!()
     }
 }

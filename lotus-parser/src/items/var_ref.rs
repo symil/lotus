@@ -29,10 +29,10 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::typed(var_info.expr_type.clone(), context.scope.get_to_stack(var_info.wasm_name.as_str()))),
+                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), context.current_scope.get_to_stack(var_info.wasm_name.as_str()))),
                     AccessType::Set(_) => Some(Wasm::untyped(vec![
-                        context.scope.set_from_stack(var_info.wasm_name.as_str()),
-                        context.scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
+                        context.current_scope.set_from_stack(var_info.wasm_name.as_str()),
+                        context.current_scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
                     ])),
                 },
                 None => {
@@ -64,6 +64,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         Type::Integer => process_integer_field_access(field_name, context),
         Type::Float => process_float_field_access(field_name, context),
         Type::String => process_string_field_access(field_name, context),
+        Type::TypeId => None,
         Type::Struct(struct_name) => {
             if field_name.is("_") {
                 if let AccessType::Set(set_location) = access_type {
@@ -93,7 +94,6 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
                 None
             }
         },
-        Type::TypeId(_) => None,
         Type::Function(_, _) => None,
         Type::Array(item_type) => process_array_field_access(item_type, field_name, context),
         Type::Any(_) => None,
@@ -111,6 +111,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     let method_info = match parent_type {
         Type::Void => None,
         Type::Null => None,
+        Type::TypeId => None,
         Type::System => process_system_method_call(method_name, context),
         Type::Pointer => process_pointer_method_call(method_name, context),
         Type::Boolean => process_boolean_method_call(method_name, context),
@@ -131,7 +132,6 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
                 None
             }
         },
-        Type::TypeId(_) => None,
         Type::Function(_, _) => None,
         Type::Array(item_type) => process_array_method_call(item_type, method_name, context),
         Type::Any(_) => None,

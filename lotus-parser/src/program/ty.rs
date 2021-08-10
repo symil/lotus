@@ -12,18 +12,29 @@ pub enum Type {
     Float,
     String,
     Null,
+    TypeId,
     Struct(Identifier),
-    TypeId(Identifier),
     Function(Vec<Type>, Box<Type>),
     Array(Box<Type>),
     Any(u32)
 }
 
 impl Type {
-    pub fn get_wasm_type(&self) -> &'static str {
+    pub fn get_wasm_type(&self) -> Option<&'static str> {
         match self {
-            Type::Float => "f32",
-            _ => "i32"
+            Type::Void => None,
+            Type::System => None,
+            Type::Pointer => Some("i32"),
+            Type::Boolean => Some("i32"),
+            Type::Integer => Some("i32"),
+            Type::Float => Some("f32"),
+            Type::String => Some("i32"),
+            Type::Null => Some("i32"),
+            Type::TypeId => Some("i32"),
+            Type::Struct(_) => Some("i32"),
+            Type::Function(_, _) => Some("i32"),
+            Type::Array(_) => Some("i32"),
+            Type::Any(_) => unreachable!(),
         }
     }
 
@@ -51,8 +62,8 @@ impl Type {
             Type::Float => Wat::const_f32(0.),
             Type::String => Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
             Type::Null => unreachable!(),
+            Type::TypeId => Wat::const_i32(0),
             Type::Struct(_) => Wat::const_i32(NULL_ADDR),
-            Type::TypeId(_) => Wat::const_i32(0),
             Type::Function(_, _) => unreachable!(),
             Type::Array(_) => Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
             Type::Any(_) => unreachable!(),
@@ -169,13 +180,6 @@ impl Type {
         }
     }
 
-    pub fn is_type_id(&self, struct_name: &Identifier) -> bool {
-        match self {
-            Type::TypeId(self_struct_name) => self_struct_name == struct_name,
-            _ => false
-        }
-    }
-
     pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
         self.is_assignable(other, context, &mut HashMap::new()) || other.is_assignable(self, context, &mut HashMap::new())
     }
@@ -190,12 +194,12 @@ impl Type {
             Type::Float => actual == &Type::Float,
             Type::String => actual == &Type::String,
             Type::Null => actual == &Type::Null,
+            Type::TypeId => actual == &Type::TypeId,
             Type::Struct(struct_name) => match actual {
                 Type::Struct(actual_struct_name) => context.structs.get(actual_struct_name).unwrap().types.contains(struct_name),
                 Type::Null => true,
                 _ => false
             },
-            Type::TypeId(struct_name) => actual.is_type_id(struct_name),
             Type::Function(expected_argument_types, expected_return_type) => match actual {
                 Type::Function(actual_argument_types, actual_return_type) => {
                     if actual_argument_types.len() != expected_argument_types.len() {
@@ -251,23 +255,23 @@ impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Type::Void => write!(f, "<void>"),
-            Type::System => write!(f, "system"),
+            Type::System => write!(f, "<system>"),
             Type::Pointer => write!(f, "ptr"),
             Type::Boolean => write!(f, "bool"),
             Type::Integer => write!(f, "int"),
             Type::Float => write!(f, "float"),
             Type::String => write!(f, "string"),
             Type::Null => write!(f, "<null>"),
-            Type::Struct(_) => todo!(),
-            Type::TypeId(_) => todo!(),
+            Type::TypeId => write!(f, "type"),
+            Type::Struct(struct_name) => write!(f, "{}", struct_name),
             Type::Function(arguments, return_type) => {
                 let args_joined = arguments.iter().map(|arg| format!("{}", arg)).collect::<Vec<String>>().join(",");
                 let return_type_str = match Box::as_ref(return_type) {
                     Type::Void => String::new(),
-                    _ => format!(" -> {}", return_type)
+                    _ => format!("({})", return_type)
                 };
 
-                write!(f, "(fn({}){})", args_joined, return_type_str)
+                write!(f, "fn({}){}", args_joined, return_type_str)
             },
             Type::Array(item_type) => write!(f, "{}[]", item_type),
             Type::Any(id) => write!(f, "<any.{}>", id),

@@ -50,7 +50,7 @@ impl ProgramIndex {
                         self.struct_declarations.insert(identifier, struct_declaration);
                     },
                     TopLevelBlock::ConstDeclaration(var_declaration) => {
-                        context.constants.insert(identifier.clone(), Type::Void);
+                        context.globals.insert(identifier.clone(), Type::Void);
                         self.const_declarations.insert(identifier, var_declaration);
                     },
                     TopLevelBlock::FunctionDeclaration(def) => {
@@ -60,140 +60,8 @@ impl ProgramIndex {
                 }
             }
         }
-
-        let world_structs : Vec<Identifier> = self.struct_declarations.values().filter(|s| s.qualifier == StructQualifier::World).map(|s| s.name.clone()).collect();
-        let user_structs : Vec<Identifier> = self.struct_declarations.values().filter(|s| s.qualifier == StructQualifier::User).map(|s| s.name.clone()).collect();
-
-        if world_structs.len() > 1 {
-            for name in &world_structs {
-                context.error(name, "multiple world structures declared");
-            }
-
-            self.world_type_name = world_structs.first().unwrap().clone();
-        } else if world_structs.is_empty() {
-            let mut default_world_struct = StructDeclaration::default();
-
-            default_world_struct.qualifier = StructQualifier::World;
-            default_world_struct.name = Identifier::new("__DefaultWorld");
-
-            self.world_type_name = default_world_struct.name.clone();
-            self.struct_declarations.insert(default_world_struct.name.clone(), default_world_struct);
-        }
-
-        if user_structs.len() > 1 {
-            for name in &world_structs {
-                context.error(name, "multiple user structures declared");
-            }
-
-            self.user_type_name = user_structs.first().unwrap().clone();
-        } else if user_structs.is_empty() {
-            let mut default_user_struct = StructDeclaration::default();
-
-            default_user_struct.qualifier = StructQualifier::World;
-            default_user_struct.name = Identifier::new("__DefaultUser");
-
-            self.user_type_name = default_user_struct.name.clone();
-            self.struct_declarations.insert(default_user_struct.name.clone(), default_user_struct);
-        }
     }
 
-    fn process_constants(&mut self, context: &mut ProgramContext) {
-        context.inside_const_expr = true;
-
-        for const_declaration in self.const_declarations.values() {
-            if const_declaration.qualifier.is_none() {
-                context.error(const_declaration, "global variables must be declared with the `const` qualifier");
-            }
-
-            if let Some(expr_type) = self.get_expression_type(&const_declaration.init_value, context) {
-                *context.constants.get_mut(&const_declaration.var_name).unwrap() = expr_type;
-            }
-        }
-    }
-
-    fn process_function_and_method_bodies(&mut self, context: &mut ProgramContext) {
-        context.inside_const_expr = false;
-        context.push_scope();
-
-        let mut global_scope = vec![];
-
-        for (const_name, const_type) in context.constants.iter() {
-            global_scope.push((const_name.clone(), const_type.clone()));
-        }
-
-        for (function_name, function_annotation) in context.functions.iter() {
-            global_scope.push((function_name.clone(), function_annotation.get_type()));
-        }
-
-        for (value_name, value_type) in global_scope {
-            context.push_var(value_name, VarInfo {
-                expr_type: value_type,
-                is_const: true
-            });
-        }
-
-        for struct_declaration in self.struct_declarations.values() {
-            for method_declaration in &struct_declaration.body.methods {
-                context.function_return_type = None;
-                context.set_this_type(Some(VarInfo {
-                    expr_type: Type::object(&struct_declaration.name),
-                    is_const: true
-                }));
-                context.set_payload_type(match &method_declaration.qualifier {
-                    Some(MethodQualifier::Builtin) => match get_builtin_method_info(&method_declaration.name).unwrap().1 {
-                        BuiltinMethodPayload::None => None,
-                        BuiltinMethodPayload::World => Some(VarInfo::const_var(Type::object(&self.world_type_name))),
-                        BuiltinMethodPayload::User => Some(VarInfo::const_var(Type::object(&self.user_type_name))),
-                        BuiltinMethodPayload::ViewInput => todo!(),
-                    },
-                    Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
-                        Some(VarInfo::const_var(Type::object(&method_declaration.name)))
-                    },
-                    None => None,
-                });
-                context.push_scope();
-
-                if let Some((arguments, return_type)) = context.get_method_signature(&struct_declaration.name, &method_declaration.name) {
-                    context.function_return_type = Some(return_type);
-
-                    for (arg_name, arg_type) in arguments {
-                        context.push_var(arg_name, VarInfo::mut_var(arg_type));
-                    }
-                }
-
-                self.process_function_body(&method_declaration.statements, context);
-
-                context.pop_scope();
-            }
-        }
-
-        for function_declaration in self.function_declarations.values() {
-            context.function_return_type = None;
-            context.set_this_type(None);
-            context.set_payload_type(None);
-            context.push_scope();
-
-            if let Some((arguments, return_type)) = context.get_function_signatures(&function_declaration.name) {
-                context.function_return_type = Some(return_type);
-
-                for (arg_name, arg_type) in arguments {
-                    context.push_var(arg_name, VarInfo::mut_var(arg_type));
-                }
-            }
-
-            self.process_function_body(&function_declaration.statements, context);
-
-            context.pop_scope();
-        }
-
-        context.push_scope();
-    }
-
-    fn process_function_body(&self, body: &Vec<Statement>, context: &mut ProgramContext){ 
-        for statement in body {
-            self.process_statement(statement, context);
-        }
-    }
 
     fn process_for_block(&self, for_block: &ForBlock, context: &mut ProgramContext) {        
         let var_name = &for_block.var_name;
@@ -207,7 +75,7 @@ impl ProgramIndex {
 
         if let Some(expr_type) = self.get_expression_type(&for_block.array_expression, context) {
             if let Type::Array(item_type) = expr_type {
-                context.push_var(var_name.clone(), VarInfo::const_var(*item_type));
+                context.push_local_var(var_name.clone(), VarInfo::const_var(*item_type));
             } else {
                 context.error(&for_block.array_expression, format!("for block range: expected array, for `{}`", expr_type));
             }
@@ -269,47 +137,4 @@ impl ProgramIndex {
             },
         }
     }
-
-    fn process_var_declaration(&self, var_declaration: &VarDeclaration, context: &mut ProgramContext) {
-        let var_name = &var_declaration.var_name;
-        let var_exists = context.var_exists(&var_declaration.var_name);
-
-        if var_declaration.qualifier.is_some() {
-            context.error(&var_declaration.qualifier, format!("local variables cannot have the `const` qualifier"));
-        }
-
-        if var_exists {
-            context.error(var_name, format!("duplicate variable declaration: `{}` already exists in this scope", var_name));
-        }
-
-        if let Some(var_type) = self.get_expression_type(&var_declaration.init_value, context) {
-            if !var_exists {
-                context.push_var(var_name.clone(), VarInfo::mut_var(var_type));
-            }
-        }
-    }
-
-    fn process_assignment(&self, assignment: &Assignment, context: &mut ProgramContext) {
-        let lvalue = &assignment.lvalue;
-        let lvalue_type_opt = self.get_operand_type(lvalue, context);
-
-        if let Some(rvalue) = &assignment.rvalue {
-            let is_lvalue_assignable = self.is_operand_assignable(lvalue);
-
-            if !is_lvalue_assignable {
-                context.error(lvalue, format!("assignment: invalid left-hand side"));
-            }
-
-            if let Some(rvalue_type) = self.get_expression_type(rvalue, context) {
-                if let Some(lvalue_type) = lvalue_type_opt {
-                    if is_lvalue_assignable {
-                        if !self.expressions_match(&lvalue_type, &rvalue_type, context) {
-                            context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", rvalue_type, lvalue_type));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
 }

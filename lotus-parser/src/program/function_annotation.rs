@@ -3,12 +3,12 @@ use super::{Type, Wasm};
 
 #[derive(Default)]
 pub struct FunctionAnnotation {
+    pub index: usize,
     pub wasm_name: String,
     pub this_type: Option<Type>,
     pub payload_type: Option<Type>,
     pub arguments: Vec<(Identifier, Type)>,
     pub return_type: Type,
-    pub body: Wasm
 }
 
 impl FunctionAnnotation {

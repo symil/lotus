@@ -92,6 +92,10 @@ impl Wat {
 
     // LOCALS
 
+    pub fn declare_local(var_name: &str, ty: &'static str) -> Self {
+        wat!["local", Self::var_name(var_name), ty]
+    }
+
     pub fn declare_local_i32(var_name: &str) -> Self {
         wat!["local", Self::var_name(var_name), "i32"]
     }
@@ -150,7 +154,7 @@ impl Wat {
         wat!["import", Self::string(namespace), Self::string(sub_namespace), func_content]
     }
 
-    pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &'static str)>, result: Option<&'static str>, instructions: Vec<Wat>) -> Self {
+    pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &'static str)>, result: Option<&'static str>, locals: Vec<(&str, &'static str)>, instructions: Vec<Wat>) -> Self {
         let mut func = wat!["func", Self::var_name(var_name)];
 
         if let Some(name) = export_name {
@@ -163,6 +167,10 @@ impl Wat {
 
         if let Some(ty) = result {
             func.push(wat!["result", ty]);
+        }
+
+        for (name, ty) in locals {
+            func.push(wat!["local", Self::var_name(name), ty]);
         }
 
         for inst in instructions {
