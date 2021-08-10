@@ -8,7 +8,6 @@ pub fn get_builtin_method_info(name: &Identifier) -> Option<(Vec<StructQualifier
     }
 }
 
-#[allow(dead_code)]
 pub enum BuiltinMethodPayload {
     None,
     World,

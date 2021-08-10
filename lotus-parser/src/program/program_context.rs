@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::WasmModule, items::Identifier};
-use super::{ConstantAnnotation, Error, Type, FunctionAnnotation, StructAnnotation};
+use super::{ConstantAnnotation, Error, FunctionAnnotation, StructAnnotation, Type, VariableScope};
 
 #[derive(Default)]
 pub struct ProgramContext {
@@ -16,9 +16,9 @@ pub struct ProgramContext {
     pub this_var: Option<VarInfo>,
     pub payload_var: Option<VarInfo>,
     pub visited_constants: Vec<Identifier>,
-    pub inside_const_expr: bool,
     pub function_return_type: Option<Type>,
-    pub function_depth: usize
+    pub function_depth: usize,
+    pub scope: VariableScope
 }
 
 impl ProgramContext {
@@ -73,7 +73,7 @@ impl ProgramContext {
     }
 
     pub fn var_exists(&mut self, name: &Identifier) -> bool {
-        self.get_var_ref(name).is_some()
+        self.get_var_ref(name).is_some() || self.constants.contains_key(name)
     }
 
     // pub fn set_var_type(&mut self, name: &Identifier, var_type: ExpressionType) {
@@ -93,7 +93,7 @@ impl ProgramContext {
 
     pub fn get_method_signature(&self, struct_name: &Identifier, method_name: &Identifier) -> Option<(Vec<(Identifier, Type)>, Type)> {
         if let Some(struct_annotation) = self.structs.get(&struct_name) {
-            if let Some(method_annotation) = struct_annotation.methods.get(method_name) {
+            if let Some(method_annotation) = struct_annotation.user_methods.get(method_name) {
                 Some((method_annotation.arguments.clone(), method_annotation.return_type.clone()))
             } else {
                 None

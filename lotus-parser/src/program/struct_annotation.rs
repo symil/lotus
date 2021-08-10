@@ -4,7 +4,7 @@ use crate::items::{Identifier, StructQualifier};
 
 use super::{Type, FunctionAnnotation};
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct StructAnnotation {
     pub name: Identifier,
     pub parent_name: Option<Identifier>,
@@ -15,9 +15,9 @@ pub struct StructAnnotation {
     pub fields: HashMap<Identifier, FieldDetails>,
     pub user_methods: HashMap<Identifier, FunctionAnnotation>,
     pub builtin_methods: HashMap<Identifier, FunctionAnnotation>,
-    pub hook_event_callbacks: HashMap<Identifier, FunctionAnnotation>,
-    pub pre_event_callbacks: HashMap<Identifier, FunctionAnnotation>,
-    pub post_event_callbacks: HashMap<Identifier, FunctionAnnotation>,
+    pub hook_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,
+    pub before_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,
+    pub after_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,
 }
 
 #[derive(Debug, Clone)]

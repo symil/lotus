@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::program::{ProgramContext, Wasm};
+use crate::program::{ProgramContext, VariableScope, Wasm};
 
 use super::{Action, Assignment, Expression, ForBlock, Identifier, IfBlock, Operand, FullType, VarDeclaration, WhileBlock};
 
@@ -20,7 +20,7 @@ pub enum Statement {
 impl Statement {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
-            Statement::VarDeclaration(var_declaration) => var_declaration.process(context),
+            Statement::VarDeclaration(var_declaration) => var_declaration.process(VariableScope::Local, context),
             Statement::Action(_) => todo!(),
             Statement::If(_) => todo!(),
             Statement::While(_) => todo!(),

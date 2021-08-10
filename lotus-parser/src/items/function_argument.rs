@@ -6,5 +6,5 @@ use super::{Identifier, FullType};
 pub struct FunctionArgument {
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub type_: FullType
+    pub ty: FullType
 }

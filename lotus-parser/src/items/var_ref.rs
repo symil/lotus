@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableScope, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -28,12 +28,11 @@ impl VarRef {
                 },
             },
             None => match context.get_var_info(&self.name) {
-                // TODO: handle constants
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::typed(var_info.expr_type.clone(), Wat::get_local(var_info.wasm_name.as_str()))),
+                    AccessType::Get => Some(Wasm::typed(var_info.expr_type.clone(), context.scope.get_to_stack(var_info.wasm_name.as_str()))),
                     AccessType::Set(_) => Some(Wasm::untyped(vec![
-                        Wat::set_local_from_stack(var_info.wasm_name.as_str()),
-                        Wat::get_local(var_info.wasm_name.as_str()) // put back the value on the stack
+                        context.scope.set_from_stack(var_info.wasm_name.as_str()),
+                        context.scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
                     ])),
                 },
                 None => {
@@ -79,12 +78,12 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
             } else if let Some(struct_annotation) = context.structs.get(struct_name) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
-                        AccessType::Get => field.expr_type.get_array_get_function_name(),
-                        AccessType::Set(_) => field.expr_type.get_array_set_function_name(),
+                        AccessType::Get => field.ty.get_array_get_function_name(),
+                        AccessType::Set(_) => field.ty.get_array_set_function_name(),
                     };
 
                     Some(Wasm::typed(
-                        field.get_expr_type(),
+                        field.ty.clone(),
                         Wat::call(func_name, vec![Wat::const_i32(field.offset)])
                     ))
                 } else {
@@ -120,7 +119,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::String => process_string_method_call(method_name, context),
         Type::Struct(struct_name) => {
             if let Some(struct_annotation) = context.structs.get(struct_name) {
-                if let Some(method) = struct_annotation.methods.get(method_name) {
+                if let Some(method) = struct_annotation.user_methods.get(method_name) {
                     Some((
                         method.get_type(),
                         method.wasm_name.as_str(),

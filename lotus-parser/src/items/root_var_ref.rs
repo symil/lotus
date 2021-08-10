@@ -1,7 +1,5 @@
 use parsable::parsable;
-
-use crate::program::{AccessType, ProgramContext, Wasm};
-
+use crate::program::{AccessType, ProgramContext, VariableScope, Wasm};
 use super::{VarRef, VarRefPrefix};
 
 #[parsable]
@@ -11,20 +9,6 @@ pub struct RootVarRef {
 }
 
 impl RootVarRef {
-    pub fn has_this_prefix(&self) -> bool {
-        match self.prefix {
-            Some(VarRefPrefix::This) => true,
-            _ => false
-        }
-    }
-
-    pub fn has_payload_prefix(&self) -> bool {
-        match self.prefix {
-            Some(VarRefPrefix::Payload) => true,
-            _ => false
-        }
-    }
-
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.prefix {
             Some(prefix) => {

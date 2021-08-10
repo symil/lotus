@@ -1,7 +1,5 @@
 use parsable::{DataLocation, parsable};
-
-use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, Type, Wasm}};
-
+use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, Type, VariableScope, Wasm}};
 use super::{ArrayLiteral, BooleanLiteral, FloatLiteral, IntegerLiteral, NullLiteral, ObjectLiteral, RootVarRef, StringLiteral, VarRef};
 
 #[parsable]

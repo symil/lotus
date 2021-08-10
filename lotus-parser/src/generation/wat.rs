@@ -73,6 +73,10 @@ impl Wat {
     pub fn set_global<T : ToWat>(var_name: &str, value: T) -> Self {
         wat!["global.set", Self::var_name(var_name), value]
     }
+    
+    pub fn set_global_from_stack(var_name: &str) -> Self {
+        wat!["global.set", Self::var_name(var_name)]
+    }
 
     pub fn get_global(var_name: &str) -> Self {
         wat!["global.get", Self::var_name(var_name)]

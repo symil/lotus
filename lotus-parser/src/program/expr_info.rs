@@ -1,6 +1,7 @@
 use crate::generation::{ToWatVec, Wat};
 use super::Type;
 
+#[derive(Default)]
 pub struct Wasm {
     pub ty: Type,
     pub wat: Vec<Wat>

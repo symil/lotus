@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, merge, program::{ProgramContext, Type, VarInfo, Wasm}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, merge, program::{ProgramContext, Type, VarInfo, VariableScope, Wasm}};
 use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
@@ -13,10 +13,10 @@ pub struct VarDeclaration {
 }
 
 impl VarDeclaration {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        if context.inside_const_expr && self.qualifier.is_none() {
+    pub fn process(&self, scope: VariableScope, context: &mut ProgramContext) -> Option<Wasm> {
+        if scope == VariableScope::Global && self.qualifier.is_none() {
             context.error(self, format!("global variables must be declared with the `const` qualifier"));
-        } else if !context.inside_const_expr && self.qualifier.is_some() {
+        } else if scope == VariableScope::Local && self.qualifier.is_some() {
             context.error(self, format!("local variables must be declared without the `const` qualifier"));
         }
 
@@ -36,7 +36,7 @@ impl VarDeclaration {
 
             if let Some(var_wasm) = var_wasm_opt {
                 if var_type.is_assignable(&var_wasm.ty, context, &mut HashMap::new()) {
-                    result = Some(Wasm::untyped(merge![var_wasm.wat, Wat::set_local_from_stack(self.var_name.as_str())]));
+                    result = Some(Wasm::untyped(merge![var_wasm.wat, scope.set_from_stack(self.var_name.as_str())]));
                 }
             }
         }

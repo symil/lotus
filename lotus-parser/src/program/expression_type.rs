@@ -274,3 +274,9 @@ impl fmt::Display for Type {
         }
     }
 }
+
+impl Default for Type {
+    fn default() -> Self {
+        Self::Void
+    }
+}

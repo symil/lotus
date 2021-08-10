@@ -18,6 +18,8 @@ mod expr_info;
 mod pointer_fields;
 mod access_type;
 mod keywords;
+mod side;
+mod variable_scope;
 
 pub use error::*;
 pub use program::*;
@@ -39,3 +41,5 @@ pub use expr_info::*;
 pub use pointer_fields::*;
 pub use access_type::*;
 pub use keywords::*;
+pub use side::*;
+pub use variable_scope::*;

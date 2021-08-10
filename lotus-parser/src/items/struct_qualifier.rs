@@ -12,6 +12,20 @@ pub enum StructQualifier {
     Request = "request"
 }
 
+impl StructQualifier {
+    pub fn is_entity_qualifier(&self) -> bool {
+        match self {
+            StructQualifier::Struct => false,
+            StructQualifier::View => false,
+            StructQualifier::Entity => true,
+            StructQualifier::Event => false,
+            StructQualifier::World => true,
+            StructQualifier::User => true,
+            StructQualifier::Request => false,
+        }
+    }
+}
+
 impl Default for StructQualifier {
     fn default() -> Self {
         Self::Struct

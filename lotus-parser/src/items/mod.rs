@@ -50,6 +50,7 @@ mod assignment_operator;
 mod statement_list;
 mod constant_declaration;
 mod struct_qualifier;
+mod method_condition_operand;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -103,3 +104,4 @@ pub use assignment_operator::*;
 pub use statement_list::*;
 pub use constant_declaration::*;
 pub use struct_qualifier::*;
+pub use method_condition_operand::*;
