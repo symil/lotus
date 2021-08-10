@@ -6,6 +6,10 @@ pub struct VecHashMap<K, V> {
 }
 
 impl<K : Eq + Hash + Clone, V> VecHashMap<K, V> {
+    pub fn len(&self) -> usize {
+        self.hashmap.len()
+    }
+
     pub fn get(&self, key: &K) -> Option<&V> {
         match self.hashmap.get(key) {
             Some(vec) => vec.first(),

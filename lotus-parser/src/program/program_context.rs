@@ -19,6 +19,7 @@ pub struct ProgramContext {
     pub payload_var: Option<VarInfo>,
     pub function_return_type: Option<Type>,
     pub function_depth: usize,
+    pub return_found: bool,
     pub current_scope: VariableScope
 }
 
@@ -43,6 +44,7 @@ impl ProgramContext {
         self.this_var = None;
         self.payload_var = None;
         self.function_depth = 0;
+        self.return_found = false;
         self.local_variables.clear();
     }
 

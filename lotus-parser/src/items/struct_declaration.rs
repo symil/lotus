@@ -37,7 +37,7 @@ impl StructDeclaration {
             if context.structs.contains_key(&self.name) {
                 context.error(&self.name, format!("duplicate type declaration: `{}`", &self.name));
             } else {
-                context.structs.insert(self.name.clone(), struct_annotation);
+                context.structs.insert(&self.name, struct_annotation);
             }
 
             if self.qualifier == StructQualifier::World {

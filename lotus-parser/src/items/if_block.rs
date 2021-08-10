@@ -1,8 +1,6 @@
 use parsable::parsable;
-
-use crate::program::{ProgramContext, Wasm};
-
-use super::Branch;
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Wasm}, wat};
+use super::{Branch, StatementList};
 
 #[parsable]
 pub struct IfBlock {
@@ -10,12 +8,63 @@ pub struct IfBlock {
     pub if_branch: Branch,
     #[parsable(prefix="else if", separator="else if", optional=true)]
     pub else_if_branches: Vec<Branch>,
-    #[parsable(prefix="else")]
-    pub else_branch: Option<Branch>
+    #[parsable(prefix="else {", suffix="}")]
+    pub else_branch: Option<StatementList>
 }
 
 impl IfBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        todo!()
+        let mut ok = true;
+        let mut return_found = context.return_found;
+        let mut branches_return = vec![];
+
+        context.return_found = false;
+        context.function_depth += 2;
+
+        let mut wat = wat!["block"];
+
+        context.return_found = false;
+        if let (Some(condition_wasm), Some(block_wasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(context)) {
+            let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
+
+            wat.push(branch_wat);
+        } else {
+            ok = false;
+        }
+        branches_return.push(context.return_found);
+
+        for branch in &self.else_if_branches {
+            context.return_found = false;
+            if let (Some(condition_wasm), Some(block_wasm)) = (branch.process_condition(context), branch.process_body(context)) {
+                let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
+
+                wat.push(branch_wat);
+            } else {
+                ok = false;
+            }
+            branches_return.push(context.return_found);
+        }
+
+        context.return_found = false;
+        if let Some(else_branch) = &self.else_branch {
+            context.return_found = false;
+
+            if let Some(wasm) = else_branch.process(context) {
+                let branch_wat = wat!["block", wasm.wat, wat!["br", 1]];
+
+                wat.push(branch_wat);
+            } else {
+                ok = false;
+            }
+        }
+        branches_return.push(context.return_found);
+
+        context.function_depth -= 2;
+        context.return_found = return_found || branches_return.iter().all(|value| *value);
+
+        match ok {
+            true => Some(Wasm::untyped(wat)),
+            false => None
+        }
     }
 }

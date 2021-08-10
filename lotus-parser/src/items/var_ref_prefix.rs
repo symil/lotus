@@ -15,14 +15,14 @@ pub enum VarRefPrefix {
 impl VarRefPrefix {
     pub fn process(&self, location: &DataLocation, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
-            VarRefPrefix::This => match context.get_this_type() {
+            VarRefPrefix::This => match &context.this_var {
                 Some(this_var) => Some(Wasm::typed(this_var.ty.clone(), Wat::get_local(this_var.wasm_name.as_str()))),
                 None => {
                     context.error(location, "no `this` value can be referenced in this context");
                     None
                 }
             },
-            VarRefPrefix::Payload => match context.get_payload_type() {
+            VarRefPrefix::Payload => match &context.payload_var {
                 Some(payload_var) => Some(Wasm::typed(payload_var.ty.clone(), Wat::get_local(payload_var.wasm_name.as_str()))),
                 None => {
                     context.error(location, "no `payload` value can be referenced in this context");

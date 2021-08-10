@@ -21,8 +21,8 @@ pub fn process_system_method_call(method_name: &Identifier, context: &mut Progra
             Type::function(vec![Type::Pointer], Type::Void),
             MEM_FREE_FUNC_NAME
         )),
-        "log_ptr" => Some((
-            Type::function(vec![Type::Pointer], Type::Void),
+        "log_int" => Some((
+            Type::function(vec![Type::Integer], Type::Void),
             LOG_I32_FUNC_NAME
         )),
         _ => None
