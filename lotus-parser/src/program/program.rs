@@ -1,10 +1,10 @@
-use std::{fs, path::{PathBuf}};
+use std::{fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf}};
 use parsable::*;
-use crate::items::LotusFile;
-use super::{error::Error, program_index::ProgramIndex};
+use crate::{items::LotusFile, program::ProgramContext};
+use super::Error;
 
 pub struct LotusProgram {
-    pub index: ProgramIndex
+    pub wat: String
 }
 
 impl LotusProgram {
@@ -30,9 +30,27 @@ impl LotusProgram {
             return Err(errors);
         }
 
-        let index = ProgramIndex::from_parsed_files(parsed_files)?;
+        let mut context = ProgramContext::new();
 
-        Ok(LotusProgram { index })
+        for file in parsed_files {
+            file.process(&mut context);
+        }
+
+        let wat = context.generate_wat()?;
+
+        Ok(Self { wat })
+    }
+
+    pub fn write_to(&self, output_file_path: &'static str) {
+        let path = Path::new(output_file_path);
+
+        if let Some(parent_dir) = path.to_path_buf().parent() {
+            DirBuilder::new().recursive(true).create(parent_dir).unwrap();
+        }
+
+        let mut file = File::create(path).unwrap();
+
+        file.write_all(self.wat.as_bytes()).unwrap();
     }
 }
 

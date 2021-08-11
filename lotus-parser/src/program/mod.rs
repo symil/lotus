@@ -1,6 +1,5 @@
 mod error;
 mod program;
-mod program_index;
 mod program_context;
 mod struct_annotation;
 mod ty;
@@ -24,7 +23,6 @@ mod vec_hashmap;
 
 pub use error::*;
 pub use program::*;
-pub use program_index::*;
 pub use program_context::*;
 pub use struct_annotation::*;
 pub use ty::*;

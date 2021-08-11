@@ -2,10 +2,14 @@ use std::{collections::HashMap, hash::Hash};
 
 #[derive(Default)]
 pub struct VecHashMap<K, V> {
-    hashmap: HashMap<K, Vec<V>>
+    pub hashmap: HashMap<K, Vec<V>>
 }
 
-impl<K : Eq + Hash + Clone, V> VecHashMap<K, V> {
+pub trait WithId {
+    fn get_id(&self) -> usize;
+}
+
+impl<K : Eq + Hash + Clone, V : WithId> VecHashMap<K, V> {
     pub fn len(&self) -> usize {
         self.hashmap.len()
     }
@@ -17,12 +21,12 @@ impl<K : Eq + Hash + Clone, V> VecHashMap<K, V> {
         }
     }
 
-    pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
-        match self.hashmap.get_mut(key) {
-            Some(vec) => vec.first_mut(),
-            None => None,
-        }
-    }
+    // pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+    //     match self.hashmap.get_mut(key) {
+    //         Some(vec) => vec.first_mut(),
+    //         None => None,
+    //     }
+    // }
 
     pub fn contains_key(&self, key: &K) -> bool {
         self.get(key).is_some()
@@ -36,16 +40,16 @@ impl<K : Eq + Hash + Clone, V> VecHashMap<K, V> {
         }
     }
 
-    pub fn get_with_predicate<F : FnMut(&V) -> bool>(&self, key: &K, predicate: F) -> Option<&V> {
+    pub fn get_by_id(&self, key: &K, id: usize) -> Option<&V> {
         match self.hashmap.get(key) {
-            Some(vec) => vec.iter().find(|value| predicate(value)),
+            Some(vec) => vec.iter().find(|value| value.get_id() == id),
             None => None,
         }
     }
 
-    pub fn get_mut_with_predicate<F : FnMut(&V) -> bool>(&self, key: &K, predicate: F) -> Option<&mut V> {
-        match self.hashmap.get(key) {
-            Some(vec) => vec.iter_mut().find(|value| predicate(value)),
+    pub fn get_mut_by_id(&mut self, key: &K, id: usize) -> Option<&mut V> {
+        match self.hashmap.get_mut(key) {
+            Some(vec) => vec.iter_mut().find(|value| value.get_id() == id),
             None => None,
         }
     }

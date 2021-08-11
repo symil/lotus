@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use parsable::parsable;
 
-use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{Error, ProgramContext, Type, Wasm}};
 
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
@@ -15,31 +15,42 @@ pub struct ObjectLiteral {
 
 impl ObjectLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+        let mut errors = vec![];
+        let mut ok = true;
+        let mut wat = vec![];
+        let mut fields_init = vec![];
+
         if let Some(struct_annotation) = context.structs.get(&self.type_name) {
-            let mut ok = true;
-            let mut wat = vec![
-                Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.type_id)])
-            ];
+            wat.push(Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.type_id)]));
+        } else {
+            context.error(&self.type_name, format!("undefined type `{}`", &self.type_name));
+            ok = false;
+        }
 
-            let mut field_initializations = HashMap::new();
+        let mut field_initializations = HashMap::new();
 
-            for field in &self.fields {
-                if !struct_annotation.fields.contains_key(&field.name) {
-                    context.error(&field.name, format!("type `{}` has no field `{}`", &self.type_name, &field.name));
+        for field in &self.fields {
+            fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
+        }
+
+        if let Some(struct_annotation) = context.structs.get(&self.type_name) {
+            for (field_name, field_expr, field_wasm_opt) in fields_init {
+                if !struct_annotation.fields.contains_key(&field_name) {
+                    errors.push(Error::located(&field_name, format!("type `{}` has no field `{}`", &self.type_name, &field_name)));
                     ok = false;
                 }
 
-                if field_initializations.contains_key(&field.name) {
-                    context.error(field, format!("field `{}`: duplicate declaration", &field.name));
+                if field_initializations.contains_key(&field_name) {
+                    errors.push(Error::located(&field_name, format!("field `{}`: duplicate declaration", &field_name)));
                     ok = false;
                 }
 
-                if let Some(field_wasm) = field.value.process(context) {
-                    if let Some(field_info) = struct_annotation.fields.get(&field.name) {
+                if let Some(field_wasm) = field_wasm_opt {
+                    if let Some(field_info) = struct_annotation.fields.get(&field_name) {
                         if field_info.ty.is_assignable(&field_wasm.ty, context, &mut HashMap::new()) {
-                            field_initializations.insert(field.name.clone(), field_wasm.wat);
+                            field_initializations.insert(field_name.clone(), field_wasm.wat);
                         } else {
-                            context.error(&field.value, format!("field `{}`: expected type `{}`, got `{}`", &field.name, &field_info.ty, &field_wasm.ty));
+                            errors.push(Error::located(field_expr, format!("field `{}`: expected type `{}`, got `{}`", &field_name, &field_info.ty, &field_wasm.ty)));
                         }
                     }
                 }
@@ -53,12 +64,15 @@ impl ObjectLiteral {
 
                 wat.push(Wat::const_i32(field_info.offset));
                 wat.extend(field_wat);
-                wat.push(Wat::call(field_info.ty.get_array_set_function_name(), vec![]));
+                wat.push(Wat::call(field_info.ty.pointer_set_function_name(), vec![]));
             }
+        }
 
-            Some(Wasm::typed(Type::Struct(self.type_name.clone()), wat))
-        } else {
-            None
+        context.errors.extend(errors);
+
+        match ok {
+            true => Some(Wasm::typed(Type::Struct(self.type_name.clone()), wat)),
+            false => None
         }
     }
 }

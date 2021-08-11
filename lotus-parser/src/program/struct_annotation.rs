@@ -1,11 +1,10 @@
 use std::collections::HashMap;
-
 use crate::items::{Identifier, StructQualifier};
-
-use super::{Type, FunctionAnnotation};
+use super::{FunctionAnnotation, Type, WithId};
 
 #[derive(Default)]
 pub struct StructAnnotation {
+    pub index: usize,
     pub name: Identifier,
     pub parent_name: Option<Identifier>,
     pub qualifier: StructQualifier,
@@ -25,4 +24,10 @@ pub struct FieldDetails {
     pub name: Identifier,
     pub ty: Type,
     pub offset: usize,
+}
+
+impl WithId for StructAnnotation {
+    fn get_id(&self) -> usize {
+        self.index
+    }
 }

@@ -21,7 +21,11 @@ impl VarRef {
     pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.arguments {
             Some(arguments) => match context.functions.get(&self.name) {
-                Some(function_annotation) => process_function_call(function_annotation.wasm_name.as_str(), &function_annotation.get_type(), arguments, access_type, context),
+                Some(function_annotation) => {
+                    let function_name = function_annotation.wasm_name.clone();
+
+                    process_function_call(&function_name, &function_annotation.get_type(), arguments, access_type, context)
+                },
                 None => {
                     context.error(&self.name, format!("undefined function `{}`", &self.name));
                     None
@@ -79,8 +83,8 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
             } else if let Some(struct_annotation) = context.structs.get(struct_name) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
-                        AccessType::Get => field.ty.get_array_get_function_name(),
-                        AccessType::Set(_) => field.ty.get_array_set_function_name(),
+                        AccessType::Get => field.ty.pointer_get_function_name(),
+                        AccessType::Set(_) => field.ty.pointer_set_function_name(),
                     };
 
                     Some(Wasm::typed(
@@ -135,11 +139,12 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::Function(_, _) => None,
         Type::Array(item_type) => process_array_method_call(item_type, method_name, context),
         Type::Any(_) => None,
-
     };
 
     if let Some((method_type, wasm_method_name)) = method_info {
-        process_function_call(wasm_method_name, &method_type, arguments, access_type, context)
+        let wasm_method_name = wasm_method_name.to_string();
+
+        process_function_call(&wasm_method_name, &method_type, arguments, access_type, context)
     } else {
         context.error(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
         None

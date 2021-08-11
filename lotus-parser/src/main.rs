@@ -7,19 +7,18 @@ mod program;
 mod items;
 mod generation;
 
+const OUTPUT_PATH : &'static str = "build/module.wat";
+
 fn main() {
-    // match LotusProgram::from_directory_path("test") {
-    //     Ok(_) => {
-    //         println!("parse ok");
-    //     },
-    //     Err(errors) => {
-    //         for error in errors {
-    //             println!("{}", error.to_string());
-    //         }
-    //     }
-    // }
-
-    let wat = generate_wat();
-
-    fs::write("build/module.wat", &wat);
+    match LotusProgram::from_directory_path("test") {
+        Ok(program) => {
+            println!("build ok");
+            program.write_to(OUTPUT_PATH);
+        },
+        Err(errors) => {
+            for error in errors {
+                println!("{}", error.to_string());
+            }
+        }
+    };
 }

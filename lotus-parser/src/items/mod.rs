@@ -50,6 +50,7 @@ mod statement_list;
 mod global_declaration;
 mod struct_qualifier;
 mod method_condition_operand;
+mod bracket_indexing;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -103,3 +104,4 @@ pub use statement_list::*;
 pub use global_declaration::*;
 pub use struct_qualifier::*;
 pub use method_condition_operand::*;
+pub use bracket_indexing::*;

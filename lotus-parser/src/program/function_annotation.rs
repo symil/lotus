@@ -1,5 +1,5 @@
-use crate::items::Identifier;
-use super::{Type, Wasm};
+use crate::{generation::Wat, items::Identifier};
+use super::{Type, Wasm, WithId};
 
 #[derive(Default)]
 pub struct FunctionAnnotation {
@@ -9,6 +9,7 @@ pub struct FunctionAnnotation {
     pub payload_type: Option<Type>,
     pub arguments: Vec<(Identifier, Type)>,
     pub return_type: Type,
+    pub wat: Wat
 }
 
 impl FunctionAnnotation {
@@ -17,5 +18,11 @@ impl FunctionAnnotation {
         let return_type = self.return_type.clone();
 
         Type::function(arguments, return_type)
+    }
+}
+
+impl WithId for FunctionAnnotation {
+    fn get_id(&self) -> usize {
+        self.index
     }
 }

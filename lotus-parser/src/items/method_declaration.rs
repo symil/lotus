@@ -14,7 +14,7 @@ pub struct MethodDeclaration {
 }
 
 impl MethodDeclaration {
-    pub fn process_signature(&self, owner: &StructDeclaration, method_index: usize, context: &mut ProgramContext) {
+    pub fn process_signature(&self, owner: &StructDeclaration, owner_index: usize, method_index: usize, context: &mut ProgramContext) {
         let mut this_type = None;
         let mut payload_type = None;
 
@@ -56,7 +56,7 @@ impl MethodDeclaration {
                     context.error(&self.name, format!("missing method arguments"));
                 }
 
-                if let Some(struct_annotation) = context.structs.get(&owner.name) {
+                if let Some(struct_annotation) = context.structs.get_by_id(&owner.name, owner_index) {
                     // let field_exists = struct_annotation.fields.contains_key(&self.name);
                     let method_exists = struct_annotation.user_methods.contains_key(&self.name);
 
@@ -84,7 +84,7 @@ impl MethodDeclaration {
             method_annotation.return_type = return_type;
         }
 
-        if let Some(struct_annotation) = context.structs.get_mut(&owner.name) {
+        if let Some(struct_annotation) = context.structs.get_mut_by_id(&owner.name, owner_index) {
             match self.qualifier {
                 Some(MethodQualifier::Builtin) => struct_annotation.builtin_methods.insert(self.name.clone(), method_annotation),
                 Some(MethodQualifier::Hook) => insert_in_vec_hashmap(&mut struct_annotation.hook_event_callbacks, &self.name, method_annotation),

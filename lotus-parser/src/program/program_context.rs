@@ -1,12 +1,11 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{PAYLOAD_VAR_NAME, THIS_VAR_NAME, WasmModule}, items::Identifier};
+use crate::{generation::{ENTRY_POINT_FUNC_NAME, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::Identifier, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
 
 #[derive(Default)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
-    pub wasm: WasmModule,
 
     pub world_struct_name: Option<Identifier>,
     pub user_struct_name: Option<Identifier>,
@@ -70,7 +69,7 @@ impl ProgramContext {
         }
 
         if let Some(global_annotation) = self.globals.get(name) {
-            return Some(VarInfo::new(global_annotation.wasm_name.clone(), global_annotation.ty));
+            return Some(VarInfo::new(global_annotation.wasm_name.clone(), global_annotation.ty.clone()));
         }
 
         None
@@ -98,6 +97,55 @@ impl ProgramContext {
         } else {
             None
         }
+    }
+
+    pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
+        let main_identifier = Identifier::new("main");
+
+        if !self.functions.contains_key(&main_identifier) {
+            self.errors.push(Error::unlocated(format!("missing required function `main`")));
+        }
+
+        if !self.errors.is_empty() {
+            return Err(self.errors);
+        }
+
+        let mut content = wat!["module"];
+
+        for (namespace1, namespace2, func_name, arguments, return_type) in IMPORT_LIST {
+            content.push(Wat::import_function(namespace1, namespace2, func_name, arguments.to_vec(), return_type.clone()));
+        }
+
+        content.push(wat!["memory", Wat::export("memory"), 1]);
+
+        let mut init_globals_body = vec![];
+
+        for mut global_list in self.globals.hashmap.into_values() {
+            let global = global_list.remove(0);
+            let wat = match global.ty {
+                Type::Float => Wat::declare_global_f32(&global.wasm_name, 0.),
+                _ => Wat::declare_global_i32(&global.wasm_name, 0),
+            };
+
+            content.push(wat);
+
+            init_globals_body.extend(global.value);
+            init_globals_body.push(Wat::set_global_from_stack(&global.wasm_name));
+        }
+
+        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
+        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
+            Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
+            Wat::call(self.functions.get(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
+        ]));
+
+        for mut function_list in self.functions.hashmap.into_values() {
+            let function = function_list.remove(0);
+
+            content.push(function.wat);
+        }
+        
+        Ok(content.to_string(0))
     }
 }
 

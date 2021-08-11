@@ -10,7 +10,7 @@ impl MainFunction {
 
     pub fn get_functions(&self, module: &WasmModule) -> Vec<Wat> {
         vec![
-            Wat::declare_function("main", Some("_start"), vec![], None, vec![
+            Wat::declare_function("main", Some("_start"), vec![], None, vec![], vec![
                 Wat::declare_local_i32("addr"),
                 Wat::call(MEM_INIT_FUNC_NAME, vec![]),
             ])

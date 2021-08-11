@@ -33,7 +33,7 @@ impl ArrayLiteral {
 
                 wat.push(Wat::const_i32(i));
                 wat.extend(item_wasm.wat);
-                wat.push(Wat::call(final_type.get_array_set_function_name(), vec![]));
+                wat.push(Wat::call(final_type.pointer_set_function_name(), vec![]));
 
                 if !item_ok {
                     context.error(item, format!("array literal: incompatible item types `{}` and `{}`", &final_type, &item_wasm.ty));

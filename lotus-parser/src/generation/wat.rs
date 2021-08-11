@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{ops::Deref, str::FromStr};
 use enum_as_string_macro::*;
 use crate::{wat, merge};
 use super::{ToInt, ToWat, ToWatVec};
@@ -10,8 +10,8 @@ pub struct Wat {
 }
 
 impl Wat {
-    pub fn new<T : ToString>(keyword: T, arguments: Vec<Wat>) -> Self {
-        Self { keyword: keyword.to_string(), arguments }
+    pub fn new<T : ToString, V : ToWatVec>(keyword: T, arguments: V) -> Self {
+        Self { keyword: keyword.to_string(), arguments: arguments.to_wat_vec() }
     }
 
     pub fn single<T : ToString>(keyword: T) -> Self {
@@ -56,8 +56,8 @@ impl Wat {
         wat!["f32.const", value]
     }
 
-    pub fn call<T : ToWatVec>(func_name: &str, arguments: T) -> Self {
-        wat!["call", Wat::var_name(func_name), arguments]
+    pub fn call<S : Deref<Target=str>, T : ToWatVec>(func_name: S, arguments: T) -> Self {
+        wat!["call", Wat::var_name(&func_name), arguments]
     }
 
     pub fn call_no_arg(func_name: &str) -> Self {
@@ -68,6 +68,10 @@ impl Wat {
 
     pub fn declare_global_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         wat!["global", Self::var_name(var_name), wat!["mut", "i32"], wat!["i32.const", value.to_i32()]]
+    }
+
+    pub fn declare_global_f32(var_name: &str, value: f32) -> Self {
+        wat!["global", Self::var_name(var_name), wat!["mut", "f32"], wat!["f32.const", value]]
     }
 
     pub fn set_global<T : ToWat>(var_name: &str, value: T) -> Self {

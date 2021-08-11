@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fmt};
-use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, Wat, ToWatVec, ToWat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
+use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, POINTER_GET_F32_FUNC_NAME, POINTER_GET_I32_FUNC_NAME, POINTER_SET_F32_FUNC_NAME, POINTER_SET_I32_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
 use super::{ProgramContext, StructAnnotation};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,17 +38,17 @@ impl Type {
         }
     }
 
-    pub fn get_array_get_function_name(&self) -> &'static str {
+    pub fn pointer_get_function_name(&self) -> &'static str {
         match self {
-            Type::Float => ARRAY_GET_F32_FUNC_NAME,
-            _ => ARRAY_GET_I32_FUNC_NAME
+            Type::Float => POINTER_GET_F32_FUNC_NAME,
+            _ => POINTER_GET_I32_FUNC_NAME
         }
     }
 
-    pub fn get_array_set_function_name(&self) -> &'static str {
+    pub fn pointer_set_function_name(&self) -> &'static str {
         match self {
-            Type::Float => ARRAY_SET_F32_FUNC_NAME,
-            _ => ARRAY_SET_I32_FUNC_NAME
+            Type::Float => POINTER_SET_F32_FUNC_NAME,
+            _ => POINTER_SET_I32_FUNC_NAME
         }
     }
 
@@ -133,10 +133,17 @@ impl Type {
         Some(final_type)
     }
 
-    pub fn item_type(&self) -> &Self {
+    pub fn leaf_item_type(&self) -> &Self {
         match self {
-            Type::Array(sub_type) => sub_type.item_type(),
+            Type::Array(sub_type) => sub_type.leaf_item_type(),
             _ => self
+        }
+    }
+
+    pub fn get_item_type(&self) -> &Self {
+        match self {
+            Type::Array(sub_type) => Box::as_ref(sub_type),
+            _ => unreachable!()
         }
     }
 

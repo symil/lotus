@@ -26,7 +26,7 @@ impl StdLib {
     }
 
     fn get_log_4_func(&self) -> Wat {
-        Wat::declare_function(I32_LOG_4, None, vec![("n", "i32")], Some("i32"), vec![
+        Wat::declare_function(I32_LOG_4, None, vec![("n", "i32")], Some("i32"), vec![], vec![
             Wat::declare_local_i32("result"),
             Wat::if_else(
                 wat!["i32.lt_s", Wat::get_local("n"), Wat::const_i32(4)],
@@ -50,7 +50,7 @@ impl StdLib {
     }
 
     fn get_pow_4_func(&self) -> Wat {
-        Wat::declare_function(I32_POW_4, None, vec![("n", "i32")], Some("i32"), vec![
+        Wat::declare_function(I32_POW_4, None, vec![("n", "i32")], Some("i32"), vec![], vec![
             Wat::declare_local_i32("result"),
 
             Wat::set_local("result", Wat::const_i32(1)), // let result = 1

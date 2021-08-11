@@ -55,7 +55,7 @@ impl Memory {
     }
 
     fn get_init_function(&self) -> Wat {
-        Wat::declare_function(MEM_INIT_FUNC_NAME, None, vec![], None, vec![
+        Wat::declare_function(MEM_INIT_FUNC_NAME, None, vec![], None, vec![], vec![
             Wat::declare_local_i32("i"),
             Wat::set_local("i", Wat::const_i32(STACKS_METADATA_BYTE_OFFSET)),
             Wat::while_loop(wat!["i32.lt_u", Wat::get_local("i"), Wat::const_i32(STACKS_METADATA_BYTE_OFFSET + ALL_STACKS_BYTE_SIZE)], vec![
@@ -66,7 +66,7 @@ impl Memory {
     }
 
     fn get_alloc_stack_function(&self) -> Wat {
-        Wat::declare_function(ALLOC_STACK_FUNC_NAME, None, vec![], Some("i32"), vec![
+        Wat::declare_function(ALLOC_STACK_FUNC_NAME, None, vec![], Some("i32"), vec![], vec![
             Wat::declare_local_i32("new_stack_addr"),
             Wat::set_local("new_stack_addr", wat![
                 "i32.mul",
@@ -79,7 +79,7 @@ impl Memory {
     }
 
     fn get_alloc_function(&self, module: &WasmModule) -> Wat {
-        Wat::declare_function(MEM_ALLOC_FUNC_NAME, None, vec![("block_size", "i32")], Some("i32"), vec![
+        Wat::declare_function(MEM_ALLOC_FUNC_NAME, None, vec![("block_size", "i32")], Some("i32"), vec![], vec![
             Wat::declare_local_i32("i"),
             Wat::declare_local_i32("j"),
             Wat::declare_local_i32("block_size_index"),
@@ -174,7 +174,7 @@ impl Memory {
     }
 
     fn get_compute_addr_page_index_function(&self) -> Wat {
-        Wat::declare_function(COMPUTE_ADDR_PAGE_INDEX_FUNC_NAME, None, vec![("addr", "i32")], Some("i32"), vec![
+        Wat::declare_function(COMPUTE_ADDR_PAGE_INDEX_FUNC_NAME, None, vec![("addr", "i32")], Some("i32"), vec![], vec![
             wat![
                 "i32.mul",
                 wat![
@@ -188,7 +188,7 @@ impl Memory {
     }
 
     fn get_free_function(&self, module: &WasmModule) -> Wat {
-        Wat::declare_function(MEM_FREE_FUNC_NAME, None, vec![("addr", "i32")], None, vec![
+        Wat::declare_function(MEM_FREE_FUNC_NAME, None, vec![("addr", "i32")], None, vec![], vec![
             Wat::declare_local_i32("virtual_page_index"),
             Wat::declare_local_i32("stack_metadata_addr"),
             Wat::declare_local_i32("index_on_stack"),
