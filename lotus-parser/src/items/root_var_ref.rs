@@ -19,19 +19,6 @@ impl RootVarRef {
                 }
             },
             None => self.var_ref.process_as_variable(access_type, context)
-                    // if let Some(referenced_const) = self.const_declarations.get(&self.name) {
-                    //     if let Some(_) = context.visit_constant(&self.name) {
-                    //         context.error(&referenced_const.var_name, format!("circular reference to `{}`", &referenced_const.var_name));
-
-                    //         None
-                    //     } else {
-                    //         self.get_expression_type(&referenced_const.init_value, context)
-                    //     }
-                    // } else {
-                    //     context.error(&self.name, format!("undefined constant `{}`", &self.name));
-                    //     None
-                    // }
-                
         }
     }
 }

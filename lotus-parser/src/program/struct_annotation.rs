@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::items::{Identifier, StructQualifier};
 use super::{FunctionAnnotation, Type, WithId};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct StructAnnotation {
     pub index: usize,
     pub name: Identifier,

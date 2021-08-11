@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, VariableScope, Wasm}};
+use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, Type, VariableScope, Wasm}};
 use super::{FunctionSignature, Identifier, Statement, FullType};
 
 #[parsable]
@@ -15,6 +15,16 @@ impl FunctionDeclaration {
     pub fn process_signature(&self, index: usize, context: &mut ProgramContext) {
         let mut function_annotation = FunctionAnnotation::default();
         let (arguments, return_type) = self.signature.process(context);
+
+        if self.name.as_str() == "main" {
+            if !arguments.is_empty() {
+                context.error(&self.name, format!("main function must not take any argument"));
+            }
+
+            if !return_type.is_void() {
+                context.error(&self.name, format!("main function must not have a return type"));
+            }
+        }
 
         function_annotation.index = index;
         function_annotation.wasm_name = format!("function_{}", self.name);
@@ -42,7 +52,10 @@ impl FunctionDeclaration {
         let mut arguments = vec![];
 
         if let Some(function_annotation) = context.functions.get_by_id(&self.name, index) {
-            return_type = Some(function_annotation.return_type.clone());
+            return_type = match function_annotation.return_type {
+                Type::Void => None,
+                _ => Some(function_annotation.return_type.clone())
+            };
             arguments = function_annotation.arguments.clone();
         }
 

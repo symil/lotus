@@ -172,7 +172,7 @@ pub fn process_function_call(function_name: &str, function_type: &Type, argument
             if expected_type.is_assignable(&actual_type_wasm.ty, context, &mut anonymous_types) {
                 wat.extend(actual_type_wasm.wat);
             } else {
-                context.error(arg_expr, format!("function call argument #{}: expected `{}`, got `{}`", i, expected_type, &actual_type_wasm.ty));
+                context.error(arg_expr, format!("function call, argument #{}: expected `{}`, got `{}`", i, expected_type, &actual_type_wasm.ty));
                 ok = false;
             }
         }

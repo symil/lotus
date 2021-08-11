@@ -3,20 +3,27 @@ use parsable::*;
 use crate::{items::LotusFile, program::ProgramContext};
 use super::Error;
 
+const SOURCE_FILE_EXTENSION : &'static str = "lt";
+
 pub struct LotusProgram {
     pub wat: String
 }
 
 impl LotusProgram {
-    pub fn from_directory_path(directory_path: &'static str) -> Result<Self, Vec<Error>> {
-        let file_paths = read_directory(directory_path);
+    pub fn from_path(path: &str) -> Result<Self, Vec<Error>> {
+        let file_paths = read_path_recursively(path, true)?;
         let mut parsed_files = vec![];
         let mut string_reader = StringReader::new();
         let mut errors = vec![];
 
-        for path in file_paths {
-            let file_content = fs::read_to_string(&path).expect(&format!("cannot read file {:?}", &path));
-            let file_name = path.strip_prefix(directory_path).unwrap().to_str().unwrap().to_string();
+        let prefix = match Path::new(path).is_dir() {
+            true => path,
+            false => "",
+        };
+
+        for file_path in file_paths {
+            let file_content = fs::read_to_string(&file_path).expect(&format!("cannot read file {:?}", &file_path));
+            let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
 
             string_reader.set_content(file_content, file_name);
 
@@ -41,7 +48,7 @@ impl LotusProgram {
         Ok(Self { wat })
     }
 
-    pub fn write_to(&self, output_file_path: &'static str) {
+    pub fn write_to(&self, output_file_path: &str) {
         let path = Path::new(output_file_path);
 
         if let Some(parent_dir) = path.to_path_buf().parent() {
@@ -54,27 +61,34 @@ impl LotusProgram {
     }
 }
 
-fn read_directory(directory_path: &str) -> Vec<PathBuf> {
-    let entries = fs::read_dir(directory_path).expect(&format!("cannot read directory {}", directory_path));
+fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<PathBuf>, Vec<Error>> {
     let mut result = vec![];
+    let path = Path::new(input_path);
 
-    for entry in entries {
-        if let Ok(entry) = entry {
-            if let Ok(metadata) = entry.metadata() {
-                let path = entry.path();
-
-                if metadata.is_dir() {
-                    result.append(&mut read_directory(path.to_str().unwrap()));
-                } else if metadata.is_file() {
-                    if let Some(extension) = path.extension() {
-                        if extension == "lt" {
-                            result.push(entry.path());
-                        }
-                    }
-                }
+    if path.is_file() {
+        if let Some(extension) = path.extension() {
+            if extension == SOURCE_FILE_EXTENSION {
+                result.push(path.to_path_buf());
             }
         }
+
+        if is_first && result.is_empty() {
+            return Err(vec![Error::unlocated(format!("specified source file must have a `.{}` extension", SOURCE_FILE_EXTENSION))]);
+        }
+    } else if path.is_dir() {
+        let entries = match path.read_dir() {
+            Ok(content) => content,
+            Err(_) => return Err(vec![Error::unlocated(format!("cannot read directory `{}`", input_path))]),
+        };
+
+        for entry in entries {
+            if let Ok(entry) = entry {
+                result.append(&mut read_path_recursively(entry.path().to_str().unwrap(), false)?);
+            }
+        }
+    } else if is_first {
+        return Err(vec![Error::unlocated(format!("path `{}` is not a valid file or directort", input_path))]);
     }
 
-    result
+    Ok(result)
 }

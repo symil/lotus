@@ -3,7 +3,7 @@ use enum_as_string_macro::*;
 use crate::{wat, merge};
 use super::{ToInt, ToWat, ToWatVec};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Wat {
     keyword: String,
     arguments: Vec<Wat>
@@ -215,19 +215,31 @@ impl Wat {
 
     pub fn to_string(&self, indent: usize) -> String {
         if self.arguments.is_empty() {
-            if self.keyword.contains(".") {
-                format!("({})", self.keyword)
-            } else {
-                self.keyword.clone()
-            }
-        } else {
-            let items = if self.arguments.len() <= 3 {
-                self.arguments.iter().map(|expr| expr.to_string(indent)).collect::<Vec<String>>().join(" ")
-            } else {
-                self.arguments.iter().map(|expr| format!("\n{}{}", indent_level_to_string(indent + 1), expr.to_string(indent + 1))).collect::<Vec<String>>().join("")
+            let wrap = match self.keyword.as_str() {
+                "block" => true,
+                _ => self.keyword.contains(".")
             };
 
-            format!("({} {})", &self.keyword, items)
+            match wrap {
+                true => format!("({})", self.keyword),
+                false => self.keyword.clone()
+            }
+        } else {
+            let split_into_lines = if self.arguments.len() <= 3 {
+                false
+            } else {
+                true
+            };
+
+            let items = match split_into_lines {
+                true => self.arguments.iter().map(|expr| format!("\n{}{}", indent_level_to_string(indent + 1), expr.to_string(indent + 1))).collect::<Vec<String>>().join(""),
+                false => self.arguments.iter().map(|expr| expr.to_string(indent)).collect::<Vec<String>>().join(" ")
+            };
+
+            match split_into_lines {
+                true => format!("({} {}\n{})", &self.keyword, items, indent_level_to_string(indent)),
+                false => format!("({} {})", &self.keyword, items),
+            }
         }
     }
 }

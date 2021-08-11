@@ -3,7 +3,7 @@ use parsable::{DataLocation, Parsable};
 use crate::{generation::{ENTRY_POINT_FUNC_NAME, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::Identifier, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
 

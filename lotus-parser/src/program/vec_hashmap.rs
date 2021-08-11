@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct VecHashMap<K, V> {
     pub hashmap: HashMap<K, Vec<V>>
 }

@@ -1,7 +1,0 @@
-world {
-    player: Player,
-
-    @do_something(a: num) -> num {
-        
-    }
-}

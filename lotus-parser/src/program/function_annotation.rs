@@ -1,7 +1,7 @@
 use crate::{generation::Wat, items::Identifier};
 use super::{Type, Wasm, WithId};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct FunctionAnnotation {
     pub index: usize,
     pub wasm_name: String,
