@@ -4,6 +4,7 @@ use super::Statement;
 
 #[parsable]
 pub struct StatementList {
+    #[parsable(brackets="{}")]
     pub list: Vec<Statement>
 }
 

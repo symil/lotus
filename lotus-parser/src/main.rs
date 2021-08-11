@@ -18,7 +18,7 @@ fn main() {
     match LotusProgram::from_path(input_path) {
         Ok(program) => {
             program.write_to(output_path);
-            println!("{} {}", "ok:".blue().bold(), output_path);
+            println!("{} {} ({}s)", "ok:".blue().bold(), output_path.bold(), program.process_time);
             process::exit(0);
         },
         Err(errors) => {

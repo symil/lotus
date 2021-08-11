@@ -19,10 +19,8 @@ impl VarDeclaration {
         } else if context.current_scope == VariableScope::Local && self.qualifier.is_some() {
             context.error(self, format!("local variables must be declared without the `const` qualifier"));
         }
-
-        let var_exists = context.var_exists(&self.var_name);
-
-        if var_exists {
+        
+        if context.current_scope != VariableScope::Global && context.var_exists(&self.var_name) {
             context.error(&self.var_name, format!("duplicate variable declaration: `{}` already exists in this scope", &self.var_name));
         }
 
@@ -32,7 +30,9 @@ impl VarDeclaration {
         let mut result = None;
 
         if let Some(var_type) = var_type_opt {
-            context.push_local_var(&self.var_name, &var_type);
+            if context.current_scope != VariableScope::Global {
+                context.push_local_var(&self.var_name, &var_type);
+            }
 
             if let Some(var_wasm) = var_wasm_opt {
                 if var_type.is_assignable(&var_wasm.ty, context, &mut HashMap::new()) {

@@ -22,10 +22,18 @@ pub struct ProgramContext {
     pub current_scope: VariableScope
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum VarKind {
+    Global,
+    Local,
+    Argument
+}
+
 #[derive(Debug, Clone)]
 pub struct VarInfo {
     pub wasm_name: String,
     pub ty: Type,
+    pub kind: VarKind
 }
 
 impl ProgramContext {
@@ -52,15 +60,19 @@ impl ProgramContext {
     }
 
     pub fn set_this_type(&mut self, ty: Option<Type>) {
-        self.this_var = ty.and_then(|t| Some(VarInfo::new(THIS_VAR_NAME.to_string(), t)));
+        self.this_var = ty.and_then(|t| Some(VarInfo::new(THIS_VAR_NAME.to_string(), t, VarKind::Argument)));
     }
 
     pub fn set_payload_type(&mut self, ty: Option<Type>) {
-        self.payload_var = ty.and_then(|t| Some(VarInfo::new(PAYLOAD_VAR_NAME.to_string(), t)));
+        self.payload_var = ty.and_then(|t| Some(VarInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VarKind::Argument)));
+    }
+
+    pub fn push_argument_var(&mut self, name: &Identifier, ty: &Type) {
+        self.local_variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), VarKind::Argument));
     }
 
     pub fn push_local_var(&mut self, name: &Identifier, ty: &Type) {
-        self.local_variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone()));
+        self.local_variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), VarKind::Local));
     }
 
     pub fn get_var_info(&self, name: &Identifier) -> Option<VarInfo> {
@@ -69,7 +81,7 @@ impl ProgramContext {
         }
 
         if let Some(global_annotation) = self.globals.get(name) {
-            return Some(VarInfo::new(global_annotation.wasm_name.clone(), global_annotation.ty.clone()));
+            return Some(VarInfo::new(global_annotation.wasm_name.clone(), global_annotation.ty.clone(), VarKind::Global));
         }
 
         None
@@ -130,7 +142,7 @@ impl ProgramContext {
             content.push(wat);
 
             init_globals_body.extend(global.value);
-            init_globals_body.push(Wat::set_global_from_stack(&global.wasm_name));
+            // init_globals_body.push(Wat::set_global_from_stack(&global.wasm_name));
         }
 
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
@@ -150,7 +162,7 @@ impl ProgramContext {
 }
 
 impl VarInfo {
-    pub fn new(wasm_name: String, ty: Type) -> Self {
-        Self { wasm_name, ty }
+    pub fn new(wasm_name: String, ty: Type, kind: VarKind) -> Self {
+        Self { wasm_name, ty, kind }
     }
 }

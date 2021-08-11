@@ -26,6 +26,8 @@ impl Action {
                                     wat.extend(wasm.wat);
                                     wat.push(Wat::set_local_from_stack(RESULT_VAR_NAME));
                                     wat.push(Wat::new("br", context.function_depth));
+                                    
+                                    context.return_found = true;
 
                                     result = Some(Wasm::untyped(wat));
                                 } else {

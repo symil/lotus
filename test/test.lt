@@ -1,7 +1,5 @@
+const int HELLO = 5;
+
 fn main() {
-    int a = 4;
-
-    a = a + 3;
-
-    @log_int(a);
+    @log_int(HELLO);
 }

@@ -8,7 +8,7 @@ pub struct IfBlock {
     pub if_branch: Branch,
     #[parsable(prefix="else if", separator="else if", optional=true)]
     pub else_if_branches: Vec<Branch>,
-    #[parsable(prefix="else {", suffix="}")]
+    #[parsable(prefix="else")]
     pub else_branch: Option<StatementList>
 }
 

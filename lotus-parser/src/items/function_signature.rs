@@ -8,7 +8,7 @@ use super::{FullType, FunctionArgument, Identifier};
 pub struct FunctionSignature {
     #[parsable(brackets="()", separator=",")]
     pub arguments: Vec<FunctionArgument>,
-    #[parsable(prefix="->")]
+    #[parsable(prefix=":")]
     pub return_type: Option<FullType>,
 }
 

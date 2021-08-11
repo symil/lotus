@@ -225,10 +225,9 @@ impl Wat {
                 false => self.keyword.clone()
             }
         } else {
-            let split_into_lines = if self.arguments.len() <= 3 {
-                false
-            } else {
-                true
+            let split_into_lines = match self.keyword.as_str() {
+                "block" => true,
+                _ => self.arguments.len() > 3
             };
 
             let items = match split_into_lines {

@@ -1,4 +1,4 @@
-use std::{fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf}};
+use std::{fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf}, time::Instant};
 use parsable::*;
 use crate::{items::LotusFile, program::ProgramContext};
 use super::Error;
@@ -6,12 +6,13 @@ use super::Error;
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 
 pub struct LotusProgram {
-    pub wat: String
+    pub wat: String,
+    pub process_time: f64
 }
 
 impl LotusProgram {
     pub fn from_path(path: &str) -> Result<Self, Vec<Error>> {
-        let file_paths = read_path_recursively(path, true)?;
+        let files_to_process = read_path_recursively(path, true)?;
         let mut parsed_files = vec![];
         let mut string_reader = StringReader::new();
         let mut errors = vec![];
@@ -21,8 +22,9 @@ impl LotusProgram {
             false => "",
         };
 
-        for file_path in file_paths {
-            let file_content = fs::read_to_string(&file_path).expect(&format!("cannot read file {:?}", &file_path));
+        let now = Instant::now();
+
+        for (file_path, file_content) in files_to_process {
             let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
 
             string_reader.set_content(file_content, file_name);
@@ -43,9 +45,10 @@ impl LotusProgram {
             file.process(&mut context);
         }
 
+        let process_time = now.elapsed().as_secs_f64();
         let wat = context.generate_wat()?;
 
-        Ok(Self { wat })
+        Ok(Self { wat, process_time })
     }
 
     pub fn write_to(&self, output_file_path: &str) {
@@ -61,14 +64,19 @@ impl LotusProgram {
     }
 }
 
-fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<PathBuf>, Vec<Error>> {
+fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBuf, String)>, Vec<Error>> {
     let mut result = vec![];
     let path = Path::new(input_path);
 
     if path.is_file() {
         if let Some(extension) = path.extension() {
             if extension == SOURCE_FILE_EXTENSION {
-                result.push(path.to_path_buf());
+                let file_content = match fs::read_to_string(&path) {
+                    Ok(content) => content,
+                    Err(_) => return Err(vec![Error::unlocated(format!("cannot read file `{}`", input_path))])
+                };
+
+                result.push((path.to_path_buf(), file_content))
             }
         }
 

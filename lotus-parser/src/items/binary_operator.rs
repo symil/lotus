@@ -111,7 +111,7 @@ impl BinaryOperator {
                 _ => None
             },
             BinaryOperatorToken::Lt => match operand_type {
-                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.lt"))),
+                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.lt_s"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.lt"))),
                 _ => None
             },

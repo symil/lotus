@@ -5,7 +5,6 @@ use super::{Expression, Statement, StatementList};
 #[parsable]
 pub struct Branch {
     pub condition: Expression,
-    #[parsable(brackets="{}")]
     pub statements: StatementList
 }
 

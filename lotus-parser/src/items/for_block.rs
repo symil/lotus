@@ -8,7 +8,6 @@ pub struct ForBlock {
     pub iterator: ForIterator,
     #[parsable(prefix="in")]
     pub array_expression: Expression,
-    #[parsable(brackets="{}")]
     pub statements: StatementList
 }
 
