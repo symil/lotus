@@ -1,3 +1,7 @@
 fn main() {
-    @log_int(1);
+    int a = 4;
+
+    a = a + 3;
+
+    @log_int(a);
 }

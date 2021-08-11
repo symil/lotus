@@ -27,11 +27,11 @@ pub enum BinaryOperatorToken {
 impl BinaryOperator {
     pub fn get_priority(&self) -> usize {
         match &self.token {
-            BinaryOperatorToken::Mult | BinaryOperatorToken::Div | BinaryOperatorToken::Mod => 0,
-            BinaryOperatorToken::Plus | BinaryOperatorToken::Minus => 1,
-            BinaryOperatorToken::Eq | BinaryOperatorToken::Ne | BinaryOperatorToken::Ge | BinaryOperatorToken::Gt | BinaryOperatorToken::Le | BinaryOperatorToken::Lt => 2,
-            BinaryOperatorToken::And => 3,
-            BinaryOperatorToken::Or => 4,
+            BinaryOperatorToken::Mult | BinaryOperatorToken::Div | BinaryOperatorToken::Mod => 1,
+            BinaryOperatorToken::Plus | BinaryOperatorToken::Minus => 2,
+            BinaryOperatorToken::Eq | BinaryOperatorToken::Ne | BinaryOperatorToken::Ge | BinaryOperatorToken::Gt | BinaryOperatorToken::Le | BinaryOperatorToken::Lt => 3,
+            BinaryOperatorToken::And => 4,
+            BinaryOperatorToken::Or => 5,
         }
     }
 

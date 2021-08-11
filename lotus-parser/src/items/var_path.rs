@@ -18,6 +18,7 @@ impl VarPath {
         };
 
         let mut parent_type = Type::Void;
+        let mut ok = true;
         let mut wat = vec![];
 
         if let Some(root_wasm) = self.root.process(current_access_type, context) {
@@ -33,13 +34,17 @@ impl VarPath {
                     parent_type = segment_wasm.ty;
                     wat.extend(segment_wasm.wat);
                 } else {
-                    return None;
+                    ok = false;
+                    break;
                 }
             }
         } else {
-            return None;
+            ok = false;
         }
 
-        Some(Wasm::typed(parent_type, wat))
+        match ok {
+            true => Some(Wasm::typed(parent_type, wat)),
+            false => None
+        }
     }
 }

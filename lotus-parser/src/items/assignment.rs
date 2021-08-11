@@ -25,11 +25,10 @@ impl Assignment {
 
                         wat.extend(right_wasm.wat);
                         wat.extend(left_wasm.wat);
-                        wat.push(Wat::inst("drop"));
 
                         result = Some(Wasm::untyped(wat));
                     } else {
-                        context.error(rvalue, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &right_wasm.ty, &left_wasm.ty));
+                        context.error(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
                     }
                 }
             }

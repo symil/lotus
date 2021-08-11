@@ -16,6 +16,7 @@ impl BinaryOperation {
     }
 }
 
+#[derive(Debug)]
 enum OperationTree<'a> {
     Operation(Box<OperationTree<'a>>, BinaryOperator, Box<OperationTree<'a>>),
     Value(&'a Operand)
@@ -38,12 +39,12 @@ impl<'a> OperationTree<'a> {
 
                         let same_type = left_wasm.ty.is_compatible(&right_wasm.ty, context);
 
-                        if !left_result.is_none() {
-                            context.error(left.get_location(), format!("operator `{}`: invalid left operand type `{}`", &operator.token, &left_wasm.ty));
+                        if left_result.is_none() {
+                            context.error(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.token, &left_wasm.ty));
                         }
 
-                        if !right_result.is_none() {
-                            context.error(right.get_location(), format!("operator `{}`: invalid right operand type `{}`", &operator.token, &right_wasm.ty));
+                        if right_result.is_none() {
+                            context.error(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.token, &right_wasm.ty));
                         }
 
                         if left_result.is_some() && right_result.is_some() && !same_type {
@@ -81,11 +82,11 @@ impl<'a> OperationTree<'a> {
         if operands.len() == 1 {
             Self::Value(&operands[0].1)
         } else {
-            let mut max_priority = usize::MAX;
+            let mut max_priority = 0;
             let mut index = 0;
 
             for (i, (_, _, priority)) in operands.iter().enumerate() {
-                if *priority > max_priority {
+                if *priority > max_priority && *priority != usize::MAX {
                     max_priority = *priority;
                     index = i
                 }
