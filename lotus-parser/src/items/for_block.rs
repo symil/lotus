@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ARRAY_LENGTH_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, Type, Wasm}, wat};
+use crate::{generation::{ARRAY_LENGTH_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, Type, VariableScope, Wasm}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -50,10 +50,10 @@ impl ForBlock {
         if let (Some(array_wasm), Some(block_wasm)) = (self.array_expression.process(context), self.statements.process(context)) {            
             let mut content = vec![];
 
-            context.push_local_var(&array_var_name, &Type::Pointer);
-            context.push_local_var(&array_len_var_name, &Type::Integer);
-            context.push_local_var(&index_var_name, &Type::Integer);
-            context.push_local_var(&item_var_name, array_wasm.ty.get_item_type());
+            context.push_var(&array_var_name, &Type::Pointer, VariableScope::Local);
+            context.push_var(&array_len_var_name, &Type::Integer, VariableScope::Local);
+            context.push_var(&index_var_name, &Type::Integer, VariableScope::Local);
+            context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableScope::Local);
 
             content.extend(array_wasm.wat);
             content.push(Wat::set_local_from_stack(array_var_name.as_str()));

@@ -33,9 +33,9 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), context.current_scope.get_to_stack(var_info.wasm_name.as_str()))),
+                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), var_info.scope.get_to_stack(var_info.wasm_name.as_str()))),
                     AccessType::Set(_) => Some(Wasm::typed(var_info.ty.clone(), vec![
-                        context.current_scope.set_from_stack(var_info.wasm_name.as_str()),
+                        var_info.scope.set_from_stack(var_info.wasm_name.as_str()),
                         // context.current_scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
                     ])),
                 },

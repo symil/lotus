@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, Type, VarKind, VariableScope, Wasm}};
+use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, Type, VariableScope, Wasm}};
 use super::{FunctionSignature, Identifier, Statement, FullType};
 
 #[parsable]
@@ -59,11 +59,11 @@ impl FunctionDeclaration {
             arguments = function_annotation.arguments.clone();
         }
 
-        context.reset_local_scope(VariableScope::Local);
+        context.reset_local_scope();
         context.set_function_return_type(return_type);
 
         for (arg_name, arg_type) in &arguments {
-            context.push_argument_var(arg_name, arg_type);
+            context.push_var(arg_name, arg_type, VariableScope::Argument);
         }
 
         for statement in &self.statements {
@@ -96,8 +96,8 @@ impl FunctionDeclaration {
             }
         }
 
-        for local_var_info in context.local_variables.values() {
-            if local_var_info.kind == VarKind::Local {
+        for local_var_info in context.variables.values() {
+            if local_var_info.scope == VariableScope::Local {
                 if let Some(wasm_type) = local_var_info.ty.get_wasm_type() {
                     wat_locals.push((local_var_info.wasm_name.clone(), wasm_type));
                 }

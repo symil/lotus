@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{ENTRY_POINT_FUNC_NAME, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::Identifier, wat};
+use crate::{generation::{ENTRY_POINT_FUNC_NAME, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
 
 #[derive(Default, Debug)]
@@ -13,27 +13,20 @@ pub struct ProgramContext {
     pub functions: VecHashMap<Identifier, FunctionAnnotation>,
     pub globals: VecHashMap<Identifier, GlobalAnnotation>,
 
-    pub local_variables: HashMap<Identifier, VarInfo>,
+    pub variables: HashMap<Identifier, VarInfo>,
     pub this_var: Option<VarInfo>,
     pub payload_var: Option<VarInfo>,
     pub function_return_type: Option<Type>,
     pub function_depth: usize,
-    pub return_found: bool,
-    pub current_scope: VariableScope
+    pub return_found: bool
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum VarKind {
-    Global,
-    Local,
-    Argument
-}
 
 #[derive(Debug, Clone)]
 pub struct VarInfo {
     pub wasm_name: String,
     pub ty: Type,
-    pub kind: VarKind
+    pub scope: VariableScope
 }
 
 impl ProgramContext {
@@ -45,14 +38,13 @@ impl ProgramContext {
         self.errors.push(Error::located(location, error));
     }
 
-    pub fn reset_local_scope(&mut self, variable_scope: VariableScope) {
-        self.current_scope = variable_scope;
+    pub fn reset_local_scope(&mut self) {
         self.function_return_type = None;
         self.this_var = None;
         self.payload_var = None;
         self.function_depth = 0;
         self.return_found = false;
-        self.local_variables.clear();
+        self.variables.retain(|_, var_info| var_info.scope == VariableScope::Global);
     }
 
     pub fn set_function_return_type(&mut self, return_type: Option<Type>) {
@@ -60,31 +52,19 @@ impl ProgramContext {
     }
 
     pub fn set_this_type(&mut self, ty: Option<Type>) {
-        self.this_var = ty.and_then(|t| Some(VarInfo::new(THIS_VAR_NAME.to_string(), t, VarKind::Argument)));
+        self.this_var = ty.and_then(|t| Some(VarInfo::new(THIS_VAR_NAME.to_string(), t, VariableScope::Argument)));
     }
 
     pub fn set_payload_type(&mut self, ty: Option<Type>) {
-        self.payload_var = ty.and_then(|t| Some(VarInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VarKind::Argument)));
+        self.payload_var = ty.and_then(|t| Some(VarInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VariableScope::Argument)));
     }
 
-    pub fn push_argument_var(&mut self, name: &Identifier, ty: &Type) {
-        self.local_variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), VarKind::Argument));
-    }
-
-    pub fn push_local_var(&mut self, name: &Identifier, ty: &Type) {
-        self.local_variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), VarKind::Local));
+    pub fn push_var(&mut self, name: &Identifier, ty: &Type, scope: VariableScope) {
+        self.variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), scope));
     }
 
     pub fn get_var_info(&self, name: &Identifier) -> Option<VarInfo> {
-        if let Some(local_var) = self.local_variables.get(name) {
-            return Some(local_var.clone());
-        }
-
-        if let Some(global_annotation) = self.globals.get(name) {
-            return Some(VarInfo::new(global_annotation.wasm_name.clone(), global_annotation.ty.clone(), VarKind::Global));
-        }
-
-        None
+        self.variables.get(name).cloned()
     }
 
     pub fn var_exists(&self, name: &Identifier) -> bool {
@@ -108,6 +88,62 @@ impl ProgramContext {
             Some((function_annotation.arguments.clone(), function_annotation.return_type.clone()))
         } else {
             None
+        }
+    }
+
+    pub fn process_files(&mut self, files: Vec<LotusFile>) {
+        let mut structs = vec![];
+        let mut functions = vec![];
+        let mut globals = vec![];
+
+        for file in files {
+            for block in file.blocks {
+                match block {
+                    TopLevelBlock::StructDeclaration(struct_declaration) => structs.push(struct_declaration),
+                    TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
+                    TopLevelBlock::GlobalDeclaration(global_declaration) => globals.push(global_declaration),
+                }
+            }
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_name(index, self);
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_parent(index, self);
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_inheritence(index, self);
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_self_fields(index, self);
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_all_fields(index, self);
+        }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_methods_signatures(index, self);
+        }
+
+        for (index, function_declaration) in functions.iter().enumerate() {
+            function_declaration.process_signature(index, self);
+        }
+
+        for (index, global_declaration) in globals.iter().enumerate() {
+            global_declaration.process_declaration(index, self);
+        }
+
+        for (index, global_declaration) in globals.iter().enumerate() {
+            global_declaration.process_assignment(index, self);
+        }
+
+        for (index, function_declaration) in functions.iter().enumerate() {
+            function_declaration.process_body(index, self);
         }
     }
 
@@ -162,7 +198,7 @@ impl ProgramContext {
 }
 
 impl VarInfo {
-    pub fn new(wasm_name: String, ty: Type, kind: VarKind) -> Self {
-        Self { wasm_name, ty, kind }
+    pub fn new(wasm_name: String, ty: Type, scope: VariableScope) -> Self {
+        Self { wasm_name, ty, scope }
     }
 }

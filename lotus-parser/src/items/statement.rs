@@ -20,7 +20,7 @@ pub enum Statement {
 impl Statement {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
-            Statement::VarDeclaration(var_declaration) => var_declaration.process(context),
+            Statement::VarDeclaration(var_declaration) => var_declaration.process(VariableScope::Local, context),
             Statement::Action(action) => action.process(context),
             Statement::If(if_block) => if_block.process(context),
             Statement::While(while_block) => while_block.process(context),

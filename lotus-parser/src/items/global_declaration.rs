@@ -26,9 +26,9 @@ impl GlobalDeclaration {
     }
 
     pub fn process_assignment(&self, index: usize, context: &mut ProgramContext) {
-        context.reset_local_scope(VariableScope::Global);
+        context.reset_local_scope();
         
-        if let Some(wasm) = self.var_declaration.process(context) {
+        if let Some(wasm) = self.var_declaration.process(VariableScope::Global, context) {
             if let Some(global_annotation) = context.globals.get_mut_by_id(&self.var_declaration.var_name, index) {
                 global_annotation.value = wasm.wat;
             }
