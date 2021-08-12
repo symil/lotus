@@ -1,5 +1,0 @@
-const int HELLO = 5;
-
-fn main() {
-    @log_int(HELLO);
-}

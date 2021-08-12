@@ -2,3 +2,5 @@ target/
 pkg/
 node_modules/
 build/
+*.wat
+*.wasm
