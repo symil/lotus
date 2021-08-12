@@ -7,7 +7,7 @@ mod main_function;
 mod wasm_module;
 mod std_lib;
 mod constants;
-mod imports;
+mod header;
 
 pub use constants::*;
 pub use utils::*;
@@ -18,4 +18,4 @@ pub use memory::*;
 pub use generate::*;
 pub use wasm_module::*;
 pub use std_lib::*;
-pub use imports::*;
+pub use header::*;

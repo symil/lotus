@@ -1,0 +1,10 @@
+fn main() {
+    ptr addr = 3 as ptr;
+    int index = 2;
+
+    addr[index] = 7;
+
+    ptr addr2 = (4 as ptr);
+
+    @log_int(addr2[1]);
+}

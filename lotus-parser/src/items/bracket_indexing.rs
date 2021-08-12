@@ -24,16 +24,29 @@ impl BracketIndexing {
             wat.extend(index_wasm.wat);
         }
 
-        if let Type::Array(item_type) = parent_type {
-            let func_name = match access_type {
-                AccessType::Get => item_type.pointer_get_function_name(),
-                AccessType::Set(_) => item_type.pointer_set_function_name(),
-            };
+        match parent_type {
+            Type::Pointer(pointed_type) => {
+                let func_name = match access_type {
+                    AccessType::Get => pointed_type.pointer_get_function_name(),
+                    AccessType::Set(_) => pointed_type.pointer_set_function_name(),
+                };
 
-            wat.push(Wat::call(func_name, vec![]));
-            result = Some(Wasm::typed(Box::as_ref(item_type).clone(), wat))
-        } else {
-            context.error(&self.index_expr, format!("bracket indexing target: expected array, got `{}`", parent_type));
+                wat.push(Wat::call(func_name, vec![]));
+                result = Some(Wasm::typed(Box::as_ref(pointed_type).clone(), wat))
+            },
+            Type::Array(item_type) => {
+                todo!()
+                // let func_name = match access_type {
+                //     AccessType::Get => item_type.pointer_get_function_name(),
+                //     AccessType::Set(_) => item_type.pointer_set_function_name(),
+                // };
+
+                // wat.push(Wat::call(func_name, vec![]));
+                // result = Some(Wasm::typed(Box::as_ref(item_type).clone(), wat))
+            },
+            _ => {
+                context.error(&self.index_expr, format!("bracket indexing target: expected `{}` or `{}`, got `{}`", Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
+            }
         }
 
         match indexing_ok {

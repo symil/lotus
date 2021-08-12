@@ -1,0 +1,2 @@
+template.lt:5:10: error: bracket indexing target: expected `<any>[]` or `ptr`, got `int`
+template.lt:7:19: error: bracket indexing target: expected `<any>[]` or `ptr`, got `int`

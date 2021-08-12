@@ -19,7 +19,7 @@ impl UnaryOperator {
         let wat_result = match &self.token {
             UnaryOperatorToken::AsBool => operand_type.to_bool(),
             UnaryOperatorToken::Not => match operand_type {
-                Type::Pointer => Some(wat!["i32.eqz"]),
+                Type::Pointer(_) => Some(wat!["i32.eqz"]),
                 Type::Boolean => Some(wat!["i32.eqz"]),
                 Type::Integer => Some(wat!["i32.eq", Wat::const_i32(i32::MIN)]),
                 Type::Float => Some(wat!["i32.eq", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]]),

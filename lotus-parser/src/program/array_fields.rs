@@ -7,16 +7,12 @@ pub fn process_array_field_access(item_type: &Type, field_name: &Identifier, con
     }
 }
 
-pub fn process_array_method_call(item_type: &Type, method_name: &Identifier, context: &mut ProgramContext) -> Option<(Type, &'static str)> {
-    match method_name.as_str() {
-        "len" => Some((
-            Type::function(vec![], Type::Integer),
-            ARRAY_LENGTH_FUNC_NAME,
-        )),
-        "get" => Some((
-            Type::function(vec![Type::Integer], item_type.clone()),
-            ARRAY_GET_I32_FUNC_NAME,
-        )),
-        _ => None
-    }
+pub fn process_array_method_call(item_type: &Type, method_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+    let (wasm_name, arguments, return_type) = match method_name.as_str() {
+        "len" => (ARRAY_LENGTH_FUNC_NAME, vec![], Type::Integer),
+        "get" => (ARRAY_GET_I32_FUNC_NAME, vec![Type::Integer], item_type.clone()),
+        _ => return None
+    };
+
+    Some(Wasm::typed(Type::function(arguments, return_type), Wat::call_no_arg(wasm_name)))
 }

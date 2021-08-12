@@ -122,7 +122,7 @@ impl StructDeclaration {
                     let ok = match field_type.leaf_item_type() {
                         Type::Void => false,
                         Type::System => false,
-                        Type::Pointer => false,
+                        Type::Pointer(_) => false,
                         Type::Boolean => true,
                         Type::Integer => true,
                         Type::Float => true,

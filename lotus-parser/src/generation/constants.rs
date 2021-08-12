@@ -27,10 +27,15 @@ pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 
 pub const NULL_ADDR : i32 = 0;
+pub const VALUE_BYTE_SIZE : usize = 4;
 
 // get stack order: self, index
-pub const POINTER_GET_I32_FUNC_NAME : &'static str = "ptr_get_i32";
-pub const POINTER_GET_F32_FUNC_NAME : &'static str = "ptr_get_f32";
+pub const DEREF_INT_POINTER_GET_FUNC_NAME : &'static str = "ptr_get_i32";
+pub const DEREF_FLOAT_POINTER_GET_FUNC_NAME : &'static str = "ptr_get_f32";
 // set order: value, self, index
-pub const POINTER_SET_I32_FUNC_NAME : &'static str = "ptr_set_i32";
-pub const POINTER_SET_F32_FUNC_NAME : &'static str = "ptr_set_f32";
+pub const DEREF_INT_POINTER_SET_FUNC_NAME : &'static str = "ptr_set_i32";
+pub const DEREF_FLOAT_POINTER_SET_FUNC_NAME : &'static str = "ptr_set_f32";
+
+fn get_wasm_func_name_from_source_name(name: &str) -> String {
+    format!("function_{}", name)
+}

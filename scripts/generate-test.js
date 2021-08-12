@@ -5,13 +5,15 @@ import { compileParser, runTest, SOURCE_EXTENSION, ROOT_DIR, TEST_DIR } from './
 
 const TEMPLATE_FILE_PATH = path.join(TEST_DIR, 'template.lt');
 const BUILD_DIR = path.join(ROOT_DIR, 'build');
+const ARGV = process.argv.slice(2);
 
 async function main() {
     compileParser();
 
-    let argv = process.argv.slice(2);
-    let testName = argv[0];
-    let testOutput = await runTest(TEMPLATE_FILE_PATH, BUILD_DIR, !testName);
+    let testName = ARGV.find(string => !string.startsWith('-'));
+    let inheritStdio = !testName;
+    let displayMemory = ARGV.includes('-m');
+    let testOutput = await runTest(TEMPLATE_FILE_PATH, BUILD_DIR, { inheritStdio, displayMemory });
 
     if (testName) {
         let testDirPath = path.join(TEST_DIR, testName);
@@ -32,7 +34,7 @@ async function main() {
         fs.writeFileSync(outputFilePath, outputFileContent);
 
         setTimeout(() => {
-            console.log(`${chalk.bold('generated:')} ${testDirPath}`);
+            console.log(`${chalk.bold('generated:')} ${testDirPath.replace(ROOT_DIR + '/', '')}`);
         });
     }
 }

@@ -7,7 +7,7 @@ pub fn process_float_field_access(field_name: &Identifier, context: &mut Program
     }
 }
 
-pub fn process_float_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<(Type, &'static str)> {
+pub fn process_float_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match method_name {
         _ => None
     }

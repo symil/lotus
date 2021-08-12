@@ -38,7 +38,7 @@ impl BinaryOperator {
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.token {
             BinaryOperatorToken::Plus => match operand_type {
-                Type::Pointer => Some(Wasm::typed(Type::Pointer, Wat::inst("i32.add"))),
+                Type::Pointer(pointed_type) => Some(Wasm::typed(Type::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
                 Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.add"))),
                 Type::Float => Some(Wasm::typed(Type::Float, Wat::inst("f32.add"))),
                 Type::String => Some(Wasm::typed(Type::String, Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
@@ -46,7 +46,7 @@ impl BinaryOperator {
                 _ => None
             },
             BinaryOperatorToken::Minus => match operand_type {
-                Type::Pointer => Some(Wasm::typed(Type::Pointer, Wat::inst("i32.sub"))),
+                Type::Pointer(pointed_type) => Some(Wasm::typed(Type::Pointer(pointed_type.clone()), Wat::inst("i32.sub"))),
                 Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.sub"))),
                 Type::Float => Some(Wasm::typed(Type::Float, Wat::inst("f32.sub"))),
                 _ => None
@@ -74,7 +74,7 @@ impl BinaryOperator {
                 _ => None
             },
             BinaryOperatorToken::Eq => match operand_type {
-                Type::Pointer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.eq"))),
+                Type::Pointer(_) => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.eq"))),
                 Type::Boolean => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.eq"))),
                 Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.eq"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.eq"))),
@@ -85,7 +85,7 @@ impl BinaryOperator {
                 _ => None
             },
             BinaryOperatorToken::Ne => match operand_type {
-                Type::Pointer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ne"))),
+                Type::Pointer(_) => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ne"))),
                 Type::Boolean => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ne"))),
                 Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ne"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.ne"))),

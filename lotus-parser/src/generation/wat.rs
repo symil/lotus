@@ -66,6 +66,16 @@ impl Wat {
 
     // GLOBALS
 
+    pub fn declare_global(var_name: &str, ty: &'static str) -> Self {
+        let init_name = match ty {
+            "i32" => "i32.const",
+            "f32" => "f32.const",
+            _ => unreachable!()
+        };
+
+        wat!["global", Self::var_name(var_name), wat!["mut", ty], wat![init_name, 0]]
+    }
+
     pub fn declare_global_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         wat!["global", Self::var_name(var_name), wat!["mut", "i32"], wat!["i32.const", value.to_i32()]]
     }

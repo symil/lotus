@@ -7,7 +7,6 @@ use super::{ArgumentList, BracketIndexing, Expression, Identifier, VarRef};
 pub enum VarPathSegment {
     #[parsable(prefix=".")]
     FieldOrMethodAccess(VarRef),
-    #[parsable(brackets="[]")]
     BracketIndexing(BracketIndexing),
 }
 

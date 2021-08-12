@@ -1,12 +1,11 @@
 use std::{collections::HashMap, fmt};
-use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, POINTER_GET_F32_FUNC_NAME, POINTER_GET_I32_FUNC_NAME, POINTER_SET_F32_FUNC_NAME, POINTER_SET_I32_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
+use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
 use super::{ProgramContext, StructAnnotation};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Void,
     System,
-    Pointer,
     Boolean,
     Integer,
     Float,
@@ -14,8 +13,9 @@ pub enum Type {
     Null,
     TypeId,
     Struct(Identifier),
-    Function(Vec<Type>, Box<Type>),
+    Pointer(Box<Type>),
     Array(Box<Type>),
+    Function(Vec<Type>, Box<Type>),
     Any(u32)
 }
 
@@ -24,7 +24,6 @@ impl Type {
         match self {
             Type::Void => None,
             Type::System => None,
-            Type::Pointer => Some("i32"),
             Type::Boolean => Some("i32"),
             Type::Integer => Some("i32"),
             Type::Float => Some("f32"),
@@ -32,6 +31,7 @@ impl Type {
             Type::Null => Some("i32"),
             Type::TypeId => Some("i32"),
             Type::Struct(_) => Some("i32"),
+            Type::Pointer(_) => Some("i32"),
             Type::Function(_, _) => Some("i32"),
             Type::Array(_) => Some("i32"),
             Type::Any(_) => unreachable!(),
@@ -40,15 +40,15 @@ impl Type {
 
     pub fn pointer_get_function_name(&self) -> &'static str {
         match self {
-            Type::Float => POINTER_GET_F32_FUNC_NAME,
-            _ => POINTER_GET_I32_FUNC_NAME
+            Type::Float => DEREF_FLOAT_POINTER_GET_FUNC_NAME,
+            _ => DEREF_INT_POINTER_GET_FUNC_NAME
         }
     }
 
     pub fn pointer_set_function_name(&self) -> &'static str {
         match self {
-            Type::Float => POINTER_SET_F32_FUNC_NAME,
-            _ => POINTER_SET_I32_FUNC_NAME
+            Type::Float => DEREF_FLOAT_POINTER_SET_FUNC_NAME,
+            _ => DEREF_INT_POINTER_SET_FUNC_NAME
         }
     }
 
@@ -56,7 +56,7 @@ impl Type {
         let item = match self {
             Type::Void => unreachable!(),
             Type::System => unreachable!(),
-            Type::Pointer => Wat::const_i32(NULL_ADDR),
+            Type::Pointer(_) => Wat::const_i32(NULL_ADDR),
             Type::Boolean => Wat::const_i32(0),
             Type::Integer => Wat::const_i32(0),
             Type::Float => Wat::const_f32(0.),
@@ -74,7 +74,7 @@ impl Type {
 
     pub fn builtin_from_str(name: &str) -> Option<Self> {
         match name {
-            "ptr" => Some(Self::Pointer),
+            "ptr" => Some(Self::Pointer(Box::new(Type::Integer))),
             "bool" => Some(Self::Boolean),
             "int" => Some(Self::Integer),
             "float" => Some(Self::Float),
@@ -147,6 +147,14 @@ impl Type {
         }
     }
 
+    pub fn int_pointer() -> Self {
+        Type::pointer(Type::Integer)
+    }
+
+    pub fn pointer(pointed_type: Type) -> Self {
+        Type::Pointer(Box::new(pointed_type))
+    }
+
     pub fn object(name: &Identifier) -> Self {
         Type::Struct(name.clone())
     }
@@ -187,6 +195,13 @@ impl Type {
         }
     }
 
+    fn is_pointer(&self) -> bool {
+        match self {
+            Type::Pointer(_) => true,
+            _ => false
+        }
+    }
+
     pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
         self.is_assignable(other, context, &mut HashMap::new()) || other.is_assignable(self, context, &mut HashMap::new())
     }
@@ -195,7 +210,6 @@ impl Type {
         match self {
             Type::Void => actual == &Type::Void,
             Type::System => actual == &Type::System,
-            Type::Pointer => actual == &Type::Pointer,
             Type::Boolean => actual == &Type::Boolean,
             Type::Integer => actual == &Type::Integer,
             Type::Float => actual == &Type::Float,
@@ -207,6 +221,7 @@ impl Type {
                 Type::Null => true,
                 _ => false
             },
+            Type::Pointer(_) => actual.is_pointer(),
             Type::Function(expected_argument_types, expected_return_type) => match actual {
                 Type::Function(actual_argument_types, actual_return_type) => {
                     if actual_argument_types.len() != expected_argument_types.len() {
@@ -245,12 +260,12 @@ impl Type {
 
     pub fn to_bool(&self) -> Option<Wat> {
         match self {
-            Type::Pointer => Some(wat!["i32.ne", Wat::const_i32(0)]),
             Type::Boolean => Some(wat!["nop"]),
             Type::Integer => Some(wat!["i32.ne", Wat::const_i32(i32::MIN)]),
             Type::Float => Some(wat!["i32.ne", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]]),
             Type::String => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
             Type::Struct(_) => Some(wat!["i32.ne", Wat::const_i32(NULL_ADDR)]),
+            Type::Pointer(_) => Some(wat!["i32.ne", Wat::const_i32(0)]),
             Type::Null => Some(Wat::const_i32(0)),
             Type::Array(_) => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
             _ => None
@@ -263,7 +278,6 @@ impl fmt::Display for Type {
         match self {
             Type::Void => write!(f, "<void>"),
             Type::System => write!(f, "<system>"),
-            Type::Pointer => write!(f, "ptr"),
             Type::Boolean => write!(f, "bool"),
             Type::Integer => write!(f, "int"),
             Type::Float => write!(f, "float"),
@@ -271,6 +285,8 @@ impl fmt::Display for Type {
             Type::Null => write!(f, "<null>"),
             Type::TypeId => write!(f, "type"),
             Type::Struct(struct_name) => write!(f, "{}", struct_name),
+            Type::Pointer(_) => write!(f, "ptr"),
+            Type::Array(item_type) => write!(f, "{}[]", item_type),
             Type::Function(arguments, return_type) => {
                 let args_joined = arguments.iter().map(|arg| format!("{}", arg)).collect::<Vec<String>>().join(",");
                 let return_type_str = match Box::as_ref(return_type) {
@@ -280,8 +296,10 @@ impl fmt::Display for Type {
 
                 write!(f, "fn({}){}", args_joined, return_type_str)
             },
-            Type::Array(item_type) => write!(f, "{}[]", item_type),
-            Type::Any(id) => write!(f, "<any.{}>", id),
+            Type::Any(id) => match id {
+                0 => write!(f, "<any>"),
+                _ => write!(f, "<any.{}>", id),
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{ENTRY_POINT_FUNC_NAME, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
+use crate::{generation::{ENTRY_POINT_FUNC_NAME, FUNCTION_LIST, GLOBAL_LIST, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
 
 #[derive(Default, Debug)]
@@ -165,6 +165,14 @@ impl ProgramContext {
         }
 
         content.push(wat!["memory", Wat::export("memory"), 1]);
+
+        for (var_name, var_type) in GLOBAL_LIST {
+            content.push(Wat::declare_global(var_name, var_type));
+        }
+
+        for (name, args, ret, locals, body) in FUNCTION_LIST {
+            content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
+        }
 
         let mut init_globals_body = vec![];
 

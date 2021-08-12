@@ -17,9 +17,13 @@ impl LotusProgram {
         let mut string_reader = StringReader::new();
         let mut errors = vec![];
 
-        let prefix = match Path::new(path).is_dir() {
+        let mut input_path = Path::new(path).to_path_buf();
+        let prefix = match input_path.is_dir() {
             true => path,
-            false => "",
+            false => {
+                input_path.pop();
+                input_path.to_str().unwrap()
+            },
         };
 
         let now = Instant::now();

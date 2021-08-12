@@ -44,19 +44,27 @@ function runCommand(command, inheritStdio) {
 }
 
 function compileLotus(inputPath, outputPath, inheritStdio) {
-    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} --silent`, inheritStdio);
+    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${inheritStdio ? '' : '--silent'}`, inheritStdio);
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {
     return runCommand(`${WAT2WASM_BINARY_PATH} ${inputPath} -o ${outputPath}`, inheritStdio);
 }
 
-async function runWasm(wasmPath, inheritStdio) {
+async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let lines = [];
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
     let importsObject = getImportsObject({ log });
 
-    await runWasmFile(wasmPath, importsObject);
+    let instance = await runWasmFile(wasmPath, importsObject);
+
+    if (displayMemory) {
+        let memory = new Uint32Array(instance.exports.memory.buffer); 
+        
+        for (let i = 0; i < 16; ++i) {
+            console.log(`${i.toString().padStart(2, ' ')}: ${memory[i]}`);
+        }
+    }
 
     let result = lines.join('\n');
     let success = true;
@@ -64,14 +72,14 @@ async function runWasm(wasmPath, inheritStdio) {
     return { result, success };
 }
 
-export async function runTest(sourcePath, buildDirectory, inheritStdio = false) {
+export async function runTest(sourcePath, buildDirectory, { inheritStdio = false, displayMemory = false } = {}) {
     let sourceFileName = path.basename(sourcePath);
     let watPath = path.join(buildDirectory, sourceFileName.replace(SOURCE_EXTENSION, '.wat'));
     let wasmPath = path.join(buildDirectory, sourceFileName.replace(SOURCE_EXTENSION, '.wasm'));
     let commandChain = [
         () => compileLotus(sourcePath, watPath, inheritStdio),
         () => compileWat(watPath, wasmPath, inheritStdio),
-        () => runWasm(wasmPath, inheritStdio)
+        () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];
 
     let actualOutput = '';

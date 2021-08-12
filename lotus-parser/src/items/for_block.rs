@@ -50,7 +50,7 @@ impl ForBlock {
         if let (Some(array_wasm), Some(block_wasm)) = (self.array_expression.process(context), self.statements.process(context)) {            
             let mut content = vec![];
 
-            context.push_var(&array_var_name, &Type::Pointer, VariableScope::Local);
+            context.push_var(&array_var_name, &Type::int_pointer(), VariableScope::Local);
             context.push_var(&array_len_var_name, &Type::Integer, VariableScope::Local);
             context.push_var(&index_var_name, &Type::Integer, VariableScope::Local);
             context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableScope::Local);
