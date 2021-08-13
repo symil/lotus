@@ -20,7 +20,7 @@ impl VariableScope {
         match self {
             VariableScope::Global => Wat::set_global_from_stack(var_name),
             VariableScope::Local => Wat::set_local_from_stack(var_name),
-            VariableScope::Argument => Wat::set_global_from_stack(var_name),
+            VariableScope::Argument => Wat::set_local_from_stack(var_name),
         }
     }
 }

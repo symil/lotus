@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{ENTRY_POINT_FUNC_NAME, FUNCTION_LIST, GLOBAL_LIST, IMPORT_LIST, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
+use crate::{generation::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
 
 #[derive(Default, Debug)]
@@ -135,11 +135,7 @@ impl ProgramContext {
         }
 
         for (index, global_declaration) in globals.iter().enumerate() {
-            global_declaration.process_declaration(index, self);
-        }
-
-        for (index, global_declaration) in globals.iter().enumerate() {
-            global_declaration.process_assignment(index, self);
+            global_declaration.process(index, self);
         }
 
         for (index, function_declaration) in functions.iter().enumerate() {
@@ -160,17 +156,22 @@ impl ProgramContext {
 
         let mut content = wat!["module"];
 
-        for (namespace1, namespace2, func_name, arguments, return_type) in IMPORT_LIST {
+        for (namespace1, namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(namespace1, namespace2, func_name, arguments.to_vec(), return_type.clone()));
         }
 
-        content.push(wat!["memory", Wat::export("memory"), 1]);
+        for (export_name, page_count) in HEADER_MEMORIES {
+            content.push(match export_name {
+                Some(name) => wat!["memory", Wat::export("memory"), page_count],
+                None => wat!["memory", page_count]
+            });
+        }
 
-        for (var_name, var_type) in GLOBAL_LIST {
+        for (var_name, var_type) in HEADER_GLOBALS {
             content.push(Wat::declare_global(var_name, var_type));
         }
 
-        for (name, args, ret, locals, body) in FUNCTION_LIST {
+        for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
             content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
         }
 
@@ -186,7 +187,6 @@ impl ProgramContext {
             content.push(wat);
 
             init_globals_body.extend(global.value);
-            // init_globals_body.push(Wat::set_global_from_stack(&global.wasm_name));
         }
 
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));

@@ -51,6 +51,7 @@ mod global_declaration;
 mod struct_qualifier;
 mod method_condition_operand;
 mod bracket_indexing;
+mod parenthesized_expression;
 
 pub use struct_declaration::*;
 pub use identifier::*;
@@ -105,3 +106,4 @@ pub use global_declaration::*;
 pub use struct_qualifier::*;
 pub use method_condition_operand::*;
 pub use bracket_indexing::*;
+pub use parenthesized_expression::*;

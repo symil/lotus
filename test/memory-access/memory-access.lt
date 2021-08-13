@@ -1,6 +1,6 @@
 fn main() {
     @memory[5] = 15;
-    int a = @memory[5];
+    let a = @memory[5];
 
     @log_int(a);
 }

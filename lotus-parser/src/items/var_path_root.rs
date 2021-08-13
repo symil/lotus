@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, Type, VariableScope, Wasm}};
-use super::{ArrayLiteral, BooleanLiteral, FloatLiteral, IntegerLiteral, NullLiteral, ObjectLiteral, RootVarRef, StringLiteral, VarRef};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, NullLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, VarRef};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -11,7 +11,8 @@ pub enum VarPathRoot {
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
     ObjectLiteral(ObjectLiteral),
-    Variable(RootVarRef)
+    Variable(RootVarRef),
+    Parenthesized(ParenthesizedExpression)
 }
 
 impl VarPathRoot {
@@ -40,6 +41,7 @@ impl VarPathRoot {
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(context),
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
             VarPathRoot::Variable(root_var_ref) => root_var_ref.process(access_type, context),
+            VarPathRoot::Parenthesized(expr) => expr.process(context),
         }
     }
 }

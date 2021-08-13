@@ -153,7 +153,7 @@ pub fn process_function_call(function_type: &Type, function_call: Vec<Wat>, argu
     let (expected_arguments, return_type) = function_type.as_function();
 
     if arguments.len() != expected_arguments.len() {
-        context.error(arguments, format!("function call arguments: expected {} arguments, got `{}`", expected_arguments.len(), arguments.as_vec().len()));
+        context.error(arguments, format!("function call arguments: expected {} arguments, got {}", expected_arguments.len(), arguments.as_vec().len()));
     }
 
     let mut ok = true;

@@ -1,0 +1,7 @@
+fn std_int_log4(n: int) -> int {
+    if n < 4 {
+        return 1;
+    } else {
+        return (33 - (n - 1).clz()) / 2;
+    }
+}

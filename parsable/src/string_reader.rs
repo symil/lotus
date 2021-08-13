@@ -5,6 +5,7 @@ use crate::{DataLocation, line_col_lookup::LineColLookup};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
+    comment_token: &'static str,
     regexes: HashMap<&'static str, Regex>,
     file_name: &'static str,
     string: String,
@@ -17,8 +18,9 @@ pub struct StringReader {
 static mut STRINGS : Vec<String> = vec![];
 
 impl StringReader {
-    pub fn new() -> Self {
+    pub fn new(comment_token: &'static str) -> Self {
         Self {
+            comment_token,
             regexes: HashMap::new(),
             file_name: "",
             string: String::new(),
@@ -130,8 +132,22 @@ impl StringReader {
     }
 
     pub fn eat_spaces(&mut self) {
-        while is_space(self.as_char()) {
-            self.index += 1;
+        let mut done = false;
+
+        while !done {
+            done = true;
+
+            while is_space(self.as_char()) {
+                self.index += 1;
+            }
+
+            if self.as_str().starts_with(self.comment_token) {
+                done = false;
+
+                while self.as_char() != '\n' {
+                    self.index += 1;
+                }
+            }
         }
     }
 

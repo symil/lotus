@@ -1,8 +1,8 @@
 fn main() {
-    int index = 6;
-    int addr = 8;
+    let index = 6;
+    let addr = 8;
 
-    addr[index] = 7;
+    let[index] = 7;
 
     @log_int(addr[index]);
 }

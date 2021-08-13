@@ -5,39 +5,66 @@ use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
 pub struct VarDeclaration {
-    pub qualifier: Option<VarDeclarationQualifier>,
-    pub var_type: FullType,
+    pub qualifier: VarDeclarationQualifier,
     pub var_name: Identifier,
+    #[parsable(prefix=":")]
+    pub var_type: Option<FullType>,
     #[parsable(prefix="=")]
     pub init_value: Expression
 }
 
 impl VarDeclaration {
     pub fn process(&self, scope: VariableScope, context: &mut ProgramContext) -> Option<Wasm> {
-        // if context.current_scope == VariableScope::Global && self.qualifier.is_none() {
-        //     context.error(self, format!("global variables must be declared with the `const` qualifier"));
-        // } else if context.current_scope == VariableScope::Local && self.qualifier.is_some() {
-        //     context.error(self, format!("local variables must be declared without the `const` qualifier"));
-        // }
-        
         if context.var_exists(&self.var_name) {
             context.error(&self.var_name, format!("duplicate variable declaration: `{}` already exists in this scope", &self.var_name));
         }
 
-        let var_type_opt = Type::from_parsed_type(&self.var_type, context);
-        let var_wasm_opt = self.init_value.process(context);
-
         let mut result = None;
+        let mut inferred_type = None;
 
-        if let Some(var_type) = var_type_opt {
-            context.push_var(&self.var_name, &var_type, scope);
+        if let Some(wasm) = self.init_value.process(context) {
+            match &self.var_type {
+                Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
+                    Some(var_type) => {
+                        context.push_var(&self.var_name, &var_type, scope);
 
-            if let Some(var_wasm) = var_wasm_opt {
-                if var_type.is_assignable(&var_wasm.ty, context, &mut HashMap::new()) {
-                    result = Some(Wasm::untyped(merge![var_wasm.wat, scope.set_from_stack(self.var_name.as_str())]));
-                } else {
-                    context.error(&self.init_value, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &var_wasm.ty, &var_type));
+                        if var_type.is_assignable(&wasm.ty, context, &mut HashMap::new()) {
+                            inferred_type = Some(var_type);
+                        } else {
+                            context.error(&self.init_value, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &wasm.ty, &var_type));
+                        }
+                    },
+                    None => {}
+                },
+                None => {
+                    let type_ok = match &wasm.ty {
+                        Type::Void => false,
+                        Type::System => false,
+                        Type::Boolean => true,
+                        Type::Integer => true,
+                        Type::Float => true,
+                        Type::String => true,
+                        Type::Null => false,
+                        Type::TypeId => true,
+                        Type::Struct(_) => true,
+                        Type::Pointer(_) => true,
+                        Type::Array(_) => true,
+                        Type::Function(_, _) => true,
+                        Type::Any(_) => false,
+                    };
+
+                    if type_ok {
+                        context.push_var(&self.var_name, &wasm.ty, scope);
+                        inferred_type = Some(wasm.ty.clone());
+                    } else {
+                        context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitely)", &wasm.ty));
+                    }
                 }
+            };
+
+            result = match inferred_type {
+                Some(var_type) => Some(Wasm::typed(var_type, merge![wasm.wat, scope.set_from_stack(self.var_name.as_str())])),
+                None => None
             }
         }
 

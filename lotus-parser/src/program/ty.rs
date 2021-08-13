@@ -221,7 +221,7 @@ impl Type {
                 Type::Null => true,
                 _ => false
             },
-            Type::Pointer(_) => actual.is_pointer(),
+            Type::Pointer(_) => actual.is_pointer() || actual == &Type::Integer,
             Type::Function(expected_argument_types, expected_return_type) => match actual {
                 Type::Function(actual_argument_types, actual_return_type) => {
                     if actual_argument_types.len() != expected_argument_types.len() {

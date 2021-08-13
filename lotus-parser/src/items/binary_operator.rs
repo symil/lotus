@@ -14,6 +14,8 @@ pub enum BinaryOperatorToken {
     Mult = "*",
     Div = "/",
     Mod = "%",
+    Shl = "<<",
+    Shr = ">>",
     And = "&&",
     Or = "||",
     Eq = "==",
@@ -29,9 +31,10 @@ impl BinaryOperator {
         match &self.token {
             BinaryOperatorToken::Mult | BinaryOperatorToken::Div | BinaryOperatorToken::Mod => 1,
             BinaryOperatorToken::Plus | BinaryOperatorToken::Minus => 2,
-            BinaryOperatorToken::Eq | BinaryOperatorToken::Ne | BinaryOperatorToken::Ge | BinaryOperatorToken::Gt | BinaryOperatorToken::Le | BinaryOperatorToken::Lt => 3,
-            BinaryOperatorToken::And => 4,
-            BinaryOperatorToken::Or => 5,
+            BinaryOperatorToken::Shl | BinaryOperatorToken::Shr => 3,
+            BinaryOperatorToken::Eq | BinaryOperatorToken::Ne | BinaryOperatorToken::Ge | BinaryOperatorToken::Gt | BinaryOperatorToken::Le | BinaryOperatorToken::Lt => 4,
+            BinaryOperatorToken::And => 5,
+            BinaryOperatorToken::Or => 6,
         }
     }
 
@@ -65,6 +68,14 @@ impl BinaryOperator {
                 Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.rem_s"))),
                 _ => None
             },
+            BinaryOperatorToken::Shl => match operand_type {
+                Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.shl"))),
+                _ => None
+            },
+            BinaryOperatorToken::Shr => match operand_type {
+                Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.shr_u"))),
+                _ => None
+            },
             BinaryOperatorToken::And => match operand_type {
                 Type::Boolean => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.and"))),
                 _ => None
@@ -96,17 +107,17 @@ impl BinaryOperator {
                 _ => None
             },
             BinaryOperatorToken::Ge => match operand_type {
-                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ge"))),
+                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.ge_s"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.ge"))),
                 _ => None
             },
             BinaryOperatorToken::Gt => match operand_type {
-                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.gt"))),
+                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.gt_s"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.gt"))),
                 _ => None
             },
             BinaryOperatorToken::Le => match operand_type {
-                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.le"))),
+                Type::Integer => Some(Wasm::typed(Type::Boolean, Wat::inst("i32.le_s"))),
                 Type::Float => Some(Wasm::typed(Type::Boolean, Wat::inst("f32.le"))),
                 _ => None
             },

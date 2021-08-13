@@ -27,7 +27,7 @@ impl FunctionDeclaration {
         }
 
         function_annotation.index = index;
-        function_annotation.wasm_name = format!("function_{}", self.name);
+        function_annotation.wasm_name = format!("{}", self.name);
         function_annotation.this_type = None;
         function_annotation.payload_type = None;
         function_annotation.arguments = arguments;

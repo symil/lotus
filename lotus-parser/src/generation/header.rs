@@ -1,17 +1,22 @@
 use super::{LOG_I32_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
+type Memory = (Option<&'static str>, usize);
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'static str>, &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
-pub const IMPORT_LIST : &'static[Import] = &[
+pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "i32", LOG_I32_FUNC_NAME, &["i32"], None)
 ];
 
-pub const GLOBAL_LIST : &'static[Global] = &[
+pub const HEADER_MEMORIES : &'static[Memory] = &[
+    (Some("memory"), 1)
 ];
 
-pub static FUNCTION_LIST : &'static[Function] = &[
+pub const HEADER_GLOBALS : &'static[Global] = &[
+];
+
+pub static HEADER_FUNCTIONS : &'static[Function] = &[
     (DEREF_INT_POINTER_GET_FUNC_NAME, &[("pointer", "i32"), ("index", "i32")], Some("i32"), &[], ptr_get_int),
     (DEREF_INT_POINTER_SET_FUNC_NAME, &[("value", "i32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_int)
 ];
