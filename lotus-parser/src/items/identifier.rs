@@ -18,6 +18,10 @@ impl Identifier {
         identifier
     }
 
+    pub fn new_unique<L : Deref<Target=DataLocation>>(prefix: &str, location: &L) -> Self {
+        Self::new(format!("{}_{:#01X}", prefix, location.start * 65536 + location.end))
+    }
+
     pub fn is(&self, value: &str) -> bool {
         self.value == value
     }

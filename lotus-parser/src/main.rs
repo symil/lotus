@@ -17,7 +17,8 @@ macro_rules! prelude_file {
 
 const PROGRAM_NAME : &'static str = "lotus";
 const PRELUDE_FILES : &'static[(&'static str, &'static str)] = &[
-    prelude_file!("prelude/math.lt")
+    prelude_file!("prelude/math.lt"),
+    prelude_file!("prelude/memory.lt"),
 ];
 
 fn main() {

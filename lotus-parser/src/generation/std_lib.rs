@@ -74,14 +74,14 @@ impl StdLib {
     }
 
     pub fn log_i32(&self) -> Wat {
-        Wat::call_no_arg(LOG_I32_FUNC_NAME)
+        Wat::call_from_stack(LOG_I32_FUNC_NAME)
     }
 
     pub fn array_length(&self) -> Wat {
-        Wat::call_no_arg("array_length")
+        Wat::call_from_stack("array_length")
     }
 
     pub fn array_get(&self) -> Wat {
-        Wat::call_no_arg("array_get")
+        Wat::call_from_stack("array_get")
     }
 }

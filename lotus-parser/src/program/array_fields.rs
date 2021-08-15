@@ -14,5 +14,5 @@ pub fn process_array_method_call(item_type: &Type, method_name: &Identifier, con
         _ => return None
     };
 
-    Some(Wasm::typed(Type::function(arguments, return_type), Wat::call_no_arg(wasm_name)))
+    Some(Wasm::typed(Type::function(arguments, return_type), Wat::call_from_stack(wasm_name)))
 }

@@ -171,14 +171,9 @@ impl ProgramContext {
             content.push(Wat::declare_global(var_name, var_type));
         }
 
-        for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
-            content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
-        }
-
         let mut init_globals_body = vec![];
 
-        for mut global_list in self.globals.hashmap.into_values() {
-            let global = global_list.remove(0);
+        for global in get_globals_sorted(self.globals) {
             let wat = match global.ty {
                 Type::Float => Wat::declare_global_f32(&global.wasm_name, 0.),
                 _ => Wat::declare_global_i32(&global.wasm_name, 0),
@@ -187,6 +182,10 @@ impl ProgramContext {
             content.push(wat);
 
             init_globals_body.extend(global.value);
+        }
+
+        for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
+            content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
         }
 
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
@@ -203,6 +202,18 @@ impl ProgramContext {
         
         Ok(content.to_string(0))
     }
+}
+
+fn get_globals_sorted(mut map: VecHashMap<Identifier, GlobalAnnotation>) -> Vec<GlobalAnnotation> {
+    let mut list = vec![];
+
+    for mut global_list in map.hashmap.into_values() {
+        list.push(global_list.remove(0));
+    }
+
+    list.sort_by_key(|global| global.index);
+
+    list
 }
 
 impl VarInfo {

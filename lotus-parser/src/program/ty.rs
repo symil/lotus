@@ -181,6 +181,13 @@ impl Type {
         }
     }
 
+    pub fn is_integer(&self) -> bool {
+        match self {
+            Self::Integer => true,
+            _ => false
+        }
+    }
+
     pub fn is_boolean(&self) -> bool {
         match self {
             Self::Boolean => true,
@@ -191,6 +198,13 @@ impl Type {
     pub fn is_struct(&self, struct_name: &Identifier) -> bool {
         match self {
             Type::Struct(self_struct_name) => self_struct_name == struct_name,
+            _ => false
+        }
+    }
+
+    pub fn is_array(&self) -> bool {
+        match self {
+            Type::Array(_) => true,
             _ => false
         }
     }

@@ -60,7 +60,7 @@ impl Wat {
         wat!["call", Wat::var_name(&func_name), arguments]
     }
 
-    pub fn call_no_arg(func_name: &str) -> Self {
+    pub fn call_from_stack(func_name: &str) -> Self {
         wat!["call", Wat::var_name(func_name)]
     }
 

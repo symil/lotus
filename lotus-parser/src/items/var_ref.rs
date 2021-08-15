@@ -22,7 +22,7 @@ impl VarRef {
         match &self.arguments {
             Some(arguments) => match context.functions.get(&self.name) {
                 Some(function_annotation) => {
-                    process_function_call(&function_annotation.get_type(), vec![Wat::call_no_arg(&function_annotation.wasm_name)], arguments, access_type, context)
+                    process_function_call(&function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
                 },
                 None => {
                     context.error(&self.name, format!("undefined function `{}`", &self.name));
@@ -124,7 +124,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::Struct(struct_name) => {
             if let Some(struct_annotation) = context.structs.get(struct_name) {
                 if let Some(method) = struct_annotation.user_methods.get(method_name) {
-                    Some(Wasm::typed(method.get_type(), Wat::call_no_arg(&method.wasm_name)))
+                    Some(Wasm::typed(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }

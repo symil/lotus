@@ -23,7 +23,7 @@ pub const LOG_I32_FUNC_NAME : &'static str = "std_log_i32";
 
 pub const THIS_VAR_NAME : &'static str = "__this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
-pub const RESULT_VAR_NAME : &'static str = "__result";
+pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 

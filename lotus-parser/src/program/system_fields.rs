@@ -12,10 +12,11 @@ pub fn process_system_field_access(field_name: &Identifier, context: &mut Progra
 }
 
 pub fn process_system_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
-    let (arguments, return_type, wasm_name) = match method_name.as_str() {
-        "log_int" => (vec![Type::Integer], Type::Void, LOG_I32_FUNC_NAME),
+    let (arguments, return_type, wat) = match method_name.as_str() {
+        "wasm_memory_grow" => (vec![Type::Integer], Type::Integer, wat!["memory.grow"]),
+        "log_int" => (vec![Type::Integer], Type::Void, Wat::call_from_stack(LOG_I32_FUNC_NAME)),
         _ => return None
     };
 
-    Some(Wasm::typed(Type::Function(arguments, Box::new(return_type)), vec![Wat::call_no_arg(wasm_name)]))
+    Some(Wasm::typed(Type::Function(arguments, Box::new(return_type)), vec![wat]))
 }
