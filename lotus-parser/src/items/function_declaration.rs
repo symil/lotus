@@ -1,14 +1,13 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, Type, VariableScope, Wasm}};
-use super::{FunctionSignature, Identifier, Statement, FullType};
+use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, ScopeKind, Type, VariableKind, Wasm}};
+use super::{FullType, FunctionSignature, Identifier, Statement, StatementList};
 
 #[parsable]
 pub struct FunctionDeclaration {
     #[parsable(prefix="fn")]
     pub name: Identifier,
     pub signature: FunctionSignature,
-    #[parsable(brackets="{}")]
-    pub statements: Vec<Statement>
+    pub statements: StatementList
 }
 
 impl FunctionDeclaration {
@@ -60,18 +59,31 @@ impl FunctionDeclaration {
         }
 
         context.reset_local_scope();
+        context.push_scope(ScopeKind::Function);
         context.set_function_return_type(return_type);
 
         for (arg_name, arg_type) in &arguments {
-            context.push_var(arg_name, arg_type, VariableScope::Argument);
-        }
+            let var_info = context.push_var(arg_name, arg_type, VariableKind::Argument);
 
-        for statement in &self.statements {
-            if let Some(wasm) = statement.process(context) {
-                wat_body.extend(wasm.wat);
+            if let Some(wasm_type) = arg_type.get_wasm_type() {
+                wat_args.push((var_info.wasm_name, wasm_type));
             } else {
                 ok = false;
             }
+        }
+
+        if let Some(wasm) = self.statements.process(context) {
+            wat_body.extend(wasm.wat);
+
+            for var_info in wasm.declared_variables {
+                if var_info.kind == VariableKind::Local {
+                    if let Some(wasm_type) = var_info.ty.get_wasm_type() {
+                        wat_locals.push((var_info.wasm_name, wasm_type));
+                    }
+                }
+            }
+        } else {
+            ok = false;
         }
 
         wat_body = vec![Wat::new("block", wat_body)];
@@ -79,14 +91,6 @@ impl FunctionDeclaration {
         if let Some(function_annotation) = context.functions.get_by_id(&self.name, index) {
             wasm_func_name = function_annotation.wasm_name.clone();
             wat_ret = function_annotation.return_type.get_wasm_type();
-
-            for (arg_name, arg_type) in &function_annotation.arguments {
-                if let Some(wasm_type) = arg_type.get_wasm_type() {
-                    wat_args.push((arg_name.to_string(), wasm_type));
-                } else {
-                    ok = false;
-                }
-            }
         }
 
         if let Some(return_type) = &context.function_return_type {
@@ -96,16 +100,8 @@ impl FunctionDeclaration {
             }
         }
 
-        for local_var_info in context.variables.values() {
-            if local_var_info.scope == VariableScope::Local {
-                if let Some(wasm_type) = local_var_info.ty.get_wasm_type() {
-                    wat_locals.push((local_var_info.wasm_name.clone(), wasm_type));
-                }
-            }
-        }
-
         if context.function_return_type.is_some() && !context.return_found {
-            context.error(&self.signature.return_type.as_ref().unwrap(), format!("not all branches return a valid value for the function"));
+            context.error(&self.signature.return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
             ok = false;
         }
 
@@ -115,5 +111,7 @@ impl FunctionDeclaration {
         if let Some(function_annotation) = context.functions.get_mut_by_id(&self.name, index) {
             function_annotation.wat = Wat::declare_function(&wasm_func_name, None, wat_args, wat_ret, wat_locals, wat_body);
         }
+
+        context.pop_scope();
     }
 }

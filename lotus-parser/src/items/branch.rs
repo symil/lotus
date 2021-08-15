@@ -16,11 +16,11 @@ impl Branch {
             let mut wat = wasm.wat;
 
             if wasm.ty.is_boolean() {
-                result = Some(Wasm::untyped(wat));
+                result = Some(Wasm::typed(Type::Boolean, wat));
             } else {
                 if let Some(convert_wat) = wasm.ty.to_bool() {
                     wat.push(convert_wat);
-                    result = Some(Wasm::untyped(wat));
+                    result = Some(Wasm::typed(Type::Boolean, wat));
                 } else {
                     context.error(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
                 }

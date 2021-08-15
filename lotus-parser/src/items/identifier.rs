@@ -22,6 +22,10 @@ impl Identifier {
         Self::new(format!("{}_{:#01X}", prefix, location.start * 65536 + location.end))
     }
 
+    pub fn to_unique_string(&self) -> String {
+        Self::new_unique(self.as_str(), self).to_string()
+    }
+
     pub fn is(&self, value: &str) -> bool {
         self.value == value
     }

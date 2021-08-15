@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableScope, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -31,9 +31,9 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), var_info.scope.get_to_stack(var_info.wasm_name.as_str()))),
+                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), var_info.get_to_stack())),
                     AccessType::Set(_) => Some(Wasm::typed(var_info.ty.clone(), vec![
-                        var_info.scope.set_from_stack(var_info.wasm_name.as_str()),
+                        var_info.set_from_stack(),
                         // context.current_scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
                     ])),
                 },

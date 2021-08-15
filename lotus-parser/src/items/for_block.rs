@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ARRAY_LENGTH_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, Type, VariableScope, Wasm}, wat};
+use crate::{generation::{ARRAY_LENGTH_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -35,18 +35,15 @@ impl ForBlock {
         };
         let return_found = context.return_found;
 
-        if context.var_exists(&index_var_name) {
-            context.error(&index_var_name, format!("duplicate variable declaration: `{}`", &index_var_name));
-        }
-
-        if context.var_exists(&item_var_name) {
-            context.error(&item_var_name, format!("duplicate variable declaration: `{}`", &item_var_name));
-        }
+        context.ckeck_var_unicity(&index_var_name);
+        context.ckeck_var_unicity(&item_var_name);
 
         context.function_depth += 2;
+        context.push_scope(ScopeKind::Loop);
 
         let mut ok = true;
         let mut content = vec![];
+        let mut variables = vec![];
 
         let range_start_wasm_opt = self.range_start.process(context);
         let range_end_wasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(context));
@@ -65,24 +62,25 @@ impl ForBlock {
 
                 let range_end_var_name = Identifier::new_unique("range_end", self);
 
-                context.push_var(&index_var_name, &Type::Integer, VariableScope::Local);
-                context.push_var(&item_var_name, &Type::Integer, VariableScope::Local);
-                context.push_var(&range_end_var_name, &Type::Integer, VariableScope::Local);
+                let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
+                let item_var_info = context.push_var(&item_var_name, &Type::Integer, VariableKind::Local);
+                let range_end_var_info = context.push_var(&range_end_var_name, &Type::Integer, VariableKind::Local);
 
                 if let Some(block_wasm) = self.statements.process(context) {
                     content.extend(range_start_wasm.wat);
                     content.extend(range_end_wasm.wat);
                     content.extend(vec![
-                        Wat::set_local_from_stack(range_end_var_name.as_str()),
-                        Wat::set_local_from_stack(item_var_name.as_str()),
-                        Wat::set_local(index_var_name.as_str(), Wat::const_i32(0)),
+                        range_end_var_info.set_from_stack(),
+                        item_var_info.set_from_stack(),
+                        Wat::const_i32(0),
+                        index_var_info.set_from_stack(),
                         wat!["block",
                             wat!["loop",
-                                wat!["i32.lt_s", Wat::get_local(item_var_name.as_str()), Wat::get_local(range_end_var_name.as_str())],
+                                wat!["i32.lt_s", item_var_info.get_to_stack(), range_end_var_info.get_to_stack()],
                                 wat!["br_if", 1, wat!["i32.eqz"]],
                                 block_wasm.wat,
-                                Wat::increment_local_i32(item_var_name.as_str(), 1),
-                                Wat::increment_local_i32(index_var_name.as_str(), 1),
+                                Wat::increment_local_i32(item_var_info.get_wasm_name(), 1),
+                                Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
                                 wat!["br", 0]
                             ]
                         ]
@@ -90,6 +88,8 @@ impl ForBlock {
                 } else {
                     ok = false;
                 }
+
+                variables.extend(vec![index_var_info, item_var_info, range_end_var_info]);
             }
         } else if let Some(array_wasm) = range_start_wasm_opt {
             if !array_wasm.ty.is_array() {
@@ -100,23 +100,25 @@ impl ForBlock {
             let array_var_name = Identifier::new_unique("array", self);
             let array_len_var_name = Identifier::new_unique("array_len", self);
 
-            context.push_var(&array_var_name, &Type::int_pointer(), VariableScope::Local);
-            context.push_var(&array_len_var_name, &Type::Integer, VariableScope::Local);
-            context.push_var(&index_var_name, &Type::Integer, VariableScope::Local);
-            context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableScope::Local);
+            let array_var_info = context.push_var(&array_var_name, &Type::int_pointer(), VariableKind::Local);
+            let array_len_var_info = context.push_var(&array_len_var_name, &Type::Integer, VariableKind::Local);
+            let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
+            let item_var_info = context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableKind::Local);
 
             if let Some(block_wasm) = self.statements.process(context) {
                 content.extend(array_wasm.wat);
                 content.extend(vec![
-                    Wat::set_local_from_stack(array_var_name.as_str()),
-                    Wat::set_local(index_var_name.as_str(), Wat::const_i32(0)),
-                    Wat::set_local(array_len_var_name.as_str(), Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![Wat::get_local(array_len_var_name.as_str())])),
+                    array_var_info.set_from_stack(),
+                    Wat::const_i32(0),
+                    index_var_info.set_from_stack(),
+                    Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![array_var_info.get_to_stack()]),
+                    array_len_var_info.set_from_stack(),
                     wat!["block",
                         wat!["loop",
-                            wat!["i32.lt", Wat::get_local(index_var_name.as_str()), Wat::get_local(array_len_var_name.as_str())],
+                            wat!["i32.lt", index_var_info.get_to_stack(), array_len_var_info.get_to_stack()],
                             wat!["br_if", 1, wat!["i32.eqz"]],
                             block_wasm.wat,
-                            Wat::increment_local_i32(index_var_name.as_str(), 1),
+                            Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
                             wat!["br", 0]
                         ]
                     ]
@@ -124,16 +126,19 @@ impl ForBlock {
             } else {
                 ok = false;
             }
+
+            variables.extend(vec![array_var_info, array_len_var_info, index_var_info, item_var_info]);
         } else {
             self.statements.process(context);
             ok = false;
         }
 
+        context.pop_scope();
         context.return_found = return_found;
         context.function_depth -= 2;
 
         match ok {
-            true => Some(Wasm::untyped(content)),
+            true => Some(Wasm::untyped(content, variables)),
             false => None
         }
     }

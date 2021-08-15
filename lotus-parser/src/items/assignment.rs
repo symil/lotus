@@ -54,7 +54,7 @@ impl Assignment {
                         wat.extend(left_wasm.wat);
 
                         if ok {
-                            result = Some(Wasm::untyped(wat));
+                            result = Some(Wasm::untyped(wat, vec![]));
                         }
                     } else {
                         context.error(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
@@ -71,7 +71,7 @@ impl Assignment {
                     wat.push(Wat::inst("drop"));
                 }
 
-                result = Some(Wasm::untyped(wat));
+                result = Some(Wasm::untyped(wat, vec![]));
             }
         }
 

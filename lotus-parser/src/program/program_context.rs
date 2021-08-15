@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionAnnotation, GlobalAnnotation, StructAnnotation, Type, VariableScope, VecHashMap};
+use super::{Error, FunctionAnnotation, GlobalAnnotation, Scope, ScopeKind, StructAnnotation, Type, VariableInfo, VariableKind, VecHashMap};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -13,25 +13,21 @@ pub struct ProgramContext {
     pub functions: VecHashMap<Identifier, FunctionAnnotation>,
     pub globals: VecHashMap<Identifier, GlobalAnnotation>,
 
-    pub variables: HashMap<Identifier, VarInfo>,
-    pub this_var: Option<VarInfo>,
-    pub payload_var: Option<VarInfo>,
+    pub scopes: Vec<Scope>,
+    pub this_var: Option<VariableInfo>,
+    pub payload_var: Option<VariableInfo>,
     pub function_return_type: Option<Type>,
     pub function_depth: usize,
     pub return_found: bool
 }
 
-
-#[derive(Debug, Clone)]
-pub struct VarInfo {
-    pub wasm_name: String,
-    pub ty: Type,
-    pub scope: VariableScope
-}
-
 impl ProgramContext {
     pub fn new() -> Self {
-        Self::default()
+        let mut value = Self::default();
+
+        value.push_scope(ScopeKind::Global);
+
+        value
     }
 
     pub fn error<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) {
@@ -44,7 +40,18 @@ impl ProgramContext {
         self.payload_var = None;
         self.function_depth = 0;
         self.return_found = false;
-        self.variables.retain(|_, var_info| var_info.scope == VariableScope::Global);
+
+        while self.scopes.len() > 1 {
+            self.scopes.pop();
+        }
+    }
+
+    pub fn push_scope(&mut self, kind: ScopeKind) {
+        self.scopes.push(Scope::new(kind));
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scopes.pop();
     }
 
     pub fn set_function_return_type(&mut self, return_type: Option<Type>) {
@@ -52,43 +59,40 @@ impl ProgramContext {
     }
 
     pub fn set_this_type(&mut self, ty: Option<Type>) {
-        self.this_var = ty.and_then(|t| Some(VarInfo::new(THIS_VAR_NAME.to_string(), t, VariableScope::Argument)));
+        self.this_var = ty.and_then(|t| Some(VariableInfo::new(THIS_VAR_NAME.to_string(), t, VariableKind::Argument)));
     }
 
     pub fn set_payload_type(&mut self, ty: Option<Type>) {
-        self.payload_var = ty.and_then(|t| Some(VarInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VariableScope::Argument)));
+        self.payload_var = ty.and_then(|t| Some(VariableInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VariableKind::Argument)));
     }
 
-    pub fn push_var(&mut self, name: &Identifier, ty: &Type, scope: VariableScope) {
-        self.variables.insert(name.clone(), VarInfo::new(name.to_string(), ty.clone(), scope));
+    pub fn push_var(&mut self, name: &Identifier, ty: &Type, scope: VariableKind) -> VariableInfo {
+        let current_scope = self.scopes.iter_mut().last().unwrap();
+        let var_info = VariableInfo::new(name.to_unique_string(), ty.clone(), scope);
+
+        current_scope.insert_var_info(name, var_info.clone());
+
+        var_info
     }
 
-    pub fn get_var_info(&self, name: &Identifier) -> Option<VarInfo> {
-        self.variables.get(name).cloned()
-    }
-
-    pub fn var_exists(&self, name: &Identifier) -> bool {
-        self.get_var_info(name).is_some()
-    }
-
-    pub fn get_method_signature(&self, struct_name: &Identifier, method_name: &Identifier) -> Option<(Vec<(Identifier, Type)>, Type)> {
-        if let Some(struct_annotation) = self.structs.get(&struct_name) {
-            if let Some(method_annotation) = struct_annotation.user_methods.get(method_name) {
-                Some((method_annotation.arguments.clone(), method_annotation.return_type.clone()))
-            } else {
-                None
+    pub fn get_var_info(&self, name: &Identifier) -> Option<VariableInfo> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(var_info) = scope.get_var_info(name) {
+                return Some(var_info.clone());
             }
-        } else {
-            None
         }
+
+        None
     }
 
-    pub fn get_function_signatures(&self, function_name: &Identifier) -> Option<(Vec<(Identifier, Type)>, Type)> {
-        if let Some(function_annotation) = self.functions.get(function_name) {
-            Some((function_annotation.arguments.clone(), function_annotation.return_type.clone()))
-        } else {
-            None
+    pub fn ckeck_var_unicity(&mut self, name: &Identifier) -> bool {
+        let is_unique = self.get_var_info(name).is_none();
+
+        if !is_unique {
+            self.error(name, format!("variable `{}` already exists in this scope", name));
         }
+
+        is_unique
     }
 
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
@@ -214,10 +218,4 @@ fn get_globals_sorted(mut map: VecHashMap<Identifier, GlobalAnnotation>) -> Vec<
     list.sort_by_key(|global| global.index);
 
     list
-}
-
-impl VarInfo {
-    pub fn new(wasm_name: String, ty: Type, scope: VariableScope) -> Self {
-        Self { wasm_name, ty, scope }
-    }
 }

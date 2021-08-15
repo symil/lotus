@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Wasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Wasm}, wat};
 use super::{Branch, StatementList};
 
 #[parsable]
@@ -22,40 +22,50 @@ impl IfBlock {
         context.function_depth += 2;
 
         let mut wat = wat!["block"];
+        let mut variables = vec![];
 
         context.return_found = false;
+        context.push_scope(ScopeKind::Branch);
         if let (Some(condition_wasm), Some(block_wasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(context)) {
             let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
 
             wat.push(branch_wat);
+            variables.extend(block_wasm.declared_variables);
         } else {
             ok = false;
         }
+        context.pop_scope();
         branches_return.push(context.return_found);
 
         for branch in &self.else_if_branches {
             context.return_found = false;
+            context.push_scope(ScopeKind::Branch);
             if let (Some(condition_wasm), Some(block_wasm)) = (branch.process_condition(context), branch.process_body(context)) {
                 let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
 
                 wat.push(branch_wat);
+                variables.extend(block_wasm.declared_variables);
             } else {
                 ok = false;
             }
+            context.pop_scope();
             branches_return.push(context.return_found);
         }
 
         context.return_found = false;
         if let Some(else_branch) = &self.else_branch {
-            context.return_found = false;
+            context.push_scope(ScopeKind::Branch);
 
             if let Some(wasm) = else_branch.process(context) {
                 let branch_wat = wat!["block", wasm.wat, wat!["br", 1]];
 
                 wat.push(branch_wat);
+                variables.extend(wasm.declared_variables);
             } else {
                 ok = false;
             }
+
+            context.pop_scope();
         }
         branches_return.push(context.return_found);
 
@@ -63,7 +73,7 @@ impl IfBlock {
         context.return_found = return_found || branches_return.iter().all(|value| *value);
 
         match ok {
-            true => Some(Wasm::untyped(wat)),
+            true => Some(Wasm::untyped(wat, variables)),
             false => None
         }
     }

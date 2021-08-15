@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{GlobalAnnotation, ProgramContext, Type, VariableScope, Wasm};
+use crate::program::{GlobalAnnotation, ProgramContext, Type, VariableKind, Wasm};
 use super::VarDeclaration;
 
 #[parsable]
@@ -12,11 +12,11 @@ impl GlobalDeclaration {
     pub fn process(&self, index: usize, context: &mut ProgramContext) {
         context.reset_local_scope();
 
-        if let Some(wasm) = self.var_declaration.process(VariableScope::Global, context) {
+        if let Some(wasm) = self.var_declaration.process(VariableKind::Global, context) {
             let mut global_annotation = GlobalAnnotation::default();
 
             global_annotation.index = index;
-            global_annotation.wasm_name = format!("{}", &self.var_declaration.var_name);
+            global_annotation.wasm_name = wasm.declared_variables[0].wasm_name.clone();
             global_annotation.ty = wasm.ty;
             global_annotation.value = wasm.wat;
 

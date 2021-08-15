@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 use parsable::parsable;
 use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{ProgramContext, Type, Wasm}};
@@ -29,7 +29,7 @@ impl Action {
                                     
                                     context.return_found = true;
 
-                                    result = Some(Wasm::untyped(wat));
+                                    result = Some(Wasm::untyped(wat, vec![]));
                                 } else {
                                     context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
                                 }
@@ -46,7 +46,7 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(Wasm::untyped(Wat::new("br", context.function_depth)));
+                            result = Some(Wasm::untyped(Wat::new("br", context.function_depth), vec![]));
                         },
                     },
                 }

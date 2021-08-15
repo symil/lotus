@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{AccessType, ProgramContext, VariableScope, Wasm};
+use crate::program::{AccessType, ProgramContext, VariableKind, Wasm};
 use super::{VarRef, VarRefPrefix};
 
 #[parsable]
