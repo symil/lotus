@@ -12,6 +12,11 @@ export const SOURCE_EXTENSION = '.lt';
 export const PARSER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-parser');
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
 
+export const SRC_DIR_NAME = 'src';
+export const OUTPUT_FILE_NAME = 'output.txt';
+export const WAT_FILE_NAME = 'module.wat';
+export const WASM_FILE_NAME = 'module.wasm';
+
 export function compileParser() {
     try {
         execSync('cargo build -p lotus-parser', { stdio: 'inherit' });
@@ -72,12 +77,11 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     return { result, success };
 }
 
-export async function runTest(sourcePath, buildDirectory, { inheritStdio = false, displayMemory = false } = {}) {
-    let sourceFileName = path.basename(sourcePath);
-    let watPath = path.join(buildDirectory, sourceFileName.replace(SOURCE_EXTENSION, '.wat'));
-    let wasmPath = path.join(buildDirectory, sourceFileName.replace(SOURCE_EXTENSION, '.wasm'));
+export async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false } = {}) {
+    let watPath = path.join(buildDirectory, WAT_FILE_NAME);
+    let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
-        () => compileLotus(sourcePath, watPath, inheritStdio),
+        () => compileLotus(sourceDirPath, watPath, inheritStdio),
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];

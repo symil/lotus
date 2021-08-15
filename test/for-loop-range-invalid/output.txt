@@ -1,0 +1,2 @@
+main.lt:2:27: error: range start: expected `int`, got `bool`
+main.lt:2:33: error: range end: expected `int`, got `bool`

@@ -1,9 +1,9 @@
 import path from 'path';
-import fs from 'fs';
+import fse from 'fs-extra';
 import chalk from 'chalk';
-import { compileParser, runTest, SOURCE_EXTENSION, ROOT_DIR, TEST_DIR } from './test-utils';
+import { compileParser, runTest, ROOT_DIR, TEST_DIR, OUTPUT_FILE_NAME, SRC_DIR_NAME } from './test-utils';
 
-const TEMPLATE_FILE_PATH = path.join(TEST_DIR, 'template.lt');
+const TEMPLATE_DIR_PATH = path.join(ROOT_DIR, 'template');
 const BUILD_DIR = path.join(ROOT_DIR, 'build');
 const ARGV = process.argv.slice(2);
 
@@ -18,26 +18,24 @@ async function main() {
 
     if (testName) {
         let testDirPath = path.join(TEST_DIR, testName);
+        let testDirSrcPath = path.join(testDirPath, SRC_DIR_NAME);
 
-        if (fs.existsSync(testDirPath)) {
-            fs.rmSync(testDirPath, { recursive: true });
+        if (fse.existsSync(testDirPath)) {
+            fse.rmSync(testDirPath, { recursive: true });
         }
 
-        fs.mkdirSync(testDirPath);
+        fse.mkdirSync(testDirSrcPath, { recursive: true });
+        fse.copySync(TEMPLATE_DIR_PATH, testDirSrcPath);
 
-        let inputFilePath = path.join(testDirPath, `${testName}${SOURCE_EXTENSION}`);
-        let inputFileContent = fs.readFileSync(TEMPLATE_FILE_PATH, 'utf8');
-        fs.writeFileSync(inputFilePath, inputFileContent);
-
-        let outputFilePath = path.join(testDirPath, `${testName}.txt`);
-        let outputFileContent = await runTest(inputFilePath, testDirPath, { inheritStdio, displayMemory });
-        fs.writeFileSync(outputFilePath, outputFileContent);
+        let outputFilePath = path.join(testDirPath, OUTPUT_FILE_NAME);
+        let outputFileContent = await runTest(testDirSrcPath, testDirPath, { inheritStdio, displayMemory });
+        fse.writeFileSync(outputFilePath, outputFileContent);
 
         setTimeout(() => {
             console.log(`${chalk.bold('generated:')} ${testDirPath.replace(ROOT_DIR + '/', '')}`);
         });
     } else {
-        await runTest(TEMPLATE_FILE_PATH, BUILD_DIR, { inheritStdio, displayMemory });
+        await runTest(TEMPLATE_DIR_PATH, BUILD_DIR, { inheritStdio, displayMemory });
     }
 }
 

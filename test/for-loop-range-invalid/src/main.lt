@@ -1,0 +1,6 @@
+fn main() {
+    for (index, value) in true..false {
+        @log_int(index);
+        @log_int(value);
+    }
+}

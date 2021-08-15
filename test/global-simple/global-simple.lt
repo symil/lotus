@@ -1,7 +1,0 @@
-let HELLO = 5;
-
-fn main() {
-    HELLO = HELLO + 8;
-
-    @log_int(HELLO);
-}

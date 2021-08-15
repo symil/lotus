@@ -1,7 +1,7 @@
 import assert from 'assert';
 import path from 'path';
 import fs from 'fs';
-import { compileParser, runTest, SOURCE_EXTENSION, TEST_DIR } from './test-utils';
+import { compileParser, OUTPUT_FILE_NAME, runTest, SOURCE_EXTENSION, SRC_DIR_NAME, TEST_DIR } from './test-utils';
 
 function main() {
     if (!compileParser()) {
@@ -14,8 +14,8 @@ function main() {
         for (let dirName of testDirList) {
             let testName = dirName;
             let dirPath = path.join(TEST_DIR, dirName);
-            let sourcePath = path.join(dirPath, `${dirName}${SOURCE_EXTENSION}`);
-            let expectedOutputPath = sourcePath.replace(SOURCE_EXTENSION, '.txt');
+            let sourcePath = path.join(dirPath, SRC_DIR_NAME);
+            let expectedOutputPath = path.join(dirPath, OUTPUT_FILE_NAME);
 
             it(testName, async () => {
                 let actualOutput = await runTest(sourcePath, dirPath);

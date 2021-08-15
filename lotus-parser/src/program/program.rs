@@ -107,7 +107,7 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
             }
         }
     } else if is_first {
-        return Err(vec![Error::unlocated(format!("path `{}` is not a valid file or directort", input_path))]);
+        return Err(vec![Error::unlocated(format!("path `{}` is not a valid file or directory", input_path))]);
     }
 
     Ok(result)
