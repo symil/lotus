@@ -5,7 +5,17 @@ pub struct AssignmentOperator {
     pub token: AssignmentToken
 }
 
-#[parsable]
+#[parsable(impl_display=true)]
+#[derive(PartialEq)]
 pub enum AssignmentToken {
-    Equal = "="
+    Equal = "=",
+    PlusEqual = "+=",
+    MinusEqual = "-=",
+    MultEqual = "*=",
+    DivEqual = "/=",
+    ModEqual = "%=",
+    ShlEqual = "<<=",
+    ShrEqual = ">>=",
+    AndEqual = "&&=",
+    OrEqual = "||=",
 }

@@ -173,7 +173,7 @@ impl StringReader {
         let regex = match self.regexes.get(pattern) {
             Some(value) => value,
             None => {
-                let re = Regex::new(&format!("^{}", pattern)).unwrap();
+                let re = Regex::new(&format!("^({})", pattern)).unwrap();
                 self.regexes.insert(pattern, re);
                 self.regexes.get(pattern).unwrap()
             }

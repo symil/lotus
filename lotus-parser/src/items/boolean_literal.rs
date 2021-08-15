@@ -13,7 +13,10 @@ impl BooleanLiteral {
         let i32_value = match self.value.as_str() {
             "true" => 1,
             "false" => 0,
-            _ => unreachable!()
+            _ => {
+                dbg!(self.value.as_str());
+                unreachable!()
+            }
         };
 
         Some(Wasm::typed(Type::Boolean, Wat::const_i32(i32_value)))

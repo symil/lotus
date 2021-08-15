@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, program::{AccessType, ProgramContext, Wasm}};
+use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, Wasm}};
 use super::{AssignmentOperator, Expression, VarPath};
 
 #[parsable]
@@ -22,11 +22,40 @@ impl Assignment {
                 if let Some(right_wasm) = right_wasm_opt {
                     if left_wasm.ty.is_assignable(&right_wasm.ty, context, &mut HashMap::new()) {
                         let mut wat = vec![];
+                        let mut ok = true;
 
                         wat.extend(right_wasm.wat);
+
+                        if equal_token.token != AssignmentToken::Equal {
+                            let associated_binary_operator = match &equal_token.token {
+                                AssignmentToken::Equal => unreachable!(),
+                                AssignmentToken::PlusEqual => BinaryOperatorToken::Plus,
+                                AssignmentToken::MinusEqual => BinaryOperatorToken::Minus,
+                                AssignmentToken::MultEqual => BinaryOperatorToken::Mult,
+                                AssignmentToken::DivEqual => BinaryOperatorToken::Div,
+                                AssignmentToken::ModEqual => BinaryOperatorToken::Mod,
+                                AssignmentToken::ShlEqual => BinaryOperatorToken::Shl,
+                                AssignmentToken::ShrEqual => BinaryOperatorToken::Shr,
+                                AssignmentToken::AndEqual => BinaryOperatorToken::And,
+                                AssignmentToken::OrEqual => BinaryOperatorToken::Or,
+                            };
+
+                            if let Some(left_rvalue_wasm) = self.lvalue.process(AccessType::Get, context) {
+                                if let Some(operator_wasm) = associated_binary_operator.process(&left_rvalue_wasm.ty, context) {
+                                    wat.extend(left_rvalue_wasm.wat);
+                                    wat.extend(operator_wasm.wat);
+                                } else {
+                                    context.error(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
+                                    ok = false;
+                                }
+                            }
+                        }
+
                         wat.extend(left_wasm.wat);
 
-                        result = Some(Wasm::untyped(wat));
+                        if ok {
+                            result = Some(Wasm::untyped(wat));
+                        }
                     } else {
                         context.error(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
                     }
