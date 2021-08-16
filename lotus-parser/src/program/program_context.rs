@@ -1,17 +1,19 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionAnnotation, GlobalAnnotation, Scope, ScopeKind, StructAnnotation, Type, VariableInfo, VariableKind, VecHashMap};
+use super::{Error, FunctionAnnotation, GlobalAnnotation, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind, VecHashMap};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
+    current_package_name: String,
+    current_file_name: String,
 
-    pub world_struct_name: Option<Identifier>,
-    pub user_struct_name: Option<Identifier>,
-    pub structs: VecHashMap<Identifier, StructAnnotation>,
-    pub functions: VecHashMap<Identifier, FunctionAnnotation>,
-    pub globals: VecHashMap<Identifier, GlobalAnnotation>,
+    world_struct_name: Option<Identifier>,
+    user_struct_name: Option<Identifier>,
+    structs: VecHashMap<String, StructAnnotation>,
+    functions: VecHashMap<String, FunctionAnnotation>,
+    globals: VecHashMap<String, GlobalAnnotation>,
 
     pub scopes: Vec<Scope>,
     pub this_var: Option<VariableInfo>,
@@ -32,6 +34,14 @@ impl ProgramContext {
 
     pub fn error<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) {
         self.errors.push(Error::located(location, error));
+    }
+
+    pub fn get_current_package_name(&self) -> String {
+        self.current_package_name.clone()
+    }
+
+    pub fn get_current_file_name(&self) -> String {
+        self.current_file_name.clone()
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -95,6 +105,48 @@ impl ProgramContext {
         is_unique
     }
 
+    pub fn get_struct_by_info(&self, info: &StructInfo) -> Option<&StructAnnotation> {
+        self.structs.get_by_id(&info.name, info.id)
+    }
+
+    pub fn get_struct(&self, name: &Identifier) -> Option<&StructAnnotation> {
+        self.structs.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    }
+
+    pub fn get_struct_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut StructAnnotation> {
+        self.structs.get_mut_by_id(name.as_string(), id)
+    }
+
+    pub fn add_struct(&mut self, name: &Identifier, value: StructAnnotation) {
+        self.structs.insert(name.to_string(), value);
+    }
+
+
+    pub fn get_function(&self, name: &Identifier) -> Option<&FunctionAnnotation> {
+        self.functions.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    }
+
+    pub fn get_function_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut FunctionAnnotation> {
+        self.functions.get_mut_by_id(name.as_string(), id)
+    }
+
+    pub fn add_function(&mut self, name: &Identifier, value: FunctionAnnotation) {
+        self.functions.insert(name.to_string(), value);
+    }
+
+
+    pub fn get_global(&self, name: &Identifier) -> Option<&GlobalAnnotation> {
+        self.globals.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    }
+
+    pub fn get_global_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut GlobalAnnotation> {
+        self.globals.get_mut_by_id(name.as_string(), id)
+    }
+
+    pub fn add_global(&mut self, name: &Identifier, value: GlobalAnnotation) {
+        self.globals.insert(name.to_string(), value);
+    }
+
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut structs = vec![];
         let mut functions = vec![];
@@ -150,7 +202,7 @@ impl ProgramContext {
     pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
         let main_identifier = Identifier::new("main");
 
-        if !self.functions.contains_key(&main_identifier) {
+        if self.get_function(&main_identifier).is_none() {
             self.errors.push(Error::unlocated(format!("missing required function `main`")));
         }
 
@@ -195,7 +247,7 @@ impl ProgramContext {
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
             Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
-            Wat::call(self.functions.get(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
+            Wat::call(self.get_function(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
         ]));
 
         for mut function_list in self.functions.hashmap.into_values() {
@@ -208,14 +260,14 @@ impl ProgramContext {
     }
 }
 
-fn get_globals_sorted(mut map: VecHashMap<Identifier, GlobalAnnotation>) -> Vec<GlobalAnnotation> {
+fn get_globals_sorted(mut map: VecHashMap<String, GlobalAnnotation>) -> Vec<GlobalAnnotation> {
     let mut list = vec![];
 
     for mut global_list in map.hashmap.into_values() {
         list.push(global_list.remove(0));
     }
 
-    list.sort_by_key(|global| global.index);
+    list.sort_by_key(|global| global.metadata.id);
 
     list
 }

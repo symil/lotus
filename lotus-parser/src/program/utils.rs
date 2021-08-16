@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt, hash::Hash};
 
+pub type Id = usize;
+
 pub fn display_join<T : fmt::Display>(values: &[T]) -> String {
     values.iter().map(|value| format!("`{}`", value)).collect::<Vec<String>>().join(" | ")
 }

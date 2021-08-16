@@ -23,7 +23,7 @@ impl Error {
         }
     }
 
-    pub fn from_parse_error(error: ParseError, file_name: &'static str) -> Self {
+    pub fn from_parse_error(error: ParseError, package_name: &'static str, file_name: &'static str) -> Self {
         let mut expected_set = HashSet::new();
         let mut expected_list = vec![];
 
@@ -42,6 +42,7 @@ impl Error {
             location: Some(DataLocation {
                 start: 0,
                 end: 0,
+                package_name,
                 file_name,
                 line: error.line,
                 column: error.column

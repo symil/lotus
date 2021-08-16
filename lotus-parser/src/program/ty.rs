@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
-use super::{ProgramContext, StructAnnotation};
+use super::{ProgramContext, StructAnnotation, StructInfo};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
@@ -12,7 +12,7 @@ pub enum Type {
     String,
     Null,
     TypeId,
-    Struct(Identifier),
+    Struct(StructInfo),
     Pointer(Box<Type>),
     Array(Box<Type>),
     Function(Vec<Type>, Box<Type>),
@@ -87,9 +87,9 @@ impl Type {
         let item_type = match &ty.item {
             ItemType::Value(value_type) => match Self::builtin_from_str(value_type.name.as_str()) {
                 Some(builtin_type) => builtin_type,
-                None => match context.structs.contains_key(&value_type.name) {
-                    true => Self::Struct(value_type.name.clone()),
-                    false => {
+                None => match context.get_struct(&value_type.name) {
+                    Some(annotation) => Self::Struct(annotation.get_struct_info()),
+                    None => {
                         context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
                         return None
                     },
@@ -155,10 +155,6 @@ impl Type {
         Type::Pointer(Box::new(pointed_type))
     }
 
-    pub fn object(name: &Identifier) -> Self {
-        Type::Struct(name.clone())
-    }
-
     pub fn array(item_type: Type) -> Self {
         Type::Array(Box::new(item_type))
     }
@@ -195,13 +191,6 @@ impl Type {
         }
     }
 
-    pub fn is_struct(&self, struct_name: &Identifier) -> bool {
-        match self {
-            Type::Struct(self_struct_name) => self_struct_name == struct_name,
-            _ => false
-        }
-    }
-
     pub fn is_array(&self) -> bool {
         match self {
             Type::Array(_) => true,
@@ -230,8 +219,8 @@ impl Type {
             Type::String => actual == &Type::String,
             Type::Null => actual == &Type::Null,
             Type::TypeId => actual == &Type::TypeId,
-            Type::Struct(struct_name) => match actual {
-                Type::Struct(actual_struct_name) => context.structs.get(actual_struct_name).unwrap().types.contains(struct_name),
+            Type::Struct(info) => match actual {
+                Type::Struct(actual_info) => context.get_struct_by_info(actual_info).unwrap().types.contains(&info.id),
                 Type::Null => true,
                 _ => false
             },
@@ -298,7 +287,7 @@ impl fmt::Display for Type {
             Type::String => write!(f, "string"),
             Type::Null => write!(f, "<null>"),
             Type::TypeId => write!(f, "type"),
-            Type::Struct(struct_name) => write!(f, "{}", struct_name),
+            Type::Struct(struct_info) => write!(f, "{}", &struct_info.name),
             Type::Pointer(_) => write!(f, "ptr"),
             Type::Array(item_type) => write!(f, "{}[]", item_type),
             Type::Function(arguments, return_type) => {

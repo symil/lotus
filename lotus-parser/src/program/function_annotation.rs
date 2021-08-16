@@ -1,9 +1,9 @@
-use crate::{generation::Wat, items::Identifier};
-use super::{Type, Wasm, WithId};
+use crate::{generation::Wat, items::{Identifier, VisibilityToken}};
+use super::{ItemMetadata, Type, Wasm, WithMetadata};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct FunctionAnnotation {
-    pub index: usize,
+    pub metadata: ItemMetadata,
     pub wasm_name: String,
     pub this_type: Option<Type>,
     pub payload_type: Option<Type>,
@@ -21,8 +21,8 @@ impl FunctionAnnotation {
     }
 }
 
-impl WithId for FunctionAnnotation {
-    fn get_id(&self) -> usize {
-        self.index
+impl WithMetadata for FunctionAnnotation {
+    fn get_metadata(&self) -> &ItemMetadata {
+        &self.metadata
     }
 }

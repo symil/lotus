@@ -34,6 +34,10 @@ impl Identifier {
         self.value.as_str()
     }
 
+    pub fn as_string(&self) -> &String {
+        &self.value
+    }
+
     pub fn to_string(&self) -> String {
         self.value.clone()
     }

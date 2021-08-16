@@ -1,15 +1,14 @@
 use std::collections::HashMap;
-use crate::items::{Identifier, StructQualifier};
-use super::{FunctionAnnotation, Type, WithId};
+use crate::items::{Identifier, StructQualifier, VisibilityToken};
+use super::{FunctionAnnotation, Id, ItemMetadata, StructInfo, Type, WithMetadata};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct StructAnnotation {
-    pub index: usize,
+    pub metadata: ItemMetadata,
+    pub qualifier: StructQualifier,
     pub name: Identifier,
     pub parent_name: Option<Identifier>,
-    pub qualifier: StructQualifier,
-    pub type_id: usize,
-    pub types: Vec<Identifier>,
+    pub types: Vec<Id>,
     pub self_fields: HashMap<Identifier, FieldDetails>,
     pub fields: HashMap<Identifier, FieldDetails>,
     pub user_methods: HashMap<Identifier, FunctionAnnotation>,
@@ -26,8 +25,18 @@ pub struct FieldDetails {
     pub offset: usize,
 }
 
-impl WithId for StructAnnotation {
-    fn get_id(&self) -> usize {
-        self.index
+impl WithMetadata for StructAnnotation {
+    fn get_metadata(&self) -> &ItemMetadata {
+        &self.metadata
+    }
+}
+
+impl StructAnnotation {
+    pub fn get_struct_info(&self) -> StructInfo {
+        StructInfo::new(self.metadata.id, self.name.to_string())
+    }
+
+    pub fn get_id(&self) -> &Id {
+        &self.metadata.id
     }
 }

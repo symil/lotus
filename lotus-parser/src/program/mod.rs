@@ -21,6 +21,8 @@ mod side;
 mod vec_hashmap;
 mod scope;
 mod variable_info;
+mod item_metadata;
+mod struct_info;
 
 pub use error::*;
 pub use program::*;
@@ -45,3 +47,5 @@ pub use side::*;
 pub use vec_hashmap::*;
 pub use scope::*;
 pub use variable_info::*;
+pub use item_metadata::*;
+pub use struct_info::*;

@@ -1,3 +1,5 @@
+#![feature(hash_set_entry)]
+
 mod utils;
 mod parsable;
 mod string_reader;

@@ -1,13 +1,13 @@
-use std::{collections::HashMap};
-
+use std::{collections::{HashMap, HashSet}};
 use regex::Regex;
 use crate::{DataLocation, line_col_lookup::LineColLookup};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
     comment_token: &'static str,
-    regexes: HashMap<&'static str, Regex>,
+    package_name: &'static str,
     file_name: &'static str,
+
     string: String,
     line_col: LineColLookup,
     index: usize,
@@ -15,13 +15,37 @@ pub struct StringReader {
     expected: Vec<String>
 }
 
-static mut STRINGS : Vec<String> = vec![];
+static mut REGEXES : Option<HashMap<&'static str, Regex>> = None;
+static mut STRINGS : Option<HashSet<String>> = None;
+
+fn get_str(string: String) -> &'static str {
+    unsafe {
+        STRINGS.as_mut().unwrap().get_or_insert(string).as_str()
+    }
+}
+
+fn get_regex(pattern: &'static str) -> &'static Regex {
+    let regexes = unsafe { REGEXES.as_mut().unwrap() };
+
+    if !regexes.contains_key(pattern) {
+        regexes.insert(pattern, Regex::new(&format!("^({})", pattern)).unwrap());
+    }
+
+    regexes.get(pattern).unwrap()
+}
 
 impl StringReader {
+    pub fn init() {
+        unsafe {
+            REGEXES = Some(HashMap::new());
+            STRINGS = Some(HashSet::new());
+        }
+    }
+
     pub fn new(comment_token: &'static str) -> Self {
         Self {
             comment_token,
-            regexes: HashMap::new(),
+            package_name: "",
             file_name: "",
             string: String::new(),
             line_col: LineColLookup::new(""),
@@ -31,15 +55,18 @@ impl StringReader {
         }
     }
 
-    pub fn set_content(&mut self, file_content: String, file_name: String) {
-        unsafe { STRINGS.push(file_name) };
-
-        self.file_name = unsafe { &STRINGS.last().unwrap() };
+    pub fn set_content(&mut self, package_name: String, file_name: String, file_content: String) {
+        self.package_name = get_str(package_name);
+        self.file_name = get_str(file_name);
         self.line_col = LineColLookup::new(&file_content);
         self.string = file_content;
         self.index = 0;
         self.error_index = 0;
         self.expected = vec![];
+    }
+
+    pub fn get_package_name(&self) -> &'static str {
+        self.package_name
     }
 
     pub fn get_file_name(&self) -> &'static str {
@@ -170,15 +197,7 @@ impl StringReader {
     }
 
     pub fn read_regex(&mut self, pattern: &'static str) -> Option<&str> {
-        let regex = match self.regexes.get(pattern) {
-            Some(value) => value,
-            None => {
-                let re = Regex::new(&format!("^({})", pattern)).unwrap();
-                self.regexes.insert(pattern, re);
-                self.regexes.get(pattern).unwrap()
-            }
-        };
-
+        let regex = get_regex(pattern);
         let length = match regex.find(self.as_str()) {
             Some(m) => m.end(),
             None => 0
@@ -189,10 +208,11 @@ impl StringReader {
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         let end = self.get_index_backtracked();
+        let package_name = self.package_name;
         let file_name = self.file_name;
         let (line, column) = self.line_col.get(start);
 
-        DataLocation { start, end, file_name, line, column }
+        DataLocation { start, end, file_name, package_name, line, column }
     }
 }
 
