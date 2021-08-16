@@ -13,6 +13,8 @@ pub struct LotusProgram {
 
 impl LotusProgram {
     pub fn from_path(path: &str, prelude: &'static[(&'static str, &'static str)]) -> Result<Self, Vec<Error>> {
+        StringReader::init();
+
         let files_to_process = read_path_recursively(path, true)?;
         let mut parsed_files = vec![];
         let mut string_reader = StringReader::new(COMMENT_START_TOKEN);

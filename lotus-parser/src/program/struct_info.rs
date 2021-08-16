@@ -1,6 +1,6 @@
 use super::Id;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct StructInfo {
     pub id: Id,
     pub name: String

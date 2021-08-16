@@ -6,6 +6,7 @@ pub struct Visibility {
 }
 
 #[parsable]
+#[derive(PartialEq)]
 pub enum VisibilityToken {
     Private = "prv",
     Public = "pub",

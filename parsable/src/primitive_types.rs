@@ -1,7 +1,7 @@
 use crate::{parsable::Parsable, string_reader::StringReader};
 
 impl Parsable for () {
-    fn parse(_reader: &mut StringReader) -> Option<Self> {
+    fn parse_item(_reader: &mut StringReader) -> Option<Self> {
         Some(())
     }
 }
@@ -11,8 +11,8 @@ impl<T : Parsable> Parsable for Box<T> {
         <T as Parsable>::get_token_name()
     }
 
-    fn parse(reader: &mut StringReader) -> Option<Self> {
-        match <T as Parsable>::parse(reader) {
+    fn parse_item(reader: &mut StringReader) -> Option<Self> {
+        match <T as Parsable>::parse_item(reader) {
             Some(value) => Some(Box::new(value)),
             None => None
         }
@@ -24,8 +24,8 @@ impl<T : Parsable> Parsable for Option<T> {
         <T as Parsable>::get_token_name()
     }
 
-    fn parse(reader: &mut StringReader) -> Option<Self> {
-        match <T as Parsable>::parse(reader) {
+    fn parse_item(reader: &mut StringReader) -> Option<Self> {
+        match <T as Parsable>::parse_item(reader) {
             Some(value) => Some(Some(value)),
             None => {
                 reader.set_expected_token(<T as Parsable>::get_token_name());
@@ -36,10 +36,10 @@ impl<T : Parsable> Parsable for Option<T> {
 }
 
 impl<T : Parsable> Parsable for Vec<T> {
-    fn parse(reader: &mut StringReader) -> Option<Self> {
+    fn parse_item(reader: &mut StringReader) -> Option<Self> {
         let mut result = vec![];
 
-        while let Some(value) = T::parse(reader) {
+        while let Some(value) = T::parse_item(reader) {
             result.push(value);
             reader.eat_spaces();
         }
@@ -51,10 +51,10 @@ impl<T : Parsable> Parsable for Vec<T> {
         <T as Parsable>::get_token_name()
     }
 
-    fn parse_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
+    fn parse_item_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
         let mut result = vec![];
 
-        while let Some(value) = T::parse(reader) {
+        while let Some(value) = T::parse_item(reader) {
             result.push(value);
             reader.eat_spaces();
 
@@ -79,16 +79,16 @@ impl<T : Parsable, U : Parsable> Parsable for (T, U) {
         Some(format!("({}, {})", first, second))
     }
 
-    fn parse(reader: &mut StringReader) -> Option<Self> {
+    fn parse_item(reader: &mut StringReader) -> Option<Self> {
         let start_index = reader.get_index();
-        let first = match T::parse(reader) {
+        let first = match T::parse_item(reader) {
             Some(value) => value,
             None => {
                 reader.set_expected_token(T::get_token_name());
                 return None;
             }
         };
-        let second = match U::parse(reader) {
+        let second = match U::parse_item(reader) {
             Some(value) => value,
             None => {
                 reader.set_expected_token(U::get_token_name());

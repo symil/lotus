@@ -20,12 +20,12 @@ impl MethodConditionOperand {
             context.error(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
         }
 
-        if let Some(target_struct_name) = context.structs.get(target_struct_name) {
-            if let Some(field) = target_struct_name.fields.get(&self.field_name) {
+        if let Some(target_struct) = context.get_struct_by_name(target_struct_name) {
+            if let Some(field) = target_struct.fields.get(&self.field_name) {
                 let mut ok = false;
 
-                if let Type::Struct(field_struct_name) = &field.ty {
-                    if let Some(field_struct_annotation) = context.structs.get(field_struct_name) {
+                if let Type::Struct(field_struct) = &field.ty {
+                    if let Some(field_struct_annotation) = context.get_struct_by_id(field_struct.id) {
                         if field_struct_annotation.qualifier.is_entity_qualifier() {
                             ok = true;
                         }

@@ -87,8 +87,8 @@ impl Type {
         let item_type = match &ty.item {
             ItemType::Value(value_type) => match Self::builtin_from_str(value_type.name.as_str()) {
                 Some(builtin_type) => builtin_type,
-                None => match context.get_struct(&value_type.name) {
-                    Some(annotation) => Self::Struct(annotation.get_struct_info()),
+                None => match context.get_struct_by_name(&value_type.name) {
+                    Some(annotation) => Self::Struct(annotation.to_struct_info()),
                     None => {
                         context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
                         return None
@@ -220,7 +220,7 @@ impl Type {
             Type::Null => actual == &Type::Null,
             Type::TypeId => actual == &Type::TypeId,
             Type::Struct(info) => match actual {
-                Type::Struct(actual_info) => context.get_struct_by_info(actual_info).unwrap().types.contains(&info.id),
+                Type::Struct(actual_info) => context.get_struct_by_id(actual_info.id).unwrap().types.contains(&info.id),
                 Type::Null => true,
                 _ => false
             },

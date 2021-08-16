@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use parsable::parsable;
 
-use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{Error, ProgramContext, Type, Wasm}};
+use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{Error, ProgramContext, StructInfo, Type, Wasm}};
 
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
@@ -19,11 +19,14 @@ impl ObjectLiteral {
         let mut ok = true;
         let mut wat = vec![];
         let mut fields_init = vec![];
+        let mut struct_info = StructInfo::default();
 
-        if let Some(struct_annotation) = context.structs.get(&self.type_name) {
-            wat.push(Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.type_id)]));
+        if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
+            struct_info = struct_annotation.to_struct_info();
+            todo!() // allocate the right number of values
+            // wat.push(Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.type_id)]));
         } else {
-            context.error(&self.type_name, format!("undefined type `{}`", &self.type_name));
+            context.error(&self.type_name, format!("undefined structure `{}`", &self.type_name));
             ok = false;
         }
 
@@ -33,7 +36,7 @@ impl ObjectLiteral {
             fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
         }
 
-        if let Some(struct_annotation) = context.structs.get(&self.type_name) {
+        if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
             for (field_name, field_expr, field_wasm_opt) in fields_init {
                 if !struct_annotation.fields.contains_key(&field_name) {
                     errors.push(Error::located(&field_name, format!("type `{}` has no field `{}`", &self.type_name, &field_name)));
@@ -71,7 +74,7 @@ impl ObjectLiteral {
         context.errors.extend(errors);
 
         match ok {
-            true => Some(Wasm::typed(Type::Struct(self.type_name.clone()), wat)),
+            true => Some(Wasm::typed(Type::Struct(struct_info), wat)),
             false => None
         }
     }

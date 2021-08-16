@@ -1,9 +1,10 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{FunctionAnnotation, ProgramContext, ScopeKind, Type, VariableKind, Wasm}};
-use super::{FullType, FunctionSignature, Identifier, Statement, StatementList};
+use crate::{generation::{RESULT_VAR_NAME, Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, Type, VariableKind, Wasm}};
+use super::{FullType, FunctionSignature, Identifier, Statement, StatementList, Visibility};
 
 #[parsable]
 pub struct FunctionDeclaration {
+    pub visibility: Visibility,
     #[parsable(prefix="fn")]
     pub name: Identifier,
     pub signature: FunctionSignature,
@@ -12,8 +13,8 @@ pub struct FunctionDeclaration {
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, index: usize, context: &mut ProgramContext) {
-        let mut function_annotation = FunctionAnnotation::default();
         let (arguments, return_type) = self.signature.process(context);
+        let visibility = self.visibility.get_token();
 
         if self.name.as_str() == "main" {
             if !arguments.is_empty() {
@@ -23,20 +24,36 @@ impl FunctionDeclaration {
             if !return_type.is_void() {
                 context.error(&self.name, format!("main function must not have a return type"));
             }
+
+            if visibility != VisibilityToken::Export {
+                context.error(&self.name, format!("main function must be declared with the `export` visibility"));
+            }
         }
 
-        function_annotation.index = index;
-        function_annotation.wasm_name = format!("{}", self.name);
-        function_annotation.this_type = None;
-        function_annotation.payload_type = None;
-        function_annotation.arguments = arguments;
-        function_annotation.return_type = return_type;
+        let function_annotation = FunctionAnnotation {
+            metadata: ItemMetadata {
+                id: index,
+                name: self.name.clone(),
+                file_name: context.get_current_file_name(),
+                namespace_name: context.get_current_namespace_name(),
+                visibility: visibility,
+            },
+            wasm_name: match visibility {
+                VisibilityToken::System => self.name.to_string(),
+                _ => format!("{}_{}", self.name, index)
+            },
+            this_type: None,
+            payload_type: None,
+            arguments: arguments,
+            return_type: return_type,
+            wat: Wat::default(),
+        };
 
-        if context.functions.contains_key(&self.name) {
+        if context.get_function_by_name(&self.name).is_some() {
             context.error(&self.name, format!("duplicate function declaration: `{}`", &self.name));
         }
-
-        context.functions.insert(&self.name, function_annotation);
+        
+        context.add_function(function_annotation);
     }
 
     pub fn process_body(&self, index: usize, context: &mut ProgramContext) {
@@ -50,7 +67,7 @@ impl FunctionDeclaration {
         let mut return_type = None;
         let mut arguments = vec![];
 
-        if let Some(function_annotation) = context.functions.get_by_id(&self.name, index) {
+        if let Some(function_annotation) = context.get_function_by_id(index) {
             return_type = match function_annotation.return_type {
                 Type::Void => None,
                 _ => Some(function_annotation.return_type.clone())
@@ -88,7 +105,7 @@ impl FunctionDeclaration {
 
         wat_body = vec![Wat::new("block", wat_body)];
 
-        if let Some(function_annotation) = context.functions.get_by_id(&self.name, index) {
+        if let Some(function_annotation) = context.get_function_by_id(index) {
             wasm_func_name = function_annotation.wasm_name.clone();
             wat_ret = function_annotation.return_type.get_wasm_type();
         }
@@ -108,7 +125,7 @@ impl FunctionDeclaration {
         let wat_args : Vec<(&str, &str)> = wat_args.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.clone())).collect();
         let wat_locals : Vec<(&str, &str)> = wat_locals.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.clone())).collect();
 
-        if let Some(function_annotation) = context.functions.get_mut_by_id(&self.name, index) {
+        if let Some(function_annotation) = context.get_function_by_id_mut(index) {
             function_annotation.wat = Wat::declare_function(&wasm_func_name, None, wat_args, wat_ret, wat_locals, wat_body);
         }
 

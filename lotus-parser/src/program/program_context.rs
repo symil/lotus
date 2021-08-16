@@ -1,19 +1,19 @@
 use std::{collections::HashMap, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionAnnotation, GlobalAnnotation, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind, VecHashMap};
+use super::{Error, FunctionAnnotation, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
-    current_package_name: String,
+    current_namespace_name: String,
     current_file_name: String,
 
     world_struct_name: Option<Identifier>,
     user_struct_name: Option<Identifier>,
-    structs: VecHashMap<String, StructAnnotation>,
-    functions: VecHashMap<String, FunctionAnnotation>,
-    globals: VecHashMap<String, GlobalAnnotation>,
+    structs: ItemIndex<StructAnnotation>,
+    functions: ItemIndex<FunctionAnnotation>,
+    globals: ItemIndex<GlobalAnnotation>,
 
     pub scopes: Vec<Scope>,
     pub this_var: Option<VariableInfo>,
@@ -36,8 +36,8 @@ impl ProgramContext {
         self.errors.push(Error::located(location, error));
     }
 
-    pub fn get_current_package_name(&self) -> String {
-        self.current_package_name.clone()
+    pub fn get_current_namespace_name(&self) -> String {
+        self.current_namespace_name.clone()
     }
 
     pub fn get_current_file_name(&self) -> String {
@@ -105,47 +105,60 @@ impl ProgramContext {
         is_unique
     }
 
-    pub fn get_struct_by_info(&self, info: &StructInfo) -> Option<&StructAnnotation> {
-        self.structs.get_by_id(&info.name, info.id)
+    // Structures
+
+    pub fn get_struct_by_name(&self, name: &Identifier) -> Option<&StructAnnotation> {
+        self.structs.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn get_struct(&self, name: &Identifier) -> Option<&StructAnnotation> {
-        self.structs.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    pub fn get_struct_by_id(&mut self, id: Id) -> Option<&StructAnnotation> {
+        self.structs.get_by_id(id)
     }
 
-    pub fn get_struct_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut StructAnnotation> {
-        self.structs.get_mut_by_id(name.as_string(), id)
+    pub fn get_struct_by_id_mut(&mut self, id: Id) -> Option<&mut StructAnnotation> {
+        self.structs.get_mut_by_id(id)
     }
 
-    pub fn add_struct(&mut self, name: &Identifier, value: StructAnnotation) {
-        self.structs.insert(name.to_string(), value);
+    pub fn add_struct(&mut self, value: StructAnnotation) {
+        self.structs.insert(value);
     }
 
+    // Functions
 
-    pub fn get_function(&self, name: &Identifier) -> Option<&FunctionAnnotation> {
-        self.functions.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    pub fn get_function_by_name(&self, name: &Identifier) -> Option<&FunctionAnnotation> {
+        self.functions.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn get_function_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut FunctionAnnotation> {
-        self.functions.get_mut_by_id(name.as_string(), id)
+    pub fn get_function_by_id(&mut self, id: Id) -> Option<&FunctionAnnotation> {
+        self.functions.get_by_id(id)
     }
 
-    pub fn add_function(&mut self, name: &Identifier, value: FunctionAnnotation) {
-        self.functions.insert(name.to_string(), value);
+    pub fn get_function_by_id_mut(&mut self, id: Id) -> Option<&mut FunctionAnnotation> {
+        self.functions.get_mut_by_id(id)
     }
 
-
-    pub fn get_global(&self, name: &Identifier) -> Option<&GlobalAnnotation> {
-        self.globals.get(name.as_string(), &self.current_package_name, &self.current_file_name)
+    pub fn add_function(&mut self, value: FunctionAnnotation) {
+        self.functions.insert(value);
     }
 
-    pub fn get_global_mut(&mut self, name: &Identifier, id: usize) -> Option<&mut GlobalAnnotation> {
-        self.globals.get_mut_by_id(name.as_string(), id)
+    // Globals
+
+    pub fn get_global_by_name(&self, name: &Identifier) -> Option<&GlobalAnnotation> {
+        self.globals.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn add_global(&mut self, name: &Identifier, value: GlobalAnnotation) {
-        self.globals.insert(name.to_string(), value);
+    pub fn get_global_by_id(&mut self, id: Id) -> Option<&GlobalAnnotation> {
+        self.globals.get_by_id(id)
     }
+
+    pub fn get_global_by_id_mut(&mut self, id: Id) -> Option<&mut GlobalAnnotation> {
+        self.globals.get_mut_by_id(id)
+    }
+
+    pub fn add_global(&mut self, value: GlobalAnnotation) {
+        self.globals.insert(value);
+    }
+
 
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut structs = vec![];
@@ -202,7 +215,7 @@ impl ProgramContext {
     pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
         let main_identifier = Identifier::new("main");
 
-        if self.get_function(&main_identifier).is_none() {
+        if self.get_function_by_name(&main_identifier).is_none() {
             self.errors.push(Error::unlocated(format!("missing required function `main`")));
         }
 
@@ -247,12 +260,10 @@ impl ProgramContext {
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
             Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
-            Wat::call(self.get_function(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
+            Wat::call(self.get_function_by_name(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
         ]));
 
-        for mut function_list in self.functions.hashmap.into_values() {
-            let function = function_list.remove(0);
-
+        for function in self.functions.id_to_item.into_values() {
             content.push(function.wat);
         }
         
@@ -260,11 +271,11 @@ impl ProgramContext {
     }
 }
 
-fn get_globals_sorted(mut map: VecHashMap<String, GlobalAnnotation>) -> Vec<GlobalAnnotation> {
+fn get_globals_sorted(mut map: ItemIndex<GlobalAnnotation>) -> Vec<GlobalAnnotation> {
     let mut list = vec![];
 
-    for mut global_list in map.hashmap.into_values() {
-        list.push(global_list.remove(0));
+    for global in map.id_to_item.into_values() {
+        list.push(global);
     }
 
     list.sort_by_key(|global| global.metadata.id);

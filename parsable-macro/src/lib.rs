@@ -243,10 +243,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                             None => quote! {}
                         };
 
-                        let mut parse_method = quote! { parse(reader__) };
+                        let mut parse_method = quote! { parse_item(reader__) };
 
                         if let Some(separator) = attributes.separator {
-                            parse_method = quote! { parse_with_separator(reader__, #separator) };
+                            parse_method = quote! { parse_item_with_separator(reader__, #separator) };
                         }
 
                         let mut assignment = quote! {
@@ -369,7 +369,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
                 let mut attributes = FieldAttributes::default();
                 let mut parse_prefix = quote! { true };
                 let mut parse_suffix = quote! { true };
-                let mut parse_method = quote! { parse(reader__) };
+                let mut parse_method = quote! { parse_item(reader__) };
 
                 if let Some((i, attr)) = variant.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
                     let result = syn::parse2::<FieldAttributes>(attr.tokens.clone());
@@ -524,7 +524,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         #ast
 
         impl parsable::Parsable for #name {
-            fn parse(reader__: &mut parsable::StringReader) -> Option<Self> {
+            fn parse_item(reader__: &mut parsable::StringReader) -> Option<Self> {
                 let start_index__ = reader__.get_index();
 
                 #body

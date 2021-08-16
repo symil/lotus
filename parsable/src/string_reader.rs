@@ -5,8 +5,8 @@ use super::parse_error::ParseError;
 
 pub struct StringReader {
     comment_token: &'static str,
-    package_name: &'static str,
     file_name: &'static str,
+    namespace_name: &'static str,
 
     string: String,
     line_col: LineColLookup,
@@ -15,12 +15,19 @@ pub struct StringReader {
     expected: Vec<String>
 }
 
+pub struct ParseOptions<'a, 'b, 'c> {
+    file_name: Option<&'a str>,
+    namespace_name: Option<&'b str>,
+    comment_start: Option<&'c str>
+}
+
+static mut INITIALIZED : bool = false;
 static mut REGEXES : Option<HashMap<&'static str, Regex>> = None;
 static mut STRINGS : Option<HashSet<String>> = None;
 
-fn get_str(string: String) -> &'static str {
+fn get_str(string: &str) -> &'static str {
     unsafe {
-        STRINGS.as_mut().unwrap().get_or_insert(string).as_str()
+        STRINGS.as_mut().unwrap().get_or_insert(string.to_string()).as_str()
     }
 }
 
@@ -35,38 +42,33 @@ fn get_regex(pattern: &'static str) -> &'static Regex {
 }
 
 impl StringReader {
-    pub fn init() {
+    fn init() {
         unsafe {
-            REGEXES = Some(HashMap::new());
-            STRINGS = Some(HashSet::new());
+            if !INITIALIZED {
+                REGEXES = Some(HashMap::new());
+                STRINGS = Some(HashSet::new());
+                INITIALIZED = true;
+            }
         }
     }
 
-    pub fn new(comment_token: &'static str) -> Self {
+    pub fn new(content: String, options: ParseOptions) -> Self {
+        Self::init();
+
         Self {
-            comment_token,
-            package_name: "",
-            file_name: "",
-            string: String::new(),
-            line_col: LineColLookup::new(""),
+            comment_token: get_str(options.comment_start.unwrap_or("")),
+            file_name: get_str(options.file_name.unwrap_or("")),
+            namespace_name: get_str(options.namespace_name.unwrap_or("")),
+            line_col: LineColLookup::new(&content),
+            string: content,
             index: 0,
             error_index: 0,
             expected: vec![]
         }
     }
 
-    pub fn set_content(&mut self, package_name: String, file_name: String, file_content: String) {
-        self.package_name = get_str(package_name);
-        self.file_name = get_str(file_name);
-        self.line_col = LineColLookup::new(&file_content);
-        self.string = file_content;
-        self.index = 0;
-        self.error_index = 0;
-        self.expected = vec![];
-    }
-
-    pub fn get_package_name(&self) -> &'static str {
-        self.package_name
+    pub fn get_namespace_name(&self) -> &'static str {
+        self.namespace_name
     }
 
     pub fn get_file_name(&self) -> &'static str {
@@ -208,11 +210,11 @@ impl StringReader {
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         let end = self.get_index_backtracked();
-        let package_name = self.package_name;
+        let namespace_name = self.namespace_name;
         let file_name = self.file_name;
         let (line, column) = self.line_col.get(start);
 
-        DataLocation { start, end, file_name, package_name, line, column }
+        DataLocation { start, end, file_name, namespace_name, line, column }
     }
 }
 

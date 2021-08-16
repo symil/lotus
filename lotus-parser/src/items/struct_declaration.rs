@@ -31,13 +31,13 @@ impl StructDeclaration {
             let mut struct_annotation = StructAnnotation {
                 metadata: ItemMetadata {
                     id: index,
+                    name: self.name.clone(),
                     visibility: self.visibility.get_token(),
-                    package_name: context.get_current_package_name(),
+                    namespace_name: context.get_current_namespace_name(),
                     file_name: context.get_current_file_name(),
                 },
                 qualifier: self.qualifier.clone(),
-                name: self.name.clone(),
-                parent_name: None,
+                parent: None,
                 types: vec![],
                 self_fields: HashMap::new(),
                 fields: HashMap::new(),
@@ -48,11 +48,11 @@ impl StructDeclaration {
                 after_event_callbacks: HashMap::new(),
             };
             
-            if context.get_struct(&self.name).is_some() {
+            if context.get_struct_by_name(&self.name).is_some() {
                 context.error(&self.name, format!("duplicate type declaration: `{}`", &self.name));
             }
 
-            context.add_struct(&self.name, struct_annotation);
+            context.add_struct(struct_annotation);
 
             // if self.qualifier == StructQualifier::World {
             //     if let Some(current_world) = &context.world_struct_name {
@@ -75,9 +75,9 @@ impl StructDeclaration {
         let mut final_parent = None;
 
         if let Some(parent_name) = &self.parent {
-            if let Some(parent) = context.get_struct(&self.name) {
+            if let Some(parent) = context.get_struct_by_name(&self.name) {
                 if parent.qualifier == self.qualifier {
-                    final_parent = Some(parent_name.clone());
+                    final_parent = Some(parent.get_id());
                 } else {
                     errors.push(Error::located(parent_name, format!("a `{}` cannot inherit from a `{}`", &self.qualifier, &parent.qualifier)));
                 }
@@ -90,32 +90,35 @@ impl StructDeclaration {
 
         context.errors.extend(errors);
 
-        if let Some(struct_annotation) = context.get_struct_mut(&self.name, index) {
-            struct_annotation.parent_name = final_parent;
+        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
+            struct_annotation.parent = final_parent;
         }
     }
 
     pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
-        let mut types = vec![index];
-        let mut parent_opt = self.parent.as_ref();
         let mut errors = vec![];
+        let mut types = vec![index];
 
-        while let Some(parent_name) = parent_opt {
-            if let Some(parent_annotation) = context.get_struct(parent_name) {
-                if types.contains(parent_annotation.get_id()) {
-                    if parent_name == &self.name {
+        if let Some(struct_annotation) = context.get_struct_by_id(index) {
+            let mut parent_opt = struct_annotation.parent;
+
+            while let Some(parent_id) = parent_opt {
+                let parent = context.get_struct_by_id(parent_id).unwrap();
+
+                if types.contains(&parent_id) {
+                    if parent.get_name() == &self.name {
                         errors.push(Error::located(&self.name, format!("circular inheritance: `{}`", &self.name)));
                     }
                 } else {
-                    types.push(parent_annotation.get_id().clone());
-                    parent_opt = parent_annotation.parent_name.as_ref();
+                    types.push(parent_id);
+                    parent_opt = parent.parent.clone();
                 }
             }
         }
 
         context.errors.extend(errors);
 
-        if let Some(struct_annotation) = context.get_struct_mut(&self.name, index) {
+        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.types = types;
         }
     }
@@ -163,18 +166,18 @@ impl StructDeclaration {
             }
         }
 
-        if let Some(struct_annotation) = context.get_struct_mut(&self.name, index) {
+        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.self_fields = fields;
         }
     }
 
     pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
         let mut fields = HashMap::new();
-        let type_ids = context.get_struct_by_info(&StructInfo::new(index, self.name.to_string())).map_or(vec![], |s| s.types.clone());
+        let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
         let mut errors = vec![];
 
         for type_id in type_ids.iter().rev() {
-            let struct_annotation = context.structs.get(type_id).unwrap();
+            let struct_annotation = context.get_struct_by_id(*type_id).unwrap();
 
             for field in struct_annotation.self_fields.values() {
                 let field_info = FieldDetails {
@@ -184,7 +187,7 @@ impl StructDeclaration {
                 };
 
                 if fields.contains_key(&field.name) {
-                    if type_id != &self.name {
+                    if *type_id != index {
                         errors.push(Error::located(&field.name, format!("duplicate field '{}' (already declared by parent struct `{}`)", &self.name, type_id)));
                     }
                 } else {
@@ -195,7 +198,7 @@ impl StructDeclaration {
 
         context.errors.extend(errors);
 
-        if let Some(struct_annotation) = context.structs.get_mut_by_id(&self.name, index) {
+        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.fields = fields;
         }
     }

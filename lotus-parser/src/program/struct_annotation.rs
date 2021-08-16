@@ -6,8 +6,7 @@ use super::{FunctionAnnotation, Id, ItemMetadata, StructInfo, Type, WithMetadata
 pub struct StructAnnotation {
     pub metadata: ItemMetadata,
     pub qualifier: StructQualifier,
-    pub name: Identifier,
-    pub parent_name: Option<Identifier>,
+    pub parent: Option<Id>,
     pub types: Vec<Id>,
     pub self_fields: HashMap<Identifier, FieldDetails>,
     pub fields: HashMap<Identifier, FieldDetails>,
@@ -32,11 +31,15 @@ impl WithMetadata for StructAnnotation {
 }
 
 impl StructAnnotation {
-    pub fn get_struct_info(&self) -> StructInfo {
-        StructInfo::new(self.metadata.id, self.name.to_string())
+    pub fn to_struct_info(&self) -> StructInfo {
+        StructInfo::new(self.metadata.id, self.metadata.name.to_string())
     }
 
-    pub fn get_id(&self) -> &Id {
-        &self.metadata.id
+    pub fn get_id(&self) -> Id {
+        self.metadata.id
+    }
+
+    pub fn get_name(&self) -> &Identifier {
+        &self.metadata.name
     }
 }

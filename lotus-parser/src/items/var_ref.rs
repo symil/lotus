@@ -20,7 +20,7 @@ impl VarRef {
 
     pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.arguments {
-            Some(arguments) => match context.functions.get(&self.name) {
+            Some(arguments) => match context.get_function_by_name(&self.name) {
                 Some(function_annotation) => {
                     process_function_call(&function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
                 },
@@ -68,7 +68,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         Type::TypeId => None,
         Type::Pointer(pointed_type) => process_pointer_field_access(pointed_type, field_name, context),
         Type::Array(item_type) => process_array_field_access(item_type, field_name, context),
-        Type::Struct(struct_name) => {
+        Type::Struct(struct_info) => {
             if field_name.is("_") {
                 if let AccessType::Set(set_location) = access_type {
                     context.error(set_location, format!("cannot set special field `_`"));
@@ -79,7 +79,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
                 // special case: `_` refers to the value itself rather than a field
                 // e.g `#foo` means `self.foo`, but `#_` means `self`
                 Some(Wasm::typed(parent_type.clone(), vec![]))
-            } else if let Some(struct_annotation) = context.structs.get(struct_name) {
+            } else if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
                         AccessType::Get => field.ty.pointer_get_function_name(),
@@ -121,8 +121,8 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::String => process_string_method_call(method_name, context),
         Type::Pointer(pointed_type) => process_pointer_method_call(pointed_type, method_name, context),
         Type::Array(item_type) => process_array_method_call(item_type, method_name, context),
-        Type::Struct(struct_name) => {
-            if let Some(struct_annotation) = context.structs.get(struct_name) {
+        Type::Struct(struct_info) => {
+            if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.user_methods.get(method_name) {
                     Some(Wasm::typed(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {

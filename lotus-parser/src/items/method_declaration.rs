@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{FunctionAnnotation, ProgramContext, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap};
+use crate::{generation::Wat, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, Type, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap}};
 use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StructDeclaration, StructQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
@@ -56,7 +56,7 @@ impl MethodDeclaration {
                     context.error(&self.name, format!("missing method arguments"));
                 }
 
-                if let Some(struct_annotation) = context.structs.get_by_id(&owner.name, owner_index) {
+                if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
                     // let field_exists = struct_annotation.fields.contains_key(&self.name);
                     let method_exists = struct_annotation.user_methods.contains_key(&self.name);
 
@@ -71,11 +71,21 @@ impl MethodDeclaration {
             },
         };
 
-        let mut method_annotation = FunctionAnnotation::default();
-
-        method_annotation.wasm_name = format!("method_{}_{}_{}_{}", &owner.name, method_qualifier_to_string(&self.qualifier), &self.name, method_index);
-        method_annotation.this_type = this_type;
-        method_annotation.payload_type = payload_type;
+        let mut method_annotation = FunctionAnnotation {
+            metadata: ItemMetadata {
+                id: method_index,
+                name: self.name.clone(),
+                file_name: context.get_current_file_name(),
+                namespace_name: context.get_current_namespace_name(),
+                visibility: VisibilityToken::Private,
+            },
+            wasm_name: format!("{}_{}_{}_{}", &owner.name, owner_index, &self.name, method_index),
+            this_type: this_type,
+            payload_type: payload_type,
+            arguments: vec![],
+            return_type: Type::Void,
+            wat: Wat::default(),
+        };
 
         if let Some(signature) = &self.signature {
             let (arguments, return_type) = signature.process(context);
@@ -84,7 +94,7 @@ impl MethodDeclaration {
             method_annotation.return_type = return_type;
         }
 
-        if let Some(struct_annotation) = context.structs.get_mut_by_id(&owner.name, owner_index) {
+        if let Some(struct_annotation) = context.get_struct_by_id_mut(owner_index) {
             match self.qualifier {
                 Some(MethodQualifier::Builtin) => struct_annotation.builtin_methods.insert(self.name.clone(), method_annotation),
                 Some(MethodQualifier::Hook) => insert_in_vec_hashmap(&mut struct_annotation.hook_event_callbacks, &self.name, method_annotation),
@@ -112,7 +122,7 @@ impl MethodDeclaration {
     fn check_self_as_event_callback(&self, context: &mut ProgramContext) {
         let mut ok = false;
 
-        if let Some(struct_annotation) = context.structs.get(&self.name) {
+        if let Some(struct_annotation) = context.get_struct_by_name(&self.name) {
             if struct_annotation.qualifier == StructQualifier::Event {
                 ok = true;
             }
