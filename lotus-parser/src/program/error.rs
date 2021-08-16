@@ -23,7 +23,7 @@ impl Error {
         }
     }
 
-    pub fn from_parse_error(error: ParseError, namespace_name: &'static str, file_name: &'static str) -> Self {
+    pub fn from_parse_error(error: ParseError, file_name: &'static str, namespace_name: &'static str, ) -> Self {
         let mut expected_set = HashSet::new();
         let mut expected_list = vec![];
 

@@ -4,5 +4,9 @@ use super::{TopLevelBlock};
 
 #[parsable]
 pub struct LotusFile {
-    pub blocks: Vec<TopLevelBlock>
+    pub blocks: Vec<TopLevelBlock>,
+    #[parsable(ignore)]
+    pub file_name: String,
+    #[parsable(ignore)]
+    pub namespace_name: String
 }

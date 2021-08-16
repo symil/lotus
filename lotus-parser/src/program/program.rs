@@ -5,6 +5,8 @@ use super::Error;
 
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 const COMMENT_START_TOKEN : &'static str = "//";
+const PRELUDE_NAMESPACE : &'static str = "std";
+const SELF_NAMESPACE : &'static str = "self";
 
 pub struct LotusProgram {
     pub wat: String,
@@ -13,11 +15,8 @@ pub struct LotusProgram {
 
 impl LotusProgram {
     pub fn from_path(path: &str, prelude: &'static[(&'static str, &'static str)]) -> Result<Self, Vec<Error>> {
-        StringReader::init();
-
         let files_to_process = read_path_recursively(path, true)?;
         let mut parsed_files = vec![];
-        let mut string_reader = StringReader::new(COMMENT_START_TOKEN);
         let mut errors = vec![];
 
         let mut input_path = Path::new(path).to_path_buf();
@@ -31,23 +30,38 @@ impl LotusProgram {
 
         let now = Instant::now();
 
-        for (file_name, file_content) in prelude {
-            string_reader.set_content(file_content.to_string(), file_name.to_string());
+        for (file_content, file_name) in prelude {
+            let parse_options = ParseOptions {
+                file_name: Some(file_name),
+                namespace_name: Some(PRELUDE_NAMESPACE),
+                comment_start: Some(COMMENT_START_TOKEN),
+            };
 
-            match LotusFile::parse_string(&mut string_reader) {
-                Ok(lotus_file) => parsed_files.push(lotus_file),
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, string_reader.get_file_name()))
+            match LotusFile::parse(file_content.to_string(), parse_options) {
+                Ok(mut lotus_file) => {
+                    lotus_file.file_name = file_name.to_string();
+                    lotus_file.namespace_name = PRELUDE_NAMESPACE.to_string();
+                    parsed_files.push(lotus_file);
+                },
+                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, &file_name, PRELUDE_NAMESPACE))
             };
         }
 
-        for (file_path, file_content) in files_to_process {
+        for (file_content, file_path) in files_to_process {
             let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
+            let parse_options = ParseOptions {
+                file_name: Some(&file_name),
+                namespace_name: Some(SELF_NAMESPACE),
+                comment_start: Some(COMMENT_START_TOKEN),
+            };
 
-            string_reader.set_content(file_content, file_name);
-
-            match LotusFile::parse_string(&mut string_reader) {
-                Ok(lotus_file) => parsed_files.push(lotus_file),
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, string_reader.get_file_name()))
+            match LotusFile::parse(file_content, parse_options) {
+                Ok(mut lotus_file) => {
+                    lotus_file.file_name = file_name.clone();
+                    lotus_file.namespace_name = SELF_NAMESPACE.to_string();
+                    parsed_files.push(lotus_file);
+                },
+                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, &file_name, PRELUDE_NAMESPACE))
             };
         }
 
@@ -78,7 +92,7 @@ impl LotusProgram {
     }
 }
 
-fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBuf, String)>, Vec<Error>> {
+fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(String, PathBuf)>, Vec<Error>> {
     let mut result = vec![];
     let path = Path::new(input_path);
 
@@ -90,7 +104,7 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
                     Err(_) => return Err(vec![Error::unlocated(format!("cannot read file `{}`", input_path))])
                 };
 
-                result.push((path.to_path_buf(), file_content))
+                result.push((file_content, path.to_path_buf()))
             }
         }
 

@@ -9,7 +9,7 @@ mod data_location;
 mod line_col_lookup;
 
 pub use parsable::Parsable;
-pub use string_reader::StringReader;
+pub use string_reader::{StringReader, ParseOptions};
 pub use parse_error::ParseError;
 pub use data_location::DataLocation;
 pub use parsable_macro::*;
