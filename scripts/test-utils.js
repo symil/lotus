@@ -49,7 +49,7 @@ function runCommand(command, inheritStdio) {
 }
 
 function compileLotus(inputPath, outputPath, inheritStdio) {
-    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${inheritStdio ? '' : '--silent'}`, inheritStdio);
+    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${inheritStdio ? '' : '--silent'} --no-prelude`, inheritStdio);
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {

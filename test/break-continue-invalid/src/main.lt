@@ -1,0 +1,22 @@
+export fn main() {
+    continue;
+    break;
+
+    if 1 == 1 {
+        continue;
+    }
+
+    if 1 == 1 {
+        break;
+    }
+
+    for i in 0..4 {
+        if i % 2 == 1 {
+            continue 4;
+        }
+
+        if i % 2 == 1 {
+            break 4;
+        }
+    }
+}

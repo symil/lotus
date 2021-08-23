@@ -19,7 +19,6 @@ impl IfBlock {
         let mut branches_return = vec![];
 
         context.return_found = false;
-        context.function_depth += 2;
 
         let mut wat = wat!["block"];
         let mut variables = vec![];
@@ -69,7 +68,6 @@ impl IfBlock {
         }
         branches_return.push(context.return_found);
 
-        context.function_depth -= 2;
         context.return_found = return_found || branches_return.iter().all(|value| *value);
 
         match ok {

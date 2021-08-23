@@ -30,7 +30,7 @@ pub struct IndexAndItem {
 impl ForBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let (index_var_name, item_var_name) = match &self.iterator {
-            ForIterator::Item(item_name) => (Identifier::new_unique("index", self), item_name.clone()),
+            ForIterator::Item(item_name) => (Identifier::unique("index", self), item_name.clone()),
             ForIterator::IndexAndItem(index_and_item) => (index_and_item.index_name.clone(), index_and_item.item_name.clone()),
         };
         let return_found = context.return_found;
@@ -38,7 +38,6 @@ impl ForBlock {
         context.ckeck_var_unicity(&index_var_name);
         context.ckeck_var_unicity(&item_var_name);
 
-        context.function_depth += 2;
         context.push_scope(ScopeKind::Loop);
 
         let mut ok = true;
@@ -60,7 +59,7 @@ impl ForBlock {
                     ok = false;
                 }
 
-                let range_end_var_name = Identifier::new_unique("range_end", self);
+                let range_end_var_name = Identifier::unique("range_end", self);
 
                 let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
                 let item_var_info = context.push_var(&item_var_name, &Type::Integer, VariableKind::Local);
@@ -72,19 +71,22 @@ impl ForBlock {
                     content.extend(vec![
                         range_end_var_info.set_from_stack(),
                         item_var_info.set_from_stack(),
-                        Wat::const_i32(0),
+                        Wat::const_i32(-1),
                         index_var_info.set_from_stack(),
+                        Wat::increment_local_i32(item_var_info.get_wasm_name(), -1),
                         wat!["block",
                             wat!["loop",
+                                Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
+                                Wat::increment_local_i32(item_var_info.get_wasm_name(), 1),
                                 wat!["i32.lt_s", item_var_info.get_to_stack(), range_end_var_info.get_to_stack()],
                                 wat!["br_if", 1, wat!["i32.eqz"]],
                                 block_wasm.wat,
-                                Wat::increment_local_i32(item_var_info.get_wasm_name(), 1),
-                                Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
                                 wat!["br", 0]
                             ]
                         ]
                     ]);
+
+                    variables.extend(block_wasm.declared_variables);
                 } else {
                     ok = false;
                 }
@@ -97,8 +99,8 @@ impl ForBlock {
                 ok = false;
             }
 
-            let array_var_name = Identifier::new_unique("array", self);
-            let array_len_var_name = Identifier::new_unique("array_len", self);
+            let array_var_name = Identifier::unique("array", self);
+            let array_len_var_name = Identifier::unique("array_len", self);
 
             let array_var_info = context.push_var(&array_var_name, &Type::int_pointer(), VariableKind::Local);
             let array_len_var_info = context.push_var(&array_len_var_name, &Type::Integer, VariableKind::Local);
@@ -109,20 +111,23 @@ impl ForBlock {
                 content.extend(array_wasm.wat);
                 content.extend(vec![
                     array_var_info.set_from_stack(),
-                    Wat::const_i32(0),
+                    Wat::const_i32(-1),
                     index_var_info.set_from_stack(),
                     Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![array_var_info.get_to_stack()]),
                     array_len_var_info.set_from_stack(),
                     wat!["block",
                         wat!["loop",
+                            Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
                             wat!["i32.lt", index_var_info.get_to_stack(), array_len_var_info.get_to_stack()],
                             wat!["br_if", 1, wat!["i32.eqz"]],
+                            // TODO: assign array item
                             block_wasm.wat,
-                            Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
                             wat!["br", 0]
                         ]
                     ]
                 ]);
+
+                variables.extend(block_wasm.declared_variables);
             } else {
                 ok = false;
             }
@@ -135,7 +140,6 @@ impl ForBlock {
 
         context.pop_scope();
         context.return_found = return_found;
-        context.function_depth -= 2;
 
         match ok {
             true => Some(Wasm::untyped(content, variables)),

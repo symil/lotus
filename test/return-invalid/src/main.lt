@@ -1,0 +1,26 @@
+export fn main() {
+    @log_int(get_result(0, 4, 2));
+    @log_int(get_result(0, 1, 2));
+
+    print_result(2);
+}
+
+fn get_result(a: int, b: int, c: int) -> int {
+    for i in a..b {
+        if i == c {
+            return;
+        }
+    }
+
+    return true;
+}
+
+fn print_result(max: int) {
+    for i in 0..10 {
+        @log_int(i);
+
+        if i == max {
+            return 56;
+        }
+    }
+}

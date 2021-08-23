@@ -15,11 +15,12 @@ pub struct ProgramContext {
     functions: ItemIndex<FunctionAnnotation>,
     globals: ItemIndex<GlobalAnnotation>,
 
+    depth: i32,
+
     pub scopes: Vec<Scope>,
     pub this_var: Option<VariableInfo>,
     pub payload_var: Option<VariableInfo>,
     pub function_return_type: Option<Type>,
-    pub function_depth: usize,
     pub return_found: bool
 }
 
@@ -49,20 +50,29 @@ impl ProgramContext {
         self.function_return_type = None;
         self.this_var = None;
         self.payload_var = None;
-        self.function_depth = 0;
         self.return_found = false;
-
-        while self.scopes.len() > 1 {
-            self.scopes.pop();
-        }
+        self.scopes = vec![];
     }
 
     pub fn push_scope(&mut self, kind: ScopeKind) {
-        self.scopes.push(Scope::new(kind));
+        self.depth += kind.get_depth();
+        self.scopes.push(Scope::new(kind, self.depth));
     }
 
     pub fn pop_scope(&mut self) {
-        self.scopes.pop();
+        if let Some(scope) = self.scopes.pop() {
+            self.depth -= scope.kind.get_depth();
+        }
+    }
+
+    pub fn get_scope_depth(&self, kind: ScopeKind) -> Option<i32> {
+        for scope in self.scopes.iter().rev() {
+            if scope.kind == kind {
+                return Some(self.depth - scope.depth);
+            }
+        }
+
+        None
     }
 
     pub fn set_function_return_type(&mut self, return_type: Option<Type>) {

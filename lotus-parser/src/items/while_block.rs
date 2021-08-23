@@ -13,7 +13,6 @@ impl WhileBlock {
         let mut result = None;
         let return_found = context.return_found;
 
-        context.function_depth += 2;
         context.push_scope(ScopeKind::Loop);
 
         if let (Some(condition_wasm), Some(block_wasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(context)) {
@@ -31,7 +30,6 @@ impl WhileBlock {
 
         context.pop_scope();
         context.return_found = return_found;
-        context.function_depth -= 2;
 
         result
     }

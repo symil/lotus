@@ -26,8 +26,13 @@ fn main() {
     let input_path = args.get(1).or_else(|| display_usage_and_exit()).unwrap();
     let output_path = args.get(2).or_else(|| display_usage_and_exit()).unwrap();
     let silent = args.iter().any(|s| s == "--silent");
+    let exclude_prelude = args.iter().any(|s| s == "--no-prelude");
+    let prelude_files = match exclude_prelude {
+        true => &[],
+        false => PRELUDE_FILES
+    };
 
-    match LotusProgram::from_path(input_path, PRELUDE_FILES) {
+    match LotusProgram::from_path(input_path, prelude_files) {
         Ok(program) => {
             program.write_to(output_path);
 

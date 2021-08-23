@@ -19,9 +19,12 @@ async function main() {
     if (testName) {
         let testDirPath = path.join(TEST_DIR, testName);
         let testDirSrcPath = path.join(testDirPath, SRC_DIR_NAME);
+        let formattedDirPath = '`' + testDirPath.replace(ROOT_DIR + '/', '') + '`';
 
         if (fse.existsSync(testDirPath)) {
-            fse.rmSync(testDirPath, { recursive: true });
+            console.log(`${chalk.bold.red('error:')} ${formattedDirPath} already exists`);
+            process.exit(1);
+            // fse.rmSync(testDirPath, { recursive: true });
         }
 
         fse.mkdirSync(testDirSrcPath, { recursive: true });
@@ -32,7 +35,7 @@ async function main() {
         fse.writeFileSync(outputFilePath, outputFileContent);
 
         setTimeout(() => {
-            console.log(`${chalk.bold('generated:')} ${testDirPath.replace(ROOT_DIR + '/', '')}`);
+            console.log(`${chalk.bold('generated:')} ${formattedDirPath}`);
         });
     } else {
         await runTest(TEMPLATE_DIR_PATH, BUILD_DIR, { inheritStdio, displayMemory });

@@ -1,8 +1,7 @@
 use std::{collections::HashMap};
-
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, program::{ProgramContext, Type, Wasm}};
-use super::{ActionKeyword, Expression};
+use crate::{generation::{RESULT_VAR_NAME, Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, Wasm}, wat};
+use super::{ActionKeyword, ActionKeywordToken, Expression};
 
 #[parsable]
 pub struct Action {
@@ -14,8 +13,11 @@ impl Action {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
 
-        match &self.keyword {
-            ActionKeyword::Return => {
+        match &self.keyword.token {
+            ActionKeywordToken::Return => {
+                let function_depth = context.get_scope_depth(ScopeKind::Function).unwrap();
+                context.return_found = true;
+
                 match context.function_return_type.clone() {
                     Some(return_type) => match &self.value {
                         Some(expr) => {
@@ -25,9 +27,7 @@ impl Action {
 
                                     wat.extend(wasm.wat);
                                     wat.push(Wat::set_local_from_stack(RESULT_VAR_NAME));
-                                    wat.push(Wat::new("br", context.function_depth));
-                                    
-                                    context.return_found = true;
+                                    wat.push(Wat::new("br", function_depth));
 
                                     result = Some(Wasm::untyped(wat, vec![]));
                                 } else {
@@ -46,9 +46,28 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(Wasm::untyped(Wat::new("br", context.function_depth), vec![]));
+                            result = Some(Wasm::untyped(Wat::new("br", function_depth), vec![]));
                         },
                     },
+                }
+            },
+            ActionKeywordToken::Break | ActionKeywordToken::Continue => {
+                if let Some(value) = &self.value {
+                    value.process(context);
+                    context.error(value, format!("keyword `{}` must not be followed by an expression", &self.keyword.token));
+                } else {
+                    match context.get_scope_depth(ScopeKind::Loop) {
+                        Some(depth) => {
+                            result = match &self.keyword.token {
+                                ActionKeywordToken::Break => Some(Wasm::untyped(wat!["br", depth + 1], vec![])),
+                                ActionKeywordToken::Continue => Some(Wasm::untyped(wat!["br", depth], vec![])),
+                                _ => unreachable!()
+                            }
+                        },
+                        None => {
+                            context.error(&self.keyword, format!("keyword `{}` can only be used from inside a loop", &self.keyword.token));
+                        }
+                    }
                 }
             },
         }

@@ -1,18 +1,28 @@
 const MEMORY_CELL_BYTE_SIZE = 4;
 const WASM_PAGE_BYTE_SIZE = 2.pow(16); // 64 KiB
+const WASM_PAGE_CELL_COUNT = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+
 const WASM_PAGE_CELL_SIZE = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
 const MEMORY_PAGE_POWER_OF_TWO = 20;
 const VIRTUAL_PAGE_BYTE_SIZE = 2.pow(MEMORY_PAGE_POWER_OF_TWO); // 1 MiB
 const WASM_PAGE_COUNT_PER_VIRTUAL_PAGE = VIRTUAL_PAGE_BYTE_SIZE / WASM_PAGE_BYTE_SIZE;
 
 const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE = 64;
+const HEADER_WASM_PAGE_COUNT = 1;
+const HEADER_END_ADDR = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
 
-sys fn __mem_alloc_page() -> ptr {
+fn alloc_page() -> ptr {
     return @wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE as ptr;
 }
 
 sys fn __mem_alloc(block_size: int) -> ptr {
-    let block_size_index = (block_size.log4() - 1) * 64;
+    let block_size_index = block_size.log4() - 1;
+    let list_start_addr = HEADER_END_ADDR + block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+    let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+
+    for i in list_start_addr..list_end_addr {
+        @log_int(1);
+    }
 
     return (0 as ptr);
 }

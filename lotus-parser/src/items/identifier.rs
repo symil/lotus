@@ -1,6 +1,7 @@
 use std::{fmt::Display, hash::Hash, ops::{Deref, DerefMut}};
-
 use parsable::*;
+
+static mut COUNTER : usize = 0;
 
 #[parsable(name="identifier")]
 #[derive(Default)]
@@ -18,12 +19,21 @@ impl Identifier {
         identifier
     }
 
-    pub fn new_unique<L : Deref<Target=DataLocation>>(prefix: &str, location: &L) -> Self {
-        Self::new(format!("{}_{:#01X}", prefix, location.start * 65536 + location.end))
+    pub fn unique<S : Deref<Target=str>>(name: S, location: &DataLocation) -> Self {
+        let mut identifier = Identifier::default();
+        let id = unsafe {
+            COUNTER += 1;
+            COUNTER
+        };
+
+        identifier.value = format!("{}{}", name.to_string(), id);
+        identifier.location = location.clone();
+
+        identifier
     }
 
     pub fn to_unique_string(&self) -> String {
-        Self::new_unique(self.as_str(), self).to_string()
+        format!("{}_{}", self.as_str(), self.location.get_hash())
     }
 
     pub fn is(&self, value: &str) -> bool {
