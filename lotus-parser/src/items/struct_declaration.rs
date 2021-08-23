@@ -13,6 +13,11 @@ pub struct StructDeclaration {
     pub parent: Option<Identifier>,
     #[parsable(brackets="{}")]
     pub body: StructDeclarationBody,
+
+    #[parsable(ignore)]
+    pub file_name: String,
+    #[parsable(ignore)]
+    pub namespace_name: String
 }
 
 #[parsable]
@@ -25,6 +30,8 @@ pub struct StructDeclarationBody {
 
 impl StructDeclaration {
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         if is_forbidden_identifier(&self.name) {
             context.error(self, format!("forbidden struct name: {}", &self.name));
         } else {
@@ -71,6 +78,8 @@ impl StructDeclaration {
     }
 
     pub fn process_parent(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let mut errors = vec![];
         let mut final_parent = None;
 
@@ -96,6 +105,8 @@ impl StructDeclaration {
     }
 
     pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let mut errors = vec![];
         let mut types = vec![index];
 
@@ -124,6 +135,8 @@ impl StructDeclaration {
     }
 
     pub fn process_self_fields(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let mut fields = HashMap::new();
 
         for field in &self.body.fields {
@@ -172,6 +185,8 @@ impl StructDeclaration {
     }
 
     pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let mut fields = HashMap::new();
         let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
         let mut errors = vec![];
@@ -204,6 +219,8 @@ impl StructDeclaration {
     }
 
     pub fn process_methods_signatures(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_signature(self, index, i, context);
         }

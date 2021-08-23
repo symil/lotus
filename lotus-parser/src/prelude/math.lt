@@ -1,4 +1,4 @@
-fn __int_log4(n: int) -> int {
+sys fn __int_log4(n: int) -> int {
     if n < 4 {
         return 1;
     } else {
@@ -6,7 +6,7 @@ fn __int_log4(n: int) -> int {
     }
 }
 
-fn __int_pow(value: int, exponent: int) -> int {
+sys fn __int_pow(value: int, exponent: int) -> int {
     let i = 0;
     let result = 1;
 
@@ -18,6 +18,6 @@ fn __int_pow(value: int, exponent: int) -> int {
     return result;
 }
 
-fn __int_next_power_of_4(n: int) -> int {
+sys fn __int_next_power_of_4(n: int) -> int {
     return 1 << (n.log4() * 2);
 }

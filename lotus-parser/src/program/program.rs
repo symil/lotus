@@ -30,7 +30,7 @@ impl LotusProgram {
 
         let now = Instant::now();
 
-        for (file_content, file_name) in prelude {
+        for (file_name, file_content) in prelude {
             let parse_options = ParseOptions {
                 file_name: Some(file_name),
                 namespace_name: Some(PRELUDE_NAMESPACE),
@@ -43,11 +43,11 @@ impl LotusProgram {
                     lotus_file.namespace_name = PRELUDE_NAMESPACE.to_string();
                     parsed_files.push(lotus_file);
                 },
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, &file_name, PRELUDE_NAMESPACE))
+                Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
             };
         }
 
-        for (file_content, file_path) in files_to_process {
+        for (file_path, file_content) in files_to_process {
             let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
             let parse_options = ParseOptions {
                 file_name: Some(&file_name),
@@ -61,7 +61,7 @@ impl LotusProgram {
                     lotus_file.namespace_name = SELF_NAMESPACE.to_string();
                     parsed_files.push(lotus_file);
                 },
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error, &file_name, PRELUDE_NAMESPACE))
+                Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
             };
         }
 
@@ -92,7 +92,7 @@ impl LotusProgram {
     }
 }
 
-fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(String, PathBuf)>, Vec<Error>> {
+fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBuf, String)>, Vec<Error>> {
     let mut result = vec![];
     let path = Path::new(input_path);
 
@@ -104,7 +104,7 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(String
                     Err(_) => return Err(vec![Error::unlocated(format!("cannot read file `{}`", input_path))])
                 };
 
-                result.push((file_content, path.to_path_buf()))
+                result.push((path.to_path_buf(), file_content))
             }
         }
 

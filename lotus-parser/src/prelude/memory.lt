@@ -7,11 +7,11 @@ const WASM_PAGE_COUNT_PER_VIRTUAL_PAGE = VIRTUAL_PAGE_BYTE_SIZE / WASM_PAGE_BYTE
 
 const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE = 64;
 
-fn __mem_alloc_page() -> ptr {
+sys fn __mem_alloc_page() -> ptr {
     return @wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE as ptr;
 }
 
-fn __mem_alloc(block_size: int) -> ptr {
+sys fn __mem_alloc(block_size: int) -> ptr {
     let block_size_index = (block_size.log4() - 1) * 64;
 
     return (0 as ptr);

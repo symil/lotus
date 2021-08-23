@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap, mem::take, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, PAYLOAD_VAR_NAME, THIS_VAR_NAME, ToWat, ToWatVec, WasmModule, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
 use super::{Error, FunctionAnnotation, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
@@ -6,8 +6,8 @@ use super::{Error, FunctionAnnotation, GlobalAnnotation, Id, ItemIndex, Scope, S
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
-    current_namespace_name: String,
     current_file_name: String,
+    current_namespace_name: String,
 
     world_struct_name: Option<Identifier>,
     user_struct_name: Option<Identifier>,
@@ -36,12 +36,17 @@ impl ProgramContext {
         self.errors.push(Error::located(location, error));
     }
 
-    pub fn get_current_namespace_name(&self) -> String {
-        self.current_namespace_name.clone()
+    pub fn set_file_location(&mut self, file_name: &str, namespace_name: &str) {
+        self.current_file_name = file_name.to_string();
+        self.current_namespace_name = namespace_name.to_string();
     }
 
     pub fn get_current_file_name(&self) -> String {
         self.current_file_name.clone()
+    }
+
+    pub fn get_current_namespace_name(&self) -> String {
+        self.current_namespace_name.clone()
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -111,7 +116,7 @@ impl ProgramContext {
         self.structs.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn get_struct_by_id(&mut self, id: Id) -> Option<&StructAnnotation> {
+    pub fn get_struct_by_id(&self, id: Id) -> Option<&StructAnnotation> {
         self.structs.get_by_id(id)
     }
 
@@ -129,7 +134,7 @@ impl ProgramContext {
         self.functions.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn get_function_by_id(&mut self, id: Id) -> Option<&FunctionAnnotation> {
+    pub fn get_function_by_id(&self, id: Id) -> Option<&FunctionAnnotation> {
         self.functions.get_by_id(id)
     }
 
@@ -147,7 +152,7 @@ impl ProgramContext {
         self.globals.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
     }
 
-    pub fn get_global_by_id(&mut self, id: Id) -> Option<&GlobalAnnotation> {
+    pub fn get_global_by_id(&self, id: Id) -> Option<&GlobalAnnotation> {
         self.globals.get_by_id(id)
     }
 
@@ -168,9 +173,21 @@ impl ProgramContext {
         for file in files {
             for block in file.blocks {
                 match block {
-                    TopLevelBlock::StructDeclaration(struct_declaration) => structs.push(struct_declaration),
-                    TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
-                    TopLevelBlock::GlobalDeclaration(global_declaration) => globals.push(global_declaration),
+                    TopLevelBlock::StructDeclaration(mut struct_declaration) => {
+                        struct_declaration.file_name = file.file_name.clone();
+                        struct_declaration.namespace_name = file.namespace_name.clone();
+                        structs.push(struct_declaration);
+                    },
+                    TopLevelBlock::FunctionDeclaration(mut function_declaration) => {
+                        function_declaration.file_name = file.file_name.clone();
+                        function_declaration.namespace_name = file.namespace_name.clone();
+                        functions.push(function_declaration);
+                    },
+                    TopLevelBlock::GlobalDeclaration(mut global_declaration) => {
+                        global_declaration.file_name = file.file_name.clone();
+                        global_declaration.namespace_name = file.namespace_name.clone();
+                        globals.push(global_declaration);
+                    },
                 }
             }
         }
@@ -242,7 +259,7 @@ impl ProgramContext {
 
         let mut init_globals_body = vec![];
 
-        for global in get_globals_sorted(self.globals) {
+        for global in get_globals_sorted(take(&mut self.globals)) {
             let wat = match global.ty {
                 Type::Float => Wat::declare_global_f32(&global.wasm_name, 0.),
                 _ => Wat::declare_global_i32(&global.wasm_name, 0),

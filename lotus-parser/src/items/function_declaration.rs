@@ -8,11 +8,18 @@ pub struct FunctionDeclaration {
     #[parsable(prefix="fn")]
     pub name: Identifier,
     pub signature: FunctionSignature,
-    pub statements: StatementList
+    pub statements: StatementList,
+
+    #[parsable(ignore)]
+    pub file_name: String,
+    #[parsable(ignore)]
+    pub namespace_name: String
 }
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let (arguments, return_type) = self.signature.process(context);
         let visibility = self.visibility.get_token();
 
@@ -36,7 +43,7 @@ impl FunctionDeclaration {
                 name: self.name.clone(),
                 file_name: context.get_current_file_name(),
                 namespace_name: context.get_current_namespace_name(),
-                visibility: visibility,
+                visibility: visibility.clone(),
             },
             wasm_name: match visibility {
                 VisibilityToken::System => self.name.to_string(),
@@ -57,6 +64,8 @@ impl FunctionDeclaration {
     }
 
     pub fn process_body(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
         let mut ok = true;
         let mut wasm_func_name = String::new();
         let mut wat_args = vec![];

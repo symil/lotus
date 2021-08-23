@@ -8,11 +8,17 @@ use super::{VarDeclaration, Visibility};
 pub struct GlobalDeclaration {
     pub visibility: Visibility,
     #[parsable(suffix=";")]
-    pub var_declaration: VarDeclaration
+    pub var_declaration: VarDeclaration,
+
+    #[parsable(ignore)]
+    pub file_name: String,
+    #[parsable(ignore)]
+    pub namespace_name: String
 }
 
 impl GlobalDeclaration {
     pub fn process(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
         context.reset_local_scope();
 
         if let Some(wasm) = self.var_declaration.process(VariableKind::Global, context) {

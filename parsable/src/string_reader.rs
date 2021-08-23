@@ -16,9 +16,9 @@ pub struct StringReader {
 }
 
 pub struct ParseOptions<'a, 'b, 'c> {
-    file_name: Option<&'a str>,
-    namespace_name: Option<&'b str>,
-    comment_start: Option<&'c str>
+    pub file_name: Option<&'a str>,
+    pub namespace_name: Option<&'b str>,
+    pub comment_start: Option<&'c str>
 }
 
 static mut INITIALIZED : bool = false;
@@ -101,10 +101,12 @@ impl StringReader {
             }
         }
 
-        let (line, col) = self.line_col.get(error_index);
+        let (line, column) = self.line_col.get(error_index);
         let expected = self.expected.clone();
+        let file_name = self.file_name;
+        let namespace_name = self.namespace_name;
 
-        ParseError { line, column: col, expected }
+        ParseError { file_name, namespace_name, line, column, expected }
     }
 
     pub fn is_finished(&self) -> bool {
