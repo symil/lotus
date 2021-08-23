@@ -25,11 +25,7 @@ pub struct ProgramContext {
 
 impl ProgramContext {
     pub fn new() -> Self {
-        let mut value = Self::default();
-
-        value.push_scope(ScopeKind::Global);
-
-        value
+        Self::default()
     }
 
     pub fn error<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) {
@@ -81,11 +77,13 @@ impl ProgramContext {
         self.payload_var = ty.and_then(|t| Some(VariableInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VariableKind::Argument)));
     }
 
-    pub fn push_var(&mut self, name: &Identifier, ty: &Type, scope: VariableKind) -> VariableInfo {
-        let current_scope = self.scopes.iter_mut().last().unwrap();
-        let var_info = VariableInfo::new(name.to_unique_string(), ty.clone(), scope);
+    pub fn push_var(&mut self, name: &Identifier, ty: &Type, kind: VariableKind) -> VariableInfo {
+        let var_info = VariableInfo::new(name.to_unique_string(), ty.clone(), kind);
 
-        current_scope.insert_var_info(name, var_info.clone());
+        // global scope is handled differently
+        if let Some(current_scope) = self.scopes.iter_mut().last() {
+            current_scope.insert_var_info(name, var_info.clone());
+        }
 
         var_info
     }
@@ -97,7 +95,10 @@ impl ProgramContext {
             }
         }
 
-        None
+        match self.get_global_by_name(name) {
+            Some(global) => Some(global.var_info.clone()),
+            None => None,
+        }
     }
 
     pub fn ckeck_var_unicity(&mut self, name: &Identifier) -> bool {
@@ -260,9 +261,9 @@ impl ProgramContext {
         let mut init_globals_body = vec![];
 
         for global in get_globals_sorted(take(&mut self.globals)) {
-            let wat = match global.ty {
-                Type::Float => Wat::declare_global_f32(&global.wasm_name, 0.),
-                _ => Wat::declare_global_i32(&global.wasm_name, 0),
+            let wat = match global.var_info.ty {
+                Type::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
+                _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),
             };
 
             content.push(wat);

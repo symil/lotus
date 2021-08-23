@@ -1,7 +1,7 @@
 use std::fs::Metadata;
 
 use parsable::parsable;
-use crate::program::{GlobalAnnotation, ItemMetadata, ProgramContext, Type, VariableKind, Wasm};
+use crate::program::{GlobalAnnotation, ItemMetadata, ProgramContext, Type, VariableInfo, VariableKind, Wasm};
 use super::{VarDeclaration, Visibility};
 
 #[parsable]
@@ -30,8 +30,7 @@ impl GlobalDeclaration {
                     namespace_name: context.get_current_namespace_name(),
                     visibility: self.visibility.get_token()
                 },
-                wasm_name: wasm.declared_variables[0].wasm_name.clone(),
-                ty: wasm.ty,
+                var_info: wasm.declared_variables[0].clone(),
                 value: wasm.wat,
             };
 

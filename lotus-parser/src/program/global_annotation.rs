@@ -1,11 +1,10 @@
 use crate::{generation::Wat, items::VisibilityToken};
-use super::{ItemMetadata, Type, WithMetadata};
+use super::{ItemMetadata, Type, VariableInfo, WithMetadata};
 
 #[derive(Debug)]
 pub struct GlobalAnnotation {
     pub metadata: ItemMetadata,
-    pub wasm_name: String,
-    pub ty: Type,
+    pub var_info: VariableInfo,
     pub value: Vec<Wat>
 }
 
