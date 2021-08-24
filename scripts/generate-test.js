@@ -3,7 +3,7 @@ import fse from 'fs-extra';
 import chalk from 'chalk';
 import { compileParser, runTest, ROOT_DIR, TEST_DIR, OUTPUT_FILE_NAME, SRC_DIR_NAME } from './test-utils';
 
-const TEMPLATE_DIR_PATH = path.join(ROOT_DIR, 'template');
+const TEMPLATE_DIR_PATH = path.join(ROOT_DIR, 'workshop');
 const BUILD_DIR = path.join(ROOT_DIR, 'build');
 const ARGV = process.argv.slice(2);
 
@@ -15,6 +15,7 @@ async function main() {
     let testName = ARGV.find(string => !string.startsWith('-'));
     let inheritStdio = !testName;
     let displayMemory = ARGV.includes('-m');
+    let options = { inheritStdio, displayMemory };
 
     if (testName) {
         let testDirPath = path.join(TEST_DIR, testName);
@@ -31,14 +32,14 @@ async function main() {
         fse.copySync(TEMPLATE_DIR_PATH, testDirSrcPath);
 
         let outputFilePath = path.join(testDirPath, OUTPUT_FILE_NAME);
-        let outputFileContent = await runTest(testDirSrcPath, testDirPath, { inheritStdio, displayMemory });
+        let outputFileContent = await runTest(testDirSrcPath, testDirPath, options);
         fse.writeFileSync(outputFilePath, outputFileContent);
 
         setTimeout(() => {
             console.log(`${chalk.bold('generated:')} ${formattedDirPath}`);
         });
     } else {
-        await runTest(TEMPLATE_DIR_PATH, BUILD_DIR, { inheritStdio, displayMemory });
+        await runTest(TEMPLATE_DIR_PATH, BUILD_DIR, options);
     }
 }
 

@@ -21,7 +21,7 @@ sys fn __mem_alloc(block_size: int) -> ptr {
     let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
 
     for i in list_start_addr..list_end_addr {
-        @log_int(1);
+        
     }
 
     return (0 as ptr);

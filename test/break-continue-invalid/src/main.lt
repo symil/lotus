@@ -1,3 +1,5 @@
+// no-prelude
+
 export fn main() {
     continue;
     break;

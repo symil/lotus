@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -12,6 +13,7 @@ export const SOURCE_EXTENSION = '.lt';
 export const PARSER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-parser');
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
 
+export const MAIN_FILE_NAME = `main${SOURCE_EXTENSION}`;
 export const SRC_DIR_NAME = 'src';
 export const OUTPUT_FILE_NAME = 'output.txt';
 export const WAT_FILE_NAME = 'module.wat';
@@ -48,8 +50,11 @@ function runCommand(command, inheritStdio) {
     return { result, success };
 }
 
-function compileLotus(inputPath, outputPath, inheritStdio) {
-    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${inheritStdio ? '' : '--silent'} --no-prelude`, inheritStdio);
+function compileLotus(inputPath, outputPath, inheritStdio, excludePrelude) {
+    let silentOption = inheritStdio ? '' : '--silent';
+    let preludeOption = excludePrelude ? '--no-prelude' : '';
+
+    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${silentOption} ${preludeOption}`, inheritStdio);
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {
@@ -78,10 +83,11 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
 }
 
 export async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false } = {}) {
+    let excludePrelude = fs.readFileSync(path.join(sourceDirPath, MAIN_FILE_NAME), 'utf8').toString().startsWith('// no-prelude');
     let watPath = path.join(buildDirectory, WAT_FILE_NAME);
     let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
-        () => compileLotus(sourceDirPath, watPath, inheritStdio),
+        () => compileLotus(sourceDirPath, watPath, inheritStdio, excludePrelude),
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];

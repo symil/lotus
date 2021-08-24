@@ -1,6 +1,6 @@
-main.lt:2:5: error: keyword `continue` can only be used from inside a loop
-main.lt:3:5: error: keyword `break` can only be used from inside a loop
-main.lt:6:9: error: keyword `continue` can only be used from inside a loop
-main.lt:10:9: error: keyword `break` can only be used from inside a loop
-main.lt:15:22: error: keyword `continue` must not be followed by an expression
-main.lt:19:19: error: keyword `break` must not be followed by an expression
+main.lt:4:5: error: keyword `continue` can only be used from inside a loop
+main.lt:5:5: error: keyword `break` can only be used from inside a loop
+main.lt:8:9: error: keyword `continue` can only be used from inside a loop
+main.lt:12:9: error: keyword `break` can only be used from inside a loop
+main.lt:17:22: error: keyword `continue` must not be followed by an expression
+main.lt:21:19: error: keyword `break` must not be followed by an expression

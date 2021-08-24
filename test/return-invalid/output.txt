@@ -1,3 +1,3 @@
-main.lt:11:13: error: return: expected `int`, got `<void>`
-main.lt:15:12: error: return: expected `int`, got `bool`
-main.lt:23:20: error: return: expected `<void>`, got `int`
+main.lt:13:13: error: return: expected `int`, got `<void>`
+main.lt:17:12: error: return: expected `int`, got `bool`
+main.lt:25:20: error: return: expected `<void>`, got `int`

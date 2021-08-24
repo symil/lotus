@@ -5,7 +5,7 @@
   "type": "module",
   "main": "lotus-framework/js/index.js",
   "scripts": {
-    "test": "mocha --experimental-wasi-unstable-preview1 --experimental-specifier-resolution=node scripts/run-all-tests.js"
+    "test": "scripts/npm-test.sh"
   },
   "repository": {
     "type": "git",

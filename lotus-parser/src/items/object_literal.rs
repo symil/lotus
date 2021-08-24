@@ -1,15 +1,17 @@
 use std::collections::HashMap;
-
 use parsable::parsable;
-
 use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{Error, ProgramContext, StructInfo, Type, Wasm}};
-
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
 pub struct ObjectLiteral {
     pub type_name: Identifier,
-    #[parsable(brackets="{}", separator=",")]
+    pub field_list: Option<ObjectFieldInitializationList>
+}
+
+#[parsable]
+pub struct ObjectFieldInitializationList {
+    #[parsable(brackets="{}", separator=",", min=1)]
     pub fields: Vec<ObjectFieldInitialization>
 }
 
@@ -32,8 +34,10 @@ impl ObjectLiteral {
 
         let mut field_initializations = HashMap::new();
 
-        for field in &self.fields {
-            fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
+        if let Some(field_list) = &self.field_list {
+            for field in &field_list.fields {
+                fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
+            }
         }
 
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
