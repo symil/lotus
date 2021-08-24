@@ -2,15 +2,15 @@
 
 export fn main() {
     for (index, value) in -2..2 {
-        @log_int(index);
-        @log_int(value);
+        @log(index);
+        @log(value);
     }
 
     for value in 2..4 {
-        @log_int(value);
+        @log(value);
     }
 
     for value in 8..8 {
-        @log_int(value);
+        @log(value);
     }
 }

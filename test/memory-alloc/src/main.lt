@@ -1,11 +1,11 @@
 export fn main() {
-    @log_ptr(@alloc(4));
-    @log_ptr(@alloc(4));
-    @log_ptr(@alloc(4));
-    @log_ptr(@alloc(-1));
-    @log_ptr(@alloc(5));
+    @log(@alloc(4));
+    @log(@alloc(4));
+    @log(@alloc(4));
+    @log(@alloc(-1));
+    @log(@alloc(5));
 
     for i in 0..20 {
-        @log_ptr(@alloc(8000));
+        @log(@alloc(8000));
     }
 }

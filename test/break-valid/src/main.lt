@@ -6,7 +6,7 @@ export fn main() {
             break;
         }
 
-        @log_int(i);
+        @log(i);
     }
 
     for i in 0..2 {
@@ -15,7 +15,7 @@ export fn main() {
                 break;
             }
 
-            @log_int(j);
+            @log(j);
         }
     }
 }

@@ -1,4 +1,4 @@
-use super::{DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, LOG_I32_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
+use super::{DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
@@ -6,7 +6,9 @@ type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'static str>, &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
-    ("log", "i32", LOG_I32_FUNC_NAME, &["i32"], None)
+    ("log", "bool", LOG_BOOL_FUNC_NAME, &["i32"], None),
+    ("log", "int", LOG_INT_FUNC_NAME, &["i32"], None),
+    ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[

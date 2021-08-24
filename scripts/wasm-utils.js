@@ -4,7 +4,17 @@ import { WASI } from 'wasi';
 export function getImportsObject({ log = console.log } = {}) {
     return {
         log: {
-            i32(value) {
+            bool(value) {
+                if (value === 0) {
+                    log("false");
+                } else {
+                    log("true");
+                }
+            },
+            int(value) {
+                log(value);
+            },
+            float(value) {
                 log(value);
             }
         }

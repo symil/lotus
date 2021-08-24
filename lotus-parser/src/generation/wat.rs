@@ -18,6 +18,10 @@ impl Wat {
         Self { keyword: keyword.to_string(), arguments: vec![] }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.keyword.is_empty()
+    }
+
     pub fn push<T : ToWat>(&mut self, value: T) {
         self.arguments.push(value.to_wat())
     }
@@ -227,7 +231,7 @@ impl Wat {
         if self.arguments.is_empty() {
             let wrap = match self.keyword.as_str() {
                 "block" => true,
-                _ => self.keyword.contains(".")
+                _ => self.keyword.contains(".") && !self.keyword.chars().next().unwrap().is_numeric()
             };
 
             match wrap {

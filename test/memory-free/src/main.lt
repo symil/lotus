@@ -3,8 +3,8 @@ export fn main() {
     @free(p1);
     let p2 = @alloc(1);
 
-    @log_ptr(p1);
-    @log_ptr(p2);
+    @log(p1);
+    @log(p2);
 
     for i in 0..10 {
         let p = @alloc(1);
@@ -14,5 +14,5 @@ export fn main() {
         }
     }
 
-    @log_ptr(@alloc(1));
+    @log(@alloc(1));
 }

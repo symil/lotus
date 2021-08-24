@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -22,7 +22,7 @@ impl VarRef {
         match &self.arguments {
             Some(arguments) => match context.get_function_by_name(&self.name) {
                 Some(function_annotation) => {
-                    process_function_call(&function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
+                    process_function_call(None, &function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
                 },
                 None => {
                     context.error(&self.name, format!("undefined function `{}`", &self.name));
@@ -110,11 +110,13 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 }
 
 pub fn process_method_call(parent_type: &Type, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    let mut result = None;
+
     let method_info : Option<Wasm> = match parent_type {
         Type::Void => None,
         Type::Null => None,
         Type::TypeId => None,
-        Type::System => process_system_method_call(method_name, context),
+        Type::System => process_system_method_call(method_name, arguments, context),
         Type::Boolean => process_boolean_method_call(method_name, context),
         Type::Integer => process_integer_method_call(method_name, context),
         Type::Float => process_float_method_call(method_name, context),
@@ -137,14 +139,15 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     };
 
     if let Some(method_wasm) = method_info {
-        process_function_call(&method_wasm.ty, method_wasm.wat, arguments, access_type, context)
+        result = process_function_call(Some(method_name), &method_wasm.ty, method_wasm.wat, arguments, access_type, context);
     } else {
         context.error(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
-        None
     }
+
+    result
 }
 
-pub fn process_function_call(function_type: &Type, function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &Type, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.error(set_location, format!("cannot set result of a function call"));
         return None;
@@ -158,17 +161,24 @@ pub fn process_function_call(function_type: &Type, function_call: Vec<Wat>, argu
 
     let mut ok = true;
     let mut wat = vec![];
+    let mut argument_types = vec![];
     let mut anonymous_types = HashMap::new();
 
     for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
-        if let Some(actual_type_wasm) = arg_expr.process(context) {
-            if expected_type.is_assignable(&actual_type_wasm.ty, context, &mut anonymous_types) {
-                wat.extend(actual_type_wasm.wat);
+        if let Some(arg_wasm) = arg_expr.process(context) {
+            if expected_type.is_assignable(&arg_wasm.ty, context, &mut anonymous_types) {
+                wat.extend(arg_wasm.wat);
             } else {
-                context.error(arg_expr, format!("function call, argument #{}: expected `{}`, got `{}`", i, expected_type, &actual_type_wasm.ty));
+                context.error(arg_expr, format!("function call, argument #{}: expected `{}`, got `{}`", i, expected_type, &arg_wasm.ty));
                 ok = false;
             }
+
+            argument_types.push(arg_wasm.ty);
         }
+    }
+
+    if function_call.is_empty() {
+        function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 
     wat.extend(function_call);

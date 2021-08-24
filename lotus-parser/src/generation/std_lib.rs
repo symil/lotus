@@ -1,4 +1,4 @@
-use crate::{generation::LOG_I32_FUNC_NAME, wat};
+use crate::{generation::LOG_INT_FUNC_NAME, wat};
 use super::{Wat, ToWat, ToWatVec};
 
 pub struct StdLib;
@@ -13,7 +13,7 @@ impl StdLib {
 
     pub fn get_header(&self) -> Vec<Wat> {
         vec![
-            Wat::import_function("log", "i32", LOG_I32_FUNC_NAME, vec!["i32"], None),
+            Wat::import_function("log", "i32", LOG_INT_FUNC_NAME, vec!["i32"], None),
             Wat::import_function("log", "special", "log_special", vec![], None),
         ]
     }
@@ -74,7 +74,7 @@ impl StdLib {
     }
 
     pub fn log_i32(&self) -> Wat {
-        Wat::call_from_stack(LOG_I32_FUNC_NAME)
+        Wat::call_from_stack(LOG_INT_FUNC_NAME)
     }
 
     pub fn array_length(&self) -> Wat {

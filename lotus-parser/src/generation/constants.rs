@@ -23,7 +23,9 @@ pub const OBJECT_ALLOC_FUNC_NAME : &'static str = "object_alloc";
 
 pub const STRING_EQUAL_FUNC_NAME : &'static str = "string_concat";
 
-pub const LOG_I32_FUNC_NAME : &'static str = "std_log_i32";
+pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
+pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
+pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
 
 pub const THIS_VAR_NAME : &'static str = "__this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
