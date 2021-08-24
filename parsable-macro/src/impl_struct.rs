@@ -1,4 +1,3 @@
-use proc_macro_error::emit_call_site_error;
 use syn::{*, parse::{Parse, ParseStream}};
 use quote::quote;
 use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::is_type};
@@ -35,7 +34,8 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
             let mut lines = vec![];
 
             for field in named_fields.named.iter_mut() {
-                let mut attributes = FieldAttributes::default();
+                let attributes = FieldAttributes::from_field_attributes(&mut field.attrs);
+                let (push_markers, pop_markers) = attributes.get_push_pop_markers();
                 let is_vec = is_type(&field.ty, "Vec");
                 let is_option = is_type(&field.ty, "Option");
 
@@ -44,21 +44,11 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
                 field_names.push(quote! { #field_name });
 
-                if let Some((i, attr)) = field.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
-                    let result = syn::parse2::<FieldAttributes>(attr.tokens.clone());
-
-                    match result {
-                        Ok(value) => attributes = value,
-                        Err(error) => emit_call_site_error!(error)
-                    };
-
-                    field.attrs.remove(i);
-                }
-
                 let optional = is_option || attributes.optional.map_or(false, |value| value);
                 let on_success = quote! { reader__.eat_spaces(); };
                 let mut on_fail = quote ! {
                     reader__.set_index(start_index__);
+                    #pop_markers
                     return None;
                 };
 
@@ -178,6 +168,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     });
                 } else {
                     lines.push(quote! {
+                        #push_markers
                         field_failed__ = false;
                         field_index__ = reader__.get_index();
                         prefix_ok__ = true;
@@ -186,6 +177,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         #(#check)*
                         #suffix_parsing
                         #on_success
+                        #pop_markers
                     });
                 }
             }

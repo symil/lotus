@@ -12,7 +12,8 @@ pub struct StringReader {
     line_col: LineColLookup,
     index: usize,
     error_index: usize,
-    expected: Vec<String>
+    expected: Vec<String>,
+    markers: HashMap<&'static str, Vec<bool>>
 }
 
 pub struct ParseOptions<'a, 'b, 'c> {
@@ -63,7 +64,8 @@ impl StringReader {
             string: content,
             index: 0,
             error_index: 0,
-            expected: vec![]
+            expected: vec![],
+            markers: HashMap::new()
         }
     }
 
@@ -218,6 +220,27 @@ impl StringReader {
         let (line, column) = self.line_col.get(start);
 
         DataLocation { start, end, file_name, namespace_name, line, column }
+    }
+
+    pub fn get_marker_value(&self, name: &'static str) -> bool {
+        match self.markers.get(name) {
+            Some(list) => *list.last().unwrap_or(&false),
+            None => false
+        }
+    }
+
+    pub fn push_marker_value(&mut self, name: &'static str, value: bool) {
+        if !self.markers.contains_key(name) {
+            self.markers.insert(name, vec![]);
+        }
+
+        self.markers.get_mut(name).unwrap().push(value);
+    }
+
+    pub fn pop_marker_value(&mut self, name: &'static str) {
+        if let Some(list) = self.markers.get_mut(name) {
+            list.pop();
+        }
     }
 }
 

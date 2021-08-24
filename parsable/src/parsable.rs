@@ -3,13 +3,6 @@ use crate::{ParseError, string_reader::{ParseOptions, StringReader}, utils::get_
 pub trait Parsable : Sized {
     fn parse_item(reader: &mut StringReader) -> Option<Self>;
 
-    fn parse_item_all(reader: &mut StringReader) -> Vec<(Self, usize)> {
-        match Self::parse_item(reader) {
-            Some(item) => vec![(item, reader.get_index())],
-            None => vec![]
-        }
-    }
-
     #[allow(unused_variables)]
     fn parse_item_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
         unimplemented!()
@@ -21,6 +14,8 @@ pub trait Parsable : Sized {
 
     fn parse(string: String, options: ParseOptions) -> Result<Self, ParseError> {
         let mut reader = StringReader::new(string, options);
+
+        // reader.push_marker_value("no-object", true);
 
         reader.eat_spaces();
 

@@ -10,8 +10,10 @@ pub enum VarPathRoot {
     IntegerLiteral(IntegerLiteral),
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
+    #[parsable(ignore_if_marker="no-object")]
     ObjectLiteral(ObjectLiteral),
     Variable(RootVarRef),
+    #[parsable(unset_marker="no-object")]
     Parenthesized(ParenthesizedExpression)
 }
 

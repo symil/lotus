@@ -4,6 +4,7 @@ use super::{Expression, Statement, StatementList};
 
 #[parsable]
 pub struct Branch {
+    #[parsable(set_marker="no-object")]
     pub condition: Expression,
     pub statements: StatementList
 }

@@ -4,7 +4,7 @@ use syn::*;
 use quote::quote;
 use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes};
 
-pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, output: &mut Output) {
+pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, output: &mut Output) {
     let mut lines = vec![];
     let mut impl_display_lines = vec![];
 
@@ -14,21 +14,17 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
         // TODO: check if variant should be skipped to avoid recursion
 
         let variant_name = &variant.ident;
-        let mut attributes = FieldAttributes::default();
+        let attributes = FieldAttributes::from_field_attributes(&mut variant.attrs);
         let mut parse_prefix = quote! { true };
         let mut parse_suffix = quote! { true };
         let mut parse_method = quote! { parse_item(reader__) };
+        let mut line = quote! { };
 
-        if let Some((i, attr)) = variant.attrs.iter().enumerate().find(|(_, attr)| attr.path.segments.last().unwrap().ident == "parsable") {
-            let result = syn::parse2::<FieldAttributes>(attr.tokens.clone());
-
-            match result {
-                Ok(value) => attributes = value,
-                Err(error) => emit_call_site_error!(error)
-            };
-
-            variant.attrs.remove(i);
-        }
+        let marker_value = match &attributes.ignore_if_marker {
+            Some(name) => quote! { reader__.get_marker_value(#name) },
+            None => quote! { false },
+        };
+        let (push_markers, pop_markers) = attributes.get_push_pop_markers();
 
         if let Some(prefix) = attributes.prefix {
             parse_prefix = quote! {
@@ -53,7 +49,7 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
         }
 
         match &variant.fields {
-            Fields::Named(_fields_named) => todo!(),
+            Fields::Named(_) => unreachable!(),
             Fields::Unnamed(fields_unnamed) => {
                 let mut value_names = vec![];
 
@@ -63,10 +59,11 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
                     value_names.push(quote! { #value_name });
                 }
 
-                let mut current_block = quote! {
+                let mut current_block_single = quote! {
                     let suffix_ok__ = #parse_suffix;
 
                     if suffix_ok__ {
+                        #pop_markers
                         return Some(Self::#variant_name(#(#value_names),*))
                     }
                 };
@@ -77,24 +74,24 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
 
                     value_names.insert(0, quote! { #value_name });
 
-                    current_block = quote! {
+                    current_block_single = quote! {
                         if let Some(#value_name) = <#field_type as parsable::Parsable>::#parse_method {
                             reader__.eat_spaces();
 
-                            #current_block
+                            #current_block_single
                         }
                     };
                 }
 
-                lines.push(quote! {
+                line = quote! {
                     let prefix_ok__ = #parse_prefix;
 
                     if prefix_ok__ {
-                        #current_block
+                        #current_block_single
                     }
 
                     reader__.set_index(start_index__);
-                });
+                };
             },
             Fields::Unit => {
                 let string = match &variant.discriminant {
@@ -111,14 +108,15 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
 
                 match string {
                     Some(lit_str) => {
-                        lines.push(quote! {
+                        line = quote! {
                             if let Some(_) = reader__.read_string(#lit_str) {
                                 reader__.eat_spaces();
+                                #pop_markers
                                 return Some(Self::#variant_name);
                             } else {
                                 reader__.set_expected_token(Some(format!("{:?}", #lit_str)));
                             }
-                        });
+                        };
 
                         impl_display_lines.push(quote! {
                             Self::#variant_name => #lit_str,
@@ -128,13 +126,21 @@ pub fn process_enum(data_enum: &mut DataEnum, attributes: &RootAttributes, outpu
                 }
             }
         }
+
+        lines.push(quote! {
+            if !(#marker_value) {
+                #push_markers
+                #line
+                #pop_markers
+            }
+        });
     }
 
     for variant in data_enum.variants.iter_mut() {
         variant.discriminant = None;
     }
 
-    if attributes.impl_display {
+    if root_attributes.impl_display {
         output.display = Some(quote! {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let string = match self {

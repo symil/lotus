@@ -6,9 +6,9 @@ use super::{Expression, Identifier, Statement, StatementList};
 pub struct ForBlock {
     #[parsable(prefix="for")]
     pub iterator: ForIterator,
-    #[parsable(prefix="in")]
+    #[parsable(prefix="in", set_marker="no-object")]
     pub range_start: Expression,
-    #[parsable(prefix="..")]
+    #[parsable(prefix="..", set_marker="no-object")]
     pub range_end: Option<Expression>,
     pub statements: StatementList
 }
