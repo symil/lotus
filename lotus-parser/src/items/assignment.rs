@@ -24,8 +24,6 @@ impl Assignment {
                         let mut wat = vec![];
                         let mut ok = true;
 
-                        wat.extend(right_wasm.wat);
-
                         if equal_token.token != AssignmentToken::Equal {
                             let associated_binary_operator = match &equal_token.token {
                                 AssignmentToken::Equal => unreachable!(),
@@ -43,12 +41,15 @@ impl Assignment {
                             if let Some(left_rvalue_wasm) = self.lvalue.process(AccessType::Get, context) {
                                 if let Some(operator_wasm) = associated_binary_operator.process(&left_rvalue_wasm.ty, context) {
                                     wat.extend(left_rvalue_wasm.wat);
+                                    wat.extend(right_wasm.wat);
                                     wat.extend(operator_wasm.wat);
                                 } else {
                                     context.error(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
                                     ok = false;
                                 }
                             }
+                        } else {
+                            wat.extend(right_wasm.wat);
                         }
 
                         wat.extend(left_wasm.wat);

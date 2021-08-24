@@ -1,3 +1,11 @@
+sys fn __int_log2(n: int) -> int {
+    if n < 2 {
+        return 1;
+    } else {
+        return 32 - (n - 1).clz();
+    }
+}
+
 sys fn __int_log4(n: int) -> int {
     if n < 4 {
         return 1;
@@ -16,6 +24,10 @@ sys fn __int_pow(value: int, exponent: int) -> int {
     }
 
     return result;
+}
+
+sys fn __int_next_power_of_2(n: int) -> int {
+    return 1 << n.log2();
 }
 
 sys fn __int_next_power_of_4(n: int) -> int {

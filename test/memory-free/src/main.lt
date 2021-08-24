@@ -1,0 +1,18 @@
+export fn main() {
+    let p1 = @alloc(1);
+    @free(p1);
+    let p2 = @alloc(1);
+
+    @log_ptr(p1);
+    @log_ptr(p2);
+
+    for i in 0..10 {
+        let p = @alloc(1);
+
+        if i == 4 {
+            @free(p);
+        }
+    }
+
+    @log_ptr(@alloc(1));
+}

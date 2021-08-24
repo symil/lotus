@@ -1,28 +1,65 @@
-const MEMORY_CELL_BYTE_SIZE = 4;
+const MEMORY_CELL_BYTE_SIZE = 4; // 4B
 const WASM_PAGE_BYTE_SIZE = 2.pow(16); // 64 KiB
-const WASM_PAGE_CELL_COUNT = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+const VIRTUAL_PAGE_BYTE_SIZE = 2.pow(20); // 1 MiB
 
-const WASM_PAGE_CELL_SIZE = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
-const MEMORY_PAGE_POWER_OF_TWO = 20;
-const VIRTUAL_PAGE_BYTE_SIZE = 2.pow(MEMORY_PAGE_POWER_OF_TWO); // 1 MiB
+const WASM_PAGE_CELL_COUNT = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+const VIRTUAL_PAGE_CELL_COUNT = VIRTUAL_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+const VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO = VIRTUAL_PAGE_CELL_COUNT.log2();
+
 const WASM_PAGE_COUNT_PER_VIRTUAL_PAGE = VIRTUAL_PAGE_BYTE_SIZE / WASM_PAGE_BYTE_SIZE;
 
 const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE = 64;
 const HEADER_WASM_PAGE_COUNT = 1;
+const HEADER_CELL_COUNT = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
 const HEADER_END_ADDR = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
 
 fn alloc_page() -> ptr {
-    return @wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE as ptr;
+    return (@wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
 }
 
 sys fn __mem_alloc(block_size: int) -> ptr {
+    let result = 0;
     let block_size_index = block_size.log4() - 1;
-    let list_start_addr = HEADER_END_ADDR + block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+    let list_start_addr = block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
     let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
 
     for i in list_start_addr..list_end_addr {
-        
+        let page_addr = @memory[i];
+
+        if page_addr == 0 {
+            page_addr = alloc_page() as int;
+            @memory[i] = page_addr;
+
+            let round_block_size = block_size.next_power_of_4();
+            let block_count = (VIRTUAL_PAGE_CELL_COUNT - 1) / (round_block_size + 2);
+            let stack_start = page_addr + 1;
+            let addr_range_start = stack_start + (2 * block_count);
+            let last_addr = addr_range_start + (block_count * round_block_size) - round_block_size;
+
+            @memory[page_addr] = block_count;
+
+            for j in 0..block_count {
+                @memory[stack_start + j] = last_addr - (j * round_block_size);
+            }
+        }
+
+        let offset = @memory[page_addr];
+
+        if offset != 0 {
+            @memory[page_addr] = offset - 1;
+            result = @memory[page_addr + offset];
+            break;
+        }
     }
 
-    return (0 as ptr);
+    return (result as ptr);
+}
+
+sys fn __mem_free(pointer: ptr) {
+    let addr = pointer as int;
+    let page_addr = (((addr - HEADER_CELL_COUNT) >> VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO) << VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO) + HEADER_CELL_COUNT;
+    let offset = @memory[page_addr] + 1;
+
+    @memory[page_addr] = offset;
+    @memory[page_addr + offset] = addr;
 }

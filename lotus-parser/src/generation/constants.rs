@@ -1,5 +1,6 @@
 pub const NULL_ADDR : i32 = 0;
 pub const VALUE_BYTE_SIZE : usize = 4;
+pub const HEADER_MEMORY_WASM_PAGE_COUNT : usize = 1;
 
 pub const MEM_INIT_FUNC_NAME : &'static str = "std_mem_init";
 pub const MEM_ALLOC_FUNC_NAME : &'static str = "std_mem_alloc";
@@ -14,6 +15,9 @@ pub const ARRAY_GET_F32_FUNC_NAME : &'static str = "array_get_f32";
 pub const ARRAY_SET_I32_FUNC_NAME : &'static str = "array_set_i32";
 pub const ARRAY_SET_F32_FUNC_NAME : &'static str = "array_set_f32";
 pub const ARRAY_CONCAT_FUNC_NAME : &'static str = "array_concat";
+
+pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
+pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
 
 pub const OBJECT_ALLOC_FUNC_NAME : &'static str = "object_alloc";
 
