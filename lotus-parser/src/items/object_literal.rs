@@ -6,7 +6,9 @@ use super::{Expression, Identifier, ObjectFieldInitialization};
 #[parsable]
 pub struct ObjectLiteral {
     pub type_name: Identifier,
-    pub field_list: Option<ObjectFieldInitializationList>
+    // pub field_list: Option<ObjectFieldInitializationList>
+    #[parsable(brackets="{}", separator=",")]
+    pub fields: Vec<ObjectFieldInitialization>
 }
 
 #[parsable]
@@ -34,10 +36,14 @@ impl ObjectLiteral {
 
         let mut field_initializations = HashMap::new();
 
-        if let Some(field_list) = &self.field_list {
-            for field in &field_list.fields {
-                fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
-            }
+        // if let Some(field_list) = &self.field_list {
+        //     for field in &field_list.fields {
+        //         fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
+        //     }
+        // }
+
+        for field in &self.fields {
+            fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
         }
 
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {

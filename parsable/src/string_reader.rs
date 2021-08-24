@@ -120,6 +120,7 @@ impl StringReader {
     pub fn get_index_backtracked(&self) -> usize {
         let mut index = self.index;
 
+        // TODO: handle comments
         while index > 0 && is_space(self.string.as_bytes()[index - 1] as char) {
             index -= 1;
         }
