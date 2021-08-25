@@ -1,0 +1,7 @@
+sys fn __object_alloc(field_count: int, type_id: int) -> ptr {
+    let object = @alloc(field_count + 1);
+
+    object[0] = type_id;
+
+    return object;
+}

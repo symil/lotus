@@ -1,0 +1,26 @@
+struct Foo {
+    a: int,
+    b: bool,
+    c: string,
+    d: float
+}
+
+export fn main() {
+    let foo = Foo {
+        c: "hello",
+        a: 2,
+        b: true,
+        d: -1f
+    };
+
+    @log(foo.a);
+    @log(foo.b);
+    @log(foo.c);
+    @log(foo.d);
+
+    foo.c = "world";
+    foo.d = 1.8f;
+
+    @log(foo.c);
+    @log(foo.d);
+}

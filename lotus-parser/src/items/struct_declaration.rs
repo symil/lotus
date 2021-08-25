@@ -168,7 +168,7 @@ impl StructDeclaration {
                         let field_details = FieldDetails {
                             name: field.name.clone(),
                             ty: field_type,
-                            offset: 0,
+                            offset: fields.len(),
                         };
 
                         fields.insert(field.name.clone(), field_details);
@@ -198,7 +198,7 @@ impl StructDeclaration {
                 let field_info = FieldDetails {
                     name: field.name.clone(),
                     ty: field.ty.clone(),
-                    offset: fields.len() + 1
+                    offset: fields.len()
                 };
 
                 if fields.contains_key(&field.name) {

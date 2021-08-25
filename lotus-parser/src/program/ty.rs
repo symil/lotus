@@ -1,5 +1,5 @@
 use std::{collections::HashMap, fmt};
-use crate::{generation::{NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME}, wat};
+use crate::{generation::{NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, STRING_ALLOC_FUNC_NAME}, wat};
 use super::{ProgramContext, StructAnnotation, StructInfo, Wasm};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -60,7 +60,7 @@ impl Type {
             Type::Boolean => Wat::const_i32(0),
             Type::Integer => Wat::const_i32(0),
             Type::Float => Wat::const_f32(0.),
-            Type::String => Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
+            Type::String => Wat::call(STRING_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
             Type::Null => unreachable!(),
             Type::TypeId => Wat::const_i32(0),
             Type::Struct(_) => Wat::const_i32(NULL_ADDR),

@@ -23,6 +23,8 @@ mod scope;
 mod variable_info;
 mod item_metadata;
 mod struct_info;
+mod object_fields;
+mod type_id_fields;
 
 pub use error::*;
 pub use program::*;
@@ -49,3 +51,5 @@ pub use scope::*;
 pub use variable_info::*;
 pub use item_metadata::*;
 pub use struct_info::*;
+pub use object_fields::*;
+pub use type_id_fields::*;

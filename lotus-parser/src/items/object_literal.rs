@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{OBJECT_ALLOC_FUNC_NAME, Wat}, program::{Error, ProgramContext, StructInfo, Type, Wasm}};
+use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, VariableInfo, VariableKind, Wasm}};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -25,10 +25,17 @@ impl ObjectLiteral {
         let mut fields_init = vec![];
         let mut struct_info = StructInfo::default();
 
+        let object_var_name = Identifier::unique("object", self).to_unique_string();
+        let variables = vec![
+            VariableInfo::new(object_var_name.clone(), Type::Integer, VariableKind::Local),
+        ];
+
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
             struct_info = struct_annotation.to_struct_info();
-            todo!() // allocate the right number of values
-            // wat.push(Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.type_id)]));
+            wat.extend(vec![
+                Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.get_field_count()), Wat::const_i32(struct_annotation.get_type_id())]),
+                Wat::set_local_from_stack(&object_var_name)
+            ]);
         } else {
             context.error(&self.type_name, format!("undefined structure `{}`", &self.type_name));
             ok = false;
@@ -54,7 +61,7 @@ impl ObjectLiteral {
                 }
 
                 if field_initializations.contains_key(&field_name) {
-                    errors.push(Error::located(&field_name, format!("field `{}`: duplicate declaration", &field_name)));
+                    errors.push(Error::located(&field_name, format!("field `{}`: duplicate initialization", &field_name)));
                     ok = false;
                 }
 
@@ -75,16 +82,23 @@ impl ObjectLiteral {
                     None => field_info.ty.get_default_wat(),
                 };
 
-                wat.push(Wat::const_i32(field_info.offset));
                 wat.extend(field_wat);
-                wat.push(Wat::call(field_info.ty.pointer_set_function_name(), vec![]));
+                wat.extend(vec![
+                    Wat::get_local(&object_var_name),
+                    Wat::const_i32(field_info.offset + OBJECT_HEADER_SIZE),
+                    Wat::call_from_stack(field_info.ty.pointer_set_function_name())
+                ]);
             }
+
+            wat.push(Wat::get_local(&object_var_name));
+        } else {
+            ok = false;
         }
 
         context.errors.extend(errors);
 
         match ok {
-            true => Some(Wasm::new(Type::Struct(struct_info), wat, vec![])),
+            true => Some(Wasm::new(Type::Struct(struct_info), wat, variables)),
             false => None
         }
     }
