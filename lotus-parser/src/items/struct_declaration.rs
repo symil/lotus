@@ -226,8 +226,12 @@ impl StructDeclaration {
         }
     }
 
-    pub fn process_methods_bodies(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        todo!()
+    pub fn process_methods_bodies(&self, index: usize, context: &mut ProgramContext) {
+        context.set_file_location(&self.file_name, &self.namespace_name);
+
+        for (i, method) in self.body.methods.iter().enumerate() {
+            method.process_body(self, index, i, context);
+        }
     }
 }
 

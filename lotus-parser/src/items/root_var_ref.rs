@@ -10,15 +10,21 @@ pub struct RootVarRef {
 
 impl RootVarRef {
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+        let mut result = None;
+
         match &self.prefix {
             Some(prefix) => {
                 if let Some(prefix_wasm) = prefix.process(self, context) {
-                    self.var_ref.process_as_field(&prefix_wasm.ty, access_type, context)
-                } else {
-                    None
+                    if let Some(wasm) = self.var_ref.process_as_field(&prefix_wasm.ty, access_type, context) {
+                        result = Some(Wasm::merge(wasm.ty.clone(), vec![prefix_wasm, wasm]));
+                    }
                 }
             },
-            None => self.var_ref.process_as_variable(access_type, context)
+            None => {
+                result = self.var_ref.process_as_variable(access_type, context);
+            }
         }
+
+        result
     }
 }

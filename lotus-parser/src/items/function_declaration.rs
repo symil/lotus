@@ -82,6 +82,8 @@ impl FunctionDeclaration {
                 _ => Some(function_annotation.return_type.clone())
             };
             arguments = function_annotation.arguments.clone();
+            wasm_func_name = function_annotation.wasm_name.clone();
+            wat_ret = function_annotation.return_type.get_wasm_type();
         }
 
         context.reset_local_scope();
@@ -113,11 +115,6 @@ impl FunctionDeclaration {
         }
 
         wat_body = vec![Wat::new("block", wat_body)];
-
-        if let Some(function_annotation) = context.get_function_by_id(index) {
-            wasm_func_name = function_annotation.wasm_name.clone();
-            wat_ret = function_annotation.return_type.get_wasm_type();
-        }
 
         if let Some(return_type) = &context.function_return_type {
             if let Some(wasm_type) = return_type.get_wasm_type() {

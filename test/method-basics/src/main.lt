@@ -1,0 +1,31 @@
+struct Foo {
+    value: string,
+    number: float
+
+    print() {
+        @log(#value);
+    }
+
+    set(value: string) {
+        #value = value;
+    }
+
+    get() -> float {
+        return #number;
+    }
+}
+
+export fn main() {
+    let foo = Foo {
+        value: "hello",
+        number: 1.3f
+    };
+
+    foo.print();
+    foo.set("world");
+    foo.print();
+
+    @log(foo.number);
+    foo.number = 1.9f;
+    @log(foo.number);
+}

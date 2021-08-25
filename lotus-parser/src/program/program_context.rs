@@ -238,6 +238,10 @@ impl ProgramContext {
         for (index, function_declaration) in functions.iter().enumerate() {
             function_declaration.process_body(index, self);
         }
+
+        for (index, struct_declaration) in structs.iter().enumerate() {
+            struct_declaration.process_methods_bodies(index, self);
+        }
     }
 
     pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
@@ -293,6 +297,12 @@ impl ProgramContext {
 
         for function in self.functions.id_to_item.into_values() {
             content.push(function.wat);
+        }
+
+        for struct_annotation in self.structs.id_to_item.into_values() {
+            for method in struct_annotation.user_methods.into_values() {
+                content.push(method.wat);
+            }
         }
         
         Ok(content.to_string(0))
