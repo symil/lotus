@@ -1,0 +1,1 @@
+main.lt:2:23: error: invalid character '\a'

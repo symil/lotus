@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ARRAY_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, Type, Wasm}, wat};
+use crate::{generation::{ARRAY_CONCAT_FUNC_NAME, Wat}, program::{ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -54,7 +54,7 @@ impl BinaryOperatorToken {
                 Type::Pointer(pointed_type) => Some(Wasm::typed(Type::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
                 Type::Integer => Some(Wasm::typed(Type::Integer, Wat::inst("i32.add"))),
                 Type::Float => Some(Wasm::typed(Type::Float, Wat::inst("f32.add"))),
-                Type::String => Some(Wasm::typed(Type::String, Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
+                Type::String => Some(Wasm::typed(Type::String, Wat::call(STRING_CONCAT_FUNC_NAME, vec![]))),
                 Type::Array(item_type) => Some(Wasm::typed(Type::Array(item_type.clone()), Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
                 _ => None
             },

@@ -155,14 +155,15 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
 
     let (expected_arguments, return_type) = function_type.as_function();
 
-    if arguments.len() != expected_arguments.len() {
-        context.error(arguments, format!("function call arguments: expected {} arguments, got {}", expected_arguments.len(), arguments.as_vec().len()));
-    }
-
     let mut ok = true;
     let mut wat = vec![];
     let mut argument_types = vec![];
     let mut anonymous_types = HashMap::new();
+
+    if arguments.len() != expected_arguments.len() {
+        context.error(arguments, format!("function call arguments: expected {} arguments, got {}", expected_arguments.len(), arguments.as_vec().len()));
+        ok = false;
+    }
 
     for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
         if let Some(arg_wasm) = arg_expr.process(context) {
@@ -174,10 +175,15 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
             }
 
             argument_types.push(arg_wasm.ty);
+        } else {
+            ok = false;
         }
     }
 
-    if function_call.is_empty() {
+    // Special case: some builtin (system) functions (e.g `@log`) need to know the type of their arguments to generate proper WAT
+    // In such case, the WAT generation is delayed until after the arguments have been processed
+    // This only happen for a few builtin functions, and can never happen for user-written functions
+    if ok && function_call.is_empty() {
         function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 

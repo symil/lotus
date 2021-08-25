@@ -44,6 +44,6 @@ impl VariableInfo {
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Self::new(String::new(), Type::Void, VariableKind::Global)
+        Self::new(String::new(), Type::Void, VariableKind::Local)
     }
 }

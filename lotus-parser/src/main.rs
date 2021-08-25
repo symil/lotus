@@ -1,7 +1,6 @@
 #![allow(unused)]
 use std::{env, fs, process};
 use colored::*;
-use generation::generate_wat;
 use program::LotusProgram;
 
 mod program;
@@ -19,6 +18,7 @@ const PROGRAM_NAME : &'static str = "lotus";
 const PRELUDE_FILES : &'static[(&'static str, &'static str)] = &[
     prelude_file!("prelude/math.lt"),
     prelude_file!("prelude/memory.lt"),
+    prelude_file!("prelude/string.lt"),
 ];
 
 fn main() {

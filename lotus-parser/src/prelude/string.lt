@@ -1,0 +1,65 @@
+sys fn __string_alloc(length: int) -> ptr {
+    let str = @alloc(length + 1);
+
+    str[0] = length;
+
+    return str;
+}
+
+sys fn __string_set_char(str: ptr, index: int, value: int) -> ptr {
+    str[index + 1] = value;
+
+    return str;
+}
+
+sys fn __string_get_char(str: ptr, index: int) -> ptr {
+    let result = @alloc(2);
+
+    result[0] = 1;
+    result[1] = str[index + 1];
+
+    return result;
+}
+
+sys fn __string_get_length(str: ptr) -> int {
+    return str[0];
+}
+
+sys fn __string_equal(left: ptr, right: ptr) -> bool {
+    let left_length = left[0];
+    let right_length = right[0];
+
+    if left_length != right_length {
+        return false;
+    }
+
+    for i in 1..(left_length + 1) {
+        if left[i] != right[i] {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+sys fn __string_concat(left: ptr, right: ptr) -> ptr {
+    let left_length = left[0];
+    let right_length = right[0];
+    let new_length = left_length + right_length;
+    let new_string = @alloc(new_length + 1);
+    let offset = 1;
+
+    new_string[0] = new_length;
+
+    for i in 0..left_length {
+        new_string[offset] = left[i + 1];
+        offset += 1;
+    }
+
+    for i in 0..right_length {
+        new_string[offset] = right[i + 1];
+        offset += 1;
+    }
+
+    return new_string;
+}

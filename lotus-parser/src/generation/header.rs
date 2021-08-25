@@ -1,14 +1,27 @@
-use super::{DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
+use super::{HEADER_MEMORY_WASM_PAGE_COUNT, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'static str>, &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
+pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
+pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
+pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
+pub const LOG_STRING_FUNC_NAME : &'static str = "__log_string";
+
+// get stack order: self, index
+pub const DEREF_INT_POINTER_GET_FUNC_NAME : &'static str = "__ptr_get_i32";
+pub const DEREF_FLOAT_POINTER_GET_FUNC_NAME : &'static str = "__ptr_get_f32";
+// set order: value, self, index
+pub const DEREF_INT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_i32";
+pub const DEREF_FLOAT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_f32";
+
 pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "bool", LOG_BOOL_FUNC_NAME, &["i32"], None),
     ("log", "int", LOG_INT_FUNC_NAME, &["i32"], None),
     ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),
+    ("log", "string", LOG_STRING_FUNC_NAME, &["i32"], None),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[

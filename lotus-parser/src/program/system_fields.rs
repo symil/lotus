@@ -1,4 +1,4 @@
-use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEM_ALLOC_FUNC_NAME, MEM_FREE_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
+use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
 use super::{ProgramContext, Type, Wasm};
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
@@ -29,12 +29,12 @@ pub fn process_system_method_call(method_name: &Identifier, arguments: &Argument
 pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Type], context: &mut ProgramContext) -> Vec<Wat> {
     let wat = match method_name.as_str() {
         "log" => match arg_types[0] {
-            Type::Void => unreachable!(),
+            Type::Void => return vec![],
             Type::System => unreachable!(),
             Type::Boolean => Wat::call_from_stack(LOG_BOOL_FUNC_NAME),
             Type::Integer => Wat::call_from_stack(LOG_INT_FUNC_NAME),
             Type::Float => Wat::call_from_stack(LOG_FLOAT_FUNC_NAME),
-            Type::String => todo!(),
+            Type::String => Wat::call_from_stack(LOG_STRING_FUNC_NAME),
             Type::Null => Wat::call_from_stack(LOG_INT_FUNC_NAME),
             Type::TypeId => Wat::call_from_stack(LOG_INT_FUNC_NAME),
             Type::Struct(_) => todo!(),

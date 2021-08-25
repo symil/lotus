@@ -1,0 +1,5 @@
+export fn main() {
+    let full_string = "\a";
+
+    @log(full_string);
+}

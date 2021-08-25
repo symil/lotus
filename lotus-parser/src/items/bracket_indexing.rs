@@ -1,5 +1,7 @@
+use std::fmt::format;
+
 use parsable::parsable;
-use crate::{generation::Wat, program::{AccessType, ProgramContext, Type, Wasm}};
+use crate::{generation::Wat, program::{AccessType, ProgramContext, STRING_GET_CHAR_FUNC_NAME, Type, Wasm}};
 use super::Expression;
 
 #[parsable]
@@ -25,6 +27,17 @@ impl BracketIndexing {
         }
 
         match parent_type {
+            Type::String => {
+                match access_type {
+                    AccessType::Get => {
+                        wat.push(Wat::call_from_stack(STRING_GET_CHAR_FUNC_NAME));
+                        result = Some(Wasm::typed(Type::String, wat))
+                    },
+                    AccessType::Set(location) => {
+                        context.error(location, format!("strings are immutable"));
+                    },
+                }
+            },
             Type::Pointer(pointed_type) => {
                 let func_name = match access_type {
                     AccessType::Get => pointed_type.pointer_get_function_name(),
@@ -45,7 +58,7 @@ impl BracketIndexing {
                 // result = Some(Wasm::typed(Box::as_ref(item_type).clone(), wat))
             },
             _ => {
-                context.error(&self.index_expr, format!("bracket indexing target: expected `{}` or `{}`, got `{}`", Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
+                context.error(&self.index_expr, format!("bracket indexing target: expected `{}`, `{}` or `{}`, got `{}`", Type::String, Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
             }
         }
 

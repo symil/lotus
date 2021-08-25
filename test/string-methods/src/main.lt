@@ -1,0 +1,13 @@
+export fn main() {
+    let empty = "";
+    let hello = "hello";
+    let big = hello + " world!";
+
+    @log(empty.len());
+    @log(hello.len());
+    @log(big.len());
+    @log(big);
+    @log(hello == "hello");
+    @log(big == "hello");
+    @log("hello" == big);
+}

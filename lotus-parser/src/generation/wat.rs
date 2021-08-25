@@ -1,6 +1,6 @@
 use std::{ops::Deref, str::FromStr};
 use enum_as_string_macro::*;
-use crate::{wat, merge};
+use crate::{wat};
 use super::{ToInt, ToWat, ToWatVec};
 
 #[derive(Default, Debug)]
@@ -10,6 +10,10 @@ pub struct Wat {
 }
 
 impl Wat {
+    pub fn from<T : ToWat>(value: T) -> Self {
+        value.to_wat()
+    }
+
     pub fn new<T : ToString, V : ToWatVec>(keyword: T, arguments: V) -> Self {
         Self { keyword: keyword.to_string(), arguments: arguments.to_wat_vec() }
     }
@@ -26,8 +30,8 @@ impl Wat {
         self.arguments.push(value.to_wat())
     }
 
-    pub fn extend(&mut self, values: Vec<Wat>) {
-        self.arguments.extend(values);
+    pub fn extend<T : ToWatVec>(&mut self, values: T) {
+        self.arguments.extend(values.to_wat_vec());
     }
 
     pub fn var_name(var_name: &str) -> Self {
@@ -199,11 +203,11 @@ impl Wat {
     }
 
     pub fn while_loop<T : ToWatVec>(condition: Wat, statements: T) -> Wat {
-        wat!["block", Wat::new("loop", merge![
+        wat!["block", wat!["loop",
             wat!["br_if", 1, wat!["i32.eqz", condition]],
             statements,
             wat!["br", 0]
-        ])]
+        ]]
     }
 
     pub fn if_else<T : ToWatVec, U : ToWatVec>(condition: Wat, if_block: T, else_block: U) -> Wat {

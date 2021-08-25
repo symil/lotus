@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat, ToWat, ToWatVec}, merge, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, Wasm}};
 use super::{BinaryOperator, Operand, FullType};
 
 #[parsable]
@@ -52,7 +52,13 @@ impl<'a> OperationTree<'a> {
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {
-                                    result = Some(Wasm::typed(operator_wasm.ty, merge![left_wasm.wat, right_wasm.wat, operator_wasm.wat]));
+                                    let mut wat = vec![];
+
+                                    wat.extend(left_wasm.wat);
+                                    wat.extend(right_wasm.wat);
+                                    wat.extend(operator_wasm.wat);
+
+                                    result = Some(Wasm::typed(operator_wasm.ty, wat));
                                 }
                             }
                         }

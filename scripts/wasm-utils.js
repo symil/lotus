@@ -1,31 +1,48 @@
 import fs from 'fs';
 import { WASI } from 'wasi';
+import { WasmEnv } from './wasm-env';
 
-export function getImportsObject({ log = console.log } = {}) {
+function getImportsObject(env) {
     return {
         log: {
             bool(value) {
                 if (value === 0) {
-                    log("false");
+                    env.log("false");
                 } else {
-                    log("true");
+                    env.log("true");
                 }
             },
             int(value) {
-                log(value);
+                env.log(value);
             },
             float(value) {
-                log(value);
+                env.log(value);
+            },
+            string(addr) {
+                let memory = env.getMemory();
+                let length = memory[addr];
+                let codes = new Array(length);
+
+                for (let i = 0; i < length; ++i) {
+                    codes[i] = memory[addr + 1 + i];
+                }
+
+                let string = String.fromCodePoint(...codes);
+
+                env.log(string);
             }
         }
     };
 }
 
-export async function runWasmFile(wasmPath, importsObject) {
+export async function runWasmFile(wasmPath, { log = console.log } = {}) {
+    let env = new WasmEnv({ log });
+    let imports = getImportsObject(env);
     let wasi = new WASI();
     let wasm = await WebAssembly.compile(fs.readFileSync(wasmPath));
-    let instance = await WebAssembly.instantiate(wasm, importsObject);
+    let instance = await WebAssembly.instantiate(wasm, imports);
 
+    env.init(instance);
     wasi.start(instance);
 
     return instance;

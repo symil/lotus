@@ -54,6 +54,12 @@ impl ToWat for usize {
     }
 }
 
+impl ToWat for &usize {
+    fn to_wat(self) -> Wat {
+        Wat::single(self.to_string())
+    }
+}
+
 impl ToWat for u32 {
     fn to_wat(self) -> Wat {
         Wat::single(self.to_string())

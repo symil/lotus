@@ -1,0 +1,9 @@
+export fn main() {
+    let full_string = "hello\nworld";
+    let single_char = full_string[1];
+    let weird = "\"\\";
+
+    @log(full_string);
+    @log(single_char);
+    @log(weird);
+}

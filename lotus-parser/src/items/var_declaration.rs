@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, merge, program::{ProgramContext, Type, VariableInfo, VariableKind, Wasm}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, VariableInfo, VariableKind, Wasm}};
 use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
@@ -14,21 +14,22 @@ pub struct VarDeclaration {
 }
 
 impl VarDeclaration {
-    pub fn process(&self, scope: VariableKind, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<Wasm> {
         context.ckeck_var_unicity(&self.var_name);
 
-        let mut result = None;
-        let mut inferred_type = None;
-        let mut var_info = VariableInfo::default();
+        let mut wat = vec![];
+        let mut ok = false;
+        let mut final_var_type = Type::Void;
 
         if let Some(wasm) = self.init_value.process(context) {
             match &self.var_type {
                 Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
                     Some(var_type) => {
-                        var_info = context.push_var(&self.var_name, &var_type, scope);
+                        final_var_type = var_type.clone();
 
                         if var_type.is_assignable(&wasm.ty, context, &mut HashMap::new()) {
-                            inferred_type = Some(var_type);
+                            final_var_type = var_type;
+                            ok = true;
                         } else {
                             context.error(&self.init_value, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &wasm.ty, &var_type));
                         }
@@ -53,20 +54,24 @@ impl VarDeclaration {
                     };
 
                     if type_ok {
-                        var_info = context.push_var(&self.var_name, &wasm.ty, scope);
-                        inferred_type = Some(wasm.ty.clone());
+                        final_var_type = wasm.ty;
+                        ok = true;
                     } else {
                         context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitely)", &wasm.ty));
                     }
                 }
             };
 
-            result = match inferred_type {
-                Some(var_type) => Some(Wasm::new(var_type, merge![wasm.wat, var_info.set_from_stack()], vec![var_info])),
-                None => None
-            }
+            wat.extend(wasm.wat);
         }
 
-        result
+        let var_info = context.push_var(&self.var_name, &final_var_type, kind);
+
+        wat.push(var_info.set_from_stack());
+
+        match ok {
+            true => Some(Wasm::new(final_var_type, wat, vec![var_info])),
+            false => None
+        }
     }
 }

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { getImportsObject, runWasmFile } from './wasm-utils';
+import { runWasmFile } from './wasm-utils';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -64,9 +64,7 @@ function compileWat(inputPath, outputPath, inheritStdio) {
 async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let lines = [];
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
-    let importsObject = getImportsObject({ log });
-
-    let instance = await runWasmFile(wasmPath, importsObject);
+    let instance = await runWasmFile(wasmPath, { log });
 
     if (displayMemory) {
         let memory = new Uint32Array(instance.exports.memory.buffer); 
