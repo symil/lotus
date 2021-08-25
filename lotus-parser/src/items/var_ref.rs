@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{ARRAY_GET_I32_FUNC_NAME, Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -31,11 +31,8 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::typed(var_info.ty.clone(), var_info.get_to_stack())),
-                    AccessType::Set(_) => Some(Wasm::typed(var_info.ty.clone(), vec![
-                        var_info.set_from_stack(),
-                        // context.current_scope.get_to_stack(var_info.wasm_name.as_str()), // put back the value on the stack
-                    ])),
+                    AccessType::Get => Some(Wasm::simple(var_info.ty.clone(), var_info.get_to_stack())),
+                    AccessType::Set(_) => Some(Wasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
                 },
                 None => {
                     context.error(&self.name, format!("undefined variable `{}`", &self.name));
@@ -78,7 +75,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 
                 // special case: `_` refers to the value itself rather than a field
                 // e.g `#foo` means `self.foo`, but `#_` means `self`
-                Some(Wasm::typed(parent_type.clone(), vec![]))
+                Some(Wasm::empty(parent_type.clone()))
             } else if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
@@ -86,7 +83,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
                         AccessType::Set(_) => field.ty.pointer_set_function_name(),
                     };
 
-                    Some(Wasm::typed(
+                    Some(Wasm::simple(
                         field.ty.clone(),
                         Wat::call(func_name, vec![Wat::const_i32(field.offset)])
                     ))
@@ -126,7 +123,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.user_methods.get(method_name) {
-                    Some(Wasm::typed(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }
@@ -156,7 +153,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
     let (expected_arguments, return_type) = function_type.as_function();
 
     let mut ok = true;
-    let mut wat = vec![];
+    let mut source = vec![];
     let mut argument_types = vec![];
     let mut anonymous_types = HashMap::new();
 
@@ -167,14 +164,14 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
 
     for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
         if let Some(arg_wasm) = arg_expr.process(context) {
+            argument_types.push(arg_wasm.ty.clone());
+
             if expected_type.is_assignable(&arg_wasm.ty, context, &mut anonymous_types) {
-                wat.extend(arg_wasm.wat);
+                source.push(arg_wasm);
             } else {
                 context.error(arg_expr, format!("function call, argument #{}: expected `{}`, got `{}`", i, expected_type, &arg_wasm.ty));
                 ok = false;
             }
-
-            argument_types.push(arg_wasm.ty);
         } else {
             ok = false;
         }
@@ -187,10 +184,10 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
         function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 
-    wat.extend(function_call);
+    source.push(Wasm::new(Type::Void, function_call, vec![]));
 
     match ok {
-        true => Some(Wasm::typed(return_type.clone(), wat)),
+        true => Some(Wasm::merge(return_type.clone(), source)),
         false => None
     }
 }

@@ -1,31 +1,47 @@
 use crate::generation::{ToWatVec, Wat};
 use super::{Type, VariableInfo};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Wasm {
     pub ty: Type,
     pub wat: Vec<Wat>,
-    pub declared_variables: Vec<VariableInfo>,
+    pub variables: Vec<VariableInfo>,
 }
 
 impl Wasm {
-    pub fn new<T : ToWatVec>(ty: Type, wat: T, declared_variables: Vec<VariableInfo>) -> Self {
-        Self { ty, wat: wat.to_wat_vec(), declared_variables }
-    }
-
-    pub fn typed<T : ToWatVec>(ty: Type, wat: T) -> Self {
+    pub fn new<T : ToWatVec>(ty: Type, wat: T, variables: Vec<VariableInfo>) -> Self {
         Self {
             ty,
             wat: wat.to_wat_vec(),
-            declared_variables: vec![]
+            variables
         }
     }
 
-    pub fn untyped<T : ToWatVec>(wat: T, declared_variables: Vec<VariableInfo>) -> Self {
+    pub fn merge(ty: Type, source: Vec<Self>) -> Self {
+        let mut wat = vec![];
+        let mut variables = vec![];
+
+        for wasm in source {
+            wat.extend(wasm.wat);
+            variables.extend(wasm.variables);
+        }
+
+        Self { ty, wat, variables }
+    }
+
+    pub fn simple(ty: Type, wat: Wat) -> Self {
         Self {
-            ty: Type::Void,
+            ty,
             wat: wat.to_wat_vec(),
-            declared_variables
+            variables: vec![]
+        }
+    }
+
+    pub fn empty(ty: Type) -> Self {
+        Self {
+            ty,
+            wat: vec![],
+            variables: vec![]
         }
     }
 }

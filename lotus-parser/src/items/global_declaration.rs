@@ -30,7 +30,7 @@ impl GlobalDeclaration {
                     namespace_name: context.get_current_namespace_name(),
                     visibility: self.visibility.get_token()
                 },
-                var_info: wasm.declared_variables[0].clone(),
+                var_info: wasm.variables[0].clone(),
                 value: wasm.wat,
             };
 

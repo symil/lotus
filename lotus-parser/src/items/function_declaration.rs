@@ -101,7 +101,7 @@ impl FunctionDeclaration {
         if let Some(wasm) = self.statements.process(context) {
             wat_body.extend(wasm.wat);
 
-            for var_info in wasm.declared_variables {
+            for var_info in wasm.variables {
                 if var_info.kind == VariableKind::Local {
                     if let Some(wasm_type) = var_info.ty.get_wasm_type() {
                         wat_locals.push((var_info.wasm_name, wasm_type));

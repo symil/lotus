@@ -10,6 +10,6 @@ pub struct NullLiteral {
 
 impl NullLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        Some(Wasm::typed(Type::Null, Wat::const_i32(NULL_ADDR)))
+        Some(Wasm::simple(Type::Null, Wat::const_i32(NULL_ADDR)))
     }
 }

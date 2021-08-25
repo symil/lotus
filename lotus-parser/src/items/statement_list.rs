@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Wasm};
+use crate::program::{ProgramContext, Type, Wasm};
 use super::Statement;
 
 #[parsable]
@@ -17,14 +17,14 @@ impl StatementList {
         for statement in &self.list {
             if let Some(wasm) = statement.process(context) {
                 wat.extend(wasm.wat);
-                variables.extend(wasm.declared_variables);
+                variables.extend(wasm.variables);
             } else {
                 ok = false;
             }
         }
 
         match ok {
-            true => Some(Wasm::untyped(wat, variables)),
+            true => Some(Wasm::new(Type::Void, wat, variables)),
             false => None
         }
     }

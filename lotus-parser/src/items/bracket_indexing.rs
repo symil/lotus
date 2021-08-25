@@ -14,7 +14,7 @@ impl BracketIndexing {
     pub fn process(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
         let mut indexing_ok = false;
-        let mut wat = vec![];
+        let mut source = vec![];
 
         if let Some(index_wasm) = self.index_expr.process(context) {
             if &index_wasm.ty == &Type::Integer {
@@ -23,15 +23,15 @@ impl BracketIndexing {
                 context.error(&self.index_expr, format!("bracket indexing argument: expected `{}`, got `{}`", Type::Integer, &index_wasm.ty));
             }
 
-            wat.extend(index_wasm.wat);
+            source.push(index_wasm);
         }
 
         match parent_type {
             Type::String => {
                 match access_type {
                     AccessType::Get => {
-                        wat.push(Wat::call_from_stack(STRING_GET_CHAR_FUNC_NAME));
-                        result = Some(Wasm::typed(Type::String, wat))
+                        source.push(Wasm::simple(Type::Void, Wat::call_from_stack(STRING_GET_CHAR_FUNC_NAME)));
+                        result = Some(Wasm::merge(Type::String, source));
                     },
                     AccessType::Set(location) => {
                         context.error(location, format!("strings are immutable"));
@@ -44,8 +44,8 @@ impl BracketIndexing {
                     AccessType::Set(_) => pointed_type.pointer_set_function_name(),
                 };
 
-                wat.push(Wat::call(func_name, vec![]));
-                result = Some(Wasm::typed(Box::as_ref(pointed_type).clone(), wat))
+                source.push(Wasm::simple(Type::Void, Wat::call(func_name, vec![])));
+                result = Some(Wasm::merge(Box::as_ref(pointed_type).clone(), source))
             },
             Type::Array(item_type) => {
                 todo!()

@@ -19,6 +19,6 @@ impl BooleanLiteral {
             }
         };
 
-        Some(Wasm::typed(Type::Boolean, Wat::const_i32(i32_value)))
+        Some(Wasm::simple(Type::Boolean, Wat::const_i32(i32_value)))
     }
 }

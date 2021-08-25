@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, Wasm}};
+use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, Type, Wasm}, wat};
 use super::{AssignmentOperator, Expression, VarPath};
 
 #[parsable]
@@ -21,7 +21,7 @@ impl Assignment {
             if let Some(left_wasm) = left_wasm_opt {
                 if let Some(right_wasm) = right_wasm_opt {
                     if left_wasm.ty.is_assignable(&right_wasm.ty, context, &mut HashMap::new()) {
-                        let mut wat = vec![];
+                        let mut source = vec![];
                         let mut ok = true;
 
                         if equal_token.token != AssignmentToken::Equal {
@@ -40,22 +40,22 @@ impl Assignment {
 
                             if let Some(left_rvalue_wasm) = self.lvalue.process(AccessType::Get, context) {
                                 if let Some(operator_wasm) = associated_binary_operator.process(&left_rvalue_wasm.ty, context) {
-                                    wat.extend(left_rvalue_wasm.wat);
-                                    wat.extend(right_wasm.wat);
-                                    wat.extend(operator_wasm.wat);
+                                    source.push(left_rvalue_wasm);
+                                    source.push(right_wasm);
+                                    source.push(operator_wasm);
                                 } else {
                                     context.error(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
                                     ok = false;
                                 }
                             }
                         } else {
-                            wat.extend(right_wasm.wat);
+                            source.push(right_wasm);
                         }
-
-                        wat.extend(left_wasm.wat);
+                        
+                        source.push(left_wasm);
 
                         if ok {
-                            result = Some(Wasm::untyped(wat, vec![]));
+                            result = Some(Wasm::merge(Type::Void, source));
                         }
                     } else {
                         context.error(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
@@ -64,15 +64,14 @@ impl Assignment {
             }
         } else {
             if let Some(wasm) = self.lvalue.process(AccessType::Get, context) {
-                let mut wat = vec![];
+                let is_void = wasm.ty.is_void();
+                let mut source = vec![wasm];
 
-                wat.extend(wasm.wat);
-
-                if !wasm.ty.is_void() {
-                    wat.push(Wat::inst("drop"));
+                if !is_void {
+                    source.push(Wasm::new(Type::Void, wat!["drop"], vec![]));
                 }
 
-                result = Some(Wasm::untyped(wat, vec![]));
+                result = Some(Wasm::merge(Type::Void, source));
             }
         }
 

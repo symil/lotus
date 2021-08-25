@@ -1,0 +1,35 @@
+sys fn __array_alloc(size: int) -> ptr {
+    let capacity = size.next_power_of_4();
+    let header = @alloc(4);
+    let body = @alloc(capacity);
+
+    header[0] = body as int;
+    header[1] = size;
+    header[2] = capacity;
+
+    return header;
+}
+
+sys fn __array_get_item(array: ptr, index: int) -> int {
+    return (array[0] as ptr)[index];
+}
+
+sys fn __array_set_item(value: int, array: ptr, index: int) {
+    let body = array[0] as ptr;
+
+    body[index] = value;
+}
+
+sys fn __array_get_length(array: ptr) -> int {
+    return array[1];
+}
+
+sys fn __array_get_body(array: ptr) -> int {
+    return array[0];
+}
+
+sys fn __array_set_body_item(body: ptr, index: int, value: int) -> ptr {
+    body[index] = value;
+
+    return body;
+}

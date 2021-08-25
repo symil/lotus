@@ -58,7 +58,7 @@ impl StringLiteral {
         }
 
         match ok {
-            true => Some(Wasm::typed(Type::String, wat)),
+            true => Some(Wasm::new(Type::String, wat, vec![])),
             false => None
         }
     }

@@ -29,7 +29,7 @@ impl Action {
                                     wat.push(Wat::set_local_from_stack(RESULT_VAR_NAME));
                                     wat.push(Wat::new("br", function_depth));
 
-                                    result = Some(Wasm::untyped(wat, vec![]));
+                                    result = Some(Wasm::new(Type::Void, wat, vec![]));
                                 } else {
                                     context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
                                 }
@@ -46,7 +46,7 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(Wasm::untyped(Wat::new("br", function_depth), vec![]));
+                            result = Some(Wasm::new(Type::Void, Wat::new("br", function_depth), vec![]));
                         },
                     },
                 }
@@ -59,8 +59,8 @@ impl Action {
                     match context.get_scope_depth(ScopeKind::Loop) {
                         Some(depth) => {
                             result = match &self.keyword.token {
-                                ActionKeywordToken::Break => Some(Wasm::untyped(wat!["br", depth + 1], vec![])),
-                                ActionKeywordToken::Continue => Some(Wasm::untyped(wat!["br", depth], vec![])),
+                                ActionKeywordToken::Break => Some(Wasm::new(Type::Void, wat!["br", depth + 1], vec![])),
+                                ActionKeywordToken::Continue => Some(Wasm::new(Type::Void, wat!["br", depth], vec![])),
                                 _ => unreachable!()
                             }
                         },

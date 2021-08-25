@@ -17,7 +17,7 @@ impl VarDeclaration {
     pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<Wasm> {
         context.ckeck_var_unicity(&self.var_name);
 
-        let mut wat = vec![];
+        let mut source = vec![];
         let mut ok = false;
         let mut final_var_type = Type::Void;
 
@@ -54,7 +54,7 @@ impl VarDeclaration {
                     };
 
                     if type_ok {
-                        final_var_type = wasm.ty;
+                        final_var_type = wasm.ty.clone();
                         ok = true;
                     } else {
                         context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitely)", &wasm.ty));
@@ -62,15 +62,15 @@ impl VarDeclaration {
                 }
             };
 
-            wat.extend(wasm.wat);
+            source.push(wasm);
         }
 
         let var_info = context.push_var(&self.var_name, &final_var_type, kind);
 
-        wat.push(var_info.set_from_stack());
+        source.push(Wasm::new(Type::Void, var_info.set_from_stack(), vec![var_info]));
 
         match ok {
-            true => Some(Wasm::new(final_var_type, wat, vec![var_info])),
+            true => Some(Wasm::merge(final_var_type, source)),
             false => None
         }
     }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
-use crate::{generation::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_F32_FUNC_NAME, ARRAY_GET_I32_FUNC_NAME, ARRAY_LENGTH_FUNC_NAME, ARRAY_SET_F32_FUNC_NAME, ARRAY_SET_I32_FUNC_NAME, NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, wat};
-use super::{ProgramContext, StructAnnotation, StructInfo};
+use crate::{generation::{NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME}, wat};
+use super::{ProgramContext, StructAnnotation, StructInfo, Wasm};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
@@ -261,18 +261,20 @@ impl Type {
         }
     }
 
-    pub fn to_bool(&self) -> Option<Wat> {
-        match self {
-            Type::Boolean => Some(wat!["nop"]),
-            Type::Integer => Some(wat!["i32.ne", Wat::const_i32(i32::MIN)]),
-            Type::Float => Some(wat!["i32.ne", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]]),
-            Type::String => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
-            Type::Struct(_) => Some(wat!["i32.ne", Wat::const_i32(NULL_ADDR)]),
-            Type::Pointer(_) => Some(wat!["i32.ne", Wat::const_i32(0)]),
-            Type::Null => Some(Wat::const_i32(0)),
-            Type::Array(_) => Some(wat!["i32.ne", Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)]),
-            _ => None
-        }
+    pub fn to_bool(&self) -> Option<Wasm> {
+        let wat = match self {
+            Type::Boolean => wat!["nop"],
+            Type::Integer => wat!["i32.ne", Wat::const_i32(i32::MIN)],
+            Type::Float => wat!["i32.ne", wat!["i32.reinterpret_f32"], wat!["i32.reinterpret_f32", wat!["f32.const", "nan"]]],
+            Type::String => wat!["i32.ne", Wat::call(ARRAY_GET_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)],
+            Type::Struct(_) => wat!["i32.ne", Wat::const_i32(NULL_ADDR)],
+            Type::Pointer(_) => wat!["i32.ne", Wat::const_i32(0)],
+            Type::Null => Wat::const_i32(0),
+            Type::Array(_) => wat!["i32.ne", Wat::call(ARRAY_GET_LENGTH_FUNC_NAME, vec![]), Wat::const_i32(0)],
+            _ => return None
+        };
+
+        Some(Wasm::simple(Type::Boolean, wat))
     }
 }
 

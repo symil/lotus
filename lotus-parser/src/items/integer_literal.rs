@@ -15,6 +15,6 @@ impl IntegerLiteral {
             _ => self.value.parse().unwrap()
         };
 
-        Some(Wasm::typed(Type::Integer, Wat::const_i32(i32_value)))
+        Some(Wasm::simple(Type::Integer, Wat::const_i32(i32_value)))
     }
 }

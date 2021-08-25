@@ -14,14 +14,16 @@ impl Branch {
         let mut result = None;
 
         if let Some(wasm) = self.condition.process(context) {
-            let mut wat = wasm.wat;
+            let mut source = vec![];
 
             if wasm.ty.is_boolean() {
-                result = Some(Wasm::typed(Type::Boolean, wat));
+                source.push(wasm);
+                result = Some(Wasm::merge(Type::Boolean, source));
             } else {
-                if let Some(convert_wat) = wasm.ty.to_bool() {
-                    wat.push(convert_wat);
-                    result = Some(Wasm::typed(Type::Boolean, wat));
+                if let Some(convert_wasm) = wasm.ty.to_bool() {
+                    source.push(wasm);
+                    source.push(convert_wasm);
+                    result = Some(Wasm::merge(Type::Boolean, source));
                 } else {
                     context.error(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
                 }

@@ -134,6 +134,10 @@ impl Wat {
         wat!["local.get", Self::var_name(var_name)]
     }
 
+    pub fn tee_local(var_name: &str) -> Self {
+        wat!["local.tee", Self::var_name(var_name)]
+    }
+
     pub fn increment_local_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         Wat::set_local(var_name, wat![
             "i32.add",

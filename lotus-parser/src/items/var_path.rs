@@ -19,11 +19,11 @@ impl VarPath {
 
         let mut parent_type = Type::Void;
         let mut ok = true;
-        let mut wat = vec![];
+        let mut source = vec![];
 
         if let Some(root_wasm) = self.root.process(current_access_type, context) {
-            parent_type = root_wasm.ty;
-            wat.extend(root_wasm.wat);
+            parent_type = root_wasm.ty.clone();
+            source.push(root_wasm);
 
             for (i, segment) in self.path.iter().enumerate() {
                 if i == self.path.len() - 1 {
@@ -31,8 +31,8 @@ impl VarPath {
                 }
 
                 if let Some(segment_wasm) = segment.process(&parent_type, current_access_type, context) {
-                    parent_type = segment_wasm.ty;
-                    wat.extend(segment_wasm.wat);
+                    parent_type = segment_wasm.ty.clone();
+                    source.push(segment_wasm);
                 } else {
                     ok = false;
                     break;
@@ -43,7 +43,7 @@ impl VarPath {
         }
 
         match ok {
-            true => Some(Wasm::typed(parent_type, wat)),
+            true => Some(Wasm::merge(parent_type, source)),
             false => None
         }
     }

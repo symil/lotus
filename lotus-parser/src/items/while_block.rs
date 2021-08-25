@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Wasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, Wasm}, wat};
 use super::Branch;
 
 #[parsable]
@@ -25,7 +25,7 @@ impl WhileBlock {
                 ]
             ];
 
-            result = Some(Wasm::untyped(content, block_wasm.declared_variables));
+            result = Some(Wasm::new(Type::Void, content, block_wasm.variables));
         }
 
         context.pop_scope();

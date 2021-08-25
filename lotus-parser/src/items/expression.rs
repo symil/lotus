@@ -16,7 +16,7 @@ impl Expression {
         if let Some(wasm) = self.operation.process(context) {
             result = match &self.as_type {
                 Some(as_type) => match Type::from_parsed_type(&as_type, context) {
-                    Some(new_type) => Some(Wasm::typed(new_type, wasm.wat)),
+                    Some(new_type) => Some(Wasm::merge(new_type, vec![wasm])),
                     None => None
                 },
                 None => Some(wasm),

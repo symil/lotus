@@ -84,7 +84,7 @@ impl ObjectLiteral {
         context.errors.extend(errors);
 
         match ok {
-            true => Some(Wasm::typed(Type::Struct(struct_info), wat)),
+            true => Some(Wasm::new(Type::Struct(struct_info), wat, vec![])),
             false => None
         }
     }

@@ -6,7 +6,7 @@ pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match field_name.as_str() {
-        "memory" => Some(Wasm::typed(
+        "memory" => Some(Wasm::simple(
             Type::pointer(Type::Integer),
             Wat::const_i32(0)
         )),
@@ -23,10 +23,12 @@ pub fn process_system_method_call(method_name: &Identifier, arguments: &Argument
         _ => return None
     };
 
-    Some(Wasm::typed(Type::Function(arguments, Box::new(return_type)), match wat.is_empty() {
-        true => vec![],
-        false => vec![wat]
-    }))
+    let ty = Type::Function(arguments, Box::new(return_type));
+
+    match wat.is_empty() {
+        true => Some(Wasm::empty(ty)),
+        false => Some(Wasm::simple(ty, wat))
+    }
 }
 
 pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Type], context: &mut ProgramContext) -> Vec<Wat> {

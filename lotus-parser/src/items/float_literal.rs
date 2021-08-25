@@ -15,6 +15,6 @@ impl FloatLiteral {
             _ => self.value[0..self.value.len()-1].parse().unwrap()
         };
 
-        Some(Wasm::typed(Type::Float, Wat::const_f32(f32_value)))
+        Some(Wasm::simple(Type::Float, Wat::const_f32(f32_value)))
     }
 }

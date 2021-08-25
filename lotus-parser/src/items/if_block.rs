@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Wasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, Wasm}, wat};
 use super::{Branch, StatementList};
 
 #[parsable]
@@ -29,7 +29,7 @@ impl IfBlock {
             let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
 
             wat.push(branch_wat);
-            variables.extend(block_wasm.declared_variables);
+            variables.extend(block_wasm.variables);
         } else {
             ok = false;
         }
@@ -43,7 +43,7 @@ impl IfBlock {
                 let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
 
                 wat.push(branch_wat);
-                variables.extend(block_wasm.declared_variables);
+                variables.extend(block_wasm.variables);
             } else {
                 ok = false;
             }
@@ -59,7 +59,7 @@ impl IfBlock {
                 let branch_wat = wat!["block", wasm.wat, wat!["br", 1]];
 
                 wat.push(branch_wat);
-                variables.extend(wasm.declared_variables);
+                variables.extend(wasm.variables);
             } else {
                 ok = false;
             }
@@ -71,7 +71,7 @@ impl IfBlock {
         context.return_found = return_found || branches_return.iter().all(|value| *value);
 
         match ok {
-            true => Some(Wasm::untyped(wat, variables)),
+            true => Some(Wasm::new(Type::Void, wat, variables)),
             false => None
         }
     }

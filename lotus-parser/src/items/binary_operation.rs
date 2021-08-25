@@ -52,13 +52,7 @@ impl<'a> OperationTree<'a> {
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {
-                                    let mut wat = vec![];
-
-                                    wat.extend(left_wasm.wat);
-                                    wat.extend(right_wasm.wat);
-                                    wat.extend(operator_wasm.wat);
-
-                                    result = Some(Wasm::typed(operator_wasm.ty, wat));
+                                    result  = Some(Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm]));
                                 }
                             }
                         }

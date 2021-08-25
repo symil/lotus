@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ARRAY_LENGTH_FUNC_NAME, ToWat, ToWatVec, Wat}, program::{ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
+use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -86,7 +86,7 @@ impl ForBlock {
                         ]
                     ]);
 
-                    variables.extend(block_wasm.declared_variables);
+                    variables.extend(block_wasm.variables);
                 } else {
                     ok = false;
                 }
@@ -113,7 +113,7 @@ impl ForBlock {
                     array_var_info.set_from_stack(),
                     Wat::const_i32(-1),
                     index_var_info.set_from_stack(),
-                    Wat::call(ARRAY_LENGTH_FUNC_NAME, vec![array_var_info.get_to_stack()]),
+                    Wat::call(ARRAY_GET_LENGTH_FUNC_NAME, vec![array_var_info.get_to_stack()]),
                     array_len_var_info.set_from_stack(),
                     wat!["block",
                         wat!["loop",
@@ -127,7 +127,7 @@ impl ForBlock {
                     ]
                 ]);
 
-                variables.extend(block_wasm.declared_variables);
+                variables.extend(block_wasm.variables);
             } else {
                 ok = false;
             }
@@ -142,7 +142,7 @@ impl ForBlock {
         context.return_found = return_found;
 
         match ok {
-            true => Some(Wasm::untyped(content, variables)),
+            true => Some(Wasm::new(Type::Void, content, variables)),
             false => None
         }
     }
