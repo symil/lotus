@@ -158,7 +158,8 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
     let mut anonymous_types = HashMap::new();
 
     if arguments.len() != expected_arguments.len() {
-        context.error(arguments, format!("function call arguments: expected {} arguments, got {}", expected_arguments.len(), arguments.as_vec().len()));
+        let s = if expected_arguments.len() > 1 { "s" } else { "" };
+        context.error(arguments, format!("expected {} argument{}, got {}", expected_arguments.len(), s, arguments.as_vec().len()));
         ok = false;
     }
 
@@ -169,7 +170,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
             if expected_type.is_assignable(&arg_wasm.ty, context, &mut anonymous_types) {
                 source.push(arg_wasm);
             } else {
-                context.error(arg_expr, format!("function call, argument #{}: expected `{}`, got `{}`", i, expected_type, &arg_wasm.ty));
+                context.error(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_wasm.ty));
                 ok = false;
             }
         } else {

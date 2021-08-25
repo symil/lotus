@@ -143,6 +143,7 @@ impl Type {
     pub fn get_item_type(&self) -> &Self {
         match self {
             Type::Array(sub_type) => Box::as_ref(sub_type),
+            Type::Void => &Type::Void,
             _ => unreachable!()
         }
     }

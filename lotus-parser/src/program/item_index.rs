@@ -41,7 +41,7 @@ impl<V : WithMetadata> ItemIndex<V> {
                 VisibilityToken::Private => metadata.namespace_name == from_namespace_name && metadata.file_name == from_file_name,
                 VisibilityToken::Public => metadata.namespace_name == from_namespace_name,
                 VisibilityToken::Export => true,
-                VisibilityToken::System => false,
+                VisibilityToken::System => metadata.namespace_name == from_namespace_name,
             };
 
             if ok {

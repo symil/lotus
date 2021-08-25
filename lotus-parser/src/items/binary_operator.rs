@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ARRAY_CONCAT_FUNC_NAME, Wat}, program::{ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, Wasm}, wat};
+use crate::{generation::{Wat}, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]

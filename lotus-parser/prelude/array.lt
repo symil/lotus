@@ -62,3 +62,27 @@ sys fn __array_pop(array: ptr) -> ptr {
 
     return array;
 }
+
+sys fn __array_concat(left: ptr, right: ptr) -> ptr {
+    let left_body = left[0] as ptr;
+    let left_size = left[1];
+    let right_body = right[0] as ptr;
+    let right_size = right[1];
+    
+    let new_array = __array_alloc(left_size + right_size);
+    let new_body = new_array[0] as ptr;
+
+    let offset = 0;
+
+    for i in 0..left_size {
+        new_body[offset] = left_body[i];
+        offset += 1;
+    }
+
+    for i in 0..right_size {
+        new_body[offset] = right_body[i];
+        offset += 1;
+    }
+
+    return new_array;
+}

@@ -64,7 +64,9 @@ impl BracketIndexing {
                 result = Some(Wasm::merge(item_type.clone(), source));
             },
             _ => {
-                context.error(&self.index_expr, format!("bracket indexing target: expected `{}`, `{}` or `{}`, got `{}`", Type::String, Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
+                if !parent_type.is_void() {
+                    context.error(&self.index_expr, format!("bracket indexing target: expected `{}`, `{}` or `{}`, got `{}`", Type::String, Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
+                }
             }
         }
 

@@ -31,7 +31,9 @@ impl Action {
 
                                     result = Some(Wasm::new(Type::Void, wat, vec![]));
                                 } else {
-                                    context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
+                                    if !wasm.ty.is_void() {
+                                        context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
+                                    }
                                 }
                             }
                         },

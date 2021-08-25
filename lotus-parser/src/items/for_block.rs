@@ -95,7 +95,9 @@ impl ForBlock {
             }
         } else if let Some(array_wasm) = range_start_wasm_opt {
             if !array_wasm.ty.is_array() {
-                context.error(&self.range_start, format!("iterable: expected `{}`, got `{}`", Type::array(Type::Any(0)), &array_wasm.ty));
+                if !array_wasm.ty.is_void() {
+                    context.error(&self.range_start, format!("iterable: expected `{}`, got `{}`", Type::array(Type::Any(0)), &array_wasm.ty));
+                }
                 ok = false;
             }
 
