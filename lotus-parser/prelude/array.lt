@@ -27,3 +27,38 @@ sys fn __array_get_length(array: ptr) -> int {
 sys fn __array_get_body(array: ptr) -> int {
     return array[0];
 }
+
+sys fn __array_push(array: ptr, value: int) -> ptr {
+    let body = array[0] as ptr;
+    let size = array[1];
+    let capacity = array[2];
+
+    if size == capacity {
+        capacity *= 4;
+
+        let new_body = @alloc(capacity);
+
+        for i in 0..size {
+            new_body[i] = body[i];
+        }
+
+        body = new_body;
+        array[0] = body as int;
+        array[2] = capacity;
+    }
+
+    body[size] = value;
+    array[1] = size + 1;
+
+    return array;
+}
+
+sys fn __array_pop(array: ptr) -> ptr {
+    let size = array[1];
+
+    if size > 0 {
+        array[1] = size - 1;
+    }
+
+    return array;
+}

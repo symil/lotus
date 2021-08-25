@@ -13,6 +13,7 @@ async function main() {
     }
 
     let testName = ARGV.find(string => !string.startsWith('-'));
+    let override = ARGV.includes('--override');
     let inheritStdio = !testName;
     let displayMemory = ARGV.includes('-m');
     let options = { inheritStdio, displayMemory };
@@ -23,9 +24,12 @@ async function main() {
         let formattedDirPath = '`' + testDirPath.replace(ROOT_DIR + '/', '') + '`';
 
         if (fse.existsSync(testDirPath)) {
-            console.log(`${chalk.bold.red('error:')} ${formattedDirPath} already exists`);
-            process.exit(1);
-            // fse.rmSync(testDirPath, { recursive: true });
+            if (override) {
+                fse.rmSync(testDirPath, { recursive: true });
+            } else {
+                console.log(`${chalk.bold.red('error:')} ${formattedDirPath} already exists`);
+                process.exit(1);
+            }
         }
 
         fse.mkdirSync(testDirSrcPath, { recursive: true });

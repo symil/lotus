@@ -1,0 +1,17 @@
+export fn main() {
+    let array : int[] = [];
+    let array_float : float[] = [];
+
+    for i in 0..10 {
+        array.push(i);
+        array_float.push(i.to_float() + 0.5f);
+    }
+
+    for item in array {
+        @log(item);
+    }
+
+    for item in array_float {
+        @log(item);
+    }
+}

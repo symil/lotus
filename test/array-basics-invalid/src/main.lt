@@ -2,4 +2,7 @@ export fn main() {
     let a = [];
     let b = [1, false, "foo"];
     let c : int[] = ["hello"];
+    let d = [[]];
+    let e = [[1, 2, 3], ["foo"], []];
+    let f = [[[]], 1];
 }

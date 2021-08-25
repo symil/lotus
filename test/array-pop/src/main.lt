@@ -1,0 +1,13 @@
+export fn main() {
+    let array = [1, 2, 3, 4];
+
+    array.pop();
+
+    @log(array.len());
+
+    for i in 0..10 {
+        array.pop();
+    }
+    
+    @log(array.len());
+}
