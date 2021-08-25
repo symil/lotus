@@ -1,5 +1,8 @@
-use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
+use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
 use super::{ProgramContext, Type, Wasm};
+
+pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
+pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match field_name.as_str() {

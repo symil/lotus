@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const ROOT_DIR = path.join(__dirname, '..');
 export const TEST_DIR = path.join(ROOT_DIR, 'test');
+export const PRELUDE_DIR = path.join(ROOT_DIR, 'lotus-parser', 'prelude');
 
 export const SOURCE_EXTENSION = '.lt';
 export const PARSER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-parser');
@@ -52,9 +53,10 @@ function runCommand(command, inheritStdio) {
 
 function compileLotus(inputPath, outputPath, inheritStdio, excludePrelude) {
     let silentOption = inheritStdio ? '' : '--silent';
-    let preludeOption = excludePrelude ? '--no-prelude' : '';
+    let preludeOption = excludePrelude ? '' : `--prelude-path=${PRELUDE_DIR}`;
+    let command = `${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${silentOption} ${preludeOption}`;
 
-    return runCommand(`${PARSER_BINARY_PATH} ${inputPath} ${outputPath} ${silentOption} ${preludeOption}`, inheritStdio);
+    return runCommand(command, inheritStdio);
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {

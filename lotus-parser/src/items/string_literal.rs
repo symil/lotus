@@ -26,6 +26,7 @@ impl StringLiteral {
         for c in chars {
             if escaping {
                 let unescaped_char_opt = match c {
+                    '0' => Some('\0'),
                     '\\' => Some('\\'),
                     '"' => Some('"'),
                     't' => Some('\t'),

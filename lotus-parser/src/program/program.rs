@@ -14,8 +14,7 @@ pub struct LotusProgram {
 }
 
 impl LotusProgram {
-    pub fn from_path(path: &str, prelude: &'static[(&'static str, &'static str)]) -> Result<Self, Vec<Error>> {
-        let files_to_process = read_path_recursively(path, true)?;
+    pub fn from_path(path: &str, prelude_directory_path: Option<&str>) -> Result<Self, Vec<Error>> {
         let mut parsed_files = vec![];
         let mut errors = vec![];
 
@@ -28,41 +27,36 @@ impl LotusProgram {
             },
         };
 
-        let now = Instant::now();
+        let mut source_list = vec![];
 
-        for (file_name, file_content) in prelude {
-            let parse_options = ParseOptions {
-                file_name: Some(file_name),
-                namespace_name: Some(PRELUDE_NAMESPACE),
-                comment_start: Some(COMMENT_START_TOKEN),
-            };
-
-            match LotusFile::parse(file_content.to_string(), parse_options) {
-                Ok(mut lotus_file) => {
-                    lotus_file.file_name = file_name.to_string();
-                    lotus_file.namespace_name = PRELUDE_NAMESPACE.to_string();
-                    parsed_files.push(lotus_file);
-                },
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
-            };
+        if let Some(prelude_path) = prelude_directory_path {
+            source_list.push((PRELUDE_NAMESPACE, prelude_path, prelude_path));
         }
 
-        for (file_path, file_content) in files_to_process {
-            let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
-            let parse_options = ParseOptions {
-                file_name: Some(&file_name),
-                namespace_name: Some(SELF_NAMESPACE),
-                comment_start: Some(COMMENT_START_TOKEN),
-            };
+        source_list.push((SELF_NAMESPACE, path, prefix));
 
-            match LotusFile::parse(file_content, parse_options) {
-                Ok(mut lotus_file) => {
-                    lotus_file.file_name = file_name.clone();
-                    lotus_file.namespace_name = SELF_NAMESPACE.to_string();
-                    parsed_files.push(lotus_file);
-                },
-                Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
-            };
+        let now = Instant::now();
+
+        for (namespace, path, prefix) in source_list {
+            let files_to_process = read_path_recursively(path, true)?;
+
+            for (file_path, file_content) in files_to_process {
+                let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
+                let parse_options = ParseOptions {
+                    file_name: Some(&file_name),
+                    namespace_name: Some(namespace),
+                    comment_start: Some(COMMENT_START_TOKEN),
+                };
+
+                match LotusFile::parse(file_content, parse_options) {
+                    Ok(mut lotus_file) => {
+                        lotus_file.file_name = file_name.clone();
+                        lotus_file.namespace_name = namespace.to_string();
+                        parsed_files.push(lotus_file);
+                    },
+                    Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
+                };
+            }
         }
 
         if !errors.is_empty() {

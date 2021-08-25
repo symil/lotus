@@ -12,9 +12,6 @@ pub const ARRAY_SET_I32_FUNC_NAME : &'static str = "array_set_i32";
 pub const ARRAY_SET_F32_FUNC_NAME : &'static str = "array_set_f32";
 pub const ARRAY_CONCAT_FUNC_NAME : &'static str = "array_concat";
 
-pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
-pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
-
 pub const OBJECT_ALLOC_FUNC_NAME : &'static str = "object_alloc";
 
 pub const THIS_VAR_NAME : &'static str = "__this";

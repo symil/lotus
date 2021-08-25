@@ -7,32 +7,19 @@ mod program;
 mod items;
 mod generation;
 
-#[macro_use]
-macro_rules! prelude_file {
-    ($name:literal) => {
-        ($name, include_str!($name))
-    }
-}
-
 const PROGRAM_NAME : &'static str = "lotus";
-const PRELUDE_FILES : &'static[(&'static str, &'static str)] = &[
-    prelude_file!("prelude/math.lt"),
-    prelude_file!("prelude/memory.lt"),
-    prelude_file!("prelude/string.lt"),
-];
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let input_path = args.get(1).or_else(|| display_usage_and_exit()).unwrap();
     let output_path = args.get(2).or_else(|| display_usage_and_exit()).unwrap();
     let silent = args.iter().any(|s| s == "--silent");
-    let exclude_prelude = args.iter().any(|s| s == "--no-prelude");
-    let prelude_files = match exclude_prelude {
-        true => &[],
-        false => PRELUDE_FILES
+    let prelude_path = match args.iter().find(|s| s.starts_with("--prelude-path=")) {
+        Some(string) => Some(string.split('=').collect::<Vec<&str>>()[1]),
+        None => None,
     };
 
-    match LotusProgram::from_path(input_path, prelude_files) {
+    match LotusProgram::from_path(input_path, prelude_path) {
         Ok(program) => {
             program.write_to(output_path);
 
