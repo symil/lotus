@@ -44,4 +44,12 @@ impl Wasm {
             variables: vec![]
         }
     }
+
+    pub fn from_wat<T : ToWatVec>(wat: T) -> Self {
+        Self {
+            ty: Type::Void,
+            wat: wat.to_wat_vec(),
+            variables: vec![]
+        }
+    }
 }

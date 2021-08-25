@@ -1,0 +1,4 @@
+main.lt:2:13: error: insufficient infered type `<any>[]` (consider declaring the variable type explicitly)
+main.lt:3:17: error: array literal: incompatible item types `int` and `bool`
+main.lt:3:24: error: array literal: incompatible item types `int` and `string`
+main.lt:4:21: error: assignment: type `string[]` does not match type `int[]`

@@ -184,6 +184,13 @@ impl Type {
         }
     }
 
+    pub fn is_float(&self) -> bool {
+        match self {
+            Self::Float => true,
+            _ => false
+        }
+    }
+
     pub fn is_boolean(&self) -> bool {
         match self {
             Self::Boolean => true,
@@ -205,11 +212,22 @@ impl Type {
         }
     }
 
+    fn is_any(&self) -> bool {
+        match self {
+            Type::Any(_) => true,
+            _ => false
+        }
+    }
+
     pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
         self.is_assignable(other, context, &mut HashMap::new()) || other.is_assignable(self, context, &mut HashMap::new())
     }
 
     pub fn is_assignable(&self, actual: &Type, context: &ProgramContext, anonymous_types: &mut HashMap<u32, Type>) -> bool {
+        if actual.is_any() {
+            return true;
+        }
+
         match self {
             Type::Void => actual == &Type::Void,
             Type::System => actual == &Type::System,
@@ -275,6 +293,24 @@ impl Type {
         };
 
         Some(Wasm::simple(Type::Boolean, wat))
+    }
+
+    pub fn is_ambiguous(&self) -> bool {
+        match self {
+            Type::Void => unreachable!(),
+            Type::System => unreachable!(),
+            Type::Boolean => false,
+            Type::Integer => false,
+            Type::Float => false,
+            Type::String => false,
+            Type::Null => true,
+            Type::TypeId => false,
+            Type::Struct(_) => false,
+            Type::Pointer(_) => false,
+            Type::Array(item_type) => item_type.is_ambiguous(),
+            Type::Function(_, _) => todo!(),
+            Type::Any(_) => true,
+        }
     }
 }
 

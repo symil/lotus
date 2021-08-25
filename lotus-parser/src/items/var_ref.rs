@@ -137,7 +137,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
 
     if let Some(method_wasm) = method_info {
         result = process_function_call(Some(method_name), &method_wasm.ty, method_wasm.wat, arguments, access_type, context);
-    } else {
+    } else if !parent_type.is_void() {
         context.error(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
     }
 

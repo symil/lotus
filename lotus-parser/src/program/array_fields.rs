@@ -6,7 +6,6 @@ pub const ARRAY_GET_ITEM_FUNC_NAME : &'static str = "__array_get_item";
 pub const ARRAY_SET_ITEM_FUNC_NAME : &'static str = "__array_set_item";
 pub const ARRAY_GET_LENGTH_FUNC_NAME : &'static str = "__array_get_length";
 pub const ARRAY_GET_BODY_FUNC_NAME : &'static str = "__array_get_body";
-pub const ARRAY_SET_BODY_ITEM_FUNC_NAME : &'static str = "__array_set_body_item";
 
 pub fn process_array_field_access(item_type: &Type, field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match field_name.as_str() {

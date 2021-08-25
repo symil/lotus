@@ -31,33 +31,17 @@ impl VarDeclaration {
                             final_var_type = var_type;
                             ok = true;
                         } else {
-                            context.error(&self.init_value, format!("assignment: right-hand side type `{}` does not match left-hand side type `{}`", &wasm.ty, &var_type));
+                            context.error(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &wasm.ty, &var_type));
                         }
                     },
                     None => {}
                 },
                 None => {
-                    let type_ok = match &wasm.ty {
-                        Type::Void => false,
-                        Type::System => false,
-                        Type::Boolean => true,
-                        Type::Integer => true,
-                        Type::Float => true,
-                        Type::String => true,
-                        Type::Null => false,
-                        Type::TypeId => true,
-                        Type::Struct(_) => true,
-                        Type::Pointer(_) => true,
-                        Type::Array(_) => true,
-                        Type::Function(_, _) => true,
-                        Type::Any(_) => false,
-                    };
-
-                    if type_ok {
+                    if !wasm.ty.is_ambiguous() {
                         final_var_type = wasm.ty.clone();
                         ok = true;
                     } else {
-                        context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitely)", &wasm.ty));
+                        context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &wasm.ty));
                     }
                 }
             };

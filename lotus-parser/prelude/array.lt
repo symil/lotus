@@ -27,9 +27,3 @@ sys fn __array_get_length(array: ptr) -> int {
 sys fn __array_get_body(array: ptr) -> int {
     return array[0];
 }
-
-sys fn __array_set_body_item(body: ptr, index: int, value: int) -> ptr {
-    body[index] = value;
-
-    return body;
-}

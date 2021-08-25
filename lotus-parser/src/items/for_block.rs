@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
+use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_BODY_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -107,6 +107,8 @@ impl ForBlock {
             let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
             let item_var_info = context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableKind::Local);
 
+            let ptr_get_func_name = item_var_info.ty.pointer_get_function_name();
+
             if let Some(block_wasm) = self.statements.process(context) {
                 content.extend(array_wasm.wat);
                 content.extend(vec![
@@ -115,12 +117,14 @@ impl ForBlock {
                     index_var_info.set_from_stack(),
                     Wat::call(ARRAY_GET_LENGTH_FUNC_NAME, vec![array_var_info.get_to_stack()]),
                     array_len_var_info.set_from_stack(),
+                    Wat::call(ARRAY_GET_BODY_FUNC_NAME, vec![array_var_info.get_to_stack()]),
+                    array_var_info.set_from_stack(),
                     wat!["block",
                         wat!["loop",
                             Wat::increment_local_i32(index_var_info.get_wasm_name(), 1),
-                            wat!["i32.lt", index_var_info.get_to_stack(), array_len_var_info.get_to_stack()],
+                            wat!["i32.lt_s", index_var_info.get_to_stack(), array_len_var_info.get_to_stack()],
                             wat!["br_if", 1, wat!["i32.eqz"]],
-                            // TODO: assign array item
+                            Wat::set_local(item_var_info.get_wasm_name(), Wat::call(ptr_get_func_name, vec![array_var_info.get_to_stack(), index_var_info.get_to_stack()])),
                             block_wasm.wat,
                             wat!["br", 0]
                         ]

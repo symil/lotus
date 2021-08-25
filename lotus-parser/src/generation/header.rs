@@ -33,7 +33,10 @@ pub const HEADER_GLOBALS : &'static[Global] = &[
 
 pub static HEADER_FUNCTIONS : &'static[Function] = &[
     (DEREF_INT_POINTER_GET_FUNC_NAME, &[("pointer", "i32"), ("index", "i32")], Some("i32"), &[], ptr_get_int),
-    (DEREF_INT_POINTER_SET_FUNC_NAME, &[("value", "i32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_int)
+    (DEREF_INT_POINTER_SET_FUNC_NAME, &[("value", "i32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_int),
+
+    (DEREF_FLOAT_POINTER_GET_FUNC_NAME, &[("pointer", "i32"), ("index", "i32")], Some("f32"), &[], ptr_get_float),
+    (DEREF_FLOAT_POINTER_SET_FUNC_NAME, &[("value", "f32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_float)
 ];
 
 fn ptr_get_int() -> Vec<Wat> {
@@ -47,5 +50,19 @@ fn ptr_set_int() -> Vec<Wat> {
     vec![
         wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
         wat!["i32.store", Wat::get_local("value")]
+    ]
+}
+
+fn ptr_get_float() -> Vec<Wat> {
+    vec![
+        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
+        wat!["f32.load"],
+    ]
+}
+
+fn ptr_set_float() -> Vec<Wat> {
+    vec![
+        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
+        wat!["f32.store", Wat::get_local("value")]
     ]
 }
