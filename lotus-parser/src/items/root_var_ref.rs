@@ -9,6 +9,10 @@ pub struct RootVarRef {
 }
 
 impl RootVarRef {
+    pub fn has_side_effects(&self) -> bool {
+        self.var_ref.has_side_effects()
+    }
+
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
 

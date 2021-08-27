@@ -11,6 +11,13 @@ pub enum VarPathSegment {
 }
 
 impl VarPathSegment {
+    pub fn has_side_effects(&self) -> bool {
+        match self {
+            VarPathSegment::FieldOrMethodAccess(var_ref) => todo!(),
+            VarPathSegment::BracketIndexing(_) => true,
+        }
+    }
+
     pub fn process(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
             VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.process_as_field(parent_type, access_type, context),

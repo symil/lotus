@@ -11,6 +11,13 @@ pub struct VarPath {
 }
 
 impl VarPath {
+    pub fn has_side_effects(&self) -> bool {
+        match self.root.has_side_effects() {
+            true => true,
+            false => self.path.iter().any(|segment| segment.has_side_effects()),
+        }
+    }
+
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         let mut current_access_type = match self.path.is_empty() {
             true => access_type,

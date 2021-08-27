@@ -16,6 +16,13 @@ impl Operand {
         }
     }
 
+    pub fn has_side_effects(&self) -> bool {
+        match self {
+            Operand::UnaryOperation(unary_operation) => unary_operation.has_side_effects(),
+            Operand::VarPath(var_path) => var_path.has_side_effects(),
+        }
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
             Operand::UnaryOperation(unary_operation) => unary_operation.process(context),

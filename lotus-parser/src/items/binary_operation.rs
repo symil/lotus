@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, Wasm}, wat};
 use super::{BinaryOperator, Operand, FullType};
 
 #[parsable]
@@ -9,6 +9,13 @@ pub struct BinaryOperation {
 }
 
 impl BinaryOperation {
+    pub fn has_side_effects(&self) -> bool {
+        match self.first.has_side_effects() {
+            true => true,
+            false => self.others.iter().any(|(_, operand)| operand.has_side_effects())
+        }
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let operation_tree = OperationTree::from_operation(self);
 
@@ -52,7 +59,21 @@ impl<'a> OperationTree<'a> {
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {
-                                    result  = Some(Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm]));
+                                    let wasm = if let Some(short_circuit_wasm) = operator.get_short_circuit_wasm() {
+                                        if right.has_side_effects() {
+                                            let mut wasm = Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
+
+                                            wasm.wat = vec![wat!["block", wat!["result", "i32"], wasm.wat]];
+
+                                            wasm
+                                        } else {
+                                            Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                        }
+                                    } else {
+                                        Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                    };
+
+                                    result = Some(wasm);
                                 }
                             }
                         }
@@ -63,6 +84,13 @@ impl<'a> OperationTree<'a> {
                 }
             },
             OperationTree::Value(operand) => operand.process(context),
+        }
+    }
+
+    fn has_side_effects(&self) -> bool {
+        match self {
+            OperationTree::Operation(left, _, right) => left.has_side_effects() || right.has_side_effects(),
+            OperationTree::Value(operand) => operand.has_side_effects() ,
         }
     }
 

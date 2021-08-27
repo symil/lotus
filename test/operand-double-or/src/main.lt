@@ -1,0 +1,19 @@
+export fn main() {
+    let a = print(true) || print(false);
+    separator();
+    let b = print(false) || print(true);
+    separator();
+    let c = print(false) || print(true) || print(false);
+    separator();
+    let d = print(false) || (print(false) || print(true));
+}
+
+fn separator() {
+    @log("---");
+}
+
+fn print(value: bool) -> bool {
+    @log(value);
+
+    return value;
+}

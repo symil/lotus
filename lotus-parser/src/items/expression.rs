@@ -10,6 +10,10 @@ pub struct Expression {
 }
 
 impl Expression {
+    pub fn has_side_effects(&self) -> bool {
+        self.operation.has_side_effects()
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
 

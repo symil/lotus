@@ -14,7 +14,8 @@ pub enum ScopeKind {
     Global,
     Function,
     Loop,
-    Branch
+    Branch,
+    Local
 }
 
 impl Scope {
@@ -42,6 +43,7 @@ impl ScopeKind {
             ScopeKind::Function => 1,
             ScopeKind::Loop => 2,
             ScopeKind::Branch => 2,
+            ScopeKind::Local => 1
         }
     }
 }

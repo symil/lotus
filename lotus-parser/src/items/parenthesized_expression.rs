@@ -10,6 +10,10 @@ pub struct ParenthesizedExpression {
 }
 
 impl ParenthesizedExpression {
+    pub fn has_side_effects(&self) -> bool {
+        self.expression.has_side_effects()
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         self.expression.process(context)
     }

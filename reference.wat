@@ -29,3 +29,14 @@
     )
     ;; end of block A
 )
+
+ ;; Blocks can have a return type, in which case it must be specified with the `result` keyword
+ ;; Otherwise the stack must be empty at the end of a block
+(block (result i32)
+    (i32.const 80)
+)
+;; Multiple results can be specified as follows
+(block (result i32 f32)
+    (i32.const 80)
+    (f32.const 1.5)
+)

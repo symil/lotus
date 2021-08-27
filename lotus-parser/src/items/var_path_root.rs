@@ -25,6 +25,20 @@ impl VarPathRoot {
         }
     }
 
+    pub fn has_side_effects(&self) -> bool {
+        match self {
+            VarPathRoot::NullLiteral(_) => false,
+            VarPathRoot::BooleanLiteral(_) => false,
+            VarPathRoot::FloatLiteral(_) => false,
+            VarPathRoot::IntegerLiteral(_) => false,
+            VarPathRoot::StringLiteral(_) => true,
+            VarPathRoot::ArrayLiteral(_) => true,
+            VarPathRoot::ObjectLiteral(_) => true,
+            VarPathRoot::Variable(var_ref) => var_ref.has_side_effects(),
+            VarPathRoot::Parenthesized(expr) => expr.has_side_effects(),
+        }
+    }
+
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {

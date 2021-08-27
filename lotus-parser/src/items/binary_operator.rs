@@ -1,5 +1,5 @@
-use parsable::parsable;
-use crate::{generation::{Wat}, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, Wasm}, wat};
+use parsable::{DataLocation, parsable};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, VariableInfo, VariableKind, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -8,6 +8,7 @@ pub struct BinaryOperator {
 }
 
 #[parsable(impl_display=true)]
+#[derive(PartialEq)]
 pub enum BinaryOperatorToken {
     Plus = "+",
     Minus = "-",
@@ -18,6 +19,8 @@ pub enum BinaryOperatorToken {
     Shr = ">>",
     And = "&&",
     Or = "||",
+    SingleAnd = "&",
+    SingleOr = "|",
     Eq = "==",
     Ne = "!=",
     Ge = ">=",
@@ -31,6 +34,10 @@ impl BinaryOperator {
         self.token.get_priority()
     }
 
+    pub fn get_short_circuit_wasm(&self) -> Option<Wasm> {
+        self.token.get_short_circuit_wasm(self)
+    }
+
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
         self.token.process(operand_type, context)
     }
@@ -42,9 +49,33 @@ impl BinaryOperatorToken {
             Self::Mult | Self::Div | Self::Mod => 1,
             Self::Plus | Self::Minus => 2,
             Self::Shl | Self::Shr => 3,
-            Self::Eq | Self::Ne | Self::Ge | Self::Gt | Self::Le | Self::Lt => 4,
-            Self::And => 5,
-            Self::Or => 6,
+            Self::SingleAnd => 4,
+            Self::SingleOr => 5,
+            Self::Eq | Self::Ne | Self::Ge | Self::Gt | Self::Le | Self::Lt => 6,
+            Self::And => 7,
+            Self::Or => 8,
+        }
+    }
+
+    pub fn get_short_circuit_wasm(&self, location: &DataLocation) -> Option<Wasm> {
+        match self {
+            Self::And | Self::Or => {
+                let tmp_var_name = Identifier::unique("tmp", location).to_unique_string();
+                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), Type::Boolean, VariableKind::Local);
+                let branch = if self == &Self::And {
+                    wat!["br_if", 0, wat!["i32.eqz"]]
+                } else {
+                    wat!["br_if", 0]
+                };
+                let wat = vec![
+                    Wat::tee_local(&tmp_var_name),
+                    Wat::get_local(&tmp_var_name),
+                    branch
+                ];
+
+                Some(Wasm::new(Type::Boolean, wat, vec![tmp_var_info]))
+            }
+            _ => None
         }
     }
 
@@ -92,6 +123,16 @@ impl BinaryOperatorToken {
             },
             Self::Or => match operand_type {
                 Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.or"))),
+                _ => None
+            },
+            Self::SingleAnd => match operand_type {
+                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.and"))),
+                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.and"))),
+                _ => None
+            },
+            Self::SingleOr => match operand_type {
+                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.or"))),
+                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.or"))),
                 _ => None
             },
             Self::Eq => match operand_type {

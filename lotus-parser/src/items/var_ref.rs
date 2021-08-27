@@ -11,6 +11,10 @@ pub struct VarRef {
 }
 
 impl VarRef {
+    pub fn has_side_effects(&self) -> bool {
+        self.arguments.is_some()
+    }
+
     pub fn process_as_field(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.arguments {
             Some(arguments) => process_method_call(parent_type, &self.name, arguments, access_type, context),

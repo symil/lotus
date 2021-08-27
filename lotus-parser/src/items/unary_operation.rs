@@ -9,6 +9,10 @@ pub struct UnaryOperation {
 }
 
 impl UnaryOperation {
+    pub fn has_side_effects(&self) -> bool {
+        self.operand.has_side_effects()
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
 
