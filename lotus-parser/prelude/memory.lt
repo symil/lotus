@@ -18,7 +18,7 @@ fn alloc_page() -> ptr {
 }
 
 sys fn __mem_alloc(block_size: int) -> ptr {
-    let result = 0;
+    let result = 0 as ptr;
     let block_size_index = block_size.log4() - 1;
     let list_start_addr = block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
     let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
@@ -31,15 +31,16 @@ sys fn __mem_alloc(block_size: int) -> ptr {
             @memory[i] = page_addr;
 
             let round_block_size = block_size.next_power_of_4();
+            let full_block_size = round_block_size + 1;
             let block_count = (VIRTUAL_PAGE_CELL_COUNT - 1) / (round_block_size + 2);
             let stack_start = page_addr + 1;
-            let addr_range_start = stack_start + (2 * block_count);
-            let last_addr = addr_range_start + (block_count * round_block_size) - round_block_size;
+            let addr_range_start = stack_start + block_count;
+            let last_addr = addr_range_start + ((block_count - 1) * full_block_size);
 
             @memory[page_addr] = block_count;
 
             for j in 0..block_count {
-                @memory[stack_start + j] = last_addr - (j * round_block_size);
+                @memory[stack_start + j] = last_addr - (j * full_block_size);
             }
         }
 
@@ -47,12 +48,13 @@ sys fn __mem_alloc(block_size: int) -> ptr {
 
         if offset != 0 {
             @memory[page_addr] = offset - 1;
-            result = @memory[page_addr + offset];
+            result = @memory[page_addr + offset] as ptr;
+            result[-1] = 1;
             break;
         }
     }
 
-    return (result as ptr);
+    return result;
 }
 
 sys fn __mem_free(pointer: ptr) {

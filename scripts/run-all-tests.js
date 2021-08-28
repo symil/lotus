@@ -8,7 +8,7 @@ function main() {
         process.exit(1);
     }
 
-    let validateOutput = process.argv.slice('--validate');
+    let validateOutput = process.argv.includes('--validate');
     let testDirList = fs.readdirSync(TEST_DIR).filter(dirName => fs.statSync(path.join(TEST_DIR, dirName)).isDirectory());
 
     describe('Lotus', () => {

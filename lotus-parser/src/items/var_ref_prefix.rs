@@ -1,7 +1,5 @@
 use std::ptr::NonNull;
-
 use parsable::{DataLocation, Parsable, parsable};
-
 use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}, wat};
 
 #[parsable(impl_display=true)]

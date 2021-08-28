@@ -23,12 +23,12 @@ impl Type {
     pub fn get_wasm_type(&self) -> Option<&'static str> {
         match self {
             Type::Void => None,
-            Type::System => None,
+            Type::System => unreachable!(),
             Type::Boolean => Some("i32"),
             Type::Integer => Some("i32"),
             Type::Float => Some("f32"),
             Type::String => Some("i32"),
-            Type::Null => Some("i32"),
+            Type::Null => unreachable!(),
             Type::TypeId => Some("i32"),
             Type::Struct(_) => Some("i32"),
             Type::Pointer(_) => Some("i32"),
@@ -39,16 +39,18 @@ impl Type {
     }
 
     pub fn pointer_get_function_name(&self) -> &'static str {
-        match self {
-            Type::Float => DEREF_FLOAT_POINTER_GET_FUNC_NAME,
-            _ => DEREF_INT_POINTER_GET_FUNC_NAME
+        match self.get_wasm_type() {
+            Some("i32") => DEREF_INT_POINTER_GET_FUNC_NAME,
+            Some("f32") => DEREF_FLOAT_POINTER_GET_FUNC_NAME,
+            _ => unreachable!()
         }
     }
 
     pub fn pointer_set_function_name(&self) -> &'static str {
-        match self {
-            Type::Float => DEREF_FLOAT_POINTER_SET_FUNC_NAME,
-            _ => DEREF_INT_POINTER_SET_FUNC_NAME
+        match self.get_wasm_type() {
+            Some("i32") => DEREF_INT_POINTER_SET_FUNC_NAME,
+            Some("f32") => DEREF_FLOAT_POINTER_SET_FUNC_NAME,
+            _ => unreachable!()
         }
     }
 

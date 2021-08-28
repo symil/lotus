@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, Type, VariableKind, Wasm}};
+use crate::{generation::{Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, Type, VariableKind, Wasm, RESULT_VAR_NAME}};
 use super::{FullType, FunctionSignature, Identifier, Statement, StatementList, Visibility};
 
 #[parsable]

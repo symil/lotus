@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{RESULT_VAR_NAME, THIS_VAR_NAME, Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, StructInfo, Type, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap}};
+use crate::{generation::{Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, StructInfo, Type, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap, RESULT_VAR_NAME, THIS_VAR_NAME}};
 use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StatementList, StructDeclaration, StructQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
