@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anovs/lotus.git"
+    "url": "git+https://github.com/symil/lotus.git"
   },
   "author": "Sylvain Milan <milan.sylvain@gmail.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/anovs/lotus/issues"
+    "url": "https://github.com/symil/lotus/issues"
   },
-  "homepage": "https://github.com/anovs/lotus#readme",
+  "homepage": "https://github.com/symil/lotus#readme",
   "devDependencies": {
     "fs-extra": "^10.0.0",
     "mocha": "^9.0.3"
