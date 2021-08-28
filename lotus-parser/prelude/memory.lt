@@ -35,7 +35,7 @@ sys fn __mem_alloc(block_size: int) -> ptr {
             let block_count = (VIRTUAL_PAGE_CELL_COUNT - 1) / (round_block_size + 2);
             let stack_start = page_addr + 1;
             let addr_range_start = stack_start + block_count;
-            let last_addr = addr_range_start + ((block_count - 1) * full_block_size);
+            let last_addr = addr_range_start + (block_count * full_block_size) - round_block_size;
 
             @memory[page_addr] = block_count;
 
