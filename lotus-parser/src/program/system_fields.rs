@@ -1,4 +1,4 @@
-use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
+use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEMORY_GARBAGE_COLLECT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
 use super::{ProgramContext, Type, Wasm};
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
@@ -18,6 +18,8 @@ pub fn process_system_method_call(method_name: &Identifier, arguments: &Argument
         "wasm_memory_grow" => (vec![Type::Integer], Type::Integer, wat!["memory.grow"]),
         "alloc" => (vec![Type::Integer], Type::int_pointer(), Wat::call_from_stack(MEMORY_ALLOC_FUNC_NAME)),
         "free" => (vec![Type::int_pointer()], Type::Void, Wat::call_from_stack(MEMORY_FREE_FUNC_NAME)),
+        "retain" => (vec![Type::Any(0)], Type::Boolean, wat![""]),
+        "garbage_collect" => (vec![], Type::Void, Wat::call_from_stack(MEMORY_GARBAGE_COLLECT_FUNC_NAME)),
         _ => return None
     };
 
@@ -45,6 +47,14 @@ pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Ty
             Type::Array(_) => todo!(),
             Type::Function(_, _) => todo!(),
             Type::Any(_) => unreachable!(),
+        },
+        "retain" => match &arg_types[0] {
+            Type::Struct(struct_info) => Wat::call_from_stack(MEMORY_RETAIN_OBJECT_FUNC_NAME),
+            Type::Pointer(_) => Wat::call_from_stack(MEMORY_RETAIN_FUNC_NAME),
+            _ => {
+                context.error(method_name, format!("cannot call `@retain` on non-struct type `{}`", arg_types[0]));
+                wat![""]
+            }
         },
         _ => unreachable!()
     };

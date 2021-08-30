@@ -92,10 +92,13 @@ sys fn __trigger_garbage_collection() {
             let block_count = @memory[page_addr + 3];
 
             for k in 0..block_count {
-                let addr_metadata = addr_range_start + (full_block_size * k);
+                let metadata_addr = addr_range_start + (full_block_size * k);
+                let metadata_value = @memory[metadata_addr];
 
-                if addr_metadata == 1 {
-                    @free(addr_metadata + 1);
+                if metadata_value == 1 {
+                    @free((metadata_addr + 1) as ptr);
+                } else if metadata_value == 2 {
+                    @memory[metadata_addr] = 1;
                 }
             }
         }

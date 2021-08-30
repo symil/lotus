@@ -1,0 +1,22 @@
+export fn main() {
+    let allocated = alloc_bulk(4);
+
+    @retain(allocated[1]);
+    @retain(allocated[2]);
+    @garbage_collect();
+    
+    @log("---");
+    alloc_bulk(4);
+}
+
+fn alloc_bulk(count: int) -> ptr[] {
+    let array : ptr[] = [];
+
+    for i in 0..count {
+        let pointer = @alloc(10);
+        @log(pointer);
+        array.push(pointer);
+    }
+
+    return array;
+}
