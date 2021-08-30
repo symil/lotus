@@ -2,8 +2,12 @@ use super::{HEADER_MEMORY_WASM_PAGE_COUNT, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
+type Table = (usize, &'static str);
+type FunctionType = (&'static str, &'static[&'static str], Option<&'static str>);
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'static str>, &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
+
+pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
 pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
 pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
@@ -26,6 +30,10 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[
     (Some("memory"), HEADER_MEMORY_WASM_PAGE_COUNT)
+];
+
+pub const HEADER_FUNC_TYPES : &'static[FunctionType] = &[
+    (RETAIN_FUNC_TYPE_NAME, &["i32"], None)
 ];
 
 pub const HEADER_GLOBALS : &'static[Global] = &[

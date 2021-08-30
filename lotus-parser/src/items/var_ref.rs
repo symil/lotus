@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{AccessType, OBJECT_HEADER_SIZE, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -89,7 +89,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 
                     Some(Wasm::simple(
                         field.ty.clone(),
-                        Wat::call(func_name, vec![Wat::const_i32(field.offset + OBJECT_HEADER_SIZE)])
+                        Wat::call(func_name, vec![Wat::const_i32(field.offset)])
                     ))
                 } else {
                     None

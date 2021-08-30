@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap, fmt, hash::Hash};
 use crate::{generation::{NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, StructDeclaration, TypeSuffix, ValueType}, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, STRING_ALLOC_FUNC_NAME}, wat};
 use super::{ProgramContext, StructAnnotation, StructInfo, Wasm};
 
@@ -12,8 +12,8 @@ pub enum Type {
     String,
     Null,
     TypeId,
-    Struct(StructInfo),
     Pointer(Box<Type>),
+    Struct(StructInfo),
     Array(Box<Type>),
     Function(Vec<Type>, Box<Type>),
     Any(u32)
@@ -315,6 +315,42 @@ impl Type {
             Type::Any(_) => true,
         }
     }
+
+    pub fn get_wasm_generated_method_name(&self, suffix: &str) -> String {
+        match self {
+            Type::Void => unreachable!(),
+            Type::System => unreachable!(),
+            Type::Boolean => format!("bool_{}", suffix),
+            Type::Integer => format!("int_{}", suffix),
+            Type::Float => format!("float_{}", suffix),
+            Type::String => format!("string_{}", suffix),
+            Type::Null => unreachable!(),
+            Type::TypeId => todo!(),
+            Type::Struct(struct_info) => format!("{}{}_{}", struct_info.name, struct_info.id, suffix),
+            Type::Pointer(_) => unreachable!(),
+            Type::Array(item_type) => format!("array_{}", item_type.get_wasm_generated_method_name(suffix)),
+            Type::Function(_, _) => todo!(),
+            Type::Any(_) => unreachable!(),
+        }
+    }
+
+    pub fn is_stored_on_heap(&self) -> bool {
+        match self {
+            Type::Void => unreachable!(),
+            Type::System => unreachable!(),
+            Type::Boolean => false,
+            Type::Integer => false,
+            Type::Float => false,
+            Type::String => true,
+            Type::Null => unreachable!(),
+            Type::TypeId => false,
+            Type::Struct(_) => true,
+            Type::Pointer(_) => unreachable!(),
+            Type::Array(_) => true,
+            Type::Function(_, _) => todo!(),
+            Type::Any(_) => unreachable!(),
+        }
+    }
 }
 
 impl fmt::Display for Type {
@@ -345,6 +381,36 @@ impl fmt::Display for Type {
                 _ => write!(f, "<any.{}>", id),
             }
         }
+    }
+}
+
+const STRUCT_OFFSET : u64 = 8;
+const ARRAY_CONSTANT : u64 = 1234;
+
+impl Eq for Type {
+
+}
+
+impl Hash for Type {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Type::Void => unreachable!(),
+            Type::System => unreachable!(),
+            Type::Boolean => 1u64.hash(state),
+            Type::Integer => 2u64.hash(state),
+            Type::Float => 3u64.hash(state),
+            Type::String => 4u64.hash(state),
+            Type::Null => unreachable!(),
+            Type::TypeId => todo!(),
+            Type::Struct(struct_info) => (STRUCT_OFFSET + (struct_info.id as u64)).hash(state),
+            Type::Pointer(_) => unreachable!(),
+            Type::Array(item_type) => {
+                ARRAY_CONSTANT.hash(state);
+                item_type.hash(state);
+            },
+            Type::Function(_, _) => todo!(),
+            Type::Any(_) => unreachable!(),
+        };
     }
 }
 

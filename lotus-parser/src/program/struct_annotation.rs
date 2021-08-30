@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::items::{Identifier, StructQualifier, VisibilityToken};
-use super::{FunctionAnnotation, Id, ItemMetadata, STRUCT_TYPE_ID_START, StructInfo, Type, WithMetadata};
+use super::{FunctionAnnotation, Id, ItemMetadata, StructInfo, Type, WithMetadata};
 
 #[derive(Debug)]
 pub struct StructAnnotation {
@@ -44,7 +44,7 @@ impl StructAnnotation {
     }
 
     pub fn get_type_id(&self) -> Id {
-        self.metadata.id + STRUCT_TYPE_ID_START
+        self.metadata.id
     }
 
     pub fn get_field_count(&self) -> usize {

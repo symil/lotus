@@ -1,6 +1,9 @@
 use crate::{wat, generation::{Wat}, items::{Expression, Identifier}};
 use super::{ProgramContext, Type, Wasm};
 
+pub const ARRAY_BODY_ADDR_OFFSET : usize = 0;
+pub const ARRAY_LENGTH_OFFSET : usize = 1;
+
 pub const ARRAY_ALLOC_FUNC_NAME : &'static str = "__array_alloc";
 pub const ARRAY_GET_ITEM_FUNC_NAME : &'static str = "__array_get_item";
 pub const ARRAY_SET_ITEM_FUNC_NAME : &'static str = "__array_set_item";

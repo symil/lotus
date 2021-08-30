@@ -1,7 +1,7 @@
 use std::{collections::HashMap, mem::take, ops::Deref};
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{HEADER_FUNCTIONS, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionAnnotation, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
+use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
+use super::{Error, FunctionAnnotation, GeneratedMethods, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
@@ -20,6 +20,7 @@ pub struct ProgramContext {
     structs: ItemIndex<StructAnnotation>,
     functions: ItemIndex<FunctionAnnotation>,
     globals: ItemIndex<GlobalAnnotation>,
+    types_ids: HashMap<Type, Id>,
 
     depth: i32,
 
@@ -182,6 +183,18 @@ impl ProgramContext {
     }
 
 
+    pub fn get_type_id(&mut self, ty: &Type) -> Id {
+        match self.types_ids.get(ty) {
+            Some(id) => *id,
+            None => {
+                let id = self.types_ids.len();
+                self.types_ids.insert(ty.clone(), id);
+
+                id
+            }
+        }
+    }
+
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut structs = vec![];
         let mut functions = vec![];
@@ -274,6 +287,13 @@ impl ProgramContext {
             });
         }
 
+        for (type_name, arguments, result) in HEADER_FUNC_TYPES {
+            content.push(Wat::declare_function_type(type_name, arguments, result.clone()));
+        }
+
+        let func_table_size = self.types_ids.len() * GENERATED_METHOD_COUNT_PER_TYPE;
+        content.push(wat!["table", func_table_size, "funcref"]);
+
         for (var_name, var_type) in HEADER_GLOBALS {
             content.push(Wat::declare_global(var_name, var_type));
         }
@@ -306,9 +326,13 @@ impl ProgramContext {
         }
 
         for struct_annotation in self.structs.id_to_item.into_values() {
+            let generated_methods = GeneratedMethods::new(&struct_annotation);
+
             for method in struct_annotation.user_methods.into_values() {
                 content.push(method.wat);
             }
+
+            content.push(generated_methods.retain);
         }
         
         Ok(content.to_string(0))

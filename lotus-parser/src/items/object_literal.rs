@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, VariableInfo, VariableKind, Wasm}};
+use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, Type, VariableInfo, VariableKind, Wasm}};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -33,7 +33,7 @@ impl ObjectLiteral {
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
             struct_info = struct_annotation.to_struct_info();
             wat.extend(vec![
-                Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.get_field_count()), Wat::const_i32(struct_annotation.get_type_id())]),
+                Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.get_field_count()), Wat::const_i32(struct_annotation.get_id())]),
                 Wat::set_local_from_stack(&object_var_name)
             ]);
         } else {
@@ -85,7 +85,7 @@ impl ObjectLiteral {
                 wat.extend(field_wat);
                 wat.extend(vec![
                     Wat::get_local(&object_var_name),
-                    Wat::const_i32(field_info.offset + OBJECT_HEADER_SIZE),
+                    Wat::const_i32(field_info.offset),
                     Wat::call_from_stack(field_info.ty.pointer_set_function_name())
                 ]);
             }

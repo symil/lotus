@@ -5,3 +5,11 @@ pub const HEADER_MEMORY_WASM_PAGE_COUNT : usize = 1;
 pub const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE : usize = 64;
 pub const VIRTUAL_PAGE_SIZE_COUNT : usize = 8;
 pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE * VIRTUAL_PAGE_SIZE_COUNT * VALUE_BYTE_SIZE;
+
+pub const GENERATED_METHODS_TABLE_START : usize = MEMORY_METADATA_SIZE;
+pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize, deserialize
+
+pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
+pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
+pub const MEMORY_RETAIN_FUNC_NAME : &'static str = "__mem_retain";
+pub const MEMORY_RETAIN_OBJECT_FUNC_NAME : &'static str = "__mem_retain_object";

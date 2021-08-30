@@ -78,6 +78,8 @@ impl Wat {
         let init_name = match ty {
             "i32" => "i32.const",
             "f32" => "f32.const",
+            "i64" => "i64.const",
+            "f64" => "f64.const",
             _ => unreachable!()
         };
 
@@ -204,6 +206,20 @@ impl Wat {
         }
 
         func
+    }
+
+    pub fn declare_function_type(type_name: &str, arguments: &[&str], result: Option<&str>) -> Wat {
+        let mut body = wat!["func"];
+
+        for arg_type in arguments {
+            body.push(wat!["param", *arg_type]);
+        }
+
+        if let Some(result_type) = result {
+            body.push(wat!["result", result_type]);
+        }
+
+        wat!["type", Self::var_name(type_name), body]
     }
 
     pub fn while_loop<T : ToWatVec>(condition: Wat, statements: T) -> Wat {

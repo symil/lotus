@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, ItemMetadata, KEYWORDS, ProgramContext, StructAnnotation, StructInfo, Type, Wasm};
+use crate::program::{Error, FieldDetails, ItemMetadata, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructAnnotation, StructInfo, Type, Wasm};
 use super::{FieldDeclaration, Identifier, MethodDeclaration, MethodQualifier, StructQualifier, Visibility};
 
 #[parsable]
@@ -168,7 +168,7 @@ impl StructDeclaration {
                         let field_details = FieldDetails {
                             name: field.name.clone(),
                             ty: field_type,
-                            offset: fields.len(),
+                            offset: 0,
                         };
 
                         fields.insert(field.name.clone(), field_details);
@@ -198,7 +198,7 @@ impl StructDeclaration {
                 let field_info = FieldDetails {
                     name: field.name.clone(),
                     ty: field.ty.clone(),
-                    offset: fields.len()
+                    offset: fields.len() + OBJECT_HEADER_SIZE
                 };
 
                 if fields.contains_key(&field.name) {
