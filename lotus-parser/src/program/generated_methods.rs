@@ -3,7 +3,7 @@ use super::{ProgramContext, StructAnnotation, Type, VariableGenerator};
 
 #[derive(Debug)]
 pub struct GeneratedMethods {
-    pub retain: Wat
+    pub retain: (String, Wat)
 }
 
 impl GeneratedMethods {
@@ -22,11 +22,17 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
         Type::Boolean => vec![],
         Type::Integer => vec![],
         Type::Float => vec![],
-        Type::String => vec![Wat::call(MEMORY_RETAIN_FUNC_NAME, vec![Wat::get_local(value_name)])],
+        Type::String => vec![
+            Wat::call(MEMORY_RETAIN_FUNC_NAME, vec![Wat::get_local(value_name)]),
+            wat!["drop"]
+        ],
         Type::Null => unreachable!(),
         Type::TypeId => vec![],
         Type::Pointer(_) => todo!(),
-        Type::Struct(_) => vec![Wat::call(MEMORY_RETAIN_OBJECT_FUNC_NAME, vec![Wat::get_local(value_name)])],
+        Type::Struct(_) => vec![
+            Wat::call(MEMORY_RETAIN_OBJECT_FUNC_NAME, vec![Wat::get_local(value_name)]),
+            wat!["drop"]
+        ],
         Type::Array(item_type) => {
             let mut lines = vec![];
             let body_var_name = var_generator.generate("body");
@@ -36,6 +42,7 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
             lines.extend(vec![
                 Wat::set_local(&body_var_name, Wat::call(DEREF_INT_POINTER_GET_FUNC_NAME, vec![Wat::get_local(&value_name), Wat::const_i32(ARRAY_BODY_ADDR_OFFSET)])),
                 Wat::call(MEMORY_RETAIN_FUNC_NAME, vec![Wat::get_local(&body_var_name)]),
+                wat!["drop"]
             ]);
 
             let (item_retain_statements, item_retain_variables) = get_retain_statements(item_type, &item_var_name, var_generator);
@@ -73,7 +80,7 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
     (body, locals)
 }
 
-fn generate_retain_method(struct_annotation: &StructAnnotation) -> Wat {
+fn generate_retain_method(struct_annotation: &StructAnnotation) -> (String, Wat) {
     const ARG_NAME : &'static str = "value";
 
     let mut var_generator = VariableGenerator::new();
@@ -85,9 +92,12 @@ fn generate_retain_method(struct_annotation: &StructAnnotation) -> Wat {
     for field in struct_annotation.fields.values() {
         let (field_retain_statements, field_retain_locals) = get_retain_statements(&field.ty, &field_value_var_name, &mut var_generator);
 
+        dbg!(field.name.as_str());
+        dbg!(field.offset);
+
         if !field_retain_statements.is_empty() {
             lines.extend(vec![
-                Wat::set_local(&field_value_var_name, Wat::call(DEREF_INT_POINTER_GET_FUNC_NAME, vec![Wat::const_i32(field.offset)])),
+                Wat::set_local(&field_value_var_name, Wat::call(DEREF_INT_POINTER_GET_FUNC_NAME, vec![Wat::get_local(ARG_NAME), Wat::const_i32(field.offset)])),
             ]);
             lines.extend(field_retain_statements);
             locals_names.extend(field_retain_locals);
@@ -103,8 +113,8 @@ fn generate_retain_method(struct_annotation: &StructAnnotation) -> Wat {
     ];
     let locals = locals_names.iter().map(|name| (name.as_str(), "i32")).collect();
 
-    let func_name = format!("retain_{}_{}", struct_annotation.get_name(), struct_annotation.get_id());
+    let func_name = format!("{}_{}_retain", struct_annotation.get_name(), struct_annotation.get_id());
     let func_declaration = Wat::declare_function(&func_name, None, vec![(ARG_NAME, "i32")], None, locals, vec![body]);
 
-    func_declaration
+    (func_name, func_declaration)
 }

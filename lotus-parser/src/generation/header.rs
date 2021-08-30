@@ -9,6 +9,7 @@ type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'
 
 pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
+pub const LOG_EMPTY_FUNC_NAME : &'static str = "__log_empty";
 pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
 pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
 pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
@@ -22,6 +23,7 @@ pub const DEREF_INT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_i32";
 pub const DEREF_FLOAT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_f32";
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
+    ("log", "empty", LOG_EMPTY_FUNC_NAME, &[], None),
     ("log", "bool", LOG_BOOL_FUNC_NAME, &["i32"], None),
     ("log", "int", LOG_INT_FUNC_NAME, &["i32"], None),
     ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),

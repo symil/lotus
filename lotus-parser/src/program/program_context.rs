@@ -20,7 +20,6 @@ pub struct ProgramContext {
     structs: ItemIndex<StructAnnotation>,
     functions: ItemIndex<FunctionAnnotation>,
     globals: ItemIndex<GlobalAnnotation>,
-    types_ids: HashMap<Type, Id>,
 
     depth: i32,
 
@@ -183,17 +182,17 @@ impl ProgramContext {
     }
 
 
-    pub fn get_type_id(&mut self, ty: &Type) -> Id {
-        match self.types_ids.get(ty) {
-            Some(id) => *id,
-            None => {
-                let id = self.types_ids.len();
-                self.types_ids.insert(ty.clone(), id);
+    // pub fn get_type_id(&mut self, ty: &Type) -> Id {
+    //     match self.types_ids.get(ty) {
+    //         Some(id) => *id,
+    //         None => {
+    //             let id = self.types_ids.len();
+    //             self.types_ids.insert(ty.clone(), id);
 
-                id
-            }
-        }
-    }
+    //             id
+    //         }
+    //     }
+    // }
 
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut structs = vec![];
@@ -291,8 +290,22 @@ impl ProgramContext {
             content.push(Wat::declare_function_type(type_name, arguments, result.clone()));
         }
 
-        let func_table_size = self.types_ids.len() * GENERATED_METHOD_COUNT_PER_TYPE;
+        let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
         content.push(wat!["table", func_table_size, "funcref"]);
+
+        let mut generated_methods_table_populate = vec![];
+        let mut generated_methods_declarations = vec![];
+
+        for struct_annotation in self.structs.id_to_item.values() {
+            let generated_methods = GeneratedMethods::new(struct_annotation);
+            let (retain_name, retain_declaration) = generated_methods.retain;
+            let table_offset = struct_annotation.get_id() * GENERATED_METHOD_COUNT_PER_TYPE;
+
+            generated_methods_table_populate.push(wat!["elem", Wat::const_i32(table_offset), Wat::var_name(&retain_name)]);
+            generated_methods_declarations.push(retain_declaration);
+        }
+
+        content.extend(generated_methods_table_populate);
 
         for (var_name, var_type) in HEADER_GLOBALS {
             content.push(Wat::declare_global(var_name, var_type));
@@ -326,14 +339,12 @@ impl ProgramContext {
         }
 
         for struct_annotation in self.structs.id_to_item.into_values() {
-            let generated_methods = GeneratedMethods::new(&struct_annotation);
-
             for method in struct_annotation.user_methods.into_values() {
                 content.push(method.wat);
             }
-
-            content.push(generated_methods.retain);
         }
+
+        content.extend(generated_methods_declarations);
         
         Ok(content.to_string(0))
     }

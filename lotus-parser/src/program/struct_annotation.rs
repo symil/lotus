@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::items::{Identifier, StructQualifier, VisibilityToken};
-use super::{FunctionAnnotation, Id, ItemMetadata, StructInfo, Type, WithMetadata};
+use super::{FunctionAnnotation, GeneratedMethods, Id, ItemMetadata, StructInfo, Type, WithMetadata};
 
 #[derive(Debug)]
 pub struct StructAnnotation {

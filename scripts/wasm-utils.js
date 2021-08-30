@@ -5,6 +5,9 @@ import { WasmEnv } from './wasm-env';
 function getImportsObject(env) {
     return {
         log: {
+            empty() {
+                env.log("");
+            },
             bool(value) {
                 if (value === 0) {
                     env.log("false");
