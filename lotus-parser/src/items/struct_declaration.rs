@@ -1,5 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
+use indexmap::IndexMap;
 use parsable::parsable;
 use crate::program::{Error, FieldDetails, ItemMetadata, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructAnnotation, StructInfo, Type, Wasm};
 use super::{FieldDeclaration, Identifier, MethodDeclaration, MethodQualifier, StructQualifier, Visibility};
@@ -46,8 +47,8 @@ impl StructDeclaration {
                 qualifier: self.qualifier.clone(),
                 parent: None,
                 types: vec![],
-                self_fields: HashMap::new(),
-                fields: HashMap::new(),
+                self_fields: IndexMap::new(),
+                fields: IndexMap::new(),
                 user_methods: HashMap::new(),
                 builtin_methods: HashMap::new(),
                 hook_event_callbacks: HashMap::new(),
@@ -137,7 +138,7 @@ impl StructDeclaration {
     pub fn process_self_fields(&self, index: usize, context: &mut ProgramContext) {
         context.set_file_location(&self.file_name, &self.namespace_name);
 
-        let mut fields = HashMap::new();
+        let mut fields = IndexMap::new();
 
         for field in &self.body.fields {
             if is_forbidden_identifier(&field.name) {
@@ -187,7 +188,7 @@ impl StructDeclaration {
     pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
         context.set_file_location(&self.file_name, &self.namespace_name);
 
-        let mut fields = HashMap::new();
+        let mut fields = IndexMap::new();
         let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
         let mut errors = vec![];
 

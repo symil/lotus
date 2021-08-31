@@ -5,6 +5,7 @@ edition = "2018"
 
 [dependencies]
 colored = "2"
+indexmap = "1.7"
 lotus-framework = { path = "../lotus-framework" }
 parsable = { path = "../parsable" }
 enum-as-string-macro = { path = "../enum-as-string-macro" }

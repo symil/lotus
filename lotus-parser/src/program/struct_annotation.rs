@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use indexmap::IndexMap;
 use crate::items::{Identifier, StructQualifier, VisibilityToken};
 use super::{FunctionAnnotation, GeneratedMethods, Id, ItemMetadata, StructInfo, Type, WithMetadata};
 
@@ -8,8 +9,8 @@ pub struct StructAnnotation {
     pub qualifier: StructQualifier,
     pub parent: Option<Id>,
     pub types: Vec<Id>,
-    pub self_fields: HashMap<Identifier, FieldDetails>,
-    pub fields: HashMap<Identifier, FieldDetails>,
+    pub self_fields: IndexMap<Identifier, FieldDetails>,
+    pub fields: IndexMap<Identifier, FieldDetails>,
     pub user_methods: HashMap<Identifier, FunctionAnnotation>,
     pub builtin_methods: HashMap<Identifier, FunctionAnnotation>,
     pub hook_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,

@@ -3,6 +3,7 @@ use std::{env, fs, process};
 use colored::*;
 use program::LotusProgram;
 
+mod utils;
 mod program;
 mod items;
 mod generation;

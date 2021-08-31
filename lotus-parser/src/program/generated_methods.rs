@@ -1,4 +1,4 @@
-use crate::{generation::{DEREF_INT_POINTER_GET_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, Wat}, program::{ARRAY_BODY_ADDR_OFFSET, ARRAY_LENGTH_OFFSET, struct_annotation}, wat};
+use crate::{generation::{DEREF_INT_POINTER_GET_FUNC_NAME, LOG_INT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, Wat}, program::{ARRAY_BODY_ADDR_OFFSET, ARRAY_LENGTH_OFFSET, struct_annotation}, wat};
 use super::{ProgramContext, StructAnnotation, Type, VariableGenerator};
 
 #[derive(Debug)]
@@ -53,6 +53,7 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
                 while_body.push(Wat::set_local(&item_var_name, Wat::call(DEREF_INT_POINTER_GET_FUNC_NAME, vec![Wat::get_local(&body_var_name), Wat::const_i32(0)])));
                 while_body.extend(item_retain_statements);
                 while_body.push(Wat::increment_local_i32(&length_var_name, -1));
+                while_body.push(Wat::increment_local_i32(&body_var_name, 1));
 
                 lines.extend(vec![
                     Wat::set_local(&length_var_name, Wat::call(DEREF_INT_POINTER_GET_FUNC_NAME, vec![Wat::get_local(&value_name), Wat::const_i32(ARRAY_LENGTH_OFFSET)])),
@@ -91,9 +92,6 @@ fn generate_retain_method(struct_annotation: &StructAnnotation) -> (String, Wat)
 
     for field in struct_annotation.fields.values() {
         let (field_retain_statements, field_retain_locals) = get_retain_statements(&field.ty, &field_value_var_name, &mut var_generator);
-
-        dbg!(field.name.as_str());
-        dbg!(field.offset);
 
         if !field_retain_statements.is_empty() {
             lines.extend(vec![
