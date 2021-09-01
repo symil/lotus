@@ -19,6 +19,10 @@ impl FunctionAnnotation {
 
         Type::function(arguments, return_type)
     }
+
+    pub fn is_static(&self) -> bool {
+        self.this_type.is_none()
+    }
 }
 
 impl WithMetadata for FunctionAnnotation {

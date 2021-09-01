@@ -22,14 +22,15 @@ impl Action {
                     Some(return_type) => match &self.value {
                         Some(expr) => {
                             if let Some(wasm) = expr.process(context) {
-                                if return_type.is_assignable(&wasm.ty, context, &mut HashMap::new()) {
-                                    let mut wat = vec![];
+                                if return_type.is_assignable_to(&wasm.ty, context, &mut HashMap::new()) {
+                                    let mut source = vec![wasm];
 
-                                    wat.extend(wasm.wat);
-                                    wat.push(Wat::set_local_from_stack(RESULT_VAR_NAME));
-                                    wat.push(Wat::new("br", function_depth));
+                                    source.push(Wasm::new(Type::Void, vec![
+                                        Wat::set_local_from_stack(RESULT_VAR_NAME),
+                                        Wat::new("br", function_depth)
+                                    ], vec![]));
 
-                                    result = Some(Wasm::new(Type::Void, wat, vec![]));
+                                    result = Some(Wasm::merge(Type::Void, source));
                                 } else {
                                     if !wasm.ty.is_void() {
                                         context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));

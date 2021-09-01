@@ -46,7 +46,7 @@ impl MethodDeclaration {
 
                 // no need to check for name unicity, multiple event callbacks on the same struct are allowed
             },
-            None => {
+            Some(MethodQualifier::Static) | None => {
                 if !self.conditions.is_empty() {
                     context.error(&self.conditions[0], format!("only event callbacks can have conditions"));
                 }
@@ -56,12 +56,13 @@ impl MethodDeclaration {
                 }
 
                 if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
-                    // let field_exists = struct_annotation.fields.contains_key(&self.name);
-                    let method_exists = struct_annotation.user_methods.contains_key(&self.name);
+                    let (method_exists, method_this_type) = match &self.qualifier {
+                        Some(MethodQualifier::Static) => (struct_annotation.static_methods.contains_key(&self.name), None),
+                        None => (struct_annotation.regular_methods.contains_key(&self.name), Some(Type::Struct(struct_annotation.get_struct_info()))),
+                        _ => unreachable!()
+                    };
 
-                    // if field_exists {
-                    //     context.error(&self.name, format!("duplicate method declaration: field `{}` already exists", &self.name));
-                    // }
+                    this_type = method_this_type;
 
                     if method_exists {
                         context.error(&self.name, format!("duplicate method declaration: method `{}` already exists", &self.name));
@@ -99,7 +100,8 @@ impl MethodDeclaration {
                 Some(MethodQualifier::Hook) => insert_in_vec_hashmap(&mut struct_annotation.hook_event_callbacks, &self.name, method_annotation),
                 Some(MethodQualifier::Before) => insert_in_vec_hashmap(&mut struct_annotation.before_event_callbacks, &self.name, method_annotation),
                 Some(MethodQualifier::After) => insert_in_vec_hashmap(&mut struct_annotation.after_event_callbacks, &self.name, method_annotation),
-                None => struct_annotation.user_methods.insert(self.name.clone(), method_annotation),
+                Some(MethodQualifier::Static) => struct_annotation.static_methods.insert(self.name.clone(), method_annotation),
+                None => struct_annotation.regular_methods.insert(self.name.clone(), method_annotation),
             };
         }
     }
@@ -113,12 +115,20 @@ impl MethodDeclaration {
         let mut wat_body = vec![];
         let mut return_type = None;
         let mut arguments = vec![];
+        let mut this_type = None;
+        let mut payload_type = None;
         let mut struct_info = StructInfo::default();
+        let is_static = self.qualifier.contains(&MethodQualifier::Static);
 
         if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
-            struct_info = struct_annotation.to_struct_info();
+            struct_info = struct_annotation.get_struct_info();
 
-            if let Some(method_annotation) = struct_annotation.user_methods.get(&self.name) {
+            let hashmap = match is_static {
+                true => &struct_annotation.static_methods,
+                false => &struct_annotation.regular_methods
+            };
+
+            if let Some(method_annotation) = hashmap.get(&self.name) {
                 return_type = match method_annotation.return_type {
                     Type::Void => None,
                     _ => Some(method_annotation.return_type.clone())
@@ -126,15 +136,20 @@ impl MethodDeclaration {
                 arguments = method_annotation.arguments.clone();
                 wasm_func_name = method_annotation.wasm_name.clone();
                 wat_ret = method_annotation.return_type.get_wasm_type();
+                this_type = method_annotation.this_type.clone();
+                payload_type = method_annotation.payload_type.clone();
             }
+        }
+
+        if !is_static {
+            wat_args.push((THIS_VAR_NAME.to_string(), "i32"));
         }
 
         context.reset_local_scope();
         context.push_scope(ScopeKind::Function);
         context.set_function_return_type(return_type);
-        context.set_this_type(Some(Type::Struct(struct_info)));
-
-        wat_args.push((THIS_VAR_NAME.to_string(), "i32"));
+        context.set_this_type(this_type);
+        context.set_payload_type(payload_type);
 
         for (arg_name, arg_type) in &arguments {
             let var_info = context.push_var(arg_name, arg_type, VariableKind::Argument);
@@ -178,7 +193,12 @@ impl MethodDeclaration {
         let wat_locals : Vec<(&str, &str)> = wat_locals.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.clone())).collect();
 
         if let Some(struct_annotation) = context.get_struct_by_id_mut(owner_index) {
-            if let Some(method_annotation) = struct_annotation.user_methods.get_mut(&self.name) {
+            let hashmap = match is_static {
+                true => &mut struct_annotation.static_methods,
+                false => &mut struct_annotation.regular_methods
+            };
+
+            if let Some(method_annotation) = hashmap.get_mut(&self.name) {
                 method_annotation.wat = Wat::declare_function(&wasm_func_name, None, wat_args, wat_ret, wat_locals, wat_body);
             }
         }
@@ -208,15 +228,5 @@ impl MethodDeclaration {
         if !ok {
             context.error(self, format!("event callback methods must be named after event names; `{}` is not an event name", &self.name));
         }
-    }
-}
-
-fn method_qualifier_to_string(prefix: &Option<MethodQualifier>) -> &'static str {
-    match prefix {
-        Some(MethodQualifier::Builtin) => "builtin",
-        Some(MethodQualifier::Hook) => "hook",
-        Some(MethodQualifier::Before) => "before",
-        Some(MethodQualifier::After) => "after",
-        None => "user",
     }
 }

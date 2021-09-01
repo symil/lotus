@@ -31,7 +31,7 @@ impl ObjectLiteral {
         ];
 
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
-            struct_info = struct_annotation.to_struct_info();
+            struct_info = struct_annotation.get_struct_info();
             wat.extend(vec![
                 Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.get_field_count()), Wat::const_i32(struct_annotation.get_id())]),
                 Wat::set_local_from_stack(&object_var_name)
@@ -67,7 +67,7 @@ impl ObjectLiteral {
 
                 if let Some(field_wasm) = field_wasm_opt {
                     if let Some(field_info) = struct_annotation.fields.get(&field_name) {
-                        if field_info.ty.is_assignable(&field_wasm.ty, context, &mut HashMap::new()) {
+                        if field_info.ty.is_assignable_to(&field_wasm.ty, context, &mut HashMap::new()) {
                             field_initializations.insert(field_name.clone(), field_wasm.wat);
                         } else {
                             errors.push(Error::located(field_expr, format!("field `{}`: expected type `{}`, got `{}`", &field_name, &field_info.ty, &field_wasm.ty)));

@@ -1,9 +1,11 @@
 use parsable::parsable;
 
 #[parsable]
+#[derive(PartialEq)]
 pub enum MethodQualifier {
     Builtin = "@",
     Hook = "`",
     Before = "'",
-    After= "\""
+    After= "\"",
+    Static = "static"
 }

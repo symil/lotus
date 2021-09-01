@@ -11,7 +11,8 @@ pub struct StructAnnotation {
     pub types: Vec<Id>,
     pub self_fields: IndexMap<Identifier, FieldDetails>,
     pub fields: IndexMap<Identifier, FieldDetails>,
-    pub user_methods: HashMap<Identifier, FunctionAnnotation>,
+    pub regular_methods: HashMap<Identifier, FunctionAnnotation>,
+    pub static_methods: HashMap<Identifier, FunctionAnnotation>,
     pub builtin_methods: HashMap<Identifier, FunctionAnnotation>,
     pub hook_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,
     pub before_event_callbacks: HashMap<Identifier, Vec<FunctionAnnotation>>,
@@ -32,7 +33,7 @@ impl WithMetadata for StructAnnotation {
 }
 
 impl StructAnnotation {
-    pub fn to_struct_info(&self) -> StructInfo {
+    pub fn get_struct_info(&self) -> StructInfo {
         StructInfo::new(self.metadata.id, self.metadata.name.to_string())
     }
 

@@ -1,0 +1,19 @@
+struct Foo {
+    value: string,
+
+    static hello() {
+        @log(#value);
+    }
+
+    display() {
+        @log(#value);
+    }
+}
+
+export fn main() {
+    let a = Foo {};
+
+    a.hello();
+
+    Foo.display();
+}

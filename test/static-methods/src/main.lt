@@ -1,0 +1,23 @@
+struct Foo {
+    value: string,
+
+    static hello() {
+        @log("hello");
+    }
+
+    static add(a: int, b: int) -> int {
+        return a + b;
+    }
+
+    static new(value: string) -> Foo {
+        return Foo {
+            value: value
+        };
+    }
+}
+
+export fn main() {
+    Foo.hello();
+    @log(Foo.add(1, 2));
+    @log(Foo.new("world").value);
+}

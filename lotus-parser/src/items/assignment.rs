@@ -20,7 +20,9 @@ impl Assignment {
 
             if let Some(left_wasm) = left_wasm_opt {
                 if let Some(right_wasm) = right_wasm_opt {
-                    if left_wasm.ty.is_assignable(&right_wasm.ty, context, &mut HashMap::new()) {
+                    if !right_wasm.ty.is_assignable() {
+                        context.error(rvalue, format!("cannot assign type `{}`", &right_wasm.ty));
+                    } else if left_wasm.ty.is_assignable_to(&right_wasm.ty, context, &mut HashMap::new()) {
                         let mut source = vec![];
                         let mut ok = true;
 

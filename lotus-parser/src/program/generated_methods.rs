@@ -27,7 +27,7 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
             wat!["drop"]
         ],
         Type::Null => unreachable!(),
-        Type::TypeId => vec![],
+        Type::TypeRef(_) => unreachable!(),
         Type::Pointer(_) => todo!(),
         Type::Struct(_) => vec![
             Wat::call(MEMORY_RETAIN_OBJECT_FUNC_NAME, vec![Wat::get_local(value_name)]),

@@ -38,10 +38,13 @@ impl VarRef {
                     AccessType::Get => Some(Wasm::simple(var_info.ty.clone(), var_info.get_to_stack())),
                     AccessType::Set(_) => Some(Wasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
                 },
-                None => {
-                    context.error(&self.name, format!("undefined variable `{}`", &self.name));
-                    None
-                },
+                None => match context.get_struct_by_name(&self.name) {
+                    Some(struct_annotation) => Some(Wasm::empty(Type::TypeRef(struct_annotation.get_struct_info()))),
+                    None => {
+                        context.error(&self.name, format!("undefined variable or type `{}`", &self.name));
+                        None
+                    },
+                }
             }
         }
     }
@@ -66,7 +69,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         Type::Integer => process_integer_field_access(field_name, context),
         Type::Float => process_float_field_access(field_name, context),
         Type::String => process_string_field_access(field_name, context),
-        Type::TypeId => None,
+        Type::TypeRef(_) => None,
         Type::Pointer(pointed_type) => process_pointer_field_access(pointed_type, field_name, context),
         Type::Array(item_type) => process_array_field_access(item_type, field_name, context),
         Type::Struct(struct_info) => {
@@ -116,7 +119,6 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     let method_info : Option<Wasm> = match parent_type {
         Type::Void => None,
         Type::Null => None,
-        Type::TypeId => None,
         Type::System => process_system_method_call(method_name, arguments, context),
         Type::Boolean => process_boolean_method_call(method_name, context),
         Type::Integer => process_integer_method_call(method_name, context),
@@ -124,9 +126,20 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
         Type::String => process_string_method_call(method_name, context),
         Type::Pointer(pointed_type) => process_pointer_method_call(pointed_type, method_name, context),
         Type::Array(item_type) => process_array_method_call(item_type, method_name, context),
+        Type::TypeRef(struct_info) => {
+            if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
+                if let Some(method) = struct_annotation.static_methods.get(method_name) {
+                    Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        },
         Type::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
-                if let Some(method) = struct_annotation.user_methods.get(method_name) {
+                if let Some(method) = struct_annotation.regular_methods.get(method_name) {
                     Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
@@ -171,7 +184,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
         if let Some(arg_wasm) = arg_expr.process(context) {
             argument_types.push(arg_wasm.ty.clone());
 
-            if expected_type.is_assignable(&arg_wasm.ty, context, &mut anonymous_types) {
+            if expected_type.is_assignable_to(&arg_wasm.ty, context, &mut anonymous_types) {
                 source.push(arg_wasm);
             } else {
                 context.error(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_wasm.ty));

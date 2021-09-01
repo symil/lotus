@@ -22,29 +22,33 @@ impl VarDeclaration {
         let mut final_var_type = Type::Void;
 
         if let Some(wasm) = self.init_value.process(context) {
-            match &self.var_type {
-                Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
-                    Some(var_type) => {
-                        final_var_type = var_type.clone();
+            if !wasm.ty.is_assignable() {
+                context.error(&self.init_value, format!("cannot assign type `{}`", &wasm.ty));
+            } else {
+                match &self.var_type {
+                    Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
+                        Some(var_type) => {
+                            final_var_type = var_type.clone();
 
-                        if var_type.is_assignable(&wasm.ty, context, &mut HashMap::new()) {
-                            final_var_type = var_type;
+                            if var_type.is_assignable_to(&wasm.ty, context, &mut HashMap::new()) {
+                                final_var_type = var_type;
+                                ok = true;
+                            } else {
+                                context.error(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &wasm.ty, &var_type));
+                            }
+                        },
+                        None => {}
+                    },
+                    None => {
+                        if !wasm.ty.is_ambiguous() {
+                            final_var_type = wasm.ty.clone();
                             ok = true;
                         } else {
-                            context.error(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &wasm.ty, &var_type));
+                            context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &wasm.ty));
                         }
-                    },
-                    None => {}
-                },
-                None => {
-                    if !wasm.ty.is_ambiguous() {
-                        final_var_type = wasm.ty.clone();
-                        ok = true;
-                    } else {
-                        context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &wasm.ty));
                     }
-                }
-            };
+                };
+            }
 
             source.push(wasm);
         }

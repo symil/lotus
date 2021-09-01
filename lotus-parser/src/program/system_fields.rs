@@ -48,7 +48,7 @@ pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Ty
                 Type::Float => Wat::call_from_stack(LOG_FLOAT_FUNC_NAME),
                 Type::String => Wat::call_from_stack(LOG_STRING_FUNC_NAME),
                 Type::Null => Wat::call_from_stack(LOG_INT_FUNC_NAME),
-                Type::TypeId => Wat::call_from_stack(LOG_INT_FUNC_NAME),
+                Type::TypeRef(_) => unreachable!(),
                 Type::Struct(_) => todo!(),
                 Type::Pointer(_) => Wat::call_from_stack(LOG_INT_FUNC_NAME),
                 Type::Array(_) => todo!(),

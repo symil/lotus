@@ -11,8 +11,8 @@ pub enum Type {
     Float,
     String,
     Null,
-    TypeId,
     Pointer(Box<Type>),
+    TypeRef(StructInfo),
     Struct(StructInfo),
     Array(Box<Type>),
     Function(Vec<Type>, Box<Type>),
@@ -29,7 +29,7 @@ impl Type {
             Type::Float => Some("f32"),
             Type::String => Some("i32"),
             Type::Null => unreachable!(),
-            Type::TypeId => Some("i32"),
+            Type::TypeRef(_) => Some("i32"),
             Type::Struct(_) => Some("i32"),
             Type::Pointer(_) => Some("i32"),
             Type::Function(_, _) => Some("i32"),
@@ -64,7 +64,7 @@ impl Type {
             Type::Float => Wat::const_f32(0.),
             Type::String => Wat::call(STRING_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
             Type::Null => unreachable!(),
-            Type::TypeId => Wat::const_i32(0),
+            Type::TypeRef(_) => unreachable!(),
             Type::Struct(_) => Wat::const_i32(NULL_ADDR),
             Type::Function(_, _) => unreachable!(),
             Type::Array(_) => Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
@@ -90,7 +90,7 @@ impl Type {
             ItemType::Value(value_type) => match Self::builtin_from_str(value_type.name.as_str()) {
                 Some(builtin_type) => builtin_type,
                 None => match context.get_struct_by_name(&value_type.name) {
-                    Some(annotation) => Self::Struct(annotation.to_struct_info()),
+                    Some(annotation) => Self::Struct(annotation.get_struct_info()),
                     None => {
                         context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
                         return None
@@ -201,6 +201,13 @@ impl Type {
         }
     }
 
+    pub fn is_type(&self) -> bool {
+        match self {
+            Self::TypeRef(_) => true,
+            _ => false
+        }
+    }
+
     pub fn is_array(&self) -> bool {
         match self {
             Type::Array(_) => true,
@@ -222,11 +229,29 @@ impl Type {
         }
     }
 
-    pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
-        self.is_assignable(other, context, &mut HashMap::new()) || other.is_assignable(self, context, &mut HashMap::new())
+    pub fn is_assignable(&self) -> bool {
+        match self {
+            Type::Void => true,
+            Type::System => false,
+            Type::Boolean => true,
+            Type::Integer => true,
+            Type::Float => true,
+            Type::String => true,
+            Type::Null => true,
+            Type::Pointer(_) => true,
+            Type::TypeRef(_) => false,
+            Type::Struct(_) => true,
+            Type::Array(_) => true,
+            Type::Function(_, _) => true,
+            Type::Any(_) => true,
+        }
     }
 
-    pub fn is_assignable(&self, actual: &Type, context: &ProgramContext, anonymous_types: &mut HashMap<u32, Type>) -> bool {
+    pub fn is_compatible(&self, other: &Type, context: &ProgramContext) -> bool {
+        self.is_assignable_to(other, context, &mut HashMap::new()) || other.is_assignable_to(self, context, &mut HashMap::new())
+    }
+
+    pub fn is_assignable_to(&self, actual: &Type, context: &ProgramContext, anonymous_types: &mut HashMap<u32, Type>) -> bool {
         if actual.is_any() {
             return true;
         }
@@ -239,7 +264,7 @@ impl Type {
             Type::Float => actual == &Type::Float,
             Type::String => actual == &Type::String,
             Type::Null => actual == &Type::Null,
-            Type::TypeId => actual == &Type::TypeId,
+            Type::TypeRef(struct_info) => unreachable!(),
             Type::Struct(info) => match actual {
                 Type::Struct(actual_info) => context.get_struct_by_id(actual_info.id).unwrap().types.contains(&info.id),
                 Type::Null => true,
@@ -256,7 +281,7 @@ impl Type {
                         let mut ok = true;
 
                         for (actual_arg_type, expected_arg_type) in actual_argument_types.iter().zip(expected_argument_types.iter()) {
-                            if !expected_arg_type.is_assignable(actual_arg_type, context, anonymous_types) {
+                            if !expected_arg_type.is_assignable_to(actual_arg_type, context, anonymous_types) {
                                 ok = false;
                             }
                         }
@@ -267,7 +292,7 @@ impl Type {
                 _ => false
             },
             Type::Array(expected_item_type) => match actual {
-                Type::Array(actual_item_type) => expected_item_type.is_assignable(actual_item_type, context, anonymous_types),
+                Type::Array(actual_item_type) => expected_item_type.is_assignable_to(actual_item_type, context, anonymous_types),
                 _ => false
             },
             Type::Any(id) => {
@@ -307,7 +332,7 @@ impl Type {
             Type::Float => false,
             Type::String => false,
             Type::Null => true,
-            Type::TypeId => false,
+            Type::TypeRef(_) => false,
             Type::Struct(_) => false,
             Type::Pointer(_) => false,
             Type::Array(item_type) => item_type.is_ambiguous(),
@@ -325,28 +350,10 @@ impl Type {
             Type::Float => format!("float_{}", suffix),
             Type::String => format!("string_{}", suffix),
             Type::Null => unreachable!(),
-            Type::TypeId => todo!(),
+            Type::TypeRef(_) => todo!(),
             Type::Struct(struct_info) => format!("{}{}_{}", struct_info.name, struct_info.id, suffix),
             Type::Pointer(_) => unreachable!(),
             Type::Array(item_type) => format!("array_{}", item_type.get_wasm_generated_method_name(suffix)),
-            Type::Function(_, _) => todo!(),
-            Type::Any(_) => unreachable!(),
-        }
-    }
-
-    pub fn is_stored_on_heap(&self) -> bool {
-        match self {
-            Type::Void => unreachable!(),
-            Type::System => unreachable!(),
-            Type::Boolean => false,
-            Type::Integer => false,
-            Type::Float => false,
-            Type::String => true,
-            Type::Null => unreachable!(),
-            Type::TypeId => false,
-            Type::Struct(_) => true,
-            Type::Pointer(_) => unreachable!(),
-            Type::Array(_) => true,
             Type::Function(_, _) => todo!(),
             Type::Any(_) => unreachable!(),
         }
@@ -363,7 +370,7 @@ impl fmt::Display for Type {
             Type::Float => write!(f, "float"),
             Type::String => write!(f, "string"),
             Type::Null => write!(f, "<null>"),
-            Type::TypeId => write!(f, "type"),
+            Type::TypeRef(struct_info) => write!(f, "<type {}>", &struct_info.name),
             Type::Struct(struct_info) => write!(f, "{}", &struct_info.name),
             Type::Pointer(_) => write!(f, "ptr"),
             Type::Array(item_type) => write!(f, "{}[]", item_type),
@@ -401,7 +408,7 @@ impl Hash for Type {
             Type::Float => 3u64.hash(state),
             Type::String => 4u64.hash(state),
             Type::Null => unreachable!(),
-            Type::TypeId => todo!(),
+            Type::TypeRef(_) => todo!(),
             Type::Struct(struct_info) => (STRUCT_OFFSET + (struct_info.id as u64)).hash(state),
             Type::Pointer(_) => unreachable!(),
             Type::Array(item_type) => {

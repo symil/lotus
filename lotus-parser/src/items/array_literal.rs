@@ -29,10 +29,10 @@ impl ArrayLiteral {
             let mut item_ok = false;
 
             if let Some(item_wasm) = item.process(context) {
-                if final_type.is_assignable(&item_wasm.ty, context, &mut HashMap::new()) {
+                if final_type.is_assignable_to(&item_wasm.ty, context, &mut HashMap::new()) {
                     final_type = item_wasm.ty.clone();
                     item_ok = true;
-                } else if item_wasm.ty.is_assignable(&final_type, context, &mut HashMap::new()) {
+                } else if item_wasm.ty.is_assignable_to(&final_type, context, &mut HashMap::new()) {
                     item_ok = true;
                 }
 

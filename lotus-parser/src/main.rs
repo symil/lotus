@@ -1,3 +1,4 @@
+#![feature(option_result_contains)]
 #![allow(unused)]
 use std::{env, fs, process};
 use colored::*;

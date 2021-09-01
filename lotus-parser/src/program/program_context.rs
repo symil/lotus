@@ -339,7 +339,11 @@ impl ProgramContext {
         }
 
         for struct_annotation in self.structs.id_to_item.into_values() {
-            for method in struct_annotation.user_methods.into_values() {
+            for method in struct_annotation.regular_methods.into_values() {
+                content.push(method.wat);
+            }
+            
+            for method in struct_annotation.static_methods.into_values() {
                 content.push(method.wat);
             }
         }
