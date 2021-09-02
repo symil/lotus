@@ -16,6 +16,7 @@ pub enum Type {
     Struct(StructInfo),
     Array(Box<Type>),
     Function(Vec<Type>, Box<Type>),
+    Generic(String),
     Any(u32)
 }
 
@@ -29,6 +30,7 @@ impl Type {
             Type::Float => Some("f32"),
             Type::String => Some("i32"),
             Type::Null => unreachable!(),
+            Type::Generic(_) => Some("i32"),
             Type::TypeRef(_) => Some("i32"),
             Type::Struct(_) => Some("i32"),
             Type::Pointer(_) => Some("i32"),
@@ -64,6 +66,7 @@ impl Type {
             Type::Float => Wat::const_f32(0.),
             Type::String => Wat::call(STRING_ALLOC_FUNC_NAME, vec![Wat::const_i32(0)]),
             Type::Null => unreachable!(),
+            Type::Generic(_) => Wat::const_i32(0),
             Type::TypeRef(_) => unreachable!(),
             Type::Struct(_) => Wat::const_i32(NULL_ADDR),
             Type::Function(_, _) => unreachable!(),
@@ -127,10 +130,13 @@ impl Type {
             },
         };
 
-        let final_type = match &ty.suffix {
-            Some(TypeSuffix::Array) => Self::Array(Box::new(item_type)),
-            None => item_type
-        };
+        let mut final_type = item_type;
+
+        for suffix in &ty.suffix {
+            final_type = match suffix {
+                TypeSuffix::Array => Self::Array(Box::new(final_type)),
+            }
+        }
 
         Some(final_type)
     }
@@ -152,6 +158,10 @@ impl Type {
 
     pub fn int_pointer() -> Self {
         Type::pointer(Type::Integer)
+    }
+
+    pub fn any_pointer() -> Self {
+        Type::pointer(Type::Any(0))
     }
 
     pub fn pointer(pointed_type: Type) -> Self {
@@ -238,6 +248,7 @@ impl Type {
             Type::Float => true,
             Type::String => true,
             Type::Null => true,
+            Type::Generic(_) => true,
             Type::Pointer(_) => true,
             Type::TypeRef(_) => false,
             Type::Struct(_) => true,
@@ -295,6 +306,12 @@ impl Type {
                 Type::Array(actual_item_type) => expected_item_type.is_assignable_to(actual_item_type, context, anonymous_types),
                 _ => false
             },
+            Type::Generic(name) => {
+                match actual {
+                    Type::Generic(actual_name) => name == actual_name,
+                    _ => false
+                }
+            },
             Type::Any(id) => {
                 if let Some(expected_type) = anonymous_types.get(id) {
                     actual == expected_type
@@ -332,30 +349,13 @@ impl Type {
             Type::Float => false,
             Type::String => false,
             Type::Null => true,
+            Type::Generic(_) => false,
             Type::TypeRef(_) => false,
             Type::Struct(_) => false,
             Type::Pointer(_) => false,
             Type::Array(item_type) => item_type.is_ambiguous(),
             Type::Function(_, _) => todo!(),
             Type::Any(_) => true,
-        }
-    }
-
-    pub fn get_wasm_generated_method_name(&self, suffix: &str) -> String {
-        match self {
-            Type::Void => unreachable!(),
-            Type::System => unreachable!(),
-            Type::Boolean => format!("bool_{}", suffix),
-            Type::Integer => format!("int_{}", suffix),
-            Type::Float => format!("float_{}", suffix),
-            Type::String => format!("string_{}", suffix),
-            Type::Null => unreachable!(),
-            Type::TypeRef(_) => todo!(),
-            Type::Struct(struct_info) => format!("{}{}_{}", struct_info.name, struct_info.id, suffix),
-            Type::Pointer(_) => unreachable!(),
-            Type::Array(item_type) => format!("array_{}", item_type.get_wasm_generated_method_name(suffix)),
-            Type::Function(_, _) => todo!(),
-            Type::Any(_) => unreachable!(),
         }
     }
 }
@@ -370,6 +370,7 @@ impl fmt::Display for Type {
             Type::Float => write!(f, "float"),
             Type::String => write!(f, "string"),
             Type::Null => write!(f, "<null>"),
+            Type::Generic(name) => write!(f, "{}", name),
             Type::TypeRef(struct_info) => write!(f, "<type {}>", &struct_info.name),
             Type::Struct(struct_info) => write!(f, "{}", &struct_info.name),
             Type::Pointer(_) => write!(f, "ptr"),
@@ -408,6 +409,7 @@ impl Hash for Type {
             Type::Float => 3u64.hash(state),
             Type::String => 4u64.hash(state),
             Type::Null => unreachable!(),
+            Type::Generic(_) => unreachable!(),
             Type::TypeRef(_) => todo!(),
             Type::Struct(struct_info) => (STRUCT_OFFSET + (struct_info.id as u64)).hash(state),
             Type::Pointer(_) => unreachable!(),

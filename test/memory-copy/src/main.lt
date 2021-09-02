@@ -1,0 +1,20 @@
+export fn main() {
+    let a = @alloc(4);
+    let b = @alloc(4);
+
+    for i in 0..4 {
+        a[i] = i + 1;
+    }
+
+    @copy(b, a, 4);
+
+    for i in 0..4 {
+        @log(a[i]);
+    }
+
+    @log();
+
+    for i in 0..4 {
+        @log(b[i]);
+    }
+}

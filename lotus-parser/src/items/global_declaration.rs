@@ -13,12 +13,12 @@ pub struct GlobalDeclaration {
     #[parsable(ignore)]
     pub file_name: String,
     #[parsable(ignore)]
-    pub namespace_name: String
+    pub namespace: String
 }
 
 impl GlobalDeclaration {
     pub fn process(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
         context.reset_local_scope();
 
         if let Some(wasm) = self.var_declaration.process(VariableKind::Global, context) {
@@ -27,7 +27,7 @@ impl GlobalDeclaration {
                     id: index,
                     name: self.var_declaration.var_name.clone(),
                     file_name: context.get_current_file_name(),
-                    namespace_name: context.get_current_namespace_name(),
+                    namespace: context.get_current_namespace(),
                     visibility: self.visibility.get_token()
                 },
                 var_info: wasm.variables[0].clone(),

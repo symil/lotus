@@ -255,7 +255,7 @@ impl Wat {
         if self.arguments.is_empty() {
             let wrap = match self.keyword.as_str() {
                 "block" => true,
-                _ => self.keyword.contains(".") && !self.keyword.chars().next().unwrap().is_numeric()
+                _ => self.keyword.contains(".") && (!self.keyword.chars().next().unwrap().is_numeric() && !self.keyword.starts_with("memory"))
             };
 
             match wrap {

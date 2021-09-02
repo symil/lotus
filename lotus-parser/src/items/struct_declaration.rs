@@ -18,7 +18,7 @@ pub struct StructDeclaration {
     #[parsable(ignore)]
     pub file_name: String,
     #[parsable(ignore)]
-    pub namespace_name: String
+    pub namespace: String
 }
 
 #[parsable]
@@ -31,7 +31,7 @@ pub struct StructDeclarationBody {
 
 impl StructDeclaration {
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         if is_forbidden_identifier(&self.name) {
             context.error(self, format!("forbidden struct name: {}", &self.name));
@@ -41,7 +41,7 @@ impl StructDeclaration {
                     id: index,
                     name: self.name.clone(),
                     visibility: self.visibility.get_token(),
-                    namespace_name: context.get_current_namespace_name(),
+                    namespace: context.get_current_namespace(),
                     file_name: context.get_current_file_name(),
                 },
                 qualifier: self.qualifier.clone(),
@@ -80,7 +80,7 @@ impl StructDeclaration {
     }
 
     pub fn process_parent(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let mut errors = vec![];
         let mut final_parent = None;
@@ -107,7 +107,7 @@ impl StructDeclaration {
     }
 
     pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let mut errors = vec![];
         let mut types = vec![index];
@@ -137,7 +137,7 @@ impl StructDeclaration {
     }
 
     pub fn process_self_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let mut fields = IndexMap::new();
 
@@ -159,6 +159,7 @@ impl StructDeclaration {
                         Type::Float => true,
                         Type::String => true,
                         Type::Null => false,
+                        Type::Generic(_) => true,
                         Type::TypeRef(_) => false,
                         Type::Struct(_) => true,
                         Type::Function(_, _) => false,
@@ -187,7 +188,7 @@ impl StructDeclaration {
     }
 
     pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let mut fields = IndexMap::new();
         let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
@@ -221,7 +222,7 @@ impl StructDeclaration {
     }
 
     pub fn process_methods_signatures(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_signature(self, index, i, context);
@@ -229,7 +230,7 @@ impl StructDeclaration {
     }
 
     pub fn process_methods_bodies(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_body(self, index, i, context);

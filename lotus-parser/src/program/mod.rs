@@ -27,6 +27,8 @@ mod object_fields;
 mod type_id_fields;
 mod generated_methods;
 mod variable_generator;
+mod type_blueprint;
+mod type_instance;
 
 pub use error::*;
 pub use program::*;
@@ -57,3 +59,5 @@ pub use object_fields::*;
 pub use type_id_fields::*;
 pub use generated_methods::*;
 pub use variable_generator::*;
+pub use type_blueprint::*;
+pub use type_instance::*;

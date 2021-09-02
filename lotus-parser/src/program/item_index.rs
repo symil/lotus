@@ -31,17 +31,17 @@ impl<V : WithMetadata> ItemIndex<V> {
         self.id_to_item.insert(id, value);
     }
 
-    pub fn get_by_name(&self, name: &Identifier, from_file_name: &str, from_namespace_name: &str) -> Option<&V> {
+    pub fn get_by_name(&self, name: &Identifier, from_file_name: &str, from_namespace: &str) -> Option<&V> {
         let candidates = self.name_to_ids.get(name.as_str())?;
 
         for id in candidates.iter() {
             let value = self.id_to_item.get(id).unwrap();
             let metadata = value.get_metadata();
             let ok = match &metadata.visibility {
-                VisibilityToken::Private => metadata.namespace_name == from_namespace_name && metadata.file_name == from_file_name,
-                VisibilityToken::Public => metadata.namespace_name == from_namespace_name,
+                VisibilityToken::Private => metadata.namespace == from_namespace && metadata.file_name == from_file_name,
+                VisibilityToken::Public => metadata.namespace == from_namespace,
                 VisibilityToken::Export => true,
-                VisibilityToken::System => metadata.namespace_name == from_namespace_name,
+                VisibilityToken::System => metadata.namespace == from_namespace,
             };
 
             if ok {

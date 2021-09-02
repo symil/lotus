@@ -4,7 +4,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}};
 pub struct DataLocation {
     pub start: usize,
     pub end: usize,
-    pub namespace_name: &'static str,
+    pub namespace: &'static str,
     pub file_name: &'static str,
     pub line: usize,
     pub column: usize
@@ -20,7 +20,7 @@ impl DataLocation {
     pub fn get_hash(&self) -> u64 {
         let mut state = DefaultHasher::new();
 
-        self.namespace_name.hash(&mut state);
+        self.namespace.hash(&mut state);
         self.file_name.hash(&mut state);
         self.line.hash(&mut state);
         self.column.hash(&mut state);

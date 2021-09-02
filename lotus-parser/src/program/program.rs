@@ -44,14 +44,14 @@ impl LotusProgram {
                 let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
                 let parse_options = ParseOptions {
                     file_name: Some(&file_name),
-                    namespace_name: Some(namespace),
+                    namespace: Some(namespace),
                     comment_start: Some(COMMENT_START_TOKEN),
                 };
 
                 match LotusFile::parse(file_content, parse_options) {
                     Ok(mut lotus_file) => {
                         lotus_file.file_name = file_name.clone();
-                        lotus_file.namespace_name = namespace.to_string();
+                        lotus_file.namespace = namespace.to_string();
                         parsed_files.push(lotus_file);
                     },
                     Err(parse_error) => errors.push(Error::from_parse_error(parse_error))

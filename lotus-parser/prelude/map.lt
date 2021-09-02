@@ -1,0 +1,22 @@
+const START_BUCKET_COUNT = 16;
+
+struct MapItem {
+    key: int,
+    value: int,
+    next: ptr
+}
+
+export struct Map {
+    first: ptr,
+    buckets: MapItem[][],
+
+    static new() -> Map {
+        let map = Map {};
+
+        for i in 0..START_BUCKET_COUNT {
+            map.buckets.push([]);
+        }
+
+        return map;
+    }
+}

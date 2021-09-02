@@ -64,6 +64,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     let result = match parent_type {
         Type::Void => None,
         Type::Null => None,
+        Type::Generic(_) => None,
         Type::System => process_system_field_access(field_name, context),
         Type::Boolean => process_boolean_field_access(field_name, context),
         Type::Integer => process_integer_field_access(field_name, context),
@@ -119,6 +120,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     let method_info : Option<Wasm> = match parent_type {
         Type::Void => None,
         Type::Null => None,
+        Type::Generic(_) => None,
         Type::System => process_system_method_call(method_name, arguments, context),
         Type::Boolean => process_boolean_method_call(method_name, context),
         Type::Integer => process_integer_method_call(method_name, context),

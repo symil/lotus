@@ -6,7 +6,7 @@ use super::parse_error::ParseError;
 pub struct StringReader {
     comment_token: &'static str,
     file_name: &'static str,
-    namespace_name: &'static str,
+    namespace: &'static str,
 
     string: String,
     line_col: LineColLookup,
@@ -18,7 +18,7 @@ pub struct StringReader {
 
 pub struct ParseOptions<'a, 'b, 'c> {
     pub file_name: Option<&'a str>,
-    pub namespace_name: Option<&'b str>,
+    pub namespace: Option<&'b str>,
     pub comment_start: Option<&'c str>
 }
 
@@ -59,7 +59,7 @@ impl StringReader {
         Self {
             comment_token: get_str(options.comment_start.unwrap_or("")),
             file_name: get_str(options.file_name.unwrap_or("")),
-            namespace_name: get_str(options.namespace_name.unwrap_or("")),
+            namespace: get_str(options.namespace.unwrap_or("")),
             line_col: LineColLookup::new(&content),
             string: content,
             index: 0,
@@ -69,8 +69,8 @@ impl StringReader {
         }
     }
 
-    pub fn get_namespace_name(&self) -> &'static str {
-        self.namespace_name
+    pub fn get_namespace(&self) -> &'static str {
+        self.namespace
     }
 
     pub fn get_file_name(&self) -> &'static str {
@@ -106,9 +106,9 @@ impl StringReader {
         let (line, column) = self.line_col.get(error_index);
         let expected = self.expected.clone();
         let file_name = self.file_name;
-        let namespace_name = self.namespace_name;
+        let namespace = self.namespace;
 
-        ParseError { file_name, namespace_name, line, column, expected }
+        ParseError { file_name, namespace, line, column, expected }
     }
 
     pub fn is_finished(&self) -> bool {
@@ -215,11 +215,11 @@ impl StringReader {
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         let end = self.get_index_backtracked();
-        let namespace_name = self.namespace_name;
+        let namespace = self.namespace;
         let file_name = self.file_name;
         let (line, column) = self.line_col.get(start);
 
-        DataLocation { start, end, file_name, namespace_name, line, column }
+        DataLocation { start, end, file_name, namespace, line, column }
     }
 
     pub fn get_marker_value(&self, name: &'static str) -> bool {

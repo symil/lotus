@@ -6,7 +6,7 @@ pub struct ItemMetadata {
     pub id: Id,
     pub name: Identifier,
     pub file_name: String,
-    pub namespace_name: String,
+    pub namespace: String,
     pub visibility: VisibilityToken,
 }
 

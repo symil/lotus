@@ -123,3 +123,11 @@ sys fn __mem_retain_object(pointer: ptr) -> bool {
 
     return true;
 }
+
+sys fn __mem_copy(dest: ptr, src: ptr, count: int) {
+    let dest_arg = (dest as int) * 4;
+    let src_arg = (src as int) * 4;
+    let count_arg = count * 4;
+
+    @wasm_memory_copy(dest_arg, src_arg, count_arg);
+}

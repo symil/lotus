@@ -13,6 +13,7 @@ export const PRELUDE_DIR = path.join(ROOT_DIR, 'lotus-parser', 'prelude');
 export const SOURCE_EXTENSION = '.lt';
 export const PARSER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-parser');
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
+export const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
 export const MAIN_FILE_NAME = `main${SOURCE_EXTENSION}`;
 export const SRC_DIR_NAME = 'src';
@@ -60,7 +61,7 @@ function compileLotus(inputPath, outputPath, inheritStdio, excludePrelude) {
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {
-    return runCommand(`${WAT2WASM_BINARY_PATH} ${inputPath} -o ${outputPath}`, inheritStdio);
+    return runCommand(`${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS.join(' ')} ${inputPath} -o ${outputPath}`, inheritStdio);
 }
 
 async function runWasm(wasmPath, inheritStdio, displayMemory) {

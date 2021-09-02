@@ -1,4 +1,4 @@
-use std::{collections::HashMap, mem::take, ops::Deref};
+use std::{collections::{HashMap, HashSet}, mem::take, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
 use super::{Error, FunctionAnnotation, GeneratedMethods, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
@@ -13,7 +13,7 @@ pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 pub struct ProgramContext {
     pub errors: Vec<Error>,
     current_file_name: String,
-    current_namespace_name: String,
+    current_namespace: String,
 
     world_struct_name: Option<Identifier>,
     user_struct_name: Option<Identifier>,
@@ -24,6 +24,7 @@ pub struct ProgramContext {
     depth: i32,
 
     pub scopes: Vec<Scope>,
+    pub generics: HashSet<String>,
     pub this_var: Option<VariableInfo>,
     pub payload_var: Option<VariableInfo>,
     pub function_return_type: Option<Type>,
@@ -39,17 +40,17 @@ impl ProgramContext {
         self.errors.push(Error::located(location, error));
     }
 
-    pub fn set_file_location(&mut self, file_name: &str, namespace_name: &str) {
+    pub fn set_file_location(&mut self, file_name: &str, namespace: &str) {
         self.current_file_name = file_name.to_string();
-        self.current_namespace_name = namespace_name.to_string();
+        self.current_namespace = namespace.to_string();
     }
 
     pub fn get_current_file_name(&self) -> String {
         self.current_file_name.clone()
     }
 
-    pub fn get_current_namespace_name(&self) -> String {
-        self.current_namespace_name.clone()
+    pub fn get_current_namespace(&self) -> String {
+        self.current_namespace.clone()
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -130,7 +131,7 @@ impl ProgramContext {
     // Structures
 
     pub fn get_struct_by_name(&self, name: &Identifier) -> Option<&StructAnnotation> {
-        self.structs.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
+        self.structs.get_by_name(name, &self.current_file_name, &self.current_namespace)
     }
 
     pub fn get_struct_by_id(&self, id: Id) -> Option<&StructAnnotation> {
@@ -148,7 +149,7 @@ impl ProgramContext {
     // Functions
 
     pub fn get_function_by_name(&self, name: &Identifier) -> Option<&FunctionAnnotation> {
-        self.functions.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
+        self.functions.get_by_name(name, &self.current_file_name, &self.current_namespace)
     }
 
     pub fn get_function_by_id(&self, id: Id) -> Option<&FunctionAnnotation> {
@@ -166,7 +167,7 @@ impl ProgramContext {
     // Globals
 
     pub fn get_global_by_name(&self, name: &Identifier) -> Option<&GlobalAnnotation> {
-        self.globals.get_by_name(name, &self.current_file_name, &self.current_namespace_name)
+        self.globals.get_by_name(name, &self.current_file_name, &self.current_namespace)
     }
 
     pub fn get_global_by_id(&self, id: Id) -> Option<&GlobalAnnotation> {
@@ -204,17 +205,17 @@ impl ProgramContext {
                 match block {
                     TopLevelBlock::StructDeclaration(mut struct_declaration) => {
                         struct_declaration.file_name = file.file_name.clone();
-                        struct_declaration.namespace_name = file.namespace_name.clone();
+                        struct_declaration.namespace = file.namespace.clone();
                         structs.push(struct_declaration);
                     },
                     TopLevelBlock::FunctionDeclaration(mut function_declaration) => {
                         function_declaration.file_name = file.file_name.clone();
-                        function_declaration.namespace_name = file.namespace_name.clone();
+                        function_declaration.namespace = file.namespace.clone();
                         functions.push(function_declaration);
                     },
                     TopLevelBlock::GlobalDeclaration(mut global_declaration) => {
                         global_declaration.file_name = file.file_name.clone();
-                        global_declaration.namespace_name = file.namespace_name.clone();
+                        global_declaration.namespace = file.namespace.clone();
                         globals.push(global_declaration);
                     },
                 }

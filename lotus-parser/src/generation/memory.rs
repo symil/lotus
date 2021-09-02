@@ -11,6 +11,7 @@ pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize
 
 pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
 pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
+pub const MEMORY_COPY_FUNC_NAME : &'static str = "__mem_copy";
 pub const MEMORY_RETAIN_FUNC_NAME : &'static str = "__mem_retain";
 pub const MEMORY_RETAIN_OBJECT_FUNC_NAME : &'static str = "__mem_retain_object";
 pub const MEMORY_GARBAGE_COLLECT_FUNC_NAME : &'static str = "__trigger_garbage_collection";

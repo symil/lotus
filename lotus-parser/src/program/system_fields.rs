@@ -1,4 +1,4 @@
-use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_EMPTY_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEMORY_GARBAGE_COLLECT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
+use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_EMPTY_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_COPY_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEMORY_GARBAGE_COLLECT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
 use super::{ProgramContext, Type, Wasm};
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
@@ -21,8 +21,10 @@ pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList,
             Type::Void, wat![""]),
         "call_indirect_retain" => (vec![Type::int_pointer(), Type::Integer], Type::Void, wat!["call_indirect", wat!["type", Wat::var_name(RETAIN_FUNC_TYPE_NAME)]]),
         "wasm_memory_grow" => (vec![Type::Integer], Type::Integer, wat!["memory.grow"]),
+        "wasm_memory_copy" => (vec![Type::Integer, Type::Integer, Type::Integer], Type::Void, wat!["memory.copy"]),
         "alloc" => (vec![Type::Integer], Type::int_pointer(), Wat::call_from_stack(MEMORY_ALLOC_FUNC_NAME)),
-        "free" => (vec![Type::int_pointer()], Type::Void, Wat::call_from_stack(MEMORY_FREE_FUNC_NAME)),
+        "free" => (vec![Type::any_pointer()], Type::Void, Wat::call_from_stack(MEMORY_FREE_FUNC_NAME)),
+        "copy" => (vec![Type::any_pointer(), Type::any_pointer(), Type::Integer], Type::Void, Wat::call_from_stack(MEMORY_COPY_FUNC_NAME)),
         "retain" => (vec![Type::Any(0)], Type::Boolean, wat![""]),
         "garbage_collect" => (vec![], Type::Void, Wat::call_from_stack(MEMORY_GARBAGE_COLLECT_FUNC_NAME)),
         _ => return None
@@ -48,6 +50,7 @@ pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Ty
                 Type::Float => Wat::call_from_stack(LOG_FLOAT_FUNC_NAME),
                 Type::String => Wat::call_from_stack(LOG_STRING_FUNC_NAME),
                 Type::Null => Wat::call_from_stack(LOG_INT_FUNC_NAME),
+                Type::Generic(_) => unreachable!(),
                 Type::TypeRef(_) => unreachable!(),
                 Type::Struct(_) => todo!(),
                 Type::Pointer(_) => Wat::call_from_stack(LOG_INT_FUNC_NAME),

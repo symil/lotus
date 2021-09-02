@@ -8,7 +8,7 @@ pub struct LotusFile {
     #[parsable(ignore)]
     pub file_name: String,
     #[parsable(ignore)]
-    pub namespace_name: String
+    pub namespace: String
 }
 
 pub struct SortedLotusFile {
@@ -16,7 +16,7 @@ pub struct SortedLotusFile {
     pub functions: Vec<FunctionDeclaration>,
     pub globals: Vec<GlobalDeclaration>,
     pub file_name: String,
-    pub namespace_name: String
+    pub namespace: String
 }
 
 impl LotusFile {
@@ -26,7 +26,7 @@ impl LotusFile {
             functions: vec![],
             globals: vec![],
             file_name: self.file_name,
-            namespace_name: self.namespace_name,
+            namespace: self.namespace,
         };
 
         for block in self.blocks {

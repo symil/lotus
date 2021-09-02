@@ -43,7 +43,7 @@ impl Error {
                 start: 0,
                 end: 0,
                 file_name: error.file_name,
-                namespace_name: error.namespace_name,
+                namespace: error.namespace,
                 line: error.line,
                 column: error.column
             }),

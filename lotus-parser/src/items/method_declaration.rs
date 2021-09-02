@@ -76,7 +76,7 @@ impl MethodDeclaration {
                 id: method_index,
                 name: self.name.clone(),
                 file_name: context.get_current_file_name(),
-                namespace_name: context.get_current_namespace_name(),
+                namespace: context.get_current_namespace(),
                 visibility: VisibilityToken::Private,
             },
             wasm_name: format!("{}_{}_{}_{}", &owner.name, owner_index, &self.name, method_index),

@@ -13,12 +13,12 @@ pub struct FunctionDeclaration {
     #[parsable(ignore)]
     pub file_name: String,
     #[parsable(ignore)]
-    pub namespace_name: String
+    pub namespace: String
 }
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let (arguments, return_type) = self.signature.process(context);
         let visibility = self.visibility.get_token();
@@ -42,7 +42,7 @@ impl FunctionDeclaration {
                 id: index,
                 name: self.name.clone(),
                 file_name: context.get_current_file_name(),
-                namespace_name: context.get_current_namespace_name(),
+                namespace: context.get_current_namespace(),
                 visibility: visibility.clone(),
             },
             wasm_name: match visibility {
@@ -64,7 +64,7 @@ impl FunctionDeclaration {
     }
 
     pub fn process_body(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace_name);
+        context.set_file_location(&self.file_name, &self.namespace);
 
         let mut ok = true;
         let mut wasm_func_name = String::new();
