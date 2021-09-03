@@ -2,66 +2,57 @@ use std::{collections::HashMap, hash::Hash};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, ItemMetadata, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructAnnotation, StructInfo, Type, Wasm};
-use super::{FieldDeclaration, Identifier, MethodDeclaration, MethodQualifier, StructQualifier, Visibility};
+use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StackType, StructInfo, Type, TypeBlueprint, Wasm};
+use super::{FieldDeclaration, GenericList, Identifier, MethodDeclaration, MethodQualifier, StackRepresentation, TypeQualifier, Visibility};
 
 #[parsable]
 pub struct StructDeclaration {
     pub visibility: Visibility,
-    pub qualifier: StructQualifier,
+    pub qualifier: TypeQualifier,
+    #[parsable(brackets="()")]
+    pub stack_repr: Option<StackRepresentation>,
+    pub generics: GenericList,
     pub name: Identifier,
     #[parsable(prefix=":")]
     pub parent: Option<Identifier>,
     #[parsable(brackets="{}")]
-    pub body: StructDeclarationBody,
-
-    #[parsable(ignore)]
-    pub file_name: String,
-    #[parsable(ignore)]
-    pub namespace: String
+    pub body: TypeDeclarationBody,
 }
 
 #[parsable]
 #[derive(Default)]
-pub struct StructDeclarationBody {
+pub struct TypeDeclarationBody {
     #[parsable(sep=",")]
     pub fields: Vec<FieldDeclaration>,
     pub methods: Vec<MethodDeclaration>
 }
 
 impl StructDeclaration {
-    pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
-
+    pub fn process_name(&self, context: &mut ProgramContext) {
         if is_forbidden_identifier(&self.name) {
             context.error(self, format!("forbidden struct name: {}", &self.name));
         } else {
-            let mut struct_annotation = StructAnnotation {
-                metadata: ItemMetadata {
-                    id: index,
-                    name: self.name.clone(),
-                    visibility: self.visibility.get_token(),
-                    namespace: context.get_current_namespace(),
-                    file_name: context.get_current_file_name(),
-                },
-                qualifier: self.qualifier.clone(),
-                parent: None,
-                types: vec![],
-                self_fields: IndexMap::new(),
+            let type_blueprint = TypeBlueprint {
+                id: self.location.get_hash(),
+                name: self.name.to_string(),
+                location: self.location.clone(),
+                visibility: self.visibility.to_item_visibility(),
+                stack_type: self.stack_repr.as_ref().and_then(|repr| Some(repr.get_stack_type())).unwrap_or(StackType::Pointer),
+                generics: self.generics.process_as_parameters(context),
                 fields: IndexMap::new(),
-                regular_methods: HashMap::new(),
-                static_methods: HashMap::new(),
-                builtin_methods: HashMap::new(),
-                hook_event_callbacks: HashMap::new(),
-                before_event_callbacks: HashMap::new(),
-                after_event_callbacks: HashMap::new(),
+                static_fields: IndexMap::new(),
+                methods: IndexMap::new(),
+                static_methods: IndexMap::new(),
+                hook_event_callbacks: IndexMap::new(),
+                before_event_callbacks: IndexMap::new(),
+                after_event_callbacks: IndexMap::new(),
             };
             
-            if context.get_struct_by_name(&self.name).is_some() {
+            if context.types.get_by_name(&self.name).is_some() {
                 context.error(&self.name, format!("duplicate type declaration: `{}`", &self.name));
             }
 
-            context.add_struct(struct_annotation);
+            context.types.insert(type_blueprint);
 
             // if self.qualifier == StructQualifier::World {
             //     if let Some(current_world) = &context.world_struct_name {
@@ -79,14 +70,12 @@ impl StructDeclaration {
         }
     }
 
-    pub fn process_parent(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
-
+    pub fn process_parent(&self, context: &mut ProgramContext) {
         let mut errors = vec![];
         let mut final_parent = None;
 
         if let Some(parent_name) = &self.parent {
-            if let Some(parent) = context.get_struct_by_name(&self.name) {
+            if let Some(parent) = context.types.get_by_name(&self.name) {
                 if parent.qualifier == self.qualifier {
                     final_parent = Some(parent.get_id());
                 } else {
@@ -107,8 +96,6 @@ impl StructDeclaration {
     }
 
     pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
-
         let mut errors = vec![];
         let mut types = vec![index];
 
@@ -137,7 +124,7 @@ impl StructDeclaration {
     }
 
     pub fn process_self_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
+        context.set_file_location(&self.file_name, &self.file_namespace);
 
         let mut fields = IndexMap::new();
 
@@ -188,7 +175,7 @@ impl StructDeclaration {
     }
 
     pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
+        context.set_file_location(&self.file_name, &self.file_namespace);
 
         let mut fields = IndexMap::new();
         let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
@@ -222,7 +209,7 @@ impl StructDeclaration {
     }
 
     pub fn process_methods_signatures(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
+        context.set_file_location(&self.file_name, &self.file_namespace);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_signature(self, index, i, context);
@@ -230,7 +217,7 @@ impl StructDeclaration {
     }
 
     pub fn process_methods_bodies(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
+        context.set_file_location(&self.file_name, &self.file_namespace);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_body(self, index, i, context);

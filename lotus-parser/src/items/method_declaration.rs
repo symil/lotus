@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{generation::{Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, StructInfo, Type, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap, RESULT_VAR_NAME, THIS_VAR_NAME}};
-use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StatementList, StructDeclaration, StructQualifier, VarPath, VarRefPrefix};
+use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StatementList, StructDeclaration, TypeQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
 pub struct MethodDeclaration {
@@ -76,7 +76,7 @@ impl MethodDeclaration {
                 id: method_index,
                 name: self.name.clone(),
                 file_name: context.get_current_file_name(),
-                namespace: context.get_current_namespace(),
+                file_namespace: context.get_current_file_namespace(),
                 visibility: VisibilityToken::Private,
             },
             wasm_name: format!("{}_{}_{}_{}", &owner.name, owner_index, &self.name, method_index),
@@ -220,7 +220,7 @@ impl MethodDeclaration {
         let mut ok = false;
 
         if let Some(struct_annotation) = context.get_struct_by_name(&self.name) {
-            if struct_annotation.qualifier == StructQualifier::Event {
+            if struct_annotation.qualifier == TypeQualifier::Event {
                 ok = true;
             }
         }

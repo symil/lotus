@@ -168,7 +168,7 @@ impl Wat {
 
     // COMPLEX BLOCKS
 
-    pub fn import_function(namespace: &str, sub_namespace: &str, func_name: &str, params: Vec<&'static str>, result: Option<&'static str>) -> Self {
+    pub fn import_function(file_namespace: &str, sub_file_namespace: &str, func_name: &str, params: Vec<&'static str>, result: Option<&'static str>) -> Self {
         let mut func_content = wat!["func", Self::var_name(func_name)];
 
         for ty in params {
@@ -179,7 +179,7 @@ impl Wat {
             func_content.push(wat!["result", ty]);
         }
 
-        wat!["import", Self::string(namespace), Self::string(sub_namespace), func_content]
+        wat!["import", Self::string(file_namespace), Self::string(sub_file_namespace), func_content]
     }
 
     pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &'static str)>, result: Option<&'static str>, locals: Vec<(&str, &'static str)>, instructions: Vec<Wat>) -> Self {

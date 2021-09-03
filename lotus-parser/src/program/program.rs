@@ -5,8 +5,8 @@ use super::Error;
 
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 const COMMENT_START_TOKEN : &'static str = "//";
-const PRELUDE_NAMESPACE : &'static str = "std";
-const SELF_NAMESPACE : &'static str = "self";
+const PRELUDE_file_namespace : &'static str = "std";
+const SELF_file_namespace : &'static str = "self";
 
 pub struct LotusProgram {
     pub wat: String,
@@ -30,28 +30,28 @@ impl LotusProgram {
         let mut source_list = vec![];
 
         if let Some(prelude_path) = prelude_directory_path {
-            source_list.push((PRELUDE_NAMESPACE, prelude_path, prelude_path));
+            source_list.push((PRELUDE_file_namespace, prelude_path, prelude_path));
         }
 
-        source_list.push((SELF_NAMESPACE, path, prefix));
+        source_list.push((SELF_file_namespace, path, prefix));
 
         let now = Instant::now();
 
-        for (namespace, path, prefix) in source_list {
+        for (file_namespace, path, prefix) in source_list {
             let files_to_process = read_path_recursively(path, true)?;
 
             for (file_path, file_content) in files_to_process {
                 let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
                 let parse_options = ParseOptions {
                     file_name: Some(&file_name),
-                    namespace: Some(namespace),
+                    file_namespace: Some(file_namespace),
                     comment_start: Some(COMMENT_START_TOKEN),
                 };
 
                 match LotusFile::parse(file_content, parse_options) {
                     Ok(mut lotus_file) => {
                         lotus_file.file_name = file_name.clone();
-                        lotus_file.namespace = namespace.to_string();
+                        lotus_file.file_namespace = file_namespace.to_string();
                         parsed_files.push(lotus_file);
                     },
                     Err(parse_error) => errors.push(Error::from_parse_error(parse_error))

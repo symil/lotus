@@ -1,7 +1,7 @@
 use std::fs::Metadata;
 
 use parsable::parsable;
-use crate::program::{GlobalAnnotation, ItemMetadata, ProgramContext, Type, VariableInfo, VariableKind, Wasm};
+use crate::program::{GlobalVarInstance, ItemMetadata, ProgramContext, Type, VariableInfo, VariableKind, Wasm};
 use super::{VarDeclaration, Visibility};
 
 #[parsable]
@@ -13,21 +13,21 @@ pub struct GlobalDeclaration {
     #[parsable(ignore)]
     pub file_name: String,
     #[parsable(ignore)]
-    pub namespace: String
+    pub file_namespace: String
 }
 
 impl GlobalDeclaration {
     pub fn process(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.namespace);
+        context.set_file_location(&self.file_name, &self.file_namespace);
         context.reset_local_scope();
 
         if let Some(wasm) = self.var_declaration.process(VariableKind::Global, context) {
-            let mut global_annotation = GlobalAnnotation {
+            let mut global_annotation = GlobalVarInstance {
                 metadata: ItemMetadata {
                     id: index,
                     name: self.var_declaration.var_name.clone(),
                     file_name: context.get_current_file_name(),
-                    namespace: context.get_current_namespace(),
+                    file_namespace: context.get_current_file_namespace(),
                     visibility: self.visibility.get_token()
                 },
                 var_info: wasm.variables[0].clone(),

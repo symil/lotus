@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, HashSet}, mem::take, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionAnnotation, GeneratedMethods, GlobalAnnotation, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, VariableInfo, VariableKind};
+use super::{Error, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind};
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
@@ -12,23 +12,16 @@ pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: Vec<Error>,
-    current_file_name: String,
-    current_namespace: String,
 
-    world_struct_name: Option<Identifier>,
-    user_struct_name: Option<Identifier>,
-    structs: ItemIndex<StructAnnotation>,
-    functions: ItemIndex<FunctionAnnotation>,
-    globals: ItemIndex<GlobalAnnotation>,
+    pub types: ItemIndex<TypeBlueprint>,
+    pub functions: ItemIndex<FunctionBlueprint>,
+    pub globals: ItemIndex<GlobalVarBlueprint>,
 
-    depth: i32,
-
+    pub current_function: Option<u64>,
+    pub current_type: Option<u64>,
     pub scopes: Vec<Scope>,
-    pub generics: HashSet<String>,
-    pub this_var: Option<VariableInfo>,
-    pub payload_var: Option<VariableInfo>,
-    pub function_return_type: Option<Type>,
-    pub return_found: bool
+    pub depth: i32,
+    pub return_found: bool,
 }
 
 impl ProgramContext {
@@ -40,23 +33,7 @@ impl ProgramContext {
         self.errors.push(Error::located(location, error));
     }
 
-    pub fn set_file_location(&mut self, file_name: &str, namespace: &str) {
-        self.current_file_name = file_name.to_string();
-        self.current_namespace = namespace.to_string();
-    }
-
-    pub fn get_current_file_name(&self) -> String {
-        self.current_file_name.clone()
-    }
-
-    pub fn get_current_namespace(&self) -> String {
-        self.current_namespace.clone()
-    }
-
     pub fn reset_local_scope(&mut self) {
-        self.function_return_type = None;
-        self.this_var = None;
-        self.payload_var = None;
         self.return_found = false;
         self.scopes = vec![];
     }
@@ -80,18 +57,6 @@ impl ProgramContext {
         }
 
         None
-    }
-
-    pub fn set_function_return_type(&mut self, return_type: Option<Type>) {
-        self.function_return_type = return_type;
-    }
-
-    pub fn set_this_type(&mut self, ty: Option<Type>) {
-        self.this_var = ty.and_then(|t| Some(VariableInfo::new(THIS_VAR_NAME.to_string(), t, VariableKind::Argument)));
-    }
-
-    pub fn set_payload_type(&mut self, ty: Option<Type>) {
-        self.payload_var = ty.and_then(|t| Some(VariableInfo::new(PAYLOAD_VAR_NAME.to_string(), t, VariableKind::Argument)));
     }
 
     pub fn push_var(&mut self, name: &Identifier, ty: &Type, kind: VariableKind) -> VariableInfo {
@@ -128,61 +93,6 @@ impl ProgramContext {
         is_unique
     }
 
-    // Structures
-
-    pub fn get_struct_by_name(&self, name: &Identifier) -> Option<&StructAnnotation> {
-        self.structs.get_by_name(name, &self.current_file_name, &self.current_namespace)
-    }
-
-    pub fn get_struct_by_id(&self, id: Id) -> Option<&StructAnnotation> {
-        self.structs.get_by_id(id)
-    }
-
-    pub fn get_struct_by_id_mut(&mut self, id: Id) -> Option<&mut StructAnnotation> {
-        self.structs.get_mut_by_id(id)
-    }
-
-    pub fn add_struct(&mut self, value: StructAnnotation) {
-        self.structs.insert(value);
-    }
-
-    // Functions
-
-    pub fn get_function_by_name(&self, name: &Identifier) -> Option<&FunctionAnnotation> {
-        self.functions.get_by_name(name, &self.current_file_name, &self.current_namespace)
-    }
-
-    pub fn get_function_by_id(&self, id: Id) -> Option<&FunctionAnnotation> {
-        self.functions.get_by_id(id)
-    }
-
-    pub fn get_function_by_id_mut(&mut self, id: Id) -> Option<&mut FunctionAnnotation> {
-        self.functions.get_mut_by_id(id)
-    }
-
-    pub fn add_function(&mut self, value: FunctionAnnotation) {
-        self.functions.insert(value);
-    }
-
-    // Globals
-
-    pub fn get_global_by_name(&self, name: &Identifier) -> Option<&GlobalAnnotation> {
-        self.globals.get_by_name(name, &self.current_file_name, &self.current_namespace)
-    }
-
-    pub fn get_global_by_id(&self, id: Id) -> Option<&GlobalAnnotation> {
-        self.globals.get_by_id(id)
-    }
-
-    pub fn get_global_by_id_mut(&mut self, id: Id) -> Option<&mut GlobalAnnotation> {
-        self.globals.get_mut_by_id(id)
-    }
-
-    pub fn add_global(&mut self, value: GlobalAnnotation) {
-        self.globals.insert(value);
-    }
-
-
     // pub fn get_type_id(&mut self, ty: &Type) -> Id {
     //     match self.types_ids.get(ty) {
     //         Some(id) => *id,
@@ -204,18 +114,12 @@ impl ProgramContext {
             for block in file.blocks {
                 match block {
                     TopLevelBlock::StructDeclaration(mut struct_declaration) => {
-                        struct_declaration.file_name = file.file_name.clone();
-                        struct_declaration.namespace = file.namespace.clone();
                         structs.push(struct_declaration);
                     },
                     TopLevelBlock::FunctionDeclaration(mut function_declaration) => {
-                        function_declaration.file_name = file.file_name.clone();
-                        function_declaration.namespace = file.namespace.clone();
                         functions.push(function_declaration);
                     },
                     TopLevelBlock::GlobalDeclaration(mut global_declaration) => {
-                        global_declaration.file_name = file.file_name.clone();
-                        global_declaration.namespace = file.namespace.clone();
                         globals.push(global_declaration);
                     },
                 }
@@ -276,8 +180,8 @@ impl ProgramContext {
 
         let mut content = wat!["module"];
 
-        for (namespace1, namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
-            content.push(Wat::import_function(namespace1, namespace2, func_name, arguments.to_vec(), return_type.clone()));
+        for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
+            content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
         }
 
         for (export_name, page_count) in HEADER_MEMORIES {
@@ -355,7 +259,7 @@ impl ProgramContext {
     }
 }
 
-fn get_globals_sorted(mut map: ItemIndex<GlobalAnnotation>) -> Vec<GlobalAnnotation> {
+fn get_globals_sorted(mut map: ItemIndex<GlobalVarInstance>) -> Vec<GlobalVarInstance> {
     let mut list = vec![];
 
     for global in map.id_to_item.into_values() {

@@ -74,3 +74,15 @@ impl Display for Identifier {
         self.value.fmt(f)
     }
 }
+
+impl AsRef<str> for Identifier {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl AsRef<DataLocation> for Identifier {
+    fn as_ref(&self) -> &DataLocation {
+        &self.location
+    }
+}
