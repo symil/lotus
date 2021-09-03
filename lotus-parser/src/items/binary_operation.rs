@@ -47,15 +47,15 @@ impl<'a> OperationTree<'a> {
                         let same_type = left_wasm.ty.is_compatible(&right_wasm.ty, context);
 
                         if left_result.is_none() {
-                            context.error(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.token, &left_wasm.ty));
+                            context.errors.add(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.token, &left_wasm.ty));
                         }
 
                         if right_result.is_none() {
-                            context.error(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.token, &right_wasm.ty));
+                            context.errors.add(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.token, &right_wasm.ty));
                         }
 
                         if left_result.is_some() && right_result.is_some() && !same_type {
-                            context.error(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.token, &left_wasm.ty, &right_wasm.ty));
+                            context.errors.add(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.token, &left_wasm.ty, &right_wasm.ty));
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {

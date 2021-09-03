@@ -50,12 +50,12 @@ impl ForBlock {
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_wasm), Some(range_end_wasm)) = (range_start_wasm_opt, range_end_wasm_opt) {
                 if !range_start_wasm.ty.is_integer() {
-                    context.error(&self.range_start, format!("range start: expected `{}`, got `{}`", Type::Integer, &range_start_wasm.ty));
+                    context.errors.add(&self.range_start, format!("range start: expected `{}`, got `{}`", Type::Integer, &range_start_wasm.ty));
                     ok = false;
                 }
 
                 if !range_end_wasm.ty.is_integer() {
-                    context.error(range_end, format!("range end: expected `{}`, got `{}`", Type::Integer, &range_end_wasm.ty));
+                    context.errors.add(range_end, format!("range end: expected `{}`, got `{}`", Type::Integer, &range_end_wasm.ty));
                     ok = false;
                 }
 
@@ -96,7 +96,7 @@ impl ForBlock {
         } else if let Some(array_wasm) = range_start_wasm_opt {
             if !array_wasm.ty.is_array() {
                 if !array_wasm.ty.is_void() {
-                    context.error(&self.range_start, format!("iterable: expected `{}`, got `{}`", Type::array(Type::Any(0)), &array_wasm.ty));
+                    context.errors.add(&self.range_start, format!("iterable: expected `{}`, got `{}`", Type::array(Type::Any(0)), &array_wasm.ty));
                 }
                 ok = false;
             }

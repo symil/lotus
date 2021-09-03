@@ -29,7 +29,7 @@ impl VarRef {
                     process_function_call(None, &function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
                 },
                 None => {
-                    context.error(&self.name, format!("undefined function `{}`", &self.name));
+                    context.errors.add(&self.name, format!("undefined function `{}`", &self.name));
                     None
                 },
             },
@@ -41,7 +41,7 @@ impl VarRef {
                 None => match context.get_struct_by_name(&self.name) {
                     Some(struct_annotation) => Some(Wasm::empty(Type::TypeRef(struct_annotation.get_struct_info()))),
                     None => {
-                        context.error(&self.name, format!("undefined variable or type `{}`", &self.name));
+                        context.errors.add(&self.name, format!("undefined variable or type `{}`", &self.name));
                         None
                     },
                 }
@@ -55,7 +55,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         match parent_type {
             Type::Struct(_) => {},
             _ => {
-                context.error(set_location, format!("cannot set field of non-struct value"));
+                context.errors.add(set_location, format!("cannot set field of non-struct value"));
                 return None;
             }
         }
@@ -76,7 +76,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         Type::Struct(struct_info) => {
             if field_name.is("_") {
                 if let AccessType::Set(set_location) = access_type {
-                    context.error(set_location, format!("cannot set special field `_`"));
+                    context.errors.add(set_location, format!("cannot set special field `_`"));
                     return None;
                 }
 
@@ -108,7 +108,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     };
 
     if result.is_none() {
-        context.error(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
+        context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
     }
 
     result
@@ -157,7 +157,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     if let Some(method_wasm) = method_info {
         result = process_function_call(Some(method_name), &method_wasm.ty, method_wasm.wat, arguments, access_type, context);
     } else if !parent_type.is_void() {
-        context.error(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
+        context.errors.add(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
     }
 
     result
@@ -165,7 +165,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
 
 pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &Type, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     if let AccessType::Set(set_location) = access_type  {
-        context.error(set_location, format!("cannot set result of a function call"));
+        context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
     }
 
@@ -178,7 +178,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
 
     if arguments.len() != expected_arguments.len() {
         let s = if expected_arguments.len() > 1 { "s" } else { "" };
-        context.error(arguments, format!("expected {} argument{}, got {}", expected_arguments.len(), s, arguments.as_vec().len()));
+        context.errors.add(arguments, format!("expected {} argument{}, got {}", expected_arguments.len(), s, arguments.as_vec().len()));
         ok = false;
     }
 
@@ -189,7 +189,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
             if expected_type.is_assignable_to(&arg_wasm.ty, context, &mut anonymous_types) {
                 source.push(arg_wasm);
             } else {
-                context.error(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_wasm.ty));
+                context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_wasm.ty));
                 ok = false;
             }
         } else {

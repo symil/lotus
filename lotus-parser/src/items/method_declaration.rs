@@ -21,17 +21,17 @@ impl MethodDeclaration {
             Some(MethodQualifier::Builtin) => {
                 if let Some((valid_qualifiers, _)) = get_builtin_method_info(&self.name) {
                     if !valid_qualifiers.iter().any(|qualifier| qualifier == &owner.qualifier) {
-                        context.error(&self.name, format!("method `@{}` can only be implemented on {}", &self.name, display_join(&valid_qualifiers)));
+                        context.errors.add(&self.name, format!("method `@{}` can only be implemented on {}", &self.name, display_join(&valid_qualifiers)));
                     }
 
                     self.check_self_as_builtin_method(context);
                 } else {
-                    context.error(self, format!("invalid built-in method name `@{}`", &self.name));
+                    context.errors.add(self, format!("invalid built-in method name `@{}`", &self.name));
                 }
             },
             Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
                 if !owner.qualifier.is_entity_qualifier() {
-                    context.error(self, "event callbacks can only be defined on an entity, world or user");
+                    context.errors.add(self, "event callbacks can only be defined on an entity, world or user");
                 }
 
                 self.check_self_as_event_callback(context);
@@ -41,18 +41,18 @@ impl MethodDeclaration {
                 }
 
                 if let Some(signature) = &self.signature {
-                    context.error(signature, "event callbacks do not take arguments nor have a return type");
+                    context.errors.add(signature, "event callbacks do not take arguments nor have a return type");
                 }
 
                 // no need to check for name unicity, multiple event callbacks on the same struct are allowed
             },
             Some(MethodQualifier::Static) | None => {
                 if !self.conditions.is_empty() {
-                    context.error(&self.conditions[0], format!("only event callbacks can have conditions"));
+                    context.errors.add(&self.conditions[0], format!("only event callbacks can have conditions"));
                 }
 
                 if self.signature.is_none() {
-                    context.error(&self.name, format!("missing method arguments"));
+                    context.errors.add(&self.name, format!("missing method arguments"));
                 }
 
                 if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
@@ -65,7 +65,7 @@ impl MethodDeclaration {
                     this_type = method_this_type;
 
                     if method_exists {
-                        context.error(&self.name, format!("duplicate method declaration: method `{}` already exists", &self.name));
+                        context.errors.add(&self.name, format!("duplicate method declaration: method `{}` already exists", &self.name));
                     }
                 }
             },
@@ -185,7 +185,7 @@ impl MethodDeclaration {
         }
 
         if context.function_return_type.is_some() && !context.return_found {
-            context.error(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
+            context.errors.add(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
             ok = false;
         }
 
@@ -208,11 +208,11 @@ impl MethodDeclaration {
 
     fn check_self_as_builtin_method(&self, context: &mut ProgramContext) {
         if !self.conditions.is_empty() {
-            context.error(&self.conditions[0], format!("only event callbacks can have conditions"));
+            context.errors.add(&self.conditions[0], format!("only event callbacks can have conditions"));
         }
 
         if let Some(signature) = &self.signature {
-            context.error(signature, format!("built-in methods do not take arguments nor have a return type"));
+            context.errors.add(signature, format!("built-in methods do not take arguments nor have a return type"));
         }
     }
 
@@ -226,7 +226,7 @@ impl MethodDeclaration {
         }
 
         if !ok {
-            context.error(self, format!("event callback methods must be named after event names; `{}` is not an event name", &self.name));
+            context.errors.add(self, format!("event callback methods must be named after event names; `{}` is not an event name", &self.name));
         }
     }
 }

@@ -95,7 +95,7 @@ impl Type {
                 None => match context.get_struct_by_name(&value_type.name) {
                     Some(annotation) => Self::Struct(annotation.get_struct_info()),
                     None => {
-                        context.error(&value_type.name, format!("undefined type: {}", &value_type.name));
+                        context.errors.add(&value_type.name, format!("undefined type: {}", &value_type.name));
                         return None
                     },
                 },

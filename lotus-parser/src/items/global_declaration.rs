@@ -35,7 +35,7 @@ impl GlobalDeclaration {
             };
 
             if context.get_global_by_name(&self.var_declaration.var_name).is_some() {
-                context.error(&self.var_declaration.var_name, format!("duplicate global declaration: `{}`", &self.var_declaration.var_name));
+                context.errors.add(&self.var_declaration.var_name, format!("duplicate global declaration: `{}`", &self.var_declaration.var_name));
             }
 
             context.add_global(global_annotation);

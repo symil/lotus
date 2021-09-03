@@ -21,7 +21,7 @@ impl BracketIndexing {
             if &wasm.ty == &Type::Integer {
                 indexing_ok = true;
             } else {
-                context.error(&self.index_expr, format!("bracket indexing argument: expected `{}`, got `{}`", Type::Integer, &wasm.ty));
+                context.errors.add(&self.index_expr, format!("bracket indexing argument: expected `{}`, got `{}`", Type::Integer, &wasm.ty));
             }
 
             index_wasm = wasm;
@@ -36,7 +36,7 @@ impl BracketIndexing {
                         result = Some(Wasm::merge(Type::String, source));
                     },
                     AccessType::Set(location) => {
-                        context.error(location, format!("strings are immutable"));
+                        context.errors.add(location, format!("strings are immutable"));
                     },
                 }
             },
@@ -65,7 +65,7 @@ impl BracketIndexing {
             },
             _ => {
                 if !parent_type.is_void() {
-                    context.error(&self.index_expr, format!("bracket indexing target: expected `{}`, `{}` or `{}`, got `{}`", Type::String, Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
+                    context.errors.add(&self.index_expr, format!("bracket indexing target: expected `{}`, `{}` or `{}`, got `{}`", Type::String, Type::array(Type::Any(0)), Type::pointer(Type::Integer), parent_type));
                 }
             }
         }

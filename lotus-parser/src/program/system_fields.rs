@@ -63,7 +63,7 @@ pub fn post_process_system_method_call(method_name: &Identifier, arg_types: &[Ty
             Type::Struct(struct_info) => Wat::call_from_stack(MEMORY_RETAIN_OBJECT_FUNC_NAME),
             Type::Pointer(_) => Wat::call_from_stack(MEMORY_RETAIN_FUNC_NAME),
             _ => {
-                context.error(method_name, format!("cannot call `@retain` on non-struct type `{}`", arg_types[0]));
+                context.errors.add(method_name, format!("cannot call `@retain` on non-struct type `{}`", arg_types[0]));
                 wat![""]
             }
         },

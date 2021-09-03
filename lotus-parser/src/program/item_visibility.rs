@@ -5,3 +5,9 @@ pub enum ItemVisibility {
     Export,
     System,
 }
+
+impl Default for ItemVisibility {
+    fn default() -> Self {
+        Self::Private
+    }
+}

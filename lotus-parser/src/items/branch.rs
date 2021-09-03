@@ -25,7 +25,7 @@ impl Branch {
                     source.push(convert_wasm);
                     result = Some(Wasm::merge(Type::Boolean, source));
                 } else {
-                    context.error(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
+                    context.errors.add(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
                 }
             }
         }

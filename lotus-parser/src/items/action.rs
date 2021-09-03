@@ -33,19 +33,19 @@ impl Action {
                                     result = Some(Wasm::merge(Type::Void, source));
                                 } else {
                                     if !wasm.ty.is_void() {
-                                        context.error(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
+                                        context.errors.add(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
                                     }
                                 }
                             }
                         },
                         None => {
-                            context.error(self, format!("return: expected `{}`, got `{}`", return_type, Type::Void));
+                            context.errors.add(self, format!("return: expected `{}`, got `{}`", return_type, Type::Void));
                         },
                     },
                     None => match &self.value {
                         Some(expr) => {
                             if let Some(wasm) = expr.process(context) {
-                                context.error(expr, format!("return: expected `{}`, got `{}`", Type::Void, &wasm.ty));
+                                context.errors.add(expr, format!("return: expected `{}`, got `{}`", Type::Void, &wasm.ty));
                             }
                         },
                         None => {
@@ -57,7 +57,7 @@ impl Action {
             ActionKeywordToken::Break | ActionKeywordToken::Continue => {
                 if let Some(value) = &self.value {
                     value.process(context);
-                    context.error(value, format!("keyword `{}` must not be followed by an expression", &self.keyword.token));
+                    context.errors.add(value, format!("keyword `{}` must not be followed by an expression", &self.keyword.token));
                 } else {
                     match context.get_scope_depth(ScopeKind::Loop) {
                         Some(depth) => {
@@ -68,7 +68,7 @@ impl Action {
                             }
                         },
                         None => {
-                            context.error(&self.keyword, format!("keyword `{}` can only be used from inside a loop", &self.keyword.token));
+                            context.errors.add(&self.keyword, format!("keyword `{}` can only be used from inside a loop", &self.keyword.token));
                         }
                     }
                 }

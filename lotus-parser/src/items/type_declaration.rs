@@ -28,49 +28,31 @@ pub struct TypeDeclarationBody {
 }
 
 impl StructDeclaration {
-    pub fn process_name(&self, context: &mut ProgramContext) {
-        if is_forbidden_identifier(&self.name) {
-            context.error(self, format!("forbidden struct name: {}", &self.name));
-        } else {
-            let type_blueprint = TypeBlueprint {
-                id: self.location.get_hash(),
-                name: self.name.to_string(),
-                location: self.location.clone(),
-                visibility: self.visibility.to_item_visibility(),
-                stack_type: self.stack_repr.as_ref().and_then(|repr| Some(repr.get_stack_type())).unwrap_or(StackType::Pointer),
-                generics: self.generics.process_as_parameters(context),
-                fields: IndexMap::new(),
-                static_fields: IndexMap::new(),
-                methods: IndexMap::new(),
-                static_methods: IndexMap::new(),
-                hook_event_callbacks: IndexMap::new(),
-                before_event_callbacks: IndexMap::new(),
-                after_event_callbacks: IndexMap::new(),
-            };
-            
-            if context.types.get_by_name(&self.name).is_some() {
-                context.error(&self.name, format!("duplicate type declaration: `{}`", &self.name));
-            }
-
-            context.types.insert(type_blueprint);
-
-            // if self.qualifier == StructQualifier::World {
-            //     if let Some(current_world) = &context.world_struct_name {
-            //         context.error(self, format!("re-declaration of world structure"));
-            //     } else {
-            //         context.world_struct_name = Some(self.name.clone());
-            //     }
-            // } else if self.qualifier == StructQualifier::User {
-            //     if let Some(current_user) = &context.user_struct_name {
-            //         context.error(self, format!("re-declaration of user structure"));
-            //     } else {
-            //         context.user_struct_name = Some(self.name.clone());
-            //     }
-            // }
+    pub fn process_name(&self, context: &mut ProgramContext) -> TypeBlueprint {
+        let type_blueprint = TypeBlueprint {
+            id: self.location.get_hash(),
+            name: self.name.to_string(),
+            location: self.location.clone(),
+            visibility: self.visibility.to_item_visibility(),
+            stack_type: self.stack_repr.as_ref().and_then(|repr| Some(repr.get_stack_type())).unwrap_or(StackType::Pointer),
+            generics: self.generics.process_as_parameters(context),
+            fields: IndexMap::new(),
+            static_fields: IndexMap::new(),
+            methods: IndexMap::new(),
+            static_methods: IndexMap::new(),
+            hook_event_callbacks: IndexMap::new(),
+            before_event_callbacks: IndexMap::new(),
+            after_event_callbacks: IndexMap::new(),
+        };
+        
+        if context.types.get_by_name(&self.name).is_some() {
+            context.errors.add(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
+
+        type_blueprint
     }
 
-    pub fn process_parent(&self, context: &mut ProgramContext) {
+    pub fn process_parent(&self, type_blueprint: &mut TypeBlueprint, context: &mut ProgramContext) {
         let mut errors = vec![];
         let mut final_parent = None;
 
@@ -88,7 +70,7 @@ impl StructDeclaration {
             }
         }
 
-        context.errors.extend(errors);
+        context.errors.adds.extend(errors);
 
         if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.parent = final_parent;
@@ -116,7 +98,7 @@ impl StructDeclaration {
             }
         }
 
-        context.errors.extend(errors);
+        context.errors.adds.extend(errors);
 
         if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.types = types;
@@ -130,10 +112,10 @@ impl StructDeclaration {
 
         for field in &self.body.fields {
             if is_forbidden_identifier(&field.name) {
-                context.error(&field.name, format!("forbidden field name '{}'", &self.name));
+                context.errors.add(&field.name, format!("forbidden field name '{}'", &self.name));
             } else {
                 if fields.contains_key(&field.name) {
-                    context.error(&field.name, format!("duplicate field `{}`", &self.name));
+                    context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
                 }
 
                 if let Some(field_type) = Type::from_parsed_type(&field.ty, context) {
@@ -163,7 +145,7 @@ impl StructDeclaration {
 
                         fields.insert(field.name.clone(), field_details);
                     } else {
-                        context.error(&field.name, format!("forbidden field type: `{}`", field_type));
+                        context.errors.add(&field.name, format!("forbidden field type: `{}`", field_type));
                     }
                 }
             }
@@ -201,7 +183,7 @@ impl StructDeclaration {
             }
         }
 
-        context.errors.extend(errors);
+        context.errors.adds.extend(errors);
 
         if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
             struct_annotation.fields = fields;

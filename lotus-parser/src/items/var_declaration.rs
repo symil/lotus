@@ -23,7 +23,7 @@ impl VarDeclaration {
 
         if let Some(wasm) = self.init_value.process(context) {
             if !wasm.ty.is_assignable() {
-                context.error(&self.init_value, format!("cannot assign type `{}`", &wasm.ty));
+                context.errors.add(&self.init_value, format!("cannot assign type `{}`", &wasm.ty));
             } else {
                 match &self.var_type {
                     Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
@@ -34,7 +34,7 @@ impl VarDeclaration {
                                 final_var_type = var_type;
                                 ok = true;
                             } else {
-                                context.error(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &wasm.ty, &var_type));
+                                context.errors.add(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &wasm.ty, &var_type));
                             }
                         },
                         None => {}
@@ -44,7 +44,7 @@ impl VarDeclaration {
                             final_var_type = wasm.ty.clone();
                             ok = true;
                         } else {
-                            context.error(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &wasm.ty));
+                            context.errors.add(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &wasm.ty));
                         }
                     }
                 };

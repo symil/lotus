@@ -1,6 +1,7 @@
 use parsable::DataLocation;
 use super::{GlobalItem, ItemVisibility};
 
+#[derive(Debug)]
 pub struct GlobalVarBlueprint {
     pub id: u64,
     pub name: String,

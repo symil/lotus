@@ -17,7 +17,7 @@ impl MethodConditionOperand {
         };
 
         if !self.has_prefix(&required_prefix) {
-            context.error(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
+            context.errors.add(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
         }
 
         if let Some(target_struct) = context.get_struct_by_name(target_struct_name) {
@@ -33,10 +33,10 @@ impl MethodConditionOperand {
                 }
 
                 if !ok {
-                    context.error(&self.field_name, format!("event callback condition: {}-side must refer to an entity field (`entity`, `world` or `user` qualifier)", side));
+                    context.errors.add(&self.field_name, format!("event callback condition: {}-side must refer to an entity field (`entity`, `world` or `user` qualifier)", side));
                 }
             } else {
-                context.error(&self.field_name, format!("type `{}` does not have a `{}` field", method_name, &self.field_name));
+                context.errors.add(&self.field_name, format!("type `{}` does not have a `{}` field", method_name, &self.field_name));
             }
         }
     }

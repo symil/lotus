@@ -21,7 +21,7 @@ impl Assignment {
             if let Some(left_wasm) = left_wasm_opt {
                 if let Some(right_wasm) = right_wasm_opt {
                     if !right_wasm.ty.is_assignable() {
-                        context.error(rvalue, format!("cannot assign type `{}`", &right_wasm.ty));
+                        context.errors.add(rvalue, format!("cannot assign type `{}`", &right_wasm.ty));
                     } else if left_wasm.ty.is_assignable_to(&right_wasm.ty, context, &mut HashMap::new()) {
                         let mut source = vec![];
                         let mut ok = true;
@@ -46,7 +46,7 @@ impl Assignment {
                                     source.push(right_wasm);
                                     source.push(operator_wasm);
                                 } else {
-                                    context.error(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
+                                    context.errors.add(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
                                     ok = false;
                                 }
                             }
@@ -60,7 +60,7 @@ impl Assignment {
                             result = Some(Wasm::merge(Type::Void, source));
                         }
                     } else {
-                        context.error(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
+                        context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
                     }
                 }
             }

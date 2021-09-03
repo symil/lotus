@@ -25,15 +25,15 @@ impl FunctionDeclaration {
 
         if self.name.as_str() == "main" {
             if !arguments.is_empty() {
-                context.error(&self.name, format!("main function must not take any argument"));
+                context.errors.add(&self.name, format!("main function must not take any argument"));
             }
 
             if !return_type.is_void() {
-                context.error(&self.name, format!("main function must not have a return type"));
+                context.errors.add(&self.name, format!("main function must not have a return type"));
             }
 
             if visibility != VisibilityToken::Export {
-                context.error(&self.name, format!("main function must be declared with the `export` visibility"));
+                context.errors.add(&self.name, format!("main function must be declared with the `export` visibility"));
             }
         }
 
@@ -57,7 +57,7 @@ impl FunctionDeclaration {
         };
 
         if context.get_function_by_name(&self.name).is_some() {
-            context.error(&self.name, format!("duplicate function declaration: `{}`", &self.name));
+            context.errors.add(&self.name, format!("duplicate function declaration: `{}`", &self.name));
         }
         
         context.add_function(function_annotation);
@@ -124,7 +124,7 @@ impl FunctionDeclaration {
         }
 
         if context.function_return_type.is_some() && !context.return_found {
-            context.error(&self.signature.return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
+            context.errors.add(&self.signature.return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
             ok = false;
         }
 

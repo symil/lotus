@@ -32,6 +32,7 @@ mod wasm_blueprint;
 mod function_instance;
 mod global_var_blueprint;
 mod item_visibility;
+mod error_list;
 
 pub use error::*;
 pub use program::*;
@@ -67,3 +68,4 @@ pub use function_instance::*;
 pub use wasm_blueprint::*;
 pub use global_var_blueprint::*;
 pub use item_visibility::*;
+pub use error_list::*;

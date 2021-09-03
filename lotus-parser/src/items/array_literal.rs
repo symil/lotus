@@ -44,7 +44,7 @@ impl ArrayLiteral {
                 wat.push(Wat::call_from_stack(func_name));
 
                 if !item_ok {
-                    context.error(item, format!("array literal: incompatible item types `{}` and `{}`", &final_type, &item_wasm.ty));
+                    context.errors.add(item, format!("array literal: incompatible item types `{}` and `{}`", &final_type, &item_wasm.ty));
                 }
             }
 

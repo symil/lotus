@@ -37,7 +37,7 @@ impl ObjectLiteral {
                 Wat::set_local_from_stack(&object_var_name)
             ]);
         } else {
-            context.error(&self.type_name, format!("undefined structure `{}`", &self.type_name));
+            context.errors.add(&self.type_name, format!("undefined structure `{}`", &self.type_name));
             ok = false;
         }
 
@@ -95,7 +95,7 @@ impl ObjectLiteral {
             ok = false;
         }
 
-        context.errors.extend(errors);
+        context.errors.adds.extend(errors);
 
         match ok {
             true => Some(Wasm::new(Type::Struct(struct_info), wat, variables)),

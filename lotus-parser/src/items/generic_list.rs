@@ -17,7 +17,7 @@ impl GenericList {
 
         for identifier in &self.list {
             if !set.insert(identifier.to_string()) {
-                context.error(identifier, format!("duplicate generic type parameter `{}`", identifier));
+                context.errors.add(identifier, format!("duplicate generic type parameter `{}`", identifier));
             }
         }
 

@@ -42,7 +42,7 @@ impl VarPathRoot {
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
-                context.error(set_location, format!("cannot assign value to a literal"));
+                context.errors.add(set_location, format!("cannot assign value to a literal"));
 
                 return None;
             }

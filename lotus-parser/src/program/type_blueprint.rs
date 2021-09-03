@@ -2,7 +2,7 @@ use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use super::{GlobalItem, ValueType, ItemVisibility};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TypeBlueprint {
     pub id: u64,
     pub name: String,
@@ -40,9 +40,21 @@ pub struct MethodDetails {
     pub is_from_self: usize
 }
 
+impl TypeBlueprint {
+    pub fn is_class(&self) -> bool {
+        self.stack_type == StackType::Pointer
+    }
+}
+
 impl GlobalItem for TypeBlueprint {
     fn get_id(&self) -> u64 { self.id }
     fn get_name(&self) -> &str { &self.name }
     fn get_location(&self) -> &DataLocation { &self.location }
     fn get_visibility(&self) -> ItemVisibility { self.visibility }
+}
+
+impl Default for StackType {
+    fn default() -> Self {
+        Self::Void
+    }
 }

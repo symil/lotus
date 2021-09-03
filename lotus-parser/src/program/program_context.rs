@@ -1,7 +1,7 @@
-use std::{collections::{HashMap, HashSet}, mem::take, ops::Deref};
+use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref};
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructAnnotation, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind};
+use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind};
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
@@ -11,7 +11,7 @@ pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
-    pub errors: Vec<Error>,
+    pub errors: ErrorList,
 
     pub types: ItemIndex<TypeBlueprint>,
     pub functions: ItemIndex<FunctionBlueprint>,
@@ -27,10 +27,6 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn error<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) {
-        self.errors.push(Error::located(location, error));
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -87,7 +83,7 @@ impl ProgramContext {
         let is_unique = self.get_var_info(name).is_none();
 
         if !is_unique {
-            self.error(name, format!("variable `{}` already exists in this scope", name));
+            self.errors.add(name, format!("variable `{}` already exists in this scope", name));
         }
 
         is_unique
@@ -257,16 +253,4 @@ impl ProgramContext {
         
         Ok(content.to_string(0))
     }
-}
-
-fn get_globals_sorted(mut map: ItemIndex<GlobalVarInstance>) -> Vec<GlobalVarInstance> {
-    let mut list = vec![];
-
-    for global in map.id_to_item.into_values() {
-        list.push(global);
-    }
-
-    list.sort_by_key(|global| global.metadata.id);
-
-    list
 }

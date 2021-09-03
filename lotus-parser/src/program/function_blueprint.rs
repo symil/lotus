@@ -11,7 +11,7 @@ pub struct FunctionBlueprint {
     pub visibility: ItemVisibility,
     pub generics: IndexSet<String>,
     pub owner: Option<u64>,
-    pub self_type: Option<ValueType>,
+    pub this_type: Option<ValueType>,
     pub payload_type: Option<ValueType>,
     pub arguments: Vec<(String, ValueType)>,
     pub return_type: Option<ValueType>,
@@ -24,7 +24,7 @@ impl FunctionBlueprint {
     }
 
     pub fn is_static(&self) -> bool {
-        self.self_type.is_none()
+        self.this_type.is_none()
     }
 }
 

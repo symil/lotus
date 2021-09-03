@@ -22,7 +22,7 @@ impl FunctionSignature {
             let arg_name = argument.name.clone();
 
             if !arg_names.insert(arg_name.clone()) {
-                context.error(&arg_name, format!("duplicate argument: {}", &arg_name));
+                context.errors.add(&arg_name, format!("duplicate argument: {}", &arg_name));
             }
 
             if let Some(arg_type) = Type::from_parsed_type(&argument.ty, context) {

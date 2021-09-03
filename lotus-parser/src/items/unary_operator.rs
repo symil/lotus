@@ -44,7 +44,7 @@ impl UnaryOperator {
         match result {
             Some(wasm) => Some(wasm),
             None => {
-                context.error(&self, format!("unary operator {}: invalid operand type `{}`", &self.token, &operand_type));
+                context.errors.add(&self, format!("unary operator {}: invalid operand type `{}`", &self.token, &operand_type));
                 None
             }
         }

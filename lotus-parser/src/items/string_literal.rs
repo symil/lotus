@@ -37,7 +37,7 @@ impl StringLiteral {
                 if let Some(unescaped_char) = unescaped_char_opt {
                     unescaped_chars.push(unescaped_char as u32);
                 } else {
-                    context.error(self, format!("invalid character '\\{}'", c));
+                    context.errors.add(self, format!("invalid character '\\{}'", c));
                     ok = false;
                 }
 
