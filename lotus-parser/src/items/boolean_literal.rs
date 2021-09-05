@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::Wat, program::{ProgramContext, TypeOld, Wasm}};
 
 #[parsable(name="boolean")]
 pub struct BooleanLiteral {
@@ -19,6 +19,6 @@ impl BooleanLiteral {
             }
         };
 
-        Some(Wasm::simple(Type::Boolean, Wat::const_i32(i32_value)))
+        Some(Wasm::simple(TypeOld::Boolean, Wat::const_i32(i32_value)))
     }
 }

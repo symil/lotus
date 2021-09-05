@@ -1,18 +1,16 @@
 use indexmap::IndexSet;
 use parsable::parsable;
-
 use crate::program::ProgramContext;
-
 use super::Identifier;
 
 #[parsable]
-pub struct GenericList {
+pub struct GenericParameters {
     #[parsable(brackets="<>", separator=",", optional=true)]
     list: Vec<Identifier>
 }
 
-impl GenericList {
-    pub fn process_as_parameters(&self, context: &mut ProgramContext) -> IndexSet<String> {
+impl GenericParameters {
+    pub fn process(&self, context: &mut ProgramContext) -> IndexSet<String> {
         let mut set = IndexSet::new();
 
         for identifier in &self.list {

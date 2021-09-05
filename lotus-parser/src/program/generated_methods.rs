@@ -1,5 +1,5 @@
 use crate::{generation::{DEREF_INT_POINTER_GET_FUNC_NAME, LOG_INT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, Wat}, program::{ARRAY_BODY_ADDR_OFFSET, ARRAY_LENGTH_OFFSET, struct_annotation}, wat};
-use super::{ProgramContext, StructAnnotation, Type, VariableGenerator};
+use super::{ProgramContext, StructAnnotation, TypeOld, VariableGenerator};
 
 #[derive(Debug)]
 pub struct GeneratedMethods {
@@ -14,27 +14,27 @@ impl GeneratedMethods {
     }
 }
 
-fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut VariableGenerator) -> (Vec<Wat>, Vec<String>) {
+fn get_retain_statements(ty: &TypeOld, value_name: &str, var_generator: &mut VariableGenerator) -> (Vec<Wat>, Vec<String>) {
     let mut locals = vec![];
     let body = match ty {
-        Type::Void => unreachable!(),
-        Type::System => unreachable!(),
-        Type::Boolean => vec![],
-        Type::Integer => vec![],
-        Type::Float => vec![],
-        Type::String => vec![
+        TypeOld::Void => unreachable!(),
+        TypeOld::System => unreachable!(),
+        TypeOld::Boolean => vec![],
+        TypeOld::Integer => vec![],
+        TypeOld::Float => vec![],
+        TypeOld::String => vec![
             Wat::call(MEMORY_RETAIN_FUNC_NAME, vec![Wat::get_local(value_name)]),
             wat!["drop"]
         ],
-        Type::Null => unreachable!(),
-        Type::Generic(_) => unreachable!(),
-        Type::TypeRef(_) => unreachable!(),
-        Type::Pointer(_) => vec![],
-        Type::Struct(_) => vec![
+        TypeOld::Null => unreachable!(),
+        TypeOld::Generic(_) => unreachable!(),
+        TypeOld::TypeRef(_) => unreachable!(),
+        TypeOld::Pointer(_) => vec![],
+        TypeOld::Struct(_) => vec![
             Wat::call(MEMORY_RETAIN_OBJECT_FUNC_NAME, vec![Wat::get_local(value_name)]),
             wat!["drop"]
         ],
-        Type::Array(item_type) => {
+        TypeOld::Array(item_type) => {
             let mut lines = vec![];
             let body_var_name = var_generator.generate("body");
             let length_var_name = var_generator.generate("length");
@@ -75,8 +75,8 @@ fn get_retain_statements(ty: &Type, value_name: &str, var_generator: &mut Variab
 
             vec![result]
         },
-        Type::Function(_, _) => todo!(),
-        Type::Any(_) => unreachable!(),
+        TypeOld::Function(_, _) => todo!(),
+        TypeOld::Any(_) => unreachable!(),
     };
 
     (body, locals)

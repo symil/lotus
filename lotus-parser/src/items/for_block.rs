@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_BODY_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, Type, VariableKind, Wasm}, wat};
+use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_BODY_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, TypeOld, VariableKind, Wasm}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -50,20 +50,20 @@ impl ForBlock {
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_wasm), Some(range_end_wasm)) = (range_start_wasm_opt, range_end_wasm_opt) {
                 if !range_start_wasm.ty.is_integer() {
-                    context.errors.add(&self.range_start, format!("range start: expected `{}`, got `{}`", Type::Integer, &range_start_wasm.ty));
+                    context.errors.add(&self.range_start, format!("range start: expected `{}`, got `{}`", TypeOld::Integer, &range_start_wasm.ty));
                     ok = false;
                 }
 
                 if !range_end_wasm.ty.is_integer() {
-                    context.errors.add(range_end, format!("range end: expected `{}`, got `{}`", Type::Integer, &range_end_wasm.ty));
+                    context.errors.add(range_end, format!("range end: expected `{}`, got `{}`", TypeOld::Integer, &range_end_wasm.ty));
                     ok = false;
                 }
 
                 let range_end_var_name = Identifier::unique("range_end", self);
 
-                let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
-                let item_var_info = context.push_var(&item_var_name, &Type::Integer, VariableKind::Local);
-                let range_end_var_info = context.push_var(&range_end_var_name, &Type::Integer, VariableKind::Local);
+                let index_var_info = context.push_var(&index_var_name, &TypeOld::Integer, VariableKind::Local);
+                let item_var_info = context.push_var(&item_var_name, &TypeOld::Integer, VariableKind::Local);
+                let range_end_var_info = context.push_var(&range_end_var_name, &TypeOld::Integer, VariableKind::Local);
 
                 if let Some(block_wasm) = self.statements.process(context) {
                     content.extend(range_start_wasm.wat);
@@ -96,7 +96,7 @@ impl ForBlock {
         } else if let Some(array_wasm) = range_start_wasm_opt {
             if !array_wasm.ty.is_array() {
                 if !array_wasm.ty.is_void() {
-                    context.errors.add(&self.range_start, format!("iterable: expected `{}`, got `{}`", Type::array(Type::Any(0)), &array_wasm.ty));
+                    context.errors.add(&self.range_start, format!("iterable: expected `{}`, got `{}`", TypeOld::array(TypeOld::Any(0)), &array_wasm.ty));
                 }
                 ok = false;
             }
@@ -104,9 +104,9 @@ impl ForBlock {
             let array_var_name = Identifier::unique("array", self);
             let array_len_var_name = Identifier::unique("array_len", self);
 
-            let array_var_info = context.push_var(&array_var_name, &Type::int_pointer(), VariableKind::Local);
-            let array_len_var_info = context.push_var(&array_len_var_name, &Type::Integer, VariableKind::Local);
-            let index_var_info = context.push_var(&index_var_name, &Type::Integer, VariableKind::Local);
+            let array_var_info = context.push_var(&array_var_name, &TypeOld::int_pointer(), VariableKind::Local);
+            let array_len_var_info = context.push_var(&array_len_var_name, &TypeOld::Integer, VariableKind::Local);
+            let index_var_info = context.push_var(&index_var_name, &TypeOld::Integer, VariableKind::Local);
             let item_var_info = context.push_var(&item_var_name, array_wasm.ty.get_item_type(), VariableKind::Local);
 
             let ptr_get_func_name = item_var_info.ty.pointer_get_function_name();
@@ -148,7 +148,7 @@ impl ForBlock {
         context.return_found = return_found;
 
         match ok {
-            true => Some(Wasm::new(Type::Void, content, variables)),
+            true => Some(Wasm::new(TypeOld::Void, content, variables)),
             false => None
         }
     }

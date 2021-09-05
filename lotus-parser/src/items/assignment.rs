@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, Type, Wasm}, wat};
+use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, TypeOld, Wasm}, wat};
 use super::{AssignmentOperator, Expression, VarPath};
 
 #[parsable]
@@ -57,7 +57,7 @@ impl Assignment {
                         source.push(left_wasm);
 
                         if ok {
-                            result = Some(Wasm::merge(Type::Void, source));
+                            result = Some(Wasm::merge(TypeOld::Void, source));
                         }
                     } else {
                         context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
@@ -70,10 +70,10 @@ impl Assignment {
                 let mut source = vec![wasm];
 
                 if !is_void {
-                    source.push(Wasm::new(Type::Void, wat!["drop"], vec![]));
+                    source.push(Wasm::new(TypeOld::Void, wat!["drop"], vec![]));
                 }
 
-                result = Some(Wasm::merge(Type::Void, source));
+                result = Some(Wasm::merge(TypeOld::Void, source));
             }
         }
 

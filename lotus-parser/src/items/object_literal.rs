@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, Type, VariableInfo, VariableKind, Wasm}};
+use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, TypeOld, VariableInfo, VariableKind, Wasm}};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -27,7 +27,7 @@ impl ObjectLiteral {
 
         let object_var_name = Identifier::unique("object", self).to_unique_string();
         let variables = vec![
-            VariableInfo::new(object_var_name.clone(), Type::Integer, VariableKind::Local),
+            VariableInfo::new(object_var_name.clone(), TypeOld::Integer, VariableKind::Local),
         ];
 
         if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
@@ -98,7 +98,7 @@ impl ObjectLiteral {
         context.errors.adds.extend(errors);
 
         match ok {
-            true => Some(Wasm::new(Type::Struct(struct_info), wat, variables)),
+            true => Some(Wasm::new(TypeOld::Struct(struct_info), wat, variables)),
             false => None
         }
     }

@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, TypeOld, Wasm}};
 
 #[parsable(name="null")]
 pub struct NullLiteral {
@@ -10,6 +10,6 @@ pub struct NullLiteral {
 
 impl NullLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        Some(Wasm::simple(Type::Null, Wat::const_i32(NULL_ADDR)))
+        Some(Wasm::simple(TypeOld::Null, Wat::const_i32(NULL_ADDR)))
     }
 }

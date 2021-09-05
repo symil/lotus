@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, Type, Wasm}, wat};
+use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, TypeOld, Wasm}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -58,7 +58,7 @@ impl StringLiteral {
         }
 
         match ok {
-            true => Some(Wasm::new(Type::String, wat, vec![])),
+            true => Some(Wasm::new(TypeOld::String, wat, vec![])),
             false => None
         }
     }

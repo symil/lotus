@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, ProgramContext, Type, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, ProgramContext, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
 use super::Expression;
 
 #[parsable]
@@ -14,12 +14,12 @@ impl ArrayLiteral {
         let array_var_name = Identifier::unique("array", self).to_unique_string();
         let array_body_var_name = Identifier::unique("array_body", self).to_unique_string();
         let variables = vec![
-            VariableInfo::new(array_var_name.clone(), Type::Integer, VariableKind::Local),
-            VariableInfo::new(array_body_var_name.clone(), Type::Integer, VariableKind::Local),
+            VariableInfo::new(array_var_name.clone(), TypeOld::Integer, VariableKind::Local),
+            VariableInfo::new(array_body_var_name.clone(), TypeOld::Integer, VariableKind::Local),
         ];
 
         let mut all_items_ok = true;
-        let mut final_type = Type::Any(0);
+        let mut final_type = TypeOld::Any(0);
         let mut wat = vec![
             Wat::set_local(&array_var_name, Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(self.items.len())])),
             Wat::set_local(&array_body_var_name, Wat::call(ARRAY_GET_BODY_FUNC_NAME, vec![Wat::get_local(&array_var_name)]))
@@ -54,7 +54,7 @@ impl ArrayLiteral {
         wat.push(Wat::get_local(&array_var_name));
 
         match all_items_ok {
-            true => Some(Wasm::new(Type::array(final_type), wat, variables)),
+            true => Some(Wasm::new(TypeOld::array(final_type), wat, variables)),
             false => None
         }
     }

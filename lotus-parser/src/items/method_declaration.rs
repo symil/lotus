@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, StructInfo, Type, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap, RESULT_VAR_NAME, THIS_VAR_NAME}};
+use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, StructInfo, TypeOld, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap, RESULT_VAR_NAME, THIS_VAR_NAME}};
 use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StatementList, StructDeclaration, TypeQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
@@ -58,7 +58,7 @@ impl MethodDeclaration {
                 if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
                     let (method_exists, method_this_type) = match &self.qualifier {
                         Some(MethodQualifier::Static) => (struct_annotation.static_methods.contains_key(&self.name), None),
-                        None => (struct_annotation.regular_methods.contains_key(&self.name), Some(Type::Struct(struct_annotation.get_struct_info()))),
+                        None => (struct_annotation.regular_methods.contains_key(&self.name), Some(TypeOld::Struct(struct_annotation.get_struct_info()))),
                         _ => unreachable!()
                     };
 
@@ -77,13 +77,13 @@ impl MethodDeclaration {
                 name: self.name.clone(),
                 file_name: context.get_current_file_name(),
                 file_namespace: context.get_current_file_namespace(),
-                visibility: VisibilityToken::Private,
+                visibility: Visibility::Private,
             },
             wasm_name: format!("{}_{}_{}_{}", &owner.name, owner_index, &self.name, method_index),
             this_type: this_type,
             payload_type: payload_type,
             arguments: vec![],
-            return_type: Type::Void,
+            return_type: TypeOld::Void,
             wat: Wat::default(),
         };
 
@@ -130,7 +130,7 @@ impl MethodDeclaration {
 
             if let Some(method_annotation) = hashmap.get(&self.name) {
                 return_type = match method_annotation.return_type {
-                    Type::Void => None,
+                    TypeOld::Void => None,
                     _ => Some(method_annotation.return_type.clone())
                 };
                 arguments = method_annotation.arguments.clone();

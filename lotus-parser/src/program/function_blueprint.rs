@@ -1,7 +1,7 @@
 use indexmap::IndexSet;
 use parsable::DataLocation;
 use crate::{generation::Wat};
-use super::{FunctionInstance, GlobalItem, ProgramContext, ValueType, ItemVisibility, WasmBlueprint};
+use super::{FunctionInstance, GlobalItem, ProgramContext, Type, ItemVisibility, WasmBlueprint};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -11,10 +11,10 @@ pub struct FunctionBlueprint {
     pub visibility: ItemVisibility,
     pub generics: IndexSet<String>,
     pub owner: Option<u64>,
-    pub this_type: Option<ValueType>,
-    pub payload_type: Option<ValueType>,
-    pub arguments: Vec<(String, ValueType)>,
-    pub return_type: Option<ValueType>,
+    pub this_type: Option<Type>,
+    pub payload_type: Option<Type>,
+    pub arguments: Vec<(String, Type)>,
+    pub return_type: Option<Type>,
     pub body: Vec<Wat>
 }
 

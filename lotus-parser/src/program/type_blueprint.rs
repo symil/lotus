@@ -1,13 +1,14 @@
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use super::{GlobalItem, ValueType, ItemVisibility};
+use crate::items::{StackType, Visibility};
+use super::{GlobalItem, Type};
 
 #[derive(Debug, Default)]
 pub struct TypeBlueprint {
     pub id: u64,
     pub name: String,
     pub location: DataLocation,
-    pub visibility: ItemVisibility,
+    pub visibility: Visibility,
     pub stack_type: StackType,
     pub generics: IndexSet<String>,
     pub fields: IndexMap<String, FieldDetails>,
@@ -19,17 +20,9 @@ pub struct TypeBlueprint {
     pub after_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum StackType {
-    Void,
-    Int,
-    Float,
-    Pointer,
-}
-
 #[derive(Debug)]
 pub struct FieldDetails {
-    pub ty: ValueType,
+    pub ty: Type,
     pub is_from_self: bool,
     pub offset: usize
 }
@@ -50,7 +43,7 @@ impl GlobalItem for TypeBlueprint {
     fn get_id(&self) -> u64 { self.id }
     fn get_name(&self) -> &str { &self.name }
     fn get_location(&self) -> &DataLocation { &self.location }
-    fn get_visibility(&self) -> ItemVisibility { self.visibility }
+    fn get_visibility(&self) -> Visibility { self.visibility }
 }
 
 impl Default for StackType {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, VariableInfo, VariableKind, Wasm}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, VariableInfo, VariableKind, Wasm}};
 use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
@@ -19,14 +19,14 @@ impl VarDeclaration {
 
         let mut source = vec![];
         let mut ok = false;
-        let mut final_var_type = Type::Void;
+        let mut final_var_type = TypeOld::Void;
 
         if let Some(wasm) = self.init_value.process(context) {
             if !wasm.ty.is_assignable() {
                 context.errors.add(&self.init_value, format!("cannot assign type `{}`", &wasm.ty));
             } else {
                 match &self.var_type {
-                    Some(parsed_type) => match Type::from_parsed_type(parsed_type, context) {
+                    Some(parsed_type) => match TypeOld::from_parsed_type(parsed_type, context) {
                         Some(var_type) => {
                             final_var_type = var_type.clone();
 
@@ -55,7 +55,7 @@ impl VarDeclaration {
 
         let var_info = context.push_var(&self.var_name, &final_var_type, kind);
 
-        source.push(Wasm::new(Type::Void, var_info.set_from_stack(), vec![var_info]));
+        source.push(Wasm::new(TypeOld::Void, var_info.set_from_stack(), vec![var_info]));
 
         match ok {
             true => Some(Wasm::merge(final_var_type, source)),

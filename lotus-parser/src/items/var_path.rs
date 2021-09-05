@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::program::{AccessType, ProgramContext, Type, Wasm};
+use crate::program::{AccessType, ProgramContext, TypeOld, Wasm};
 
 use super::{VarPathRoot, VarPathSegment};
 
@@ -24,7 +24,7 @@ impl VarPath {
             false => AccessType::Get
         };
 
-        let mut parent_type = Type::Void;
+        let mut parent_type = TypeOld::Void;
         let mut ok = true;
         let mut source = vec![];
 

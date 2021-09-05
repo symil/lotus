@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{Wat}, program::{AccessType, ProgramContext, TypeOld, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -15,7 +15,7 @@ impl VarRef {
         self.arguments.is_some()
     }
 
-    pub fn process_as_field(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process_as_field(&self, parent_type: &TypeOld, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
         match &self.arguments {
             Some(arguments) => process_method_call(parent_type, &self.name, arguments, access_type, context),
             None => process_field_access(parent_type, &self.name, access_type, context)
@@ -39,7 +39,7 @@ impl VarRef {
                     AccessType::Set(_) => Some(Wasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
                 },
                 None => match context.get_struct_by_name(&self.name) {
-                    Some(struct_annotation) => Some(Wasm::empty(Type::TypeRef(struct_annotation.get_struct_info()))),
+                    Some(struct_annotation) => Some(Wasm::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
                     None => {
                         context.errors.add(&self.name, format!("undefined variable or type `{}`", &self.name));
                         None
@@ -50,10 +50,10 @@ impl VarRef {
     }
 }
 
-pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     if let AccessType::Set(set_location) = access_type {
         match parent_type {
-            Type::Struct(_) => {},
+            TypeOld::Struct(_) => {},
             _ => {
                 context.errors.add(set_location, format!("cannot set field of non-struct value"));
                 return None;
@@ -62,18 +62,18 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     }
 
     let result = match parent_type {
-        Type::Void => None,
-        Type::Null => None,
-        Type::Generic(_) => None,
-        Type::System => process_system_field_access(field_name, context),
-        Type::Boolean => process_boolean_field_access(field_name, context),
-        Type::Integer => process_integer_field_access(field_name, context),
-        Type::Float => process_float_field_access(field_name, context),
-        Type::String => process_string_field_access(field_name, context),
-        Type::TypeRef(_) => None,
-        Type::Pointer(pointed_type) => process_pointer_field_access(pointed_type, field_name, context),
-        Type::Array(item_type) => process_array_field_access(item_type, field_name, context),
-        Type::Struct(struct_info) => {
+        TypeOld::Void => None,
+        TypeOld::Null => None,
+        TypeOld::Generic(_) => None,
+        TypeOld::System => process_system_field_access(field_name, context),
+        TypeOld::Boolean => process_boolean_field_access(field_name, context),
+        TypeOld::Integer => process_integer_field_access(field_name, context),
+        TypeOld::Float => process_float_field_access(field_name, context),
+        TypeOld::String => process_string_field_access(field_name, context),
+        TypeOld::TypeRef(_) => None,
+        TypeOld::Pointer(pointed_type) => process_pointer_field_access(pointed_type, field_name, context),
+        TypeOld::Array(item_type) => process_array_field_access(item_type, field_name, context),
+        TypeOld::Struct(struct_info) => {
             if field_name.is("_") {
                 if let AccessType::Set(set_location) = access_type {
                     context.errors.add(set_location, format!("cannot set special field `_`"));
@@ -102,8 +102,8 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
                 None
             }
         },
-        Type::Function(_, _) => None,
-        Type::Any(_) => None,
+        TypeOld::Function(_, _) => None,
+        TypeOld::Any(_) => None,
         
     };
 
@@ -114,21 +114,21 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     result
 }
 
-pub fn process_method_call(parent_type: &Type, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     let mut result = None;
 
     let method_info : Option<Wasm> = match parent_type {
-        Type::Void => None,
-        Type::Null => None,
-        Type::Generic(_) => None,
-        Type::System => process_system_method_call(method_name, arguments, context),
-        Type::Boolean => process_boolean_method_call(method_name, context),
-        Type::Integer => process_integer_method_call(method_name, context),
-        Type::Float => process_float_method_call(method_name, context),
-        Type::String => process_string_method_call(method_name, context),
-        Type::Pointer(pointed_type) => process_pointer_method_call(pointed_type, method_name, context),
-        Type::Array(item_type) => process_array_method_call(item_type, method_name, context),
-        Type::TypeRef(struct_info) => {
+        TypeOld::Void => None,
+        TypeOld::Null => None,
+        TypeOld::Generic(_) => None,
+        TypeOld::System => process_system_method_call(method_name, arguments, context),
+        TypeOld::Boolean => process_boolean_method_call(method_name, context),
+        TypeOld::Integer => process_integer_method_call(method_name, context),
+        TypeOld::Float => process_float_method_call(method_name, context),
+        TypeOld::String => process_string_method_call(method_name, context),
+        TypeOld::Pointer(pointed_type) => process_pointer_method_call(pointed_type, method_name, context),
+        TypeOld::Array(item_type) => process_array_method_call(item_type, method_name, context),
+        TypeOld::TypeRef(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.static_methods.get(method_name) {
                     Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
@@ -139,7 +139,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
                 None
             }
         },
-        Type::Struct(struct_info) => {
+        TypeOld::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.regular_methods.get(method_name) {
                     Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
@@ -150,8 +150,8 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
                 None
             }
         },
-        Type::Function(_, _) => None,
-        Type::Any(_) => None,
+        TypeOld::Function(_, _) => None,
+        TypeOld::Any(_) => None,
     };
 
     if let Some(method_wasm) = method_info {
@@ -163,7 +163,7 @@ pub fn process_method_call(parent_type: &Type, method_name: &Identifier, argumen
     result
 }
 
-pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &Type, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
@@ -204,7 +204,7 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
         function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 
-    source.push(Wasm::new(Type::Void, function_call, vec![]));
+    source.push(Wasm::new(TypeOld::Void, function_call, vec![]));
 
     match ok {
         true => Some(Wasm::merge(return_type.clone(), source)),

@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::Wat, program::{ProgramContext, TypeOld, Wasm}};
 
 #[parsable(name="integer")]
 pub struct IntegerLiteral {
@@ -15,6 +15,6 @@ impl IntegerLiteral {
             _ => self.value.parse().unwrap()
         };
 
-        Some(Wasm::simple(Type::Integer, Wat::const_i32(i32_value)))
+        Some(Wasm::simple(TypeOld::Integer, Wat::const_i32(i32_value)))
     }
 }

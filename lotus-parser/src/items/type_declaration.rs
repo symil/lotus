@@ -2,16 +2,16 @@ use std::{collections::HashMap, hash::Hash};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StackType, StructInfo, Type, TypeBlueprint, Wasm};
-use super::{FieldDeclaration, GenericList, Identifier, MethodDeclaration, MethodQualifier, StackRepresentation, TypeQualifier, Visibility};
+use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, TypeOld, TypeBlueprint, Wasm};
+use super::{FieldDeclaration, GenericParameters, Identifier, MethodDeclaration, MethodQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
 
 #[parsable]
 pub struct StructDeclaration {
-    pub visibility: Visibility,
+    pub visibility: VisibilityToken,
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
-    pub stack_repr: Option<StackRepresentation>,
-    pub generics: GenericList,
+    pub stack_type: Option<StackTypeToken>,
+    pub generics: GenericParameters,
     pub name: Identifier,
     #[parsable(prefix=":")]
     pub parent: Option<Identifier>,
@@ -33,9 +33,9 @@ impl StructDeclaration {
             id: self.location.get_hash(),
             name: self.name.to_string(),
             location: self.location.clone(),
-            visibility: self.visibility.to_item_visibility(),
-            stack_type: self.stack_repr.as_ref().and_then(|repr| Some(repr.get_stack_type())).unwrap_or(StackType::Pointer),
-            generics: self.generics.process_as_parameters(context),
+            visibility: self.visibility.value.unwrap_or(Visibility::Private),
+            stack_type: self.stack_type.value.unwrap_or(StackType::Pointer),
+            generics: self.generics.process(context),
             fields: IndexMap::new(),
             static_fields: IndexMap::new(),
             methods: IndexMap::new(),
@@ -53,7 +53,6 @@ impl StructDeclaration {
     }
 
     pub fn process_parent(&self, type_blueprint: &mut TypeBlueprint, context: &mut ProgramContext) {
-        let mut errors = vec![];
         let mut final_parent = None;
 
         if let Some(parent_name) = &self.parent {
@@ -61,20 +60,16 @@ impl StructDeclaration {
                 if parent.qualifier == self.qualifier {
                     final_parent = Some(parent.get_id());
                 } else {
-                    errors.push(Error::located(parent_name, format!("a `{}` cannot inherit from a `{}`", &self.qualifier, &parent.qualifier)));
+                    context.errors.add(parent_name, format!("a `{}` cannot inherit from a `{}`", &self.qualifier, &parent.qualifier));
                 }
             } else if is_builtin_type_name(parent_name) {
-                errors.push(Error::located(parent_name, format!("cannot inherit from built-in type `{}`", parent_name)));
+                context.errors.add(parent_name, format!("cannot inherit from built-in type `{}`", parent_name));
             } else {
-                errors.push(Error::located(parent_name, format!("cannot inherit from undefined type `{}`", parent_name)));
+                context.errors.add(parent_name, format!("cannot inherit from undefined type `{}`", parent_name));
             }
         }
 
-        context.errors.adds.extend(errors);
-
-        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
-            struct_annotation.parent = final_parent;
-        }
+        type_blueprint.parent = final_parent;
     }
 
     pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
@@ -118,22 +113,22 @@ impl StructDeclaration {
                     context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
                 }
 
-                if let Some(field_type) = Type::from_parsed_type(&field.ty, context) {
+                if let Some(field_type) = TypeOld::from_parsed_type(&field.ty, context) {
                     let ok = match field_type.leaf_item_type() {
-                        Type::Void => false,
-                        Type::System => false,
-                        Type::Pointer(_) => true,
-                        Type::Boolean => true,
-                        Type::Integer => true,
-                        Type::Float => true,
-                        Type::String => true,
-                        Type::Null => false,
-                        Type::Generic(_) => true,
-                        Type::TypeRef(_) => false,
-                        Type::Struct(_) => true,
-                        Type::Function(_, _) => false,
-                        Type::Array(_) => unreachable!(),
-                        Type::Any(_) => unreachable!(),
+                        TypeOld::Void => false,
+                        TypeOld::System => false,
+                        TypeOld::Pointer(_) => true,
+                        TypeOld::Boolean => true,
+                        TypeOld::Integer => true,
+                        TypeOld::Float => true,
+                        TypeOld::String => true,
+                        TypeOld::Null => false,
+                        TypeOld::Generic(_) => true,
+                        TypeOld::TypeRef(_) => false,
+                        TypeOld::Struct(_) => true,
+                        TypeOld::Function(_, _) => false,
+                        TypeOld::Array(_) => unreachable!(),
+                        TypeOld::Any(_) => unreachable!(),
                     };
 
                     if ok {
@@ -208,7 +203,7 @@ impl StructDeclaration {
 }
 
 fn is_builtin_type_name(name: &Identifier) -> bool {
-    Type::builtin_from_str(name.as_str()).is_some()
+    TypeOld::builtin_from_str(name.as_str()).is_some()
 }
 
 fn is_forbidden_identifier(name: &Identifier) -> bool {

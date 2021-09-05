@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Type, Wasm};
+use crate::program::{ProgramContext, TypeOld, Wasm};
 use super::{Expression, Statement, StatementList};
 
 #[parsable]
@@ -18,12 +18,12 @@ impl Branch {
 
             if wasm.ty.is_boolean() {
                 source.push(wasm);
-                result = Some(Wasm::merge(Type::Boolean, source));
+                result = Some(Wasm::merge(TypeOld::Boolean, source));
             } else {
                 if let Some(convert_wasm) = wasm.ty.to_bool() {
                     source.push(wasm);
                     source.push(convert_wasm);
-                    result = Some(Wasm::merge(Type::Boolean, source));
+                    result = Some(Wasm::merge(TypeOld::Boolean, source));
                 } else {
                     context.errors.add(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
                 }

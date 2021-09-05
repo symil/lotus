@@ -1,8 +1,8 @@
-use super::ValueType;
+use super::Type;
 
 #[derive(Debug, Clone)]
 pub struct TypeInstance {
     pub id: u64,
     pub type_id: u64,
-    pub generics: Vec<ValueType>
+    pub generics: Vec<Type>
 }

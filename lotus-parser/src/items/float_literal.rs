@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::Wat, program::{ProgramContext, TypeOld, Wasm}};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
@@ -15,6 +15,6 @@ impl FloatLiteral {
             _ => self.value[0..self.value.len()-1].parse().unwrap()
         };
 
-        Some(Wasm::simple(Type::Float, Wat::const_f32(f32_value)))
+        Some(Wasm::simple(TypeOld::Float, Wat::const_f32(f32_value)))
     }
 }

@@ -212,7 +212,6 @@ dependencies = [
  "colored",
  "enum-as-string-macro",
  "indexmap",
- "lotus-framework",
  "parsable",
 ]
 

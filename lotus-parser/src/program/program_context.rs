@@ -1,13 +1,16 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref};
+use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind};
+use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, TypeOld, TypeBlueprint, VariableInfo, VariableKind};
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "__this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
+
+static EMPTY_GENERICS : IndexSet<String> = IndexSet::new();
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -55,7 +58,7 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, name: &Identifier, ty: &Type, kind: VariableKind) -> VariableInfo {
+    pub fn push_var(&mut self, name: &Identifier, ty: &TypeOld, kind: VariableKind) -> VariableInfo {
         let var_info = VariableInfo::new(name.to_unique_string(), ty.clone(), kind);
 
         // global scope is handled differently
@@ -87,6 +90,22 @@ impl ProgramContext {
         }
 
         is_unique
+    }
+
+    pub fn get_current_type(&self) -> Option<&TypeBlueprint> {
+        if let Some(type_id) = &self.current_type {
+            self.types.get_by_id(*type_id)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_current_generics(&self) -> &IndexSet<String> {
+        if let Some(type_blueprint) = self.get_current_type() {
+            &type_blueprint.generics
+        } else {
+            &EMPTY_GENERICS
+        }
     }
 
     // pub fn get_type_id(&mut self, ty: &Type) -> Id {
@@ -216,7 +235,7 @@ impl ProgramContext {
 
         for global in get_globals_sorted(take(&mut self.globals)) {
             let wat = match global.var_info.ty {
-                Type::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
+                TypeOld::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
                 _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),
             };
 

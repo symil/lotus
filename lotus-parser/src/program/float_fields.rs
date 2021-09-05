@@ -1,5 +1,5 @@
 use crate::{generation::Wat, items::{Expression, Identifier}};
-use super::{ProgramContext, Type, Wasm};
+use super::{ProgramContext, TypeOld, Wasm};
 
 pub fn process_float_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
     match field_name {

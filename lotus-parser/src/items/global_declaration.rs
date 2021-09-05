@@ -1,12 +1,12 @@
 use std::fs::Metadata;
 
 use parsable::parsable;
-use crate::program::{GlobalVarInstance, ItemMetadata, ProgramContext, Type, VariableInfo, VariableKind, Wasm};
-use super::{VarDeclaration, Visibility};
+use crate::program::{GlobalVarInstance, ProgramContext, TypeOld, VariableInfo, VariableKind, Wasm};
+use super::{VarDeclaration, VisibilityToken};
 
 #[parsable]
 pub struct GlobalDeclaration {
-    pub visibility: Visibility,
+    pub visibility: VisibilityToken,
     #[parsable(suffix=";")]
     pub var_declaration: VarDeclaration,
 

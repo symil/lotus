@@ -1,8 +1,7 @@
 use std::{collections::HashMap, hash::Hash, mem::take};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::items::Identifier;
-use super::{Id, ItemVisibility};
+use crate::items::{Identifier, Visibility};
 
 #[derive(Debug)]
 pub struct ItemIndex<V> {
@@ -14,7 +13,7 @@ pub trait GlobalItem {
     fn get_id(&self) -> u64;
     fn get_name(&self) -> &str;
     fn get_location(&self) -> &DataLocation;
-    fn get_visibility(&self) -> ItemVisibility;
+    fn get_visibility(&self) -> Visibility;
 }
 
 impl<V : GlobalItem> ItemIndex<V> {
@@ -43,10 +42,10 @@ impl<V : GlobalItem> ItemIndex<V> {
             if let Some(value) = self.id_to_item.get(id).unwrap() {
                 let location = value.get_location();
                 let ok = match value.get_visibility() {
-                    ItemVisibility::Private => location.file_namespace == getter_location.file_namespace && location.file_name == getter_location.file_name,
-                    ItemVisibility::Public => location.file_namespace == getter_location.file_namespace,
-                    ItemVisibility::Export => true,
-                    ItemVisibility::System => location.file_namespace == getter_location.file_namespace,
+                    Visibility::Private => location.file_namespace == getter_location.file_namespace && location.file_name == getter_location.file_name,
+                    Visibility::Public => location.file_namespace == getter_location.file_namespace,
+                    Visibility::Export => true,
+                    Visibility::System => location.file_namespace == getter_location.file_namespace,
                 };
 
                 if ok {

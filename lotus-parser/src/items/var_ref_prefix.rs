@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 use parsable::{DataLocation, Parsable, parsable};
-use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}, wat};
+use crate::{generation::Wat, program::{ProgramContext, TypeOld, Wasm}, wat};
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
@@ -28,7 +28,7 @@ impl VarRefPrefix {
                 }
             },
             VarRefPrefix::System => {
-                Some(Wasm::empty(Type::System))
+                Some(Wasm::empty(TypeOld::System))
             },
         }
     }

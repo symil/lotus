@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -38,7 +38,7 @@ impl BinaryOperator {
         self.token.get_short_circuit_wasm(self)
     }
 
-    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, operand_type: &TypeOld, context: &mut ProgramContext) -> Option<Wasm> {
         self.token.process(operand_type, context)
     }
 }
@@ -61,7 +61,7 @@ impl BinaryOperatorToken {
         match self {
             Self::And | Self::Or => {
                 let tmp_var_name = Identifier::unique("tmp", location).to_unique_string();
-                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), Type::Boolean, VariableKind::Local);
+                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), TypeOld::Boolean, VariableKind::Local);
                 let branch = if self == &Self::And {
                     wat!["br_if", 0, wat!["i32.eqz"]]
                 } else {
@@ -73,108 +73,108 @@ impl BinaryOperatorToken {
                     branch
                 ];
 
-                Some(Wasm::new(Type::Boolean, wat, vec![tmp_var_info]))
+                Some(Wasm::new(TypeOld::Boolean, wat, vec![tmp_var_info]))
             }
             _ => None
         }
     }
 
-    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, operand_type: &TypeOld, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
             Self::Plus => match operand_type {
-                Type::Pointer(pointed_type) => Some(Wasm::simple(Type::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.add"))),
-                Type::Float => Some(Wasm::simple(Type::Float, Wat::inst("f32.add"))),
-                Type::String => Some(Wasm::simple(Type::String, Wat::call(STRING_CONCAT_FUNC_NAME, vec![]))),
-                Type::Array(item_type) => Some(Wasm::simple(Type::Array(item_type.clone()), Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
+                TypeOld::Pointer(pointed_type) => Some(Wasm::simple(TypeOld::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.add"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.add"))),
+                TypeOld::String => Some(Wasm::simple(TypeOld::String, Wat::call(STRING_CONCAT_FUNC_NAME, vec![]))),
+                TypeOld::Array(item_type) => Some(Wasm::simple(TypeOld::Array(item_type.clone()), Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
                 _ => None
             },
             Self::Minus => match operand_type {
-                Type::Pointer(pointed_type) => Some(Wasm::simple(Type::Pointer(pointed_type.clone()), Wat::inst("i32.sub"))),
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.sub"))),
-                Type::Float => Some(Wasm::simple(Type::Float, Wat::inst("f32.sub"))),
+                TypeOld::Pointer(pointed_type) => Some(Wasm::simple(TypeOld::Pointer(pointed_type.clone()), Wat::inst("i32.sub"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.sub"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.sub"))),
                 _ => None
             },
             Self::Mult => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.mul"))),
-                Type::Float => Some(Wasm::simple(Type::Float, Wat::inst("f32.mul"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.mul"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.mul"))),
                 _ => None
             },
             Self::Div => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.div_s"))),
-                Type::Float => Some(Wasm::simple(Type::Float, Wat::inst("f32.div"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.div_s"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.div"))),
                 _ => None
             },
             Self::Mod => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.rem_s"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.rem_s"))),
                 _ => None
             },
             Self::Shl => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.shl"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.shl"))),
                 _ => None
             },
             Self::Shr => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.shr_u"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.shr_u"))),
                 _ => None
             },
             Self::And => match operand_type {
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.and"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.and"))),
                 _ => None
             },
             Self::Or => match operand_type {
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.or"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.or"))),
                 _ => None
             },
             Self::SingleAnd => match operand_type {
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.and"))),
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.and"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.and"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.and"))),
                 _ => None
             },
             Self::SingleOr => match operand_type {
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.or"))),
-                Type::Integer => Some(Wasm::simple(Type::Integer, Wat::inst("i32.or"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.or"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.or"))),
                 _ => None
             },
             Self::Eq => match operand_type {
-                Type::Pointer(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.eq"))),
-                Type::String => Some(Wasm::simple(Type::Boolean, Wat::call(STRING_EQUAL_FUNC_NAME, vec![]))),
-                Type::Null => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
-                Type::Struct(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
-                Type::Array(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Pointer(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.eq"))),
+                TypeOld::String => Some(Wasm::simple(TypeOld::Boolean, Wat::call(STRING_EQUAL_FUNC_NAME, vec![]))),
+                TypeOld::Null => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Struct(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
+                TypeOld::Array(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
                 _ => None
             },
             Self::Ne => match operand_type {
-                Type::Pointer(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
-                Type::Boolean => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.ne"))),
-                Type::String => Some(Wasm::simple(Type::Boolean, wat!["i32.eqz", Wat::call(STRING_EQUAL_FUNC_NAME, vec![])])),
-                Type::Null => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
-                Type::Struct(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
-                Type::Array(_) => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Pointer(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.ne"))),
+                TypeOld::String => Some(Wasm::simple(TypeOld::Boolean, wat!["i32.eqz", Wat::call(STRING_EQUAL_FUNC_NAME, vec![])])),
+                TypeOld::Null => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Struct(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
+                TypeOld::Array(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
                 _ => None
             },
             Self::Ge => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.ge_s"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.ge"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ge_s"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.ge"))),
                 _ => None
             },
             Self::Gt => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.gt_s"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.gt"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.gt_s"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.gt"))),
                 _ => None
             },
             Self::Le => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.le_s"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.le"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.le_s"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.le"))),
                 _ => None
             },
             Self::Lt => match operand_type {
-                Type::Integer => Some(Wasm::simple(Type::Boolean, Wat::inst("i32.lt_s"))),
-                Type::Float => Some(Wasm::simple(Type::Boolean, Wat::inst("f32.lt"))),
+                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.lt_s"))),
+                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.lt"))),
                 _ => None
             },
         }

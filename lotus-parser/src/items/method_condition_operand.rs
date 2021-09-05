@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Side, Type};
+use crate::program::{ProgramContext, Side, TypeOld};
 
 use super::{Identifier, VarRefPrefix};
 
@@ -24,7 +24,7 @@ impl MethodConditionOperand {
             if let Some(field) = target_struct.fields.get(&self.field_name) {
                 let mut ok = false;
 
-                if let Type::Struct(field_struct) = &field.ty {
+                if let TypeOld::Struct(field_struct) = &field.ty {
                     if let Some(field_struct_annotation) = context.get_struct_by_id(field_struct.id) {
                         if field_struct_annotation.qualifier.is_entity_qualifier() {
                             ok = true;

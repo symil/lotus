@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Side, Type};
+use crate::program::{ProgramContext, Side, TypeOld};
 
 use super::{Identifier, MethodConditionOperand};
 

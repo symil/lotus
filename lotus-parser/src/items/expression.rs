@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Type, Wasm};
+use crate::program::{ProgramContext, TypeOld, Wasm};
 use super::{BinaryOperation, FullType};
 
 #[parsable]
@@ -19,7 +19,7 @@ impl Expression {
 
         if let Some(wasm) = self.operation.process(context) {
             result = match &self.as_type {
-                Some(as_type) => match Type::from_parsed_type(&as_type, context) {
+                Some(as_type) => match TypeOld::from_parsed_type(&as_type, context) {
                     Some(new_type) => Some(Wasm::merge(new_type, vec![wasm])),
                     None => None
                 },

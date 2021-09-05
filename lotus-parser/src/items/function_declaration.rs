@@ -1,10 +1,10 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, items::VisibilityToken, program::{FunctionAnnotation, ItemMetadata, ProgramContext, ScopeKind, Type, VariableKind, Wasm, RESULT_VAR_NAME}};
-use super::{FullType, FunctionSignature, Identifier, Statement, StatementList, Visibility};
+use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, TypeOld, VariableKind, Wasm, RESULT_VAR_NAME}};
+use super::{FullType, FunctionSignature, Identifier, Statement, StatementList, VisibilityToken};
 
 #[parsable]
 pub struct FunctionDeclaration {
-    pub visibility: Visibility,
+    pub visibility: VisibilityToken,
     #[parsable(prefix="fn")]
     pub name: Identifier,
     pub signature: FunctionSignature,
@@ -32,7 +32,7 @@ impl FunctionDeclaration {
                 context.errors.add(&self.name, format!("main function must not have a return type"));
             }
 
-            if visibility != VisibilityToken::Export {
+            if visibility != Visibility::Export {
                 context.errors.add(&self.name, format!("main function must be declared with the `export` visibility"));
             }
         }
@@ -46,7 +46,7 @@ impl FunctionDeclaration {
                 visibility: visibility.clone(),
             },
             wasm_name: match visibility {
-                VisibilityToken::System => self.name.to_string(),
+                Visibility::System => self.name.to_string(),
                 _ => format!("{}_{}", self.name, index)
             },
             this_type: None,
@@ -78,7 +78,7 @@ impl FunctionDeclaration {
 
         if let Some(function_annotation) = context.get_function_by_id(index) {
             return_type = match function_annotation.return_type {
-                Type::Void => None,
+                TypeOld::Void => None,
                 _ => Some(function_annotation.return_type.clone())
             };
             arguments = function_annotation.arguments.clone();

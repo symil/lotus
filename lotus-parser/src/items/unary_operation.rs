@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, Type, Wasm}, wat};
+use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, TypeOld, Wasm}, wat};
 use super::{Operand, UnaryOperator};
 
 #[parsable]
