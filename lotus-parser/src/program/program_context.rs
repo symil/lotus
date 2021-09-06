@@ -10,8 +10,6 @@ pub const THIS_VAR_NAME : &'static str = "__this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
-static EMPTY_GENERICS : IndexSet<String> = IndexSet::new();
-
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: ErrorList,
@@ -100,11 +98,13 @@ impl ProgramContext {
         }
     }
 
-    pub fn get_current_generics(&self) -> &IndexSet<String> {
-        if let Some(type_blueprint) = self.get_current_type() {
-            &type_blueprint.generics
-        } else {
-            &EMPTY_GENERICS
+    pub fn check_generic_name(&self, name: &str) -> Option<u64> {
+        match self.get_current_type() {
+            Some(type_blueprint) => match type_blueprint.generics.contains(name) {
+                true => self.current_type.clone(),
+                false => None,
+            },
+            None => None
         }
     }
 
