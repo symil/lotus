@@ -182,7 +182,7 @@ impl Wat {
         wat!["import", Self::string(file_namespace), Self::string(sub_file_namespace), func_content]
     }
 
-    pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &'static str)>, result: Option<&'static str>, locals: Vec<(&str, &'static str)>, instructions: Vec<Wat>) -> Self {
+    pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &str)>, result: Option<&str>, locals: Vec<(&str, &str)>, instructions: Vec<Wat>) -> Self {
         let mut func = wat!["func", Self::var_name(var_name)];
 
         if let Some(name) = export_name {

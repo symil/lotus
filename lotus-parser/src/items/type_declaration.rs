@@ -58,7 +58,8 @@ impl StructDeclaration {
         type_id
     }
 
-    pub fn process_parent(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_parent(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
         let mut result = None;
 
         if let Some(parsed_parent_type) = &self.parent {
@@ -95,7 +96,8 @@ impl StructDeclaration {
         context.types.get_mut_by_id(type_id).parent = result;
     }
 
-    pub fn process_inheritence(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_inheritence(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut types = vec![type_blueprint.get_typeref()];
         let mut parent_opt = type_blueprint.parent;
@@ -118,7 +120,8 @@ impl StructDeclaration {
         context.types.get_mut_by_id(type_id).inheritance_chain = types;
     }
 
-    pub fn process_self_fields(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_self_fields(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut fields = IndexMap::new();
 
@@ -142,7 +145,8 @@ impl StructDeclaration {
         context.types.get_mut_by_id(type_id).fields = fields;
     }
 
-    pub fn process_all_fields(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_all_fields(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut fields : IndexMap<String, FieldDetails> = IndexMap::new();
 
@@ -170,27 +174,27 @@ impl StructDeclaration {
         context.types.get_mut_by_id(type_id).fields = fields;
     }
 
-    pub fn process_methods_signatures(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_methods_signatures(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
+
         context.current_type = Some(type_id);
 
-        for (i, method) in self.body.methods.iter().enumerate() {
-            method.process_signature(self, index, i, context);
+        for method in self.body.methods.iter() {
+            method.process_signature(context);
         }
+
+        context.current_type = None;
     }
 
-    pub fn process_methods_bodies(&self, type_id: u64, context: &mut ProgramContext) {
+    pub fn process_methods_bodies(&self, context: &mut ProgramContext) {
+        let type_id = self.location.get_hash();
+
         context.current_type = Some(type_id);
 
-        for (i, method) in self.body.methods.iter().enumerate() {
-            method.process_body(self, index, i, context);
+        for method in self.body.methods.iter() {
+            method.process_body(context);
         }
+
+        context.current_type = None;
     }
-}
-
-fn is_builtin_type_name(name: &Identifier) -> bool {
-    TypeOld::builtin_from_str(name.as_str()).is_some()
-}
-
-fn is_forbidden_identifier(name: &Identifier) -> bool {
-    KEYWORDS.contains(&name.as_str()) || is_builtin_type_name(name)
 }

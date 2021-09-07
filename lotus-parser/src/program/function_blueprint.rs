@@ -11,7 +11,7 @@ pub struct FunctionBlueprint {
     pub visibility: Visibility,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub generics: IndexSet<String>,
-    pub owner: Option<u64>,
+    pub owner_type_id: Option<u64>,
     pub this_type: Option<Type>,
     pub payload_type: Option<Type>,
     pub conditions: Vec<(String, String)>,
@@ -29,6 +29,21 @@ impl FunctionBlueprint {
 
     pub fn is_static(&self) -> bool {
         self.this_type.is_none()
+    }
+
+    pub fn get_wasm_name(&self, context: &ProgramContext) -> String {
+        let mut name = String::new();
+
+        if let Some(type_id) = self.owner_type_id {
+            name.push_str(&context.types.get_by_id(type_id).unwrap().name);
+            name.push('_');
+        }
+
+        name.push_str(self.name.as_str());
+        name.push('_');
+        name.push_str(&self.function_id.to_string());
+
+        name
     }
 }
 

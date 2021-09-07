@@ -1,6 +1,6 @@
 use indexmap::IndexSet;
 use parsable::parsable;
-use crate::{generation::Wat, items::TypeQualifier, program::{FunctionBlueprint, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VariableKind}};
+use crate::{generation::Wat, items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableKind}};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, Visibility};
 
 #[parsable]
@@ -22,7 +22,7 @@ impl FunctionContent {
             visibility: Visibility::Private,
             event_callback_qualifier: None,
             generics: IndexSet::new(),
-            owner: None,
+            owner_type_id: None,
             this_type: None,
             payload_type: None,
             conditions: vec![],
@@ -38,7 +38,7 @@ impl FunctionContent {
         if let Some(type_id) = context.current_type {
             let type_blueprint = context.types.get_by_id(type_id).unwrap();
 
-            function_blueprint.owner = Some(type_id);
+            function_blueprint.owner_type_id = Some(type_id);
             function_blueprint.generics = type_blueprint.generics.clone();
 
             if !is_static {
@@ -92,17 +92,19 @@ impl FunctionContent {
         function_blueprint
     }
 
-    pub fn process_body(&self, function_id: u64, context: &mut ProgramContext) {
-        context.current_function = Some(function_id);
-        context.reset_local_scope();
-        context.push_scope(ScopeKind::Function);
-
+    pub fn process_body(&self, context: &mut ProgramContext) {
+        let function_id = self.location.get_hash();
         let is_raw_wasm = self.body.is_raw_wasm();
         let function_blueprint = context.functions.get_by_id(function_id).unwrap();
+        let is_static = function_blueprint.is_static();
         let mut wat_args = vec![];
         let mut wat_ret = None;
         let mut wat_locals = vec![];
         let mut wat_body = vec![];
+
+        context.current_function = Some(function_id);
+        context.reset_local_scope();
+        context.push_scope(ScopeKind::Function);
 
         if let Some(wasm) = self.body.process(context) {
             wat_body.extend(wasm.wat);
@@ -117,6 +119,18 @@ impl FunctionContent {
         }
 
         if !is_raw_wasm {
+            if let Some(this_type) = &function_blueprint.this_type {
+                if let Some(wasm_type) = this_type.get_wasm_type(context) {
+                    wat_args.push((THIS_VAR_NAME.to_string(), wasm_type));
+                }
+            }
+
+            if let Some(payload_type) = &function_blueprint.payload_type {
+                if let Some(wasm_type) = payload_type.get_wasm_type(context) {
+                    wat_args.push((PAYLOAD_VAR_NAME.to_string(), wasm_type));
+                }
+            }
+
             for (arg_name, arg_type) in &function_blueprint.arguments {
                 let var_info = context.push_var(arg_name, arg_type, VariableKind::Argument);
 
@@ -138,14 +152,22 @@ impl FunctionContent {
             }
         }
 
-        wat_body = vec![Wat::new("block", wat_body)];
-
         context.pop_scope();
         context.current_function = None;
 
-        let wat_args : Vec<(&str, &str)> = wat_args.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.as_str())).collect();
-        let wat_locals : Vec<(&str, &str)> = wat_locals.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.as_str())).collect();
+        let mut function_declaration = context.functions.get_mut_by_id(function_id);
 
-        context.functions.get_mut_by_id(function_id).body = Wat::declare_function(&wasm_func_name, None, wat_args, wat_ret, wat_locals, wat_body);
+        if !is_raw_wasm {
+            let wat_args : Vec<(&str, &str)> = wat_args.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.as_str())).collect();
+            let wat_locals : Vec<(&str, &str)> = wat_locals.iter().map(|(arg_name, arg_type)| (arg_name.as_str(), arg_type.as_str())).collect();
+            let wat_ret = wat_ret.and_then(|s| Some(s.as_str()));
+            let wat_body = vec![Wat::new("block", wat_body)];
+            let wasm_name = function_declaration.get_wasm_name(context);
+
+            function_declaration.declaration = Some(Wat::declare_function(&wasm_name, None, wat_args, wat_ret, wat_locals, wat_body));
+            function_declaration.call = vec![Wat::call_from_stack(&wasm_name)];
+        } else {
+            function_declaration.call = wat_body;
+        }
     }
 }
