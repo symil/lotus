@@ -9,11 +9,6 @@ pub struct FunctionDeclaration {
     pub name: Identifier,
     pub signature: FunctionSignature,
     pub statements: StatementList,
-
-    #[parsable(ignore)]
-    pub file_name: String,
-    #[parsable(ignore)]
-    pub file_namespace: String
 }
 
 impl FunctionDeclaration {

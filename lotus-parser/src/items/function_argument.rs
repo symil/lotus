@@ -4,7 +4,7 @@ use super::{Identifier, FullType};
 
 #[parsable]
 pub struct FunctionArgument {
-    pub name: Identifier,
-    #[parsable(prefix=":")]
+    #[parsable(suffix=":")]
+    pub name: Option<Identifier>,
     pub ty: FullType,
 }

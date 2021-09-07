@@ -10,6 +10,16 @@ pub struct FullType {
 
 impl FullType {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
+        if let Some(mut final_type) = self.item.process(context) {
+            for suffix in &self.suffix {
+                final_type = match suffix {
+                    TypeSuffix::Array => todo!()
+                };
+            }
 
+            Some(final_type)
+        } else {
+            None
+        }
     }
 }

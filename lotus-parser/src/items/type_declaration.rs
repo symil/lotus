@@ -2,8 +2,8 @@ use std::{collections::HashMap, hash::Hash};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, TypeOld, TypeBlueprint, Wasm};
-use super::{FieldDeclaration, GenericParameters, Identifier, MethodDeclaration, MethodQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
+use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, TypeRef, Wasm};
+use super::{FieldDeclaration, FullType, GenericParameters, Identifier, MethodDeclaration, FunctionPrefix, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
 
 #[parsable]
 pub struct StructDeclaration {
@@ -14,7 +14,7 @@ pub struct StructDeclaration {
     pub generics: GenericParameters,
     pub name: Identifier,
     #[parsable(prefix=":")]
-    pub parent: Option<Identifier>,
+    pub parent: Option<FullType>,
     #[parsable(brackets="{}")]
     pub body: TypeDeclarationBody,
 }
@@ -28,14 +28,18 @@ pub struct TypeDeclarationBody {
 }
 
 impl StructDeclaration {
-    pub fn process_name(&self, context: &mut ProgramContext) -> TypeBlueprint {
+    pub fn process_name(&self, context: &mut ProgramContext) -> u64 {
+        let type_id = self.location.get_hash();
         let type_blueprint = TypeBlueprint {
-            id: self.location.get_hash(),
+            type_id,
             name: self.name.to_string(),
             location: self.location.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
-            stack_type: self.stack_type.value.unwrap_or(StackType::Pointer),
+            qualifier: self.qualifier,
+            stack_type: self.stack_type.and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
             generics: self.generics.process(context),
+            parent: None,
+            inheritance_chain: vec![],
             fields: IndexMap::new(),
             static_fields: IndexMap::new(),
             methods: IndexMap::new(),
@@ -49,152 +53,133 @@ impl StructDeclaration {
             context.errors.add(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
 
-        type_blueprint
+        context.types.insert(type_blueprint);
+
+        type_id
     }
 
-    pub fn process_parent(&self, type_blueprint: &mut TypeBlueprint, context: &mut ProgramContext) {
-        let mut final_parent = None;
+    pub fn process_parent(&self, type_id: u64, context: &mut ProgramContext) {
+        let mut result = None;
 
-        if let Some(parent_name) = &self.parent {
-            if let Some(parent) = context.types.get_by_name(&self.name) {
-                if parent.qualifier == self.qualifier {
-                    final_parent = Some(parent.get_id());
-                } else {
-                    context.errors.add(parent_name, format!("a `{}` cannot inherit from a `{}`", &self.qualifier, &parent.qualifier));
+        if let Some(parsed_parent_type) = &self.parent {
+            if let Some(parent_type) = parsed_parent_type.process(context) {
+                if self.qualifier == TypeQualifier::Type {
+                    context.errors.add(parsed_parent_type, format!("regular types cannot inherit"));
                 }
-            } else if is_builtin_type_name(parent_name) {
-                context.errors.add(parent_name, format!("cannot inherit from built-in type `{}`", parent_name));
+
+                match parent_type {
+                    Type::Generic(_) => {
+                        context.errors.add(parsed_parent_type, format!("cannot inherit from generic parameter"));
+                    },
+                    Type::Actual(type_ref) => {
+                        let parent_blueprint = context.types.get_by_id(type_ref.type_id).unwrap();
+
+                        match &parent_blueprint.qualifier {
+                            TypeQualifier::Type => {
+                                context.errors.add(parsed_parent_type, format!("cannot inherit from regular types"));
+                            },
+                            _ => {
+                                if parent_blueprint.qualifier != self.qualifier {
+                                    context.errors.add(parsed_parent_type, format!("`{}` types cannot inherit from `{}` types", self.qualifier, parent_blueprint.qualifier));
+                                } else if self.qualifier != TypeQualifier::Type {
+                                    result = Some(type_ref);
+                                }
+                            }
+                        };
+                    },
+                    _ => unreachable!()
+                }
+            }
+        }
+
+        context.types.get_mut_by_id(type_id).parent = result;
+    }
+
+    pub fn process_inheritence(&self, type_id: u64, context: &mut ProgramContext) {
+        let type_blueprint = context.types.get_by_id(type_id).unwrap();
+        let mut types = vec![type_blueprint.get_typeref()];
+        let mut parent_opt = type_blueprint.parent;
+
+        while let Some(parent_typeref) = parent_opt {
+            let parent = context.types.get_by_id(parent_typeref.type_id).unwrap();
+
+            if types.iter().any(|typeref| typeref.type_id == parent.type_id) {
+                if parent.type_id == type_blueprint.type_id {
+                    context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
+                }
             } else {
-                context.errors.add(parent_name, format!("cannot inherit from undefined type `{}`", parent_name));
+                types.push(parent_typeref.clone());
+                parent_opt = parent.parent.clone();
             }
         }
 
-        type_blueprint.parent = final_parent;
+        types.reverse();
+
+        context.types.get_mut_by_id(type_id).inheritance_chain = types;
     }
 
-    pub fn process_inheritence(&self, index: usize, context: &mut ProgramContext) {
-        let mut errors = vec![];
-        let mut types = vec![index];
-
-        if let Some(struct_annotation) = context.get_struct_by_id(index) {
-            let mut parent_opt = struct_annotation.parent;
-
-            while let Some(parent_id) = parent_opt {
-                let parent = context.get_struct_by_id(parent_id).unwrap();
-
-                if types.contains(&parent_id) {
-                    if parent.get_name() == &self.name {
-                        errors.push(Error::located(&self.name, format!("circular inheritance: `{}`", &self.name)));
-                    }
-                } else {
-                    types.push(parent_id);
-                    parent_opt = parent.parent.clone();
-                }
-            }
-        }
-
-        context.errors.adds.extend(errors);
-
-        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
-            struct_annotation.types = types;
-        }
-    }
-
-    pub fn process_self_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
-
+    pub fn process_self_fields(&self, type_id: u64, context: &mut ProgramContext) {
+        let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut fields = IndexMap::new();
 
         for field in &self.body.fields {
-            if is_forbidden_identifier(&field.name) {
-                context.errors.add(&field.name, format!("forbidden field name '{}'", &self.name));
-            } else {
-                if fields.contains_key(&field.name) {
-                    context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
-                }
-
-                if let Some(field_type) = TypeOld::from_parsed_type(&field.ty, context) {
-                    let ok = match field_type.leaf_item_type() {
-                        TypeOld::Void => false,
-                        TypeOld::System => false,
-                        TypeOld::Pointer(_) => true,
-                        TypeOld::Boolean => true,
-                        TypeOld::Integer => true,
-                        TypeOld::Float => true,
-                        TypeOld::String => true,
-                        TypeOld::Null => false,
-                        TypeOld::Generic(_) => true,
-                        TypeOld::TypeRef(_) => false,
-                        TypeOld::Struct(_) => true,
-                        TypeOld::Function(_, _) => false,
-                        TypeOld::Array(_) => unreachable!(),
-                        TypeOld::Any(_) => unreachable!(),
-                    };
-
-                    if ok {
-                        let field_details = FieldDetails {
-                            name: field.name.clone(),
-                            ty: field_type,
-                            offset: 0,
-                        };
-
-                        fields.insert(field.name.clone(), field_details);
-                    } else {
-                        context.errors.add(&field.name, format!("forbidden field type: `{}`", field_type));
-                    }
-                }
+            if fields.contains_key(field.name.as_str()) {
+                context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
             }
-        }
 
-        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
-            struct_annotation.self_fields = fields;
-        }
-    }
-
-    pub fn process_all_fields(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
-
-        let mut fields = IndexMap::new();
-        let type_ids = context.get_struct_by_id(index).map_or(vec![], |s| s.types.clone());
-        let mut errors = vec![];
-
-        for type_id in type_ids.iter().rev() {
-            let struct_annotation = context.get_struct_by_id(*type_id).unwrap();
-
-            for field in struct_annotation.self_fields.values() {
-                let field_info = FieldDetails {
+            if let Some(field_type) = field.ty.process(context) {
+                let field_details = FieldDetails {
+                    ty: field_type,
                     name: field.name.clone(),
-                    ty: field.ty.clone(),
-                    offset: fields.len() + OBJECT_HEADER_SIZE
+                    owner_type_id: type_blueprint.type_id,
+                    offset: 0,
                 };
 
-                if fields.contains_key(&field.name) {
-                    if *type_id != index {
-                        errors.push(Error::located(&field.name, format!("duplicate field '{}' (already declared by parent struct `{}`)", &self.name, type_id)));
+                fields.insert(field.name.to_string(), field_details);
+            }
+        }
+        
+        context.types.get_mut_by_id(type_id).fields = fields;
+    }
+
+    pub fn process_all_fields(&self, type_id: u64, context: &mut ProgramContext) {
+        let type_blueprint = context.types.get_by_id(type_id).unwrap();
+        let mut fields : IndexMap<String, FieldDetails> = IndexMap::new();
+
+        for typeref in &type_blueprint.inheritance_chain {
+            let parent_blueprint = context.types.get_by_id(typeref.type_id).unwrap();
+
+            for field in parent_blueprint.fields.values() {
+                if field.owner_type_id == typeref.type_id {
+                    let field_info = FieldDetails {
+                        name: field.name.clone(),
+                        ty: field.ty.clone(),
+                        owner_type_id: field.owner_type_id,
+                        offset: fields.len() + OBJECT_HEADER_SIZE
+                    };
+
+                    if let Some(other_field) = fields.get(field.name.as_str()) {
+                        context.errors.add(&field.name, format!("duplicate field `{}` (already declared by parent struct `{}`)", &self.name, &other_field.name));
+                    } else {
+                        fields.insert(field.name.to_string(), field_info);
                     }
-                } else {
-                    fields.insert(field.name.clone(), field_info);
                 }
             }
         }
 
-        context.errors.adds.extend(errors);
-
-        if let Some(struct_annotation) = context.get_struct_by_id_mut(index) {
-            struct_annotation.fields = fields;
-        }
+        context.types.get_mut_by_id(type_id).fields = fields;
     }
 
-    pub fn process_methods_signatures(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
+    pub fn process_methods_signatures(&self, type_id: u64, context: &mut ProgramContext) {
+        context.current_type = Some(type_id);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_signature(self, index, i, context);
         }
     }
 
-    pub fn process_methods_bodies(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
+    pub fn process_methods_bodies(&self, type_id: u64, context: &mut ProgramContext) {
+        context.current_type = Some(type_id);
 
         for (i, method) in self.body.methods.iter().enumerate() {
             method.process_body(self, index, i, context);

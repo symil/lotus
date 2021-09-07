@@ -1,15 +1,14 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Side, TypeOld};
-
 use super::{Identifier, VarRefPrefix};
 
 #[parsable]
-pub struct MethodConditionOperand {
+pub struct FunctionConditionOperand {
     pub prefix: Option<VarRefPrefix>,
     pub field_name: Identifier
 }
 
-impl MethodConditionOperand {
+impl FunctionConditionOperand {
     pub fn process(&self, struct_name: &Identifier, method_name: &Identifier, side: Side, context: &mut ProgramContext) {
         let (required_prefix, target_struct_name) = match side {
             Side::Left => (VarRefPrefix::Payload, method_name),

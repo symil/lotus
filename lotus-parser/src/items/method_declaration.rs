@@ -1,24 +1,24 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, StructInfo, TypeOld, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap, RESULT_VAR_NAME, THIS_VAR_NAME}};
-use super::{FunctionDeclaration, FunctionSignature, Identifier, MethodCondition, MethodQualifier, Statement, StatementList, StructDeclaration, TypeQualifier, VarPath, VarRefPrefix};
+use crate::{generation::{Wat}, items::Visibility, program::{FunctionBlueprint, ProgramContext, RESULT_VAR_NAME, ScopeKind, StructInfo, THIS_VAR_NAME, TypeOld, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap}};
+use super::{FunctionDeclaration, FunctionSignature, Identifier, FunctionCondition, FunctionPrefix, Statement, StatementList, StructDeclaration, TypeQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
 pub struct MethodDeclaration {
-    pub qualifier: Option<MethodQualifier>,
+    pub qualifier: Option<FunctionPrefix>,
     pub name: Identifier,
     #[parsable(brackets="[]", separator=",", optional=true)]
-    pub conditions: Vec<MethodCondition>,
+    pub conditions: Vec<FunctionCondition>,
     pub signature: Option<FunctionSignature>,
     pub statements: StatementList
 }
 
 impl MethodDeclaration {
-    pub fn process_signature(&self, owner: &StructDeclaration, owner_index: usize, method_index: usize, context: &mut ProgramContext) {
+    pub fn process_signature(&self, context: &mut ProgramContext) {
         let mut this_type = None;
         let mut payload_type = None;
 
         match &self.qualifier {
-            Some(MethodQualifier::Builtin) => {
+            Some(FunctionPrefix::Builtin) => {
                 if let Some((valid_qualifiers, _)) = get_builtin_method_info(&self.name) {
                     if !valid_qualifiers.iter().any(|qualifier| qualifier == &owner.qualifier) {
                         context.errors.add(&self.name, format!("method `@{}` can only be implemented on {}", &self.name, display_join(&valid_qualifiers)));
@@ -29,7 +29,7 @@ impl MethodDeclaration {
                     context.errors.add(self, format!("invalid built-in method name `@{}`", &self.name));
                 }
             },
-            Some(MethodQualifier::Hook | MethodQualifier::Before | MethodQualifier::After) => {
+            Some(FunctionPrefix::Hook | FunctionPrefix::Before | FunctionPrefix::After) => {
                 if !owner.qualifier.is_entity_qualifier() {
                     context.errors.add(self, "event callbacks can only be defined on an entity, world or user");
                 }
@@ -46,7 +46,7 @@ impl MethodDeclaration {
 
                 // no need to check for name unicity, multiple event callbacks on the same struct are allowed
             },
-            Some(MethodQualifier::Static) | None => {
+            Some(FunctionPrefix::Static) | None => {
                 if !self.conditions.is_empty() {
                     context.errors.add(&self.conditions[0], format!("only event callbacks can have conditions"));
                 }
@@ -57,7 +57,7 @@ impl MethodDeclaration {
 
                 if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
                     let (method_exists, method_this_type) = match &self.qualifier {
-                        Some(MethodQualifier::Static) => (struct_annotation.static_methods.contains_key(&self.name), None),
+                        Some(FunctionPrefix::Static) => (struct_annotation.static_methods.contains_key(&self.name), None),
                         None => (struct_annotation.regular_methods.contains_key(&self.name), Some(TypeOld::Struct(struct_annotation.get_struct_info()))),
                         _ => unreachable!()
                     };
@@ -96,11 +96,11 @@ impl MethodDeclaration {
 
         if let Some(struct_annotation) = context.get_struct_by_id_mut(owner_index) {
             match self.qualifier {
-                Some(MethodQualifier::Builtin) => struct_annotation.builtin_methods.insert(self.name.clone(), method_annotation),
-                Some(MethodQualifier::Hook) => insert_in_vec_hashmap(&mut struct_annotation.hook_event_callbacks, &self.name, method_annotation),
-                Some(MethodQualifier::Before) => insert_in_vec_hashmap(&mut struct_annotation.before_event_callbacks, &self.name, method_annotation),
-                Some(MethodQualifier::After) => insert_in_vec_hashmap(&mut struct_annotation.after_event_callbacks, &self.name, method_annotation),
-                Some(MethodQualifier::Static) => struct_annotation.static_methods.insert(self.name.clone(), method_annotation),
+                Some(FunctionPrefix::Builtin) => struct_annotation.builtin_methods.insert(self.name.clone(), method_annotation),
+                Some(FunctionPrefix::Hook) => insert_in_vec_hashmap(&mut struct_annotation.hook_event_callbacks, &self.name, method_annotation),
+                Some(FunctionPrefix::Before) => insert_in_vec_hashmap(&mut struct_annotation.before_event_callbacks, &self.name, method_annotation),
+                Some(FunctionPrefix::After) => insert_in_vec_hashmap(&mut struct_annotation.after_event_callbacks, &self.name, method_annotation),
+                Some(FunctionPrefix::Static) => struct_annotation.static_methods.insert(self.name.clone(), method_annotation),
                 None => struct_annotation.regular_methods.insert(self.name.clone(), method_annotation),
             };
         }
@@ -118,7 +118,7 @@ impl MethodDeclaration {
         let mut this_type = None;
         let mut payload_type = None;
         let mut struct_info = StructInfo::default();
-        let is_static = self.qualifier.contains(&MethodQualifier::Static);
+        let is_static = self.qualifier.contains(&FunctionPrefix::Static);
 
         if let Some(struct_annotation) = context.get_struct_by_id(owner_index) {
             struct_info = struct_annotation.get_struct_info();

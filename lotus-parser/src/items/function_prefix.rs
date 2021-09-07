@@ -2,10 +2,8 @@ use parsable::parsable;
 
 #[parsable]
 #[derive(PartialEq)]
-pub enum MethodQualifier {
-    Builtin = "@",
+pub enum FunctionPrefix {
     Hook = "`",
     Before = "'",
     After= "\"",
-    Static = "static"
 }

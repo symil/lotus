@@ -1,16 +1,19 @@
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use crate::items::{StackType, Visibility};
-use super::{GlobalItem, Type};
+use crate::items::{Identifier, StackType, TypeQualifier, Visibility};
+use super::{GlobalItem, Type, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypeBlueprint {
-    pub id: u64,
+    pub type_id: u64,
     pub name: String,
     pub location: DataLocation,
     pub visibility: Visibility,
+    pub qualifier: TypeQualifier,
     pub stack_type: StackType,
     pub generics: IndexSet<String>,
+    pub parent: Option<TypeRef>,
+    pub inheritance_chain: Vec<TypeRef>, // from the most "parent" type to the most "child", including self
     pub fields: IndexMap<String, FieldDetails>,
     pub static_fields: IndexMap<String, FieldDetails>,
     pub methods: IndexMap<String, MethodDetails>,
@@ -22,8 +25,9 @@ pub struct TypeBlueprint {
 
 #[derive(Debug)]
 pub struct FieldDetails {
+    pub name: Identifier,
     pub ty: Type,
-    pub is_from_self: bool,
+    pub owner_type_id: u64,
     pub offset: usize
 }
 
@@ -34,13 +38,17 @@ pub struct MethodDetails {
 }
 
 impl TypeBlueprint {
-    pub fn is_class(&self) -> bool {
-        self.stack_type == StackType::Pointer
+    pub fn get_typeref(&self) -> TypeRef {
+        TypeRef {
+            type_id: self.type_id,
+            type_context: Some(self.type_id),
+            generic_values: self.generics.iter().map(|name| Type::generic(name.to_string(), self.type_id)).collect(),
+        }
     }
 }
 
 impl GlobalItem for TypeBlueprint {
-    fn get_id(&self) -> u64 { self.id }
+    fn get_id(&self) -> u64 { self.type_id }
     fn get_name(&self) -> &str { &self.name }
     fn get_location(&self) -> &DataLocation { &self.location }
     fn get_visibility(&self) -> Visibility { self.visibility }
