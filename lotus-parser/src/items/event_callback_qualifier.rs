@@ -2,7 +2,7 @@ use parsable::parsable;
 
 #[parsable]
 #[derive(PartialEq)]
-pub enum FunctionPrefix {
+pub enum EventCallbackQualifier {
     Hook = "`",
     Before = "'",
     After= "\"",

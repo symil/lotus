@@ -3,7 +3,7 @@ use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, TypeRef, Wasm};
-use super::{FieldDeclaration, FullType, GenericParameters, Identifier, MethodDeclaration, FunctionPrefix, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
+use super::{FieldDeclaration, FullType, GenericParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
 
 #[parsable]
 pub struct StructDeclaration {

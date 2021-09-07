@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, TypeOld, Wasm};
+use crate::program::{ProgramContext, Type, Wasm};
 use super::Statement;
 
 #[parsable]
@@ -24,7 +24,7 @@ impl StatementList {
         }
 
         match ok {
-            true => Some(Wasm::new(TypeOld::Void, wat, variables)),
+            true => Some(Wasm::new(Type::Void, wat, variables)),
             false => None
         }
     }

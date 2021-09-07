@@ -34,7 +34,7 @@ pub struct FieldDetails {
 #[derive(Debug)]
 pub struct MethodDetails {
     pub function_id: u64,
-    pub is_from_self: usize
+    pub owner_type_id: u64,
 }
 
 impl TypeBlueprint {

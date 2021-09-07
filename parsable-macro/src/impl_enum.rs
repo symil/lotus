@@ -1,4 +1,3 @@
-use proc_macro_error::emit_call_site_error;
 use proc_macro2::{Span};
 use syn::*;
 use quote::quote;
@@ -122,7 +121,9 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                             Self::#variant_name => #lit_str,
                         });
                     },
-                    None => emit_call_site_error!("variants with no field must have an associated string literal")
+                    None => {
+                        // emit_call_site_error!("variants with no field must have an associated string literal")
+                    }
                 }
             }
         }

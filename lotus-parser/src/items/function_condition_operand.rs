@@ -9,35 +9,25 @@ pub struct FunctionConditionOperand {
 }
 
 impl FunctionConditionOperand {
-    pub fn process(&self, struct_name: &Identifier, method_name: &Identifier, side: Side, context: &mut ProgramContext) {
-        let (required_prefix, target_struct_name) = match side {
-            Side::Left => (VarRefPrefix::Payload, method_name),
-            Side::Right => (VarRefPrefix::This, struct_name),
+    pub fn process(&self, side: Side, event_type_id: u64, context: &mut ProgramContext) -> Option<String> {
+        let mut result = None;
+        let (required_prefix, target_type_id) = match side {
+            Side::Left => (VarRefPrefix::Payload, event_type_id),
+            Side::Right => (VarRefPrefix::This, context.current_type.unwrap()),
         };
+        let target_type = context.types.get_by_id(target_type_id).unwrap();
 
         if !self.has_prefix(&required_prefix) {
             context.errors.add(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
         }
 
-        if let Some(target_struct) = context.get_struct_by_name(target_struct_name) {
-            if let Some(field) = target_struct.fields.get(&self.field_name) {
-                let mut ok = false;
-
-                if let TypeOld::Struct(field_struct) = &field.ty {
-                    if let Some(field_struct_annotation) = context.get_struct_by_id(field_struct.id) {
-                        if field_struct_annotation.qualifier.is_entity_qualifier() {
-                            ok = true;
-                        }
-                    }
-                }
-
-                if !ok {
-                    context.errors.add(&self.field_name, format!("event callback condition: {}-side must refer to an entity field (`entity`, `world` or `user` qualifier)", side));
-                }
-            } else {
-                context.errors.add(&self.field_name, format!("type `{}` does not have a `{}` field", method_name, &self.field_name));
-            }
+        if let Some(field) = target_type.fields.get(self.field_name.as_str()) {
+            result = Some(self.field_name.to_string());
+        } else {
+            context.errors.add(&self.field_name, format!("type `{}` does not have a `{}` field", &target_type.name, &self.field_name));
         }
+
+        result
     }
 
     fn has_prefix(&self, prefix: &VarRefPrefix) -> bool {
