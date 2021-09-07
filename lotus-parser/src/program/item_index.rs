@@ -46,6 +46,7 @@ impl<V : GlobalItem> ItemIndex<V> {
                 Visibility::Public => location.file_namespace == getter_location.file_namespace,
                 Visibility::Export => true,
                 Visibility::System => location.file_namespace == getter_location.file_namespace,
+                Visibility::Member => false,
             };
 
             if ok {

@@ -45,6 +45,15 @@ impl TypeBlueprint {
             generic_values: self.generics.iter().map(|name| Type::generic(name.to_string(), self.type_id)).collect(),
         }
     }
+
+    pub fn get_wasm_type(&self) -> Option<&'static str> {
+        match self.stack_type {
+            StackType::Void => None,
+            StackType::Int => Some("i32"),
+            StackType::Float => Some("f32"),
+            StackType::Pointer => Some("i32"),
+        }
+    }
 }
 
 impl GlobalItem for TypeBlueprint {

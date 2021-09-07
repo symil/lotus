@@ -12,7 +12,7 @@ pub struct FunctionSignature {
 }
 
 impl FunctionSignature {
-    pub fn process(&self, context: &mut ProgramContext) -> (Vec<(String, Type)>, Option<Type>) {
+    pub fn process(&self, context: &mut ProgramContext) -> (Vec<(Identifier, Type)>, Option<Type>) {
         let mut arg_names = HashSet::new();
         let mut arguments = vec![];
         let mut return_type = None;

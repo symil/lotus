@@ -1,11 +1,10 @@
 use crate::generation::Wat;
-
-use super::TypeOld;
+use super::{Type};
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {
     pub wasm_name: String,
-    pub ty: TypeOld,
+    pub ty: Type,
     pub kind: VariableKind
 }
 
@@ -17,7 +16,7 @@ pub enum VariableKind {
 }
 
 impl VariableInfo {
-    pub fn new(wasm_name: String, ty: TypeOld, kind: VariableKind) -> Self {
+    pub fn new(wasm_name: String, ty: Type, kind: VariableKind) -> Self {
         Self { wasm_name, ty, kind }
     }
 
@@ -44,6 +43,6 @@ impl VariableInfo {
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Self::new(String::new(), TypeOld::Void, VariableKind::Local)
+        Self::new(String::new(), Type::Void, VariableKind::Local)
     }
 }

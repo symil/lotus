@@ -23,7 +23,7 @@ impl MethodDeclaration {
 
         method_blueprint.visibility = Visibility::Member;
 
-        if index_map.insert(method_blueprint.name.clone(), method_details).is_some() {
+        if index_map.insert(method_blueprint.name.to_string(), method_details).is_some() {
             let s = match method_blueprint.is_static() {
                 true => "static ",
                 false => ""

@@ -50,6 +50,15 @@ impl Type {
             _ => false
         }
     }
+
+    pub fn get_wasm_type(&self, context: &ProgramContext) -> Option<String> {
+        match self {
+            Type::Void => None,
+            Type::Generic(info) => Some(format!("?{}", &info.name)),
+            Type::Actual(typeref) => context.types.get_by_id(typeref.type_id).unwrap().get_wasm_type().and_then(|s| Some(s.to_string())),
+            _ => unreachable!()
+        }
+    }
 }
 
 impl Default for Type {

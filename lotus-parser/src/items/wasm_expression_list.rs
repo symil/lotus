@@ -5,7 +5,7 @@ use super::WasmExpression;
 
 #[parsable]
 pub struct WasmExpressionList {
-    #[parsable(brackets="[]")]
+    #[parsable(prefix="{{", suffix="}}")]
     pub list: Vec<WasmExpression>
 }
 

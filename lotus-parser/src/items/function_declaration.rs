@@ -1,61 +1,39 @@
 use parsable::parsable;
 use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, TypeOld, VariableKind, Wasm, RESULT_VAR_NAME}};
-use super::{FullType, FunctionSignature, Identifier, Statement, StatementList, VisibilityToken};
+use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityToken};
 
 #[parsable]
 pub struct FunctionDeclaration {
     pub visibility: VisibilityToken,
     #[parsable(prefix="fn")]
-    pub name: Identifier,
-    pub signature: FunctionSignature,
-    pub statements: StatementList,
+    pub content: FunctionContent
 }
 
 impl FunctionDeclaration {
-    pub fn process_signature(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
+    pub fn process_signature(&self, context: &mut ProgramContext) {
+        let mut function_blueprint = self.content.process_signature(context);
 
-        let (arguments, return_type) = self.signature.process(context);
-        let visibility = self.visibility.get_token();
+        function_blueprint.visibility = self.visibility.value.unwrap_or(Visibility::Private);
 
-        if self.name.as_str() == "main" {
-            if !arguments.is_empty() {
-                context.errors.add(&self.name, format!("main function must not take any argument"));
+        if function_blueprint.name.as_str() == "main" {
+            if !function_blueprint.arguments.is_empty() {
+                context.errors.add(self, format!("main function must not take any argument"));
             }
 
-            if !return_type.is_void() {
-                context.errors.add(&self.name, format!("main function must not have a return type"));
+            if function_blueprint.return_type.is_some() {
+                context.errors.add(self, format!("main function must not have a return type"));
             }
 
-            if visibility != Visibility::Export {
-                context.errors.add(&self.name, format!("main function must be declared with the `export` visibility"));
+            if function_blueprint.visibility != Visibility::Export {
+                context.errors.add(self, format!("main function must be declared with the `export` visibility"));
             }
         }
 
-        let function_annotation = FunctionAnnotation {
-            metadata: ItemMetadata {
-                id: index,
-                name: self.name.clone(),
-                file_name: context.get_current_file_name(),
-                file_namespace: context.get_current_file_namespace(),
-                visibility: visibility.clone(),
-            },
-            wasm_name: match visibility {
-                Visibility::System => self.name.to_string(),
-                _ => format!("{}_{}", self.name, index)
-            },
-            this_type: None,
-            payload_type: None,
-            arguments: arguments,
-            return_type: return_type,
-            wat: Wat::default(),
-        };
-
-        if context.get_function_by_name(&self.name).is_some() {
-            context.errors.add(&self.name, format!("duplicate function declaration: `{}`", &self.name));
+        if context.functions.get_by_name(&function_blueprint.name).is_some() {
+            context.errors.add(self, format!("duplicate function declaration `{}`", &function_blueprint.name));
         }
         
-        context.add_function(function_annotation);
+        context.functions.insert(function_blueprint);
     }
 
     pub fn process_body(&self, index: usize, context: &mut ProgramContext) {

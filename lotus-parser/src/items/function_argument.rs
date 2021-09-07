@@ -1,6 +1,5 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-
 use super::{Identifier, FullType};
 
 #[parsable]
@@ -11,11 +10,8 @@ pub struct FunctionArgument {
 }
 
 impl FunctionArgument {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<(String, Type)> {
-        let arg_name = match &self.name {
-            Some(name) => name.to_string(),
-            None => Identifier::unique("arg", self).to_string()
-        };
+    pub fn process(&self, context: &mut ProgramContext) -> Option<(Identifier, Type)> {
+        let arg_name = self.name.clone().unwrap_or_else(|| Identifier::unique("arg", self));
 
         match self.ty.process(context) {
             Some(arg_type) => Some((arg_name, arg_type)),

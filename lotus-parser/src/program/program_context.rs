@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, 
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, TypeOld, TypeBlueprint, VariableInfo, VariableKind};
+use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind};
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
@@ -56,7 +56,7 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, name: &Identifier, ty: &TypeOld, kind: VariableKind) -> VariableInfo {
+    pub fn push_var(&mut self, name: &Identifier, ty: &Type, kind: VariableKind) -> VariableInfo {
         let var_info = VariableInfo::new(name.to_unique_string(), ty.clone(), kind);
 
         // global scope is handled differently
