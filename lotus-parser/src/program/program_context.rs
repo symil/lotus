@@ -10,6 +10,13 @@ pub const THIS_VAR_NAME : &'static str = "__this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
+const BOOL_TYPE_NAME : &'static str = "bool";
+const INT_TYPE_NAME : &'static str = "int";
+const ARRAY_TYPE_NAME : &'static str = "Array";
+
+const PTR_GET_PLACEHOLDER : &'static str = "__ptr_get";
+const PTR_SET_PLACEHOLDER : &'static str = "__ptr_set";
+
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: ErrorList,
@@ -28,6 +35,22 @@ pub struct ProgramContext {
 impl ProgramContext {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn bool_type(&self) -> Type {
+        todo!()
+    }
+
+    pub fn int_type(&self) -> Type {
+        todo!()
+    }
+
+    pub fn float_type(&self) -> Type {
+        todo!()
+    }
+
+    pub fn array_type(&self, item_type: Type) -> Type {
+        todo!()
     }
 
     pub fn reset_local_scope(&mut self) {

@@ -41,7 +41,7 @@ impl TypeBlueprint {
     pub fn get_typeref(&self) -> TypeRef {
         TypeRef {
             type_id: self.type_id,
-            type_context: Some(self.type_id),
+            name: self.name.clone(),
             generic_values: self.generics.iter().map(|name| Type::generic(name.to_string(), self.type_id)).collect(),
         }
     }

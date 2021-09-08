@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::program::ProgramContext;
-use super::{FunctionDeclaration, GlobalDeclaration, StructDeclaration, TopLevelBlock};
+use super::{FunctionDeclaration, GlobalDeclaration, TypeDeclaration, TopLevelBlock};
 
 #[parsable]
 pub struct LotusFile {
@@ -12,7 +12,7 @@ pub struct LotusFile {
 }
 
 pub struct SortedLotusFile {
-    pub structs: Vec<StructDeclaration>,
+    pub structs: Vec<TypeDeclaration>,
     pub functions: Vec<FunctionDeclaration>,
     pub globals: Vec<GlobalDeclaration>,
     pub file_name: String,

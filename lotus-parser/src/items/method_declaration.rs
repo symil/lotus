@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{generation::{Wat}, items::Visibility, program::{FunctionBlueprint, MethodDetails, ProgramContext, RESULT_VAR_NAME, ScopeKind, StructInfo, THIS_VAR_NAME, TypeOld, VariableKind, Wasm, display_join, get_builtin_method_info, insert_in_vec_hashmap}};
-use super::{EventCallbackQualifier, FunctionCondition, FunctionContent, FunctionDeclaration, FunctionSignature, Identifier, Statement, StatementList, StructDeclaration, TypeQualifier, VarPath, VarRefPrefix};
+use super::{EventCallbackQualifier, FunctionCondition, FunctionContent, FunctionDeclaration, FunctionSignature, Identifier, Statement, StatementList, TypeDeclaration, TypeQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
 pub struct MethodDeclaration {

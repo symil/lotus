@@ -1,15 +1,15 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]
-pub struct BinaryOperator {
-    pub token: BinaryOperatorToken
+pub struct BinaryOperatorToken {
+    pub token: BinaryOperator
 }
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq)]
-pub enum BinaryOperatorToken {
+pub enum BinaryOperator {
     Plus = "+",
     Minus = "-",
     Mult = "*",
@@ -29,7 +29,7 @@ pub enum BinaryOperatorToken {
     Lt = "<",
 }
 
-impl BinaryOperator {
+impl BinaryOperatorToken {
     pub fn get_priority(&self) -> usize {
         self.token.get_priority()
     }
@@ -43,7 +43,7 @@ impl BinaryOperator {
     }
 }
 
-impl BinaryOperatorToken {
+impl BinaryOperator {
     pub fn get_priority(&self) -> usize {
         match self {
             Self::Mult | Self::Div | Self::Mod => 1,
@@ -57,11 +57,11 @@ impl BinaryOperatorToken {
         }
     }
 
-    pub fn get_short_circuit_wasm(&self, location: &DataLocation) -> Option<Wasm> {
+    pub fn get_short_circuit_wasm(&self, location: &DataLocation, context: &ProgramContext) -> Option<Wasm> {
         match self {
             Self::And | Self::Or => {
                 let tmp_var_name = Identifier::unique("tmp", location).to_unique_string();
-                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), TypeOld::Boolean, VariableKind::Local);
+                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), context.bool_type(), VariableKind::Local);
                 let branch = if self == &Self::And {
                     wat!["br_if", 0, wat!["i32.eqz"]]
                 } else {
@@ -73,13 +73,13 @@ impl BinaryOperatorToken {
                     branch
                 ];
 
-                Some(Wasm::new(TypeOld::Boolean, wat, vec![tmp_var_info]))
+                Some(Wasm::new(context.bool_type(), wat, vec![tmp_var_info]))
             }
             _ => None
         }
     }
 
-    pub fn process(&self, operand_type: &TypeOld, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
         match self {
             Self::Plus => match operand_type {
                 TypeOld::Pointer(pointed_type) => Some(Wasm::simple(TypeOld::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
@@ -181,7 +181,7 @@ impl BinaryOperatorToken {
     }
 }
 
-impl Default for BinaryOperatorToken {
+impl Default for BinaryOperator {
     fn default() -> Self {
         Self::Plus
     }

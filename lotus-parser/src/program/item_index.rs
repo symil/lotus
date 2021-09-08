@@ -61,6 +61,13 @@ impl<V : GlobalItem> ItemIndex<V> {
         self.id_to_item.get(&id)
     }
 
+    pub fn get_by_opt(&self, id_opt: &Option<u64>) -> Option<&V> {
+        match id_opt {
+            Some(id) => self.get_by_id(*id),
+            None => None
+        }
+    }
+
     pub fn get_mut_by_id(&self, id: u64) -> &mut V {
         self.id_to_item.get_mut(&id).unwrap()
     }

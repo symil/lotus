@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentToken, BinaryOperatorToken}, program::{AccessType, ProgramContext, TypeOld, Wasm}, wat};
+use crate::{generation::Wat, items::{AssignmentToken, BinaryOperator}, program::{AccessType, ProgramContext, Type, TypeOld, Wasm}, wat};
 use super::{AssignmentOperator, Expression, VarPath};
 
 #[parsable]
@@ -22,22 +22,22 @@ impl Assignment {
                 if let Some(right_wasm) = right_wasm_opt {
                     if !right_wasm.ty.is_assignable() {
                         context.errors.add(rvalue, format!("cannot assign type `{}`", &right_wasm.ty));
-                    } else if left_wasm.ty.is_assignable_to(&right_wasm.ty, context, &mut HashMap::new()) {
+                    } else if left_wasm.ty.is_assignable_to(&right_wasm.ty, context) {
                         let mut source = vec![];
                         let mut ok = true;
 
                         if equal_token.token != AssignmentToken::Equal {
                             let associated_binary_operator = match &equal_token.token {
                                 AssignmentToken::Equal => unreachable!(),
-                                AssignmentToken::PlusEqual => BinaryOperatorToken::Plus,
-                                AssignmentToken::MinusEqual => BinaryOperatorToken::Minus,
-                                AssignmentToken::MultEqual => BinaryOperatorToken::Mult,
-                                AssignmentToken::DivEqual => BinaryOperatorToken::Div,
-                                AssignmentToken::ModEqual => BinaryOperatorToken::Mod,
-                                AssignmentToken::ShlEqual => BinaryOperatorToken::Shl,
-                                AssignmentToken::ShrEqual => BinaryOperatorToken::Shr,
-                                AssignmentToken::AndEqual => BinaryOperatorToken::And,
-                                AssignmentToken::OrEqual => BinaryOperatorToken::Or,
+                                AssignmentToken::PlusEqual => BinaryOperator::Plus,
+                                AssignmentToken::MinusEqual => BinaryOperator::Minus,
+                                AssignmentToken::MultEqual => BinaryOperator::Mult,
+                                AssignmentToken::DivEqual => BinaryOperator::Div,
+                                AssignmentToken::ModEqual => BinaryOperator::Mod,
+                                AssignmentToken::ShlEqual => BinaryOperator::Shl,
+                                AssignmentToken::ShrEqual => BinaryOperator::Shr,
+                                AssignmentToken::AndEqual => BinaryOperator::And,
+                                AssignmentToken::OrEqual => BinaryOperator::Or,
                             };
 
                             if let Some(left_rvalue_wasm) = self.lvalue.process(AccessType::Get, context) {
@@ -57,7 +57,7 @@ impl Assignment {
                         source.push(left_wasm);
 
                         if ok {
-                            result = Some(Wasm::merge(TypeOld::Void, source));
+                            result = Some(Wasm::merge(Type::Void, source));
                         }
                     } else {
                         context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
@@ -70,10 +70,10 @@ impl Assignment {
                 let mut source = vec![wasm];
 
                 if !is_void {
-                    source.push(Wasm::new(TypeOld::Void, wat!["drop"], vec![]));
+                    source.push(Wasm::new(Type::Void, wat!["drop"], vec![]));
                 }
 
-                result = Some(Wasm::merge(TypeOld::Void, source));
+                result = Some(Wasm::merge(Type::Void, source));
             }
         }
 

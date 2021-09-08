@@ -1,12 +1,11 @@
 use std::{collections::HashMap, hash::Hash};
-
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, TypeRef, Wasm};
 use super::{FieldDeclaration, FullType, GenericParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
 
 #[parsable]
-pub struct StructDeclaration {
+pub struct TypeDeclaration {
     pub visibility: VisibilityToken,
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
@@ -27,7 +26,7 @@ pub struct TypeDeclarationBody {
     pub methods: Vec<MethodDeclaration>
 }
 
-impl StructDeclaration {
+impl TypeDeclaration {
     pub fn process_name(&self, context: &mut ProgramContext) -> u64 {
         let type_id = self.location.get_hash();
         let type_blueprint = TypeBlueprint {

@@ -63,6 +63,8 @@ mod wasm_expression;
 mod wasm_expression_list;
 mod wasm_token;
 mod function_qualifier;
+mod interface_declaration;
+mod interface_qualifier;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -129,3 +131,5 @@ pub use wasm_expression::*;
 pub use wasm_expression_list::*;
 pub use wasm_token::*;
 pub use function_qualifier::*;
+pub use interface_declaration::*;
+pub use interface_qualifier::*;
