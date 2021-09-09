@@ -12,6 +12,7 @@ pub struct TypeBlueprint {
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
     pub parameters: IndexMap<String, TypeParameter>,
+    pub associated_types: IndexMap<String, AssociatedType>,
     pub parent: Option<ActualTypeInfo>,
     pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
     pub fields: IndexMap<String, FieldDetails>,
@@ -23,13 +24,19 @@ pub struct TypeBlueprint {
     pub after_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub required_interfaces: Vec<u64>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct AssociatedType {
+    pub name: Identifier,
+    pub owner_type_id: u64
+}
+
+#[derive(Debug, Clone)]
 pub struct FieldDetails {
     pub name: Identifier,
     pub ty: Type,
@@ -37,8 +44,9 @@ pub struct FieldDetails {
     pub offset: usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MethodDetails {
+    pub name: Identifier,
     pub function_id: u64,
     pub owner_type_id: u64,
 }

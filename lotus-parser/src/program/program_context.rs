@@ -227,19 +227,19 @@ impl ProgramContext {
         }
 
         for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_inheritence(index, self);
+            struct_declaration.process_inheritance_chain(index, self);
         }
 
         for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_self_fields(index, self);
+            struct_declaration.process_fields(index, self);
         }
 
         for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_all_fields(index, self);
+            struct_declaration.process_fields_inheritance(index, self);
         }
 
         for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_methods_signatures(index, self);
+            struct_declaration.process_method_signatures(index, self);
         }
 
         for (index, function_declaration) in functions.iter().enumerate() {

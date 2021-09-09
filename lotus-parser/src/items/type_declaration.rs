@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, ActualTypeInfo, Wasm};
+use crate::program::{ActualTypeInfo, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, Wasm};
 use super::{FieldDeclaration, FullType, TypeParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -37,6 +37,7 @@ impl TypeDeclaration {
             qualifier: self.qualifier,
             stack_type: self.stack_type.and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
             parameters: self.parameters.process(context),
+            associated_types: IndexMap::new(),
             parent: None,
             inheritance_chain: vec![],
             fields: IndexMap::new(),
@@ -98,7 +99,7 @@ impl TypeDeclaration {
         context.types.get_mut_by_id(type_id).parent = result;
     }
 
-    pub fn process_inheritence(&self, context: &mut ProgramContext) {
+    pub fn process_inheritance_chain(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut types = vec![type_blueprint.get_typeref()];
@@ -122,7 +123,7 @@ impl TypeDeclaration {
         context.types.get_mut_by_id(type_id).inheritance_chain = types;
     }
 
-    pub fn process_self_fields(&self, context: &mut ProgramContext) {
+    pub fn process_fields(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut fields = IndexMap::new();
@@ -150,36 +151,7 @@ impl TypeDeclaration {
         context.types.get_mut_by_id(type_id).fields = fields;
     }
 
-    pub fn process_all_fields(&self, context: &mut ProgramContext) {
-        let type_id = self.location.get_hash();
-        let type_blueprint = context.types.get_by_id(type_id).unwrap();
-        let mut fields : IndexMap<String, FieldDetails> = IndexMap::new();
-
-        for typeref in &type_blueprint.inheritance_chain {
-            let parent_blueprint = context.types.get_by_id(typeref.type_id).unwrap();
-
-            for field in parent_blueprint.fields.values() {
-                if field.owner_type_id == typeref.type_id {
-                    let field_info = FieldDetails {
-                        name: field.name.clone(),
-                        ty: field.ty.clone(),
-                        owner_type_id: field.owner_type_id,
-                        offset: fields.len() + OBJECT_HEADER_SIZE
-                    };
-
-                    if let Some(other_field) = fields.get(field.name.as_str()) {
-                        context.errors.add(&field.name, format!("duplicate field `{}` (already declared by parent struct `{}`)", &self.name, &other_field.name));
-                    } else {
-                        fields.insert(field.name.to_string(), field_info);
-                    }
-                }
-            }
-        }
-
-        context.types.get_mut_by_id(type_id).fields = fields;
-    }
-
-    pub fn process_methods_signatures(&self, context: &mut ProgramContext) {
+    pub fn process_method_signatures(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
 
         context.current_type = Some(type_id);
@@ -201,5 +173,60 @@ impl TypeDeclaration {
         }
 
         context.current_type = None;
+    }
+
+    fn process_inheritance<'a, F : FnMut(u64, Vec<u64>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) -> &'a mut TypeBlueprint {
+        let type_id = self.location.get_hash();
+        let type_blueprint = context.types.get_by_id(type_id).unwrap();
+        let parent_type_id_list : Vec<u64> = type_blueprint.inheritance_chain.iter().map(|info| info.type_id).collect();
+
+        f(type_id, parent_type_id_list, context);
+
+        context.types.get_mut_by_id(type_id)
+    }
+
+    pub fn process_fields_inheritance(&self, context: &mut ProgramContext) {
+        let mut fields : IndexMap<String, FieldDetails> = IndexMap::new();
+        let mut type_blueprint = self.process_inheritance(context, |type_id, parent_type_id_list, context| {
+            for parent_type_id in parent_type_id_list {
+                let parent_blueprint = context.types.get_by_id(parent_type_id).unwrap();
+
+                for field in parent_blueprint.fields.values() {
+                    if field.owner_type_id == parent_type_id {
+                        let field_info = FieldDetails {
+                            name: field.name.clone(),
+                            ty: field.ty.clone(),
+                            owner_type_id: field.owner_type_id,
+                            offset: fields.len() + OBJECT_HEADER_SIZE
+                        };
+
+                        if fields.insert(field.name.to_string(), field_info).is_some() && field.owner_type_id == type_id {
+                            context.errors.add(&self.name, format!("duplicate field `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.name));
+                        }
+                    }
+                }
+            }
+        });
+
+        type_blueprint.fields = fields;
+    }
+
+    pub fn process_methods_inheritance(&self, context: &mut ProgramContext) {
+        let mut methods : IndexMap<String, MethodDetails> = IndexMap::new();
+        let mut type_blueprint = self.process_inheritance(context, |type_id, parent_type_id_list, context| {
+            for parent_type_id in parent_type_id_list {
+                let parent_blueprint = context.types.get_by_id(parent_type_id).unwrap();
+
+                for method in parent_blueprint.methods.values() {
+                    if method.owner_type_id == parent_type_id {
+                        if methods.insert(method.name.to_string(), method.clone()).is_some() && method.owner_type_id == type_id {
+                            context.errors.add(&self.name, format!("duplicate method `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.name));
+                        }
+                    }
+                }
+            }
+        });
+
+        type_blueprint.methods = methods;
     }
 }
