@@ -15,4 +15,5 @@ pub enum BuiltinInterface {
     Gt,
     Le,
     Lt,
+    ToBool
 }

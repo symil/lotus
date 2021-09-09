@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, TypeOld, Wasm};
+use crate::program::{BuiltinInterface, ProgramContext, TypeOld, Wasm};
 use super::{Expression, Statement, StatementList};
 
 #[parsable]
@@ -13,20 +13,9 @@ impl Branch {
     pub fn process_condition(&self, context: &mut ProgramContext) -> Option<Wasm> {
         let mut result = None;
 
-        if let Some(wasm) = self.condition.process(context) {
-            let mut source = vec![];
-
-            if wasm.ty.is_boolean() {
-                source.push(wasm);
-                result = Some(Wasm::merge(TypeOld::Boolean, source));
-            } else {
-                if let Some(convert_wasm) = wasm.ty.to_bool() {
-                    source.push(wasm);
-                    source.push(convert_wasm);
-                    result = Some(Wasm::merge(TypeOld::Boolean, source));
-                } else {
-                    context.errors.add(&self.condition, format!("branch condition: cannot convert `{}` to `bool`", wasm.ty));
-                }
+        if let Some(condition_wasm) = self.condition.process(context) {
+            if let Some(to_bool_wasm) = context.call_builtin_interface_no_arg(&self.condition, BuiltinInterface::ToBool, &condition_wasm.ty) {
+                result = Some(Wasm::merge(context.bool_type(), vec![condition_wasm, to_bool_wasm]));
             }
         }
 

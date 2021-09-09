@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -17,10 +17,10 @@ pub enum BinaryOperator {
     Mod = "%",
     Shl = "<<",
     Shr = ">>",
-    And = "&&",
-    Or = "||",
-    SingleAnd = "&",
-    SingleOr = "|",
+    DoubleAnd = "&&",
+    DoubleOr = "||",
+    And = "&",
+    Or = "|",
     Eq = "==",
     Ne = "!=",
     Ge = ">=",
@@ -30,39 +30,34 @@ pub enum BinaryOperator {
 }
 
 impl BinaryOperatorWrapper {
+    pub fn new(value: BinaryOperator, location: &DataLocation) -> Self {
+        let mut result = Self::default();
+
+        result.value = value;
+        result.location = location.clone();
+
+        result
+    }
+
     pub fn get_priority(&self) -> usize {
-        self.value.get_priority()
-    }
-
-    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<Wasm> {
-        self.value.get_short_circuit_wasm(self, context)
-    }
-
-    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
-        self.value.process(operand_type, context)
-    }
-}
-
-impl BinaryOperator {
-    pub fn get_priority(&self) -> usize {
-        match self {
-            Self::Mult | Self::Div | Self::Mod => 1,
-            Self::Plus | Self::Minus => 2,
-            Self::Shl | Self::Shr => 3,
-            Self::SingleAnd => 4,
-            Self::SingleOr => 5,
-            Self::Eq | Self::Ne | Self::Ge | Self::Gt | Self::Le | Self::Lt => 6,
-            Self::And => 7,
-            Self::Or => 8,
+        match &self.value {
+            BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => 1,
+            BinaryOperator::Plus | BinaryOperator::Minus => 2,
+            BinaryOperator::Shl | BinaryOperator::Shr => 3,
+            BinaryOperator::And => 4,
+            BinaryOperator::Or => 5,
+            BinaryOperator::Eq | BinaryOperator::Ne | BinaryOperator::Ge | BinaryOperator::Gt | BinaryOperator::Le | BinaryOperator::Lt => 6,
+            BinaryOperator::DoubleAnd => 7,
+            BinaryOperator::DoubleOr => 8,
         }
     }
 
-    pub fn get_short_circuit_wasm(&self, location: &DataLocation, context: &ProgramContext) -> Option<Wasm> {
-        match self {
-            Self::And | Self::Or => {
-                let tmp_var_name = Identifier::unique("tmp", location).to_unique_string();
+    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<Wasm> {
+        match &self.value {
+            BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
+                let tmp_var_name = Identifier::unique("tmp", self).to_unique_string();
                 let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), context.bool_type(), VariableKind::Local);
-                let branch = if self == &Self::And {
+                let branch = if &self.value == &BinaryOperator::DoubleAnd {
                     wat!["br_if", 0, wat!["i32.eqz"]]
                 } else {
                     wat!["br_if", 0]
@@ -79,105 +74,28 @@ impl BinaryOperator {
         }
     }
 
-    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
-        match self {
-            Self::Plus => match operand_type {
-                TypeOld::Pointer(pointed_type) => Some(Wasm::simple(TypeOld::Pointer(pointed_type.clone()), Wat::inst("i32.add"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.add"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.add"))),
-                TypeOld::String => Some(Wasm::simple(TypeOld::String, Wat::call(STRING_CONCAT_FUNC_NAME, vec![]))),
-                TypeOld::Array(item_type) => Some(Wasm::simple(TypeOld::Array(item_type.clone()), Wat::call(ARRAY_CONCAT_FUNC_NAME, vec![]))),
-                _ => None
-            },
-            Self::Minus => match operand_type {
-                TypeOld::Pointer(pointed_type) => Some(Wasm::simple(TypeOld::Pointer(pointed_type.clone()), Wat::inst("i32.sub"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.sub"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.sub"))),
-                _ => None
-            },
-            Self::Mult => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.mul"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.mul"))),
-                _ => None
-            },
-            Self::Div => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.div_s"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Float, Wat::inst("f32.div"))),
-                _ => None
-            },
-            Self::Mod => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.rem_s"))),
-                _ => None
-            },
-            Self::Shl => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.shl"))),
-                _ => None
-            },
-            Self::Shr => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.shr_u"))),
-                _ => None
-            },
-            Self::And => match operand_type {
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.and"))),
-                _ => None
-            },
-            Self::Or => match operand_type {
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.or"))),
-                _ => None
-            },
-            Self::SingleAnd => match operand_type {
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.and"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.and"))),
-                _ => None
-            },
-            Self::SingleOr => match operand_type {
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.or"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Integer, Wat::inst("i32.or"))),
-                _ => None
-            },
-            Self::Eq => match operand_type {
-                TypeOld::Pointer(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.eq"))),
-                TypeOld::String => Some(Wasm::simple(TypeOld::Boolean, Wat::call(STRING_EQUAL_FUNC_NAME, vec![]))),
-                TypeOld::Null => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                TypeOld::Struct(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                TypeOld::Array(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.eq"))),
-                _ => None
-            },
-            Self::Ne => match operand_type {
-                TypeOld::Pointer(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                TypeOld::Boolean => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.ne"))),
-                TypeOld::String => Some(Wasm::simple(TypeOld::Boolean, wat!["i32.eqz", Wat::call(STRING_EQUAL_FUNC_NAME, vec![])])),
-                TypeOld::Null => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                TypeOld::Struct(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                TypeOld::Array(_) => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ne"))),
-                _ => None
-            },
-            Self::Ge => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.ge_s"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.ge"))),
-                _ => None
-            },
-            Self::Gt => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.gt_s"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.gt"))),
-                _ => None
-            },
-            Self::Le => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.le_s"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.le"))),
-                _ => None
-            },
-            Self::Lt => match operand_type {
-                TypeOld::Integer => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("i32.lt_s"))),
-                TypeOld::Float => Some(Wasm::simple(TypeOld::Boolean, Wat::inst("f32.lt"))),
-                _ => None
-            },
-        }
+    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
+        let required_interface = match &self.value {
+            BinaryOperator::Plus => BuiltinInterface::Add,
+            BinaryOperator::Minus => BuiltinInterface::Sub,
+            BinaryOperator::Mult => BuiltinInterface::Mul,
+            BinaryOperator::Div => BuiltinInterface::Div,
+            BinaryOperator::Mod => BuiltinInterface::Mod,
+            BinaryOperator::Shl => BuiltinInterface::Shl,
+            BinaryOperator::Shr => BuiltinInterface::Shr,
+            BinaryOperator::DoubleAnd => BuiltinInterface::And,
+            BinaryOperator::DoubleOr => BuiltinInterface::Or,
+            BinaryOperator::And => BuiltinInterface::And,
+            BinaryOperator::Or => BuiltinInterface::Or,
+            BinaryOperator::Eq => BuiltinInterface::Eq,
+            BinaryOperator::Ne => BuiltinInterface::Ne,
+            BinaryOperator::Ge => BuiltinInterface::Ge,
+            BinaryOperator::Gt => BuiltinInterface::Gt,
+            BinaryOperator::Le => BuiltinInterface::Le,
+            BinaryOperator::Lt => BuiltinInterface::Lt,
+        };
+
+        context.call_builtin_interface(self, required_interface, left_type, &[right_type], || format!("`{}` right operand", &self.value))
     }
 }
 

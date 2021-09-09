@@ -1,13 +1,13 @@
 use parsable::parsable;
 
 #[parsable]
-pub struct AssignmentOperator {
-    pub token: AssignmentToken
+pub struct AssignmentOperatorWrapper {
+    pub value: AssignmentOperator
 }
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq)]
-pub enum AssignmentToken {
+pub enum AssignmentOperator {
     Equal = "=",
     PlusEqual = "+=",
     MinusEqual = "-=",
@@ -16,6 +16,8 @@ pub enum AssignmentToken {
     ModEqual = "%=",
     ShlEqual = "<<=",
     ShrEqual = ">>=",
-    AndEqual = "&&=",
-    OrEqual = "||=",
+    DoubleAndEqual = "&&=",
+    DoubleOrEqual = "||=",
+    AndEqual = "&=",
+    OrEqual = "|=",
 }

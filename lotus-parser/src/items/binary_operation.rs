@@ -39,43 +39,26 @@ impl<'a> OperationTree<'a> {
                 match (left_wasm_result, right_wasm_result) {
                     (Some(left_wasm), Some(right_wasm)) => {
                         let mut result = None;
-                        let left_result = operator.process(&left_wasm.ty, context);
-                        let right_result = operator.process(&right_wasm.ty, context);
+                        let operator_wasm_opt = operator.process(&left_wasm.ty, &right_wasm.ty, context);
 
                         // TODO: if operator is `&&` or `||`, convert operands to booleans when possible
 
-                        let same_type = left_wasm.ty.is_compatible(&right_wasm.ty, context);
+                        if let Some(operator_wasm) = operator_wasm_opt {
+                            let wasm = if let Some(short_circuit_wasm) = operator.get_short_circuit_wasm(context) {
+                                if right.has_side_effects() {
+                                    let mut wasm = Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
 
-                        if left_result.is_none() {
-                            context.errors.add(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.value, &left_wasm.ty));
-                        }
+                                    wasm.wat = vec![wat!["block", wat!["result", "i32"], wasm.wat]];
 
-                        if right_result.is_none() {
-                            context.errors.add(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.value, &right_wasm.ty));
-                        }
-
-                        if left_result.is_some() && right_result.is_some() && !same_type {
-                            context.errors.add(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.value, &left_wasm.ty, &right_wasm.ty));
-                        } else {
-                            if let Some(operator_wasm) = left_result {
-                                if let Some(_) = right_result {
-                                    let wasm = if let Some(short_circuit_wasm) = operator.get_short_circuit_wasm() {
-                                        if right.has_side_effects() {
-                                            let mut wasm = Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
-
-                                            wasm.wat = vec![wat!["block", wat!["result", "i32"], wasm.wat]];
-
-                                            wasm
-                                        } else {
-                                            Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
-                                        }
-                                    } else {
-                                        Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
-                                    };
-
-                                    result = Some(wasm);
+                                    wasm
+                                } else {
+                                    Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
                                 }
-                            }
+                            } else {
+                                Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                            };
+
+                            result = Some(wasm);
                         }
 
                         result

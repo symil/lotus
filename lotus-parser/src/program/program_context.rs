@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, 
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind, Wasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -14,7 +14,7 @@ pub struct ProgramContext {
     pub globals: ItemIndex<GlobalVarBlueprint>,
 
     pub builtin_types: HashMap<BuiltinType, (String, u64)>,
-    pub builtin_interfaces: HashMap<BuiltinInterface, u64>,
+    pub builtin_interfaces: HashMap<BuiltinInterface, (String, u64, String)>,
 
     pub current_function: Option<u64>,
     pub current_type: Option<u64>,
@@ -57,6 +57,12 @@ impl ProgramContext {
         info.parameters.push(item_type);
 
         Type::Actual(info)
+    }
+
+    pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> (u64, &str) {
+        let (interface_name, interface_id, method_name) = self.builtin_interfaces.get(&interface).unwrap();
+
+        (*interface_id, method_name)
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -135,6 +141,48 @@ impl ProgramContext {
             },
             None => None
         }
+    }
+
+    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<Wasm>
+        where
+            L : Deref<Target=DataLocation>,
+            F : FnMut() -> String
+    {
+        let mut ok = true;
+        let (interface_id, method_name) = self.get_builtin_interface(interface);
+        let interface_blueprint = self.interfaces.get_by_id(interface_id).unwrap();
+        let method_info = interface_blueprint.methods.get(method_name).unwrap().clone();
+
+        if !target_type.match_interface(interface_id, self) {
+            self.errors.add(location, format!("type `{}` does not implement method `{}`", target_type, method_name));
+            ok = false;
+        }
+
+        for (expected_arg_type, actual_arg_type) in method_info.arguments.iter().zip(argument_types.iter()) {
+            if !actual_arg_type.is_assignable_to(expected_arg_type, self) {
+                let prefix = make_error_prefix();
+                self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, expected_arg_type, actual_arg_type));
+                ok = false;
+            }
+        }
+
+        let result = Wasm {
+            ty: method_info.return_type.clone().unwrap_or(Type::Void),
+            wat: vec![target_type.method_call_placeholder(method_name)],
+            variables: vec![],
+        };
+
+        match ok {
+            true => Some(result),
+            false => None
+        }
+    }
+
+    pub fn call_builtin_interface_no_arg<L>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type) -> Option<Wasm>
+        where
+            L : Deref<Target=DataLocation>
+    {
+        self.call_builtin_interface(location, interface, target_type, &[], || String::new())
     }
 
     // pub fn get_type_id(&mut self, ty: &Type) -> Id {

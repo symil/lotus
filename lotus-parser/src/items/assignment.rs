@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentToken, BinaryOperator}, program::{AccessType, ProgramContext, Type, TypeOld, Wasm}, wat};
-use super::{AssignmentOperator, Expression, VarPath};
+use crate::{generation::Wat, items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, TypeOld, Wasm}, wat};
+use super::{AssignmentOperatorWrapper, Expression, VarPath};
 
 #[parsable]
 pub struct Assignment {
     pub lvalue: VarPath,
-    pub rvalue: Option<(AssignmentOperator, Expression)>
+    pub rvalue: Option<(AssignmentOperatorWrapper, Expression)>
 }
 
 impl Assignment {
@@ -26,27 +26,30 @@ impl Assignment {
                         let mut source = vec![];
                         let mut ok = true;
 
-                        if equal_token.token != AssignmentToken::Equal {
-                            let associated_binary_operator = match &equal_token.token {
-                                AssignmentToken::Equal => unreachable!(),
-                                AssignmentToken::PlusEqual => BinaryOperator::Plus,
-                                AssignmentToken::MinusEqual => BinaryOperator::Minus,
-                                AssignmentToken::MultEqual => BinaryOperator::Mult,
-                                AssignmentToken::DivEqual => BinaryOperator::Div,
-                                AssignmentToken::ModEqual => BinaryOperator::Mod,
-                                AssignmentToken::ShlEqual => BinaryOperator::Shl,
-                                AssignmentToken::ShrEqual => BinaryOperator::Shr,
-                                AssignmentToken::AndEqual => BinaryOperator::And,
-                                AssignmentToken::OrEqual => BinaryOperator::Or,
+                        if equal_token.value != AssignmentOperator::Equal {
+                            let associated_binary_operator = match &equal_token.value {
+                                AssignmentOperator::Equal => unreachable!(),
+                                AssignmentOperator::PlusEqual => BinaryOperator::Plus,
+                                AssignmentOperator::MinusEqual => BinaryOperator::Minus,
+                                AssignmentOperator::MultEqual => BinaryOperator::Mult,
+                                AssignmentOperator::DivEqual => BinaryOperator::Div,
+                                AssignmentOperator::ModEqual => BinaryOperator::Mod,
+                                AssignmentOperator::ShlEqual => BinaryOperator::Shl,
+                                AssignmentOperator::ShrEqual => BinaryOperator::Shr,
+                                AssignmentOperator::DoubleAndEqual => BinaryOperator::DoubleAnd,
+                                AssignmentOperator::DoubleOrEqual => BinaryOperator::DoubleOr,
+                                AssignmentOperator::AndEqual => BinaryOperator::And,
+                                AssignmentOperator::OrEqual => BinaryOperator::Or,
                             };
+                            let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
 
                             if let Some(left_rvalue_wasm) = self.lvalue.process(AccessType::Get, context) {
-                                if let Some(operator_wasm) = associated_binary_operator.process(&left_rvalue_wasm.ty, context) {
+                                if let Some(operator_wasm) = wrapper.process(&left_rvalue_wasm.ty, &right_wasm.ty, context) {
                                     source.push(left_rvalue_wasm);
                                     source.push(right_wasm);
                                     source.push(operator_wasm);
                                 } else {
-                                    context.errors.add(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.token, &left_rvalue_wasm.ty));
+                                    context.errors.add(equal_token, format!("operator `{}` cannot be applied to type `{}`", &equal_token.value, &left_rvalue_wasm.ty));
                                     ok = false;
                                 }
                             }
