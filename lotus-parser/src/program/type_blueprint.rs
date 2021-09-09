@@ -1,7 +1,7 @@
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::items::{Identifier, StackType, TypeQualifier, Visibility};
-use super::{GlobalItem, Type, TypeRef};
+use super::{GlobalItem, Type, ActualTypeInfo};
 
 #[derive(Debug, Default)]
 pub struct TypeBlueprint {
@@ -11,9 +11,9 @@ pub struct TypeBlueprint {
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
-    pub generics: IndexSet<String>,
-    pub parent: Option<TypeRef>,
-    pub inheritance_chain: Vec<TypeRef>, // from the most "parent" type to the most "child", including self
+    pub parameters: IndexMap<String, TypeParameter>,
+    pub parent: Option<ActualTypeInfo>,
+    pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
     pub fields: IndexMap<String, FieldDetails>,
     pub static_fields: IndexMap<String, FieldDetails>,
     pub methods: IndexMap<String, MethodDetails>,
@@ -21,6 +21,12 @@ pub struct TypeBlueprint {
     pub hook_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
     pub before_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
     pub after_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
+}
+
+#[derive(Debug)]
+pub struct TypeParameter {
+    pub name: Identifier,
+    pub required_interfaces: Vec<u64>
 }
 
 #[derive(Debug)]
@@ -38,11 +44,11 @@ pub struct MethodDetails {
 }
 
 impl TypeBlueprint {
-    pub fn get_typeref(&self) -> TypeRef {
-        TypeRef {
+    pub fn get_typeref(&self) -> ActualTypeInfo {
+        ActualTypeInfo {
             type_id: self.type_id,
             name: self.name.clone(),
-            generic_values: self.generics.iter().map(|name| Type::generic(name.to_string(), self.type_id)).collect(),
+            parameters: self.parameters.values().map(|param| Type::generic(param.name.to_string(), self.type_id)).collect(),
         }
     }
 

@@ -279,10 +279,6 @@ impl Wat {
             }
         }
     }
-
-    pub fn placeholder(&self, type_id: u64, method_name: &str) -> Self {
-        
-    }
 }
 
 fn indent_level_to_string(level: usize) -> String {

@@ -10,7 +10,6 @@ pub struct FunctionBlueprint {
     pub location: DataLocation,
     pub visibility: Visibility,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
-    pub generics: IndexSet<String>,
     pub owner_type_id: Option<u64>,
     pub this_type: Option<Type>,
     pub payload_type: Option<Type>,

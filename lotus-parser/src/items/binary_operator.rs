@@ -3,8 +3,8 @@ use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NA
 
 #[parsable]
 #[derive(Default)]
-pub struct BinaryOperatorToken {
-    pub token: BinaryOperator
+pub struct BinaryOperatorWrapper {
+    pub value: BinaryOperator
 }
 
 #[parsable(impl_display=true)]
@@ -29,17 +29,17 @@ pub enum BinaryOperator {
     Lt = "<",
 }
 
-impl BinaryOperatorToken {
+impl BinaryOperatorWrapper {
     pub fn get_priority(&self) -> usize {
-        self.token.get_priority()
+        self.value.get_priority()
     }
 
-    pub fn get_short_circuit_wasm(&self) -> Option<Wasm> {
-        self.token.get_short_circuit_wasm(self)
+    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<Wasm> {
+        self.value.get_short_circuit_wasm(self, context)
     }
 
-    pub fn process(&self, operand_type: &TypeOld, context: &mut ProgramContext) -> Option<Wasm> {
-        self.token.process(operand_type, context)
+    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
+        self.value.process(operand_type, context)
     }
 }
 

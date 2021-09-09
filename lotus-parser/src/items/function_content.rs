@@ -21,7 +21,7 @@ impl FunctionContent {
             location: self.location.clone(),
             visibility: Visibility::Private,
             event_callback_qualifier: None,
-            generics: IndexSet::new(),
+            parameters: IndexSet::new(),
             owner_type_id: None,
             this_type: None,
             payload_type: None,
@@ -39,7 +39,7 @@ impl FunctionContent {
             let type_blueprint = context.types.get_by_id(type_id).unwrap();
 
             function_blueprint.owner_type_id = Some(type_id);
-            function_blueprint.generics = type_blueprint.generics.clone();
+            function_blueprint.parameters = type_blueprint.generics.clone();
 
             if !is_static {
                 function_blueprint.this_type = Some(Type::Actual(type_blueprint.get_typeref()));

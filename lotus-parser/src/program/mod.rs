@@ -32,6 +32,10 @@ mod wasm_blueprint;
 mod function_instance;
 mod global_var_blueprint;
 mod error_list;
+mod interface_blueprint;
+mod constants;
+mod builtin_interfaces;
+mod builtin_types;
 
 pub use error::*;
 pub use program::*;
@@ -67,3 +71,7 @@ pub use function_instance::*;
 pub use wasm_blueprint::*;
 pub use global_var_blueprint::*;
 pub use error_list::*;
+pub use interface_blueprint::*;
+pub use constants::*;
+pub use builtin_interfaces::*;
+pub use builtin_types::*;

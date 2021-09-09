@@ -1,38 +1,59 @@
 use std::fmt::format;
 
 use parsable::parsable;
-use crate::program::{GenericInfo, ProgramContext, Type, TypeRef};
-use super::{GenericArguments, Identifier, TypeSuffix};
+use crate::program::{GenericTypeInfo, ProgramContext, THIS_VAR_NAME, Type, ActualTypeInfo};
+use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
 pub struct ValueType {
     pub name: Identifier,
-    pub parameters: GenericArguments
+    pub arguments: TypeArguments
 }
 
 impl ValueType {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
-        if let Some(type_id) = context.check_generic_name(self.name.as_str()) {
-            if let Some(generic_list) = self.parameters.process(context) {
-                context.errors.add(&self.parameters, format!("generic types cannot have parameters"));
+        if (self.name.as_str() == THIS_VAR_NAME) {
+            if let Some(generic_list) = self.arguments.process(context) {
+                context.errors.add(&self.arguments, format!("`{}` type cannot have parameters", THIS_VAR_NAME));
             }
 
-            Some(Type::Generic(GenericInfo {
+            if context.current_type.is_none() && context.current_interface.is_none() {
+                context.errors.add(&self.arguments, format!("`{}` does not refer to anything in this context", THIS_VAR_NAME));
+                None
+            } else {
+                Some(Type::This)
+            }
+        } else if let Some(type_id) = context.check_generic_name(self.name.as_str()) {
+            if let Some(generic_list) = self.arguments.process(context) {
+                context.errors.add(&self.arguments, format!("generic types cannot have parameters"));
+            }
+
+            Some(Type::Generic(GenericTypeInfo {
                 name: self.name.to_string(),
                 type_context: type_id
             }))
         } else {
-            let generic_list = self.parameters.process(context).unwrap_or_default();
+            let parameter_list = self.arguments.process(context).unwrap_or_default();
 
             if let Some(type_blueprint) = context.types.get_by_name(&self.name) {
-                if generic_list.len() != type_blueprint.generics.len() {
-                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, type_blueprint.generics.len(), generic_list.len()));
+                if parameter_list.len() != type_blueprint.parameters.len() {
+                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, type_blueprint.parameters.len(), parameter_list.len()));
                     None
                 } else {
-                    Some(Type::Actual(TypeRef {
+                    for (i, (parameter, argument)) in type_blueprint.parameters.values().zip(parameter_list.iter()).enumerate() {
+                        for interface_id in &parameter.required_interfaces {
+                            if !argument.match_interface(*interface_id, context) {
+                                let interface_name = &context.interfaces.get_by_id(*interface_id).unwrap().name;
+
+                                context.errors.add(&self.arguments.list[i], format!("type `{}` does not implement interface `{}`", argument, interface_name));
+                            }
+                        }
+                    }
+
+                    Some(Type::Actual(ActualTypeInfo {
+                        name: type_blueprint.name.clone(),
                         type_id: type_blueprint.type_id,
-                        type_context: context.current_type,
-                        generic_values: generic_list,
+                        parameters: parameter_list,
                     }))
                 }
             } else {

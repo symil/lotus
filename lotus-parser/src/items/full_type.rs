@@ -13,7 +13,7 @@ impl FullType {
         if let Some(mut final_type) = self.item.process(context) {
             for suffix in &self.suffix {
                 final_type = match suffix {
-                    TypeSuffix::Array => todo!()
+                    TypeSuffix::Array => context.array_type(final_type)
                 };
             }
 

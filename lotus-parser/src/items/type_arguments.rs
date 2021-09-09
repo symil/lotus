@@ -4,12 +4,12 @@ use crate::program::{ProgramContext, Type};
 use super::{FullType, Identifier};
 
 #[parsable]
-pub struct GenericArguments {
+pub struct TypeArguments {
     #[parsable(brackets="<>", separator=",", optional=true)]
-    list: Vec<FullType>
+    pub list: Vec<FullType>
 }
 
-impl GenericArguments {
+impl TypeArguments {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vec<Type>> {
         let mut type_list = vec![];
 

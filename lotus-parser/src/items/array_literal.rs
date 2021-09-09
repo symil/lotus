@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, ProgramContext, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
 use super::Expression;
 
 #[parsable]
@@ -36,12 +36,12 @@ impl ArrayLiteral {
                     item_ok = true;
                 }
 
-                let func_name = final_item_type.pointer_set_function_name();
-
                 wat.extend(item_wasm.wat);
-                wat.push(Wat::get_local(&array_body_var_name));
-                wat.push(Wat::const_i32(i));
-                wat.push(Wat::call_from_stack(func_name));
+                wat.extend(vec![
+                    Wat::get_local(&array_body_var_name),
+                    Wat::const_i32(i),
+                    final_item_type.method_call_placeholder(PTR_SET_METHOD_NAME)
+                ]);
 
                 if !item_ok {
                     context.errors.add(item, format!("incompatible item types `{}` and `{}`", &final_item_type, &item_wasm.ty));

@@ -2,31 +2,23 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, 
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, wat};
-use super::{Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind};
-
-pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
-pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
-pub const THIS_VAR_NAME : &'static str = "__this";
-pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
-pub const RESULT_VAR_NAME : &'static str = "__fn_result";
-
-const BOOL_TYPE_NAME : &'static str = "bool";
-const INT_TYPE_NAME : &'static str = "int";
-const ARRAY_TYPE_NAME : &'static str = "Array";
-
-const PTR_GET_PLACEHOLDER : &'static str = "__ptr_get";
-const PTR_SET_PLACEHOLDER : &'static str = "__ptr_set";
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: ErrorList,
 
     pub types: ItemIndex<TypeBlueprint>,
+    pub interfaces: ItemIndex<InterfaceBlueprint>,
     pub functions: ItemIndex<FunctionBlueprint>,
     pub globals: ItemIndex<GlobalVarBlueprint>,
 
+    pub builtin_types: HashMap<BuiltinType, (String, u64)>,
+    pub builtin_interfaces: HashMap<BuiltinInterface, u64>,
+
     pub current_function: Option<u64>,
     pub current_type: Option<u64>,
+    pub current_interface: Option<u64>,
     pub scopes: Vec<Scope>,
     pub depth: i32,
     pub return_found: bool,
@@ -37,20 +29,34 @@ impl ProgramContext {
         Self::default()
     }
 
+    fn get_builtin_type_info(&self, builtin_type: BuiltinType) -> ActualTypeInfo {
+        let (type_name, type_id) = self.builtin_types.get(&builtin_type).unwrap();
+
+        ActualTypeInfo {
+            name: type_name.clone(),
+            type_id: type_id.clone(),
+            parameters: vec![],
+        }
+    }
+
     pub fn bool_type(&self) -> Type {
-        todo!()
+        Type::Actual(self.get_builtin_type_info(BuiltinType::Bool))
     }
 
     pub fn int_type(&self) -> Type {
-        todo!()
+        Type::Actual(self.get_builtin_type_info(BuiltinType::Int))
     }
 
     pub fn float_type(&self) -> Type {
-        todo!()
+        Type::Actual(self.get_builtin_type_info(BuiltinType::Float))
     }
 
     pub fn array_type(&self, item_type: Type) -> Type {
-        todo!()
+        let mut info = self.get_builtin_type_info(BuiltinType::Array);
+
+        info.parameters.push(item_type);
+
+        Type::Actual(info)
     }
 
     pub fn reset_local_scope(&mut self) {

@@ -1,16 +1,16 @@
 use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, TypeRef, Wasm};
-use super::{FieldDeclaration, FullType, GenericParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityToken};
+use crate::program::{Error, FieldDetails, KEYWORDS, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, ActualTypeInfo, Wasm};
+use super::{FieldDeclaration, FullType, TypeParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct TypeDeclaration {
-    pub visibility: VisibilityToken,
+    pub visibility: VisibilityWrapper,
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
     pub stack_type: Option<StackTypeToken>,
-    pub generics: GenericParameters,
+    pub parameters: TypeParameters,
     pub name: Identifier,
     #[parsable(prefix=":")]
     pub parent: Option<FullType>,
@@ -36,7 +36,7 @@ impl TypeDeclaration {
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             qualifier: self.qualifier,
             stack_type: self.stack_type.and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
-            generics: self.generics.process(context),
+            parameters: self.parameters.process(context),
             parent: None,
             inheritance_chain: vec![],
             fields: IndexMap::new(),
@@ -60,6 +60,8 @@ impl TypeDeclaration {
     pub fn process_parent(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let mut result = None;
+
+        context.current_type = Some(type_id);
 
         if let Some(parsed_parent_type) = &self.parent {
             if let Some(parent_type) = parsed_parent_type.process(context) {
@@ -92,6 +94,7 @@ impl TypeDeclaration {
             }
         }
 
+        context.current_type = None;
         context.types.get_mut_by_id(type_id).parent = result;
     }
 
@@ -124,6 +127,8 @@ impl TypeDeclaration {
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
         let mut fields = IndexMap::new();
 
+        context.current_type = Some(type_id);
+
         for field in &self.body.fields {
             if fields.contains_key(field.name.as_str()) {
                 context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
@@ -141,6 +146,7 @@ impl TypeDeclaration {
             }
         }
         
+        context.current_type = None;
         context.types.get_mut_by_id(type_id).fields = fields;
     }
 

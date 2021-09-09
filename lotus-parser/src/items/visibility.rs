@@ -1,7 +1,7 @@
 use parsable::parsable;
 
 #[parsable]
-pub struct VisibilityToken {
+pub struct VisibilityWrapper {
     pub value: Option<Visibility>
 }
 

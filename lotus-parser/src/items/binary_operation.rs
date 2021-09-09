@@ -1,11 +1,11 @@
 use parsable::{DataLocation, parsable};
 use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, Wasm}, wat};
-use super::{BinaryOperatorToken, Operand, FullType};
+use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]
 pub struct BinaryOperation {
     pub first: Operand,
-    pub others: Vec<(BinaryOperatorToken, Operand)>
+    pub others: Vec<(BinaryOperatorWrapper, Operand)>
 }
 
 impl BinaryOperation {
@@ -25,7 +25,7 @@ impl BinaryOperation {
 
 #[derive(Debug)]
 enum OperationTree<'a> {
-    Operation(Box<OperationTree<'a>>, BinaryOperatorToken, Box<OperationTree<'a>>),
+    Operation(Box<OperationTree<'a>>, BinaryOperatorWrapper, Box<OperationTree<'a>>),
     Value(&'a Operand)
 }
 
@@ -47,15 +47,15 @@ impl<'a> OperationTree<'a> {
                         let same_type = left_wasm.ty.is_compatible(&right_wasm.ty, context);
 
                         if left_result.is_none() {
-                            context.errors.add(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.token, &left_wasm.ty));
+                            context.errors.add(left.get_location(), format!("operator `{}`: invalid left-hand operand type `{}`", &operator.value, &left_wasm.ty));
                         }
 
                         if right_result.is_none() {
-                            context.errors.add(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.token, &right_wasm.ty));
+                            context.errors.add(right.get_location(), format!("operator `{}`: invalid right-hand operand type `{}`", &operator.value, &right_wasm.ty));
                         }
 
                         if left_result.is_some() && right_result.is_some() && !same_type {
-                            context.errors.add(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.token, &left_wasm.ty, &right_wasm.ty));
+                            context.errors.add(&operator, format!("operator `{}`: operand types must match (got `{}` and `{}`)", &operator.value, &left_wasm.ty, &right_wasm.ty));
                         } else {
                             if let Some(operator_wasm) = left_result {
                                 if let Some(_) = right_result {
@@ -95,18 +95,18 @@ impl<'a> OperationTree<'a> {
     }
 
     fn from_operation(operation: &'a BinaryOperation) -> Self {
-        let mut list : Vec<(BinaryOperatorToken, &'a Operand, usize)> = operation.others.iter().enumerate().map(|(i, (operator, operand))| {
+        let mut list : Vec<(BinaryOperatorWrapper, &'a Operand, usize)> = operation.others.iter().enumerate().map(|(i, (operator, operand))| {
             let priority = operator.get_priority() * 256 + i;
 
             (operator.clone(), operand, priority)
         }).collect();
 
-        list.insert(0, (BinaryOperatorToken::default(), &operation.first, usize::MAX));
+        list.insert(0, (BinaryOperatorWrapper::default(), &operation.first, usize::MAX));
 
         Self::from_list(&mut list)
     }
 
-    fn from_list(operands: &mut [(BinaryOperatorToken, &'a Operand, usize)]) -> Self {
+    fn from_list(operands: &mut [(BinaryOperatorWrapper, &'a Operand, usize)]) -> Self {
         if operands.len() == 1 {
             Self::Value(&operands[0].1)
         } else {

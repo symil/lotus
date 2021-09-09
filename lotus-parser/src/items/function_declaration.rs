@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, TypeOld, VariableKind, Wasm, RESULT_VAR_NAME}};
-use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityToken};
+use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityWrapper};
 
 #[parsable]
 pub struct FunctionDeclaration {
-    pub visibility: VisibilityToken,
+    pub visibility: VisibilityWrapper,
     #[parsable(prefix="fn")]
     pub content: FunctionContent
 }

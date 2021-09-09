@@ -42,6 +42,12 @@ impl ToWat for String {
     }
 }
 
+impl<'a> ToWat for &'a String {
+    fn to_wat(self) -> Wat {
+        Wat::single(self.as_str().to_string())
+    }
+}
+
 impl<'a> ToWat for &'a str {
     fn to_wat(self) -> Wat {
         Wat::single(self.to_string())
@@ -61,6 +67,12 @@ impl ToWat for &usize {
 }
 
 impl ToWat for u32 {
+    fn to_wat(self) -> Wat {
+        Wat::single(self.to_string())
+    }
+}
+
+impl ToWat for u64 {
     fn to_wat(self) -> Wat {
         Wat::single(self.to_string())
     }
