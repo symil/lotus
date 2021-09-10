@@ -33,7 +33,8 @@ pub struct TypeParameter {
 #[derive(Debug, Clone)]
 pub struct AssociatedType {
     pub name: Identifier,
-    pub owner_type_id: u64
+    pub owner_type_id: u64,
+    pub value: Type
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +53,7 @@ pub struct MethodDetails {
 }
 
 impl TypeBlueprint {
-    pub fn get_typeref(&self) -> ActualTypeInfo {
+    pub fn get_info(&self) -> ActualTypeInfo {
         ActualTypeInfo {
             type_id: self.type_id,
             name: self.name.clone(),

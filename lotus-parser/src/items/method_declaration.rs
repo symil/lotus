@@ -17,8 +17,9 @@ impl MethodDeclaration {
             false => &mut type_blueprint.methods
         };
         let method_details = MethodDetails {
+            name: self.content.name.clone(),
             function_id: method_blueprint.function_id,
-            owner_type_id: type_id
+            owner_type_id: type_id,
         };
 
         method_blueprint.visibility = Visibility::Member;

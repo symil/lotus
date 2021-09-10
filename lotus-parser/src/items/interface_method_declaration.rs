@@ -5,6 +5,7 @@ use super::{FunctionSignature, Identifier};
 #[parsable]
 pub struct InterfaceMethodDeclaration {
     pub name: Identifier,
+    #[parsable(suffix=";")]
     pub signature: FunctionSignature
 }
 

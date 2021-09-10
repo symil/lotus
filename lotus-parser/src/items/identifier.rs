@@ -11,10 +11,11 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub fn new<S : Deref<Target=str>>(name: S) -> Self {
+    pub fn new<S : Deref<Target=str>, L : Deref<Target=DataLocation>>(name: S, location: &L) -> Self {
         let mut identifier = Identifier::default();
 
         identifier.value = name.to_string();
+        identifier.location = location.deref().clone();
 
         identifier
     }

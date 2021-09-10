@@ -21,7 +21,6 @@ impl FunctionContent {
             location: self.location.clone(),
             visibility: Visibility::Private,
             event_callback_qualifier: None,
-            parameters: IndexSet::new(),
             owner_type_id: None,
             this_type: None,
             payload_type: None,
@@ -39,10 +38,9 @@ impl FunctionContent {
             let type_blueprint = context.types.get_by_id(type_id).unwrap();
 
             function_blueprint.owner_type_id = Some(type_id);
-            function_blueprint.parameters = type_blueprint.generics.clone();
 
             if !is_static {
-                function_blueprint.this_type = Some(Type::Actual(type_blueprint.get_typeref()));
+                function_blueprint.this_type = Some(Type::Actual(type_blueprint.get_info()));
             }
         } else if is_static {
             context.errors.add(self, "regular functions cannot be static");
@@ -66,7 +64,7 @@ impl FunctionContent {
                 }
 
                 if let Some(event_type) = context.types.get_by_name(&self.name) {
-                    function_blueprint.payload_type = Some(Type::Actual(event_type.get_typeref()));
+                    function_blueprint.payload_type = Some(Type::Actual(event_type.get_info()));
 
                     if event_type.qualifier != TypeQualifier::Class {
                         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));

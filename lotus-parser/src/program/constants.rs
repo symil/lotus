@@ -34,4 +34,7 @@ pub const BUILTIN_INTERFACES : &'static[(BuiltinInterface, &'static str, &'stati
     (BuiltinInterface::Gt, "Gt",  "gt"),
     (BuiltinInterface::Le, "Le",  "le"),
     (BuiltinInterface::Lt, "Lt",  "lt"),
+    (BuiltinInterface::ToBool, "ToBool",  "to_bool"),
+    (BuiltinInterface::GetAtIndex, "GetAtIndex",  "get_at_index"),
+    (BuiltinInterface::SetAtIndex, "SetAtIndex",  "set_at_index"),
 ];

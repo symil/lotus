@@ -66,6 +66,8 @@ mod function_qualifier;
 mod interface_declaration;
 mod interface_qualifier;
 mod interface_method_declaration;
+mod associated_type_declaration;
+mod interface_associated_type_declaration;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -135,3 +137,5 @@ pub use function_qualifier::*;
 pub use interface_declaration::*;
 pub use interface_qualifier::*;
 pub use interface_method_declaration::*;
+pub use associated_type_declaration::*;
+pub use interface_associated_type_declaration::*;

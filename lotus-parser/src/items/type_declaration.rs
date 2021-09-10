@@ -1,8 +1,8 @@
 use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::program::{ActualTypeInfo, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, Type, TypeBlueprint, TypeOld, Wasm};
-use super::{FieldDeclaration, FullType, TypeParameters, Identifier, MethodDeclaration, EventCallbackQualifier, StackType, StackTypeToken, TypeQualifier, Visibility, VisibilityWrapper};
+use crate::program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, THIS_TYPE_NAME, Type, TypeBlueprint, TypeOld, Wasm};
+use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct TypeDeclaration {
@@ -21,7 +21,7 @@ pub struct TypeDeclaration {
 #[parsable]
 #[derive(Default)]
 pub struct TypeDeclarationBody {
-    #[parsable(sep=",")]
+    pub associated_types: Vec<AssociatedTypeDeclaration>,
     pub fields: Vec<FieldDeclaration>,
     pub methods: Vec<MethodDeclaration>
 }
@@ -56,6 +56,36 @@ impl TypeDeclaration {
         context.types.insert(type_blueprint);
 
         type_id
+    }
+
+    pub fn process_associated_types(&self, context: &mut ProgramContext) {
+        let mut associated_types = IndexMap::new();
+        let mut type_blueprint = self.process(context, |type_id, context| {
+            for associated_type in &self.body.associated_types {
+                let (name, ty) = associated_type.process(context);
+                let item = AssociatedType {
+                    name: name.clone(),
+                    owner_type_id: type_id,
+                    value: ty
+                };
+
+                if associated_types.insert(name.to_string(), item).is_some() {
+                    context.errors.add(&associated_type.name, format!("duplicate associated type `{}`", &name));
+                }
+                
+                if name.as_str() == THIS_TYPE_NAME {
+                    context.errors.add(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
+                }
+            }
+        });
+
+        associated_types.insert(THIS_TYPE_NAME.to_string(), AssociatedType {
+            name: Identifier::new(THIS_TYPE_NAME, &self.name),
+            owner_type_id: type_blueprint.type_id,
+            value: Type::Actual(type_blueprint.get_info())
+        });
+
+        type_blueprint.associated_types = associated_types;
     }
 
     pub fn process_parent(&self, context: &mut ProgramContext) {
@@ -102,7 +132,7 @@ impl TypeDeclaration {
     pub fn process_inheritance_chain(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let type_blueprint = context.types.get_by_id(type_id).unwrap();
-        let mut types = vec![type_blueprint.get_typeref()];
+        let mut types = vec![type_blueprint.get_info()];
         let mut parent_opt = type_blueprint.parent;
 
         while let Some(parent_typeref) = parent_opt {
@@ -173,6 +203,16 @@ impl TypeDeclaration {
         }
 
         context.current_type = None;
+    }
+
+    fn process<'a, F : FnMut(u64, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) -> &'a mut TypeBlueprint {
+        let type_id = self.location.get_hash();
+
+        context.current_type = Some(type_id);
+        f(type_id, context);
+        context.current_type = None;
+
+        context.types.get_mut_by_id(type_id)
     }
 
     fn process_inheritance<'a, F : FnMut(u64, Vec<u64>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) -> &'a mut TypeBlueprint {

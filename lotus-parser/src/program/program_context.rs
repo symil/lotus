@@ -133,16 +133,6 @@ impl ProgramContext {
         }
     }
 
-    pub fn check_generic_name(&self, name: &str) -> Option<u64> {
-        match self.get_current_type() {
-            Some(type_blueprint) => match type_blueprint.generics.contains(name) {
-                true => self.current_type.clone(),
-                false => None,
-            },
-            None => None
-        }
-    }
-
     pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<Wasm>
         where
             L : Deref<Target=DataLocation>,

@@ -9,7 +9,13 @@ pub struct InterfaceBlueprint {
     pub name: Identifier,
     pub location: DataLocation,
     pub visibility: Visibility,
+    pub associated_types: IndexMap<String, InterfaceAssociatedType>,
     pub methods: IndexMap<String, InterfaceMethod>
+}
+
+#[derive(Debug)]
+pub struct InterfaceAssociatedType {
+    pub name: Identifier
 }
 
 #[derive(Debug)]

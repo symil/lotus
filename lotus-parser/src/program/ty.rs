@@ -1,7 +1,5 @@
 use std::fmt::Display;
-
 use parsable::DataLocation;
-
 use crate::{generation::Wat, items::FullType, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, wat};
 use super::{InterfaceMethod, ProgramContext};
 
@@ -9,10 +7,22 @@ use super::{InterfaceMethod, ProgramContext};
 pub enum Type {
     Void,
     Any,
-    This,
+    Associated(AssociatedTypeInfo),
     Generic(GenericTypeInfo),
     Actual(ActualTypeInfo),
-    TypeRef(ActualTypeInfo)
+    TypeRef(Box<Type>)
+}
+
+#[derive(Debug, Clone)]
+pub struct AssociatedTypeInfo {
+    pub name: String,
+    pub interface_context: u64
+}
+
+#[derive(Debug, Clone)]
+pub struct GenericTypeInfo {
+    pub name: String,
+    pub type_context: u64
 }
 
 #[derive(Debug, Clone)]
@@ -20,12 +30,6 @@ pub struct ActualTypeInfo {
     pub name: String, // only used for display
     pub type_id: u64, // blueprint id
     pub parameters: Vec<Type>
-}
-
-#[derive(Debug, Clone)]
-pub struct GenericTypeInfo {
-    pub name: String,
-    pub type_context: u64
 }
 
 impl Type {
@@ -68,9 +72,9 @@ impl Type {
         match self {
             Type::Void => None,
             Type::Any => unreachable!(),
-            Type::This => todo!(),
+            Type::Associated(info) => Some(format!("?{}", &info.name)),
             Type::Generic(info) => Some(format!("?{}", &info.name)),
-            Type::Actual(typeref) => context.types.get_by_id(typeref.type_id).unwrap().get_wasm_type().and_then(|s| Some(s.to_string())),
+            Type::Actual(info) => context.types.get_by_id(info.type_id).unwrap().get_wasm_type().and_then(|s| Some(s.to_string())),
             Type::TypeRef(_) => unreachable!(),
         }
     }
@@ -79,7 +83,7 @@ impl Type {
         match self {
             Type::Void => true,
             Type::Any => true,
-            Type::This => true,
+            Type::Associated(_) => true,
             Type::Generic(_) => true,
             Type::Actual(_) => true,
             Type::TypeRef(_) => false,
@@ -90,22 +94,22 @@ impl Type {
         match self {
             Type::Void => false,
             Type::Any => true,
-            Type::This => match target {
-                Type::This => true,
+            Type::Associated(self_info) => match target {
+                Type::Associated(target_info) => self_info == target_info,
                 _ => false
             },
-            Type::Generic(self_generic_info) => {
+            Type::Generic(self_info) => {
                 match target {
-                    Type::Generic(target_generic_info) => self_generic_info == target_generic_info,
+                    Type::Generic(target_info) => self_info == target_info,
                     _ => false
                 }
             },
-            Type::Actual(self_typeref) => {
+            Type::Actual(self_info) => {
                 match target {
-                    Type::Actual(target_typeref) => {
-                        let self_type = context.types.get_by_id(self_typeref.type_id).unwrap();
+                    Type::Actual(target_info) => {
+                        let self_type = context.types.get_by_id(self_info.type_id).unwrap();
 
-                        self_type.inheritance_chain.contains(target_typeref)
+                        self_type.inheritance_chain.contains(target_info)
                     },
                     _ => false
                 }
@@ -118,7 +122,7 @@ impl Type {
         match self {
             Type::Void => unreachable!(),
             Type::Any => unreachable!(),
-            Type::This => wat![THIS_TYPE_NAME],
+            Type::Associated(info) => wat![&info.name],
             Type::Generic(info) => wat![&info.name],
             Type::Actual(info) => {
                 let mut placeholder = wat![info.type_id];
@@ -141,7 +145,7 @@ impl Type {
         match self {
             Type::Void => unreachable!(),
             Type::Any => unreachable!(),
-            Type::This => todo!(),
+            Type::Associated(info) => unreachable!(),
             Type::Generic(info) => {
                 let context_type = context.types.get_by_id(info.type_context).unwrap();
                 let parameter_info = context_type.parameters.get(&info.name).unwrap();
@@ -151,6 +155,14 @@ impl Type {
             Type::Actual(info) => {
                 let type_blueprint = context.types.get_by_id(info.type_id).unwrap();
                 let interface_blueprint = context.interfaces.get_by_id(interface_id).unwrap();
+
+                for associated_type in interface_blueprint.associated_types.values() {
+                    if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
+                        // later: check that associated type matches required interfaces
+                    } else {
+                        return false;
+                    }
+                }
          
                 for method in interface_blueprint.methods.values() {
                     if let Some(method_info) = type_blueprint.methods.get(method.name.as_str()) {
@@ -193,9 +205,16 @@ impl PartialEq for GenericTypeInfo {
     }
 }
 
+impl PartialEq for AssociatedTypeInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.interface_context == other.interface_context
+    }
+}
+
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
+            (Self::Associated(l0), Self::Associated(r0)) => l0 == r0,
             (Self::Generic(l0), Self::Generic(r0)) => l0 == r0,
             (Self::Actual(l0), Self::Actual(r0)) => l0 == r0,
             (Self::TypeRef(l0), Self::TypeRef(r0)) => l0 == r0,
@@ -215,10 +234,10 @@ impl Display for Type {
         match self {
             Type::Void => write!(f, "<void>"),
             Type::Any => write!(f, "<any>"),
-            Type::This => write!(f, "This"),
+            Type::Associated(info) => write!(f, "{}", &info.name),
             Type::Generic(info) => write!(f, "{}", &info.name),
-            Type::Actual(typeref) => write!(f, "{}", &typeref.name),
-            Type::TypeRef(typeref) => write!(f, "<type {}>", &typeref.name),
+            Type::Actual(info) => write!(f, "{}", &info.name),
+            Type::TypeRef(typeref) => write!(f, "<type {}>", &typeref),
         }
     }
 }
