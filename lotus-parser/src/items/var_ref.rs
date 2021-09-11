@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{AccessType, ProgramContext, TypeOld, VariableKind, Wasm, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, TypeOld, VariableKind, IrFragment, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -15,18 +15,18 @@ impl VarRef {
         self.arguments.is_some()
     }
 
-    pub fn process_as_field(&self, parent_type: &TypeOld, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process_as_field(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
         match &self.arguments {
             Some(arguments) => process_method_call(parent_type, &self.name, arguments, access_type, context),
             None => process_field_access(parent_type, &self.name, access_type, context)
         }
     }
 
-    pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
         match &self.arguments {
-            Some(arguments) => match context.get_function_by_name(&self.name) {
-                Some(function_annotation) => {
-                    process_function_call(None, &function_annotation.get_type(), vec![Wat::call_from_stack(&function_annotation.wasm_name)], arguments, access_type, context)
+            Some(arguments) => match context.functions.get_by_name(&self.name) {
+                Some(function_blueprint) => {
+                    process_function_call(None, &function_blueprint.get_type(), vec![Wat::call_from_stack(&function_blueprint.wasm_name)], arguments, access_type, context)
                 },
                 None => {
                     context.errors.add(&self.name, format!("undefined function `{}`", &self.name));
@@ -35,11 +35,11 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Wasm::simple(var_info.ty.clone(), var_info.get_to_stack())),
-                    AccessType::Set(_) => Some(Wasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
+                    AccessType::Get => Some(IrFragment::simple(var_info.ty.clone(), var_info.get_to_stack())),
+                    AccessType::Set(_) => Some(IrFragment::simple(var_info.ty.clone(), var_info.set_from_stack())),
                 },
                 None => match context.get_struct_by_name(&self.name) {
-                    Some(struct_annotation) => Some(Wasm::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
+                    Some(struct_annotation) => Some(IrFragment::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
                     None => {
                         context.errors.add(&self.name, format!("undefined variable or type `{}`", &self.name));
                         None
@@ -50,7 +50,7 @@ impl VarRef {
     }
 }
 
-pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
     if let AccessType::Set(set_location) = access_type {
         match parent_type {
             TypeOld::Struct(_) => {},
@@ -83,7 +83,7 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
 
                 // special case: `_` refers to the value itself rather than a field
                 // e.g `#foo` means `self.foo`, but `#_` means `self`
-                Some(Wasm::empty(parent_type.clone()))
+                Some(IrFragment::empty(parent_type.clone()))
             } else if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
@@ -91,7 +91,7 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
                         AccessType::Set(_) => field.ty.pointer_set_function_name(),
                     };
 
-                    Some(Wasm::simple(
+                    Some(IrFragment::simple(
                         field.ty.clone(),
                         Wat::call(func_name, vec![Wat::const_i32(field.offset)])
                     ))
@@ -114,10 +114,10 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
     result
 }
 
-pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
     let mut result = None;
 
-    let method_info : Option<Wasm> = match parent_type {
+    let method_info : Option<IrFragment> = match parent_type {
         TypeOld::Void => None,
         TypeOld::Null => None,
         TypeOld::Generic(_) => None,
@@ -131,7 +131,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::TypeRef(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.static_methods.get(method_name) {
-                    Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(IrFragment::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }
@@ -142,7 +142,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.regular_methods.get(method_name) {
-                    Some(Wasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(IrFragment::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }
@@ -163,7 +163,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
     result
 }
 
-pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
@@ -204,10 +204,10 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
         function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 
-    source.push(Wasm::new(TypeOld::Void, function_call, vec![]));
+    source.push(IrFragment::new(TypeOld::Void, function_call, vec![]));
 
     match ok {
-        true => Some(Wasm::merge(return_type.clone(), source)),
+        true => Some(IrFragment::merge(return_type.clone(), source)),
         false => None
     }
 }

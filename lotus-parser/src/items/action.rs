@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, TypeOld, Wasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, TypeOld, IrFragment}, wat};
 use super::{ActionKeyword, ActionKeywordToken, Expression};
 
 #[parsable]
@@ -10,7 +10,7 @@ pub struct Action {
 }
 
 impl Action {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut result = None;
 
         match &self.keyword.token {
@@ -18,21 +18,21 @@ impl Action {
                 let function_depth = context.get_scope_depth(ScopeKind::Function).unwrap();
                 context.return_found = true;
 
-                let function_blueprint = context.functions.get_by_opt(&context.current_function).unwrap();
+                let function_blueprint = context.current_function.as_ref().unwrap().borrow();
 
                 match &function_blueprint.return_type {
                     Some(return_type) => match &self.value {
                         Some(expr) => {
                             if let Some(wasm) = expr.process(context) {
-                                if return_type.is_assignable_to(&wasm.ty, context) {
+                                if return_type.is_assignable_to(&wasm.ty) {
                                     let mut source = vec![wasm];
 
-                                    source.push(Wasm::new(Type::Void, vec![
+                                    source.push(IrFragment::new(Type::Void, vec![
                                         Wat::set_local_from_stack(RESULT_VAR_NAME),
                                         Wat::new("br", function_depth)
                                     ], vec![]));
 
-                                    result = Some(Wasm::merge(Type::Void, source));
+                                    result = Some(IrFragment::merge(Type::Void, source));
                                 } else {
                                     if !wasm.ty.is_void() {
                                         context.errors.add(expr, format!("return: expected `{}`, got `{}`", return_type, &wasm.ty));
@@ -51,7 +51,7 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(Wasm::new(Type::Void, Wat::new("br", function_depth), vec![]));
+                            result = Some(IrFragment::new(Type::Void, Wat::new("br", function_depth), vec![]));
                         },
                     },
                 }
@@ -64,8 +64,8 @@ impl Action {
                     match context.get_scope_depth(ScopeKind::Loop) {
                         Some(depth) => {
                             result = match &self.keyword.token {
-                                ActionKeywordToken::Break => Some(Wasm::new(Type::Void, wat!["br", depth + 1], vec![])),
-                                ActionKeywordToken::Continue => Some(Wasm::new(Type::Void, wat!["br", depth], vec![])),
+                                ActionKeywordToken::Break => Some(IrFragment::new(Type::Void, wat!["br", depth + 1], vec![])),
+                                ActionKeywordToken::Continue => Some(IrFragment::new(Type::Void, wat!["br", depth], vec![])),
                                 _ => unreachable!()
                             }
                         },

@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, Wasm}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, IrFragment}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -52,7 +52,7 @@ impl BinaryOperatorWrapper {
         }
     }
 
-    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<Wasm> {
+    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<IrFragment> {
         match &self.value {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
                 let tmp_var_name = Identifier::unique("tmp", self).to_unique_string();
@@ -68,13 +68,13 @@ impl BinaryOperatorWrapper {
                     branch
                 ];
 
-                Some(Wasm::new(context.bool_type(), wat, vec![tmp_var_info]))
+                Some(IrFragment::new(context.bool_type(), wat, vec![tmp_var_info]))
             }
             _ => None
         }
     }
 
-    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<IrFragment> {
         let required_interface = match &self.value {
             BinaryOperator::Plus => BuiltinInterface::Add,
             BinaryOperator::Minus => BuiltinInterface::Sub,

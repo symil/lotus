@@ -1,5 +1,5 @@
 use crate::{wat, generation::{Wat}, items::{Expression, Identifier}};
-use super::{ProgramContext, TypeOld, Wasm};
+use super::{ProgramContext, TypeOld, IrFragment};
 
 pub const ARRAY_BODY_ADDR_OFFSET : usize = 0;
 pub const ARRAY_LENGTH_OFFSET : usize = 1;
@@ -13,13 +13,13 @@ pub const ARRAY_PUSH_FUNC_NAME : &'static str = "__array_push";
 pub const ARRAY_POP_FUNC_NAME : &'static str = "__array_pop";
 pub const ARRAY_CONCAT_FUNC_NAME : &'static str = "__array_concat";
 
-pub fn process_array_field_access(item_type: &TypeOld, field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_array_field_access(item_type: &TypeOld, field_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
     match field_name.as_str() {
         _ => None
     }
 }
 
-pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
     let (arguments, return_type, wat) = match method_name.as_str() {
         "len" => (vec![], TypeOld::Integer, vec![Wat::call_from_stack(ARRAY_GET_LENGTH_FUNC_NAME)]),
         "get" => (vec![TypeOld::Integer], item_type.clone(), vec![Wat::call_from_stack(ARRAY_GET_ITEM_FUNC_NAME)]),
@@ -39,5 +39,5 @@ pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, 
         _ => return None
     };
 
-    Some(Wasm::new(TypeOld::function(arguments, return_type), wat, vec![]))
+    Some(IrFragment::new(TypeOld::function(arguments, return_type), wat, vec![]))
 }

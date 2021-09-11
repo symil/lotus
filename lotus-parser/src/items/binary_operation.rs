@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, Wasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, IrFragment}, wat};
 use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]
@@ -16,7 +16,7 @@ impl BinaryOperation {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let operation_tree = OperationTree::from_operation(self);
 
         operation_tree.process(context)
@@ -30,7 +30,7 @@ enum OperationTree<'a> {
 }
 
 impl<'a> OperationTree<'a> {
-    fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         match self {
             OperationTree::Operation(left, operator, right) => {
                 let left_wasm_result = left.process(context);
@@ -46,16 +46,16 @@ impl<'a> OperationTree<'a> {
                         if let Some(operator_wasm) = operator_wasm_opt {
                             let wasm = if let Some(short_circuit_wasm) = operator.get_short_circuit_wasm(context) {
                                 if right.has_side_effects() {
-                                    let mut wasm = Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
+                                    let mut wasm = IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
 
                                     wasm.wat = vec![wat!["block", wat!["result", "i32"], wasm.wat]];
 
                                     wasm
                                 } else {
-                                    Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                    IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
                                 }
                             } else {
-                                Wasm::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
                             };
 
                             result = Some(wasm);

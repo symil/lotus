@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::Wat, program::{ProgramContext, Type, Wasm}};
+use crate::{generation::Wat, program::{ProgramContext, Type, IrFragment}};
 use super::{StatementList, WasmExpressionList};
 
 #[parsable]
@@ -9,9 +9,9 @@ pub enum FunctionBody {
 }
 
 impl FunctionBody {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         match self {
-            FunctionBody::WebAssembly(wasm) => Some(Wasm::new(Type::Void, wasm.process(context), vec![])),
+            FunctionBody::WebAssembly(wasm) => Some(IrFragment::new(Type::Void, wasm.process(context), vec![])),
             FunctionBody::Statements(statements) => statements.process(context),
         }
     }

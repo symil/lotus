@@ -1,11 +1,12 @@
-use crate::generation::Wat;
+use crate::{generation::Wat, items::Identifier};
 use super::{Type};
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {
-    pub wasm_name: String,
+    pub name: Identifier,
     pub ty: Type,
-    pub kind: VariableKind
+    pub kind: VariableKind,
+    pub wasm_name: String
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -16,8 +17,10 @@ pub enum VariableKind {
 }
 
 impl VariableInfo {
-    pub fn new(wasm_name: String, ty: Type, kind: VariableKind) -> Self {
-        Self { wasm_name, ty, kind }
+    pub fn new(name: Identifier, ty: Type, kind: VariableKind) -> Self {
+        let wasm_name = name.to_unique_string();
+
+        Self { name, ty, kind, wasm_name }
     }
 
     pub fn get_to_stack(&self) -> Wat {
@@ -43,6 +46,6 @@ impl VariableInfo {
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Self::new(String::new(), Type::Void, VariableKind::Local)
+        Self::new(Identifier::default(), Type::Void, VariableKind::Local)
     }
 }

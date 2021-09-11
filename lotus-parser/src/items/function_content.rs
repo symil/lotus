@@ -130,7 +130,7 @@ impl FunctionContent {
             }
 
             for (arg_name, arg_type) in &function_blueprint.arguments {
-                let var_info = context.push_var(arg_name, arg_type, VariableKind::Argument);
+                let var_info = context.push_var(arg_name.clone(), arg_type.clone(), VariableKind::Argument);
 
                 if let Some(wasm_type) = arg_type.get_wasm_type(context) {
                     wat_args.push((var_info.wasm_name, wasm_type));

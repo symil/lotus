@@ -1,83 +1,71 @@
 use std::{collections::HashMap, hash::Hash, mem::take};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::items::{Identifier, Visibility};
+use crate::{items::{Identifier, Visibility}, utils::Link};
 
 #[derive(Debug)]
 pub struct ItemIndex<V> {
-    pub id_to_item: IndexMap<u64, V>,
-    pub name_to_ids: HashMap<String, Vec<u64>>
+    pub items_by_id: IndexMap<u64, Link<V>>,
+    pub items_by_name: HashMap<String, Vec<Link<V>>>
 }
 
 pub trait GlobalItem {
-    fn get_id(&self) -> u64;
-    fn get_name(&self) -> &str;
-    fn get_location(&self) -> &DataLocation;
+    fn get_name(&self) -> &Identifier;
     fn get_visibility(&self) -> Visibility;
 }
 
 impl<V : GlobalItem> ItemIndex<V> {
     pub fn len(&self) -> usize {
-        self.id_to_item.len()
+        self.items_by_name.len()
     }
 
     pub fn insert(&mut self, value: V) {
-        let id = value.get_id();
         let name = value.get_name();
+        let id = name.location.get_hash();
+        let item = Link::new(value);
 
-        if let Some(vec) = self.name_to_ids.get_mut(name) {
-            vec.push(id);
+        self.items_by_id.insert(id, item.clone());
+
+        if let Some(vec) = self.items_by_name.get_mut(name.as_str()) {
+            vec.push(item);
         } else {
-            self.name_to_ids.insert(name.to_string(), vec![id]);
+            self.items_by_name.insert(name.to_string(), vec![item]);
         }
-
-        self.id_to_item.insert(id, value);
     }
 
-    pub fn get_by_name(&self, name: &Identifier) -> Option<&V> {
-        let candidates = self.name_to_ids.get(name.as_str())?;
-        let getter_location : &DataLocation = &name.location;
+    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<Link<V>> {
+        let candidates = self.items_by_name.get(getter_name.as_str())?;
+        let getter_location : &DataLocation = &getter_name.location;
 
-        for id in candidates.iter() {
-            let value = self.id_to_item.get(id).unwrap();
-            let location = value.get_location();
-            let ok = match value.get_visibility() {
-                Visibility::Private => location.file_namespace == getter_location.file_namespace && location.file_name == getter_location.file_name,
-                Visibility::Public => location.file_namespace == getter_location.file_namespace,
+        for item in candidates.iter() {
+            let item_name = item.borrow().get_name();
+            let item_location = &item_name.location;
+            let ok = match item.borrow().get_visibility() {
+                Visibility::Private => item_location.file_namespace == getter_location.file_namespace && item_location.file_name == getter_location.file_name,
+                Visibility::Public => item_location.file_namespace == getter_location.file_namespace,
                 Visibility::Export => true,
-                Visibility::System => location.file_namespace == getter_location.file_namespace,
+                Visibility::System => item_location.file_namespace == getter_location.file_namespace,
                 Visibility::Member => false,
             };
 
             if ok {
-                return Some(value);
+                return Some(item.clone());
             }
         }
 
         None
     }
 
-    pub fn get_by_id(&self, id: u64) -> Option<&V> {
-        self.id_to_item.get(&id)
-    }
-
-    pub fn get_by_opt(&self, id_opt: &Option<u64>) -> Option<&V> {
-        match id_opt {
-            Some(id) => self.get_by_id(*id),
-            None => None
-        }
-    }
-
-    pub fn get_mut_by_id(&self, id: u64) -> &mut V {
-        self.id_to_item.get_mut(&id).unwrap()
+    pub fn get_by_location(&self, value_name: &Identifier) -> Link<V> {
+        self.items_by_id.get(&value_name.location.get_hash()).unwrap().clone()
     }
 }
 
 impl<V> Default for ItemIndex<V> {
     fn default() -> Self {
         Self {
-            id_to_item: IndexMap::new(),
-            name_to_ids: HashMap::new()
+            items_by_id: IndexMap::new(),
+            items_by_name: HashMap::new(),
         }
     }
 }

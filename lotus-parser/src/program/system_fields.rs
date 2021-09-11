@@ -1,9 +1,9 @@
 use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_EMPTY_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_COPY_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEMORY_GARBAGE_COLLECT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
-use super::{ProgramContext, TypeOld, Wasm};
+use super::{ProgramContext, TypeOld, IrFragment};
 
-pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
     match field_name.as_str() {
-        "memory" => Some(Wasm::simple(
+        "memory" => Some(IrFragment::simple(
             TypeOld::pointer(TypeOld::Integer),
             Wat::const_i32(0)
         )),
@@ -11,7 +11,7 @@ pub fn process_system_field_access(field_name: &Identifier, context: &mut Progra
     }
 }
 
-pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList, context: &mut ProgramContext) -> Option<IrFragment> {
     let (arguments, return_type, wat) = match method_name.as_str() {
         "log" => (
             match args.len() {
@@ -33,8 +33,8 @@ pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList,
     let ty = TypeOld::Function(arguments, Box::new(return_type));
 
     match wat.is_empty() {
-        true => Some(Wasm::empty(ty)),
-        false => Some(Wasm::simple(ty, wat))
+        true => Some(IrFragment::empty(ty)),
+        false => Some(IrFragment::simple(ty, wat))
     }
 }
 

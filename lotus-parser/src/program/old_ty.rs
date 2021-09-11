@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt, hash::Hash};
 use crate::{generation::{NULL_ADDR, DEREF_FLOAT_POINTER_GET_FUNC_NAME, DEREF_INT_POINTER_GET_FUNC_NAME, DEREF_FLOAT_POINTER_SET_FUNC_NAME, DEREF_INT_POINTER_SET_FUNC_NAME, ToWat, ToWatVec, Wat}, items::{FullType, Identifier, ItemType, TypeDeclaration, TypeSuffix, ValueType}, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, STRING_ALLOC_FUNC_NAME}, wat};
-use super::{ProgramContext, StructInfo, Wasm};
+use super::{ProgramContext, StructInfo, IrFragment};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeOld {
@@ -324,7 +324,7 @@ impl TypeOld {
         }
     }
 
-    pub fn to_bool(&self) -> Option<Wasm> {
+    pub fn to_bool(&self) -> Option<IrFragment> {
         let wat = match self {
             TypeOld::Boolean => wat!["nop"],
             TypeOld::Integer => wat!["i32.ne", Wat::const_i32(i32::MIN)],
@@ -337,7 +337,7 @@ impl TypeOld {
             _ => return None
         };
 
-        Some(Wasm::simple(TypeOld::Boolean, wat))
+        Some(IrFragment::simple(TypeOld::Boolean, wat))
     }
 
     pub fn is_ambiguous(&self) -> bool {

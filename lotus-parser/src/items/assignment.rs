@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, TypeOld, Wasm}, wat};
+use crate::{generation::Wat, items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, TypeOld, IrFragment}, wat};
 use super::{AssignmentOperatorWrapper, Expression, VarPath};
 
 #[parsable]
@@ -11,7 +11,7 @@ pub struct Assignment {
 }
 
 impl Assignment {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut result = None;
 
         if let Some((equal_token, rvalue)) = &self.rvalue {
@@ -60,7 +60,7 @@ impl Assignment {
                         source.push(left_wasm);
 
                         if ok {
-                            result = Some(Wasm::merge(Type::Void, source));
+                            result = Some(IrFragment::merge(Type::Void, source));
                         }
                     } else {
                         context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_wasm.ty, &right_wasm.ty));
@@ -73,10 +73,10 @@ impl Assignment {
                 let mut source = vec![wasm];
 
                 if !is_void {
-                    source.push(Wasm::new(Type::Void, wat!["drop"], vec![]));
+                    source.push(IrFragment::new(Type::Void, wat!["drop"], vec![]));
                 }
 
-                result = Some(Wasm::merge(Type::Void, source));
+                result = Some(IrFragment::merge(Type::Void, source));
             }
         }
 

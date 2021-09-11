@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::program::{ProgramContext, VariableKind, Wasm};
+use crate::program::{ProgramContext, VariableKind, IrFragment};
 
 use super::{Action, Assignment, Expression, ForBlock, Identifier, IfBlock, Operand, FullType, VarDeclaration, WhileBlock};
 
@@ -18,7 +18,7 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         match self {
             Statement::VarDeclaration(var_declaration) => var_declaration.process(VariableKind::Local, context),
             Statement::Action(action) => action.process(context),

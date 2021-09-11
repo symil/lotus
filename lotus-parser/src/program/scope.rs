@@ -31,8 +31,8 @@ impl Scope {
         self.variables.get(var_name).cloned()
     }
 
-    pub fn insert_var_info(&mut self, var_name: &Identifier, info: VariableInfo) {
-        self.variables.insert(var_name.clone(), info);
+    pub fn insert_var_info(&mut self, var_name: Identifier, info: VariableInfo) {
+        self.variables.insert(var_name, info);
     }
 }
 

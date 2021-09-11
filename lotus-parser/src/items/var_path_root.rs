@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, TypeOld, VariableKind, Wasm}};
+use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, TypeOld, VariableKind, IrFragment}};
 use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, NullLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, VarRef};
 
 #[parsable]
@@ -39,7 +39,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
                 context.errors.add(set_location, format!("cannot assign value to a literal"));

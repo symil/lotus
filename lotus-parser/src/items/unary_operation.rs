@@ -1,10 +1,10 @@
 use parsable::parsable;
-use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, TypeOld, Wasm}, wat};
-use super::{Operand, UnaryOperator};
+use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext, TypeOld, IrFragment}, wat};
+use super::{Operand, UnaryOperatorWrapper};
 
 #[parsable]
 pub struct UnaryOperation {
-    pub operator: UnaryOperator,
+    pub operator: UnaryOperatorWrapper,
     pub operand: Operand
 }
 
@@ -13,12 +13,12 @@ impl UnaryOperation {
         self.operand.has_side_effects()
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut result = None;
 
         if let Some(operand_wasm) = self.operand.process(context) {
             if let Some(operator_wasm) = self.operator.process(&operand_wasm.ty, context) {
-                result = Some(Wasm::merge(operator_wasm.ty.clone(), vec![operand_wasm, operator_wasm]));
+                result = Some(IrFragment::merge(operator_wasm.ty.clone(), vec![operand_wasm, operator_wasm]));
             }
         }
 

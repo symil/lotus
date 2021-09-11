@@ -2,13 +2,13 @@ use crate::generation::{ToWatVec, Wat};
 use super::{Type, VariableInfo};
 
 #[derive(Default, Debug)]
-pub struct Wasm {
+pub struct IrFragment {
     pub ty: Type,
     pub wat: Vec<Wat>,
     pub variables: Vec<VariableInfo>,
 }
 
-impl Wasm {
+impl IrFragment {
     pub fn new<T : ToWatVec>(ty: Type, wat: T, variables: Vec<VariableInfo>) -> Self {
         Self {
             ty,

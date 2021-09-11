@@ -1,13 +1,13 @@
 use crate::{generation::{wat, Wat, ToWat, ToWatVec}, items::Identifier};
-use super::{ProgramContext, TypeOld, Wasm};
+use super::{ProgramContext, TypeOld, IrFragment};
 
-pub fn process_integer_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_integer_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
     match field_name.as_str() {
         _ => None
     }
 }
 
-pub fn process_integer_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<Wasm> {
+pub fn process_integer_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
     let (arguments, return_type, wat) = match method_name.as_str() {
         "as_float" => (vec![], TypeOld::Float, wat!["f32.reinterpret_i32"]),
         "to_float" => (vec![], TypeOld::Float, wat!["f32.convert_i32_s"]),
@@ -21,5 +21,5 @@ pub fn process_integer_method_call(method_name: &Identifier, context: &mut Progr
         _ => return None
     };
 
-    Some(Wasm::simple(TypeOld::Function(arguments, Box::new(return_type)), wat))
+    Some(IrFragment::simple(TypeOld::Function(arguments, Box::new(return_type)), wat))
 }

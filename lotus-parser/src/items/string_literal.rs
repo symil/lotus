@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, TypeOld, Wasm}, wat};
+use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, TypeOld, IrFragment}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -13,7 +13,7 @@ impl StringLiteral {
         self.value.clone()
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut chars : Vec<char> = self.value.chars().collect();
 
         chars.remove(0);
@@ -58,7 +58,7 @@ impl StringLiteral {
         }
 
         match ok {
-            true => Some(Wasm::new(TypeOld::String, wat, vec![])),
+            true => Some(IrFragment::new(context.string_type(), wat, vec![])),
             false => None
         }
     }

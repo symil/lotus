@@ -15,6 +15,9 @@ pub enum BuiltinInterface {
     Gt,
     Le,
     Lt,
+    Not,
+    Plus,
+    Minus,
     ToBool,
     GetAtIndex,
     SetAtIndex

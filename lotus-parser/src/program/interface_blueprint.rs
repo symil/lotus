@@ -1,15 +1,14 @@
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::items::{Identifier, Visibility};
+use crate::{items::{Identifier, Visibility}, utils::Link};
 use super::{GlobalItem, Type};
 
 #[derive(Debug)]
 pub struct InterfaceBlueprint {
     pub interface_id: u64,
     pub name: Identifier,
-    pub location: DataLocation,
     pub visibility: Visibility,
-    pub associated_types: IndexMap<String, InterfaceAssociatedType>,
+    pub associated_types: IndexMap<String, Link<InterfaceAssociatedType>>,
     pub methods: IndexMap<String, InterfaceMethod>
 }
 
@@ -26,8 +25,6 @@ pub struct InterfaceMethod {
 }
 
 impl GlobalItem for InterfaceBlueprint {
-    fn get_id(&self) -> u64 { self.interface_id }
-    fn get_name(&self) -> &str { self.name.as_str() }
-    fn get_location(&self) -> &DataLocation { &self.location }
+    fn get_name(&self) -> &Identifier { &self.name }
     fn get_visibility(&self) -> Visibility { self.visibility }
 }

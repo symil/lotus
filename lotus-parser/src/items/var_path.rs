@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::program::{AccessType, ProgramContext, TypeOld, Wasm};
+use crate::program::{AccessType, ProgramContext, TypeOld, IrFragment};
 
 use super::{VarPathRoot, VarPathSegment};
 
@@ -18,7 +18,7 @@ impl VarPath {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut current_access_type = match self.path.is_empty() {
             true => access_type,
             false => AccessType::Get
@@ -50,7 +50,7 @@ impl VarPath {
         }
 
         match ok {
-            true => Some(Wasm::merge(parent_type, source)),
+            true => Some(IrFragment::merge(parent_type, source)),
             false => None
         }
     }

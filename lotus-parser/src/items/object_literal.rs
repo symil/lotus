@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, TypeOld, VariableInfo, VariableKind, Wasm}};
+use crate::{generation::{Wat}, items::TypeQualifier, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, TypeOld, VariableInfo, VariableKind, IrFragment}};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -18,30 +19,28 @@ pub struct ObjectFieldInitializationList {
 }
 
 impl ObjectLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Wasm> {
-        let mut errors = vec![];
-        let mut ok = true;
+    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut wat = vec![];
-        let mut fields_init = vec![];
+        let mut fields_init = IndexMap::new();
         let mut struct_info = StructInfo::default();
 
         let object_var_name = Identifier::unique("object", self).to_unique_string();
         let variables = vec![
-            VariableInfo::new(object_var_name.clone(), TypeOld::Integer, VariableKind::Local),
+            VariableInfo::new(object_var_name.clone(), context.int_type(), VariableKind::Local),
         ];
 
-        if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
-            struct_info = struct_annotation.get_struct_info();
-            wat.extend(vec![
-                Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(struct_annotation.get_field_count()), Wat::const_i32(struct_annotation.get_id())]),
-                Wat::set_local_from_stack(&object_var_name)
-            ]);
+        if let Some(type_blueprint) = context.types.get_by_name(&self.type_name) {
+            if type_blueprint.qualifier == TypeQualifier::Class {
+                wat.extend(vec![
+                    Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(type_blueprint.fields.len()), Wat::const_i32(type_blueprint.get_id())]),
+                    Wat::set_local_from_stack(&object_var_name)
+                ]);
+            } else {
+                context.errors.add(&self.type_name, format!("type `{}` is not a class", &self.type_name));
+            }
         } else {
-            context.errors.add(&self.type_name, format!("undefined structure `{}`", &self.type_name));
-            ok = false;
+            context.errors.add(&self.type_name, format!("undefined type `{}`", &self.type_name));
         }
-
-        let mut field_initializations = HashMap::new();
 
         // if let Some(field_list) = &self.field_list {
         //     for field in &field_list.fields {
@@ -98,7 +97,7 @@ impl ObjectLiteral {
         context.errors.adds.extend(errors);
 
         match ok {
-            true => Some(Wasm::new(TypeOld::Struct(struct_info), wat, variables)),
+            true => Some(IrFragment::new(TypeOld::Struct(struct_info), wat, variables)),
             false => None
         }
     }

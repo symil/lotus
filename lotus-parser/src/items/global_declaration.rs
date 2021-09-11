@@ -1,7 +1,7 @@
 use std::fs::Metadata;
 
 use parsable::parsable;
-use crate::program::{GlobalVarInstance, ProgramContext, TypeOld, VariableInfo, VariableKind, Wasm};
+use crate::program::{GlobalVarInstance, ProgramContext, TypeOld, VariableInfo, VariableKind, IrFragment};
 use super::{VarDeclaration, VisibilityWrapper};
 
 #[parsable]

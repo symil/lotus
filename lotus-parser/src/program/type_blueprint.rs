@@ -1,17 +1,16 @@
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use crate::items::{Identifier, StackType, TypeQualifier, Visibility};
-use super::{GlobalItem, Type, ActualTypeInfo};
+use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
+use super::{ActualTypeInfo, FunctionBlueprint, GlobalItem, InterfaceBlueprint, Type};
 
 #[derive(Debug, Default)]
 pub struct TypeBlueprint {
     pub type_id: u64,
-    pub name: String,
-    pub location: DataLocation,
+    pub name: Identifier,
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
-    pub parameters: IndexMap<String, TypeParameter>,
+    pub parameters: IndexMap<String, Link<TypeParameter>>,
     pub associated_types: IndexMap<String, AssociatedType>,
     pub parent: Option<ActualTypeInfo>,
     pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
@@ -27,40 +26,32 @@ pub struct TypeBlueprint {
 #[derive(Debug, Clone)]
 pub struct TypeParameter {
     pub name: Identifier,
-    pub required_interfaces: Vec<u64>
+    pub required_interfaces: Vec<Link<InterfaceBlueprint>>
 }
 
 #[derive(Debug, Clone)]
 pub struct AssociatedType {
+    pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
-    pub owner_type_id: u64,
     pub value: Type
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldDetails {
+    pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
     pub ty: Type,
-    pub owner_type_id: u64,
-    pub offset: usize
+    pub offset: usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct MethodDetails {
+    pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
-    pub function_id: u64,
-    pub owner_type_id: u64,
+    pub content: Link<FunctionBlueprint>
 }
 
 impl TypeBlueprint {
-    pub fn get_info(&self) -> ActualTypeInfo {
-        ActualTypeInfo {
-            type_id: self.type_id,
-            name: self.name.clone(),
-            parameters: self.parameters.values().map(|param| Type::generic(param.name.to_string(), self.type_id)).collect(),
-        }
-    }
-
     pub fn get_wasm_type(&self) -> Option<&'static str> {
         match self.stack_type {
             StackType::Void => None,
@@ -71,10 +62,17 @@ impl TypeBlueprint {
     }
 }
 
+impl Link<TypeBlueprint> {
+    pub fn get_info(&self) -> ActualTypeInfo {
+        ActualTypeInfo {
+            type_blueprint: self.clone(),
+            parameters: self.borrow().parameters.values().map(|param| Type::Parameter(param.clone())).collect(),
+        }
+    }
+}
+
 impl GlobalItem for TypeBlueprint {
-    fn get_id(&self) -> u64 { self.type_id }
-    fn get_name(&self) -> &str { &self.name }
-    fn get_location(&self) -> &DataLocation { &self.location }
+    fn get_name(&self) -> &Identifier { &self.name }
     fn get_visibility(&self) -> Visibility { self.visibility }
 }
 

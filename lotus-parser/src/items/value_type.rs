@@ -1,7 +1,7 @@
 use std::fmt::format;
 
 use parsable::parsable;
-use crate::program::{ActualTypeInfo, AssociatedTypeInfo, GenericTypeInfo, ProgramContext, THIS_VAR_NAME, Type};
+use crate::program::{ActualTypeInfo, ProgramContext, THIS_VAR_NAME, Type};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
@@ -18,30 +18,20 @@ impl ValueType {
         let parameters = self.arguments.process(context);
         let has_parameters = parameters.is_some();
 
-        if let Some(interface_id) = context.current_interface {
-            let interface_blueprint = context.interfaces.get_by_id(interface_id).unwrap();
-            
-            if let Some(associated_type) = interface_blueprint.associated_types.get(self.name.as_str()) {
+        if let Some(current_interface) = context.current_interface {
+            if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                 associated = true;
-                result = Some(Type::Associated(AssociatedTypeInfo {
-                    name: self.name.to_string(),
-                    interface_context: interface_id,
-                }));
+                result = Some(Type::Associated(associated_type.clone()));
 
                 if let Some(generic_list) = self.arguments.process(context) {
                     context.errors.add(&self.arguments, format!("associated types do not have parameters"));
                 }
             }
-        } else if let Some(type_id) = context.current_type {
-            let type_blueprint = context.types.get_by_id(type_id).unwrap();
-
-            if let Some(parameter_type) = type_blueprint.parameters.get(self.name.as_str()) {
+        } else if let Some(current_type) = context.current_type {
+            if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
                 parameter = true;
-                result = Some(Type::Generic(GenericTypeInfo {
-                    name: self.name.to_string(),
-                    type_context: type_id
-                }));
-            } else if let Some(associated_type) = type_blueprint.associated_types.get(self.name.as_str()) {
+                result = Some(Type::Parameter(parameter_type.clone()));
+            } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
                 associated = true;
                 result = Some(associated_type.value.clone());
             }
@@ -51,13 +41,15 @@ impl ValueType {
             let parameter_list = parameters.unwrap_or_default();
 
             if let Some(type_blueprint) = context.types.get_by_name(&self.name) {
-                if parameter_list.len() != type_blueprint.parameters.len() {
-                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, type_blueprint.parameters.len(), parameter_list.len()));
+                let parameters = &type_blueprint.borrow().parameters;
+
+                if parameter_list.len() != parameters.len() {
+                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
                 } else {
-                    for (i, (parameter, argument)) in type_blueprint.parameters.values().zip(parameter_list.iter()).enumerate() {
-                        for interface_id in &parameter.required_interfaces {
-                            if !argument.match_interface(*interface_id, context) {
-                                let interface_name = &context.interfaces.get_by_id(*interface_id).unwrap().name;
+                    for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
+                        for interface_blueprint in &parameter.borrow().required_interfaces {
+                            if !argument.match_interface(interface_blueprint) {
+                                let interface_name = &interface_blueprint.borrow().name;
 
                                 context.errors.add(&self.arguments.list[i], format!("type `{}` does not implement interface `{}`", argument, interface_name));
                             }
@@ -65,9 +57,8 @@ impl ValueType {
                     }
 
                     result = Some(Type::Actual(ActualTypeInfo {
-                        name: type_blueprint.name.clone(),
-                        type_id: type_blueprint.type_id,
                         parameters: parameter_list,
+                        type_blueprint: type_blueprint.clone(),
                     }))
                 }
             }

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{AccessType, ProgramContext, VariableKind, Wasm};
+use crate::program::{AccessType, ProgramContext, VariableKind, IrFragment};
 use super::{VarRef, VarRefPrefix};
 
 #[parsable]
@@ -13,14 +13,14 @@ impl RootVarRef {
         self.var_ref.has_side_effects()
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Wasm> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
         let mut result = None;
 
         match &self.prefix {
             Some(prefix) => {
                 if let Some(prefix_wasm) = prefix.process(self, context) {
                     if let Some(wasm) = self.var_ref.process_as_field(&prefix_wasm.ty, access_type, context) {
-                        result = Some(Wasm::merge(wasm.ty.clone(), vec![prefix_wasm, wasm]));
+                        result = Some(IrFragment::merge(wasm.ty.clone(), vec![prefix_wasm, wasm]));
                     }
                 }
             },
