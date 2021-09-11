@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use indexmap::IndexSet;
 use parsable::parsable;
-use crate::{generation::Wat, items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableKind}};
+use crate::{generation::Wat, items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind}};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, Visibility};
 
 #[parsable]
@@ -18,26 +20,22 @@ impl FunctionContent {
         let mut function_blueprint = FunctionBlueprint {
             function_id: self.location.get_hash(),
             name: self.name.clone(),
-            location: self.location.clone(),
             visibility: Visibility::Private,
             event_callback_qualifier: None,
-            owner_type_id: None,
+            owner_type: None,
             this_type: None,
             payload_type: None,
             conditions: vec![],
             arguments: vec![],
-            return_type: None,
+            return_value: None,
             is_raw_wasm: false,
-            declaration: None,
-            call: vec![]
+            body: vec![]
         };
 
         let is_static = self.qualifier.contains(&FunctionQualifier::Static);
 
-        if let Some(type_id) = context.current_type {
-            let type_blueprint = context.types.get_by_id(type_id).unwrap();
-
-            function_blueprint.owner_type_id = Some(type_id);
+        if let Some(type_blueprint) = &context.current_type {
+            function_blueprint.owner_type = Some(type_blueprint.clone());
 
             if !is_static {
                 function_blueprint.this_type = Some(Type::Actual(type_blueprint.get_info()));
@@ -49,8 +47,8 @@ impl FunctionContent {
         if let Some(signature) = &self.signature {
             let (arguments, return_type) = signature.process(context);
 
-            function_blueprint.arguments = arguments;
-            function_blueprint.return_type = return_type;
+            function_blueprint.arguments = arguments.into_iter().map(|(name, ty)| Rc::new(VariableInfo::new(name, ty, VariableKind::Argument))).collect();
+            function_blueprint.return_value = return_type.and_then(|ty| Some(Rc::new(VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), ty, VariableKind::Local))))
         }
 
         if let Some(qualifier) = &self.event_callback_qualifier {
@@ -63,13 +61,13 @@ impl FunctionContent {
                     context.errors.add(self, "event callbacks cannot be static");
                 }
 
-                if let Some(event_type) = context.types.get_by_name(&self.name) {
-                    function_blueprint.payload_type = Some(Type::Actual(event_type.get_info()));
+                if let Some(event_type_blueprint) = context.types.get_by_name(&self.name) {
+                    function_blueprint.payload_type = Some(Type::Actual(event_type_blueprint.get_info()));
 
-                    if event_type.qualifier != TypeQualifier::Class {
+                    if event_type_blueprint.borrow().qualifier != TypeQualifier::Class {
                         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));
                     } else if let Some(conditions) = &self.conditions {
-                        function_blueprint.conditions = conditions.process(event_type.type_id, context);
+                        function_blueprint.conditions = conditions.process(&event_type_blueprint, context);
                     }
                 } else {
                     context.errors.add(&self.name, format!("undefined type `{}`", &self.name));
@@ -91,16 +89,15 @@ impl FunctionContent {
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        let function_id = self.location.get_hash();
         let is_raw_wasm = self.body.is_raw_wasm();
-        let function_blueprint = context.functions.get_by_id(function_id).unwrap();
-        let is_static = function_blueprint.is_static();
+        let function_blueprint = context.functions.get_by_location(&self.name);
+        let is_static = function_blueprint.borrow().this_type.is_none();
         let mut wat_args = vec![];
         let mut wat_ret = None;
         let mut wat_locals = vec![];
         let mut wat_body = vec![];
 
-        context.current_function = Some(function_id);
+        context.current_function = Some(function_blueprint.clone());
         context.reset_local_scope();
         context.push_scope(ScopeKind::Function);
 

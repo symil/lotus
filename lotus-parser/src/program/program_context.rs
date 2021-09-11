@@ -1,8 +1,8 @@
-use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref};
+use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref, rc::Rc};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, utils::Link, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, TypeOld, VariableInfo, VariableKind, IrFragment};
+use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, program::VI, utils::Link, wat};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -20,7 +20,7 @@ pub struct ProgramContext {
     pub current_type: Option<Link<TypeBlueprint>>,
     pub current_interface: Option<Link<InterfaceBlueprint>>,
     pub scopes: Vec<Scope>,
-    pub depth: i32,
+    pub depth: u32,
     pub return_found: bool,
 }
 
@@ -82,7 +82,7 @@ impl ProgramContext {
         }
     }
 
-    pub fn get_scope_depth(&self, kind: ScopeKind) -> Option<i32> {
+    pub fn get_scope_depth(&self, kind: ScopeKind) -> Option<u32> {
         for scope in self.scopes.iter().rev() {
             if scope.kind == kind {
                 return Some(self.depth - scope.depth);
@@ -92,21 +92,21 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, name: Identifier, ty: Type, kind: VariableKind) -> VariableInfo {
+    pub fn push_var(&mut self, name: Identifier, ty: Type, kind: VariableKind) -> Rc<VariableInfo> {
         let var_info = VariableInfo::new(name.clone(), ty.clone(), kind);
 
         // global scope is handled differently
         if let Some(current_scope) = self.scopes.iter_mut().last() {
-            current_scope.insert_var_info(name, var_info.clone());
+            current_scope.insert_var_info(&var_info);
         }
 
         var_info
     }
 
-    pub fn get_var_info(&self, name: &Identifier) -> Option<VariableInfo> {
+    pub fn get_var_info(&self, name: &Identifier) -> Option<&Rc<VariableInfo>> {
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name) {
-                return Some(var_info.clone());
+                return Some(var_info);
             }
         }
 
@@ -126,15 +126,7 @@ impl ProgramContext {
         is_unique
     }
 
-    pub fn get_current_type(&self) -> Option<&TypeBlueprint> {
-        if let Some(type_id) = &self.current_type {
-            self.types.get_by_id(*type_id)
-        } else {
-            None
-        }
-    }
-
-    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<IrFragment>
+    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<Vasm>
         where
             L : Deref<Target=DataLocation>,
             F : FnMut() -> String
@@ -156,11 +148,9 @@ impl ProgramContext {
             }
         }
 
-        let result = IrFragment {
-            ty: method_info.return_type.clone().unwrap_or(Type::Void),
-            wat: vec![target_type.method_call_placeholder(method_name)],
-            variables: vec![],
-        };
+        let ty = method_info.return_type.clone().unwrap_or(Type::Void);
+        let method_instruction = VI::method(&ty, method_name, vec![]);
+        let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
         match ok {
             true => Some(result),
@@ -168,7 +158,7 @@ impl ProgramContext {
         }
     }
 
-    pub fn call_builtin_interface_no_arg<L>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type) -> Option<IrFragment>
+    pub fn call_builtin_interface_no_arg<L>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type) -> Option<Vasm>
         where
             L : Deref<Target=DataLocation>
     {

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, TypeOld, IrFragment}, wat};
+use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, VI, Vasm}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -13,7 +13,7 @@ impl StringLiteral {
         self.value.clone()
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut chars : Vec<char> = self.value.chars().collect();
 
         chars.remove(0);
@@ -49,16 +49,19 @@ impl StringLiteral {
             }
         }
 
-        let mut wat = vec![
-            Wat::call(STRING_ALLOC_FUNC_NAME, Wat::const_i32(unescaped_chars.len()))
+        let string_type = context.string_type();
+        let mut content = vec![
+            VI::static_method(&string_type, "new", vec![VI::int(unescaped_chars.len())])
         ];
 
         for (i, code) in unescaped_chars.into_iter().enumerate() {
-            wat.push(Wat::call(STRING_SET_CHAR_FUNC_NAME, vec![Wat::const_i32(i), Wat::const_i32(code)]));
+            content.push(
+                VI::method(&string_type, "set_char", vec![VI::int(i), VI::int(code)]),
+            );
         }
 
         match ok {
-            true => Some(IrFragment::new(context.string_type(), wat, vec![])),
+            true => Some(Vasm::new(string_type, vec![], content)),
             false => None
         }
     }

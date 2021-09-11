@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::Wat, program::{ProgramContext, TypeOld, IrFragment}};
+use crate::{generation::Wat, program::{ProgramContext, VI, Vasm}};
 
 #[parsable(name="integer")]
 pub struct IntegerLiteral {
@@ -9,12 +9,12 @@ pub struct IntegerLiteral {
 }
 
 impl IntegerLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let i32_value = match self.value.as_str() {
             "mi" => i32::MIN,
             _ => self.value.parse().unwrap()
         };
 
-        Some(IrFragment::simple(context.int_type(), Wat::const_i32(i32_value)))
+        Some(Vasm::new(context.int_type(), vec![], vec![VI::int(i32_value)]))
     }
 }

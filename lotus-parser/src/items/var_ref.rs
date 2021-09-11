@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, TypeOld, VariableKind, IrFragment, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, VariableKind, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -15,14 +15,14 @@ impl VarRef {
         self.arguments.is_some()
     }
 
-    pub fn process_as_field(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process_as_field(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.arguments {
             Some(arguments) => process_method_call(parent_type, &self.name, arguments, access_type, context),
             None => process_field_access(parent_type, &self.name, access_type, context)
         }
     }
 
-    pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process_as_variable(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.arguments {
             Some(arguments) => match context.functions.get_by_name(&self.name) {
                 Some(function_blueprint) => {
@@ -50,7 +50,7 @@ impl VarRef {
     }
 }
 
-pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type {
         match parent_type {
             TypeOld::Struct(_) => {},
@@ -114,10 +114,10 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
     result
 }
 
-pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    let method_info : Option<IrFragment> = match parent_type {
+    let method_info : Option<Vasm> = match parent_type {
         TypeOld::Void => None,
         TypeOld::Null => None,
         TypeOld::Generic(_) => None,
@@ -163,7 +163,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
     result
 }
 
-pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;

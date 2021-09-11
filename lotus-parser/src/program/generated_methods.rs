@@ -1,5 +1,5 @@
 use crate::{generation::{DEREF_INT_POINTER_GET_FUNC_NAME, LOG_INT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, Wat}, program::{ARRAY_BODY_ADDR_OFFSET, ARRAY_LENGTH_OFFSET, struct_annotation}, wat};
-use super::{ProgramContext, StructAnnotation, TypeOld, VariableGenerator};
+use super::{ProgramContext, StructAnnotation, VariableGenerator};
 
 #[derive(Debug)]
 pub struct GeneratedMethods {

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, TypeOld, IrFragment}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type}, wat};
 use super::Branch;
 
 #[parsable]
@@ -9,7 +9,7 @@ pub struct WhileBlock {
 }
 
 impl WhileBlock {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
         let return_found = context.return_found;
 

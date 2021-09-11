@@ -126,7 +126,7 @@ impl Type {
                             }
                         }
 
-                        if function_blueprint.return_type != method.return_type {
+                        if function_blueprint.return_value != method.return_type {
                             return false;
                         }
                     } else {

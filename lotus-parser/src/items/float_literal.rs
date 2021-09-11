@@ -1,6 +1,6 @@
 use parsable::parsable;
 
-use crate::{generation::Wat, program::{ProgramContext, TypeOld, IrFragment}};
+use crate::{generation::Wat, program::{ProgramContext, VI, Vasm}};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
@@ -9,12 +9,12 @@ pub struct FloatLiteral {
 }
 
 impl FloatLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let f32_value = match self.value.as_str() {
             "nan" => f32::NAN,
-            _ => self.value[0..self.value.len()-1].parse().unwrap()
+            _ => self.value[0..self.value.len() - 1].parse().unwrap()
         };
 
-        Some(IrFragment::simple(context.float_type(), Wat::const_f32(f32_value)))
+        Some(Vasm::new(context.float_type(), vec![], vec![VI::float(f32_value)]))
     }
 }

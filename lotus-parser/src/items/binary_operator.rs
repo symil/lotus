@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, TypeOld, VariableInfo, VariableKind, IrFragment}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -52,29 +52,28 @@ impl BinaryOperatorWrapper {
         }
     }
 
-    pub fn get_short_circuit_wasm(&self, context: &ProgramContext) -> Option<IrFragment> {
+    pub fn get_short_circuit_vasm(&self, context: &ProgramContext) -> Option<Vasm> {
         match &self.value {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
-                let tmp_var_name = Identifier::unique("tmp", self).to_unique_string();
-                let tmp_var_info = VariableInfo::new(tmp_var_name.clone(), context.bool_type(), VariableKind::Local);
-                let branch = if &self.value == &BinaryOperator::DoubleAnd {
-                    wat!["br_if", 0, wat!["i32.eqz"]]
-                } else {
-                    wat!["br_if", 0]
-                };
-                let wat = vec![
-                    Wat::tee_local(&tmp_var_name),
-                    Wat::get_local(&tmp_var_name),
-                    branch
+                let tmp_var = VariableInfo::new(Identifier::unique("tmp", self), context.bool_type(), VariableKind::Local);
+                let mut content = vec![
+                    VI::tee(&tmp_var),
+                    VI::get(&tmp_var),
                 ];
 
-                Some(IrFragment::new(context.bool_type(), wat, vec![tmp_var_info]))
+                if &self.value == &BinaryOperator::DoubleAnd {
+                    content.push(VI::Raw(wat!["i32.eqz"]));
+                }
+
+                content.push(VI::jump(0, None));
+
+                Some(Vasm::new(context.bool_type(), vec![tmp_var], content))
             }
             _ => None
         }
     }
 
-    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         let required_interface = match &self.value {
             BinaryOperator::Plus => BuiltinInterface::Add,
             BinaryOperator::Minus => BuiltinInterface::Sub,

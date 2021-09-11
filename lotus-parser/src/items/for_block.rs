@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_BODY_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, TypeOld, VariableKind, IrFragment}, wat};
+use crate::{generation::{ToWat, ToWatVec, Wat}, program::{ARRAY_GET_BODY_FUNC_NAME, ARRAY_GET_LENGTH_FUNC_NAME, ProgramContext, ScopeKind, VariableKind}, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -28,7 +28,7 @@ pub struct IndexAndItem {
 }
 
 impl ForBlock {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let (index_var_name, item_var_name) = match &self.iterator {
             ForIterator::Item(item_name) => (Identifier::unique("index", self), item_name.clone()),
             ForIterator::IndexAndItem(index_and_item) => (index_and_item.index_name.clone(), index_and_item.item_name.clone()),
@@ -96,7 +96,7 @@ impl ForBlock {
         } else if let Some(iterable_wasm) = range_start_wasm_opt {
             if !iterable_wasm.ty.is_array() {
                 if !iterable_wasm.ty.is_void() {
-                    context.errors.add(&self.range_start, format!("iterable: expected `{}`, got `{}`", TypeOld::array(TypeOld::Any(0)), &iterable_wasm.ty));
+                    context.errors.add(&self.range_start, format!("iterable: expected `{}`, got `{}`"::array(TypeOld::Any(0)), &iterable_wasm.ty));
                 }
                 ok = false;
             }

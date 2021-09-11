@@ -1,12 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 use crate::items::Identifier;
 use super::VariableInfo;
 
 #[derive(Debug)]
 pub struct Scope {
     pub kind: ScopeKind,
-    pub depth: i32,
-    pub variables: HashMap<Identifier, VariableInfo>,
+    pub depth: u32,
+    pub variables: HashMap<String, Rc<VariableInfo>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -19,7 +19,7 @@ pub enum ScopeKind {
 }
 
 impl Scope {
-    pub fn new(kind: ScopeKind, depth: i32) -> Self {
+    pub fn new(kind: ScopeKind, depth: u32) -> Self {
         Self {
             kind,
             depth,
@@ -27,17 +27,17 @@ impl Scope {
         }
     }
 
-    pub fn get_var_info(&self, var_name: &Identifier) -> Option<VariableInfo> {
-        self.variables.get(var_name).cloned()
+    pub fn get_var_info(&self, var_name: &Identifier) -> Option<&Rc<VariableInfo>> {
+        self.variables.get(var_name.as_str())
     }
 
-    pub fn insert_var_info(&mut self, var_name: Identifier, info: VariableInfo) {
-        self.variables.insert(var_name, info);
+    pub fn insert_var_info(&mut self, info: &Rc<VariableInfo>) {
+        self.variables.insert(info.name.to_string(), Rc::clone(info));
     }
 }
 
 impl ScopeKind {
-    pub fn get_depth(&self) -> i32 {
+    pub fn get_depth(&self) -> u32 {
         match self {
             ScopeKind::Global => 0,
             ScopeKind::Function => 1,

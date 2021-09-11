@@ -1,10 +1,9 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, TypeOld, VariableKind, IrFragment}};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, NullLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, VarRef};
+use crate::{generation::{NULL_ADDR, Wat}, program::{AccessType, ProgramContext, VariableKind, Vasm}};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, VarRef};
 
 #[parsable]
 pub enum VarPathRoot {
-    NullLiteral(NullLiteral),
     BooleanLiteral(BooleanLiteral),
     FloatLiteral(FloatLiteral),
     IntegerLiteral(IntegerLiteral),
@@ -27,7 +26,6 @@ impl VarPathRoot {
 
     pub fn has_side_effects(&self) -> bool {
         match self {
-            VarPathRoot::NullLiteral(_) => false,
             VarPathRoot::BooleanLiteral(_) => false,
             VarPathRoot::FloatLiteral(_) => false,
             VarPathRoot::IntegerLiteral(_) => false,
@@ -39,7 +37,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
                 context.errors.add(set_location, format!("cannot assign value to a literal"));
@@ -49,7 +47,6 @@ impl VarPathRoot {
         }
 
         match self {
-            VarPathRoot::NullLiteral(null_literal) => null_literal.process(context),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
             VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context),
             VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context),

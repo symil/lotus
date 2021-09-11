@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::program::{AccessType, ProgramContext, IrFragment};
+use crate::program::{AccessType, ProgramContext};
 use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, FullType, UnaryOperation, VarPath};
 
 #[parsable]
@@ -23,7 +23,7 @@ impl Operand {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             Operand::UnaryOperation(unary_operation) => unary_operation.process(context),
             Operand::VarPath(var_path) => var_path.process(AccessType::Get, context),

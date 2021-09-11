@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, TypeOld, IrFragment};
+use crate::program::{ProgramContext, Vasm};
 use super::{BinaryOperation, FullType};
 
 #[parsable]
@@ -14,16 +14,16 @@ impl Expression {
         self.operation.has_side_effects()
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
-        if let Some(wasm) = self.operation.process(context) {
+        if let Some(vasm) = self.operation.process(context) {
             result = match &self.as_type {
                 Some(as_type) => match as_type.process(context) {
-                    Some(new_type) => Some(IrFragment::merge(new_type, vec![wasm])),
+                    Some(new_type) => Some(Vasm::merge(vec![vasm, Vasm::new(new_type, vec![], vec![])])),
                     None => None
                 },
-                None => Some(wasm),
+                None => Some(vasm),
             }
         }
 

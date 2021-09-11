@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, VariableInfo, VariableKind, IrFragment}};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, VariableInfo, VariableKind}};
 use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
@@ -14,7 +14,7 @@ pub struct VarDeclaration {
 }
 
 impl VarDeclaration {
-    pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<Vasm> {
         context.ckeck_var_unicity(&self.var_name);
 
         let mut source = vec![];

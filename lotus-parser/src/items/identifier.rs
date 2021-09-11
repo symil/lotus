@@ -20,6 +20,14 @@ impl Identifier {
         identifier
     }
 
+    pub fn unlocated<S : Deref<Target=str>>(name: S) -> Self {
+        let mut identifier = Identifier::default();
+
+        identifier.value = name.to_string();
+
+        identifier
+    }
+
     pub fn unique<S : Deref<Target=str>>(name: S, location: &DataLocation) -> Self {
         let mut identifier = Identifier::default();
         let id = unsafe {

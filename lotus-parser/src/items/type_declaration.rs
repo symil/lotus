@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, THIS_TYPE_NAME, Type, TypeBlueprint, TypeOld, IrFragment}, utils::Link};
+use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::TypeQualifier, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, TypeOld, VariableInfo, VariableKind, IrFragment}};
+use crate::{generation::{Wat}, items::TypeQualifier, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, VariableInfo, VariableKind}};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -19,7 +19,7 @@ pub struct ObjectFieldInitializationList {
 }
 
 impl ObjectLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut wat = vec![];
         let mut fields_init = IndexMap::new();
         let mut struct_info = StructInfo::default();

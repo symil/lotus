@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, TypeOld, IrFragment}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, VI, Vasm}, wat};
 use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]
@@ -16,7 +16,7 @@ impl BinaryOperation {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let operation_tree = OperationTree::from_operation(self);
 
         operation_tree.process(context)
@@ -30,35 +30,33 @@ enum OperationTree<'a> {
 }
 
 impl<'a> OperationTree<'a> {
-    fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             OperationTree::Operation(left, operator, right) => {
-                let left_wasm_result = left.process(context);
-                let right_wasm_result = right.process(context);
+                let left_vasm_result = left.process(context);
+                let right_vasm_result = right.process(context);
 
-                match (left_wasm_result, right_wasm_result) {
-                    (Some(left_wasm), Some(right_wasm)) => {
+                match (left_vasm_result, right_vasm_result) {
+                    (Some(left_vasm), Some(right_vasm)) => {
                         let mut result = None;
-                        let operator_wasm_opt = operator.process(&left_wasm.ty, &right_wasm.ty, context);
+                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, context);
 
                         // TODO: if operator is `&&` or `||`, convert operands to booleans when possible
 
-                        if let Some(operator_wasm) = operator_wasm_opt {
-                            let wasm = if let Some(short_circuit_wasm) = operator.get_short_circuit_wasm(context) {
+                        if let Some(operator_vasm) = operator_vasm_opt {
+                            let vasm = if let Some(short_circuit_vasm) = operator.get_short_circuit_vasm(context) {
                                 if right.has_side_effects() {
-                                    let mut wasm = IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, short_circuit_wasm, right_wasm, operator_wasm]);
+                                    let wrapped_vasm = Vasm::merge(vec![left_vasm, short_circuit_vasm, right_vasm, operator_vasm]);
 
-                                    wasm.wat = vec![wat!["block", wat!["result", "i32"], wasm.wat]];
-
-                                    wasm
+                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::block(vec![context.bool_type()], wrapped_vasm)])
                                 } else {
-                                    IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                    Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
                                 }
                             } else {
-                                IrFragment::merge(operator_wasm.ty.clone(), vec![left_wasm, right_wasm, operator_wasm])
+                                Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
                             };
 
-                            result = Some(wasm);
+                            result = Some(vasm);
                         }
 
                         result

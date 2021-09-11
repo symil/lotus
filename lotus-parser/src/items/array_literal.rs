@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, TypeOld, VariableInfo, VariableKind, IrFragment}, wat};
+use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 use super::Expression;
 
 #[parsable]
@@ -10,19 +10,25 @@ pub struct ArrayLiteral {
 }
 
 impl ArrayLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
-        let array_var_name = Identifier::unique("array", self);
-        let array_body_var_name = Identifier::unique("array_body", self);
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+        let array_var = VariableInfo::new(Identifier::unique("array", self), context.int_type(), VariableKind::Local);
+        let array_body_var = VariableInfo::new(Identifier::unique("array_body", self), context.int_type(), VariableKind::Local);
         let variables = vec![
-            VariableInfo::new(array_var_name.clone(), context.int_type(), VariableKind::Local),
-            VariableInfo::new(array_body_var_name.clone(), context.int_type(), VariableKind::Local),
+            array_var.clone(),
+            array_body_var.clone()
         ];
 
         let mut all_items_ok = true;
         let mut final_item_type = Type::Any;
-        let mut wat = vec![
-            Wat::set_local(array_var_name.as_str(), Wat::call(ARRAY_ALLOC_FUNC_NAME, vec![Wat::const_i32(self.items.len())])),
-            Wat::set_local(array_body_var_name.as_str(), Wat::call(ARRAY_GET_BODY_FUNC_NAME, vec![Wat::get_local(&array_var_name)]))
+
+        let mut content = vec![
+            VI::int(self.items.len()),
+            VI::static_method(&context.array_type(final_item_type.clone()), "new"),
+            VI::set(&array_var),
+
+            VI::get(&array_var),
+            VI::method(&context.array_type(final_item_type.clone()), "get_body"),
+            VI::set(&array_body_var),
         ];
 
         for (i, item) in self.items.iter().enumerate() {
@@ -36,8 +42,8 @@ impl ArrayLiteral {
                     item_ok = true;
                 }
 
-                wat.extend(item_wasm.wat);
-                wat.extend(vec![
+                content.extend(item_wasm.wat);
+                content.extend(vec![
                     Wat::get_local(&array_body_var_name),
                     Wat::const_i32(i),
                     final_item_type.method_call_placeholder(PTR_SET_METHOD_NAME)
@@ -51,10 +57,10 @@ impl ArrayLiteral {
             all_items_ok &= item_ok;
         }
 
-        wat.push(Wat::get_local(&array_var_name));
+        content.push(Wat::get_local(&array_var_name));
 
         match all_items_ok {
-            true => Some(IrFragment::new(context.array_type(final_item_type), wat, variables)),
+            true => Some(IrFragment::new(context.array_type(final_item_type), content, variables)),
             false => None
         }
     }

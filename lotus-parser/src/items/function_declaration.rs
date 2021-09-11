@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, TypeOld, VariableKind, IrFragment, RESULT_VAR_NAME}};
+use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, VariableKind, RESULT_VAR_NAME}};
 use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityWrapper};
 
 #[parsable]
@@ -20,7 +20,7 @@ impl FunctionDeclaration {
                 context.errors.add(self, format!("main function must not take any argument"));
             }
 
-            if function_blueprint.return_type.is_some() {
+            if function_blueprint.return_value.is_some() {
                 context.errors.add(self, format!("main function must not have a return type"));
             }
 

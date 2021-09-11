@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, TypeOld, IrFragment}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, Vasm}, wat};
 use super::{Branch, StatementList};
 
 #[parsable]
@@ -13,7 +13,7 @@ pub struct IfBlock {
 }
 
 impl IfBlock {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut ok = true;
         let mut return_found = context.return_found;
         let mut branches_return = vec![];

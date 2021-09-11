@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, mem::take};
+use std::{borrow::Borrow, cell::Ref, collections::HashMap, hash::Hash, mem::take};
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, Visibility}, utils::Link};
@@ -33,7 +33,7 @@ impl<V : GlobalItem> ItemIndex<V> {
         }
     }
 
-    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<Link<V>> {
+    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<&Link<V>> {
         let candidates = self.items_by_name.get(getter_name.as_str())?;
         let getter_location : &DataLocation = &getter_name.location;
 
@@ -49,15 +49,19 @@ impl<V : GlobalItem> ItemIndex<V> {
             };
 
             if ok {
-                return Some(item.clone());
+                return Some(&item);
             }
         }
 
         None
     }
 
-    pub fn get_by_location(&self, value_name: &Identifier) -> Link<V> {
-        self.items_by_id.get(&value_name.location.get_hash()).unwrap().clone()
+    pub fn ref_by_name(&self, getter_name: &Identifier) -> Option<Ref<V>> {
+        self.get_by_name(getter_name).and_then(|link| Some(link.borrow()))
+    }
+
+    pub fn get_by_location(&self, value_name: &Identifier) -> &Link<V> {
+        self.items_by_id.get(&value_name.location.get_hash()).unwrap()
     }
 }
 

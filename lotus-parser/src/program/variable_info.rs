@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{generation::Wat, items::Identifier};
 use super::{Type};
 
@@ -17,10 +19,11 @@ pub enum VariableKind {
 }
 
 impl VariableInfo {
-    pub fn new(name: Identifier, ty: Type, kind: VariableKind) -> Self {
+    pub fn new(name: Identifier, ty: Type, kind: VariableKind) -> Rc<Self> {
         let wasm_name = name.to_unique_string();
+        let value = Self { name, ty, kind, wasm_name };
 
-        Self { name, ty, kind, wasm_name }
+        Rc::new(value)
     }
 
     pub fn get_to_stack(&self) -> Wat {
@@ -42,10 +45,14 @@ impl VariableInfo {
     pub fn get_wasm_name(&self) -> &str {
         self.wasm_name.as_str()
     }
+
+    pub fn clone(self: &Rc<Self>) -> Rc<Self> {
+        Rc::clone(self)
+    }
 }
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Self::new(Identifier::default(), Type::Void, VariableKind::Local)
+        Rc::try_unwrap(Self::new(Identifier::default(), Type::Void, VariableKind::Local)).unwrap()
     }
 }

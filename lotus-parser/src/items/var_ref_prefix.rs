@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 use parsable::{DataLocation, Parsable, parsable};
-use crate::{generation::Wat, program::{ProgramContext, TypeOld, IrFragment}, wat};
+use crate::{generation::Wat, program::{ProgramContext}, wat};
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
@@ -11,7 +11,7 @@ pub enum VarRefPrefix {
 }
 
 impl VarRefPrefix {
-    pub fn process(&self, location: &DataLocation, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             VarRefPrefix::This => match &context.this_var {
                 Some(this_var) => Some(IrFragment::simple(this_var.ty.clone(), Wat::get_local(this_var.wasm_name.as_str()))),

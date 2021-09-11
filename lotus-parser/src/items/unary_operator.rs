@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{NULL_ADDR, ToWat, ToWatVec, Wat}, program::{ARRAY_GET_LENGTH_FUNC_NAME, BuiltinInterface, ProgramContext, Type, TypeOld, IrFragment}, wat};
+use crate::{generation::{NULL_ADDR, ToWat, ToWatVec, Wat}, program::{ARRAY_GET_LENGTH_FUNC_NAME, BuiltinInterface, ProgramContext, Type}, wat};
 
 #[parsable]
 pub struct UnaryOperatorWrapper {
@@ -15,7 +15,7 @@ pub enum UnaryOperator {
 }
 
 impl UnaryOperatorWrapper {
-    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<IrFragment> {
+    pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         let required_interface = match &self.value {
             UnaryOperator::Not => BuiltinInterface::Not,
             UnaryOperator::ToBool => BuiltinInterface::ToBool,

@@ -1,7 +1,7 @@
 use crate::{generation::{LOG_BOOL_FUNC_NAME, LOG_EMPTY_FUNC_NAME, LOG_FLOAT_FUNC_NAME, LOG_INT_FUNC_NAME, LOG_STRING_FUNC_NAME, MEMORY_ALLOC_FUNC_NAME, MEMORY_COPY_FUNC_NAME, MEMORY_FREE_FUNC_NAME, MEMORY_GARBAGE_COLLECT_FUNC_NAME, MEMORY_RETAIN_FUNC_NAME, MEMORY_RETAIN_OBJECT_FUNC_NAME, RETAIN_FUNC_TYPE_NAME, VALUE_BYTE_SIZE, Wat}, items::{ArgumentList, Identifier}, wat};
-use super::{ProgramContext, TypeOld, IrFragment};
+use super::{ProgramContext};
 
-pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<IrFragment> {
+pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Vasm> {
     match field_name.as_str() {
         "memory" => Some(IrFragment::simple(
             TypeOld::pointer(TypeOld::Integer),
@@ -11,7 +11,7 @@ pub fn process_system_field_access(field_name: &Identifier, context: &mut Progra
     }
 }
 
-pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList, context: &mut ProgramContext) -> Option<IrFragment> {
+pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList, context: &mut ProgramContext) -> Option<Vasm> {
     let (arguments, return_type, wat) = match method_name.as_str() {
         "log" => (
             match args.len() {
@@ -19,14 +19,14 @@ pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList,
                 _ => vec![TypeOld::Any(0)]
             },
             TypeOld::Void, wat![""]),
-        "call_indirect_retain" => (vec![TypeOld::int_pointer(), TypeOld::Integer], TypeOld::Void, wat!["call_indirect", wat!["type", Wat::var_name(RETAIN_FUNC_TYPE_NAME)]]),
-        "wasm_memory_grow" => (vec![TypeOld::Integer], TypeOld::Integer, wat!["memory.grow"]),
-        "wasm_memory_copy" => (vec![TypeOld::Integer, TypeOld::Integer, TypeOld::Integer], TypeOld::Void, wat!["memory.copy"]),
-        "alloc" => (vec![TypeOld::Integer], TypeOld::int_pointer(), Wat::call_from_stack(MEMORY_ALLOC_FUNC_NAME)),
-        "free" => (vec![TypeOld::any_pointer()], TypeOld::Void, Wat::call_from_stack(MEMORY_FREE_FUNC_NAME)),
-        "copy" => (vec![TypeOld::any_pointer(), TypeOld::any_pointer(), TypeOld::Integer], TypeOld::Void, Wat::call_from_stack(MEMORY_COPY_FUNC_NAME)),
-        "retain" => (vec![TypeOld::Any(0)], TypeOld::Boolean, wat![""]),
-        "garbage_collect" => (vec![], TypeOld::Void, Wat::call_from_stack(MEMORY_GARBAGE_COLLECT_FUNC_NAME)),
+        "call_indirect_retain" => (vec![TypeOld::int_pointer()::Integer]::Void, wat!["call_indirect", wat!["type", Wat::var_name(RETAIN_FUNC_TYPE_NAME)]]),
+        "wasm_memory_grow" => (vec![TypeOld::Integer]::Integer, wat!["memory.grow"]),
+        "wasm_memory_copy" => (vec![TypeOld::Integer::Integer::Integer]::Void, wat!["memory.copy"]),
+        "alloc" => (vec![TypeOld::Integer]::int_pointer(), Wat::call_from_stack(MEMORY_ALLOC_FUNC_NAME)),
+        "free" => (vec![TypeOld::any_pointer()]::Void, Wat::call_from_stack(MEMORY_FREE_FUNC_NAME)),
+        "copy" => (vec![TypeOld::any_pointer()::any_pointer()::Integer]::Void, Wat::call_from_stack(MEMORY_COPY_FUNC_NAME)),
+        "retain" => (vec![TypeOld::Any(0)]::Boolean, wat![""]),
+        "garbage_collect" => (vec![]::Void, Wat::call_from_stack(MEMORY_GARBAGE_COLLECT_FUNC_NAME)),
         _ => return None
     };
 
