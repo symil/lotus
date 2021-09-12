@@ -27,8 +27,8 @@ impl Scope {
         }
     }
 
-    pub fn get_var_info(&self, var_name: &Identifier) -> Option<&Rc<VariableInfo>> {
-        self.variables.get(var_name.as_str())
+    pub fn get_var_info(&self, var_name: &str) -> Option<&Rc<VariableInfo>> {
+        self.variables.get(var_name)
     }
 
     pub fn insert_var_info(&mut self, info: &Rc<VariableInfo>) {

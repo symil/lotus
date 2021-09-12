@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{IrFragment, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VI, Vasm}, wat};
+use crate::{generation::{Wat, ToWat, ToWatVec}, program::{Vasm, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VI}, wat};
 use super::{ActionKeyword, ActionKeywordToken, Expression};
 
 #[parsable]
@@ -23,35 +23,35 @@ impl Action {
                 match &function_blueprint.return_value {
                     Some(return_value) => match &self.value {
                         Some(expr) => {
-                            if let Some(wasm) = expr.process(context) {
-                                if return_value.ty.is_assignable_to(&wasm.ty) {
-                                    let mut source = vec![wasm];
+                            if let Some(vasm) = expr.process(context) {
+                                if return_value.ty.is_assignable_to(&vasm.ty) {
+                                    let mut source = vec![vasm];
 
                                     source.push(Vasm::new(Type::Void, vec![], vec![
                                         VI::set(return_value),
                                         VI::jump(function_depth, None),
                                     ]));
 
-                                    result = Some(IrFragment::merge(Type::Void, source));
+                                    result = Some(Vasm::merge(source));
                                 } else {
-                                    if !wasm.ty.is_void() {
-                                        context.errors.add(expr, format!("return: expected `{}`, got `{}`", return_value, &wasm.ty));
+                                    if !vasm.ty.is_void() {
+                                        context.errors.add(expr, format!("return: expected `{}`, got `{}`", &return_value.ty, &vasm.ty));
                                     }
                                 }
                             }
                         },
                         None => {
-                            context.errors.add(self, format!("return: expected `{}`, got `{}`", return_value::Void));
+                            context.errors.add(self, format!("return: expected `{}`, got `{}`", &return_value.ty, Type::Void));
                         },
                     },
                     None => match &self.value {
                         Some(expr) => {
-                            if let Some(wasm) = expr.process(context) {
-                                context.errors.add(expr, format!("return: expected `{}`, got `{}`"::Void, &wasm.ty));
+                            if let Some(vasm) = expr.process(context) {
+                                context.errors.add(expr, format!("return: expected `{}`, got `{}`", Type::Void, &vasm.ty));
                             }
                         },
                         None => {
-                            result = Some(IrFragment::new(Type::Void, Wat::new("br", function_depth), vec![]));
+                            result = Some(Vasm::new(Type::Void, vec![], vec![VI::jump(function_depth, None)]));
                         },
                     },
                 }
@@ -64,8 +64,8 @@ impl Action {
                     match context.get_scope_depth(ScopeKind::Loop) {
                         Some(depth) => {
                             result = match &self.keyword.token {
-                                ActionKeywordToken::Break => Some(IrFragment::new(Type::Void, wat!["br", depth + 1], vec![])),
-                                ActionKeywordToken::Continue => Some(IrFragment::new(Type::Void, wat!["br", depth], vec![])),
+                                ActionKeywordToken::Break => Some(Vasm::new(Type::Void, vec![], vec![VI::jump(depth + 1, None)])),
+                                ActionKeywordToken::Continue => Some(Vasm::new(Type::Void, vec![], vec![VI::jump(depth, None)])),
                                 _ => unreachable!()
                             }
                         },

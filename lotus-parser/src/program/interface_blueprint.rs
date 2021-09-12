@@ -14,6 +14,7 @@ pub struct InterfaceBlueprint {
 
 #[derive(Debug)]
 pub struct InterfaceAssociatedType {
+    pub owner: Link<InterfaceBlueprint>,
     pub name: Identifier
 }
 

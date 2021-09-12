@@ -71,7 +71,7 @@ impl IfBlock {
         context.return_found = return_found || branches_return.iter().all(|value| *value);
 
         match ok {
-            true => Some(IrFragment::new(Type::Void, wat, variables)),
+            true => Some(Vasm::new(Type::Void, wat, variables)),
             false => None
         }
     }

@@ -97,7 +97,7 @@ impl ObjectLiteral {
         context.errors.adds.extend(errors);
 
         match ok {
-            true => Some(IrFragment::new(TypeOld::Struct(struct_info), wat, variables)),
+            true => Some(Vasm::new(TypeOld::Struct(struct_info), wat, variables)),
             false => None
         }
     }

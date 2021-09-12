@@ -39,5 +39,5 @@ pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, 
         _ => return None
     };
 
-    Some(IrFragment::new(TypeOld::function(arguments, return_type), wat, vec![]))
+    Some(Vasm::new(TypeOld::function(arguments, return_type), wat, vec![]))
 }

@@ -1,7 +1,5 @@
 use std::rc::Rc;
-use crate::generation::{ToInt, Wat};
-use super::{Type, VariableInfo, Vasm};
-
+use super::{ToInt, ToVasm, Type, VariableInfo, Vasm, Wat};
 pub type VI = VirtualInstruction;
 
 #[derive(Debug)]
@@ -10,25 +8,42 @@ pub enum VirtualInstruction {
     Raw(Wat),
     IntConstant(i32),
     FloatConstant(f32),
-    GetVariable(Rc<VariableInfo>),
-    SetVariable(Rc<VariableInfo>),
-    TeeVariable(Rc<VariableInfo>),
+    GetVariable(VirtualGetVariableInfo),
+    SetVariable(VirtualSetVariableInfo),
+    TeeVariable(VirtualSetVariableInfo),
     MethodCall(VirtualMethodCallInfo),
     Loop(VirtualLoopInfo),
     Block(VasmInfo),
-    Jump(VirtualJumpInfo)
+    Jump(VirtualJumpInfo),
+    JumpIf(VirtualJumpIfInfo)
+}
+
+#[derive(Debug)]
+pub struct VirtualGetVariableInfo {
+    pub var_info: Rc<VariableInfo>,
+}
+
+#[derive(Debug)]
+pub struct VirtualSetVariableInfo {
+    pub var_info: Rc<VariableInfo>,
+    pub value: Option<Vasm>
 }
 
 #[derive(Debug)]
 pub struct VirtualMethodCallInfo {
     pub caller_type: Type,
     pub method_name: String,
-    pub args: Vec<VirtualInstruction>,
+    pub args: Vec<Vasm>,
     pub is_static: bool,
 }
 
 #[derive(Debug)]
 pub struct VirtualJumpInfo {
+    pub depth: u32,
+}
+
+#[derive(Debug)]
+pub struct VirtualJumpIfInfo {
     pub depth: u32,
     pub condition: Option<Vasm>,
 }
@@ -45,6 +60,10 @@ pub struct VasmInfo {
 }
 
 impl VirtualInstruction {
+    pub fn raw(value: Wat) -> Self {
+        Self::Raw(value)
+    }
+
     pub fn int<T : ToInt>(value: T) -> Self {
         Self::IntConstant(value.to_i32())
     }
@@ -53,69 +72,123 @@ impl VirtualInstruction {
         Self::FloatConstant(value)
     }
 
-    pub fn get(value: &Rc<VariableInfo>) -> Self {
-        Self::GetVariable(Rc::clone(value))
+    pub fn get(var_info: &Rc<VariableInfo>) -> Self {
+        Self::GetVariable(VirtualGetVariableInfo{
+            var_info: Rc::clone(var_info),
+        })
     }
 
-    pub fn set(value: &Rc<VariableInfo>) -> Self {
-        Self::SetVariable(Rc::clone(value))
+    pub fn set<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+        Self::SetVariable(VirtualSetVariableInfo {
+            var_info: Rc::clone(var_info),
+            value: Some(value.to_vasm())
+        })
     }
 
-    pub fn tee(value: &Rc<VariableInfo>) -> Self {
-        Self::TeeVariable(Rc::clone(value))
+    pub fn set_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+        Self::SetVariable(VirtualSetVariableInfo {
+            var_info: Rc::clone(var_info),
+            value: None
+        })
     }
 
-    pub fn method<S : ToString>(caller_type: &Type, method_name: S, args: Vec<VirtualInstruction>) -> Self {
+    pub fn tee<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+        Self::TeeVariable(VirtualSetVariableInfo {
+            var_info: Rc::clone(var_info),
+            value: Some(value.to_vasm())
+        })
+    }
+
+    pub fn tee_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+        Self::TeeVariable(VirtualSetVariableInfo {
+            var_info: Rc::clone(var_info),
+            value: None
+        })
+    }
+
+    pub fn call_method<S : ToString, T : ToVasm>(caller_type: &Type, method_name: S, args: Vec<T>) -> Self {
         Self::MethodCall(VirtualMethodCallInfo {
             caller_type: caller_type.clone(),
             method_name: method_name.to_string(),
-            args,
+            args: args.into_iter().map(|arg| arg.to_vasm()).collect(),
             is_static: false
         })
     }
 
-    pub fn static_method<S : ToString>(caller_type: &Type, method_name: S, args: Vec<VirtualInstruction>) -> Self {
+    pub fn call_method_from_stack<S : ToString>(caller_type: &Type, method_name: S) -> Self {
         Self::MethodCall(VirtualMethodCallInfo {
             caller_type: caller_type.clone(),
             method_name: method_name.to_string(),
-            args,
+            args: vec![],
+            is_static: false
+        })
+    }
+
+    pub fn call_static_method<S : ToString, T : ToVasm>(caller_type: &Type, method_name: S, args: Vec<T>) -> Self {
+        Self::MethodCall(VirtualMethodCallInfo {
+            caller_type: caller_type.clone(),
+            method_name: method_name.to_string(),
+            args: args.into_iter().map(|arg| arg.to_vasm()).collect(),
             is_static: true
         })
     }
 
-    pub fn loop_(content: Vasm) -> Self {
-        Self::Loop(VirtualLoopInfo {
-            content,
+    pub fn call_static_method_from_stack<S : ToString>(caller_type: &Type, method_name: S) -> Self {
+        Self::MethodCall(VirtualMethodCallInfo {
+            caller_type: caller_type.clone(),
+            method_name: method_name.to_string(),
+            args: vec![],
+            is_static: true
         })
     }
 
-    pub fn block(result: Vec<Type>, content: Vasm) -> Self {
+    pub fn loop_<T : ToVasm>(content: T) -> Self {
+        Self::Loop(VirtualLoopInfo {
+            content: content.to_vasm(),
+        })
+    }
+
+    pub fn block<T : ToVasm>(result: Vec<Type>, content: T) -> Self {
         Self::Block(VasmInfo {
             result,
-            content,
+            content: content.to_vasm(),
         })
     }
 
-    pub fn jump(depth: u32, condition: Option<Vasm>) -> Self {
+    pub fn jump(depth: u32) -> Self {
         Self::Jump(VirtualJumpInfo {
-            depth,
-            condition
+            depth
         })
     }
 
-    pub fn collect_variables(&self, mut list: Vec<Rc<VariableInfo>>) -> Vec<Rc<VariableInfo>> {
+    pub fn jump_if<T : ToVasm>(depth: u32, condition: T) -> Self {
+        Self::JumpIf(VirtualJumpIfInfo {
+            depth,
+            condition: Some(condition.to_vasm()),
+        })
+    }
+
+    pub fn jump_if_from_stack<T : ToVasm>(depth: u32) -> Self {
+        Self::JumpIf(VirtualJumpIfInfo {
+            depth,
+            condition: None
+        })
+    }
+
+    pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
         match self {
-            VirtualInstruction::Drop => list,
-            VirtualInstruction::Raw(_) => list,
-            VirtualInstruction::IntConstant(_) => list,
-            VirtualInstruction::FloatConstant(_) => list,
-            VirtualInstruction::GetVariable(_) => list,
-            VirtualInstruction::SetVariable(_) => list,
-            VirtualInstruction::TeeVariable(_) => list,
-            VirtualInstruction::MethodCall(_) => list,
+            VirtualInstruction::Drop => {},
+            VirtualInstruction::Raw(_) => {},
+            VirtualInstruction::IntConstant(_) => {},
+            VirtualInstruction::FloatConstant(_) => {},
+            VirtualInstruction::GetVariable(_) => {},
+            VirtualInstruction::SetVariable(_) => {},
+            VirtualInstruction::TeeVariable(_) => {},
+            VirtualInstruction::MethodCall(_) => {},
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
-            VirtualInstruction::Jump(_) => list,
+            VirtualInstruction::Jump(_) => {},
+            VirtualInstruction::JumpIf(_) => {},
         }
     }
 }

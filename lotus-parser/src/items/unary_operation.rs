@@ -18,7 +18,7 @@ impl UnaryOperation {
 
         if let Some(operand_wasm) = self.operand.process(context) {
             if let Some(operator_wasm) = self.operator.process(&operand_wasm.ty, context) {
-                result = Some(IrFragment::merge(operator_wasm.ty.clone(), vec![operand_wasm, operator_wasm]));
+                result = Some(Vasm::merge(operator_wasm.ty.clone(), vec![operand_wasm, operator_wasm]));
             }
         }
 

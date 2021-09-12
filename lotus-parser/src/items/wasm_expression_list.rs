@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::Wat, program::ProgramContext};
+use crate::{generation::Wat, program::{ProgramContext, Type, VI, Vasm}};
 
 use super::WasmExpression;
 
@@ -10,13 +10,13 @@ pub struct WasmExpressionList {
 }
 
 impl WasmExpressionList {
-    pub fn process(&self, context: &mut ProgramContext) -> Vec<Wat> {
-        let mut list = vec![];
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+        let mut content = vec![];
 
         for item in &self.list {
-            list.push(item.process(context));
+            content.push(VI::Raw(item.process(context)));
         }
 
-        list
+        Some(Vasm::new(Type::Void, vec![], content))
     }
 }

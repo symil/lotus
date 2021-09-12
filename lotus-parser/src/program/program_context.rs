@@ -11,7 +11,7 @@ pub struct ProgramContext {
     pub types: ItemIndex<TypeBlueprint>,
     pub interfaces: ItemIndex<InterfaceBlueprint>,
     pub functions: ItemIndex<FunctionBlueprint>,
-    pub globals: ItemIndex<GlobalVarBlueprint>,
+    pub global_vars: ItemIndex<GlobalVarBlueprint>,
 
     pub builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     pub builtin_interfaces: HashMap<BuiltinInterface, (Link<InterfaceBlueprint>, String)>,
@@ -52,6 +52,14 @@ impl ProgramContext {
         Type::Actual(self.get_builtin_type_info(BuiltinType::String))
     }
 
+    pub fn pointer_type(&self, item_type: Type) -> Type {
+        let mut info = self.get_builtin_type_info(BuiltinType::Pointer);
+
+        info.parameters.push(item_type);
+
+        Type::Actual(info)
+    }
+
     pub fn array_type(&self, item_type: Type) -> Type {
         let mut info = self.get_builtin_type_info(BuiltinType::Array);
 
@@ -60,10 +68,10 @@ impl ProgramContext {
         Type::Actual(info)
     }
 
-    pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> (&Link<InterfaceBlueprint>, &str) {
-        let (interface_blueprint, method_name) = self.builtin_interfaces.get(&interface).unwrap();
+    pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> &Link<InterfaceBlueprint> {
+        let (interface_blueprint, _) = self.builtin_interfaces.get(&interface).unwrap();
 
-        (interface_blueprint, method_name)
+        interface_blueprint
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -92,26 +100,22 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, name: Identifier, ty: Type, kind: VariableKind) -> Rc<VariableInfo> {
-        let var_info = VariableInfo::new(name.clone(), ty.clone(), kind);
-
+    pub fn push_var(&mut self, var_info: &Rc<VariableInfo>) {
         // global scope is handled differently
         if let Some(current_scope) = self.scopes.iter_mut().last() {
             current_scope.insert_var_info(&var_info);
         }
-
-        var_info
     }
 
     pub fn get_var_info(&self, name: &Identifier) -> Option<&Rc<VariableInfo>> {
         for scope in self.scopes.iter().rev() {
-            if let Some(var_info) = scope.get_var_info(name) {
+            if let Some(var_info) = scope.get_var_info(name.as_str()) {
                 return Some(var_info);
             }
         }
 
-        match self.get_global_by_name(name) {
-            Some(global) => Some(global.var_info.clone()),
+        match self.global_vars.get_by_name(name) {
+            Some(global) => Some(&global.borrow().var_info),
             None => None,
         }
     }
@@ -132,7 +136,7 @@ impl ProgramContext {
             F : FnMut() -> String
     {
         let mut ok = true;
-        let (interface_blueprint, method_name) = self.get_builtin_interface(interface);
+        let (interface_blueprint, method_name) = self.builtin_interfaces.get(&interface).unwrap();
         let method_info = interface_blueprint.borrow().methods.get(method_name).unwrap().clone();
 
         if !target_type.match_interface(interface_blueprint) {
@@ -149,7 +153,7 @@ impl ProgramContext {
         }
 
         let ty = method_info.return_type.clone().unwrap_or(Type::Void);
-        let method_instruction = VI::method(&ty, method_name, vec![]);
+        let method_instruction = VI::call_method(&ty, method_name, vec![]);
         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
         match ok {
@@ -165,22 +169,10 @@ impl ProgramContext {
         self.call_builtin_interface(location, interface, target_type, &[], || String::new())
     }
 
-    // pub fn get_type_id(&mut self, ty: &Type) -> Id {
-    //     match self.types_ids.get(ty) {
-    //         Some(id) => *id,
-    //         None => {
-    //             let id = self.types_ids.len();
-    //             self.types_ids.insert(ty.clone(), id);
-
-    //             id
-    //         }
-    //     }
-    // }
-
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut structs = vec![];
         let mut functions = vec![];
-        let mut globals = vec![];
+        let mut global_vars = vec![];
 
         for file in files {
             for block in file.blocks {
@@ -192,7 +184,7 @@ impl ProgramContext {
                         functions.push(function_declaration);
                     },
                     TopLevelBlock::GlobalDeclaration(mut global_declaration) => {
-                        globals.push(global_declaration);
+                        global_vars.push(global_declaration);
                     },
                 }
             }
@@ -226,7 +218,7 @@ impl ProgramContext {
             function_declaration.process_signature(index, self);
         }
 
-        for (index, global_declaration) in globals.iter().enumerate() {
+        for (index, global_declaration) in global_vars.iter().enumerate() {
             global_declaration.process(index, self);
         }
 
@@ -290,7 +282,7 @@ impl ProgramContext {
 
         let mut init_globals_body = vec![];
 
-        for global in get_globals_sorted(take(&mut self.globals)) {
+        for global in get_globals_sorted(take(&mut self.global_vars)) {
             let wat = match global.var_info.ty {
                 TypeOld::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
                 _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),

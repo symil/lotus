@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Type};
+use crate::program::{ProgramContext, Type, Vasm};
 use super::Statement;
 
 #[parsable]
@@ -10,22 +10,14 @@ pub struct StatementList {
 
 impl StatementList {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut ok = true;
-        let mut wat = vec![];
-        let mut variables = vec![];
+        let mut source = vec![];
 
         for statement in &self.list {
-            if let Some(wasm) = statement.process(context) {
-                wat.extend(wasm.wat);
-                variables.extend(wasm.variables);
-            } else {
-                ok = false;
+            if let Some(vasm) = statement.process(context) {
+                source.push(vasm);
             }
         }
 
-        match ok {
-            true => Some(IrFragment::new(Type::Void, wat, variables)),
-            false => None
-        }
+        Some(Vasm::merge(source))
     }
 }

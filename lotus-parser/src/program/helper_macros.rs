@@ -18,4 +18,21 @@ macro_rules! wat {
     };
 }
 
+#[macro_export]
+macro_rules! vasm {
+    ($($arg:expr),*) => {
+        {
+            let mut result = Vasm::empty();
+            $(
+                {
+                    result.extend($arg);
+                }
+            )*
+
+            result
+        }
+    };
+}
+
 pub use wat;
+pub use vasm;

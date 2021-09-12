@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use parsable::DataLocation;
 use crate::{generation::Wat, items::{FullType}, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
-use super::{AssociatedType, InterfaceAssociatedType, InterfaceBlueprint, InterfaceMethod, ProgramContext, TypeBlueprint, TypeParameter};
+use super::{AssociatedType, InterfaceAssociatedType, InterfaceBlueprint, InterfaceMethod, ProgramContext, ResolvedType, TypeBlueprint, TypeParameter};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -59,6 +59,23 @@ impl Type {
         false
     }
 
+    pub fn get_assiciated_type(&self, interface_associated_type: &Link<InterfaceAssociatedType>) -> Option<Type> {
+        match self {
+            Type::Void => None,
+            Type::Any => None,
+            Type::Associated(_) => None,
+            Type::Parameter(info) => match info.borrow().required_interfaces.contains(&interface_associated_type.borrow().owner) {
+                true => Some(Type::Associated(interface_associated_type.clone())),
+                false => None
+            },
+            Type::Actual(info) => match info.type_blueprint.borrow().associated_types.get(interface_associated_type.borrow().name.as_str()) {
+                Some(associated_type) => Some(associated_type.value.clone()),
+                None => None,
+            },
+            Type::TypeRef(_) => None,
+        }
+    }
+
     pub fn is_assignable(&self) -> bool {
         match self {
             Type::Void => true,
@@ -105,8 +122,8 @@ impl Type {
                 let type_blueprint = info.type_blueprint.borrow();
 
                 for associated_type in interface_blueprint.associated_types.values() {
-                    if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
-                        // later: check that associated type matches required interfaces
+                    if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.borrow().name.as_str()) {
+                        // later: check that the associated type matches the interfaces required by the interface
                     } else {
                         return false;
                     }
@@ -120,13 +137,13 @@ impl Type {
                             return false;
                         }
 
-                        for (required_type, (arg_name, arg_type)) in method.arguments.iter().zip(function_blueprint.arguments.iter()) {
-                            if required_type != arg_type {
+                        for (required_type, arg_info) in method.arguments.iter().zip(function_blueprint.arguments.iter()) {
+                            if required_type != &arg_info.ty {
                                 return false;
                             }
                         }
 
-                        if function_blueprint.return_value != method.return_type {
+                        if function_blueprint.return_value.and_then(|info| Some(&info.ty)) != method.return_type.as_ref() {
                             return false;
                         }
                     } else {
@@ -138,6 +155,21 @@ impl Type {
             },
             Type::TypeRef(_) => unreachable!(),
         }
+    }
+
+    pub fn is_ambiguous(&self) -> bool {
+        match self {
+            Type::Void => false,
+            Type::Any => true,
+            Type::Associated(_) => false,
+            Type::Parameter(_) => false,
+            Type::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
+            Type::TypeRef(ty) => ty.is_ambiguous(),
+        }
+    }
+
+    pub fn resolve(&self) -> ResolvedType {
+        todo!()
     }
 }
 

@@ -21,5 +21,5 @@ pub fn process_integer_method_call(method_name: &Identifier, context: &mut Progr
         _ => return None
     };
 
-    Some(IrFragment::simple(TypeOld::Function(arguments, Box::new(return_type)), wat))
+    Some(Vasm::simple(TypeOld::Function(arguments, Box::new(return_type)), wat))
 }

@@ -1,5 +1,5 @@
 use crate::{generation::Wat, items::Visibility};
-use super::{TypeOld, VariableInfo};
+use super::{VariableInfo};
 
 #[derive(Debug)]
 pub struct GlobalVarInstance {

@@ -20,5 +20,5 @@ pub fn process_string_method_call(method_name: &Identifier, context: &mut Progra
         _ => return None
     };
 
-    Some(IrFragment::simple(TypeOld::Function(arguments, Box::new(return_type)), Wat::call_from_stack(func_name)))
+    Some(Vasm::simple(TypeOld::Function(arguments, Box::new(return_type)), Wat::call_from_stack(func_name)))
 }

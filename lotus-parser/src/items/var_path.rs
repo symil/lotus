@@ -50,7 +50,7 @@ impl VarPath {
         }
 
         match ok {
-            true => Some(IrFragment::merge(parent_type, source)),
+            true => Some(Vasm::merge(parent_type, source)),
             false => None
         }
     }

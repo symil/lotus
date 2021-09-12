@@ -5,5 +5,6 @@ pub enum BuiltinType {
     Int,
     Float,
     String,
+    Pointer,
     Array,
 }

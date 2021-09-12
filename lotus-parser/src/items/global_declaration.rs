@@ -1,44 +1,33 @@
 use std::fs::Metadata;
 
 use parsable::parsable;
-use crate::program::{GlobalVarInstance, ProgramContext, VariableInfo, VariableKind};
-use super::{VarDeclaration, VisibilityWrapper};
+use crate::program::{GlobalVarBlueprint, GlobalVarInstance, ProgramContext, VariableInfo, VariableKind};
+use super::{VarDeclaration, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct GlobalDeclaration {
     pub visibility: VisibilityWrapper,
     #[parsable(suffix=";")]
     pub var_declaration: VarDeclaration,
-
-    #[parsable(ignore)]
-    pub file_name: String,
-    #[parsable(ignore)]
-    pub file_namespace: String
 }
 
 impl GlobalDeclaration {
     pub fn process(&self, index: usize, context: &mut ProgramContext) {
-        context.set_file_location(&self.file_name, &self.file_namespace);
         context.reset_local_scope();
 
-        if let Some(wasm) = self.var_declaration.process(VariableKind::Global, context) {
-            let mut global_annotation = GlobalVarInstance {
-                metadata: ItemMetadata {
-                    id: index,
-                    name: self.var_declaration.var_name.clone(),
-                    file_name: context.get_current_file_name(),
-                    file_namespace: context.get_current_file_namespace(),
-                    visibility: self.visibility.get_token()
-                },
-                var_info: wasm.variables[0].clone(),
-                value: wasm.wat,
+        if let Some((var_info, init_vasm)) = self.var_declaration.process(VariableKind::Global, context) {
+            let global_var_blueprint = GlobalVarBlueprint {
+                var_id: self.location.get_hash(),
+                visibility: self.visibility.value.unwrap_or(Visibility::Private),
+                var_info,
+                init_vasm,
             };
 
-            if context.get_global_by_name(&self.var_declaration.var_name).is_some() {
-                context.errors.add(&self.var_declaration.var_name, format!("duplicate global declaration: `{}`", &self.var_declaration.var_name));
+            if context.global_vars.get_by_name(&self.var_declaration.var_name).is_some() {
+                context.errors.add(&self.var_declaration.var_name, format!("duplicate global variable declaration: `{}`", &self.var_declaration.var_name));
             }
 
-            context.add_global(global_annotation);
+            context.global_vars.insert(global_var_blueprint);
         }
     }
 }

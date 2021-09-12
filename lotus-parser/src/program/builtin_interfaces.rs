@@ -20,5 +20,6 @@ pub enum BuiltinInterface {
     Minus,
     ToBool,
     GetAtIndex,
-    SetAtIndex
+    SetAtIndex,
+    Iterable
 }

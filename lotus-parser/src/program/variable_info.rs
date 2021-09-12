@@ -1,7 +1,6 @@
 use std::rc::Rc;
-
-use crate::{generation::Wat, items::Identifier};
-use super::{Type};
+use crate::{items::Identifier};
+use super::{Type, Wat};
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {

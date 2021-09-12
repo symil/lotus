@@ -25,7 +25,7 @@ impl WhileBlock {
                 ]
             ];
 
-            result = Some(IrFragment::new(Type::Void, content, block_wasm.variables));
+            result = Some(Vasm::new(Type::Void, content, block_wasm.variables));
         }
 
         context.pop_scope();

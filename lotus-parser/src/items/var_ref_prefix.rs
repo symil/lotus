@@ -14,21 +14,21 @@ impl VarRefPrefix {
     pub fn process(&self, location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             VarRefPrefix::This => match &context.this_var {
-                Some(this_var) => Some(IrFragment::simple(this_var.ty.clone(), Wat::get_local(this_var.wasm_name.as_str()))),
+                Some(this_var) => Some(Vasm::simple(this_var.ty.clone(), Wat::get_local(this_var.wasm_name.as_str()))),
                 None => {
                     context.errors.add(location, "no `this` value can be referenced in this context");
                     None
                 }
             },
             VarRefPrefix::Payload => match &context.payload_var {
-                Some(payload_var) => Some(IrFragment::simple(payload_var.ty.clone(), Wat::get_local(payload_var.wasm_name.as_str()))),
+                Some(payload_var) => Some(Vasm::simple(payload_var.ty.clone(), Wat::get_local(payload_var.wasm_name.as_str()))),
                 None => {
                     context.errors.add(location, "no `payload` value can be referenced in this context");
                     None
                 }
             },
             VarRefPrefix::System => {
-                Some(IrFragment::empty(TypeOld::System))
+                Some(Vasm::empty(TypeOld::System))
             },
         }
     }

@@ -35,11 +35,11 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(IrFragment::simple(var_info.ty.clone(), var_info.get_to_stack())),
-                    AccessType::Set(_) => Some(IrFragment::simple(var_info.ty.clone(), var_info.set_from_stack())),
+                    AccessType::Get => Some(Vasm::simple(var_info.ty.clone(), var_info.get_to_stack())),
+                    AccessType::Set(_) => Some(Vasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
                 },
                 None => match context.get_struct_by_name(&self.name) {
-                    Some(struct_annotation) => Some(IrFragment::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
+                    Some(struct_annotation) => Some(Vasm::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
                     None => {
                         context.errors.add(&self.name, format!("undefined variable or type `{}`", &self.name));
                         None
@@ -83,7 +83,7 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
 
                 // special case: `_` refers to the value itself rather than a field
                 // e.g `#foo` means `self.foo`, but `#_` means `self`
-                Some(IrFragment::empty(parent_type.clone()))
+                Some(Vasm::empty(parent_type.clone()))
             } else if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(field) = struct_annotation.fields.get(field_name) {
                     let func_name = match access_type {
@@ -91,7 +91,7 @@ pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, acce
                         AccessType::Set(_) => field.ty.pointer_set_function_name(),
                     };
 
-                    Some(IrFragment::simple(
+                    Some(Vasm::simple(
                         field.ty.clone(),
                         Wat::call(func_name, vec![Wat::const_i32(field.offset)])
                     ))
@@ -131,7 +131,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::TypeRef(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.static_methods.get(method_name) {
-                    Some(IrFragment::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }
@@ -142,7 +142,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.regular_methods.get(method_name) {
-                    Some(IrFragment::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
                 } else {
                     None
                 }
@@ -204,10 +204,10 @@ pub fn process_function_call(system_method_name: Option<&Identifier>, function_t
         function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
     }
 
-    source.push(IrFragment::new(TypeOld::Void, function_call, vec![]));
+    source.push(Vasm::new(TypeOld::Void, function_call, vec![]));
 
     match ok {
-        true => Some(IrFragment::merge(return_type.clone(), source)),
+        true => Some(Vasm::merge(return_type.clone(), source)),
         false => None
     }
 }

@@ -51,12 +51,12 @@ impl StringLiteral {
 
         let string_type = context.string_type();
         let mut content = vec![
-            VI::static_method(&string_type, "new", vec![VI::int(unescaped_chars.len())])
+            VI::call_static_method(&string_type, "new", vec![VI::int(unescaped_chars.len())])
         ];
 
         for (i, code) in unescaped_chars.into_iter().enumerate() {
             content.push(
-                VI::method(&string_type, "set_char", vec![VI::int(i), VI::int(code)]),
+                VI::call_method(&string_type, "set_char", vec![VI::int(i), VI::int(code)]),
             );
         }
 

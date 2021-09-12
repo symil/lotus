@@ -1,4 +1,4 @@
-use super::Wat;
+use super::{Vasm, VirtualInstruction, Wat};
 
 pub trait ToInt {
     fn to_i32(self) -> i32;
@@ -8,9 +8,14 @@ pub trait ToWat {
     fn to_wat(self) -> Wat;
 }
 
+pub trait ToVasm {
+    fn to_vasm(self) -> Vasm;
+}
+
 pub trait ToWatVec {
     fn to_wat_vec(self) -> Vec<Wat>;
 }
+
 
 impl ToInt for i32 {
     fn to_i32(self) -> i32 {
@@ -99,5 +104,23 @@ impl ToWatVec for Vec<Wat> {
 impl<T : ToWat> ToWatVec for T {
     fn to_wat_vec(self) -> Vec<Wat> {
         vec![self.to_wat()]
+    }
+}
+
+impl ToVasm for Vasm {
+    fn to_vasm(self) -> Vasm {
+        self
+    }
+}
+
+impl ToVasm for VirtualInstruction {
+    fn to_vasm(self) -> Vasm {
+        Vasm::void(vec![self])
+    }
+}
+
+impl ToVasm for Vec<VirtualInstruction> {
+    fn to_vasm(self) -> Vasm {
+        Vasm::void(self)
     }
 }

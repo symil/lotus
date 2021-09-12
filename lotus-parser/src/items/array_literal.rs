@@ -20,48 +20,58 @@ impl ArrayLiteral {
 
         let mut all_items_ok = true;
         let mut final_item_type = Type::Any;
+        let mut item_vasm_list = vec![];
 
-        let mut content = vec![
-            VI::int(self.items.len()),
-            VI::static_method(&context.array_type(final_item_type.clone()), "new"),
-            VI::set(&array_var),
-
-            VI::get(&array_var),
-            VI::method(&context.array_type(final_item_type.clone()), "get_body"),
-            VI::set(&array_body_var),
-        ];
-
-        for (i, item) in self.items.iter().enumerate() {
+        for item in self.items.iter() {
             let mut item_ok = false;
 
-            if let Some(item_wasm) = item.process(context) {
-                if final_item_type.is_assignable_to(&item_wasm.ty) {
-                    final_item_type = item_wasm.ty.clone();
+            if let Some(item_vasm) = item.process(context) {
+                item_vasm_list.push(item_vasm);
+
+                if final_item_type.is_assignable_to(&item_vasm.ty) {
+                    final_item_type = item_vasm.ty.clone();
                     item_ok = true;
-                } else if item_wasm.ty.is_assignable_to(&final_item_type) {
+                } else if item_vasm.ty.is_assignable_to(&final_item_type) {
                     item_ok = true;
                 }
-
-                content.extend(item_wasm.wat);
-                content.extend(vec![
-                    Wat::get_local(&array_body_var_name),
-                    Wat::const_i32(i),
-                    final_item_type.method_call_placeholder(PTR_SET_METHOD_NAME)
-                ]);
 
                 if !item_ok {
-                    context.errors.add(item, format!("incompatible item types `{}` and `{}`", &final_item_type, &item_wasm.ty));
+                    context.errors.add(item, format!("incompatible item types `{}` and `{}`", &final_item_type, &item_vasm.ty));
+                    all_items_ok = false;
                 }
             }
-
-            all_items_ok &= item_ok;
         }
 
-        content.push(Wat::get_local(&array_var_name));
-
-        match all_items_ok {
-            true => Some(IrFragment::new(context.array_type(final_item_type), content, variables)),
-            false => None
+        if !all_items_ok {
+            return None;
         }
+
+        let final_array_type = context.array_type(final_item_type.clone());
+        let final_pointer_type = context.pointer_type(final_item_type.clone());
+        let mut source = vec![Vasm::new(Type::Void, variables, vec![
+            VI::call_static_method(&final_array_type, "new", vec![VI::int(self.items.len())]),
+            VI::set(&array_var),
+            VI::call_method(&final_array_type, "get_body", vec![VI::get(&array_var)]),
+            VI::set(&array_body_var),
+        ])];
+
+        for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
+            source.extend(vec![
+                Vasm::new(Type::Void, vec![], vec![
+                    VI::get(&array_body_var),
+                    VI::int(i),
+                ]),
+                item_vasm,
+                Vasm::new(Type::Void, vec![], vec![
+                    VI::call_method(&final_pointer_type, "set_at_index", vec![]),
+                ])
+            ]);
+        }
+
+        source.push(Vasm::new(Type::Void, vec![], vec![
+            VI::get(&array_var)
+        ]));
+
+        Some(Vasm::merge(source))
     }
 }

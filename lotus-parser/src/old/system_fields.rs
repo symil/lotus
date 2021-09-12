@@ -3,7 +3,7 @@ use super::{ProgramContext};
 
 pub fn process_system_field_access(field_name: &Identifier, context: &mut ProgramContext) -> Option<Vasm> {
     match field_name.as_str() {
-        "memory" => Some(IrFragment::simple(
+        "memory" => Some(Vasm::simple(
             TypeOld::pointer(TypeOld::Integer),
             Wat::const_i32(0)
         )),
@@ -33,8 +33,8 @@ pub fn process_system_method_call(method_name: &Identifier, args: &ArgumentList,
     let ty = TypeOld::Function(arguments, Box::new(return_type));
 
     match wat.is_empty() {
-        true => Some(IrFragment::empty(ty)),
-        false => Some(IrFragment::simple(ty, wat))
+        true => Some(Vasm::empty(ty)),
+        false => Some(Vasm::simple(ty, wat))
     }
 }
 

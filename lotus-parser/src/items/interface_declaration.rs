@@ -31,7 +31,7 @@ impl InterfaceDeclaration {
         context.interfaces.insert(interface_blueprint);
     }
 
-    fn process<'a, F : FnMut(Link<InterfaceBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, f : F) {
+    fn process<'a, F : FnMut(&Link<InterfaceBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, f : F) {
         let interface_blueprint = context.interfaces.get_by_location(&self.name);
 
         context.current_interface = Some(interface_blueprint.clone());

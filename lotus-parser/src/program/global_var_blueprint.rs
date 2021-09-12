@@ -1,17 +1,17 @@
+use std::rc::Rc;
 use parsable::DataLocation;
-use super::{GlobalItem, ItemVisibility};
+use crate::items::{Identifier, Visibility};
+use super::{GlobalItem, VariableInfo, Vasm};
 
 #[derive(Debug)]
 pub struct GlobalVarBlueprint {
-    pub id: u64,
-    pub name: String,
-    pub location: DataLocation,
-    pub visibility: ItemVisibility,
+    pub var_id: u64,
+    pub visibility: Visibility,
+    pub var_info: Rc<VariableInfo>,
+    pub init_vasm: Vasm
 }
 
 impl GlobalItem for GlobalVarBlueprint {
-    fn get_id(&self) -> u64 { self.id }
-    fn get_name(&self) -> &str { &self.name }
-    fn get_location(&self) -> &DataLocation { &self.location }
-    fn get_visibility(&self) -> ItemVisibility { self.visibility }
+    fn get_name(&self) -> &Identifier { &self.var_info.name }
+    fn get_visibility(&self) -> Visibility { self.visibility }
 }
