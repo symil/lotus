@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
+use crate::{program::{ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
 use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
 
 #[parsable]
@@ -53,9 +53,11 @@ impl VarDeclaration {
             source.push(vasm);
         }
 
-        let var_info = context.push_var(self.var_name.clone(), final_var_type.clone(), kind);
+        let var_info = VariableInfo::new(self.var_name.clone(), final_var_type.clone(), kind);
 
-        source.push(Vasm::new(Type::Void, vec![Rc::clone(&var_info)], vec![VI::set(&var_info)]));
+        context.push_var(&var_info);
+
+        source.push(Vasm::new(Type::Void, vec![Rc::clone(&var_info)], vec![VI::set_from_stack(&var_info)]));
 
         match ok {
             true => Some((var_info, Vasm::merge(source))),

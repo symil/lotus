@@ -20,7 +20,7 @@ impl RootVarRef {
             Some(prefix) => {
                 if let Some(prefix_vasm) = prefix.process(self, context) {
                     if let Some(field_vasm) = self.var_ref.process_as_field(&prefix_vasm.ty, access_type, context) {
-                        result = Some(Vasm::merge(field_vasm.ty.clone(), vec![prefix_vasm, field_vasm]));
+                        result = Some(Vasm::merge(vec![prefix_vasm, field_vasm]));
                     }
                 }
             },

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{ProgramContext, STRING_ALLOC_FUNC_NAME, STRING_SET_CHAR_FUNC_NAME, VI, Vasm}, wat};
+use crate::{program::{ProgramContext, VI, Vasm}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {

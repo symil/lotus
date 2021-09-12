@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, VI, Vasm}, wat};
+use crate::{program::{ProgramContext, VI, Vasm}, wat};
 use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use parsable::DataLocation;
-use crate::{generation::Wat, items::{FullType}, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
+use crate::{items::{FullType}, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
 use super::{AssociatedType, InterfaceAssociatedType, InterfaceBlueprint, InterfaceMethod, ProgramContext, ResolvedType, TypeBlueprint, TypeParameter};
 
 #[derive(Debug, Clone)]

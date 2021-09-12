@@ -6,7 +6,7 @@ macro_rules! wat {
     ($keyword:expr $(,$arg:expr)*) => {
         {
             let keyword = $keyword;
-            let mut result = Wat::from(keyword);
+            let mut result = crate::program::Wat::from(keyword);
             $(
                 {
                     result.extend($arg);

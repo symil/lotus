@@ -46,6 +46,7 @@ impl InterfaceDeclaration {
             for associated_type in &self.body.associated_types {
                 let name = associated_type.process(context);
                 let item = Link::new(InterfaceAssociatedType {
+                    owner: interface_blueprint.clone(),
                     name: name.clone(),
                 });
 
@@ -59,6 +60,7 @@ impl InterfaceDeclaration {
             }
 
             associated_types.insert(THIS_TYPE_NAME.to_string(), Link::new(InterfaceAssociatedType {
+                owner: interface_blueprint.clone(),
                 name: Identifier::new(THIS_TYPE_NAME, &self.name)
             }));
 

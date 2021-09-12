@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext};
+use crate::program::{ProgramContext, Vasm};
 
 use super::Expression;
 

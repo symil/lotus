@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use indexmap::IndexSet;
 use parsable::DataLocation;
-use crate::{generation::Wat, items::{EventCallbackQualifier, Identifier, Visibility}, program::VariableKind, utils::Link};
+use crate::{items::{EventCallbackQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
 use super::{FunctionInstance, GlobalItem, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeContext, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
@@ -22,6 +22,10 @@ pub struct FunctionBlueprint {
 }
 
 impl FunctionBlueprint {
+    pub fn is_static(&self) -> bool {
+        self.this_arg.is_none()
+    }
+
     pub fn generate_instance(&self, type_context: &TypeContext) -> FunctionInstance {
         let is_static = self.this_arg.is_none();
         let mut variables = vec![];

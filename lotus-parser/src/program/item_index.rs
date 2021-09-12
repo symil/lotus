@@ -19,7 +19,7 @@ impl<V : GlobalItem> ItemIndex<V> {
         self.items_by_name.len()
     }
 
-    pub fn insert(&mut self, value: V) {
+    pub fn insert(&mut self, value: V) -> Link<V> {
         let name = value.get_name();
         let id = name.location.get_hash();
         let item = Link::new(value);
@@ -27,10 +27,12 @@ impl<V : GlobalItem> ItemIndex<V> {
         self.items_by_id.insert(id, item.clone());
 
         if let Some(vec) = self.items_by_name.get_mut(name.as_str()) {
-            vec.push(item);
+            vec.push(item.clone());
         } else {
-            self.items_by_name.insert(name.to_string(), vec![item]);
+            self.items_by_name.insert(name.to_string(), vec![item.clone()]);
         }
+
+        item
     }
 
     pub fn get_by_name(&self, getter_name: &Identifier) -> Option<&Link<V>> {

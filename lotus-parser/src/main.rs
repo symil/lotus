@@ -7,7 +7,6 @@ use program::LotusProgram;
 mod utils;
 mod program;
 mod items;
-mod generation;
 
 const PROGRAM_NAME : &'static str = "lotus";
 

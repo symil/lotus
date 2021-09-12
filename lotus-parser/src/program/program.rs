@@ -49,11 +49,7 @@ impl LotusProgram {
                 };
 
                 match LotusFile::parse(file_content, parse_options) {
-                    Ok(mut lotus_file) => {
-                        lotus_file.file_name = file_name.clone();
-                        lotus_file.file_namespace = file_namespace.to_string();
-                        parsed_files.push(lotus_file);
-                    },
+                    Ok(lotus_file) => parsed_files.push(lotus_file),
                     Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
                 };
             }

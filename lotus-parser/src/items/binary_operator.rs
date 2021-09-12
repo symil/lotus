@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_CONCAT_FUNC_NAME, BuiltinInterface, ProgramContext, STRING_CONCAT_FUNC_NAME, STRING_EQUAL_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
+use crate::{items::Identifier, program::{BuiltinInterface, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
 #[derive(Default)]
@@ -57,7 +57,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
                 let tmp_var = VariableInfo::new(Identifier::unique("tmp", self), context.bool_type(), VariableKind::Local);
                 let mut content = vec![
-                    VI::tee(&tmp_var),
+                    VI::tee_from_stack(&tmp_var),
                     VI::get(&tmp_var),
                 ];
 
@@ -65,7 +65,7 @@ impl BinaryOperatorWrapper {
                     content.push(VI::Raw(wat!["i32.eqz"]));
                 }
 
-                content.push(VI::jump(0, None));
+                content.push(VI::jump(0));
 
                 Some(Vasm::new(context.bool_type(), vec![tmp_var], content))
             }

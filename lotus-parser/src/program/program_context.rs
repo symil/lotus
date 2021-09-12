@@ -1,8 +1,8 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref, rc::Rc};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{generation::{GENERATED_METHOD_COUNT_PER_TYPE, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, ToWat, ToWatVec, Wat}, items::{Identifier, LotusFile, TopLevelBlock}, program::VI, utils::Link, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GeneratedMethods, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::VI, utils::Link, wat};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -153,7 +153,7 @@ impl ProgramContext {
         }
 
         let ty = method_info.return_type.clone().unwrap_or(Type::Void);
-        let method_instruction = VI::call_method(&ty, method_name, vec![]);
+        let method_instruction = VI::call_method_from_stack(&ty, method_name);
         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
         match ok {
@@ -170,64 +170,80 @@ impl ProgramContext {
     }
 
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
-        let mut structs = vec![];
+        let mut interfaces = vec![];
+        let mut types = vec![];
         let mut functions = vec![];
         let mut global_vars = vec![];
 
         for file in files {
             for block in file.blocks {
                 match block {
-                    TopLevelBlock::StructDeclaration(mut struct_declaration) => {
-                        structs.push(struct_declaration);
-                    },
-                    TopLevelBlock::FunctionDeclaration(mut function_declaration) => {
-                        functions.push(function_declaration);
-                    },
-                    TopLevelBlock::GlobalDeclaration(mut global_declaration) => {
-                        global_vars.push(global_declaration);
-                    },
+                    TopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
+                    TopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
+                    TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
+                    TopLevelBlock::GlobalDeclaration(mut global_declaration) => global_vars.push(global_declaration),
                 }
             }
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_name(index, self);
+        for interface_declaration in &interfaces {
+            interface_declaration.process_name(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_parent(index, self);
+        for type_declaration in &types {
+            type_declaration.process_name(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_inheritance_chain(index, self);
+        for interface_declaration in &interfaces {
+            interface_declaration.process_associated_types(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_fields(index, self);
+        for type_declaration in &types {
+            type_declaration.process_associated_types(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_fields_inheritance(index, self);
+        for interface_declaration in &interfaces {
+            interface_declaration.process_methods(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_method_signatures(index, self);
+        for type_declaration in &types {
+            type_declaration.process_parent(self);
         }
 
-        for (index, function_declaration) in functions.iter().enumerate() {
-            function_declaration.process_signature(index, self);
+        for type_declaration in &types {
+            type_declaration.process_inheritance_chain(self);
         }
 
-        for (index, global_declaration) in global_vars.iter().enumerate() {
-            global_declaration.process(index, self);
+        for type_declaration in &types {
+            type_declaration.process_fields(self);
+        }
+        
+        for type_declaration in &types {
+            type_declaration.process_fields_inheritance(self);
         }
 
-        for (index, function_declaration) in functions.iter().enumerate() {
-            function_declaration.process_body(index, self);
+        for type_declaration in &types {
+            type_declaration.process_method_signatures(self);
         }
 
-        for (index, struct_declaration) in structs.iter().enumerate() {
-            struct_declaration.process_methods_bodies(index, self);
+        for type_declaration in &types {
+            type_declaration.process_methods_inheritance(self);
+        }
+
+        for function_declaration in &functions {
+            function_declaration.process_signature(self);
+        }
+
+        for global_var_declaration in &global_vars {
+            global_var_declaration.process(self);
+        }
+
+        for type_declaration in &types {
+            type_declaration.process_methods_bodies(self);
+        }
+
+        for function_declaration in &functions {
+            function_declaration.process_body(self);
         }
     }
 

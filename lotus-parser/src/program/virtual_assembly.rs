@@ -14,8 +14,8 @@ impl Vasm {
         Self { ty, variables, instructions: content }
     }
 
-    pub fn void(content: Vec<VirtualInstruction>) -> Self {
-        Self::new(Type::Void, vec![], content)
+    pub fn void(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
+        Self::new(Type::Void, variables, content)
     }
 
     pub fn empty() -> Self {

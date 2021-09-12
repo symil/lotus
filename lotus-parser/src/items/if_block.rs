@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{ProgramContext, ScopeKind, Type, Vasm}, wat};
+use crate::{program::{ProgramContext, ScopeKind, Type, Vasm}, wat};
 use super::{Branch, StatementList};
 
 #[parsable]

@@ -1,10 +1,10 @@
 use parsable::parsable;
-
-use super::{FunctionDeclaration, GlobalDeclaration, TypeDeclaration, VarDeclaration};
+use super::{FunctionDeclaration, GlobalVarDeclaration, InterfaceDeclaration, TypeDeclaration, VarDeclaration};
 
 #[parsable]
 pub enum TopLevelBlock {
-    StructDeclaration(TypeDeclaration),
+    InterfaceDeclaration(InterfaceDeclaration),
+    TypeDeclaration(TypeDeclaration),
     FunctionDeclaration(FunctionDeclaration),
-    GlobalDeclaration(GlobalDeclaration),
+    GlobalDeclaration(GlobalVarDeclaration),
 }

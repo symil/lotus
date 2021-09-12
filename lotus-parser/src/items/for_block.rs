@@ -71,20 +71,16 @@ impl ForBlock {
                         VI::set(&item_var, range_start_vasm),
                         VI::set(&index_var, VI::int(-1)),
                         VI::raw(Wat::increment_local_i32(&item_var.wasm_name, -1)),
-                        VI::block(vec![], Vasm::void(vec![
-                            VI::loop_(Vasm::merge(vec![
-                                Vasm::void(vec![
-                                    VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
-                                    VI::raw(Wat::increment_local_i32(&item_var.wasm_name, 1)),
-                                    VI::raw(wat!["i32.lt_s", item_var.get_to_stack(), range_end_var.get_to_stack()]),
-                                    VI::jump_if(1, VI::raw(wat!["i32.eqz"]))
-                                ]),
+                        VI::block(vec![], vasm![
+                            VI::loop_(vasm![
+                                VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
+                                VI::raw(Wat::increment_local_i32(&item_var.wasm_name, 1)),
+                                VI::raw(wat!["i32.lt_s", item_var.get_to_stack(), range_end_var.get_to_stack()]),
+                                VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
                                 block_vasm,
-                                Vasm::void(vec![
-                                    VI::jump(0)
-                                ])
-                            ]))
-                        ]))
+                                VI::jump(0)
+                            ])
+                        ])
                     ]));
                 }
             }

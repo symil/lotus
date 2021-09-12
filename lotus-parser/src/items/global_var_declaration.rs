@@ -5,14 +5,14 @@ use crate::program::{GlobalVarBlueprint, GlobalVarInstance, ProgramContext, Vari
 use super::{VarDeclaration, Visibility, VisibilityWrapper};
 
 #[parsable]
-pub struct GlobalDeclaration {
+pub struct GlobalVarDeclaration {
     pub visibility: VisibilityWrapper,
     #[parsable(suffix=";")]
     pub var_declaration: VarDeclaration,
 }
 
-impl GlobalDeclaration {
-    pub fn process(&self, index: usize, context: &mut ProgramContext) {
+impl GlobalVarDeclaration {
+    pub fn process(&self, context: &mut ProgramContext) {
         context.reset_local_scope();
 
         if let Some((var_info, init_vasm)) = self.var_declaration.process(VariableKind::Global, context) {

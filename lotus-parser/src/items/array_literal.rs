@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Identifier, program::{ARRAY_ALLOC_FUNC_NAME, ARRAY_GET_BODY_FUNC_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
+use crate::{items::Identifier, program::{PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
@@ -48,30 +48,20 @@ impl ArrayLiteral {
 
         let final_array_type = context.array_type(final_item_type.clone());
         let final_pointer_type = context.pointer_type(final_item_type.clone());
-        let mut source = vec![Vasm::new(Type::Void, variables, vec![
-            VI::call_static_method(&final_array_type, "new", vec![VI::int(self.items.len())]),
-            VI::set(&array_var),
-            VI::call_method(&final_array_type, "get_body", vec![VI::get(&array_var)]),
-            VI::set(&array_body_var),
-        ])];
+        let mut result = Vasm::new(Type::Void, variables, vec![
+            VI::set(&array_var, VI::call_static_method(&final_array_type, "new", vec![VI::int(self.items.len())])),
+            VI::set(&array_body_var, VI::call_method(&final_array_type, "get_body", vec![VI::get(&array_var)])),
+        ]);
 
         for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
-            source.extend(vec![
-                Vasm::new(Type::Void, vec![], vec![
-                    VI::get(&array_body_var),
-                    VI::int(i),
-                ]),
-                item_vasm,
-                Vasm::new(Type::Void, vec![], vec![
-                    VI::call_method(&final_pointer_type, "set_at_index", vec![]),
-                ])
+            result.extend(vasm![
+                VI::get(&array_body_var),
+                VI::call_method(&final_pointer_type, "set_at_index", vec![vasm![VI::int(i)], item_vasm])
             ]);
         }
 
-        source.push(Vasm::new(Type::Void, vec![], vec![
-            VI::get(&array_var)
-        ]));
+        result.extend(VI::get(&array_var));
 
-        Some(Vasm::merge(source))
+        Some(result)
     }
 }

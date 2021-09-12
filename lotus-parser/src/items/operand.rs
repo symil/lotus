@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::program::{AccessType, ProgramContext};
+use crate::program::{AccessType, ProgramContext, Vasm};
 use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, FullType, UnaryOperation, VarPath};
 
 #[parsable]

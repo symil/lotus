@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{Wat}, items::Visibility, program::{ProgramContext, ScopeKind, VariableKind, RESULT_VAR_NAME}};
+use crate::{items::Visibility, program::{ProgramContext, ScopeKind, VariableKind, RESULT_VAR_NAME}};
 use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityWrapper};
 
 #[parsable]
@@ -11,7 +11,7 @@ pub struct FunctionDeclaration {
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, context: &mut ProgramContext) {
-        let mut function_blueprint = self.content.process_signature(context);
+        let mut function_blueprint = self.content.process_signature(context).borrow_mut();
 
         function_blueprint.visibility = self.visibility.value.unwrap_or(Visibility::Private);
 
@@ -32,11 +32,13 @@ impl FunctionDeclaration {
         if context.functions.get_by_name(&function_blueprint.name).is_some() {
             context.errors.add(self, format!("duplicate function declaration `{}`", &function_blueprint.name));
         }
-        
-        context.functions.insert(function_blueprint);
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
+        context.current_function = Some(context.functions.get_by_location(&self.content.name).clone());
+
         self.content.process_body(context);
+
+        context.current_function = None;
     }
 }

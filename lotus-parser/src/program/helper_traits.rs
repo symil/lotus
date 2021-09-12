@@ -115,12 +115,12 @@ impl ToVasm for Vasm {
 
 impl ToVasm for VirtualInstruction {
     fn to_vasm(self) -> Vasm {
-        Vasm::void(vec![self])
+        Vasm::void(vec![], vec![self])
     }
 }
 
 impl ToVasm for Vec<VirtualInstruction> {
     fn to_vasm(self) -> Vasm {
-        Vasm::void(self)
+        Vasm::void(vec![], self)
     }
 }

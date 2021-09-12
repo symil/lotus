@@ -1,7 +1,5 @@
 use parsable::parsable;
-
-use crate::program::{AccessType, ProgramContext};
-
+use crate::program::{AccessType, ProgramContext, Type, Vasm};
 use super::{VarPathRoot, VarPathSegment};
 
 #[parsable]
@@ -24,7 +22,7 @@ impl VarPath {
             false => AccessType::Get
         };
 
-        let mut parent_type = TypeOld::Void;
+        let mut parent_type = Type::Void;
         let mut ok = true;
         let mut source = vec![];
 
@@ -50,7 +48,7 @@ impl VarPath {
         }
 
         match ok {
-            true => Some(Vasm::merge(parent_type, source)),
+            true => Some(Vasm::merge(source)),
             false => None
         }
     }

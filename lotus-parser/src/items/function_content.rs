@@ -1,8 +1,7 @@
 use std::rc::Rc;
-
 use indexmap::IndexSet;
 use parsable::parsable;
-use crate::{generation::Wat, items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}};
+use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, Visibility};
 
 #[parsable]
@@ -16,7 +15,7 @@ pub struct FunctionContent {
 }
 
 impl FunctionContent {
-    pub fn process_signature(&self, context: &mut ProgramContext) -> FunctionBlueprint {
+    pub fn process_signature(&self, context: &mut ProgramContext) -> Link<FunctionBlueprint> {
         let mut function_blueprint = FunctionBlueprint {
             function_id: self.location.get_hash(),
             name: self.name.clone(),
@@ -85,12 +84,12 @@ impl FunctionContent {
             }
         }
 
-        function_blueprint
+        context.functions.insert(function_blueprint)
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
         let function_blueprint = context.functions.get_by_location(&self.name);
-
+        
         context.current_function = Some(function_blueprint.clone());
         context.reset_local_scope();
         context.push_scope(ScopeKind::Function);

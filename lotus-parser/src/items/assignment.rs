@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{generation::Wat, items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, wat};
+use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, wat};
 use super::{AssignmentOperatorWrapper, Expression, VarPath};
 
 #[parsable]
@@ -21,7 +21,7 @@ impl Assignment {
                 if let Some(right_vasm) = right_vasm_opt {
                     if !right_vasm.ty.is_assignable() {
                         context.errors.add(rvalue, format!("cannot assign type `{}`", &right_vasm.ty));
-                    } else if left_vasm.ty.is_assignable_to(&right_vasm.ty, context) {
+                    } else if left_vasm.ty.is_assignable_to(&right_vasm.ty) {
                         let mut source = vec![];
                         let mut ok = true;
 

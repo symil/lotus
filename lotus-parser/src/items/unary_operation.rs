@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{NULL_ADDR, Wat}, program::{ProgramContext}, wat};
+use crate::{program::{ProgramContext, Vasm}, wat};
 use super::{Operand, UnaryOperatorWrapper};
 
 #[parsable]
@@ -18,7 +18,7 @@ impl UnaryOperation {
 
         if let Some(operand_wasm) = self.operand.process(context) {
             if let Some(operator_wasm) = self.operator.process(&operand_wasm.ty, context) {
-                result = Some(Vasm::merge(operator_wasm.ty.clone(), vec![operand_wasm, operator_wasm]));
+                result = Some(Vasm::merge(vec![operand_wasm, operator_wasm]));
             }
         }
 

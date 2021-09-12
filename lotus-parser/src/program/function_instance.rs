@@ -1,4 +1,4 @@
-use crate::generation::Wat;
+use super::Wat;
 
 pub struct FunctionInstance {
     pub wasm_name: String,

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::{NULL_ADDR, ToWat, ToWatVec, Wat}, program::{ARRAY_GET_LENGTH_FUNC_NAME, BuiltinInterface, ProgramContext, Type}, wat};
+use crate::{program::{BuiltinInterface, ProgramContext, Type, Vasm}, wat};
 
 #[parsable]
 pub struct UnaryOperatorWrapper {

@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{generation::Wat, program::ProgramContext};
+use crate::{program::{ProgramContext, Wat}};
 
 use super::WasmToken;
 

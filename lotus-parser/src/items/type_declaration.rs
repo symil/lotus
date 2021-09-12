@@ -134,7 +134,7 @@ impl TypeDeclaration {
 
             while let Some(parent_info) = parent_opt {
                 if types.iter().any(|info| info.type_blueprint == parent_info.type_blueprint) {
-                    if parent_info.type_blueprint == type_blueprint {
+                    if &parent_info.type_blueprint == type_blueprint {
                         context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
                     }
                 } else {
@@ -190,7 +190,7 @@ impl TypeDeclaration {
         });
     }
 
-    fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, f : F) {
+    fn process<'a, F : FnMut(&Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, f : F) {
         let type_blueprint = context.types.get_by_location(&self.name);
 
         context.current_type = Some(type_blueprint.clone());
@@ -198,7 +198,7 @@ impl TypeDeclaration {
         context.current_type = None;
     }
 
-    fn process_inheritance<'a, F : FnMut(Link<TypeBlueprint>, Vec<Link<TypeBlueprint>>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) {
+    fn process_inheritance<'a, F : FnMut(&Link<TypeBlueprint>, Vec<Link<TypeBlueprint>>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) {
         let type_blueprint = context.types.get_by_location(&self.name);
         let parent_type_list : Vec<Link<TypeBlueprint>> = type_blueprint.borrow().inheritance_chain.iter().map(|info| info.type_blueprint.clone()).collect();
 
@@ -219,7 +219,7 @@ impl TypeDeclaration {
                             offset: fields.len() + OBJECT_HEADER_SIZE
                         };
 
-                        if fields.insert(field.name.to_string(), field_info).is_some() && field.owner == type_blueprint {
+                        if fields.insert(field.name.to_string(), field_info).is_some() && &field.owner == type_blueprint {
                             context.errors.add(&self.name, format!("duplicate field `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.borrow().name));
                         }
                     }
@@ -237,7 +237,7 @@ impl TypeDeclaration {
             for parent_blueprint in parent_type_list {
                 for method in parent_blueprint.borrow().methods.values() {
                     if method.owner == parent_blueprint {
-                        if methods.insert(method.name.to_string(), method.clone()).is_some() && method.owner == type_blueprint {
+                        if methods.insert(method.name.to_string(), method.clone()).is_some() && &method.owner == type_blueprint {
                             context.errors.add(&self.name, format!("duplicate method `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.borrow().name));
                         }
                     }

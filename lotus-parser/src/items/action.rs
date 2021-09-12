@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{generation::{Wat, ToWat, ToWatVec}, program::{Vasm, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VI}, wat};
+use crate::{program::{Vasm, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VI}, vasm, wat};
 use super::{ActionKeyword, ActionKeywordToken, Expression};
 
 #[parsable]
@@ -25,14 +25,10 @@ impl Action {
                         Some(expr) => {
                             if let Some(vasm) = expr.process(context) {
                                 if return_value.ty.is_assignable_to(&vasm.ty) {
-                                    let mut source = vec![vasm];
-
-                                    source.push(Vasm::new(Type::Void, vec![], vec![
-                                        VI::set(return_value),
-                                        VI::jump(function_depth, None),
-                                    ]));
-
-                                    result = Some(Vasm::merge(source));
+                                    result = Some(vasm![
+                                        VI::set(return_value, vasm),
+                                        VI::jump(function_depth)
+                                    ]);
                                 } else {
                                     if !vasm.ty.is_void() {
                                         context.errors.add(expr, format!("return: expected `{}`, got `{}`", &return_value.ty, &vasm.ty));
@@ -51,7 +47,7 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(Vasm::new(Type::Void, vec![], vec![VI::jump(function_depth, None)]));
+                            result = Some(vasm![VI::jump(function_depth)]);
                         },
                     },
                 }
@@ -64,8 +60,8 @@ impl Action {
                     match context.get_scope_depth(ScopeKind::Loop) {
                         Some(depth) => {
                             result = match &self.keyword.token {
-                                ActionKeywordToken::Break => Some(Vasm::new(Type::Void, vec![], vec![VI::jump(depth + 1, None)])),
-                                ActionKeywordToken::Continue => Some(Vasm::new(Type::Void, vec![], vec![VI::jump(depth, None)])),
+                                ActionKeywordToken::Break => Some(vasm![VI::jump(depth + 1)]),
+                                ActionKeywordToken::Continue => Some(vasm![VI::jump(depth)]),
                                 _ => unreachable!()
                             }
                         },
