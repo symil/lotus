@@ -1,7 +1,7 @@
 use std::{cell::Ref, collections::HashMap};
 
 use parsable::parsable;
-use crate::{program::{AccessType, FunctionBlueprint, PTR_GET_METHOD_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AccessType, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -55,12 +55,12 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 
     if let Some(field_details) = parent_type.get_field(field_name.as_str()) {
         let method_name = match access_type {
-            AccessType::Get => PTR_GET_METHOD_NAME,
-            AccessType::Set(_) => PTR_SET_METHOD_NAME,
+            AccessType::Get => GET_AS_PTR_METHOD_NAME,
+            AccessType::Set(_) => SET_AS_PTR_METHOD_NAME,
         };
 
         result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![
-            VI::call_function(parent_type.get_method(method_name), vec![VI::int(field_details.offset)])
+            VI::call_function(parent_type.get_static_method(method_name).unwrap(), vec![VI::int(field_details.offset)])
         ]));
     } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
@@ -72,46 +72,9 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 pub fn process_method_call(parent_type: &Type, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    let method_info : Option<Vasm> = match parent_type {
-        TypeOld::Void => None,
-        TypeOld::Null => None,
-        TypeOld::Generic(_) => None,
-        TypeOld::System => process_system_method_call(method_name, arguments, context),
-        TypeOld::Boolean => process_boolean_method_call(method_name, context),
-        TypeOld::Integer => process_integer_method_call(method_name, context),
-        TypeOld::Float => process_float_method_call(method_name, context),
-        TypeOld::String => process_string_method_call(method_name, context),
-        TypeOld::Pointer(pointed_type) => process_pointer_method_call(pointed_type, method_name, context),
-        TypeOld::Array(item_type) => process_array_method_call(item_type, method_name, context),
-        TypeOld::TypeRef(struct_info) => {
-            if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
-                if let Some(method) = struct_annotation.static_methods.get(method_name) {
-                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.vasm_name)))
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        },
-        TypeOld::Struct(struct_info) => {
-            if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
-                if let Some(method) = struct_annotation.regular_methods.get(method_name) {
-                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.vasm_name)))
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        },
-        TypeOld::Function(_, _) => None,
-        TypeOld::Any(_) => None,
-    };
-
-    if let Some(method_vasm) = method_info {
-        result = process_function_call(Some(method_name), &method_vasm.ty, method_vasm.wat, arguments, access_type, context);
-    } else if !parent_type.is_void() {
+    if let Some(function_blueprint) = parent_type.get_method(method_name.as_str()) {
+        result = process_function_call(function_blueprint, arguments, access_type, context);
+    } else {
         context.errors.add(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
     }
 

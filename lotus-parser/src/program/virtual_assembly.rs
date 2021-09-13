@@ -22,6 +22,10 @@ impl Vasm {
         Self::new(Type::Void, vec![], vec![])
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.instructions.is_empty()
+    }
+
     pub fn extend<T : ToVasm>(&mut self, value: T) {
         let other = value.to_vasm();
 

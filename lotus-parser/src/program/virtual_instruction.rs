@@ -34,7 +34,7 @@ pub struct VirtualSetVariableInfo {
 #[derive(Debug)]
 pub struct VirtualFunctionCallInfo {
     pub function_blueprint: Link<FunctionBlueprint>,
-    pub args: Vec<Vasm>,
+    pub args: Option<Vasm>,
 }
 
 #[derive(Debug)]
@@ -106,17 +106,17 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn call_function<T : ToVasm>(function: &Link<FunctionBlueprint>, args: Vec<T>) -> Self {
+    pub fn call_function<T : ToVasm>(function: &Link<FunctionBlueprint>, args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
             function_blueprint: function.clone(),
-            args: args.into_iter().map(|arg| arg.to_vasm()).collect(),
+            args: Some(args.to_vasm()),
         })
     }
 
     pub fn call_function_from_stack(function: &Link<FunctionBlueprint>) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
             function_blueprint: function.clone(),
-            args: vec![],
+            args: None,
         })
     }
 

@@ -61,9 +61,11 @@ pub const BUILTIN_INTERFACES : &'static[(BuiltinInterface, &'static str, &'stati
 ];
 
 pub const NEW_FUNC_NAME : &'static str = "__new";
+pub const DEFAULT_FUNC_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
-pub const PTR_GET_METHOD_NAME : &'static str = "__ptr_get";
-pub const PTR_SET_METHOD_NAME : &'static str = "__ptr_set";
+pub const GET_BODY_FUNC_NAME : &'static str = "__get_body";
+pub const GET_AS_PTR_METHOD_NAME : &'static str = "__get_as_ptr";
+pub const SET_AS_PTR_METHOD_NAME : &'static str = "__set_as_ptr"; // static method, argument order: value, pointer, index
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at_index";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at_index";

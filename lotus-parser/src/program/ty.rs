@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
+use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
 use super::{AssociatedType, FieldDetails, FunctionBlueprint, InterfaceAssociatedType, InterfaceBlueprint, ParameterType, ProgramContext, ResolvedType, TypeBlueprint};
 
 #[derive(Debug, Clone)]
@@ -204,12 +204,12 @@ impl Type {
         }
     }
 
-    pub fn get_method(&self, method_name: &str) -> &Link<FunctionBlueprint> {
-        self.get_maybe_static_method(false, method_name).unwrap()
+    pub fn get_method(&self, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+        self.get_maybe_static_method(false, method_name)
     }
 
-    pub fn get_static_method(&self, method_name: &str) -> &Link<FunctionBlueprint> {
-        self.get_maybe_static_method(true, method_name).unwrap()
+    pub fn get_static_method(&self, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+        self.get_maybe_static_method(true, method_name)
     }
 
     pub fn get_field(&self, field_name: &str) -> Option<&FieldDetails> {

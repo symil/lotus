@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{Error, ProgramContext, VI, VariableInfo, VariableKind, Vasm}, vasm};
-use super::{Expression, Identifier, ObjectFieldInitialization};
+use crate::{items::TypeQualifier, program::{DEFAULT_FUNC_NAME, Error, NEW_FUNC_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use super::{Expression, FullType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
 pub struct ObjectLiteral {
-    pub type_name: Identifier,
+    pub object_type: FullType,
     // pub field_list: Option<ObjectFieldInitializationList>
     #[parsable(brackets="{}", separator=",")]
     pub fields: Vec<ObjectFieldInitialization>
@@ -20,85 +20,70 @@ pub struct ObjectFieldInitializationList {
 
 impl ObjectLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut fields_init = IndexMap::new();
+        let mut result = Vasm::empty();
 
-        let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
-        let mut result = Vasm::void(vec![object_var.clone()], vec![]);
+        if let Some(object_type) = self.object_type.process(context) {
+            if let Type::Actual(info) = object_type {
+                let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
+                let type_blueprint = info.type_blueprint.borrow();
 
-        if let Some(type_blueprint) = context.types.get_by_name(&self.type_name) {
-            if type_blueprint.borrow().qualifier == TypeQualifier::Class {
-                result.extend(vasm![
-                    VI::call_static_method()
-                ]);
+                if type_blueprint.qualifier == TypeQualifier::Class {
+                    let mut fields_init = HashMap::new();
 
-                wat.extend(vec![
-                    Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(type_blueprint.fields.len()), Wat::const_i32(type_blueprint.get_id())]),
-                    Wat::set_local_from_stack(&object_var_name)
-                ]);
-            } else {
-                context.errors.add(&self.type_name, format!("type `{}` is not a class", &self.type_name));
-            }
-        } else {
-            context.errors.add(&self.type_name, format!("undefined type `{}`", &self.type_name));
-        }
+                    result.extend(Vasm::void(
+                        vec![object_var.clone()],
+                        vec![
+                            VI::set(&object_var, vasm![VI::call_function(object_type.get_static_method(NEW_FUNC_NAME).unwrap(), vec![])])
+                        ]
+                    ));
 
-        // if let Some(field_list) = &self.field_list {
-        //     for field in &field_list.fields {
-        //         fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
-        //     }
-        // }
+                    for field in &self.fields {
+                        if !type_blueprint.fields.contains_key(field.name.as_str()) {
+                            context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, &field.name));
+                        }
 
-        for field in &self.fields {
-            fields_init.push((field.name.clone(), &field.value, field.value.process(context)));
-        }
+                        if fields_init.contains_key(field.name.as_str()) {
+                            context.errors.add(&field.name, format!("duplicate field initialization `{}`", &field.name));
+                        }
 
-        if let Some(struct_annotation) = context.get_struct_by_name(&self.type_name) {
-            for (field_name, field_expr, field_wasm_opt) in fields_init {
-                if !struct_annotation.fields.contains_key(&field_name) {
-                    errors.push(Error::located(&field_name, format!("type `{}` has no field `{}`", &self.type_name, &field_name)));
-                    ok = false;
-                }
-
-                if field_initializations.contains_key(&field_name) {
-                    errors.push(Error::located(&field_name, format!("field `{}`: duplicate initialization", &field_name)));
-                    ok = false;
-                }
-
-                if let Some(field_wasm) = field_wasm_opt {
-                    if let Some(field_info) = struct_annotation.fields.get(&field_name) {
-                        if field_info.ty.is_assignable_to(&field_wasm.ty, context, &mut HashMap::new()) {
-                            field_initializations.insert(field_name.clone(), field_wasm.wat);
-                        } else {
-                            errors.push(Error::located(field_expr, format!("field `{}`: expected type `{}`, got `{}`", &field_name, &field_info.ty, &field_wasm.ty)));
+                        if let Some(field_vasm) = field.value.process(context) {
+                            if let Some(field_info) = type_blueprint.fields.get(field.name.as_str()) {
+                                if field_vasm.ty.is_assignable_to(&field_info.ty) {
+                                    fields_init.insert(field.name.as_str(), field_vasm);
+                                } else {
+                                    context.errors.add(&field.value, format!("expected `{}`, got `{}`", &field_info.ty, &field_vasm.ty));
+                                }
+                            }
                         }
                     }
+
+                    for field_info in type_blueprint.fields.values() {
+                        let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
+                            Some(field_vasm) => field_vasm,
+                            None => vasm![VI::call_function(field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), vec![])],
+                        };
+
+                        result.extend(vasm![
+                            VI::call_function(object_type.get_method(SET_AS_PTR_METHOD_NAME).unwrap(), vasm![
+                                init_vasm,
+                                VI::get(&object_var),
+                                VI::int(field_info.offset)
+                            ])
+                        ]);
+                    }
+
+                    result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get(&object_var)]));
+                } else {
+                    context.errors.add(&self.object_type, format!("type `{}` is not a class", &object_type));
                 }
+            } else {
+                context.errors.add(&self.object_type, format!("cannot manually instanciate type `{}`", &object_type));
             }
-
-            for (field_name, field_info) in struct_annotation.fields.iter() {
-                let field_wat = match field_initializations.remove(&field_name) {
-                    Some(wat) => wat,
-                    None => field_info.ty.get_default_wat(),
-                };
-
-                wat.extend(field_wat);
-                wat.extend(vec![
-                    Wat::get_local(&object_var_name),
-                    Wat::const_i32(field_info.offset),
-                    Wat::call_from_stack(field_info.ty.pointer_set_function_name())
-                ]);
-            }
-
-            wat.push(Wat::get_local(&object_var_name));
-        } else {
-            ok = false;
         }
 
-        context.errors.adds.extend(errors);
-
-        match ok {
-            true => Some(Vasm::new(TypeOld::Struct(struct_info), wat, variables)),
-            false => None
+        match result.is_empty() {
+            true => None,
+            false => Some(result)
         }
     }
 }
