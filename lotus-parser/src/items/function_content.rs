@@ -22,13 +22,14 @@ impl FunctionContent {
             visibility: Visibility::Private,
             event_callback_qualifier: None,
             owner_type: None,
+            owner_interface: None,
             this_arg: None,
             payload_arg: None,
             conditions: vec![],
             arguments: vec![],
             return_value: None,
             is_raw_wasm: false,
-            body: Vasm::empty()
+            body: Vasm::empty(),
         };
 
         let is_static = self.qualifier.contains(&FunctionQualifier::Static);

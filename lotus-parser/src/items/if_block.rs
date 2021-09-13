@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, ScopeKind, Type, Vasm}, wat};
+use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
 use super::{Branch, StatementList};
 
 #[parsable]
@@ -14,24 +14,22 @@ pub struct IfBlock {
 
 impl IfBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut ok = true;
         let mut return_found = context.return_found;
         let mut branches_return = vec![];
 
         context.return_found = false;
 
-        let mut wat = wat!["block"];
-        let mut variables = vec![];
+        let mut result = Vasm::empty();
 
         context.return_found = false;
         context.push_scope(ScopeKind::Branch);
-        if let (Some(condition_wasm), Some(block_wasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(context)) {
-            let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
-
-            wat.push(branch_wat);
-            variables.extend(block_wasm.variables);
-        } else {
-            ok = false;
+        if let (Some(condition_vasm), Some(block_vasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(context)) {
+            result.extend(VI::block(vasm![
+                condition_vasm,
+                VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
+                block_vasm,
+                VI::jump(1)
+            ]));
         }
         context.pop_scope();
         branches_return.push(context.return_found);
@@ -39,13 +37,14 @@ impl IfBlock {
         for branch in &self.else_if_branches {
             context.return_found = false;
             context.push_scope(ScopeKind::Branch);
-            if let (Some(condition_wasm), Some(block_wasm)) = (branch.process_condition(context), branch.process_body(context)) {
-                let branch_wat = wat!["block", condition_wasm.wat, wat!["br_if", 0, wat!["i32.eqz"]], block_wasm.wat, wat!["br", 1]];
 
-                wat.push(branch_wat);
-                variables.extend(block_wasm.variables);
-            } else {
-                ok = false;
+            if let (Some(condition_vasm), Some(block_vasm)) = (branch.process_condition(context), branch.process_body(context)) {
+                result.extend(VI::block(vasm![
+                    condition_vasm,
+                    VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
+                    block_vasm,
+                    VI::jump(1)
+                ]));
             }
             context.pop_scope();
             branches_return.push(context.return_found);
@@ -55,13 +54,11 @@ impl IfBlock {
         if let Some(else_branch) = &self.else_branch {
             context.push_scope(ScopeKind::Branch);
 
-            if let Some(wasm) = else_branch.process(context) {
-                let branch_wat = wat!["block", wasm.wat, wat!["br", 1]];
-
-                wat.push(branch_wat);
-                variables.extend(wasm.variables);
-            } else {
-                ok = false;
+            if let Some(vasm) = else_branch.process(context) {
+                result.extend(VI::block(vasm![
+                    vasm,
+                    VI::jump(1)
+                ]));
             }
 
             context.pop_scope();
@@ -70,9 +67,6 @@ impl IfBlock {
 
         context.return_found = return_found || branches_return.iter().all(|value| *value);
 
-        match ok {
-            true => Some(Vasm::new(Type::Void, wat, variables)),
-            false => None
-        }
+        Some(vasm![VI::block(result)])
     }
 }

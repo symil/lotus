@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 use parsable::{DataLocation, Parsable, parsable};
-use crate::{program::{ProgramContext, Vasm}, wat};
+use crate::{program::{BuiltinType, ProgramContext, VI, Vasm}, wat};
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Copy)]
@@ -15,22 +15,26 @@ impl VarRefPrefix {
         let mut result = None;
 
         match self {
-            VarRefPrefix::This => match &context.this_var {
-                Some(this_var) => Some(Vasm::simple(this_var.ty.clone(), Wat::get_local(this_var.wasm_name.as_str()))),
-                None => {
-                    context.errors.add(location, "no `this` value can be referenced in this context");
-                    None
+            VarRefPrefix::This => match &context.current_function {
+                Some(function_blueprint) => match &function_blueprint.borrow().this_arg {
+                    Some(this_var) => {
+                        result = Some(Vasm::new(this_var.ty.clone(), vec![], vec![VI::get(this_var)]));
+                    },
+                    None => context.errors.add(location, "no `this` value can be referenced in this context")
                 }
+                None => context.errors.add(location, "no `this` value can be referenced in this context")
             },
-            VarRefPrefix::Payload => match &context.payload_var {
-                Some(payload_var) => Some(Vasm::simple(payload_var.ty.clone(), Wat::get_local(payload_var.wasm_name.as_str()))),
-                None => {
-                    context.errors.add(location, "no `payload` value can be referenced in this context");
-                    None
+            VarRefPrefix::Payload => match &context.current_function {
+                Some(function_blueprint) => match &function_blueprint.borrow().payload_arg {
+                    Some(payload_var) => {
+                        result = Some(Vasm::new(payload_var.ty.clone(), vec![], vec![VI::get(payload_var)]));
+                    },
+                    None => context.errors.add(location, "no `payload` value can be referenced in this context")
                 }
+                None => context.errors.add(location, "no `payload` value can be referenced in this context")
             },
             VarRefPrefix::System => {
-                Some(Vasm::empty(TypeOld::System))
+                result = Some(Vasm::new(context.get_builtin_type(BuiltinType::System, vec![]), vec![], vec![]))
             },
         };
 

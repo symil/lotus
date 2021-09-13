@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Type};
+use crate::program::{BuiltinType, ProgramContext, Type};
 use super::{ItemType, TypeSuffix};
 
 #[parsable]
@@ -13,7 +13,7 @@ impl FullType {
         if let Some(mut final_type) = self.item.process(context) {
             for suffix in &self.suffix {
                 final_type = match suffix {
-                    TypeSuffix::Array => context.array_type(final_type)
+                    TypeSuffix::Array => context.get_builtin_type(BuiltinType::Array, vec![final_type])
                 };
             }
 

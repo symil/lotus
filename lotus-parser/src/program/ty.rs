@@ -1,14 +1,14 @@
 use std::fmt::Display;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{PTR_SET_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
-use super::{AssociatedType, InterfaceAssociatedType, InterfaceBlueprint, InterfaceMethod, ProgramContext, ResolvedType, TypeBlueprint, TypeParameter};
+use super::{AssociatedType, FieldDetails, FunctionBlueprint, InterfaceAssociatedType, InterfaceBlueprint, ParameterType, ProgramContext, ResolvedType, TypeBlueprint};
 
 #[derive(Debug, Clone)]
 pub enum Type {
     Void,
     Any,
     Associated(Link<InterfaceAssociatedType>),
-    Parameter(Link<TypeParameter>),
+    Parameter(Link<ParameterType>),
     Actual(ActualTypeInfo),
     TypeRef(Box<Type>)
 }
@@ -129,21 +129,23 @@ impl Type {
                     }
                 }
          
-                for method in interface_blueprint.methods.values() {
-                    if let Some(method_info) = type_blueprint.methods.get(method.name.as_str()) {
-                        let function_blueprint = method_info.content.borrow();
+                for required_method in interface_blueprint.methods.values() {
+                    let expected_function_blueprint = required_method.borrow();
 
-                        if function_blueprint.arguments.len() != method.arguments.len() {
+                    if let Some(function_blueprint) = type_blueprint.methods.get(expected_function_blueprint.name.as_str()) {
+                        let actual_function_blueprint = function_blueprint.borrow();
+
+                        if actual_function_blueprint.arguments.len() != expected_function_blueprint.arguments.len() {
                             return false;
                         }
 
-                        for (required_type, arg_info) in method.arguments.iter().zip(function_blueprint.arguments.iter()) {
-                            if required_type != &arg_info.ty {
+                        for (expected_arg, actual_arg) in expected_function_blueprint.arguments.iter().zip(actual_function_blueprint.arguments.iter()) {
+                            if &expected_arg.ty != &actual_arg.ty {
                                 return false;
                             }
                         }
 
-                        if function_blueprint.return_value.and_then(|info| Some(&info.ty)) != method.return_type.as_ref() {
+                        if actual_function_blueprint.return_value.and_then(|info| Some(&info.ty)) != expected_function_blueprint.return_value.and_then(|info| Some(&info.ty)) {
                             return false;
                         }
                     } else {
@@ -165,6 +167,59 @@ impl Type {
             Type::Parameter(_) => false,
             Type::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
             Type::TypeRef(ty) => ty.is_ambiguous(),
+        }
+    }
+
+    pub fn get_maybe_static_method(&self, is_static: bool, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+        match self {
+            Type::Void => None,
+            Type::Any => None,
+            Type::Associated(associated_type) => None,
+            Type::Parameter(parameter_type) => {
+                for interface_blueprint in &parameter_type.borrow().required_interfaces {
+                    let index_map = match is_static {
+                        true => interface_blueprint.borrow().static_methods,
+                        false => interface_blueprint.borrow().methods,
+                    };
+
+                    if let Some(function_blueprint) = index_map.get(method_name) {
+                        return Some(&function_blueprint);
+                    }
+                }
+
+                None
+            },
+            Type::Actual(info) => {
+                let index_map = match is_static {
+                    true => info.type_blueprint.borrow().static_methods,
+                    false => info.type_blueprint.borrow().methods,
+                };
+
+                match index_map.get(method_name) {
+                    Some(function_blueprint) => Some(&function_blueprint),
+                    None => None,
+                }
+            },
+            Type::TypeRef(ty) => ty.get_maybe_static_method(true, method_name)
+        }
+    }
+
+    pub fn get_method(&self, method_name: &str) -> &Link<FunctionBlueprint> {
+        self.get_maybe_static_method(false, method_name).unwrap()
+    }
+
+    pub fn get_static_method(&self, method_name: &str) -> &Link<FunctionBlueprint> {
+        self.get_maybe_static_method(true, method_name).unwrap()
+    }
+
+    pub fn get_field(&self, field_name: &str) -> Option<&FieldDetails> {
+        match self {
+            Type::Void => None,
+            Type::Any => None,
+            Type::Associated(_) => None,
+            Type::Parameter(_) => None,
+            Type::Actual(info) => info.type_blueprint.borrow().fields.get(field_name),
+            Type::TypeRef(_) => None,
         }
     }
 

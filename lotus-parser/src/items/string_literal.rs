@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, VI, Vasm}, wat};
+use crate::{program::{BuiltinType, NEW_FUNC_NAME, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -20,7 +20,6 @@ impl StringLiteral {
         chars.remove(chars.len() - 1);
 
         let mut escaping = false;
-        let mut ok = true;
         let mut unescaped_chars = vec![];
 
         for c in chars {
@@ -38,7 +37,6 @@ impl StringLiteral {
                     unescaped_chars.push(unescaped_char as u32);
                 } else {
                     context.errors.add(self, format!("invalid character '\\{}'", c));
-                    ok = false;
                 }
 
                 escaping = false;
@@ -49,20 +47,17 @@ impl StringLiteral {
             }
         }
 
-        let string_type = context.string_type();
+        let string_type = context.get_builtin_type(BuiltinType::String, vec![]);
         let mut content = vec![
-            VI::call_static_method(&string_type, "new", vec![VI::int(unescaped_chars.len())])
+            VI::call_function(string_type.get_static_method(NEW_FUNC_NAME), vec![VI::int(unescaped_chars.len())])
         ];
 
         for (i, code) in unescaped_chars.into_iter().enumerate() {
             content.push(
-                VI::call_method(&string_type, "set_char", vec![VI::int(i), VI::int(code)]),
+                VI::call_function(string_type.get_method(SET_CHAR_FUNC_NAME), vec![VI::int(i), VI::int(code)]),
             );
         }
 
-        match ok {
-            true => Some(Vasm::new(string_type, vec![], content)),
-            false => None
-        }
+        Some(Vasm::new(string_type, vec![], content))
     }
 }

@@ -2,7 +2,7 @@ use std::rc::Rc;
 use crate::{items::Identifier};
 use super::{Type, Wat};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct VariableInfo {
     pub name: Identifier,
     pub ty: Type,

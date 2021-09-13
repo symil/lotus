@@ -25,8 +25,6 @@ pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
 pub const THIS_TYPE_NAME : &'static str = "This";
-pub const PTR_GET_METHOD_NAME : &'static str = "__ptr_get";
-pub const PTR_SET_METHOD_NAME : &'static str = "__ptr_set";
 
 pub const BUILTIN_TYPES : &'static[(BuiltinType, &'static str)] = &[
     (BuiltinType::Bool, "bool"),
@@ -62,6 +60,12 @@ pub const BUILTIN_INTERFACES : &'static[(BuiltinInterface, &'static str, &'stati
     (BuiltinInterface::Iterable, "Iterable",  ""),
 ];
 
+pub const NEW_FUNC_NAME : &'static str = "__new";
+pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
+pub const PTR_GET_METHOD_NAME : &'static str = "__ptr_get";
+pub const PTR_SET_METHOD_NAME : &'static str = "__ptr_set";
+
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at_index";
+pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at_index";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";

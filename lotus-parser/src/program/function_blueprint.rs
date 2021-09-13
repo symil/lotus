@@ -3,7 +3,7 @@ use std::rc::Rc;
 use indexmap::IndexSet;
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstance, GlobalItem, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeContext, VariableInfo, Vasm, VirtualInstruction};
+use super::{FunctionInstance, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeContext, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -12,6 +12,7 @@ pub struct FunctionBlueprint {
     pub visibility: Visibility,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub owner_type: Option<Link<TypeBlueprint>>,
+    pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub conditions: Vec<(Identifier, Identifier)>,
     pub this_arg: Option<Rc<VariableInfo>>,
     pub payload_arg: Option<Rc<VariableInfo>>,

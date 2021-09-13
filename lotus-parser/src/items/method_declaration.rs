@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{items::Visibility, program::{FunctionBlueprint, MethodDetails, ProgramContext, RESULT_VAR_NAME, ScopeKind, StructInfo, THIS_VAR_NAME, VariableKind, display_join, insert_in_vec_hashmap}, utils::Link};
+use crate::{items::Visibility, program::{FunctionBlueprint, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, VariableKind, display_join, insert_in_vec_hashmap}, utils::Link};
 use super::{EventCallbackQualifier, FunctionCondition, FunctionContent, FunctionDeclaration, FunctionSignature, Identifier, Statement, StatementList, TypeDeclaration, TypeQualifier, VarPath, VarRefPrefix};
 
 #[parsable]
@@ -17,18 +17,12 @@ impl MethodDeclaration {
 
         function_blueprint.borrow_mut().visibility = Visibility::Member;
 
-        let method_details = MethodDetails {
-            name: self.content.name.clone(),
-            owner: type_blueprint.clone(),
-            content: function_blueprint,
-        };
-
         let mut index_map = match is_static {
             true => &mut type_blueprint.borrow_mut().static_methods,
             false => &mut type_blueprint.borrow_mut().methods
         };
 
-        if index_map.insert(name.to_string(), method_details).is_some() {
+        if index_map.insert(name.to_string(), function_blueprint).is_some() {
             let s = match is_static {
                 true => "static ",
                 false => ""

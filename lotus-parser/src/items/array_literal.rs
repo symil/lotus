@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::Identifier, program::{PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinType, NEW_FUNC_NAME, PTR_SET_METHOD_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
@@ -46,17 +46,17 @@ impl ArrayLiteral {
             return None;
         }
 
-        let final_array_type = context.array_type(final_item_type.clone());
-        let final_pointer_type = context.pointer_type(final_item_type.clone());
+        let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
+        let final_pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![final_item_type.clone()]);
         let mut result = Vasm::new(Type::Void, variables, vec![
-            VI::set(&array_var, VI::call_static_method(&final_array_type, "new", vec![VI::int(self.items.len())])),
-            VI::set(&array_body_var, VI::call_method(&final_array_type, "get_body", vec![VI::get(&array_var)])),
+            VI::set(&array_var, VI::call_function(final_array_type.get_static_method(NEW_FUNC_NAME), vec![VI::int(self.items.len())])),
+            VI::set(&array_body_var, VI::call_function(final_array_type.get_method("get_body"), vec![VI::get(&array_var)])),
         ]);
 
         for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
             result.extend(vasm![
                 VI::get(&array_body_var),
-                VI::call_method(&final_pointer_type, "set_at_index", vec![vasm![VI::int(i)], item_vasm])
+                VI::call_function(final_pointer_type.get_method(SET_AT_INDEX_FUNC_NAME), vec![vasm![VI::int(i)], item_vasm])
             ]);
         }
 

@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{InterfaceAssociatedType, InterfaceBlueprint, InterfaceMethod, ProgramContext, THIS_TYPE_NAME}, utils::Link};
-use super::{Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
+use crate::{program::{FunctionBlueprint, InterfaceAssociatedType, InterfaceBlueprint, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct InterfaceDeclaration {
@@ -26,6 +26,7 @@ impl InterfaceDeclaration {
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             associated_types: IndexMap::new(),
             methods: IndexMap::new(),
+            static_methods: IndexMap::new(),
         };
 
         context.interfaces.insert(interface_blueprint);
@@ -70,14 +71,29 @@ impl InterfaceDeclaration {
 
     pub fn process_methods(&self, context: &mut ProgramContext) {
         self.process(context, |interface_blueprint, context| {
+            let this_type = Type::Associated(interface_blueprint.borrow().associated_types.get(THIS_TYPE_NAME).unwrap().clone());
             let mut methods = IndexMap::new();
 
             for method in &self.body.methods {
                 let (name, arguments, return_type) = method.process(context);
-                let interface_method = InterfaceMethod { name, arguments, return_type };
+                let function_blueprint = FunctionBlueprint {
+                    function_id: name.location.get_hash(),
+                    name: name.clone(),
+                    visibility: Visibility::Member,
+                    event_callback_qualifier: None,
+                    owner_type: None,
+                    owner_interface: Some(interface_blueprint.clone()),
+                    conditions: vec![],
+                    this_arg: Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local)),
+                    payload_arg: None,
+                    arguments: arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect(),
+                    return_value: return_type.and_then(|ty| Some(VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), ty, VariableKind::Argument))),
+                    is_raw_wasm: false,
+                    body: Vasm::empty(),
+                };
 
-                if let Some(previous) = methods.insert(interface_method.name.to_string(), interface_method) {
-                    context.errors.add(method, format!("duplicate method `{}`", previous.name));
+                if methods.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
+                    context.errors.add(method, format!("duplicate method `{}`", &name));
                 }
             }
 

@@ -16,7 +16,7 @@ pub fn process_string_field_access(field_name: &Identifier, context: &mut Progra
 
 pub fn process_string_method_call(method_name: &Identifier, context: &mut ProgramContext) -> Option<Vasm> {
     let (arguments, return_type, func_name) = match method_name.as_str() {
-        "len" => (vec![]::Integer, STRING_GET_LENGTH_FUNC_NAME),
+        "len" => (Type::Integer, STRING_GET_LENGTH_FUNC_NAME),
         _ => return None
     };
 

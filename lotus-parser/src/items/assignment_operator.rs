@@ -18,6 +18,6 @@ pub enum AssignmentOperator {
     ShrEqual = ">>=",
     DoubleAndEqual = "&&=",
     DoubleOrEqual = "||=",
-    AndEqual = "&=",
-    OrEqual = "|=",
+    SingleAndEqual = "&=",
+    SingleOrEqual = "|=",
 }

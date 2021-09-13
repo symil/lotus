@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, KEYWORDS, MethodDetails, OBJECT_HEADER_SIZE, ProgramContext, StructInfo, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, OBJECT_HEADER_SIZE, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -232,12 +232,15 @@ impl TypeDeclaration {
 
     pub fn process_methods_inheritance(&self, context: &mut ProgramContext) {
         self.process_inheritance(context, |type_blueprint, parent_type_list, context| {
-            let mut methods : IndexMap<String, MethodDetails> = IndexMap::new();
+            let mut methods = IndexMap::new();
 
-            for parent_blueprint in parent_type_list {
-                for method in parent_blueprint.borrow().methods.values() {
-                    if method.owner == parent_blueprint {
-                        if methods.insert(method.name.to_string(), method.clone()).is_some() && &method.owner == type_blueprint {
+            for parent_blueprint in &parent_type_list {
+                for method_blueprint in parent_blueprint.borrow().methods.values() {
+                    let owner = method_blueprint.borrow().owner_type.as_ref().unwrap();
+                    let name = &method_blueprint.borrow().name;
+
+                    if owner == parent_blueprint {
+                        if methods.insert(name.to_string(), method_blueprint.clone()).is_some() && owner == type_blueprint {
                             context.errors.add(&self.name, format!("duplicate method `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.borrow().name));
                         }
                     }

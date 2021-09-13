@@ -48,7 +48,7 @@ impl<'a> OperationTree<'a> {
                                 if right.has_side_effects() {
                                     let wrapped_vasm = Vasm::merge(vec![left_vasm, short_circuit_vasm, right_vasm, operator_vasm]);
 
-                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::block(vec![context.bool_type()], wrapped_vasm)])
+                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::typed_block(vec![context.bool_type()], wrapped_vasm)])
                                 } else {
                                     Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
                                 }

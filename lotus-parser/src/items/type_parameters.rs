@@ -19,7 +19,7 @@ pub struct TypeParameter {
 }
 
 impl TypeParameters {
-    pub fn process(&self, context: &mut ProgramContext) -> IndexMap<String, Link<program::TypeParameter>> {
+    pub fn process(&self, context: &mut ProgramContext) -> IndexMap<String, Link<program::ParameterType>> {
         let mut result = IndexMap::new();
 
         for parameter in &self.list {
@@ -34,7 +34,7 @@ impl TypeParameters {
                 }
             }
 
-            let item = Link::new(program::TypeParameter { name, required_interfaces });
+            let item = Link::new(program::ParameterType { name, required_interfaces });
 
             if result.insert(parameter.name.to_string(), item).is_some() {
                 context.errors.add(&parameter.name, format!("duplicate type parameter `{}`", &parameter.name));

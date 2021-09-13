@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, 
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::VI, utils::Link, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, StructInfo, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -36,36 +36,25 @@ impl ProgramContext {
         }
     }
 
+    pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
+        let mut info = ActualTypeInfo {
+            type_blueprint: self.builtin_types.get(&builtin_type).unwrap().clone(),
+            parameters: vec![],
+        };
+
+        for ty in parameters {
+            info.parameters.push(ty);
+        }
+
+        Type::Actual(info)
+    }
+
     pub fn bool_type(&self) -> Type {
-        Type::Actual(self.get_builtin_type_info(BuiltinType::Bool))
+        self.get_builtin_type(BuiltinType::Bool, vec![])
     }
 
     pub fn int_type(&self) -> Type {
-        Type::Actual(self.get_builtin_type_info(BuiltinType::Int))
-    }
-
-    pub fn float_type(&self) -> Type {
-        Type::Actual(self.get_builtin_type_info(BuiltinType::Float))
-    }
-
-    pub fn string_type(&self) -> Type {
-        Type::Actual(self.get_builtin_type_info(BuiltinType::String))
-    }
-
-    pub fn pointer_type(&self, item_type: Type) -> Type {
-        let mut info = self.get_builtin_type_info(BuiltinType::Pointer);
-
-        info.parameters.push(item_type);
-
-        Type::Actual(info)
-    }
-
-    pub fn array_type(&self, item_type: Type) -> Type {
-        let mut info = self.get_builtin_type_info(BuiltinType::Array);
-
-        info.parameters.push(item_type);
-
-        Type::Actual(info)
+        self.get_builtin_type(BuiltinType::Int, vec![])
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> &Link<InterfaceBlueprint> {
@@ -137,23 +126,23 @@ impl ProgramContext {
     {
         let mut ok = true;
         let (interface_blueprint, method_name) = self.builtin_interfaces.get(&interface).unwrap();
-        let method_info = interface_blueprint.borrow().methods.get(method_name).unwrap().clone();
+        let function_blueprint = interface_blueprint.borrow().methods.get(method_name).unwrap();
 
         if !target_type.match_interface(interface_blueprint) {
             self.errors.add(location, format!("type `{}` does not implement method `{}`", target_type, method_name));
             ok = false;
         }
 
-        for (expected_arg_type, actual_arg_type) in method_info.arguments.iter().zip(argument_types.iter()) {
-            if !actual_arg_type.is_assignable_to(expected_arg_type) {
+        for (expected_arg, actual_arg_type) in function_blueprint.borrow().arguments.iter().zip(argument_types.iter()) {
+            if !actual_arg_type.is_assignable_to(&expected_arg.ty) {
                 let prefix = make_error_prefix();
-                self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, expected_arg_type, actual_arg_type));
+                self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
                 ok = false;
             }
         }
 
-        let ty = method_info.return_type.clone().unwrap_or(Type::Void);
-        let method_instruction = VI::call_method_from_stack(&ty, method_name);
+        let ty = function_blueprint.borrow().return_value.and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
+        let method_instruction = VI::call_function_from_stack(ty.get_method(method_name));
         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
         match ok {

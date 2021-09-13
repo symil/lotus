@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{cell::Ref, collections::HashMap};
 
 use parsable::parsable;
-use crate::{generation::{Wat}, program::{AccessType, ProgramContext, Type, VariableKind, post_process_system_method_call, process_array_field_access, process_array_method_call, process_boolean_field_access, process_boolean_method_call, process_float_field_access, process_float_method_call, process_integer_field_access, process_integer_method_call, process_pointer_field_access, process_pointer_method_call, process_string_field_access, process_string_method_call, process_system_field_access, process_system_method_call}};
+use crate::{program::{AccessType, FunctionBlueprint, PTR_GET_METHOD_NAME, PTR_SET_METHOD_NAME, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link};
 use super::{ArgumentList, Identifier, VarRefPrefix};
 
 #[parsable]
@@ -26,7 +26,7 @@ impl VarRef {
         match &self.arguments {
             Some(arguments) => match context.functions.get_by_name(&self.name) {
                 Some(function_blueprint) => {
-                    process_function_call(None, &function_blueprint.get_type(), vec![Wat::call_from_stack(&function_blueprint.wasm_name)], arguments, access_type, context)
+                    process_function_call(function_blueprint, arguments, access_type, context)
                 },
                 None => {
                     context.errors.add(&self.name, format!("undefined function `{}`", &self.name));
@@ -35,8 +35,8 @@ impl VarRef {
             },
             None => match context.get_var_info(&self.name) {
                 Some(var_info) => match access_type {
-                    AccessType::Get => Some(Vasm::simple(var_info.ty.clone(), var_info.get_to_stack())),
-                    AccessType::Set(_) => Some(Vasm::simple(var_info.ty.clone(), var_info.set_from_stack())),
+                    AccessType::Get => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(var_info)])),
+                    AccessType::Set(_) => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(var_info)])),
                 },
                 None => match context.get_struct_by_name(&self.name) {
                     Some(struct_annotation) => Some(Vasm::empty(TypeOld::TypeRef(struct_annotation.get_struct_info()))),
@@ -50,71 +50,26 @@ impl VarRef {
     }
 }
 
-pub fn process_field_access(parent_type: &TypeOld, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-    if let AccessType::Set(set_location) = access_type {
-        match parent_type {
-            TypeOld::Struct(_) => {},
-            _ => {
-                context.errors.add(set_location, format!("cannot set field of non-struct value"));
-                return None;
-            }
-        }
-    }
+pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    let mut result = None;
 
-    let result = match parent_type {
-        TypeOld::Void => None,
-        TypeOld::Null => None,
-        TypeOld::Generic(_) => None,
-        TypeOld::System => process_system_field_access(field_name, context),
-        TypeOld::Boolean => process_boolean_field_access(field_name, context),
-        TypeOld::Integer => process_integer_field_access(field_name, context),
-        TypeOld::Float => process_float_field_access(field_name, context),
-        TypeOld::String => process_string_field_access(field_name, context),
-        TypeOld::TypeRef(_) => None,
-        TypeOld::Pointer(pointed_type) => process_pointer_field_access(pointed_type, field_name, context),
-        TypeOld::Array(item_type) => process_array_field_access(item_type, field_name, context),
-        TypeOld::Struct(struct_info) => {
-            if field_name.is("_") {
-                if let AccessType::Set(set_location) = access_type {
-                    context.errors.add(set_location, format!("cannot set special field `_`"));
-                    return None;
-                }
+    if let Some(field_details) = parent_type.get_field(field_name.as_str()) {
+        let method_name = match access_type {
+            AccessType::Get => PTR_GET_METHOD_NAME,
+            AccessType::Set(_) => PTR_SET_METHOD_NAME,
+        };
 
-
-                // special case: `_` refers to the value itself rather than a field
-                // e.g `#foo` means `self.foo`, but `#_` means `self`
-                Some(Vasm::empty(parent_type.clone()))
-            } else if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
-                if let Some(field) = struct_annotation.fields.get(field_name) {
-                    let func_name = match access_type {
-                        AccessType::Get => field.ty.pointer_get_function_name(),
-                        AccessType::Set(_) => field.ty.pointer_set_function_name(),
-                    };
-
-                    Some(Vasm::simple(
-                        field.ty.clone(),
-                        Wat::call(func_name, vec![Wat::const_i32(field.offset)])
-                    ))
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        },
-        TypeOld::Function(_, _) => None,
-        TypeOld::Any(_) => None,
-        
-    };
-
-    if result.is_none() {
+        result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![
+            VI::call_function(parent_type.get_method(method_name), vec![VI::int(field_details.offset)])
+        ]));
+    } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
     }
 
     result
 }
 
-pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_method_call(parent_type: &Type, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
     let method_info : Option<Vasm> = match parent_type {
@@ -131,7 +86,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::TypeRef(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.static_methods.get(method_name) {
-                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.vasm_name)))
                 } else {
                     None
                 }
@@ -142,7 +97,7 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::Struct(struct_info) => {
             if let Some(struct_annotation) = context.get_struct_by_id(struct_info.id) {
                 if let Some(method) = struct_annotation.regular_methods.get(method_name) {
-                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.wasm_name)))
+                    Some(Vasm::simple(method.get_type(), Wat::call_from_stack(&method.vasm_name)))
                 } else {
                     None
                 }
@@ -154,8 +109,8 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
         TypeOld::Any(_) => None,
     };
 
-    if let Some(method_wasm) = method_info {
-        result = process_function_call(Some(method_name), &method_wasm.ty, method_wasm.wat, arguments, access_type, context);
+    if let Some(method_vasm) = method_info {
+        result = process_function_call(Some(method_name), &method_vasm.ty, method_vasm.wat, arguments, access_type, context);
     } else if !parent_type.is_void() {
         context.errors.add(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
     }
@@ -163,51 +118,39 @@ pub fn process_method_call(parent_type: &TypeOld, method_name: &Identifier, argu
     result
 }
 
-pub fn process_function_call(system_method_name: Option<&Identifier>, function_type: &TypeOld, mut function_call: Vec<Wat>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_function_call(function_blueprint: &Link<FunctionBlueprint>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
     }
 
-    let (expected_arguments, return_type) = function_type.as_function();
+    let function_content = function_blueprint.borrow();
+    let expected_arg_count = function_content.arguments.len();
+    let mut result = Vasm::empty();
 
-    let mut ok = true;
-    let mut source = vec![];
-    let mut argument_types = vec![];
-    let mut anonymous_types = HashMap::new();
+    if arguments.len() != expected_arg_count {
+        let s = if expected_arg_count > 1 { "s" } else { "" };
 
-    if arguments.len() != expected_arguments.len() {
-        let s = if expected_arguments.len() > 1 { "s" } else { "" };
-        context.errors.add(arguments, format!("expected {} argument{}, got {}", expected_arguments.len(), s, arguments.as_vec().len()));
-        ok = false;
+        context.errors.add(arguments, format!("expected {} argument{}, got {}", expected_arg_count, s, arguments.as_vec().len()));
     }
 
-    for (i, (arg_expr, expected_type)) in arguments.as_vec().iter().zip(expected_arguments.iter()).enumerate() {
-        if let Some(arg_wasm) = arg_expr.process(context) {
-            argument_types.push(arg_wasm.ty.clone());
+    for (i, arg_expr) in arguments.as_vec().iter().enumerate() {
+        if let Some(arg_vasm) = arg_expr.process(context) {
+            if i < expected_arg_count {
+                let expected_type = &function_content.arguments[0].ty;
 
-            if expected_type.is_assignable_to(&arg_wasm.ty, context, &mut anonymous_types) {
-                source.push(arg_wasm);
-            } else {
-                context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_wasm.ty));
-                ok = false;
+                if expected_type.is_assignable_to(&arg_vasm.ty) {
+                    result.extend(arg_vasm);
+                } else {
+                    context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_vasm.ty));
+                }
             }
-        } else {
-            ok = false;
         }
     }
 
-    // Special case: some builtin (system) functions (e.g `@log`) need to know the type of their arguments to generate proper WAT
-    // In such case, the WAT generation is delayed until after the arguments have been processed
-    // This only happen for a few builtin functions, and can never happen for user-written functions
-    if ok && function_call.is_empty() {
-        function_call = post_process_system_method_call(system_method_name.unwrap(), &argument_types, context);
-    }
+    let return_type = function_content.return_value.and_then(|var_info| Some(var_info.ty.clone())).unwrap_or(Type::Void);
 
-    source.push(Vasm::new(TypeOld::Void, function_call, vec![]));
+    result.extend(Vasm::new(return_type, vec![], vec![VI::call_function_from_stack(function_blueprint)]));
 
-    match ok {
-        true => Some(Vasm::merge(return_type.clone(), source)),
-        false => None
-    }
+    Some(result)
 }

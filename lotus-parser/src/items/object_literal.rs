@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{generation::{Wat}, items::TypeQualifier, program::{Error, OBJECT_ALLOC_FUNC_NAME, ProgramContext, StructInfo, VariableInfo, VariableKind}};
+use crate::{items::TypeQualifier, program::{Error, ProgramContext, VI, VariableInfo, VariableKind, Vasm}, vasm};
 use super::{Expression, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -20,17 +20,17 @@ pub struct ObjectFieldInitializationList {
 
 impl ObjectLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut wat = vec![];
         let mut fields_init = IndexMap::new();
-        let mut struct_info = StructInfo::default();
 
-        let object_var_name = Identifier::unique("object", self).to_unique_string();
-        let variables = vec![
-            VariableInfo::new(object_var_name.clone(), context.int_type(), VariableKind::Local),
-        ];
+        let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
+        let mut result = Vasm::void(vec![object_var.clone()], vec![]);
 
         if let Some(type_blueprint) = context.types.get_by_name(&self.type_name) {
-            if type_blueprint.qualifier == TypeQualifier::Class {
+            if type_blueprint.borrow().qualifier == TypeQualifier::Class {
+                result.extend(vasm![
+                    VI::call_static_method()
+                ]);
+
                 wat.extend(vec![
                     Wat::call(OBJECT_ALLOC_FUNC_NAME, vec![Wat::const_i32(type_blueprint.fields.len()), Wat::const_i32(type_blueprint.get_id())]),
                     Wat::set_local_from_stack(&object_var_name)

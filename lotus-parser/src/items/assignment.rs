@@ -37,8 +37,8 @@ impl Assignment {
                                 AssignmentOperator::ShrEqual => BinaryOperator::Shr,
                                 AssignmentOperator::DoubleAndEqual => BinaryOperator::DoubleAnd,
                                 AssignmentOperator::DoubleOrEqual => BinaryOperator::DoubleOr,
-                                AssignmentOperator::AndEqual => BinaryOperator::And,
-                                AssignmentOperator::OrEqual => BinaryOperator::Or,
+                                AssignmentOperator::SingleAndEqual => BinaryOperator::SingleAnd,
+                                AssignmentOperator::SingleOrEqual => BinaryOperator::SingleOr,
                             };
                             let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
 

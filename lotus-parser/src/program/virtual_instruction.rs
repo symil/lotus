@@ -1,5 +1,7 @@
 use std::rc::Rc;
-use super::{ToInt, ToVasm, Type, VariableInfo, Vasm, Wat};
+use crate::utils::Link;
+
+use super::{FunctionBlueprint, ToInt, ToVasm, Type, VariableInfo, Vasm, Wat};
 pub type VI = VirtualInstruction;
 
 #[derive(Debug)]
@@ -11,7 +13,7 @@ pub enum VirtualInstruction {
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
-    MethodCall(VirtualMethodCallInfo),
+    FunctionCall(VirtualFunctionCallInfo),
     Loop(VirtualLoopInfo),
     Block(VasmInfo),
     Jump(VirtualJumpInfo),
@@ -30,11 +32,9 @@ pub struct VirtualSetVariableInfo {
 }
 
 #[derive(Debug)]
-pub struct VirtualMethodCallInfo {
-    pub caller_type: Type,
-    pub method_name: String,
+pub struct VirtualFunctionCallInfo {
+    pub function_blueprint: Link<FunctionBlueprint>,
     pub args: Vec<Vasm>,
-    pub is_static: bool,
 }
 
 #[derive(Debug)]
@@ -106,39 +106,17 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn call_method<S : ToString, T : ToVasm>(caller_type: &Type, method_name: S, args: Vec<T>) -> Self {
-        Self::MethodCall(VirtualMethodCallInfo {
-            caller_type: caller_type.clone(),
-            method_name: method_name.to_string(),
+    pub fn call_function<T : ToVasm>(function: &Link<FunctionBlueprint>, args: Vec<T>) -> Self {
+        Self::FunctionCall(VirtualFunctionCallInfo {
+            function_blueprint: function.clone(),
             args: args.into_iter().map(|arg| arg.to_vasm()).collect(),
-            is_static: false
         })
     }
 
-    pub fn call_method_from_stack<S : ToString>(caller_type: &Type, method_name: S) -> Self {
-        Self::MethodCall(VirtualMethodCallInfo {
-            caller_type: caller_type.clone(),
-            method_name: method_name.to_string(),
+    pub fn call_function_from_stack(function: &Link<FunctionBlueprint>) -> Self {
+        Self::FunctionCall(VirtualFunctionCallInfo {
+            function_blueprint: function.clone(),
             args: vec![],
-            is_static: false
-        })
-    }
-
-    pub fn call_static_method<S : ToString, T : ToVasm>(caller_type: &Type, method_name: S, args: Vec<T>) -> Self {
-        Self::MethodCall(VirtualMethodCallInfo {
-            caller_type: caller_type.clone(),
-            method_name: method_name.to_string(),
-            args: args.into_iter().map(|arg| arg.to_vasm()).collect(),
-            is_static: true
-        })
-    }
-
-    pub fn call_static_method_from_stack<S : ToString>(caller_type: &Type, method_name: S) -> Self {
-        Self::MethodCall(VirtualMethodCallInfo {
-            caller_type: caller_type.clone(),
-            method_name: method_name.to_string(),
-            args: vec![],
-            is_static: true
         })
     }
 
@@ -148,7 +126,14 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn block<T : ToVasm>(result: Vec<Type>, content: T) -> Self {
+    pub fn block<T : ToVasm>(content: T) -> Self {
+        Self::Block(VasmInfo {
+            result: vec![],
+            content: content.to_vasm(),
+        })
+    }
+
+    pub fn typed_block<T : ToVasm>(result: Vec<Type>, content: T) -> Self {
         Self::Block(VasmInfo {
             result,
             content: content.to_vasm(),
@@ -184,7 +169,7 @@ impl VirtualInstruction {
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(_) => {},
             VirtualInstruction::TeeVariable(_) => {},
-            VirtualInstruction::MethodCall(_) => {},
+            VirtualInstruction::FunctionCall(_) => {},
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},

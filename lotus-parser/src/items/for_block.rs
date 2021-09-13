@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, vasm, wat};
+use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, vasm, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -71,7 +71,7 @@ impl ForBlock {
                         VI::set(&item_var, range_start_vasm),
                         VI::set(&index_var, VI::int(-1)),
                         VI::raw(Wat::increment_local_i32(&item_var.wasm_name, -1)),
-                        VI::block(vec![], vasm![
+                        VI::block(vasm![
                             VI::loop_(vasm![
                                 VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
                                 VI::raw(Wat::increment_local_i32(&item_var.wasm_name, 1)),
@@ -88,7 +88,7 @@ impl ForBlock {
             let required_interface = context.get_builtin_interface(BuiltinInterface::Iterable);
             let item_associated_type = required_interface.borrow().associated_types.get("Item").unwrap();
             let item_type = iterable_vasm.ty.get_assiciated_type(item_associated_type).unwrap_or(Type::Void);
-            let pointer_type = context.pointer_type(item_type.clone());
+            let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
             if !iterable_vasm.ty.match_interface(&required_interface) {
                 if !iterable_vasm.ty.is_void() {
@@ -110,14 +110,14 @@ impl ForBlock {
                 result = Some(Vasm::new(Type::Void, variables, vec![
                     VI::set(&iterable_var, iterable_vasm),
                     VI::set(&index_var, VI::int(-1)),
-                    VI::set(&iterable_len_var, VI::call_method(&iterable_vasm.ty, GET_ITERABLE_LEN_FUNC_NAME, vec![VI::get(&iterable_var)])),
-                    VI::set(&iterable_ptr_var, VI::call_method(&iterable_vasm.ty, GET_ITERABLE_PTR_FUNC_NAME, vec![VI::get(&iterable_var)])),
-                    VI::block(vec![], vec![
+                    VI::set(&iterable_len_var, VI::call_function(iterable_vasm.ty.get_method(GET_ITERABLE_LEN_FUNC_NAME), vec![VI::get(&iterable_var)])),
+                    VI::set(&iterable_ptr_var, VI::call_function(iterable_vasm.ty.get_method(GET_ITERABLE_PTR_FUNC_NAME), vec![VI::get(&iterable_var)])),
+                    VI::block(vec![
                         VI::loop_(vasm![
                             VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
                             VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
                             VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
-                            VI::set(&item_var, VI::call_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
+                            VI::set(&item_var, VI::call_function(pointer_type.get_method(GET_AT_INDEX_FUNC_NAME), vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
                             block_vasm,
                             VI::jump(0)
                         ])

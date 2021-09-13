@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, VI, Vasm}};
+use crate::{program::{BuiltinType, ProgramContext, VI, Vasm}};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
@@ -14,6 +14,6 @@ impl FloatLiteral {
             _ => self.value[0..self.value.len() - 1].parse().unwrap()
         };
 
-        Some(Vasm::new(context.float_type(), vec![], vec![VI::float(f32_value)]))
+        Some(Vasm::new(context.get_builtin_type(BuiltinType::Float, vec![]), vec![], vec![VI::float(f32_value)]))
     }
 }

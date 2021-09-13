@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, Visibility}, utils::Link};
-use super::{GlobalItem, Type};
+use super::{FunctionBlueprint, GlobalItem, Type};
 
 #[derive(Debug)]
 pub struct InterfaceBlueprint {
@@ -9,20 +9,14 @@ pub struct InterfaceBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub associated_types: IndexMap<String, Link<InterfaceAssociatedType>>,
-    pub methods: IndexMap<String, InterfaceMethod>
+    pub methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
 }
 
 #[derive(Debug)]
 pub struct InterfaceAssociatedType {
     pub owner: Link<InterfaceBlueprint>,
     pub name: Identifier
-}
-
-#[derive(Debug)]
-pub struct InterfaceMethod {
-    pub name: Identifier,
-    pub arguments: Vec<Type>,
-    pub return_type: Option<Type>
 }
 
 impl GlobalItem for InterfaceBlueprint {

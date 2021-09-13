@@ -21,9 +21,9 @@ pub fn process_array_field_access(item_type: &TypeOld, field_name: &Identifier, 
 
 pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, context: &mut ProgramContext) -> Option<Vasm> {
     let (arguments, return_type, wat) = match method_name.as_str() {
-        "len" => (vec![]::Integer, vec![Wat::call_from_stack(ARRAY_GET_LENGTH_FUNC_NAME)]),
+        "len" => (vec![], Integer, vec![Wat::call_from_stack(ARRAY_GET_LENGTH_FUNC_NAME)]),
         "get" => (vec![TypeOld::Integer], item_type.clone(), vec![Wat::call_from_stack(ARRAY_GET_ITEM_FUNC_NAME)]),
-        "pop" => (vec![]::array(item_type.clone()), vec![Wat::call_from_stack(ARRAY_POP_FUNC_NAME)]),
+        "pop" => (vec![], array(item_type.clone()), vec![Wat::call_from_stack(ARRAY_POP_FUNC_NAME)]),
         "push" => {
             let mut wat = vec![];
 
@@ -33,9 +33,9 @@ pub fn process_array_method_call(item_type: &TypeOld, method_name: &Identifier, 
 
             wat.push(Wat::call_from_stack(ARRAY_PUSH_FUNC_NAME));
 
-            (vec![item_type.clone()]::array(item_type.clone()), wat)
+            // (vec![item_type.clone()]::array(item_type.clone()), wat)
         },
-        "concat" => (vec![TypeOld::array(item_type.clone())]::array(item_type.clone()), vec![Wat::call_from_stack(ARRAY_CONCAT_FUNC_NAME)]),
+        "concat" => (vec![TypeOld::array(item_type.clone())], array(item_type.clone()), vec![Wat::call_from_stack(ARRAY_CONCAT_FUNC_NAME)]),
         _ => return None
     };
 

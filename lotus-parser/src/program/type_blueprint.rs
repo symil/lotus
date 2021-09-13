@@ -10,21 +10,21 @@ pub struct TypeBlueprint {
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
-    pub parameters: IndexMap<String, Link<TypeParameter>>,
+    pub parameters: IndexMap<String, Link<ParameterType>>,
     pub associated_types: IndexMap<String, AssociatedType>,
     pub parent: Option<ActualTypeInfo>,
     pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
     pub fields: IndexMap<String, FieldDetails>,
     pub static_fields: IndexMap<String, FieldDetails>,
-    pub methods: IndexMap<String, MethodDetails>,
-    pub static_methods: IndexMap<String, MethodDetails>,
-    pub hook_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
-    pub before_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
-    pub after_event_callbacks: IndexMap<String, Vec<MethodDetails>>,
+    pub methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
+    pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
+    pub after_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct TypeParameter {
+pub struct ParameterType {
     pub name: Identifier,
     pub required_interfaces: Vec<Link<InterfaceBlueprint>>
 }
@@ -42,13 +42,6 @@ pub struct FieldDetails {
     pub name: Identifier,
     pub ty: Type,
     pub offset: usize,
-}
-
-#[derive(Debug, Clone)]
-pub struct MethodDetails {
-    pub owner: Link<TypeBlueprint>,
-    pub name: Identifier,
-    pub content: Link<FunctionBlueprint>
 }
 
 impl TypeBlueprint {
