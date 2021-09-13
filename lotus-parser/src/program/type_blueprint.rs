@@ -18,6 +18,7 @@ pub struct TypeBlueprint {
     pub static_fields: IndexMap<String, FieldDetails>,
     pub methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub after_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,

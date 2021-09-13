@@ -3,5 +3,6 @@ use parsable::parsable;
 #[parsable]
 #[derive(PartialEq)]
 pub enum FunctionQualifier {
-    Static = "static"
+    Static = "static",
+    Dynamic = "dyn"
 }

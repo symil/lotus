@@ -18,6 +18,14 @@ impl<T> Link<T> {
     pub fn borrow_mut(&self) -> RefMut<T> {
         Rc::as_ref(&self.value).borrow_mut()
     }
+
+    pub fn with_ref<V, F : FnMut(Ref<T>) -> V>(&self, f: F) -> V {
+        f(self.borrow())
+    }
+
+    pub fn with_mut<V, F : FnMut(RefMut<T>) -> V>(&self, f: F) -> V {
+        f(self.borrow_mut())
+    }
 }
 
 impl<T> Clone for Link<T> {

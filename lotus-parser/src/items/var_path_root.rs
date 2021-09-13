@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, VarRef};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, FieldOrMethodAccess};
 
 #[parsable]
 pub enum VarPathRoot {

@@ -11,6 +11,13 @@ pub struct ValueType {
 }
 
 impl ValueType {
+    pub fn as_single_name(&self) -> Option<&Identifier> {
+        match self.arguments.list.is_empty() {
+            true => Some(&self.name),
+            false => None
+        }
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
         let mut result = None;
         let mut associated = false;
@@ -18,22 +25,27 @@ impl ValueType {
         let parameters = self.arguments.process(context);
         let has_parameters = parameters.is_some();
 
-        if let Some(current_interface) = context.current_interface {
-            if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
-                associated = true;
-                result = Some(Type::Associated(associated_type.clone()));
-
-                if let Some(generic_list) = self.arguments.process(context) {
-                    context.errors.add(&self.arguments, format!("associated types do not have parameters"));
-                }
-            }
-        } else if let Some(current_type) = context.current_type {
-            if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
+        if let Some(current_function) = context.current_function {
+            if let Some(parameter_type) = current_function.borrow().parameters.get(self.name.as_str()) {
                 parameter = true;
                 result = Some(Type::Parameter(parameter_type.clone()));
-            } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
-                associated = true;
-                result = Some(associated_type.value.clone());
+            }
+        }
+
+        if result.is_none() {
+            if let Some(current_interface) = context.current_interface {
+                if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
+                    associated = true;
+                    result = Some(Type::Associated(associated_type.clone()));
+                }
+            } else if let Some(current_type) = context.current_type {
+                if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
+                    parameter = true;
+                    result = Some(Type::Parameter(parameter_type.clone()));
+                } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
+                    associated = true;
+                    result = Some(associated_type.value.clone());
+                }
             }
         }
 
@@ -68,7 +80,7 @@ impl ValueType {
             if associated {
                 context.errors.add(&self.arguments, format!("associated types do not take parameters"));
             } else if parameter {
-                context.errors.add(&self.arguments, format!("associated types do not take parameters"));
+                context.errors.add(&self.arguments, format!("parameter types do not take parameters"));
             }
         }
 

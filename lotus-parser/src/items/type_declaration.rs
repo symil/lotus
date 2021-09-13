@@ -43,6 +43,7 @@ impl TypeDeclaration {
             static_fields: IndexMap::new(),
             methods: IndexMap::new(),
             static_methods: IndexMap::new(),
+            dynamic_methods: vec![],
             hook_event_callbacks: IndexMap::new(),
             before_event_callbacks: IndexMap::new(),
             after_event_callbacks: IndexMap::new(),
@@ -233,21 +234,62 @@ impl TypeDeclaration {
     pub fn process_methods_inheritance(&self, context: &mut ProgramContext) {
         self.process_inheritance(context, |type_blueprint, parent_type_list, context| {
             let mut methods = IndexMap::new();
+            let mut static_methods = IndexMap::new();
+            let mut dynamic_methods = vec![];
 
             for parent_blueprint in &parent_type_list {
-                for method_blueprint in parent_blueprint.borrow().methods.values() {
-                    let owner = method_blueprint.borrow().owner_type.as_ref().unwrap();
-                    let name = &method_blueprint.borrow().name;
+                let parent_unwrapped = parent_blueprint.borrow();
+
+                for method_blueprint in parent_unwrapped.methods.values().chain(parent_unwrapped.static_methods.values()) {
+                    let method_unwrapped = method_blueprint.borrow();
+                    let is_static = method_unwrapped.is_static();
+                    let is_dynamic = method_unwrapped.is_dynamic;
+                    let owner = method_unwrapped.owner_type.as_ref().unwrap();
+                    let name = &method_unwrapped.name;
 
                     if owner == parent_blueprint {
-                        if methods.insert(name.to_string(), method_blueprint.clone()).is_some() && owner == type_blueprint {
-                            context.errors.add(&self.name, format!("duplicate method `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.borrow().name));
+                        let (mut indexmap, s) = match is_static {
+                            true => (&mut static_methods, "static "),
+                            false => (&mut methods, ""),
+                        };
+
+                        if let Some(previous_method) = indexmap.insert(name.to_string(), method_blueprint.clone()) {
+                            if owner == type_blueprint && (!previous_method.borrow().is_dynamic || !is_dynamic) {
+                                context.errors.add(&self.name, format!("duplicate {}method `{}` (already declared by parent struct `{}`)", s, &self.name, &parent_blueprint.borrow().name));
+                            }
                         }
                     }
                 }
             }
 
-            type_blueprint.borrow_mut().methods = methods;
+            for method_blueprint in methods.values() {
+                let ok = method_blueprint.with_mut(|method| {
+                    if method.is_dynamic {
+                        let index = dynamic_methods.len() as i32;
+
+                        if method.dynamic_index == -1 {
+                            method.dynamic_index = index;
+                            return true;
+                        } else if method.dynamic_index != index {
+                            panic!("method `{}` had dynamic index `{}`, tried to assign `{}`", &method.name, method.dynamic_index, index);
+                        } else {
+                            return true;
+                        }
+                    }
+
+                    false
+                });
+
+                if ok {
+                    dynamic_methods.push(method_blueprint.clone());
+                }
+            }
+
+            type_blueprint.with_mut(|t| {
+                t.methods = methods;
+                t.static_methods = static_methods;
+                t.dynamic_methods = dynamic_methods;
+            });
         });
     }
 }

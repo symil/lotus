@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, Side, TypeBlueprint}, utils::Link};
-use super::{Identifier, VarRefPrefix};
+use super::{Identifier, VarPrefix};
 
 #[parsable]
 pub struct FunctionConditionOperand {
-    pub prefix: Option<VarRefPrefix>,
+    pub prefix: Option<VarPrefix>,
     pub field_name: Identifier
 }
 
@@ -12,8 +12,8 @@ impl FunctionConditionOperand {
     pub fn process(&self, side: Side, event_type_blueprint: &Link<TypeBlueprint>, context: &mut ProgramContext) -> Option<Identifier> {
         let mut result = None;
         let (required_prefix, target_type_blueprint) = match side {
-            Side::Left => (VarRefPrefix::Payload, event_type_blueprint),
-            Side::Right => (VarRefPrefix::This, context.current_type.as_ref().unwrap()),
+            Side::Left => (VarPrefix::Payload, event_type_blueprint),
+            Side::Right => (VarPrefix::This, context.current_type.as_ref().unwrap()),
         };
 
         if !self.has_prefix(&required_prefix) {
@@ -29,7 +29,7 @@ impl FunctionConditionOperand {
         result
     }
 
-    fn has_prefix(&self, prefix: &VarRefPrefix) -> bool {
+    fn has_prefix(&self, prefix: &VarPrefix) -> bool {
         match &self.prefix {
             Some(self_prefix) => self_prefix == prefix,
             _ => false

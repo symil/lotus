@@ -142,7 +142,7 @@ impl ProgramContext {
         }
 
         let ty = function_blueprint.borrow().return_value.and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
-        let method_instruction = VI::call_function_from_stack(ty.get_method(method_name));
+        let method_instruction = VI::call_function_from_stack(ty.get_method(method_name).unwrap());
         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
         match ok {
