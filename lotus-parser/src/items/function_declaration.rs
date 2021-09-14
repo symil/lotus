@@ -11,26 +11,30 @@ pub struct FunctionDeclaration {
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, context: &mut ProgramContext) {
-        let mut function_blueprint = self.content.process_signature(context).borrow_mut();
+        let mut function_wrapped = self.content.process_signature(context);
 
-        function_blueprint.visibility = self.visibility.value.unwrap_or(Visibility::Private);
+        let name = function_wrapped.with_mut(|mut function_unwrapped| {
+            function_unwrapped.visibility = self.visibility.value.unwrap_or(Visibility::Private);
 
-        if function_blueprint.name.as_str() == "main" {
-            if !function_blueprint.arguments.is_empty() {
-                context.errors.add(self, format!("main function must not take any argument"));
+            if function_unwrapped.name.as_str() == "main" {
+                if !function_unwrapped.arguments.is_empty() {
+                    context.errors.add(self, format!("main function must not take any argument"));
+                }
+
+                if function_unwrapped.return_value.is_some() {
+                    context.errors.add(self, format!("main function must not have a return type"));
+                }
+
+                if function_unwrapped.visibility != Visibility::Export {
+                    context.errors.add(self, format!("main function must be declared with the `export` visibility"));
+                }
             }
 
-            if function_blueprint.return_value.is_some() {
-                context.errors.add(self, format!("main function must not have a return type"));
-            }
+            function_unwrapped.name.clone()
+        });
 
-            if function_blueprint.visibility != Visibility::Export {
-                context.errors.add(self, format!("main function must be declared with the `export` visibility"));
-            }
-        }
-
-        if context.functions.get_by_name(&function_blueprint.name).is_some() {
-            context.errors.add(self, format!("duplicate function declaration `{}`", &function_blueprint.name));
+        if context.functions.get_by_name(&name).is_some() {
+            context.errors.add(self, format!("duplicate function declaration `{}`", &name));
         }
     }
 

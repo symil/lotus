@@ -1,7 +1,7 @@
 use std::rc::Rc;
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ParameterTypeOwner, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
 
 #[parsable]
@@ -21,7 +21,7 @@ impl FunctionContent {
             function_id: self.location.get_hash(),
             name: self.name.clone(),
             visibility: Visibility::Private,
-            parameters: self.parameters.process(context),
+            parameters: IndexMap::new(),
             event_callback_qualifier: None,
             owner_type: None,
             owner_interface: None,
@@ -38,10 +38,14 @@ impl FunctionContent {
 
         let function_blueprint = context.functions.insert(function_unwrapped);
         let is_static = self.qualifier.contains(&FunctionQualifier::Static);
+        let owner = ParameterTypeOwner::Function(function_blueprint.clone());
+        let parameters = self.parameters.process(&owner, context);
 
         context.current_function = Some(function_blueprint.clone());
 
-        function_blueprint.with_mut(|function_unwrapped| {
+        function_blueprint.with_mut(|mut function_unwrapped| {
+            function_unwrapped.parameters = parameters;
+
             if let Some(type_blueprint) = &context.current_type {
                 function_unwrapped.owner_type = Some(type_blueprint.clone());
 
@@ -58,14 +62,14 @@ impl FunctionContent {
         if let Some(signature) = &self.signature {
             let (arguments, return_type) = signature.process(context);
 
-            function_blueprint.with_mut(|function_unwrapped| {
+            function_blueprint.with_mut(|mut function_unwrapped| {
                 function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
                 function_unwrapped.return_value = return_type.and_then(|ty| Some(VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), ty, VariableKind::Local)))
             });
         }
 
         if let Some(qualifier) = &self.event_callback_qualifier {
-            if let Some(type_id) = context.current_type {
+            if let Some(type_wrapped) = context.get_current_type() {
                 if let Some(signature) = &self.signature {
                     context.errors.add(signature, "event callbacks do not take arguments nor have a return type");
                 }
@@ -103,7 +107,7 @@ impl FunctionContent {
         }
 
         context.current_function = None;
-        
+
         function_blueprint
     }
 

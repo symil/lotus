@@ -60,6 +60,7 @@ pub const BUILTIN_INTERFACES : &'static[(BuiltinInterface, &'static str, &'stati
     (BuiltinInterface::Iterable, "Iterable",  ""),
 ];
 
+pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
 pub const NEW_FUNC_NAME : &'static str = "__new";
 pub const DEFAULT_FUNC_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";

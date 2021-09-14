@@ -61,7 +61,7 @@ impl FunctionBlueprint {
 
             self.body.collect_variables(&mut variables);
 
-            for var_info in variables {
+            for var_info in &variables {
                 if let Some(wasm_type) = var_info.ty.resolve().get_wasm_type() {
                     let mut array = match var_info.kind {
                         VariableKind::Global => unreachable!(),

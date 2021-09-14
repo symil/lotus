@@ -25,7 +25,7 @@ impl ValueType {
         let parameters = self.arguments.process(context);
         let has_parameters = parameters.is_some();
 
-        if let Some(current_function) = context.current_function {
+        if let Some(current_function) = context.get_current_function() {
             if let Some(parameter_type) = current_function.borrow().parameters.get(self.name.as_str()) {
                 parameter = true;
                 result = Some(Type::Parameter(parameter_type.clone()));
@@ -33,12 +33,12 @@ impl ValueType {
         }
 
         if result.is_none() {
-            if let Some(current_interface) = context.current_interface {
+            if let Some(current_interface) = context.get_current_interface() {
                 if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
                     result = Some(Type::Associated(associated_type.clone()));
                 }
-            } else if let Some(current_type) = context.current_type {
+            } else if let Some(current_type) = context.get_current_type() {
                 if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
                     parameter = true;
                     result = Some(Type::Parameter(parameter_type.clone()));
@@ -70,7 +70,7 @@ impl ValueType {
 
                     result = Some(Type::Actual(ActualTypeInfo {
                         parameters: parameter_list,
-                        type_blueprint: type_blueprint.clone(),
+                        type_wrapped: type_blueprint.clone(),
                     }))
                 }
             }

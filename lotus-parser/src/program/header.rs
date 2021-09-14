@@ -1,4 +1,6 @@
-use super::{HEADER_MEMORY_WASM_PAGE_COUNT, ToWat, ToWatVec, VALUE_BYTE_SIZE, Wat, wat};
+use crate::{program::VALUE_BYTE_SIZE, wat};
+
+use super::{HEADER_MEMORY_WASM_PAGE_COUNT, Wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);

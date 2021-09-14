@@ -106,16 +106,16 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn call_function<T : ToVasm>(function: &Link<FunctionBlueprint>, args: T) -> Self {
+    pub fn call_function<T : ToVasm>(function: Link<FunctionBlueprint>, args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
-            function_blueprint: function.clone(),
+            function_blueprint: function,
             args: Some(args.to_vasm()),
         })
     }
 
-    pub fn call_function_from_stack(function: &Link<FunctionBlueprint>) -> Self {
+    pub fn call_function_from_stack(function: Link<FunctionBlueprint>) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
-            function_blueprint: function.clone(),
+            function_blueprint: function,
             args: None,
         })
     }

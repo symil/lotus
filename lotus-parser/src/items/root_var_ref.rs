@@ -49,8 +49,8 @@ impl RootVarRef {
                 None => match full_type.as_single_name() {
                     Some(name) => match context.get_var_info(name) {
                         Some(var_info) => match access_type {
-                            AccessType::Get => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(var_info)])),
-                            AccessType::Set(_) => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(var_info)])),
+                            AccessType::Get => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(&var_info)])),
+                            AccessType::Set(_) => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(&var_info)])),
                         },
                         None => {
                             context.errors.set_enabled(false);

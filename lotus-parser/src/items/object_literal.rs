@@ -23,11 +23,11 @@ impl ObjectLiteral {
         let mut result = Vasm::empty();
 
         if let Some(object_type) = self.object_type.process(context) {
-            if let Type::Actual(info) = object_type {
+            if let Type::Actual(info) = &object_type {
                 let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
-                let type_blueprint = info.type_blueprint.borrow();
+                let type_unwrapped = info.type_wrapped.borrow();
 
-                if type_blueprint.qualifier == TypeQualifier::Class {
+                if type_unwrapped.qualifier == TypeQualifier::Class {
                     let mut fields_init = HashMap::new();
 
                     result.extend(Vasm::void(
@@ -38,7 +38,7 @@ impl ObjectLiteral {
                     ));
 
                     for field in &self.fields {
-                        if !type_blueprint.fields.contains_key(field.name.as_str()) {
+                        if !type_unwrapped.fields.contains_key(field.name.as_str()) {
                             context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, &field.name));
                         }
 
@@ -47,7 +47,7 @@ impl ObjectLiteral {
                         }
 
                         if let Some(field_vasm) = field.value.process(context) {
-                            if let Some(field_info) = type_blueprint.fields.get(field.name.as_str()) {
+                            if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
                                 if field_vasm.ty.is_assignable_to(&field_info.ty) {
                                     fields_init.insert(field.name.as_str(), field_vasm);
                                 } else {
@@ -57,7 +57,7 @@ impl ObjectLiteral {
                         }
                     }
 
-                    for field_info in type_blueprint.fields.values() {
+                    for field_info in type_unwrapped.fields.values() {
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
                             None => vasm![VI::call_function(field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), vec![])],

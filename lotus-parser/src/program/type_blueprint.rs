@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
@@ -14,8 +16,8 @@ pub struct TypeBlueprint {
     pub associated_types: IndexMap<String, AssociatedType>,
     pub parent: Option<ActualTypeInfo>,
     pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
-    pub fields: IndexMap<String, FieldDetails>,
-    pub static_fields: IndexMap<String, FieldDetails>,
+    pub fields: IndexMap<String, Rc<FieldDetails>>,
+    pub static_fields: IndexMap<String, Rc<FieldDetails>>,
     pub methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
@@ -27,7 +29,14 @@ pub struct TypeBlueprint {
 #[derive(Debug, Clone)]
 pub struct ParameterType {
     pub name: Identifier,
+    pub owner: ParameterTypeOwner,
     pub required_interfaces: Vec<Link<InterfaceBlueprint>>
+}
+
+#[derive(Debug, Clone)]
+pub enum ParameterTypeOwner {
+    Type(Link<TypeBlueprint>),
+    Function(Link<FunctionBlueprint>)
 }
 
 #[derive(Debug, Clone)]
@@ -59,7 +68,7 @@ impl TypeBlueprint {
 impl Link<TypeBlueprint> {
     pub fn get_info(&self) -> ActualTypeInfo {
         ActualTypeInfo {
-            type_blueprint: self.clone(),
+            type_wrapped: self.clone(),
             parameters: self.borrow().parameters.values().map(|param| Type::Parameter(param.clone())).collect(),
         }
     }

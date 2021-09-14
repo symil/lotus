@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
-use crate::{program::{self, ProgramContext}, utils::Link};
+use crate::{program::{self, ParameterType, ParameterTypeOwner, ProgramContext}, utils::Link};
 use super::Identifier;
 
 #[parsable]
@@ -19,7 +19,7 @@ pub struct TypeParameter {
 }
 
 impl TypeParameters {
-    pub fn process(&self, context: &mut ProgramContext) -> IndexMap<String, Link<program::ParameterType>> {
+    pub fn process(&self, owner: &ParameterTypeOwner, context: &mut ProgramContext) -> IndexMap<String, Link<program::ParameterType>> {
         let mut result = IndexMap::new();
 
         for parameter in &self.list {
@@ -34,7 +34,11 @@ impl TypeParameters {
                 }
             }
 
-            let item = Link::new(program::ParameterType { name, required_interfaces });
+            let item = Link::new(ParameterType {
+                name,
+                required_interfaces,
+                owner: owner.clone()
+            });
 
             if result.insert(parameter.name.to_string(), item).is_some() {
                 context.errors.add(&parameter.name, format!("duplicate type parameter `{}`", &parameter.name));

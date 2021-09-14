@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{ProgramContext, VI, Vasm}, wat};
+use crate::{program::{ProgramContext, VI, Vasm}, vasm, wat};
 use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]
@@ -46,9 +46,9 @@ impl<'a> OperationTree<'a> {
                         if let Some(operator_vasm) = operator_vasm_opt {
                             let vasm = if let Some(short_circuit_vasm) = operator.get_short_circuit_vasm(context) {
                                 if right.has_side_effects() {
-                                    let wrapped_vasm = Vasm::merge(vec![left_vasm, short_circuit_vasm, right_vasm, operator_vasm]);
-
-                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::typed_block(vec![context.bool_type()], wrapped_vasm)])
+                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::typed_block(vec![context.bool_type()], vasm![
+                                        left_vasm, short_circuit_vasm, right_vasm, operator_vasm
+                                    ])])
                                 } else {
                                     Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
                                 }

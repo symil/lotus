@@ -4,7 +4,7 @@ use parsable::*;
 static mut COUNTER : usize = 0;
 
 #[parsable(name="identifier")]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Identifier {
     #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#)]
     pub value: String

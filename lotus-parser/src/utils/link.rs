@@ -19,11 +19,11 @@ impl<T> Link<T> {
         Rc::as_ref(&self.value).borrow_mut()
     }
 
-    pub fn with_ref<V, F : FnMut(Ref<T>) -> V>(&self, f: F) -> V {
+    pub fn with_ref<V, F : FnOnce(Ref<T>) -> V>(&self, mut f: F) -> V {
         f(self.borrow())
     }
 
-    pub fn with_mut<V, F : FnMut(RefMut<T>) -> V>(&self, f: F) -> V {
+    pub fn with_mut<V, F : FnOnce(RefMut<T>) -> V>(&self, mut f: F) -> V {
         f(self.borrow_mut())
     }
 }

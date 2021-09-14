@@ -39,7 +39,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         style: AttrStyle::Outer,
         bracket_token: syn::token::Bracket { span: Span::call_site() },
         path: syn::parse_str("derive").unwrap(),
-        tokens: syn::parse_str("(Debug, Clone)").unwrap(),
+        tokens: syn::parse_str("(Debug)").unwrap(),
     };
 
     // if let Data::Enum(_) = ast.data {

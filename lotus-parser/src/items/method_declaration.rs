@@ -9,26 +9,27 @@ pub struct MethodDeclaration {
 
 impl MethodDeclaration {
     pub fn process_signature(&self, context: &mut ProgramContext) {
-        let type_id = context.current_type.unwrap();
-        let mut function_blueprint = self.content.process_signature(context);
-        let mut type_blueprint = context.current_type.unwrap();
-        let is_static = function_blueprint.borrow().is_static();
-        let name = function_blueprint.borrow().name.clone();
+        let function_wrapped = self.content.process_signature(context);
+        let mut type_wrapped = context.get_current_type().unwrap();
+        let is_static = function_wrapped.borrow().is_static();
+        let name = function_wrapped.borrow().name.clone();
 
-        function_blueprint.borrow_mut().visibility = Visibility::Member;
+        function_wrapped.borrow_mut().visibility = Visibility::Member;
 
-        let mut index_map = match is_static {
-            true => &mut type_blueprint.borrow_mut().static_methods,
-            false => &mut type_blueprint.borrow_mut().methods
-        };
-
-        if index_map.insert(name.to_string(), function_blueprint).is_some() {
-            let s = match is_static {
-                true => "static ",
-                false => ""
+        type_wrapped.with_mut(|mut type_unwrapped| {
+            let mut index_map = match is_static {
+                true => &mut type_unwrapped.static_methods,
+                false => &mut type_unwrapped.methods
             };
-            context.errors.add(self, format!("duplicate {}method `{}`", s, &name));
-        }
+
+            if index_map.insert(name.to_string(), function_wrapped.clone()).is_some() {
+                let s = match is_static {
+                    true => "static ",
+                    false => ""
+                };
+                context.errors.add(self, format!("duplicate {}method `{}`", s, &name));
+            }
+        });
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {

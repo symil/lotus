@@ -6,7 +6,7 @@ pub struct VisibilityWrapper {
 }
 
 #[parsable]
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Visibility {
     Private = "prv",
     Public = "pub",

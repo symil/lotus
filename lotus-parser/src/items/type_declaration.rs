@@ -1,7 +1,7 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, OBJECT_HEADER_SIZE, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, OBJECT_HEADER_SIZE, ParameterTypeOwner, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -27,15 +27,15 @@ pub struct TypeDeclarationBody {
 }
 
 impl TypeDeclaration {
-    pub fn process_name(&self, context: &mut ProgramContext) -> u64 {
+    pub fn process_name(&self, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
-        let type_blueprint = TypeBlueprint {
+        let type_unwrapped = TypeBlueprint {
             type_id,
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             qualifier: self.qualifier,
-            stack_type: self.stack_type.and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
-            parameters: self.parameters.process(context),
+            stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
+            parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
             parent: None,
             inheritance_chain: vec![],
@@ -53,9 +53,10 @@ impl TypeDeclaration {
             context.errors.add(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
 
-        context.types.insert(type_blueprint);
+        let type_blueprint = context.types.insert(type_unwrapped);
+        let owner = ParameterTypeOwner::Type(type_blueprint.clone());
 
-        type_id
+        type_blueprint.borrow_mut().parameters = self.parameters.process(&owner, context);
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
@@ -90,7 +91,7 @@ impl TypeDeclaration {
     }
 
     pub fn process_parent(&self, context: &mut ProgramContext) {
-        self.process(context, |type_blueprint, context| {
+        self.process(context, |type_wrapped, context| {
             let mut result = None;
 
             if let Some(parsed_parent_type) = &self.parent {
@@ -104,17 +105,17 @@ impl TypeDeclaration {
                             context.errors.add(parsed_parent_type, format!("cannot inherit from generic parameter"));
                         },
                         Type::Actual(info) => {
-                            let parent_blueprint = info.type_blueprint.borrow();
+                            let parent_unwrapped = info.type_wrapped.borrow();
 
-                            match &parent_blueprint.qualifier {
+                            match &parent_unwrapped.qualifier {
                                 TypeQualifier::Type => {
                                     context.errors.add(parsed_parent_type, format!("cannot inherit from regular types"));
                                 },
                                 _ => {
-                                    if parent_blueprint.qualifier != self.qualifier {
-                                        context.errors.add(parsed_parent_type, format!("`{}` types cannot inherit from `{}` types", self.qualifier, parent_blueprint.qualifier));
+                                    if parent_unwrapped.qualifier != self.qualifier {
+                                        context.errors.add(parsed_parent_type, format!("`{}` types cannot inherit from `{}` types", self.qualifier, parent_unwrapped.qualifier));
                                     } else if self.qualifier != TypeQualifier::Type {
-                                        result = Some(info);
+                                        result = Some(info.clone());
                                     }
                                 }
                             };
@@ -124,29 +125,29 @@ impl TypeDeclaration {
                 }
             }
 
-            type_blueprint.borrow_mut().parent = result;
+            type_wrapped.borrow_mut().parent = result;
         });
     }
 
     pub fn process_inheritance_chain(&self, context: &mut ProgramContext) {
-        self.process(context, |type_blueprint, context| {
-            let mut types = vec![type_blueprint.get_info()];
-            let mut parent_opt = &type_blueprint.borrow().parent;
+        self.process(context, |type_wrapped, context| {
+            let mut types = vec![type_wrapped.get_info()];
+            let mut parent_opt = type_wrapped.borrow().parent.clone();
 
-            while let Some(parent_info) = parent_opt {
-                if types.iter().any(|info| info.type_blueprint == parent_info.type_blueprint) {
-                    if &parent_info.type_blueprint == type_blueprint {
+            while let Some(parent_info) = &parent_opt {
+                if types.iter().any(|info| info.type_wrapped == parent_info.type_wrapped) {
+                    if &parent_info.type_wrapped == &type_wrapped {
                         context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
                     }
                 } else {
                     types.push(parent_info.clone());
-                    parent_opt = &parent_info.type_blueprint.borrow().parent;
+                    parent_opt = parent_info.type_wrapped.with_ref(|parent_unwrapped| parent_unwrapped.parent.clone());
                 }
             }
 
             types.reverse();
 
-            type_blueprint.borrow_mut().inheritance_chain = types;
+            type_wrapped.borrow_mut().inheritance_chain = types;
         });
     }
 
@@ -160,12 +161,12 @@ impl TypeDeclaration {
                 }
 
                 if let Some(field_type) = field.ty.process(context) {
-                    let field_details = FieldDetails {
+                    let field_details = Rc::new(FieldDetails {
                         owner: type_blueprint.clone(),
                         ty: field_type,
                         name: field.name.clone(),
                         offset: 0,
-                    };
+                    });
 
                     fields.insert(field.name.to_string(), field_details);
                 }
@@ -191,7 +192,7 @@ impl TypeDeclaration {
         });
     }
 
-    fn process<'a, F : FnMut(&Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, f : F) {
+    fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f : F) {
         let type_blueprint = context.types.get_by_location(&self.name);
 
         context.current_type = Some(type_blueprint.clone());
@@ -199,28 +200,28 @@ impl TypeDeclaration {
         context.current_type = None;
     }
 
-    fn process_inheritance<'a, F : FnMut(&Link<TypeBlueprint>, Vec<Link<TypeBlueprint>>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, f : F) {
+    fn process_inheritance<'a, F : FnMut(Link<TypeBlueprint>, Vec<Link<TypeBlueprint>>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, mut f : F) {
         let type_blueprint = context.types.get_by_location(&self.name);
-        let parent_type_list : Vec<Link<TypeBlueprint>> = type_blueprint.borrow().inheritance_chain.iter().map(|info| info.type_blueprint.clone()).collect();
+        let parent_type_list : Vec<Link<TypeBlueprint>> = type_blueprint.borrow().inheritance_chain.iter().map(|info| info.type_wrapped.clone()).collect();
 
         f(type_blueprint, parent_type_list, context);
     }
 
     pub fn process_fields_inheritance(&self, context: &mut ProgramContext) {
         self.process_inheritance(context, |type_blueprint, parent_type_list, context| {
-            let mut fields : IndexMap<String, FieldDetails> = IndexMap::new();
+            let mut fields = IndexMap::new();
 
             for parent_blueprint in parent_type_list {
                 for field in parent_blueprint.borrow().fields.values() {
                     if field.owner == parent_blueprint {
-                        let field_info = FieldDetails {
+                        let field_info = Rc::new(FieldDetails {
                             owner: field.owner.clone(),
                             name: field.name.clone(),
                             ty: field.ty.clone(),
                             offset: fields.len() + OBJECT_HEADER_SIZE
-                        };
+                        });
 
-                        if fields.insert(field.name.to_string(), field_info).is_some() && &field.owner == type_blueprint {
+                        if fields.insert(field.name.to_string(), field_info).is_some() && &field.owner == &type_blueprint {
                             context.errors.add(&self.name, format!("duplicate field `{}` (already declared by parent struct `{}`)", &self.name, &parent_blueprint.borrow().name));
                         }
                     }
@@ -232,7 +233,7 @@ impl TypeDeclaration {
     }
 
     pub fn process_methods_inheritance(&self, context: &mut ProgramContext) {
-        self.process_inheritance(context, |type_blueprint, parent_type_list, context| {
+        self.process_inheritance(context, |type_wrapped, parent_type_list, context| {
             let mut methods = IndexMap::new();
             let mut static_methods = IndexMap::new();
             let mut dynamic_methods = vec![];
@@ -254,7 +255,7 @@ impl TypeDeclaration {
                         };
 
                         if let Some(previous_method) = indexmap.insert(name.to_string(), method_blueprint.clone()) {
-                            if owner == type_blueprint && (!previous_method.borrow().is_dynamic || !is_dynamic) {
+                            if owner == &type_wrapped && (!previous_method.borrow().is_dynamic || !is_dynamic) {
                                 context.errors.add(&self.name, format!("duplicate {}method `{}` (already declared by parent struct `{}`)", s, &self.name, &parent_blueprint.borrow().name));
                             }
                         }
@@ -262,16 +263,16 @@ impl TypeDeclaration {
                 }
             }
 
-            for method_blueprint in methods.values() {
-                let ok = method_blueprint.with_mut(|method| {
-                    if method.is_dynamic {
+            for method_wrapped in methods.values() {
+                let ok = method_wrapped.with_mut(|mut method_unwrapped| {
+                    if method_unwrapped.is_dynamic {
                         let index = dynamic_methods.len() as i32;
 
-                        if method.dynamic_index == -1 {
-                            method.dynamic_index = index;
+                        if method_unwrapped.dynamic_index == -1 {
+                            method_unwrapped.dynamic_index = index;
                             return true;
-                        } else if method.dynamic_index != index {
-                            panic!("method `{}` had dynamic index `{}`, tried to assign `{}`", &method.name, method.dynamic_index, index);
+                        } else if method_unwrapped.dynamic_index != index {
+                            panic!("method `{}` had dynamic index `{}`, tried to assign `{}`", &method_unwrapped.name, method_unwrapped.dynamic_index, index);
                         } else {
                             return true;
                         }
@@ -281,15 +282,13 @@ impl TypeDeclaration {
                 });
 
                 if ok {
-                    dynamic_methods.push(method_blueprint.clone());
+                    dynamic_methods.push(method_wrapped.clone());
                 }
             }
 
-            type_blueprint.with_mut(|t| {
-                t.methods = methods;
-                t.static_methods = static_methods;
-                t.dynamic_methods = dynamic_methods;
-            });
+            type_wrapped.borrow_mut().methods = methods;
+            type_wrapped.borrow_mut().static_methods = static_methods;
+            type_wrapped.borrow_mut().dynamic_methods = dynamic_methods;
         });
     }
 }

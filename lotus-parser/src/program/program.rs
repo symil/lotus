@@ -5,8 +5,8 @@ use super::Error;
 
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 const COMMENT_START_TOKEN : &'static str = "//";
-const PRELUDE_file_namespace : &'static str = "std";
-const SELF_file_namespace : &'static str = "self";
+const PRELUDE_NAMESPACE : &'static str = "std";
+const SELF_NAMESPACE : &'static str = "self";
 
 pub struct LotusProgram {
     pub wat: String,
@@ -30,10 +30,10 @@ impl LotusProgram {
         let mut source_list = vec![];
 
         if let Some(prelude_path) = prelude_directory_path {
-            source_list.push((PRELUDE_file_namespace, prelude_path, prelude_path));
+            source_list.push((PRELUDE_NAMESPACE, prelude_path, prelude_path));
         }
 
-        source_list.push((SELF_file_namespace, path, prefix));
+        source_list.push((SELF_NAMESPACE, path, prefix));
 
         let now = Instant::now();
 

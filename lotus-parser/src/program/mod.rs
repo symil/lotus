@@ -29,6 +29,7 @@ mod type_context;
 mod helper_traits;
 mod helper_macros;
 mod wat;
+mod header;
 
 pub use error::*;
 pub use program::*;
@@ -60,3 +61,4 @@ pub use resolved_type::*;
 pub use type_context::*;
 pub use helper_traits::*;
 pub use wat::*;
+pub use header::*;

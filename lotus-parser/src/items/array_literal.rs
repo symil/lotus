@@ -26,8 +26,6 @@ impl ArrayLiteral {
             let mut item_ok = false;
 
             if let Some(item_vasm) = item.process(context) {
-                item_vasm_list.push(item_vasm);
-
                 if final_item_type.is_assignable_to(&item_vasm.ty) {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;
@@ -38,6 +36,8 @@ impl ArrayLiteral {
                 if !item_ok {
                     context.errors.add(item, format!("incompatible item types `{}` and `{}`", &final_item_type, &item_vasm.ty));
                     all_items_ok = false;
+                } else {
+                    item_vasm_list.push(item_vasm);
                 }
             }
         }

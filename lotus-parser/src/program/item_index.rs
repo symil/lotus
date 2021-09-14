@@ -20,8 +20,8 @@ impl<V : GlobalItem> ItemIndex<V> {
     }
 
     pub fn insert(&mut self, value: V) -> Link<V> {
-        let name = value.get_name();
-        let id = name.location.get_hash();
+        let id = value.get_name().location.get_hash();
+        let name = value.get_name().to_string();
         let item = Link::new(value);
 
         self.items_by_id.insert(id, item.clone());
@@ -29,41 +29,39 @@ impl<V : GlobalItem> ItemIndex<V> {
         if let Some(vec) = self.items_by_name.get_mut(name.as_str()) {
             vec.push(item.clone());
         } else {
-            self.items_by_name.insert(name.to_string(), vec![item.clone()]);
+            self.items_by_name.insert(name, vec![item.clone()]);
         }
 
         item
     }
 
-    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<&Link<V>> {
+    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<Link<V>> {
         let candidates = self.items_by_name.get(getter_name.as_str())?;
         let getter_location : &DataLocation = &getter_name.location;
 
-        for item in candidates.iter() {
-            let item_name = item.borrow().get_name();
-            let item_location = &item_name.location;
-            let ok = match item.borrow().get_visibility() {
-                Visibility::Private => item_location.file_namespace == getter_location.file_namespace && item_location.file_name == getter_location.file_name,
-                Visibility::Public => item_location.file_namespace == getter_location.file_namespace,
-                Visibility::Export => true,
-                Visibility::System => item_location.file_namespace == getter_location.file_namespace,
-                Visibility::Member => false,
-            };
+        for item_wrapped in candidates.iter() {
+            let ok = item_wrapped.with_ref(|item| {
+                let item_name = item.get_name();
+                let item_location = &item_name.location;
+                match item.get_visibility() {
+                    Visibility::Private => item_location.file_namespace == getter_location.file_namespace && item_location.file_name == getter_location.file_name,
+                    Visibility::Public => item_location.file_namespace == getter_location.file_namespace,
+                    Visibility::Export => true,
+                    Visibility::System => item_location.file_namespace == getter_location.file_namespace,
+                    Visibility::Member => false,
+                }
+            });
 
             if ok {
-                return Some(&item);
+                return Some(item_wrapped.clone());
             }
         }
 
         None
     }
 
-    pub fn ref_by_name(&self, getter_name: &Identifier) -> Option<Ref<V>> {
-        self.get_by_name(getter_name).and_then(|link| Some(link.borrow()))
-    }
-
-    pub fn get_by_location(&self, value_name: &Identifier) -> &Link<V> {
-        self.items_by_id.get(&value_name.location.get_hash()).unwrap()
+    pub fn get_by_location(&self, value_name: &Identifier) -> Link<V> {
+        self.items_by_id.get(&value_name.location.get_hash()).unwrap().clone()
     }
 }
 

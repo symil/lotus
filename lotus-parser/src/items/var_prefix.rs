@@ -8,7 +8,7 @@ pub struct VarPrefixWrapper {
 }
 
 #[parsable(impl_display=true)]
-#[derive(PartialEq, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum VarPrefix {
     This = "#",
     Payload = "$",

@@ -2,13 +2,13 @@ use parsable::{DataLocation, parsable};
 use crate::{items::Identifier, program::{BuiltinInterface, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct BinaryOperatorWrapper {
     pub value: BinaryOperator
 }
 
 #[parsable(impl_display=true)]
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum BinaryOperator {
     Plus = "+",
     Minus = "-",

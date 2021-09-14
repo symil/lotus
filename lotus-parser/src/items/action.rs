@@ -18,9 +18,10 @@ impl Action {
                 let function_depth = context.get_scope_depth(ScopeKind::Function).unwrap();
                 context.return_found = true;
 
-                let function_blueprint = context.current_function.as_ref().unwrap().borrow();
+                let function_wrapped = context.get_current_function().unwrap();
+                let function_unwrapped = function_wrapped.borrow();
 
-                match &function_blueprint.return_value {
+                match &function_unwrapped.return_value {
                     Some(return_value) => match &self.value {
                         Some(expr) => {
                             if let Some(vasm) = expr.process(context) {

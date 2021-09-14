@@ -1,7 +1,7 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref, rc::Rc};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::VI, utils::Link, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, VI, Wat}, utils::Link, wat};
 use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -31,14 +31,14 @@ impl ProgramContext {
 
     fn get_builtin_type_info(&self, builtin_type: BuiltinType) -> ActualTypeInfo {
         ActualTypeInfo {
-            type_blueprint: self.builtin_types.get(&builtin_type).unwrap().clone(),
+            type_wrapped: self.builtin_types.get(&builtin_type).unwrap().clone(),
             parameters: vec![],
         }
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
         let mut info = ActualTypeInfo {
-            type_blueprint: self.builtin_types.get(&builtin_type).unwrap().clone(),
+            type_wrapped: self.builtin_types.get(&builtin_type).unwrap().clone(),
             parameters: vec![],
         };
 
@@ -57,10 +57,22 @@ impl ProgramContext {
         self.get_builtin_type(BuiltinType::Int, vec![])
     }
 
-    pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> &Link<InterfaceBlueprint> {
+    pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {
         let (interface_blueprint, _) = self.builtin_interfaces.get(&interface).unwrap();
 
-        interface_blueprint
+        interface_blueprint.clone()
+    }
+
+    pub fn get_current_function(&self) -> Option<Link<FunctionBlueprint>> {
+        self.current_function.as_ref().and_then(|f| Some(f.clone()))
+    }
+
+    pub fn get_current_type(&self) -> Option<Link<TypeBlueprint>> {
+        self.current_type.as_ref().and_then(|f| Some(f.clone()))
+    }
+
+    pub fn get_current_interface(&self) -> Option<Link<InterfaceBlueprint>> {
+        self.current_interface.as_ref().and_then(|f| Some(f.clone()))
     }
 
     pub fn reset_local_scope(&mut self) {
@@ -96,15 +108,15 @@ impl ProgramContext {
         }
     }
 
-    pub fn get_var_info(&self, name: &Identifier) -> Option<&Rc<VariableInfo>> {
+    pub fn get_var_info(&self, name: &Identifier) -> Option<Rc<VariableInfo>> {
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
-                return Some(var_info);
+                return Some(var_info.clone());
             }
         }
 
         match self.global_vars.get_by_name(name) {
-            Some(global) => Some(&global.borrow().var_info),
+            Some(global) => Some(global.borrow().var_info.clone()),
             None => None,
         }
     }
@@ -122,33 +134,37 @@ impl ProgramContext {
     pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<Vasm>
         where
             L : Deref<Target=DataLocation>,
-            F : FnMut() -> String
+            F : Fn() -> String
     {
-        let mut ok = true;
-        let (interface_blueprint, method_name) = self.builtin_interfaces.get(&interface).unwrap();
-        let function_blueprint = interface_blueprint.borrow().methods.get(method_name).unwrap();
+        let (interface_wrapped, method_name) = self.builtin_interfaces.get(&interface).cloned().unwrap();
 
-        if !target_type.match_interface(interface_blueprint) {
-            self.errors.add(location, format!("type `{}` does not implement method `{}`", target_type, method_name));
-            ok = false;
-        }
+        interface_wrapped.with_ref(|interface_unwrapped| {
+            interface_unwrapped.methods.get(&method_name).unwrap().with_ref(|function_unwrapped| {
+                let mut ok = true;
 
-        for (expected_arg, actual_arg_type) in function_blueprint.borrow().arguments.iter().zip(argument_types.iter()) {
-            if !actual_arg_type.is_assignable_to(&expected_arg.ty) {
-                let prefix = make_error_prefix();
-                self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
-                ok = false;
-            }
-        }
+                if !target_type.match_interface(&interface_wrapped) {
+                    self.errors.add(location, format!("type `{}` does not implement method `{}`", target_type, method_name));
+                    ok = false;
+                }
 
-        let ty = function_blueprint.borrow().return_value.and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
-        let method_instruction = VI::call_function_from_stack(ty.get_method(method_name).unwrap());
-        let result = Vasm::new(ty, vec![], vec![method_instruction]);
+                for (expected_arg, actual_arg_type) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
+                    if !actual_arg_type.is_assignable_to(&expected_arg.ty) {
+                        let prefix = make_error_prefix();
+                        self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
+                        ok = false;
+                    }
+                }
 
-        match ok {
-            true => Some(result),
-            false => None
-        }
+                let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
+                let method_instruction = VI::call_function_from_stack(ty.get_method(&method_name).unwrap());
+                let result = Vasm::new(ty, vec![], vec![method_instruction]);
+
+                match ok {
+                    true => Some(result),
+                    false => None
+                }
+            })
+        })
     }
 
     pub fn call_builtin_interface_no_arg<L>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type) -> Option<Vasm>
@@ -237,14 +253,14 @@ impl ProgramContext {
     }
 
     pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
-        let main_identifier = Identifier::new("main");
+        let main_identifier = Identifier::unlocated("main");
 
-        if self.get_function_by_name(&main_identifier).is_none() {
-            self.errors.push(Error::unlocated(format!("missing required function `main`")));
+        if self.functions.get_by_name(&main_identifier).is_none() {
+            self.errors.add_unlocated(format!("missing required function `main`"));
         }
 
         if !self.errors.is_empty() {
-            return Err(self.errors);
+            return Err(self.errors.consume());
         }
 
         let mut content = wat!["module"];
@@ -264,65 +280,65 @@ impl ProgramContext {
             content.push(Wat::declare_function_type(type_name, arguments, result.clone()));
         }
 
-        let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
-        content.push(wat!["table", func_table_size, "funcref"]);
+        // let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
+        // content.push(wat!["table", func_table_size, "funcref"]);
 
-        let mut generated_methods_table_populate = vec![];
-        let mut generated_methods_declarations = vec![];
+        // let mut generated_methods_table_populate = vec![];
+        // let mut generated_methods_declarations = vec![];
 
-        for struct_annotation in self.structs.id_to_item.values() {
-            let generated_methods = GeneratedMethods::new(struct_annotation);
-            let (retain_name, retain_declaration) = generated_methods.retain;
-            let table_offset = struct_annotation.get_id() * GENERATED_METHOD_COUNT_PER_TYPE;
+        // for struct_annotation in self.structs.id_to_item.values() {
+        //     let generated_methods = GeneratedMethods::new(struct_annotation);
+        //     let (retain_name, retain_declaration) = generated_methods.retain;
+        //     let table_offset = struct_annotation.get_id() * GENERATED_METHOD_COUNT_PER_TYPE;
 
-            generated_methods_table_populate.push(wat!["elem", Wat::const_i32(table_offset), Wat::var_name(&retain_name)]);
-            generated_methods_declarations.push(retain_declaration);
-        }
+        //     generated_methods_table_populate.push(wat!["elem", Wat::const_i32(table_offset), Wat::var_name(&retain_name)]);
+        //     generated_methods_declarations.push(retain_declaration);
+        // }
 
-        content.extend(generated_methods_table_populate);
+        // content.extend(generated_methods_table_populate);
 
-        for (var_name, var_type) in HEADER_GLOBALS {
-            content.push(Wat::declare_global(var_name, var_type));
-        }
+        // for (var_name, var_type) in HEADER_GLOBALS {
+        //     content.push(Wat::declare_global(var_name, var_type));
+        // }
 
-        let mut init_globals_body = vec![];
+        // let mut init_globals_body = vec![];
 
-        for global in get_globals_sorted(take(&mut self.global_vars)) {
-            let wat = match global.var_info.ty {
-                TypeOld::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
-                _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),
-            };
+        // for global in get_globals_sorted(take(&mut self.global_vars)) {
+        //     let wat = match global.var_info.ty {
+        //         TypeOld::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
+        //         _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),
+        //     };
 
-            content.push(wat);
+        //     content.push(wat);
 
-            init_globals_body.extend(global.value);
-        }
+        //     init_globals_body.extend(global.value);
+        // }
 
-        for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
-            content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
-        }
+        // for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
+        //     content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
+        // }
 
-        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
-        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
-            Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
-            Wat::call(self.get_function_by_name(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
-        ]));
+        // content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
+        // content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
+        //     Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
+        //     Wat::call(self.get_function_by_name(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
+        // ]));
 
-        for function in self.functions.id_to_item.into_values() {
-            content.push(function.wat);
-        }
+        // for function in self.functions.id_to_item.into_values() {
+        //     content.push(function.wat);
+        // }
 
-        for struct_annotation in self.structs.id_to_item.into_values() {
-            for method in struct_annotation.regular_methods.into_values() {
-                content.push(method.wat);
-            }
+        // for struct_annotation in self.structs.id_to_item.into_values() {
+        //     for method in struct_annotation.regular_methods.into_values() {
+        //         content.push(method.wat);
+        //     }
             
-            for method in struct_annotation.static_methods.into_values() {
-                content.push(method.wat);
-            }
-        }
+        //     for method in struct_annotation.static_methods.into_values() {
+        //         content.push(method.wat);
+        //     }
+        // }
 
-        content.extend(generated_methods_declarations);
+        // content.extend(generated_methods_declarations);
         
         Ok(content.to_string(0))
     }

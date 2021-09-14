@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, rc::Rc, result};
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
 use super::{AssociatedType, FieldDetails, FunctionBlueprint, InterfaceAssociatedType, InterfaceBlueprint, ParameterType, ProgramContext, ResolvedType, TypeBlueprint};
@@ -15,7 +15,7 @@ pub enum Type {
 
 #[derive(Debug, Clone)]
 pub struct ActualTypeInfo {
-    pub type_blueprint: Link<TypeBlueprint>,
+    pub type_wrapped: Link<TypeBlueprint>,
     pub parameters: Vec<Type>
 }
 
@@ -51,7 +51,7 @@ impl Type {
     pub fn is_integer(&self) -> bool {
         if let Type::Actual(info) = self {
             // TODO: do this more properly
-            if info.type_blueprint.borrow().name.as_str() == "int" {
+            if info.type_wrapped.borrow().name.as_str() == "int" {
                 return true;
             }
         }
@@ -59,7 +59,7 @@ impl Type {
         false
     }
 
-    pub fn get_assiciated_type(&self, interface_associated_type: &Link<InterfaceAssociatedType>) -> Option<Type> {
+    pub fn get_assiciated_type(&self, interface_associated_type: Link<InterfaceAssociatedType>) -> Option<Type> {
         match self {
             Type::Void => None,
             Type::Any => None,
@@ -68,7 +68,7 @@ impl Type {
                 true => Some(Type::Associated(interface_associated_type.clone())),
                 false => None
             },
-            Type::Actual(info) => match info.type_blueprint.borrow().associated_types.get(interface_associated_type.borrow().name.as_str()) {
+            Type::Actual(info) => match info.type_wrapped.borrow().associated_types.get(interface_associated_type.borrow().name.as_str()) {
                 Some(associated_type) => Some(associated_type.value.clone()),
                 None => None,
             },
@@ -103,7 +103,7 @@ impl Type {
             },
             Type::Actual(self_info) => {
                 match target {
-                    Type::Actual(target_info) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
+                    Type::Actual(target_info) => self_info.type_wrapped.borrow().inheritance_chain.contains(target_info),
                     _ => false
                 }
             },
@@ -119,7 +119,7 @@ impl Type {
             Type::Parameter(parameter) => parameter.borrow().required_interfaces.contains(interface),
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
-                let type_blueprint = info.type_blueprint.borrow();
+                let type_blueprint = info.type_wrapped.borrow();
 
                 for associated_type in interface_blueprint.associated_types.values() {
                     if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.borrow().name.as_str()) {
@@ -145,7 +145,10 @@ impl Type {
                             }
                         }
 
-                        if actual_function_blueprint.return_value.and_then(|info| Some(&info.ty)) != expected_function_blueprint.return_value.and_then(|info| Some(&info.ty)) {
+                        let actual_return_value = actual_function_blueprint.return_value.as_ref().and_then(|info| Some(&info.ty));
+                        let expected_return_type = expected_function_blueprint.return_value.as_ref().and_then(|info| Some(&info.ty));
+
+                        if actual_return_value != expected_return_type {
                             return false;
                         }
                     } else {
@@ -170,55 +173,64 @@ impl Type {
         }
     }
 
-    pub fn get_maybe_static_method(&self, is_static: bool, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+    pub fn get_maybe_static_method(&self, is_static: bool, method_name: &str) -> Option<Link<FunctionBlueprint>> {
         match self {
             Type::Void => None,
             Type::Any => None,
             Type::Associated(associated_type) => None,
             Type::Parameter(parameter_type) => {
-                for interface_blueprint in &parameter_type.borrow().required_interfaces {
-                    let index_map = match is_static {
-                        true => interface_blueprint.borrow().static_methods,
-                        false => interface_blueprint.borrow().methods,
-                    };
+                for interface_wrapped in &parameter_type.borrow().required_interfaces {
+                    let result = interface_wrapped.with_ref(|interface_unwrapped| {
+                        let index_map = match is_static {
+                            true => &interface_unwrapped.static_methods,
+                            false => &interface_unwrapped.methods,
+                        };
 
-                    if let Some(function_blueprint) = index_map.get(method_name) {
-                        return Some(&function_blueprint);
+                        match index_map.get(method_name) {
+                            Some(function_wrapped) => Some(function_wrapped.clone()),
+                            None => None
+                        }
+                    });
+
+                    if result.is_some() {
+                        return result;
                     }
                 }
 
                 None
             },
             Type::Actual(info) => {
-                let index_map = match is_static {
-                    true => info.type_blueprint.borrow().static_methods,
-                    false => info.type_blueprint.borrow().methods,
-                };
+                info.type_wrapped.with_ref(|type_unwrapped| {
+                    let index_map = match is_static {
+                        true => &type_unwrapped.static_methods,
+                        false => &type_unwrapped.methods,
+                    };
 
-                match index_map.get(method_name) {
-                    Some(function_blueprint) => Some(&function_blueprint),
-                    None => None,
-                }
+                    match index_map.get(method_name) {
+                        Some(function_blueprint) => Some(function_blueprint.clone()),
+                        None => None,
+                    }
+                })
             },
             Type::TypeRef(ty) => ty.get_maybe_static_method(true, method_name)
         }
     }
 
-    pub fn get_method(&self, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+    pub fn get_method(&self, method_name: &str) -> Option<Link<FunctionBlueprint>> {
         self.get_maybe_static_method(false, method_name)
     }
 
-    pub fn get_static_method(&self, method_name: &str) -> Option<&Link<FunctionBlueprint>> {
+    pub fn get_static_method(&self, method_name: &str) -> Option<Link<FunctionBlueprint>> {
         self.get_maybe_static_method(true, method_name)
     }
 
-    pub fn get_field(&self, field_name: &str) -> Option<&FieldDetails> {
+    pub fn get_field(&self, field_name: &str) -> Option<Rc<FieldDetails>> {
         match self {
             Type::Void => None,
             Type::Any => None,
             Type::Associated(_) => None,
             Type::Parameter(_) => None,
-            Type::Actual(info) => info.type_blueprint.borrow().fields.get(field_name),
+            Type::Actual(info) => info.type_wrapped.with_ref(|type_unwrapped| type_unwrapped.fields.get(field_name).cloned()),
             Type::TypeRef(_) => None,
         }
     }
@@ -230,7 +242,7 @@ impl Type {
 
 impl PartialEq for ActualTypeInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.type_blueprint == other.type_blueprint && self.parameters == other.parameters
+        self.type_wrapped == other.type_wrapped && self.parameters == other.parameters
     }
 }
 
@@ -259,7 +271,7 @@ impl Display for Type {
             Type::Any => write!(f, "<any>"),
             Type::Associated(info) => write!(f, "{}", &info.borrow().name),
             Type::Parameter(info) => write!(f, "{}", &info.borrow().name),
-            Type::Actual(info) => write!(f, "{}", &info.type_blueprint.borrow().name),
+            Type::Actual(info) => write!(f, "{}", &info.type_wrapped.borrow().name),
             Type::TypeRef(typeref) => write!(f, "<type {}>", &typeref),
         }
     }
