@@ -1,7 +1,7 @@
 use std::rc::Rc;
-use crate::utils::Link;
-
+use crate::{items::Identifier, utils::Link, wat};
 use super::{FunctionBlueprint, ToInt, ToVasm, Type, VariableInfo, Vasm, Wat};
+
 pub type VI = VirtualInstruction;
 
 #[derive(Debug)]
@@ -32,8 +32,16 @@ pub struct VirtualSetVariableInfo {
 }
 
 #[derive(Debug)]
+enum FunctionKind {
+    Function,
+    Method(Type),
+    StaticMethod(Type)
+}
+
+#[derive(Debug)]
 pub struct VirtualFunctionCallInfo {
-    pub function_blueprint: Link<FunctionBlueprint>,
+    pub kind: FunctionKind,
+    pub function_name: String,
     pub args: Option<Vasm>,
 }
 
@@ -106,17 +114,27 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn call_function<T : ToVasm>(function: Link<FunctionBlueprint>, args: T) -> Self {
+    pub fn call_function<T : ToVasm>(function_name: &str, args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
-            function_blueprint: function,
+            kind: FunctionKind::Function,
+            function_name: function_name.to_string(),
             args: Some(args.to_vasm()),
         })
     }
 
-    pub fn call_function_from_stack(function: Link<FunctionBlueprint>) -> Self {
+    pub fn call_method<T : ToVasm>(caller_type: &Type, function_name: &str, args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
-            function_blueprint: function,
-            args: None,
+            kind: FunctionKind::Method(caller_type.clone()),
+            function_name: function_name.to_string(),
+            args: Some(args.to_vasm()),
+        })
+    }
+
+    pub fn call_static_method<T : ToVasm>(caller_type: &Type, function_name: &str, args: T) -> Self {
+        Self::FunctionCall(VirtualFunctionCallInfo {
+            kind: FunctionKind::StaticMethod(caller_type.clone()),
+            function_name: function_name.to_string(),
+            args: Some(args.to_vasm()),
         })
     }
 
@@ -174,6 +192,51 @@ impl VirtualInstruction {
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},
             VirtualInstruction::JumpIf(_) => {},
+        }
+    }
+
+    pub fn resolve(&self, type_index: &TypeIndex) -> Vec<Wat> {
+        match self {
+            VirtualInstruction::Drop => vec![wat!["drop"]],
+            VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
+            VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
+            VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
+            VirtualInstruction::GetVariable(info) => todo!(),
+            VirtualInstruction::SetVariable(_) => todo!(),
+            VirtualInstruction::TeeVariable(_) => todo!(),
+            VirtualInstruction::FunctionCall(info) => {
+                todo!()
+            },
+            VirtualInstruction::Loop(info) => vec![wat!["loop", info.content.resolve()]],
+            VirtualInstruction::Block(info) => {
+                let mut wat = wat!["block"];
+
+                if !info.result.is_empty() {
+                    let mut result = wat!["result"];
+
+                    for ty in &info.result {
+                        if let Some(wasm_type) = ty.resolve().get_wasm_type() {
+                            result.push(wasm_type);
+                        }
+                    }
+
+                    wat.push(result);
+                }
+
+                wat.extend(info.content.resolve());
+
+                vec![wat]
+            },
+            VirtualInstruction::Jump(info) => vec![wat!["br", info.depth]],
+            VirtualInstruction::JumpIf(info) => {
+                let mut jump = wat!["br_if", info.depth];
+
+                if let Some(vasm) = &info.condition {
+                    jump.extend(vasm.resolve());
+                }
+
+                vec![jump]
+            },
         }
     }
 }

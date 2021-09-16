@@ -3,7 +3,7 @@ use enum_as_string_macro::*;
 use crate::{wat};
 use super::{ToInt, ToWat, ToWatVec};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Wat {
     keyword: String,
     arguments: Vec<Wat>

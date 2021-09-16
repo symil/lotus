@@ -1,7 +1,6 @@
 use std::{cell::Ref, collections::HashMap};
-
 use parsable::parsable;
-use crate::{program::{AccessType, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AccessType, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
 use super::{ArgumentList, Identifier, VarPrefix};
 
 #[parsable]
@@ -17,7 +16,7 @@ impl FieldOrMethodAccess {
 
     pub fn process(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.arguments {
-            Some(arguments) => process_method_call(parent_type, &self.name, arguments, access_type, context),
+            Some(arguments) => process_method_call(parent_type, &self.name, &[], arguments, access_type, context),
             None => process_field_access(parent_type, &self.name, access_type, context)
         }
     }
@@ -33,7 +32,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         };
 
         result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![
-            VI::call_function(parent_type.get_static_method(method_name).unwrap(), vec![VI::int(field_details.offset)])
+            VI::call_static_method(parent_type, method_name, vec![VI::int(field_details.offset)])
         ]));
     } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
@@ -42,19 +41,19 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     result
 }
 
-pub fn process_method_call(parent_type: &Type, method_name: &Identifier, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_method_call(caller_type: &Type, method_name: &Identifier, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(function_blueprint) = parent_type.get_method(method_name.as_str()) {
-        result = process_function_call(function_blueprint, arguments, access_type, context);
+    if let Some(function_blueprint) = caller_type.get_method(method_name.as_str()) {
+        result = process_function_call(caller_type, function_blueprint, parameters, arguments, access_type, context);
     } else {
-        context.errors.add(method_name, format!("type `{}` has no method `{}`", parent_type, method_name));
+        context.errors.add(method_name, format!("type `{}` has no method `{}`", caller_type, method_name));
     }
 
     result
 }
 
-pub fn process_function_call(function_wrapped: Link<FunctionBlueprint>, arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_function_call(caller_type: &Type, function_wrapped: Link<FunctionBlueprint>, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
@@ -62,7 +61,7 @@ pub fn process_function_call(function_wrapped: Link<FunctionBlueprint>, argument
 
     let mut result = Vasm::empty();
 
-    let return_type = function_wrapped.with_ref(|function_unwrapped| {
+    let (function_name, mut return_type) = function_wrapped.with_ref(|function_unwrapped| {
         let expected_arg_count = function_unwrapped.arguments.len();
 
         if arguments.len() != expected_arg_count {
@@ -76,6 +75,7 @@ pub fn process_function_call(function_wrapped: Link<FunctionBlueprint>, argument
                 if i < expected_arg_count {
                     let expected_type = &function_unwrapped.arguments[0].ty;
 
+                    todo!(); // replace generics
                     if expected_type.is_assignable_to(&arg_vasm.ty) {
                         result.extend(arg_vasm);
                     } else {
@@ -85,10 +85,15 @@ pub fn process_function_call(function_wrapped: Link<FunctionBlueprint>, argument
             }
         }
 
-        function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.clone())).unwrap_or(Type::Void)
+        (
+            function_unwrapped.name.as_str(),
+            function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.clone())).unwrap_or(Type::Void)
+        )
     });
 
-    result.extend(Vasm::new(return_type, vec![], vec![VI::call_function_from_stack(function_wrapped)]));
+    return_type = return_type.replace_generics(&context.get_this_type(), parameters);
+
+    result.extend(Vasm::new(return_type, vec![], vec![VI::call_method(caller_type, function_name, vasm![])]));
 
     Some(result)
 }

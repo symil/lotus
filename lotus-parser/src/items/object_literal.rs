@@ -33,7 +33,7 @@ impl ObjectLiteral {
                     result.extend(Vasm::void(
                         vec![object_var.clone()],
                         vec![
-                            VI::set(&object_var, vasm![VI::call_function(object_type.get_static_method(NEW_FUNC_NAME).unwrap(), vec![])])
+                            VI::set(&object_var, vasm![VI::call_static_method(&object_type, NEW_FUNC_NAME, vec![])])
                         ]
                     ));
 
@@ -60,11 +60,11 @@ impl ObjectLiteral {
                     for field_info in type_unwrapped.fields.values() {
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
-                            None => vasm![VI::call_function(field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), vec![])],
+                            None => vasm![VI::call_static_method(&field_info.ty, DEFAULT_FUNC_NAME, vec![])],
                         };
 
                         result.extend(vasm![
-                            VI::call_function(object_type.get_method(SET_AS_PTR_METHOD_NAME).unwrap(), vasm![
+                            VI::call_method(&object_type, SET_AS_PTR_METHOD_NAME, vasm![
                                 init_vasm,
                                 VI::get(&object_var),
                                 VI::int(field_info.offset)

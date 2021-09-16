@@ -1,16 +1,15 @@
 use std::rc::Rc;
-
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstance, GlobalItem, InterfaceBlueprint, ParameterType, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeContext, VariableInfo, Vasm, VirtualInstruction};
+use super::{FunctionInstance, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeInstance, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
     pub function_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
-    pub parameters: IndexMap<String, Link<ParameterType>>,
+    pub parameters: IndexMap<String, Rc<GenericTypeInfo>>,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
@@ -30,7 +29,7 @@ impl FunctionBlueprint {
         self.this_arg.is_none()
     }
 
-    pub fn generate_instance(&self, type_context: &TypeContext) -> FunctionInstance {
+    pub fn generate_instance(&self, type_index: &TypeIndex) -> FunctionInstance {
         let is_static = self.this_arg.is_none();
         let mut variables = vec![];
         let mut wat_args : Vec<(&str, &str)> = vec![];
@@ -75,7 +74,7 @@ impl FunctionBlueprint {
         }
 
         let prefix = match &self.this_arg {
-            Some(var_info) => format!("{}_", &var_info.ty.resolve().type_blueprint.borrow().name),
+            Some(var_info) => format!("{}_", &var_info.ty.resolve().type_wrapped.borrow().name),
             None => String::new(),
         };
         let wasm_name = format!("{}{}_{}", prefix, &self.name, type_context.get_name());

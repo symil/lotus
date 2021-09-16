@@ -1,13 +1,14 @@
-use std::fmt::format;
-
+use std::{rc::Rc};
 use parsable::parsable;
-use crate::program::{ActualTypeInfo, ProgramContext, THIS_VAR_NAME, Type};
+use crate::program::{ActualTypeInfo, AssociatedTypeInfo, ProgramContext, THIS_TYPE_NAME, THIS_VAR_NAME, Type};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
 pub struct ValueType {
     pub name: Identifier,
-    pub arguments: TypeArguments
+    pub arguments: TypeArguments,
+    #[parsable(prefix="::", separator="::", min=1, optional=true)]
+    pub associated_types: Vec<Identifier>
 }
 
 impl ValueType {
@@ -19,37 +20,46 @@ impl ValueType {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
-        let mut result = None;
+        let mut result = Type::Void;
         let mut associated = false;
         let mut parameter = false;
         let parameters = self.arguments.process(context);
         let has_parameters = parameters.is_some();
 
-        if let Some(current_function) = context.get_current_function() {
-            if let Some(parameter_type) = current_function.borrow().parameters.get(self.name.as_str()) {
-                parameter = true;
-                result = Some(Type::Parameter(parameter_type.clone()));
+        if self.name.as_str() == THIS_TYPE_NAME {
+            result = context.get_this_type();
+        }
+
+        if result.is_void() {
+            if let Some(current_function) = context.get_current_function() {
+                if let Some(info) = current_function.borrow().parameters.get(self.name.as_str()) {
+                    parameter = true;
+                    result = Type::FunctionParameter(Rc::clone(info));
+                }
             }
         }
 
-        if result.is_none() {
+        if result.is_void() {
             if let Some(current_interface) = context.get_current_interface() {
                 if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
-                    result = Some(Type::Associated(associated_type.clone()));
+                    result = Type::Associated(AssociatedTypeInfo {
+                        root: Box::new(Type::This(current_interface)),
+                        associated: associated_type.clone(),
+                    });
                 }
             } else if let Some(current_type) = context.get_current_type() {
                 if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
                     parameter = true;
-                    result = Some(Type::Parameter(parameter_type.clone()));
+                    result = Type::TypeParameter(Rc::clone(parameter_type));
                 } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
-                    result = Some(associated_type.value.clone());
+                    result = associated_type.clone();
                 }
             }
         }
 
-        if result.is_none() {
+        if result.is_void() {
             let parameter_list = parameters.unwrap_or_default();
 
             if let Some(type_blueprint) = context.types.get_by_name(&self.name) {
@@ -59,7 +69,7 @@ impl ValueType {
                     context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
-                        for interface_blueprint in &parameter.borrow().required_interfaces {
+                        for interface_blueprint in &parameter.required_interfaces.list {
                             if !argument.match_interface(interface_blueprint) {
                                 let interface_name = &interface_blueprint.borrow().name;
 
@@ -68,10 +78,10 @@ impl ValueType {
                         }
                     }
 
-                    result = Some(Type::Actual(ActualTypeInfo {
+                    result = Type::Actual(ActualTypeInfo {
                         parameters: parameter_list,
                         type_wrapped: type_blueprint.clone(),
-                    }))
+                    })
                 }
             }
         }
@@ -84,10 +94,24 @@ impl ValueType {
             }
         }
 
-        if result.is_none() {
+        if result.is_void() {
             context.errors.add(&self.name, format!("undefined type `{}`", &self.name));
+        } else {
+            for name in &self.associated_types {
+                if let Some(associated_type) = result.get_associated_type(name.as_str()) {
+                    result = associated_type;
+                } else {
+                    context.errors.add(&self.name, format!("type `{}` has no associated type `{}`", &result, name));
+
+                    result = Type::Void;
+                    break;
+                }
+            }
         }
 
-        result
+        match result.is_void() {
+            true => None,
+            false => Some(result)
+        }
     }
 }

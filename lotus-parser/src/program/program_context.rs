@@ -1,8 +1,8 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref, rc::Rc};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, VI, Wat}, utils::Link, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, Type, TypeBlueprint, VariableInfo, VariableKind, Vasm};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, VI, Wat}, utils::Link, vasm, wat};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, Type, TypeBlueprint, TypeInstance, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -14,7 +14,7 @@ pub struct ProgramContext {
     pub global_vars: ItemIndex<GlobalVarBlueprint>,
 
     pub builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
-    pub builtin_interfaces: HashMap<BuiltinInterface, (Link<InterfaceBlueprint>, String)>,
+    pub builtin_interfaces: HashMap<BuiltinInterface, Link<InterfaceBlueprint>>,
 
     pub current_function: Option<Link<FunctionBlueprint>>,
     pub current_type: Option<Link<TypeBlueprint>>,
@@ -22,6 +22,8 @@ pub struct ProgramContext {
     pub scopes: Vec<Scope>,
     pub depth: u32,
     pub return_found: bool,
+
+    pub type_instances: HashMap<u64, Rc<TypeInstance>>,
 }
 
 impl ProgramContext {
@@ -49,6 +51,16 @@ impl ProgramContext {
         Type::Actual(info)
     }
 
+    pub fn get_this_type(&self) -> Type {
+        if let Some(type_wrapped) = &self.current_type {
+            Type::Actual(type_wrapped.get_info())
+        } else if let Some(interface_wrapped) = &self.current_interface {
+            Type::This(interface_wrapped.clone())
+        } else {
+            Type::Void
+        }
+    }
+
     pub fn bool_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Bool, vec![])
     }
@@ -58,9 +70,7 @@ impl ProgramContext {
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {
-        let (interface_blueprint, _) = self.builtin_interfaces.get(&interface).unwrap();
-
-        interface_blueprint.clone()
+        self.builtin_interfaces.get(&interface).unwrap().clone()
     }
 
     pub fn get_current_function(&self) -> Option<Link<FunctionBlueprint>> {
@@ -136,10 +146,11 @@ impl ProgramContext {
             L : Deref<Target=DataLocation>,
             F : Fn() -> String
     {
-        let (interface_wrapped, method_name) = self.builtin_interfaces.get(&interface).cloned().unwrap();
+        let interface_wrapped = self.builtin_interfaces.get(&interface).cloned().unwrap();
 
         interface_wrapped.with_ref(|interface_unwrapped| {
-            interface_unwrapped.methods.get(&method_name).unwrap().with_ref(|function_unwrapped| {
+            interface_unwrapped.methods.first().unwrap().1.with_ref(|function_unwrapped| {
+                let method_name = function_unwrapped.name.as_str();
                 let mut ok = true;
 
                 if !target_type.match_interface(&interface_wrapped) {
@@ -148,6 +159,7 @@ impl ProgramContext {
                 }
 
                 for (expected_arg, actual_arg_type) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
+                    todo!(); // replace generics
                     if !actual_arg_type.is_assignable_to(&expected_arg.ty) {
                         let prefix = make_error_prefix();
                         self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
@@ -156,7 +168,7 @@ impl ProgramContext {
                 }
 
                 let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
-                let method_instruction = VI::call_function_from_stack(ty.get_method(&method_name).unwrap());
+                let method_instruction = VI::call_method(target_type, method_name, vasm![]);
                 let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
                 match ok {

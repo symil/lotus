@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ParameterTypeOwner, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
 
 #[parsable]
@@ -38,8 +38,24 @@ impl FunctionContent {
 
         let function_blueprint = context.functions.insert(function_unwrapped);
         let is_static = self.qualifier.contains(&FunctionQualifier::Static);
-        let owner = ParameterTypeOwner::Function(function_blueprint.clone());
-        let parameters = self.parameters.process(&owner, context);
+        let parameters = self.parameters.process(context);
+        // let parameters = match context.get_current_type() {
+        //     Some(type_wrapped) => type_wrapped.with_ref(|type_unwrapped| {
+        //         let mut result = type_unwrapped.parameters.clone();
+        //         let type_parameter_count = result.len();
+
+        //         for (name, mut value) in self.parameters.process(context) {
+        //             value.index += type_parameter_count;
+
+        //             if result.insert(name, value).is_some() {
+        //                 context.errors.add(&value.name, format!("parameter `{}` already declared by type `{}`", &value.name, &type_unwrapped.name));
+        //             }
+        //         }
+
+        //         result
+        //     }),
+        //     None => self.parameters.process(context)
+        // };
 
         context.current_function = Some(function_blueprint.clone());
 

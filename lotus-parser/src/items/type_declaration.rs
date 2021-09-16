@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeInfo, AssociatedType, Error, FieldDetails, OBJECT_HEADER_SIZE, ParameterTypeOwner, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeInfo, Error, FieldDetails, OBJECT_HEADER_SIZE, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -10,8 +10,8 @@ pub struct TypeDeclaration {
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
     pub stack_type: Option<StackTypeToken>,
-    pub parameters: TypeParameters,
     pub name: Identifier,
+    pub parameters: TypeParameters,
     #[parsable(prefix=":")]
     pub parent: Option<FullType>,
     #[parsable(brackets="{}")]
@@ -54,9 +54,8 @@ impl TypeDeclaration {
         }
 
         let type_blueprint = context.types.insert(type_unwrapped);
-        let owner = ParameterTypeOwner::Type(type_blueprint.clone());
 
-        type_blueprint.borrow_mut().parameters = self.parameters.process(&owner, context);
+        type_blueprint.borrow_mut().parameters = self.parameters.process(context);
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
@@ -65,13 +64,8 @@ impl TypeDeclaration {
 
             for associated_type in &self.body.associated_types {
                 let (name, ty) = associated_type.process(context);
-                let item = AssociatedType {
-                    owner: type_blueprint.clone(),
-                    name: name.clone(),
-                    value: ty,
-                };
 
-                if associated_types.insert(name.to_string(), item).is_some() {
+                if associated_types.insert(name.to_string(), ty).is_some() {
                     context.errors.add(&associated_type.name, format!("duplicate associated type `{}`", &name));
                 }
                 
@@ -79,12 +73,6 @@ impl TypeDeclaration {
                     context.errors.add(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
                 }
             }
-
-            associated_types.insert(THIS_TYPE_NAME.to_string(), AssociatedType {
-                owner: type_blueprint.clone(),
-                name: Identifier::new(THIS_TYPE_NAME, &self.name),
-                value: Type::Actual(type_blueprint.get_info()),
-            });
 
             type_blueprint.borrow_mut().associated_types = associated_types;
         });
@@ -101,7 +89,7 @@ impl TypeDeclaration {
                     }
 
                     match parent_type {
-                        Type::Parameter(_) => {
+                        Type::TypeParameter(_) => {
                             context.errors.add(parsed_parent_type, format!("cannot inherit from generic parameter"));
                         },
                         Type::Actual(info) => {

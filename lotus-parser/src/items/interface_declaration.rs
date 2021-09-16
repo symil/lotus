@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{FunctionBlueprint, InterfaceAssociatedType, InterfaceBlueprint, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeInfo, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -24,6 +26,7 @@ impl InterfaceDeclaration {
             interface_id: self.location.get_hash(),
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
+            this_type: Type::Void,
             associated_types: IndexMap::new(),
             methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -41,14 +44,15 @@ impl InterfaceDeclaration {
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
-        self.process(context, |interface_blueprint, context| {
+        self.process(context, |interface_wrapped, context| {
+            let this_type = Type::This(interface_wrapped.clone());
             let mut associated_types = IndexMap::new();
 
             for associated_type in &self.body.associated_types {
                 let name = associated_type.process(context);
-                let item = Link::new(InterfaceAssociatedType {
-                    owner: interface_blueprint.clone(),
-                    name: name.clone(),
+                let item = Rc::new(InterfaceAssociatedTypeInfo {
+                    name,
+                    required_interfaces: InterfaceList::new(vec![]),
                 });
 
                 if associated_types.insert(name.to_string(), item).is_some() {
@@ -60,18 +64,16 @@ impl InterfaceDeclaration {
                 }
             }
 
-            associated_types.insert(THIS_TYPE_NAME.to_string(), Link::new(InterfaceAssociatedType {
-                owner: interface_blueprint.clone(),
-                name: Identifier::new(THIS_TYPE_NAME, &self.name)
-            }));
-
-            interface_blueprint.borrow_mut().associated_types = associated_types;
+            interface_wrapped.with_mut(|interface_unwrapped| {
+                interface_unwrapped.this_type = this_type;
+                interface_unwrapped.associated_types = associated_types;
+            });
         });
     }
 
     pub fn process_methods(&self, context: &mut ProgramContext) {
         self.process(context, |interface_blueprint, context| {
-            let this_type = Type::Associated(interface_blueprint.borrow().associated_types.get(THIS_TYPE_NAME).unwrap().clone());
+            let this_type = interface_blueprint.borrow().this_type.clone();
             let mut methods = IndexMap::new();
 
             for method in &self.body.methods {
