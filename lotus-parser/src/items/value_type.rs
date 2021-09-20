@@ -62,7 +62,7 @@ impl ValueType {
         if result.is_void() {
             let parameter_list = parameters.unwrap_or_default();
 
-            if let Some(type_blueprint) = context.types.get_by_name(&self.name) {
+            if let Some(type_blueprint) = context.types.get_by_identifier(&self.name) {
                 let parameters = &type_blueprint.borrow().parameters;
 
                 if parameter_list.len() != parameters.len() {

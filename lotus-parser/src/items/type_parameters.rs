@@ -26,7 +26,7 @@ impl TypeParameters {
             let mut required_interfaces = vec![];
 
             for interface_name in &parameter.required_interfaces {
-                if let Some(interface) = context.interfaces.get_by_name(interface_name) {
+                if let Some(interface) = context.interfaces.get_by_identifier(interface_name) {
                     required_interfaces.push(interface.clone());
                 } else {
                     context.errors.add(&parameter.name, format!("undefined interface `{}`", interface_name));

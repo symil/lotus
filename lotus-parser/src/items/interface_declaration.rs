@@ -98,7 +98,7 @@ impl InterfaceDeclaration {
                 }
             }
 
-            if context.interfaces.get_by_name(&self.name).is_some() {
+            if context.interfaces.get_by_identifier(&self.name).is_some() {
                 context.errors.add(self, format!("interface `{}` already exists", &self.name));
             }
 

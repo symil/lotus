@@ -1,7 +1,7 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, VI, Wat}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat}, utils::Link, vasm, wat};
 use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -13,9 +13,6 @@ pub struct ProgramContext {
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
-    pub builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
-    pub builtin_interfaces: HashMap<BuiltinInterface, Link<InterfaceBlueprint>>,
-
     pub current_function: Option<Link<FunctionBlueprint>>,
     pub current_type: Option<Link<TypeBlueprint>>,
     pub current_interface: Option<Link<InterfaceBlueprint>>,
@@ -26,6 +23,8 @@ pub struct ProgramContext {
     // pub instances: GeneratedItems,
     pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
     pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,
+    pub global_var_instances: Vec<GlobalVarInstance>,
+    pub entry_function: Option<Rc<FunctionInstanceHeader>>
 }
 
 impl ProgramContext {
@@ -33,16 +32,11 @@ impl ProgramContext {
         Self::default()
     }
 
-    fn get_builtin_type_info(&self, builtin_type: BuiltinType) -> ActualTypeInfo {
-        ActualTypeInfo {
-            type_wrapped: self.builtin_types.get(&builtin_type).unwrap().clone(),
-            parameters: vec![],
-        }
-    }
-
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
+        let type_name = builtin_type.get_name();
+        let type_blueprint = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
         let mut info = ActualTypeInfo {
-            type_wrapped: self.builtin_types.get(&builtin_type).unwrap().clone(),
+            type_wrapped: type_blueprint,
             parameters: vec![],
         };
 
@@ -72,7 +66,10 @@ impl ProgramContext {
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {
-        self.builtin_interfaces.get(&interface).unwrap().clone()
+        let interface_name = interface.get_name();
+        let interface_blueprint = self.interfaces.get_by_name(interface_name).unwrap_or_else(|| panic!("undefined builtin interface `{}`", interface_name));
+
+        interface_blueprint
     }
 
     pub fn get_current_function(&self) -> Option<Link<FunctionBlueprint>> {
@@ -127,7 +124,7 @@ impl ProgramContext {
             }
         }
 
-        match self.global_vars.get_by_name(name) {
+        match self.global_vars.get_by_identifier(name) {
             Some(global) => Some(global.borrow().var_info.clone()),
             None => None,
         }
@@ -148,7 +145,7 @@ impl ProgramContext {
             L : Deref<Target=DataLocation>,
             F : Fn() -> String
     {
-        let interface_wrapped = self.builtin_interfaces.get(&interface).cloned().unwrap();
+        let interface_wrapped = self.get_builtin_interface(interface);
 
         interface_wrapped.with_ref(|interface_unwrapped| {
             let (_, method_wrapped) = interface_unwrapped.methods.first().unwrap();
@@ -269,18 +266,41 @@ impl ProgramContext {
         }
     }
 
-    pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
-        let main_identifier = Identifier::unlocated("main");
+    pub fn generate_instances(&mut self) {
+        for global_var in self.global_vars.get_all() {
+            let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
+                global_var_unwrapped.generate_instance(self)
+            });
 
-        if self.functions.get_by_name(&main_identifier).is_none() {
-            self.errors.add_unlocated(format!("missing required function `main`"));
+            self.global_var_instances.push(global_var_instance);
         }
 
+        let main_identifier = Identifier::unlocated("main");
+
+        if let Some(function_wrapped) = self.functions.get_by_identifier(&main_identifier) {
+            let parameters = FunctionInstanceParameters {
+                function_blueprint: function_wrapped.clone(),
+                this_type: None,
+                function_parameters: vec![],
+            };
+
+            let (function_instance_header, exists) = self.function_instances.get_header(&parameters);
+            let function_instance_content = parameters.generate_content(&function_instance_header, self);
+
+            self.entry_function = Some(function_instance_header);
+        } else { 
+            self.errors.add_unlocated(format!("missing required function `main`"));
+        }
+    }
+
+    pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
         if !self.errors.is_empty() {
             return Err(self.errors.consume());
         }
 
         let mut content = wat!["module"];
+        let mut globals_declaration = vec![];
+        let mut globals_initialization = vec![];
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
@@ -295,6 +315,12 @@ impl ProgramContext {
 
         for (type_name, arguments, result) in HEADER_FUNC_TYPES {
             content.push(Wat::declare_function_type(type_name, arguments, result.clone()));
+        }
+
+        for global_var in self.global_var_instances {
+            globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
+            globals_initialization.extend(global_var.init_value);
+            globals_initialization.push(Wat::set_global_from_stack(&global_var.wasm_name));
         }
 
         // let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
@@ -320,26 +346,22 @@ impl ProgramContext {
 
         // let mut init_globals_body = vec![];
 
-        // for global in get_globals_sorted(take(&mut self.global_vars)) {
-        //     let wat = match global.var_info.ty {
-        //         TypeOld::Float => Wat::declare_global_f32(&global.var_info.wasm_name, 0.),
-        //         _ => Wat::declare_global_i32(&global.var_info.wasm_name, 0),
-        //     };
-
-        //     content.push(wat);
-
-        //     init_globals_body.extend(global.value);
-        // }
-
         // for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
         //     content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
         // }
 
-        // content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], init_globals_body));
-        // content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], vec![
-        //     Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
-        //     Wat::call(self.get_function_by_name(&main_identifier).unwrap().wasm_name.as_str(), vec![]),
-        // ]));
+        let mut entry_function_body = vec![Wat::call(INIT_GLOBALS_FUNC_NAME, vec![])];
+        entry_function_body.extend(self.entry_function.unwrap().wasm_call.clone());
+
+        content.extend(globals_declaration);
+        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], globals_initialization));
+        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], entry_function_body));
+
+        for (_, function_instance_content) in self.function_instances.consume() {
+            if let Some(wasm_declaration) = function_instance_content.wasm_declaration {
+                content.push(wasm_declaration);
+            }
+        }
 
         // for function in self.functions.id_to_item.into_values() {
         //     content.push(function.wat);

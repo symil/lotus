@@ -98,7 +98,7 @@ impl FunctionContent {
                     context.errors.add(self, "event callbacks cannot have parameters");
                 }
 
-                if let Some(event_type_blueprint) = context.types.get_by_name(&self.name) {
+                if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
                     function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::new(Identifier::new(PAYLOAD_VAR_NAME, self), Type::Actual(event_type_blueprint.get_info()), VariableKind::Argument));
 
                     if event_type_blueprint.borrow().qualifier != TypeQualifier::Class {

@@ -9,7 +9,7 @@ pub struct GeneratedItemIndex<H, C> {
 #[derive(Debug)]
 pub struct Entry<H, C> {
     header: Rc<H>,
-    content: Option<Rc<C>>
+    content: Option<C>
 }
 
 pub trait ItemGenerator<H, C> {
@@ -41,7 +41,13 @@ impl<H, C> GeneratedItemIndex<H, C> {
     pub fn set_content<G : ItemGenerator<H, C>>(&mut self, generator: &G, content: C) {
         let mut entry = self.entries.get_mut(&generator.get_id()).unwrap();
 
-        entry.content = Some(Rc::new(content));
+        entry.content = Some(content);
+    }
+
+    pub fn consume(self) -> Vec<(Rc<H>, C)> {
+        self.entries.into_iter().map(|(id, entry)| {
+            (entry.header, entry.content.unwrap())
+        }).collect()
     }
 }
 

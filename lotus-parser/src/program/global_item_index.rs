@@ -35,7 +35,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         item
     }
 
-    pub fn get_by_name(&self, getter_name: &Identifier) -> Option<Link<V>> {
+    pub fn get_by_identifier(&self, getter_name: &Identifier) -> Option<Link<V>> {
         let candidates = self.items_by_name.get(getter_name.as_str())?;
         let getter_location : &DataLocation = &getter_name.location;
 
@@ -60,8 +60,33 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         None
     }
 
+    pub fn get_by_name(&self, name: &str) -> Option<Link<V>> {
+        let candidates = self.items_by_name.get(name)?;
+
+        for item_wrapped in candidates.iter() {
+            let ok = item_wrapped.with_ref(|item| {
+                let item_name = item.get_name();
+                let item_location = &item_name.location;
+                match item.get_visibility() {
+                    Visibility::Export => true,
+                    _ => false
+                }
+            });
+
+            if ok {
+                return Some(item_wrapped.clone());
+            }
+        }
+
+        None
+    }
+
     pub fn get_by_location(&self, value_name: &Identifier) -> Link<V> {
         self.items_by_id.get(&value_name.location.get_hash()).unwrap().clone()
+    }
+
+    pub fn get_all(&self) -> Vec<Link<V>> {
+        self.items_by_id.values().map(|v| v.clone()).collect()
     }
 }
 

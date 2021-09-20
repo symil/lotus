@@ -23,7 +23,7 @@ impl GlobalVarDeclaration {
                 init_vasm,
             };
 
-            if context.global_vars.get_by_name(&self.var_declaration.var_name).is_some() {
+            if context.global_vars.get_by_identifier(&self.var_declaration.var_name).is_some() {
                 context.errors.add(&self.var_declaration.var_name, format!("duplicate global variable declaration: `{}`", &self.var_declaration.var_name));
             }
 

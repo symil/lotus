@@ -33,7 +33,7 @@ impl FunctionDeclaration {
             function_unwrapped.name.clone()
         });
 
-        if context.functions.get_by_name(&name).is_some() {
+        if context.functions.get_by_identifier(&name).is_some() {
             context.errors.add(self, format!("duplicate function declaration `{}`", &name));
         }
     }

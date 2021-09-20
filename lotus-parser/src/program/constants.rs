@@ -26,40 +26,6 @@ pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
 pub const THIS_TYPE_NAME : &'static str = "This";
 
-pub const BUILTIN_TYPES : &'static[(BuiltinType, &'static str)] = &[
-    (BuiltinType::Bool, "bool"),
-    (BuiltinType::Int, "int"),
-    (BuiltinType::Float, "float"),
-    (BuiltinType::String, "string"),
-    (BuiltinType::Pointer, "Pointer"),
-    (BuiltinType::Array, "Array"),
-];
-
-pub const BUILTIN_INTERFACES : &'static[(BuiltinInterface, &'static str, &'static str)] = &[
-    (BuiltinInterface::Add, "Add", "add"),
-    (BuiltinInterface::Sub, "Sub", "sub"),
-    (BuiltinInterface::Mul, "Mul", "mul"),
-    (BuiltinInterface::Div, "Div", "div"),
-    (BuiltinInterface::Mod, "Mod", "mod"),
-    (BuiltinInterface::Shl, "Shl", "shl"),
-    (BuiltinInterface::Shr, "Shr", "shr"),
-    (BuiltinInterface::And, "And", "and"),
-    (BuiltinInterface::Or, "Or",  "or"),
-    (BuiltinInterface::Eq, "Eq",  "eq"),
-    (BuiltinInterface::Ne, "Ne",  "ne"),
-    (BuiltinInterface::Ge, "Ge",  "ge"),
-    (BuiltinInterface::Gt, "Gt",  "gt"),
-    (BuiltinInterface::Le, "Le",  "le"),
-    (BuiltinInterface::Lt, "Lt",  "lt"),
-    (BuiltinInterface::Not, "Not",  "not"),
-    (BuiltinInterface::Plus, "Plus",  "plus"),
-    (BuiltinInterface::Minus, "Minus",  "minus"),
-    (BuiltinInterface::ToBool, "ToBool",  "to_bool"),
-    (BuiltinInterface::GetAtIndex, "GetAtIndex",  "get_at_index"),
-    (BuiltinInterface::SetAtIndex, "SetAtIndex",  "set_at_index"),
-    (BuiltinInterface::Iterable, "Iterable",  ""),
-];
-
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
 pub const NEW_FUNC_NAME : &'static str = "__new";
 pub const DEFAULT_FUNC_NAME : &'static str = "__default";

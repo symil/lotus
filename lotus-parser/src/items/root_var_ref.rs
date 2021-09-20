@@ -31,7 +31,7 @@ impl RootVarRef {
             RootVarRef::Unprefixed(full_type, args_opt) => match args_opt {
                 Some(args) => match full_type.as_single_name() {
                     Some(name) => {
-                        if let Some(function_blueprint) = context.functions.get_by_name(name) {
+                        if let Some(function_blueprint) = context.functions.get_by_identifier(name) {
                             process_function_call(&Type::Void, function_blueprint, &[], args, access_type, context)
                         } else {
                             context.errors.add(name, format!("undefined function `{}`", name));

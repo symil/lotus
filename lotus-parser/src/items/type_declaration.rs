@@ -49,7 +49,7 @@ impl TypeDeclaration {
             after_event_callbacks: IndexMap::new(),
         };
         
-        if context.types.get_by_name(&self.name).is_some() {
+        if context.types.get_by_identifier(&self.name).is_some() {
             context.errors.add(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
 
