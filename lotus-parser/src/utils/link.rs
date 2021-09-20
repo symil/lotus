@@ -11,6 +11,10 @@ impl<T> Link<T> {
         }
     }
 
+    pub fn get_addr(&self) -> usize {
+        Rc::as_ptr(&self.value) as usize
+    }
+
     pub fn borrow(&self) -> Ref<T> {
         Rc::as_ref(&self.value).borrow()
     }

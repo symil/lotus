@@ -4,7 +4,7 @@ use parsable::DataLocation;
 use crate::{items::{Identifier, Visibility}, utils::Link};
 
 #[derive(Debug)]
-pub struct ItemIndex<V> {
+pub struct GlobalItemIndex<V> {
     pub items_by_id: IndexMap<u64, Link<V>>,
     pub items_by_name: HashMap<String, Vec<Link<V>>>
 }
@@ -14,7 +14,7 @@ pub trait GlobalItem {
     fn get_visibility(&self) -> Visibility;
 }
 
-impl<V : GlobalItem> ItemIndex<V> {
+impl<V : GlobalItem> GlobalItemIndex<V> {
     pub fn len(&self) -> usize {
         self.items_by_name.len()
     }
@@ -65,7 +65,7 @@ impl<V : GlobalItem> ItemIndex<V> {
     }
 }
 
-impl<V> Default for ItemIndex<V> {
+impl<V> Default for GlobalItemIndex<V> {
     fn default() -> Self {
         Self {
             items_by_id: IndexMap::new(),

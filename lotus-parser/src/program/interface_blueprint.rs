@@ -9,7 +9,6 @@ pub struct InterfaceBlueprint {
     pub interface_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
-    pub this_type: Type,
     pub associated_types: IndexMap<String, Rc<InterfaceAssociatedTypeInfo>>,
     pub methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,

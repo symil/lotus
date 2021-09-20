@@ -44,7 +44,7 @@ impl ValueType {
                 if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
                     result = Type::Associated(AssociatedTypeInfo {
-                        root: Box::new(Type::This(current_interface)),
+                        root: Box::new(Type::This(current_interface.clone())),
                         associated: associated_type.clone(),
                     });
                 }

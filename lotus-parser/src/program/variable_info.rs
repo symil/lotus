@@ -41,6 +41,14 @@ impl VariableInfo {
         }
     }
 
+    pub fn tee_from_stack(&self) -> Wat {
+        match &self.kind {
+            VariableKind::Global => Wat::tee_global_from_stack(&self.wasm_name),
+            VariableKind::Local => Wat::tee_local_from_stack(&self.wasm_name),
+            VariableKind::Argument => Wat::tee_local_from_stack(&self.wasm_name),
+        }
+    }
+
     pub fn get_wasm_name(&self) -> &str {
         self.wasm_name.as_str()
     }

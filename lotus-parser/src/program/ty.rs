@@ -1,8 +1,8 @@
 use std::{convert::TryInto, fmt::Display, rc::Rc, result};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME}, utils::Link, wat};
-use super::{FieldDetails, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstance};
+use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
+use super::{FieldDetails, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -35,40 +35,6 @@ pub struct AssociatedTypeInfo {
 }
 
 impl Type {
-    // pub fn void() -> Rc<Type> {
-    //     Rc::new(Type::Void)
-    // }
-
-    // pub fn any() -> Rc<Type> {
-    //     Rc::new(Type::Any)
-    // }
-
-    // pub fn actual(type_wrapped: Link<TypeBlueprint>) -> Rc<Type> {
-    //     Rc::new(Type::Actual(ActualTypeInfo {
-    //         type_wrapped,
-    //     }))
-    // }
-
-    // pub fn interface(interface_wrapped: Link<InterfaceBlueprint>) -> Rc<Type> {
-    //     Rc::new(Type::Interface(InterfaceTypeInfo {
-    //         interface_wrapped,
-    //     }))
-    // }
-
-    // pub fn parameter(parent: &Rc<Type>, name: &str) -> Rc<Type> {
-    //     Rc::new(Type::Parameter(AssociatedTypeInfo {
-    //         parent: Rc::clone(parent),
-    //         name: name.to_string()
-    //     }))
-    // }
-
-    // pub fn associated(parent: &Rc<Type>, name: &str) -> Rc<Type> {
-    //     Rc::new(Type::Associated(AssociatedTypeInfo {
-    //         parent: Rc::clone(parent),
-    //         name: name.to_string()
-    //     }))
-    // }
-
     pub fn is_void(&self) -> bool {
         match self {
             Type::Void => true,
@@ -287,26 +253,30 @@ impl Type {
         }
     }
 
-    pub fn resolve(&self, type_index: &TypeIndex) -> Rc<TypeInstance> {
+    pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
         match self {
             Type::Void => unreachable!(),
             Type::Any => unreachable!(),
+            Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
             Type::Actual(info) => {
-                let mut resolved_type = ResolvedType {
-                    type_wrapped: info.type_wrapped.clone(),
-                    parameters: Vec::with_capacity(info.parameters.len()),
+                let parameters = TypeInstanceParameters {
+                    type_blueprint: info.type_wrapped.clone(),
+                    type_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
 
-                for parameter in &info.parameters {
-                    resolved_type.parameters.push(parameter.resolve(current_type));
+                context.type_instances.get_header(&parameters, context)
+            },
+            Type::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
+            Type::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),
+            Type::Associated(info) => {
+                let result = info.root.resolve(type_index, context);
+
+                match context.type_instances.get_content(&result, context) {
+                    Some(type_instance) => type_instance.associated_types.get(info.associated.name.as_str()).unwrap().clone(),
+                    None => todo!(), 
                 }
-
-                resolved_type
             },
-            Type::TypeParameter(info) => {
-
-            },
-            Type::TypeRef(_) => unreachable!(),
+            Type::TypeRef(ty) => unreachable!(),
         }
     }
 }
@@ -319,7 +289,7 @@ impl PartialEq for ActualTypeInfo {
 
 impl PartialEq for AssociatedTypeInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.root == other.root && self.name == other.name
+        self.root == other.root && Rc::as_ptr(&self.associated) == Rc::as_ptr(&other.associated)
     }
 }
 
@@ -345,8 +315,16 @@ impl Display for Type {
         match self {
             Type::Void => write!(f, "<void>"),
             Type::Any => write!(f, "<any>"),
-            Type::Actual(info) => write!(f, "{}", &info.type_wrapped.borrow().name),
+            Type::This(_) => write!(f, "{}", THIS_TYPE_NAME),
+            Type::Actual(info) => {
+                match info.parameters.is_empty() {
+                    true => write!(f, "{}", &info.type_wrapped.borrow().name),
+                    false => write!(f, "{}<{}>", &info.type_wrapped.borrow().name, display_join(&info.parameters, ",")),
+                }
+            },
             Type::TypeParameter(info) => write!(f, "{}", &info.name),
+            Type::FunctionParameter(info) => write!(f, "{}", &info.name),
+            Type::Associated(info) => write!(f, "{}", &info.associated.name),
             Type::TypeRef(typeref) => write!(f, "<type {}>", &typeref),
         }
     }

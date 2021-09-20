@@ -106,6 +106,10 @@ impl Wat {
         wat!["global.get", Self::var_name(var_name)]
     }
 
+    pub fn tee_global_from_stack(var_name: &str) -> Self {
+        wat!["global.tee", Self::var_name(var_name)]
+    }
+
     pub fn increment_global_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         Wat::set_global(var_name, wat![
             "i32.add",
@@ -136,7 +140,7 @@ impl Wat {
         wat!["local.get", Self::var_name(var_name)]
     }
 
-    pub fn tee_local(var_name: &str) -> Self {
+    pub fn tee_local_from_stack(var_name: &str) -> Self {
         wat!["local.tee", Self::var_name(var_name)]
     }
 
@@ -249,6 +253,15 @@ impl Wat {
 
     pub fn log_addr(var_name: &str) -> Wat {
         Wat::call("log_i32", Wat::mem_get_i32(var_name))
+    }
+
+    // OTHER
+    
+    pub fn replace(&self, pattern: &str, replacement: &str) -> Wat {
+        Wat {
+            keyword: self.keyword.replace(pattern, replacement),
+            arguments: self.arguments.iter().map(|w| w.replace(pattern, replacement)).collect(),
+        }
     }
 
     pub fn to_string(&self, indent: usize) -> String {

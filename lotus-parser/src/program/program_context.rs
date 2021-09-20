@@ -1,17 +1,17 @@
-use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, mem::{self, take}, ops::Deref, rc::Rc};
+use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, VI, Wat}, utils::Link, vasm, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, ItemIndex, Scope, ScopeKind, Type, TypeBlueprint, TypeInstance, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, GeneratedItems, InterfaceBlueprint, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: ErrorList,
 
-    pub types: ItemIndex<TypeBlueprint>,
-    pub interfaces: ItemIndex<InterfaceBlueprint>,
-    pub functions: ItemIndex<FunctionBlueprint>,
-    pub global_vars: ItemIndex<GlobalVarBlueprint>,
+    pub types: GlobalItemIndex<TypeBlueprint>,
+    pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
+    pub functions: GlobalItemIndex<FunctionBlueprint>,
+    pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
     pub builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     pub builtin_interfaces: HashMap<BuiltinInterface, Link<InterfaceBlueprint>>,
@@ -23,7 +23,9 @@ pub struct ProgramContext {
     pub depth: u32,
     pub return_found: bool,
 
-    pub type_instances: HashMap<u64, Rc<TypeInstance>>,
+    // pub instances: GeneratedItems,
+    pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
+    pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,
 }
 
 impl ProgramContext {
@@ -149,7 +151,9 @@ impl ProgramContext {
         let interface_wrapped = self.builtin_interfaces.get(&interface).cloned().unwrap();
 
         interface_wrapped.with_ref(|interface_unwrapped| {
-            interface_unwrapped.methods.first().unwrap().1.with_ref(|function_unwrapped| {
+            let (_, method_wrapped) = interface_unwrapped.methods.first().unwrap();
+
+            method_wrapped.with_ref(|function_unwrapped| {
                 let method_name = function_unwrapped.name.as_str();
                 let mut ok = true;
 
@@ -159,16 +163,17 @@ impl ProgramContext {
                 }
 
                 for (expected_arg, actual_arg_type) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
-                    todo!(); // replace generics
-                    if !actual_arg_type.is_assignable_to(&expected_arg.ty) {
+                    let expected_type = expected_arg.ty.replace_generics(target_type, &[]);
+
+                    if !actual_arg_type.is_assignable_to(&expected_type) {
                         let prefix = make_error_prefix();
                         self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
                         ok = false;
                     }
                 }
 
-                let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.clone())).unwrap_or(Type::Void);
-                let method_instruction = VI::call_method(target_type, method_name, vasm![]);
+                let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_generics(target_type, &[]))).unwrap_or(Type::Void);
+                let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], vasm![]);
                 let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
                 match ok {

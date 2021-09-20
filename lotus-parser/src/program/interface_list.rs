@@ -15,11 +15,11 @@ impl InterfaceList {
     pub fn get_associated_type_info(&self, name: &str) -> Option<Rc<InterfaceAssociatedTypeInfo>> {
         for interface_wrapped in &self.list {
             let type_info = interface_wrapped.with_ref(|interface_unwrapped| {
-                interface_unwrapped.associated_types.get(name)
+                interface_unwrapped.associated_types.get(name).cloned()
             });
 
             if type_info.is_some() {
-                return type_info.cloned();
+                return type_info;
             }
         }
 

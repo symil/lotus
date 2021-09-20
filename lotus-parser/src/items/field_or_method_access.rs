@@ -32,7 +32,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         };
 
         result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![
-            VI::call_static_method(parent_type, method_name, vec![VI::int(field_details.offset)])
+            VI::call_method(parent_type, parent_type.get_static_method(method_name).unwrap(), &[], vec![VI::int(field_details.offset)])
         ]));
     } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
@@ -61,7 +61,7 @@ pub fn process_function_call(caller_type: &Type, function_wrapped: Link<Function
 
     let mut result = Vasm::empty();
 
-    let (function_name, mut return_type) = function_wrapped.with_ref(|function_unwrapped| {
+    let (function_name, return_type) = function_wrapped.with_ref(|function_unwrapped| {
         let expected_arg_count = function_unwrapped.arguments.len();
 
         if arguments.len() != expected_arg_count {
@@ -73,27 +73,24 @@ pub fn process_function_call(caller_type: &Type, function_wrapped: Link<Function
         for (i, arg_expr) in arguments.as_vec().iter().enumerate() {
             if let Some(arg_vasm) = arg_expr.process(context) {
                 if i < expected_arg_count {
-                    let expected_type = &function_unwrapped.arguments[0].ty;
+                    let expected_type = function_unwrapped.arguments[0].ty.replace_generics(caller_type, parameters);
 
-                    todo!(); // replace generics
                     if expected_type.is_assignable_to(&arg_vasm.ty) {
                         result.extend(arg_vasm);
                     } else {
-                        context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, expected_type, &arg_vasm.ty));
+                        context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));
                     }
                 }
             }
         }
 
         (
-            function_unwrapped.name.as_str(),
-            function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.clone())).unwrap_or(Type::Void)
+            function_unwrapped.name.to_string(),
+            function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_generics(caller_type, parameters))).unwrap_or(Type::Void)
         )
     });
 
-    return_type = return_type.replace_generics(&context.get_this_type(), parameters);
-
-    result.extend(Vasm::new(return_type, vec![], vec![VI::call_method(caller_type, function_name, vasm![])]));
+    result.extend(Vasm::new(return_type, vec![], vec![VI::call_method(caller_type, function_wrapped.clone(), parameters, vasm![])]));
 
     Some(result)
 }

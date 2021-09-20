@@ -26,7 +26,6 @@ impl InterfaceDeclaration {
             interface_id: self.location.get_hash(),
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
-            this_type: Type::Void,
             associated_types: IndexMap::new(),
             methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -45,13 +44,12 @@ impl InterfaceDeclaration {
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
         self.process(context, |interface_wrapped, context| {
-            let this_type = Type::This(interface_wrapped.clone());
             let mut associated_types = IndexMap::new();
 
             for associated_type in &self.body.associated_types {
                 let name = associated_type.process(context);
                 let item = Rc::new(InterfaceAssociatedTypeInfo {
-                    name,
+                    name: name.clone(),
                     required_interfaces: InterfaceList::new(vec![]),
                 });
 
@@ -64,16 +62,14 @@ impl InterfaceDeclaration {
                 }
             }
 
-            interface_wrapped.with_mut(|interface_unwrapped| {
-                interface_unwrapped.this_type = this_type;
+            interface_wrapped.with_mut(|mut interface_unwrapped| {
                 interface_unwrapped.associated_types = associated_types;
             });
         });
     }
 
     pub fn process_methods(&self, context: &mut ProgramContext) {
-        self.process(context, |interface_blueprint, context| {
-            let this_type = interface_blueprint.borrow().this_type.clone();
+        self.process(context, |interface_wrapped, context| {
             let mut methods = IndexMap::new();
 
             for method in &self.body.methods {
@@ -84,10 +80,10 @@ impl InterfaceDeclaration {
                     visibility: Visibility::Member,
                     event_callback_qualifier: None,
                     owner_type: None,
-                    owner_interface: Some(interface_blueprint.clone()),
+                    owner_interface: Some(interface_wrapped.clone()),
                     parameters: IndexMap::new(),
                     conditions: vec![],
-                    this_arg: Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local)),
+                    this_arg: Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), Type::This(interface_wrapped.clone()), VariableKind::Local)),
                     payload_arg: None,
                     arguments: arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect(),
                     return_value: return_type.and_then(|ty| Some(VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), ty, VariableKind::Argument))),
@@ -106,7 +102,7 @@ impl InterfaceDeclaration {
                 context.errors.add(self, format!("interface `{}` already exists", &self.name));
             }
 
-            interface_blueprint.borrow_mut().methods = methods;
+            interface_wrapped.borrow_mut().methods = methods;
         });
     }
 }

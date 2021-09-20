@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::{ToVasm, Type, VariableInfo, VirtualInstruction, Wat};
+use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat};
 
 #[derive(Debug)]
 pub struct Vasm {
@@ -58,8 +58,24 @@ impl Vasm {
         list.extend(self.variables.clone());
     }
 
-    pub fn resolve(&self) -> Vec<Wat> {
-        todo!()
+    pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {
+        let mut content = vec![];
+
+        for inst in &self.instructions {
+            content.extend(inst.resolve(type_index, context));
+        }
+
+        content
+    }
+
+    pub fn resolve_without_context(&self) -> Vec<Wat> {
+        let mut content = vec![];
+
+        for inst in &self.instructions {
+            content.extend(inst.resolve_without_context());
+        }
+
+        content
     }
 }
 

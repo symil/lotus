@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstance, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeInstance, VariableInfo, Vasm, VirtualInstruction};
+use super::{FunctionInstanceContent, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -27,73 +27,6 @@ pub struct FunctionBlueprint {
 impl FunctionBlueprint {
     pub fn is_static(&self) -> bool {
         self.this_arg.is_none()
-    }
-
-    pub fn generate_instance(&self, type_index: &TypeIndex) -> FunctionInstance {
-        let is_static = self.this_arg.is_none();
-        let mut variables = vec![];
-        let mut wat_args : Vec<(&str, &str)> = vec![];
-        let mut wat_ret = None;
-        let mut wat_locals : Vec<(&str, &str)> = vec![];
-        let mut wat_body = self.body.resolve();
-
-        if !self.is_raw_wasm {
-            if let Some(this_arg) = &self.this_arg {
-                variables.push(Rc::clone(this_arg));
-            }
-
-            if let Some(payload_arg) = &self.payload_arg {
-                variables.push(Rc::clone(payload_arg));
-            }
-
-            for arg in &self.arguments {
-                variables.push(Rc::clone(arg));
-            }
-
-            if let Some(return_value) = &self.return_value {
-                if let Some(wasm_type) = return_value.ty.resolve().get_wasm_type() {
-                    wat_ret = Some(wasm_type);
-                    wat_locals.push((&return_value.wasm_name, wasm_type));
-                    wat_body.push(Wat::get_local(&return_value.wasm_name));
-                }
-            }
-
-            self.body.collect_variables(&mut variables);
-
-            for var_info in &variables {
-                if let Some(wasm_type) = var_info.ty.resolve().get_wasm_type() {
-                    let mut array = match var_info.kind {
-                        VariableKind::Global => unreachable!(),
-                        VariableKind::Local => &mut wat_locals,
-                        VariableKind::Argument => &mut wat_args,
-                    };
-
-                    array.push((var_info.wasm_name.as_str(), wasm_type))
-                }
-            }
-        }
-
-        let prefix = match &self.this_arg {
-            Some(var_info) => format!("{}_", &var_info.ty.resolve().type_wrapped.borrow().name),
-            None => String::new(),
-        };
-        let wasm_name = format!("{}{}_{}", prefix, &self.name, type_context.get_name());
-        let (wasm_declaration, wasm_call) = match self.is_raw_wasm {
-            true => ((
-                Some(Wat::declare_function(&wasm_name, None, wat_args, wat_ret, wat_locals, wat_body)),
-                vec![Wat::call_from_stack(&wasm_name)]
-            )),
-            false => ((
-                None,
-                wat_body,
-            )),
-        };
-
-        FunctionInstance {
-            wasm_name,
-            wasm_declaration,
-            wasm_call,
-        }
     }
 }
 

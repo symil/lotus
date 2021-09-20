@@ -2,7 +2,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeInfo, FunctionBlueprint, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeInstance};
+use super::{ActualTypeInfo, FunctionBlueprint, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeInstanceContent};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -41,35 +41,6 @@ impl TypeBlueprint {
             StackType::Float => Some("f32"),
             StackType::Pointer => Some("i32"),
         }
-    }
-
-    pub fn get_instance_id(&self, parameters: &[Rc<TypeInstance>]) -> u64 {
-        let mut hasher = DefaultHasher::new();
-
-        self.type_id.hash(&mut hasher);
-        parameters.hash(&mut hasher);
-
-        hasher.finish()
-    }
-
-    pub fn resolve(&self, parameters: &[Rc<TypeInstance>], context: &mut ProgramContext) -> Rc<TypeInstance> {
-        let id = self.get_instance_id(parameters);
-
-        if let Some(type_instance) = context.type_instances.get(&id) {
-            return Rc::clone(type_instance);
-        }
-
-        let mut instance_generic_types = IndexMap::new();
-
-        for (generic_type, parameter_type) in self.parameters.values().zip(parameters.iter()) {
-            instance_generic_types.insert(generic_type.get_id(), Rc::clone(parameter_type));
-        }
-
-        for associated_type in self.associated_types.values() {
-            
-        }
-
-        todo!()
     }
 }
 
