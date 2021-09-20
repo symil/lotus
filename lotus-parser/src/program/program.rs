@@ -62,6 +62,7 @@ impl LotusProgram {
         let mut context = ProgramContext::new();
 
         context.process_files(parsed_files);
+        context.generate_instances();
 
         let process_time = now.elapsed().as_secs_f64();
         let wat = context.generate_wat()?;

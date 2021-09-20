@@ -287,6 +287,7 @@ impl ProgramContext {
             let (function_instance_header, exists) = self.function_instances.get_header(&parameters);
             let function_instance_content = parameters.generate_content(&function_instance_header, self);
 
+            self.function_instances.set_content(&parameters, function_instance_content);
             self.entry_function = Some(function_instance_header);
         } else { 
             self.errors.add_unlocated(format!("missing required function `main`"));
