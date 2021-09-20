@@ -3,8 +3,13 @@ use super::ProgramContext;
 
 #[derive(Debug)]
 pub struct GeneratedItemIndex<H, C> {
-    pub headers: HashMap<u64, Rc<H>>,
-    pub contents: HashMap<u64, Rc<C>>,
+    pub entries: HashMap<u64, Entry<H, C>>
+}
+
+#[derive(Debug)]
+pub struct Entry<H, C> {
+    header: Rc<H>,
+    content: Option<Rc<C>>
 }
 
 pub trait ItemGenerator<H, C> {
@@ -14,38 +19,34 @@ pub trait ItemGenerator<H, C> {
 }
 
 impl<H, C> GeneratedItemIndex<H, C> {
-    pub fn get_header<G : ItemGenerator<H, C>>(&mut self, generator: &G, context: &mut ProgramContext) -> Rc<H> {
+    pub fn get_header<G : ItemGenerator<H, C>>(&mut self, generator: &G) -> (Rc<H>, bool) {
         let id = generator.get_id();
 
-        match self.headers.get(&id) {
-            Some(header) => Rc::clone(header),
+        match self.entries.get(&id) {
+            Some(entry) => (Rc::clone(&entry.header), true),
             None => {
                 let header = Rc::new(generator.generate_header(id));
+                let entry = Entry {
+                    header: Rc::clone(&header),
+                    content: None,
+                };
 
-                self.headers.insert(id, Rc::clone(&header));
-                self.contents.insert(id, Rc::new(generator.generate_content(&header, context)));
+                self.entries.insert(id, entry);
 
-                header
+                (header, false)
             }
         }
     }
 
-    pub fn get_content(&mut self, header: &H, context: &mut ProgramContext) -> Option<Rc<C>>
-        where H : Hash
-    {
-        let mut state = DefaultHasher::new();
-        header.hash(&mut state);
-        let id = state.finish();
+    pub fn set_content<G : ItemGenerator<H, C>>(&mut self, generator: &G, content: C) {
+        let mut entry = self.entries.get_mut(&generator.get_id()).unwrap();
 
-        self.contents.get(&id).cloned()
+        entry.content = Some(Rc::new(content));
     }
 }
 
 impl<H, C> Default for GeneratedItemIndex<H, C> {
     fn default() -> Self {
-        Self {
-            headers: Default::default(),
-            contents: Default::default()
-        }
+        Self { entries: Default::default() }
     }
 }

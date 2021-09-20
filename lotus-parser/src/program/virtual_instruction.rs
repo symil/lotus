@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{items::Identifier, program::FunctionInstanceParameters, utils::Link, wat};
+use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, Vasm, Wat};
 
 pub type VI = VirtualInstruction;
@@ -235,7 +235,13 @@ impl VirtualInstruction {
                     function_parameters,
                 };
 
-                let function_instance = context.function_instances.get_header(&parameters, context);
+                let (function_instance, exists) = context.function_instances.get_header(&parameters);
+
+                if !exists {
+                    let content = parameters.generate_content(&function_instance, context);
+                    
+                    context.function_instances.set_content(&parameters, content);
+                }
 
                 content.extend_from_slice(&function_instance.wasm_call);
 

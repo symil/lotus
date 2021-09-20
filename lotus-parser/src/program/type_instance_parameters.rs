@@ -42,18 +42,18 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
 
     fn generate_content(&self, header: &Rc<TypeInstanceHeader>, context: &mut ProgramContext) -> TypeInstanceContent {
         self.type_blueprint.with_ref(|type_unwrapped| {
-            let type_index = TypeIndex {
-                current_type_instance: Some(header.clone()),
-                current_function_parameters: vec![],
-            };
-            let mut associated_types = HashMap::new();
+            // let type_index = TypeIndex {
+            //     current_type_instance: Some(header.clone()),
+            //     current_function_parameters: vec![],
+            // };
+            // let mut associated_types = HashMap::new();
 
-            for (name, associated_type) in type_unwrapped.associated_types.iter() {
-                associated_types.insert(name.clone(), associated_type.resolve(&type_index, context));
-            }
+            // for (name, associated_type) in type_unwrapped.associated_types.iter() {
+            //     associated_types.insert(name.clone(), associated_type.resolve(&type_index, context));
+            // }
 
             TypeInstanceContent {
-                associated_types,
+                // associated_types,
             }
         })
     }

@@ -1,7 +1,7 @@
 use std::{convert::TryInto, fmt::Display, rc::Rc, result};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
+use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
 use super::{FieldDetails, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
@@ -264,17 +264,30 @@ impl Type {
                     type_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
 
-                context.type_instances.get_header(&parameters, context)
+                let (type_instance, exists) = context.type_instances.get_header(&parameters);
+
+                if !exists {
+                    let content = parameters.generate_content(&type_instance, context);
+                    
+                    context.type_instances.set_content(&parameters, content);
+                }
+
+                type_instance
             },
             Type::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
             Type::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),
             Type::Associated(info) => {
                 let result = info.root.resolve(type_index, context);
 
-                match context.type_instances.get_content(&result, context) {
-                    Some(type_instance) => type_instance.associated_types.get(info.associated.name.as_str()).unwrap().clone(),
-                    None => todo!(), 
-                }
+                result.type_blueprint.with_ref(|type_unwrapped| {
+                    let associated = type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap();
+                    let type_index = TypeIndex {
+                        current_type_instance: Some(result.clone()),
+                        current_function_parameters: vec![],
+                    };
+
+                    associated.resolve(&type_index, context)
+                })
             },
             Type::TypeRef(ty) => unreachable!(),
         }

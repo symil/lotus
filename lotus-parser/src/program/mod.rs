@@ -37,7 +37,6 @@ mod function_instance_parameters;
 mod generated_item_index;
 mod function_instance_header;
 mod type_instance_header;
-mod generated_items;
 
 pub use error::*;
 pub use program::*;
@@ -77,4 +76,3 @@ pub use function_instance_parameters::*;
 pub use generated_item_index::*;
 pub use function_instance_header::*;
 pub use type_instance_header::*;
-pub use generated_items::*;

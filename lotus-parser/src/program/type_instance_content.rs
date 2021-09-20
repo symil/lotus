@@ -5,5 +5,5 @@ use super::{FunctionInstanceContent, TypeBlueprint, TypeInstanceHeader};
 
 #[derive(Debug)]
 pub struct TypeInstanceContent {
-    pub associated_types: HashMap<String, Rc<TypeInstanceHeader>>,
+    // pub associated_types: HashMap<String, Rc<TypeInstanceHeader>>,
 }
