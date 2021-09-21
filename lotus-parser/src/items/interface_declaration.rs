@@ -31,6 +31,10 @@ impl InterfaceDeclaration {
             static_methods: IndexMap::new(),
         };
 
+        if context.interfaces.get_by_identifier(&self.name).is_some() {
+            context.errors.add(self, format!("interface `{}` already exists", &self.name));
+        }
+
         context.interfaces.insert(interface_blueprint);
     }
 
@@ -96,10 +100,6 @@ impl InterfaceDeclaration {
                 if methods.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
                     context.errors.add(method, format!("duplicate method `{}`", &name));
                 }
-            }
-
-            if context.interfaces.get_by_identifier(&self.name).is_some() {
-                context.errors.add(self, format!("interface `{}` already exists", &self.name));
             }
 
             interface_wrapped.borrow_mut().methods = methods;

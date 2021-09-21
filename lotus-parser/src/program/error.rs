@@ -5,21 +5,32 @@ use parsable::{DataLocation, Parsable, ParseError};
 #[derive(Debug, Clone)]
 pub struct Error {
     pub location: Option<DataLocation>,
-    pub error: String
+    pub error: String,
+    pub details: Vec<String>
 }
 
 impl Error {
     pub fn unlocated<S : Deref<Target=str>>(error: S) -> Self {
         Self {
             location: None,
-            error: error.to_string()
+            error: error.to_string(),
+            details: vec![],
         }
     }
 
     pub fn located<S : Deref<Target=str>>(location: &DataLocation, error: S) -> Self {
         Self {
             location: Some(location.clone()),
-            error: error.to_string()
+            error: error.to_string(),
+            details: vec![],
+        }
+    }
+
+    pub fn located_detailed<S : Deref<Target=str>, T : Deref<Target=str>>(location: &DataLocation, error: S, details: Vec<T>) -> Self {
+        Self {
+            location: Some(location.clone()),
+            error: error.to_string(),
+            details: details.into_iter().map(|s| s.to_string()).collect(),
         }
     }
 
@@ -47,7 +58,8 @@ impl Error {
                 line: error.line,
                 column: error.column
             }),
-            error: string
+            error: string,
+            details: vec![],
         }
     }
 
@@ -58,6 +70,12 @@ impl Error {
             None => String::new(),
         };
 
-        format!("{}{}", location_string.bold(), error_string)
+        let mut result = format!("{}{}", location_string.bold(), error_string);
+
+        for detail in &self.details {
+            result.push_str(&format!("\n  - {}", detail));
+        }
+
+        result
     }
 }

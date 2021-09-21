@@ -2,14 +2,14 @@ use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{program::{ActualTypeInfo, Error, FieldDetails, OBJECT_HEADER_SIZE, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
-use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeToken, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
+use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct TypeDeclaration {
     pub visibility: VisibilityWrapper,
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
-    pub stack_type: Option<StackTypeToken>,
+    pub stack_type: Option<StackTypeWrapped>,
     pub name: Identifier,
     pub parameters: TypeParameters,
     #[parsable(prefix=":")]

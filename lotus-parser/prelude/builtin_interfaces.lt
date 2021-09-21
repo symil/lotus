@@ -1,0 +1,98 @@
+export interface Add {
+    add(This) -> This;
+}
+
+export interface Sub {
+    sub(This) -> This;
+}
+
+export interface Mul {
+    mul(This) -> This;
+}
+
+export interface Div {
+    div(This) -> This;
+}
+
+export interface Mod {
+    mod(This) -> This;
+}
+
+export interface Shl {
+    shl(int) -> This;
+}
+
+export interface Shr {
+    shr(int) -> This;
+}
+
+export interface And {
+    and(This) -> This;
+}
+
+export interface Or {
+    or(This) -> This;
+}
+
+export interface Xor {
+    xor(This) -> This;
+}
+
+export interface Eq {
+    eq(This) -> bool;
+}
+
+export interface Ne {
+    ne(This) -> bool;
+}
+
+export interface Ge {
+    ge(This) -> bool;
+}
+
+export interface Gt {
+    gt(This) -> bool;
+}
+
+export interface Le {
+    le(This) -> bool;
+}
+
+export interface Lt {
+    lt(This) -> bool;
+}
+
+export interface Not {
+    not() -> bool;
+}
+
+export interface Plus {
+    plus() -> This;
+}
+
+export interface Minus {
+    minus() -> This;
+}
+
+export interface ToBool {
+    to_bool() -> bool;
+}
+
+export interface GetAtIndex {
+    type Item;
+
+    get_at_index(int) -> Item;
+}
+
+export interface SetAtIndex {
+    type Item;
+
+    set_at_index(int, Item);
+}
+
+export interface Iterable {
+    type Item;
+    
+    get_iterable_len() -> int;
+    // get_iterable_ptr() -> Pointer<This>;
+}

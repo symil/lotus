@@ -20,17 +20,17 @@ impl ValueType {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
-        let mut result = Type::Void;
+        let mut result = Type::Undefined;
         let mut associated = false;
         let mut parameter = false;
         let parameters = self.arguments.process(context);
-        let has_parameters = parameters.is_some();
+        let has_parameters = !parameters.is_empty();
 
         if self.name.as_str() == THIS_TYPE_NAME {
             result = context.get_this_type();
         }
 
-        if result.is_void() {
+        if result.is_undefined() {
             if let Some(current_function) = context.get_current_function() {
                 if let Some(info) = current_function.borrow().parameters.get(self.name.as_str()) {
                     parameter = true;
@@ -39,7 +39,7 @@ impl ValueType {
             }
         }
 
-        if result.is_void() {
+        if result.is_undefined() {
             if let Some(current_interface) = context.get_current_interface() {
                 if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
@@ -59,8 +59,8 @@ impl ValueType {
             }
         }
 
-        if result.is_void() {
-            let parameter_list = parameters.unwrap_or_default();
+        if result.is_undefined() {
+            let parameter_list = parameters;
 
             if let Some(type_blueprint) = context.types.get_by_identifier(&self.name) {
                 let parameters = &type_blueprint.borrow().parameters;
@@ -70,11 +70,7 @@ impl ValueType {
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
                         for interface_blueprint in &parameter.required_interfaces.list {
-                            if !argument.match_interface(interface_blueprint) {
-                                let interface_name = &interface_blueprint.borrow().name;
-
-                                context.errors.add(&self.arguments.list[i], format!("type `{}` does not implement interface `{}`", argument, interface_name));
-                            }
+                            argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
                         }
                     }
 
@@ -94,7 +90,7 @@ impl ValueType {
             }
         }
 
-        if result.is_void() {
+        if result.is_undefined() {
             context.errors.add(&self.name, format!("undefined type `{}`", &self.name));
         } else {
             for name in &self.associated_types {
@@ -103,13 +99,13 @@ impl ValueType {
                 } else {
                     context.errors.add(&self.name, format!("type `{}` has no associated type `{}`", &result, name));
 
-                    result = Type::Void;
+                    result = Type::Undefined;
                     break;
                 }
             }
         }
 
-        match result.is_void() {
+        match result.is_undefined() {
             true => None,
             false => Some(result)
         }

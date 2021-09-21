@@ -66,7 +66,7 @@ impl ForBlock {
                 context.push_var(&item_var);
 
                 if let Some(block_vasm) = self.statements.process(context) {
-                    result = Some(Vasm::new(Type::Void, variables, vec![
+                    result = Some(Vasm::new(Type::Undefined, variables, vec![
                         VI::set(&range_end_var, range_end_vasm),
                         VI::set(&item_var, range_start_vasm),
                         VI::set(&index_var, VI::int(-1)),
@@ -86,14 +86,10 @@ impl ForBlock {
             }
         } else if let Some(iterable_vasm) = range_start_vasm_opt {
             let required_interface_wrapped = context.get_builtin_interface(BuiltinInterface::Iterable);
-            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Void);
+            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined);
             let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
-            if !iterable_vasm.ty.match_interface(&required_interface_wrapped) {
-                if !iterable_vasm.ty.is_void() {
-                    context.errors.add(&self.range_start, format!("type `{}` does not implement the `{}` interface", &iterable_vasm.ty, &required_interface_wrapped.borrow().name));
-                }
-            }
+            iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context);
 
             let iterable_var = VariableInfo::new(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);
             let iterable_len_var = VariableInfo::new(Identifier::unique("iterable_len", self), context.int_type(), VariableKind::Local);
@@ -108,7 +104,7 @@ impl ForBlock {
             if let Some(block_vasm) = self.statements.process(context) {
                 let iterable_type = iterable_vasm.ty.clone();
 
-                result = Some(Vasm::new(Type::Void, variables, vec![
+                result = Some(Vasm::new(Type::Undefined, variables, vec![
                     VI::set(&iterable_var, iterable_vasm),
                     VI::set(&index_var, VI::int(-1)),
                     VI::set(&iterable_len_var, VI::call_method(&iterable_type, iterable_type.get_method(GET_ITERABLE_LEN_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),

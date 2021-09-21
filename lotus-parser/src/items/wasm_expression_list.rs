@@ -17,6 +17,6 @@ impl WasmExpressionList {
             content.push(VI::Raw(item.process(context)));
         }
 
-        Some(Vasm::new(Type::Void, vec![], content))
+        Some(Vasm::new(Type::Undefined, vec![], content))
     }
 }

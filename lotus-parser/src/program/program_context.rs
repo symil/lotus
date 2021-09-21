@@ -53,7 +53,7 @@ impl ProgramContext {
         } else if let Some(interface_wrapped) = &self.current_interface {
             Type::This(interface_wrapped.clone())
         } else {
-            Type::Void
+            Type::Undefined
         }
     }
 
@@ -152,30 +152,16 @@ impl ProgramContext {
 
             method_wrapped.with_ref(|function_unwrapped| {
                 let method_name = function_unwrapped.name.as_str();
-                let mut ok = true;
 
-                if !target_type.match_interface(&interface_wrapped) {
-                    self.errors.add(location, format!("type `{}` does not implement method `{}`", target_type, method_name));
-                    ok = false;
-                }
+                match target_type.check_match_interface(&interface_wrapped, location, self) {
+                    true => {
+                        let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_generics(Some(target_type), &[]))).unwrap_or(Type::Undefined);
+                        let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], vasm![]);
+                        let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
-                for (expected_arg, actual_arg_type) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
-                    let expected_type = expected_arg.ty.replace_generics(target_type, &[]);
-
-                    if !actual_arg_type.is_assignable_to(&expected_type) {
-                        let prefix = make_error_prefix();
-                        self.errors.add(location, format!("{}: expected `{}`, got `{}`", prefix, &expected_arg.ty, actual_arg_type));
-                        ok = false;
-                    }
-                }
-
-                let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_generics(target_type, &[]))).unwrap_or(Type::Void);
-                let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], vasm![]);
-                let result = Vasm::new(ty, vec![], vec![method_instruction]);
-
-                match ok {
-                    true => Some(result),
-                    false => None
+                        Some(result)
+                    },
+                    false => None,
                 }
             })
         })
@@ -212,6 +198,8 @@ impl ProgramContext {
         for type_declaration in &types {
             type_declaration.process_name(self);
         }
+
+        // TODO: index builtin types?
 
         for interface_declaration in &interfaces {
             interface_declaration.process_associated_types(self);
@@ -264,32 +252,8 @@ impl ProgramContext {
         for function_declaration in &functions {
             function_declaration.process_body(self);
         }
-    }
 
-    pub fn generate_instances(&mut self) {
-        for global_var in self.global_vars.get_all() {
-            let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
-                global_var_unwrapped.generate_instance(self)
-            });
-
-            self.global_var_instances.push(global_var_instance);
-        }
-
-        let main_identifier = Identifier::unlocated("main");
-
-        if let Some(function_wrapped) = self.functions.get_by_identifier(&main_identifier) {
-            let parameters = FunctionInstanceParameters {
-                function_blueprint: function_wrapped.clone(),
-                this_type: None,
-                function_parameters: vec![],
-            };
-
-            let (function_instance_header, exists) = self.function_instances.get_header(&parameters);
-            let function_instance_content = parameters.generate_content(&function_instance_header, self);
-
-            self.function_instances.set_content(&parameters, function_instance_content);
-            self.entry_function = Some(function_instance_header);
-        } else { 
+        if self.functions.get_by_name("main").is_none() {
             self.errors.add_unlocated(format!("missing required function `main`"));
         }
     }
@@ -297,6 +261,28 @@ impl ProgramContext {
     pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
         if !self.errors.is_empty() {
             return Err(self.errors.consume());
+        }
+
+        for global_var in self.global_vars.get_all() {
+            let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
+                global_var_unwrapped.generate_instance(&mut self)
+            });
+
+            self.global_var_instances.push(global_var_instance);
+        }
+
+        if let Some(function_wrapped) = self.functions.get_by_name("main") {
+            let parameters = FunctionInstanceParameters {
+                function_blueprint: function_wrapped.clone(),
+                this_type: None,
+                function_parameters: vec![],
+            };
+
+            let (function_instance_header, exists) = self.function_instances.get_header(&parameters);
+            let function_instance_content = parameters.generate_content(&function_instance_header, &mut self);
+
+            self.function_instances.set_content(&parameters, function_instance_content);
+            self.entry_function = Some(function_instance_header);
         }
 
         let mut content = wat!["module"];
@@ -358,7 +344,7 @@ impl ProgramContext {
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], globals_initialization));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], entry_function_body));
 
-        for (_, function_instance_content) in self.function_instances.consume() {
+        for (function_instance_header, function_instance_content) in self.function_instances.consume() {
             if let Some(wasm_declaration) = function_instance_content.wasm_declaration {
                 content.push(wasm_declaration);
             }

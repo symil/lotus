@@ -16,6 +16,7 @@ pub enum AssignmentOperator {
     ModEqual = "%=",
     ShlEqual = "<<=",
     ShrEqual = ">>=",
+    XorEqual = "^=",
     DoubleAndEqual = "&&=",
     DoubleOrEqual = "||=",
     SingleAndEqual = "&=",

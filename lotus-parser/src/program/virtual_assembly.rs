@@ -15,11 +15,11 @@ impl Vasm {
     }
 
     pub fn void(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
-        Self::new(Type::Void, variables, content)
+        Self::new(Type::Undefined, variables, content)
     }
 
     pub fn empty() -> Self {
-        Self::new(Type::Void, vec![], vec![])
+        Self::new(Type::Undefined, vec![], vec![])
     }
 
     pub fn is_empty(&self) -> bool {
@@ -35,7 +35,7 @@ impl Vasm {
     }
 
     pub fn merge(source: Vec<Self>) -> Self {
-        let mut ty = Type::Void;
+        let mut ty = Type::Undefined;
         let mut variables = vec![];
         let mut instructions = vec![];
 
@@ -48,14 +48,12 @@ impl Vasm {
         Self::new(ty, variables, instructions)
     }
 
-    pub fn collect_all_variables(&self) -> Vec<Rc<VariableInfo>> {
-        let mut list = vec![];
-        self.collect_variables(&mut list);
-        list
-    }
-
     pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
         list.extend(self.variables.clone());
+
+        for instruction in &self.instructions {
+            instruction.collect_variables(list);
+        }
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {

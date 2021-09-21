@@ -45,15 +45,15 @@ pub fn process_method_call(caller_type: &Type, method_name: &Identifier, paramet
     let mut result = None;
 
     if let Some(function_blueprint) = caller_type.get_method(method_name.as_str()) {
-        result = process_function_call(caller_type, function_blueprint, parameters, arguments, access_type, context);
-    } else {
+        result = process_function_call(Some(caller_type), function_blueprint, parameters, arguments, access_type, context);
+    } else if !caller_type.is_undefined() {
         context.errors.add(method_name, format!("type `{}` has no method `{}`", caller_type, method_name));
     }
 
     result
 }
 
-pub fn process_function_call(caller_type: &Type, function_wrapped: Link<FunctionBlueprint>, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_function_call(caller_type: Option<&Type>, function_wrapped: Link<FunctionBlueprint>, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add(set_location, format!("cannot set result of a function call"));
         return None;
@@ -86,11 +86,16 @@ pub fn process_function_call(caller_type: &Type, function_wrapped: Link<Function
 
         (
             function_unwrapped.name.to_string(),
-            function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_generics(caller_type, parameters))).unwrap_or(Type::Void)
+            function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_generics(caller_type, parameters))).unwrap_or(Type::Undefined)
         )
     });
 
-    result.extend(Vasm::new(return_type, vec![], vec![VI::call_method(caller_type, function_wrapped.clone(), parameters, vasm![])]));
+    let call_instruction = match caller_type {
+        Some(ty) => VI::call_method(ty, function_wrapped.clone(), parameters, vasm![]),
+        None => VI::call_function(function_wrapped.clone(), parameters, vasm![]),
+    };
+
+    result.extend(Vasm::new(return_type, vec![], vec![call_instruction]));
 
     Some(result)
 }

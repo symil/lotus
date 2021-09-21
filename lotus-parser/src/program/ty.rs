@@ -1,11 +1,13 @@
-use std::{convert::TryInto, fmt::Display, rc::Rc, result};
+use std::{convert::TryInto, fmt::{Display, write}, rc::Rc, result};
 use indexmap::IndexMap;
+use colored::*;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
 use super::{FieldDetails, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
+    Undefined,
     Void,
     Any,
     This(Link<InterfaceBlueprint>),
@@ -35,9 +37,9 @@ pub struct AssociatedTypeInfo {
 }
 
 impl Type {
-    pub fn is_void(&self) -> bool {
+    pub fn is_undefined(&self) -> bool {
         match self {
-            Type::Void => true,
+            Type::Undefined => true,
             _ => false
         }
     }
@@ -53,11 +55,12 @@ impl Type {
         false
     }
 
-    pub fn replace_generics(&self, this_type: &Type, function_parameters: &[Type]) -> Type {
+    pub fn replace_generics(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
+            Type::Undefined => Type::Undefined,
             Type::Void => Type::Void,
             Type::Any => Type::Any,
-            Type::This(_) => this_type.clone(),
+            Type::This(_) => this_type.unwrap().clone(),
             Type::Actual(info) => {
                 let type_wrapped = info.type_wrapped.clone();
                 let parameters = info.parameters.iter().map(|p| p.replace_generics(this_type, function_parameters)).collect();
@@ -67,7 +70,7 @@ impl Type {
                     parameters,
                 })
             },
-            Type::TypeParameter(info) => this_type.get_parameter(info.index),
+            Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
             Type::FunctionParameter(info) => function_parameters[info.index].clone(),
             Type::Associated(info) => Type::Associated(AssociatedTypeInfo {
                 root: Box::new(info.root.replace_generics(this_type, function_parameters)),
@@ -79,6 +82,7 @@ impl Type {
 
     pub fn get_parameter(&self, index: usize) -> Type {
         match self {
+            Type::Undefined => unreachable!(),
             Type::Void => unreachable!(),
             Type::Any => unreachable!(),
             Type::This(_) => unreachable!(),
@@ -92,6 +96,7 @@ impl Type {
 
     pub fn get_associated_type(&self, name: &str) -> Option<Type> {
         match self {
+            Type::Undefined => None,
             Type::Void => None,
             Type::Any => None,
             Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
@@ -145,10 +150,13 @@ impl Type {
         }
     }
     
-    pub fn match_interface(&self, interface: &Link<InterfaceBlueprint>) -> bool {
-        match self {
-            Type::Void => unreachable!(),
-            Type::Any => unreachable!(),
+    pub fn check_match_interface(&self, interface: &Link<InterfaceBlueprint>, location: &DataLocation, context: &mut ProgramContext) -> bool {
+        let mut details = vec![];
+
+        let ok = match self {
+            Type::Undefined => false,
+            Type::Any => false,
+            Type::Void => false,
             Type::This(interface_wrapped) => interface_wrapped == interface,
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
@@ -158,47 +166,58 @@ impl Type {
                     if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
                         // later: check that the associated type matches the interfaces required by the interface
                     } else {
-                        return false;
+                        details.push(format!("missing associated type `{}`", &associated_type.name));
                     }
                 }
          
-                for required_method in interface_blueprint.methods.values() {
-                    let expected_function_blueprint = required_method.borrow();
+                for expected_method_wrapped in interface_blueprint.methods.values() {
+                    let expected_method_unwrapped = expected_method_wrapped.borrow();
 
-                    if let Some(function_blueprint) = type_blueprint.methods.get(expected_function_blueprint.name.as_str()) {
-                        let actual_function_blueprint = function_blueprint.borrow();
+                    if let Some(actual_method_wrapped) = type_blueprint.methods.get(expected_method_unwrapped.name.as_str()) {
+                        let actual_method_unwrapped = actual_method_wrapped.borrow();
+                        let actual_argument_count = actual_method_unwrapped.arguments.len();
+                        let expected_argument_count = expected_method_unwrapped.arguments.len();
 
-                        if actual_function_blueprint.arguments.len() != expected_function_blueprint.arguments.len() {
-                            return false;
-                        }
+                        if actual_argument_count != expected_argument_count {
+                            details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
+                        } else {
+                            for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
+                                let expected_type = expected_arg.ty.replace_generics(Some(self), &[]);
 
-                        for (expected_arg, actual_arg) in expected_function_blueprint.arguments.iter().zip(actual_function_blueprint.arguments.iter()) {
-                            if &expected_arg.ty != &actual_arg.ty {
-                                return false;
+                                if &expected_type != &actual_arg.ty {
+                                    details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_arg.ty));
+                                }
                             }
                         }
 
-                        let actual_return_value = actual_function_blueprint.return_value.as_ref().and_then(|info| Some(&info.ty));
-                        let expected_return_type = expected_function_blueprint.return_value.as_ref().and_then(|info| Some(&info.ty));
+                        let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(&info.ty)).unwrap_or(&Type::Void);
+                        let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
 
-                        if actual_return_value != expected_return_type {
-                            return false;
+                        if actual_return_value != &expected_return_type {
+                            details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
                         }
                     } else {
-                        return false;
+                        details.push(format!("missing method `{}`", expected_method_unwrapped.name.as_str().bold()));
                     }
                 }
 
-                true
+                details.is_empty()
             },
             Type::TypeParameter(info) | Type::FunctionParameter(info) => info.required_interfaces.contains(interface),
             Type::Associated(info) => info.associated.required_interfaces.contains(interface),
             Type::TypeRef(_) => unreachable!(),
+        };
+
+        if !ok {
+            context.errors.add_detailed(location, format!("type `{}` does not match interface `{}`:", self, interface.borrow().name.as_str().bold()), details);
         }
+
+        ok
     }
 
     pub fn is_ambiguous(&self) -> bool {
         match self {
+            Type::Undefined => false,
             Type::Void => false,
             Type::Any => true,
             Type::This(_) => false,
@@ -212,8 +231,9 @@ impl Type {
 
     pub fn get_maybe_static_method(&self, is_static: bool, name: &str) -> Option<Link<FunctionBlueprint>> {
         match self {
-            Type::Void => None,
+            Type::Undefined => None,
             Type::Any => None,
+            Type::Void => None,
             Type::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
             Type::Actual(info) => {
                 info.type_wrapped.with_ref(|type_unwrapped| {
@@ -242,6 +262,7 @@ impl Type {
 
     pub fn get_field(&self, field_name: &str) -> Option<Rc<FieldDetails>> {
         match self {
+            Type::Undefined => None,
             Type::Void => None,
             Type::Any => None,
             Type::This(_) => None,
@@ -255,6 +276,7 @@ impl Type {
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
         match self {
+            Type::Undefined => unreachable!(),
             Type::Void => unreachable!(),
             Type::Any => unreachable!(),
             Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
@@ -319,26 +341,29 @@ impl PartialEq for Type {
 
 impl Default for Type {
     fn default() -> Self {
-        Self::Void
+        Self::Undefined
     }
 }
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Type::Void => write!(f, "<void>"),
-            Type::Any => write!(f, "<any>"),
-            Type::This(_) => write!(f, "{}", THIS_TYPE_NAME),
+        let s = match self {
+            Type::Undefined => format!("<undefined>"),
+            Type::Void => format!("<void>"),
+            Type::Any => format!("<any>"),
+            Type::This(_) => format!("{}", THIS_TYPE_NAME),
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
-                    true => write!(f, "{}", &info.type_wrapped.borrow().name),
-                    false => write!(f, "{}<{}>", &info.type_wrapped.borrow().name, display_join(&info.parameters, ",")),
+                    true => format!("{}", &info.type_wrapped.borrow().name),
+                    false => format!("{}<{}>", &info.type_wrapped.borrow().name, display_join(&info.parameters, ",")),
                 }
             },
-            Type::TypeParameter(info) => write!(f, "{}", &info.name),
-            Type::FunctionParameter(info) => write!(f, "{}", &info.name),
-            Type::Associated(info) => write!(f, "{}", &info.associated.name),
-            Type::TypeRef(typeref) => write!(f, "<type {}>", &typeref),
-        }
+            Type::TypeParameter(info) => format!("{}", &info.name),
+            Type::FunctionParameter(info) => format!("{}", &info.name),
+            Type::Associated(info) => format!("{}", &info.associated.name),
+            Type::TypeRef(typeref) => format!("<type {}>", &typeref),
+        };
+
+        write!(f, "{}", s.bold())
     }
 }

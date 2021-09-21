@@ -23,15 +23,20 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
 
     fn generate_header(&self, id: u64) -> FunctionInstanceHeader {
         self.function_blueprint.with_ref(|function_unwrapped| {
+            let wasm_name = match &self.this_type {
+                Some(type_instance) => format!("{}_{}_{}", &type_instance.name, &function_unwrapped.name, id),
+                None => format!("{}_{}", &function_unwrapped.name, id),
+            };
             let wasm_call = match function_unwrapped.is_raw_wasm {
                 true => function_unwrapped.body.resolve_without_context(),
                 false => vec![
-                    Wat::call_from_stack(&format!("{}_{}", &function_unwrapped.name, id))
+                    Wat::call_from_stack(&wasm_name)
                 ],
             };
 
             FunctionInstanceHeader {
                 id,
+                wasm_name,
                 wasm_call,
             }
         })
@@ -89,14 +94,8 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
                             }
                         }
                     }
-
-                    let prefix = match &function_unwrapped.this_arg {
-                        Some(var_info) => format!("{}_", &var_info.ty.resolve(&type_index, context).name),
-                        None => String::new(),
-                    };
-                    let wasm_name = format!("{}{}_{}", prefix, &function_unwrapped.name, self.get_id());
                     
-                    Some(Wat::declare_function(&wasm_name, None, wat_args, wat_ret, wat_locals, wat_body))
+                    Some(Wat::declare_function(&header.wasm_name, None, wat_args, wat_ret, wat_locals, wat_body))
                 }
             };
 

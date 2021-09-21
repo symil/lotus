@@ -35,6 +35,7 @@ impl Assignment {
                                 AssignmentOperator::ModEqual => BinaryOperator::Mod,
                                 AssignmentOperator::ShlEqual => BinaryOperator::Shl,
                                 AssignmentOperator::ShrEqual => BinaryOperator::Shr,
+                                AssignmentOperator::XorEqual => BinaryOperator::Xor,
                                 AssignmentOperator::DoubleAndEqual => BinaryOperator::DoubleAnd,
                                 AssignmentOperator::DoubleOrEqual => BinaryOperator::DoubleOr,
                                 AssignmentOperator::SingleAndEqual => BinaryOperator::SingleAnd,
@@ -68,11 +69,11 @@ impl Assignment {
             }
         } else {
             if let Some(vasm) = self.lvalue.process(AccessType::Get, context) {
-                let is_void = vasm.ty.is_void();
+                let is_void = vasm.ty.is_undefined();
                 let mut source = vec![vasm];
 
                 if !is_void {
-                    source.push(Vasm::new(Type::Void, vec![], vec![VI::Drop]));
+                    source.push(Vasm::new(Type::Undefined, vec![], vec![VI::Drop]));
                 }
 
                 result = Some(Vasm::merge(source));

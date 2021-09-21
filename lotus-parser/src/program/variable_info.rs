@@ -60,6 +60,6 @@ impl VariableInfo {
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Rc::try_unwrap(Self::new(Identifier::default(), Type::Void, VariableKind::Local)).unwrap()
+        Rc::try_unwrap(Self::new(Identifier::default(), Type::Undefined, VariableKind::Local)).unwrap()
     }
 }

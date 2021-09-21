@@ -2,7 +2,7 @@ use std::ops::Deref;
 use parsable::DataLocation;
 use super::Error;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ErrorList {
     errors: Vec<Error>,
     enabled: bool
@@ -22,6 +22,12 @@ impl ErrorList {
         }
     }
 
+    pub fn add_detailed<S : Deref<Target=str>, T : Deref<Target=str>>(&mut self, location: &DataLocation, error: S, details: Vec<T>) {
+        if self.enabled {
+            self.errors.push(Error::located_detailed(location, error, details));
+        }
+    }
+
     pub fn add_unlocated<S : Deref<Target=str>>(&mut self, error: S) {
         if self.enabled {
             self.errors.push(Error::unlocated(error));
@@ -38,5 +44,11 @@ impl ErrorList {
 
     pub fn consume(self) -> Vec<Error> {
         self.errors
+    }
+}
+
+impl Default for ErrorList {
+    fn default() -> Self {
+        Self::new()
     }
 }

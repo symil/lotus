@@ -1,0 +1,5 @@
+export type(i32) bool {
+    to_bool() -> bool {{ }}
+
+    log() {{ (call $__log_bool) }}
+}

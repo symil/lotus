@@ -19,7 +19,7 @@ impl VarDeclaration {
 
         let mut source = vec![];
         let mut ok = false;
-        let mut final_var_type = Type::Void;
+        let mut final_var_type = Type::Undefined;
 
         if let Some(vasm) = self.init_value.process(context) {
             if !vasm.ty.is_assignable() {
@@ -57,7 +57,7 @@ impl VarDeclaration {
 
         context.push_var(&var_info);
 
-        source.push(Vasm::new(Type::Void, vec![Rc::clone(&var_info)], vec![VI::set_from_stack(&var_info)]));
+        source.push(Vasm::new(Type::Undefined, vec![Rc::clone(&var_info)], vec![VI::set_from_stack(&var_info)]));
 
         match ok {
             true => Some((var_info, Vasm::merge(source))),

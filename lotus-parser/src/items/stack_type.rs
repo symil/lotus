@@ -2,7 +2,7 @@ use parsable::parsable;
 
 #[parsable]
 #[derive(Clone)]
-pub struct StackTypeToken {
+pub struct StackTypeWrapped {
     pub value: StackType
 }
 

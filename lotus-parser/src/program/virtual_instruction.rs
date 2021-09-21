@@ -108,10 +108,10 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn call_function<T : ToVasm>(function: &Link<FunctionBlueprint>, parameters: &[Type], args: T) -> Self {
+    pub fn call_function<T : ToVasm>(function: Link<FunctionBlueprint>, parameters: &[Type], args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
             caller_type: None,
-            function: function.clone(),
+            function,
             parameters: parameters.to_vec(),
             args: Some(args.to_vasm()),
         })
@@ -220,8 +220,8 @@ impl VirtualInstruction {
                         false => this_type.as_ref().unwrap().type_blueprint.with_ref(|type_unwrapped| {
                             let is_static = function_unwrapped.is_static();
                             let index_map = match is_static {
-                                true => &type_unwrapped.methods,
-                                false => &type_unwrapped.static_methods,
+                                true => &type_unwrapped.static_methods,
+                                false => &type_unwrapped.methods,
                             };
 
                             index_map.get(function_unwrapped.name.as_str()).unwrap().clone()

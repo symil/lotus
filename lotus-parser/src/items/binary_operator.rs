@@ -7,7 +7,7 @@ pub struct BinaryOperatorWrapper {
     pub value: BinaryOperator
 }
 
-#[parsable(impl_display=true)]
+#[parsable(impl_display=true, name="binary operator")]
 #[derive(PartialEq, Clone, Copy)]
 pub enum BinaryOperator {
     Plus = "+",
@@ -17,6 +17,7 @@ pub enum BinaryOperator {
     Mod = "%",
     Shl = "<<",
     Shr = ">>",
+    Xor = "^",
     DoubleAnd = "&&",
     DoubleOr = "||",
     SingleAnd = "&",
@@ -46,9 +47,10 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Shl | BinaryOperator::Shr => 3,
             BinaryOperator::SingleAnd => 4,
             BinaryOperator::SingleOr => 5,
-            BinaryOperator::Eq | BinaryOperator::Ne | BinaryOperator::Ge | BinaryOperator::Gt | BinaryOperator::Le | BinaryOperator::Lt => 6,
-            BinaryOperator::DoubleAnd => 7,
-            BinaryOperator::DoubleOr => 8,
+            BinaryOperator::Xor => 6,
+            BinaryOperator::Eq | BinaryOperator::Ne | BinaryOperator::Ge | BinaryOperator::Gt | BinaryOperator::Le | BinaryOperator::Lt => 7,
+            BinaryOperator::DoubleAnd => 8,
+            BinaryOperator::DoubleOr => 9,
         }
     }
 
@@ -82,6 +84,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Mod => BuiltinInterface::Mod,
             BinaryOperator::Shl => BuiltinInterface::Shl,
             BinaryOperator::Shr => BuiltinInterface::Shr,
+            BinaryOperator::Xor => BuiltinInterface::Xor,
             BinaryOperator::DoubleAnd => BuiltinInterface::And,
             BinaryOperator::DoubleOr => BuiltinInterface::Or,
             BinaryOperator::SingleAnd => BuiltinInterface::And,

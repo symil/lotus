@@ -31,20 +31,20 @@ impl Action {
                                         VI::jump(function_depth)
                                     ]);
                                 } else {
-                                    if !vasm.ty.is_void() {
-                                        context.errors.add(expr, format!("return: expected `{}`, got `{}`", &return_value.ty, &vasm.ty));
+                                    if !vasm.ty.is_undefined() {
+                                        context.errors.add(expr, format!("expected `{}`, got `{}`", &return_value.ty, &vasm.ty));
                                     }
                                 }
                             }
                         },
                         None => {
-                            context.errors.add(self, format!("return: expected `{}`, got `{}`", &return_value.ty, Type::Void));
+                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_value.ty, Type::Void));
                         },
                     },
                     None => match &self.value {
                         Some(expr) => {
                             if let Some(vasm) = expr.process(context) {
-                                context.errors.add(expr, format!("return: expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                context.errors.add(expr, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
                             }
                         },
                         None => {

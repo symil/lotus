@@ -6,6 +6,7 @@ use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::
 pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, output: &mut Output) {
     let mut lines = vec![];
     let mut impl_display_lines = vec![];
+    let has_name = root_attributes.name.is_some();
 
     for i in 0..data_enum.variants.len() {
         let variant = &mut data_enum.variants[i];
@@ -112,7 +113,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                                 reader__.eat_spaces();
                                 #pop_markers
                                 return Some(Self::#variant_name);
-                            } else {
+                            } else if (! #has_name) {
                                 reader__.set_expected_token(Some(format!("{:?}", #lit_str)));
                             }
                         };

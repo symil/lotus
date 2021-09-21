@@ -4,7 +4,7 @@ use super::Identifier;
 
 #[parsable]
 pub struct InterfaceAssociatedTypeDeclaration {
-    #[parsable(suffix=";")]
+    #[parsable(prefix="type", suffix=";")]
     pub name: Identifier
 }
 

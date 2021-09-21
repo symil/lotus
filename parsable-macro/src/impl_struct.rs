@@ -70,6 +70,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                             None => {
                                 reader__.set_expected_token(Some(format!("{:?}", #prefix)));
                                 prefix_ok__ = false;
+                                field_failed__ = true;
                                 #on_fail;
                             }
                         };
@@ -78,13 +79,15 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 };
                 let suffix_parsing = match attributes.suffix {
                     Some(suffix) => quote! {
-                        match reader__.read_string(#suffix) {
-                            Some(_) => reader__.eat_spaces(),
-                            None => {
-                                reader__.set_expected_token(Some(format!("{:?}", #suffix)));
-                                #on_fail;
-                            }
-                        };
+                        if !field_failed__ {
+                            match reader__.read_string(#suffix) {
+                                Some(_) => reader__.eat_spaces(),
+                                None => {
+                                    reader__.set_expected_token(Some(format!("{:?}", #suffix)));
+                                    #on_fail;
+                                }
+                            };
+                        }
                     },
                     None => quote! {}
                 };

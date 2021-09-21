@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
 
 #[parsable]
@@ -39,23 +39,6 @@ impl FunctionContent {
         let function_blueprint = context.functions.insert(function_unwrapped);
         let is_static = self.qualifier.contains(&FunctionQualifier::Static);
         let parameters = self.parameters.process(context);
-        // let parameters = match context.get_current_type() {
-        //     Some(type_wrapped) => type_wrapped.with_ref(|type_unwrapped| {
-        //         let mut result = type_unwrapped.parameters.clone();
-        //         let type_parameter_count = result.len();
-
-        //         for (name, mut value) in self.parameters.process(context) {
-        //             value.index += type_parameter_count;
-
-        //             if result.insert(name, value).is_some() {
-        //                 context.errors.add(&value.name, format!("parameter `{}` already declared by type `{}`", &value.name, &type_unwrapped.name));
-        //             }
-        //         }
-
-        //         result
-        //     }),
-        //     None => self.parameters.process(context)
-        // };
 
         context.current_function = Some(function_blueprint.clone());
 
@@ -128,21 +111,37 @@ impl FunctionContent {
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        let function_blueprint = context.functions.get_by_location(&self.name);
+        let function_wrapped = context.functions.get_by_location(&self.name);
         
-        context.current_function = Some(function_blueprint.clone());
+        context.current_function = Some(function_wrapped.clone());
         context.reset_local_scope();
         context.push_scope(ScopeKind::Function);
 
+        function_wrapped.with_ref(|function_unwrapped| {
+            if let Some(this_var) = &function_unwrapped.this_arg {
+                context.push_var(this_var);
+            }
+
+            for arg in &function_unwrapped.arguments {
+                context.push_var(arg);
+            }
+        });
+
         let is_raw_wasm = self.body.is_raw_wasm();
 
-        if let Some(vasm) = self.body.process(context) {
-            function_blueprint.borrow_mut().body = vasm;
-            function_blueprint.borrow_mut().is_raw_wasm = is_raw_wasm;
+        if let Some(mut vasm) = self.body.process(context) {
+            if !is_raw_wasm {
+                vasm = vasm![VI::block(vasm)];
+            }
+
+            function_wrapped.with_mut(|mut function_unwrapped| {
+                function_unwrapped.body = vasm;
+                function_unwrapped.is_raw_wasm = is_raw_wasm;
+            });
         }
 
         if !is_raw_wasm {
-            if let Some(return_type) = &function_blueprint.borrow().return_value {
+            if let Some(return_type) = &function_wrapped.borrow().return_value {
                 if !context.return_found {
                     context.errors.add(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
                 }

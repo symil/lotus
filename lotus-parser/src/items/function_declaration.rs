@@ -11,6 +11,10 @@ pub struct FunctionDeclaration {
 
 impl FunctionDeclaration {
     pub fn process_signature(&self, context: &mut ProgramContext) {
+        if context.functions.get_by_identifier(&self.content.name).is_some() {
+            context.errors.add(self, format!("duplicate function declaration `{}`", &self.content.name));
+        }
+
         let mut function_wrapped = self.content.process_signature(context);
 
         let name = function_wrapped.with_mut(|mut function_unwrapped| {
@@ -32,10 +36,6 @@ impl FunctionDeclaration {
 
             function_unwrapped.name.clone()
         });
-
-        if context.functions.get_by_identifier(&name).is_some() {
-            context.errors.add(self, format!("duplicate function declaration `{}`", &name));
-        }
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {

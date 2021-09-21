@@ -10,18 +10,18 @@ pub struct TypeArguments {
 }
 
 impl TypeArguments {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vec<Type>> {
+    pub fn process(&self, context: &mut ProgramContext) -> Vec<Type> {
         let mut type_list = vec![];
 
         for arg in &self.list {
-            if let Some(ty) = arg.process(context) {
-                type_list.push(ty);
-            }
+            let arg_type = match arg.process(context) {
+                Some(ty) => ty,
+                None => Type::Undefined,
+            };
+
+            type_list.push(arg_type);
         }
 
-        match type_list.len() == self.list.len() {
-            true => Some(type_list),
-            false => None
-        }
+        type_list
     }
 }

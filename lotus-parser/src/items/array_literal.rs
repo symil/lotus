@@ -48,7 +48,7 @@ impl ArrayLiteral {
 
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let final_pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![final_item_type.clone()]);
-        let mut result = Vasm::new(Type::Void, variables, vec![
+        let mut result = Vasm::new(Type::Undefined, variables, vec![
             VI::set(&array_var, VI::call_method(&final_array_type, final_array_type.get_static_method(NEW_FUNC_NAME).unwrap(), &[], vec![VI::int(self.items.len())])),
             VI::set(&array_body_var, VI::call_method(&final_array_type, final_array_type.get_method(GET_BODY_FUNC_NAME).unwrap(), &[], vec![VI::get(&array_var)])),
         ]);

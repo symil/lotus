@@ -5,6 +5,7 @@ use super::Wat;
 #[derive(Debug)]
 pub struct FunctionInstanceHeader {
     pub id: u64,
+    pub wasm_name: String,
     pub wasm_call: Vec<Wat>
 }
 

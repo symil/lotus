@@ -1,0 +1,62 @@
+export type(i32) int {
+    add(int) -> int {{ i32.add }}
+    sub(int) -> int {{ i32.sub }}
+    mul(int) -> int {{ i32.mul }}
+    div(int) -> int {{ i32.div_s }}
+    mod(int) -> int {{ i32.rem_s }}
+    shl(int) -> int {{ i32.shl }}
+    shr(int) -> int {{ i32.shr_s }}
+    and(int) -> int {{ i32.and }}
+    or(int) -> int {{ i32.or }}
+    xor(int) -> int {{ i32.xor }}
+    eq(int) -> bool {{ i32.eq }}
+    ne(int) -> bool {{ i32.ne }}
+    ge(int) -> bool {{ i32.ge_s }}
+    gt(int) -> bool {{ i32.gt_s }}
+    le(int) -> bool {{ i32.le_s }}
+    lt(int) -> bool {{ i32.lt_s }}
+    plus() -> int {{ }}
+    minus() -> int {{ (i32.mul (i32.const -1)) }}
+
+    clz() -> int {{ i32.clz }}
+    ctz() -> int {{ i32.ctz }}
+    as_float() -> float {{ f32.reinterpret_i32 }}
+    to_float() -> float {{ f32.convert_i32_s }}
+
+    log() {{ (call $__log_int) }}
+    
+    log2() -> int {
+        if this < 2 {
+            return 1;
+        } else {
+            return 32 - (this - 1).clz();
+        }
+    }
+
+    next_power_of_2() -> int {
+        return 1 << this.log2();
+    }
+
+    log4() -> int {
+        if this < 4 {
+            return 1;
+        } else {
+            return (33 - (this - 1).clz()) / 2;
+        }
+    }
+
+    next_power_of_4() -> int {
+        return 1 << (this.log4() * 2);
+    }
+
+    pow(exponent: int) -> int {
+        let result = 1;
+
+        while exponent > 0 {
+            result = result * this;
+            exponent = exponent - 1;
+        }
+
+        return result;
+    }
+}

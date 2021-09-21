@@ -1,4 +1,5 @@
 use parsable::parsable;
+use colored::*;
 use crate::{items::{process_field_access, process_function_call}, program::{AccessType, ProgramContext, Type, VI, VariableKind, Vasm}};
 use super::{ArgumentList, FieldOrMethodAccess, FullType, Identifier, VarPrefix, VarPrefixWrapper};
 
@@ -32,7 +33,7 @@ impl RootVarRef {
                 Some(args) => match full_type.as_single_name() {
                     Some(name) => {
                         if let Some(function_blueprint) = context.functions.get_by_identifier(name) {
-                            process_function_call(&Type::Void, function_blueprint, &[], args, access_type, context)
+                            process_function_call(None, function_blueprint, &[], args, access_type, context)
                         } else {
                             context.errors.add(name, format!("undefined function `{}`", name));
                             None
@@ -60,7 +61,7 @@ impl RootVarRef {
                             match type_opt {
                                 Some(ty) => Some(Vasm::new(Type::TypeRef(Box::new(ty)), vec![], vec![])),
                                 None => {
-                                    context.errors.add(name, format!("undefined variable or type `{}`", name));
+                                    context.errors.add(name, format!("undefined variable `{}`", name.as_str().bold()));
                                     None
                                 },
                             }

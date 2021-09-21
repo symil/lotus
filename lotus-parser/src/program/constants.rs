@@ -20,7 +20,7 @@ pub const MEMORY_GARBAGE_COLLECT_FUNC_NAME : &'static str = "__trigger_garbage_c
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
-pub const THIS_VAR_NAME : &'static str = "__this";
+pub const THIS_VAR_NAME : &'static str = "this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
@@ -36,5 +36,5 @@ pub const SET_AS_PTR_METHOD_NAME : &'static str = "__set_as_ptr"; // static meth
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at_index";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at_index";
-pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
+pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";

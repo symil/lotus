@@ -22,7 +22,7 @@ impl VarPath {
             false => AccessType::Get
         };
 
-        let mut parent_type = Type::Void;
+        let mut parent_type = Type::Undefined;
         let mut ok = true;
         let mut source = vec![];
 
