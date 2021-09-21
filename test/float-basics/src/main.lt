@@ -1,0 +1,34 @@
+fn log(f: float) {
+    f.log();
+}
+
+fn logb(b: bool) {
+    b.log();
+}
+
+export fn main() {
+    log(2f + 3f);
+    log(2f - 3f);
+    log(2f * 3f);
+    log(2f / 3f);
+
+    logb(1f == 1f);
+    logb(1f != 1f);
+    logb(2f > 1f);
+    logb(2f >= 1f);
+    logb(2f < 1f);
+    logb(2f <= 1f);
+
+    log(+3f);
+    log(-3f);
+
+    log(-5f.abs());
+    log(5f.neg());
+    log(1.5f.ceil());
+    log(1.5f.floor());
+    log(1.5f.trunc());
+    log(1.8f.round());
+    log(2f.sqrt());
+    log(2f.min(-2f));
+    log(2f.max(-2f));
+}

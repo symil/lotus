@@ -10,8 +10,8 @@ pub struct UnaryOperatorWrapper {
 pub enum UnaryOperator {
     Not = "!",
     ToBool = "?",
-    Plus = "+",
-    Minus = "-"
+    // Plus = "+",
+    // Minus = "-"
 }
 
 impl UnaryOperatorWrapper {
@@ -19,8 +19,8 @@ impl UnaryOperatorWrapper {
         let required_interface = match &self.value {
             UnaryOperator::Not => BuiltinInterface::Not,
             UnaryOperator::ToBool => BuiltinInterface::ToBool,
-            UnaryOperator::Plus => BuiltinInterface::Plus,
-            UnaryOperator::Minus => BuiltinInterface::Minus,
+            // UnaryOperator::Plus => BuiltinInterface::Plus,
+            // UnaryOperator::Minus => BuiltinInterface::Minus,
         };
 
         context.call_builtin_interface_no_arg(self, required_interface, operand_type)

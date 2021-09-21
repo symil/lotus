@@ -3,7 +3,7 @@ use crate::{program::{BuiltinType, ProgramContext, VI, Vasm}};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
-    #[parsable(regex = r"(-?\d+(\.\d*)?f)|nan")]
+    #[parsable(regex = r"((-|\+)?\d+(\.\d*)?f)|nan")]
     pub value: String,
 }
 

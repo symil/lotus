@@ -1,3 +1,24 @@
 export type(f32) float {
+    add(float) -> float {{ f32.add }}
+    sub(float) -> float {{ f32.sub }}
+    mul(float) -> float {{ f32.mul }}
+    div(float) -> float {{ f32.div }}
+    eq(float) -> bool {{ f32.eq }}
+    ne(float) -> bool {{ f32.ne }}
+    ge(float) -> bool {{ f32.ge }}
+    gt(float) -> bool {{ f32.gt }}
+    le(float) -> bool {{ f32.le }}
+    lt(float) -> bool {{ f32.lt }}
 
+    abs() -> float {{ f32.abs }}
+    neg() -> float {{ f32.neg }}
+    ceil() -> float {{ f32.ceil }}
+    floor() -> float {{ f32.floor }}
+    trunc() -> float {{ f32.trunc }}
+    round() -> float {{ f32.nearest }}
+    sqrt() -> float {{ f32.sqrt }}
+    min(float) -> float {{ f32.min }}
+    max(float) -> float {{ f32.max }}
+
+    log() {{ (call $__log_float) }}
 }
