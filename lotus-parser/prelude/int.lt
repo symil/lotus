@@ -22,6 +22,7 @@ export type(i32) int {
     ctz() -> int {{ i32.ctz }}
     as_float() -> float {{ f32.reinterpret_i32 }}
     to_float() -> float {{ f32.convert_i32_s }}
+    to_bool() -> bool {{ (i32.eqz i32.eqz) }}
 
     log() {{ (call $__log_int) }}
     

@@ -221,7 +221,7 @@ impl VirtualInstruction {
                             let is_static = function_unwrapped.is_static();
                             let index_map = match is_static {
                                 true => &type_unwrapped.static_methods,
-                                false => &type_unwrapped.methods,
+                                false => &type_unwrapped.regular_methods,
                             };
 
                             index_map.get(function_unwrapped.name.as_str()).unwrap().clone()

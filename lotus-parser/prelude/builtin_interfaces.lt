@@ -74,10 +74,6 @@ export interface Minus {
     minus() -> This;
 }
 
-export interface ToBool {
-    to_bool() -> bool;
-}
-
 export interface GetAtIndex {
     type Item;
 

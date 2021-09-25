@@ -10,7 +10,7 @@ pub struct InterfaceBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub associated_types: IndexMap<String, Rc<InterfaceAssociatedTypeInfo>>,
-    pub methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
 }
 
@@ -25,7 +25,7 @@ impl Link<InterfaceBlueprint> {
         self.with_ref(|interface_unwrapped| {
             let index_map = match is_static {
                 true => &interface_unwrapped.static_methods,
-                false => &interface_unwrapped.methods,
+                false => &interface_unwrapped.regular_methods,
             };
 
             index_map.get(name).cloned()

@@ -2,13 +2,14 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat}, utils::Link, vasm, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
     pub errors: ErrorList,
 
     pub types: GlobalItemIndex<TypeBlueprint>,
+    pub typedefs: GlobalItemIndex<TypedefBlueprint>,
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
@@ -148,7 +149,7 @@ impl ProgramContext {
         let interface_wrapped = self.get_builtin_interface(interface);
 
         interface_wrapped.with_ref(|interface_unwrapped| {
-            let (_, method_wrapped) = interface_unwrapped.methods.first().unwrap();
+            let (_, method_wrapped) = interface_unwrapped.regular_methods.first().unwrap();
 
             method_wrapped.with_ref(|function_unwrapped| {
                 let method_name = function_unwrapped.name.as_str();
@@ -177,6 +178,7 @@ impl ProgramContext {
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut interfaces = vec![];
         let mut types = vec![];
+        let mut typedefs = vec![];
         let mut functions = vec![];
         let mut global_vars = vec![];
 
@@ -185,6 +187,7 @@ impl ProgramContext {
                 match block {
                     TopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
                     TopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
+                    TopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
                     TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
                     TopLevelBlock::GlobalDeclaration(mut global_declaration) => global_vars.push(global_declaration),
                 }
@@ -197,6 +200,10 @@ impl ProgramContext {
 
         for type_declaration in &types {
             type_declaration.process_name(self);
+        }
+
+        for typedef_declaration in &typedefs {
+            typedef_declaration.process(self);
         }
 
         // TODO: index builtin types?

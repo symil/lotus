@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{BuiltinInterface, ProgramContext, Vasm};
+use crate::program::{BuiltinInterface, BuiltinType, ProgramContext, Vasm};
 use super::{Expression, Statement, StatementList};
 
 #[parsable]
@@ -14,8 +14,10 @@ impl Branch {
         let mut result = None;
 
         if let Some(condition_wasm) = self.condition.process(context) {
-            if let Some(to_bool_wasm) = context.call_builtin_interface_no_arg(&self.condition, BuiltinInterface::ToBool, &condition_wasm.ty) {
-                result = Some(Vasm::merge(vec![condition_wasm, to_bool_wasm]));
+            if condition_wasm.ty.is_bool() {
+                result = Some(condition_wasm);
+            } else {
+                context.errors.add(&self.condition, format!("expected `{}`, got `{}`", BuiltinType::Bool.get_name(), &condition_wasm.ty));
             }
         }
 

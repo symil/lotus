@@ -17,7 +17,7 @@ pub struct TypeBlueprint {
     pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
     pub fields: IndexMap<String, Rc<FieldDetails>>,
     pub static_fields: IndexMap<String, Rc<FieldDetails>>,
-    pub methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
@@ -39,7 +39,6 @@ impl TypeBlueprint {
             StackType::Void => None,
             StackType::Int => Some("i32"),
             StackType::Float => Some("f32"),
-            StackType::Pointer => Some("i32"),
         }
     }
 }

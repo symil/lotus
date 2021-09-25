@@ -1,0 +1,135 @@
+// ignore
+
+const MEMORY_CELL_BYTE_SIZE = 4; // 4B
+const WASM_PAGE_BYTE_SIZE = 2.pow(16); // 64 KiB
+const VIRTUAL_PAGE_BYTE_SIZE = 2.pow(20); // 1 MiB
+
+const WASM_PAGE_CELL_COUNT = WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+const VIRTUAL_PAGE_CELL_COUNT = VIRTUAL_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE;
+const VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO = VIRTUAL_PAGE_CELL_COUNT.log2();
+
+const WASM_PAGE_COUNT_PER_VIRTUAL_PAGE = VIRTUAL_PAGE_BYTE_SIZE / WASM_PAGE_BYTE_SIZE;
+
+const VIRTUAL_PAGE_METADATA_SIZE = 4;
+const POINTER_METADATA_SIZE = 1;
+const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE = 64;
+const BLOCK_SIZE_COUNT = 8;
+const MEMORY_METADATA_SIZE = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE * BLOCK_SIZE_COUNT;
+
+const GENERATED_METHOD_COUNT_PER_TYPE = 4;
+
+const HEADER_WASM_PAGE_COUNT = 1;
+const HEADER_CELL_COUNT = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
+const HEADER_END_ADDR = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
+
+fn alloc_page() -> ptr {
+    return (@wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
+}
+
+sys fn mem_alloc(block_size: int) -> ptr {
+    let result = 0 as ptr;
+    let block_size_index = block_size.log4() - 1;
+    let list_start_addr = block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+    let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+
+    for i in list_start_addr..list_end_addr {
+        let page_addr = @memory[i];
+
+        if page_addr == 0 {
+            page_addr = alloc_page() as int;
+            @memory[i] = page_addr;
+
+            let round_block_size = block_size.next_power_of_4();
+            let full_block_size = round_block_size + POINTER_METADATA_SIZE;
+            let block_count = (VIRTUAL_PAGE_CELL_COUNT - VIRTUAL_PAGE_METADATA_SIZE) / (round_block_size + 1 + POINTER_METADATA_SIZE);
+            let stack_start_addr = page_addr + VIRTUAL_PAGE_METADATA_SIZE;
+            let block_list_start_addr = stack_start_addr + block_count;
+            let last_block_addr = block_list_start_addr + (block_count * full_block_size) - round_block_size;
+
+            @memory[page_addr] = block_count;
+            @memory[page_addr + 1] = block_list_start_addr;
+            @memory[page_addr + 2] = full_block_size;
+            @memory[page_addr + 3] = block_count;
+
+            for j in 0..block_count {
+                @memory[stack_start_addr + j] = last_block_addr - (j * full_block_size);
+            }
+        }
+
+        let offset = @memory[page_addr];
+
+        if offset != 0 {
+            offset -= 1;
+            result = @memory[page_addr + offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
+            result[-1] = 1;
+            @memory[page_addr] = offset;
+            break;
+        }
+    }
+
+    return result;
+}
+
+sys fn __mem_free(pointer: ptr) {
+    let addr = pointer as int;
+    let page_addr = (((addr - HEADER_CELL_COUNT) >> VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO) << VIRTUAL_PAGE_CELL_COUNT_POWER_OF_TWO) + HEADER_CELL_COUNT;
+    let avilable_block_count = @memory[page_addr];
+
+    pointer[-1] = 0;
+    @memory[page_addr + avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = addr;
+    @memory[page_addr] = avilable_block_count + 1;
+}
+
+sys fn __trigger_garbage_collection() {
+    for i in 0..BLOCK_SIZE_COUNT {
+        for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
+            let page_addr = @memory[i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
+
+            if page_addr == 0 {
+                break;
+            }
+
+            let block_list_start_addr = @memory[page_addr + 1];
+            let full_block_size = @memory[page_addr + 2];
+            let block_count = @memory[page_addr + 3];
+
+            for k in 0..block_count {
+                let metadata_addr = block_list_start_addr + (full_block_size * k);
+                let metadata_value = @memory[metadata_addr];
+
+                if metadata_value == 1 {
+                    @free((metadata_addr + 1) as ptr);
+                } else if metadata_value == 2 {
+                    @memory[metadata_addr] = 1;
+                }
+            }
+        }
+    }
+}
+
+sys fn __mem_retain(addr: ptr) -> bool {
+    let success = addr[-1] == 1;
+
+    if success {
+        addr[-1] = 2;
+    }
+
+    return success;
+}
+
+sys fn __mem_retain_object(pointer: ptr) -> bool {
+    let type_id = pointer[0];
+    let retain_method_index = type_id * GENERATED_METHOD_COUNT_PER_TYPE;
+
+    @call_indirect_retain(pointer, retain_method_index);
+
+    return true;
+}
+
+sys fn __mem_copy(dest: ptr, src: ptr, count: int) {
+    let dest_arg = (dest as int) * 4;
+    let src_arg = (src as int) * 4;
+    let count_arg = count * 4;
+
+    @wasm_memory_copy(dest_arg, src_arg, count_arg);
+}

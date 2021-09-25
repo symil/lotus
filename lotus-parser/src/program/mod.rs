@@ -37,6 +37,8 @@ mod function_instance_parameters;
 mod generated_item_index;
 mod function_instance_header;
 mod type_instance_header;
+mod typedef_blueprint;
+mod field_kind;
 
 pub use error::*;
 pub use program::*;
@@ -76,3 +78,5 @@ pub use function_instance_parameters::*;
 pub use generated_item_index::*;
 pub use function_instance_header::*;
 pub use type_instance_header::*;
+pub use typedef_blueprint::*;
+pub use field_kind::*;

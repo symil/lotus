@@ -27,7 +27,7 @@ impl InterfaceDeclaration {
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             associated_types: IndexMap::new(),
-            methods: IndexMap::new(),
+            regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
         };
 
@@ -74,10 +74,11 @@ impl InterfaceDeclaration {
 
     pub fn process_methods(&self, context: &mut ProgramContext) {
         self.process(context, |interface_wrapped, context| {
-            let mut methods = IndexMap::new();
+            let mut regular_methods = IndexMap::new();
+            let mut static_methods = IndexMap::new();
 
             for method in &self.body.methods {
-                let (name, arguments, return_type) = method.process(context);
+                let (is_static, name, arguments, return_type) = method.process(context);
                 let function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
@@ -97,12 +98,20 @@ impl InterfaceDeclaration {
                     body: Vasm::empty(),
                 };
 
-                if methods.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
+                let index_map = match is_static {
+                    true => &mut static_methods,
+                    false => &mut regular_methods
+                };
+
+                if index_map.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
                     context.errors.add(method, format!("duplicate method `{}`", &name));
                 }
             }
 
-            interface_wrapped.borrow_mut().methods = methods;
+            interface_wrapped.with_mut(|mut interface_unwrapped| {
+                interface_unwrapped.regular_methods = regular_methods;
+                interface_unwrapped.static_methods = static_methods;
+            });
         });
     }
 }

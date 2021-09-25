@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{FieldDetails, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use super::{BuiltinType, FieldDetails, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -15,7 +15,6 @@ pub enum Type {
     TypeParameter(Rc<GenericTypeInfo>),
     FunctionParameter(Rc<GenericTypeInfo>),
     Associated(AssociatedTypeInfo),
-    TypeRef(Box<Type>)
 }
 
 #[derive(Debug, Clone)]
@@ -44,15 +43,24 @@ impl Type {
         }
     }
 
-    pub fn is_integer(&self) -> bool {
+    fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
+        let name = builtin_type.get_name();
+
         if let Type::Actual(info) = self {
-            // TODO: do this more properly
-            if info.type_wrapped.borrow().name.as_str() == "int" {
+            if info.type_wrapped.borrow().name.as_str() == name {
                 return true;
             }
         }
 
         false
+    }
+
+    pub fn is_int(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Int)
+    }
+
+    pub fn is_bool(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Bool)
     }
 
     pub fn replace_generics(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
@@ -75,8 +83,7 @@ impl Type {
             Type::Associated(info) => Type::Associated(AssociatedTypeInfo {
                 root: Box::new(info.root.replace_generics(this_type, function_parameters)),
                 associated: info.associated.clone(),
-            }),
-            Type::TypeRef(ty) => Type::TypeRef(Box::new(ty.replace_generics(this_type, function_parameters))),
+            })
         }
     }
 
@@ -90,7 +97,6 @@ impl Type {
             Type::TypeParameter(_) => unreachable!(),
             Type::FunctionParameter(_) => unreachable!(),
             Type::Associated(_) => unreachable!(),
-            Type::TypeRef(ty) => ty.get_parameter(index),
         }
     }
 
@@ -127,13 +133,11 @@ impl Type {
                 })),
                 None => None
             },
-            Type::TypeRef(_) => None,
         }
     }
 
     pub fn is_assignable(&self) -> bool {
         match self {
-            Type::TypeRef(_) => false,
             _ => true
         }
     }
@@ -169,35 +173,48 @@ impl Type {
                         details.push(format!("missing associated type `{}`", &associated_type.name));
                     }
                 }
-         
-                for expected_method_wrapped in interface_blueprint.methods.values() {
-                    let expected_method_unwrapped = expected_method_wrapped.borrow();
 
-                    if let Some(actual_method_wrapped) = type_blueprint.methods.get(expected_method_unwrapped.name.as_str()) {
-                        let actual_method_unwrapped = actual_method_wrapped.borrow();
-                        let actual_argument_count = actual_method_unwrapped.arguments.len();
-                        let expected_argument_count = expected_method_unwrapped.arguments.len();
+                for method_kind in &[FieldKind::Regular, FieldKind::Static] {
+                    let interface_methods = match method_kind {
+                        FieldKind::Regular => &interface_blueprint.regular_methods,
+                        FieldKind::Static => &interface_blueprint.static_methods,
+                    };
+                    dbg!(method_kind);
+                    dbg!(interface_methods.len());
 
-                        if actual_argument_count != expected_argument_count {
-                            details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
-                        } else {
-                            for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
-                                let expected_type = expected_arg.ty.replace_generics(Some(self), &[]);
+                    for expected_method_wrapped in interface_methods.values() {
+                        let expected_method_unwrapped = expected_method_wrapped.borrow();
+                        let type_methods = match method_kind {
+                            FieldKind::Regular => &type_blueprint.regular_methods,
+                            FieldKind::Static => &type_blueprint.static_methods,
+                        };
+                        
+                        if let Some(actual_method_wrapped) = type_methods.get(expected_method_unwrapped.name.as_str()) {
+                            let actual_method_unwrapped = actual_method_wrapped.borrow();
+                            let actual_argument_count = actual_method_unwrapped.arguments.len();
+                            let expected_argument_count = expected_method_unwrapped.arguments.len();
 
-                                if &expected_type != &actual_arg.ty {
-                                    details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_arg.ty));
+                            if actual_argument_count != expected_argument_count {
+                                details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
+                            } else {
+                                for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
+                                    let expected_type = expected_arg.ty.replace_generics(Some(self), &[]);
+
+                                    if &expected_type != &actual_arg.ty {
+                                        details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_arg.ty));
+                                    }
                                 }
                             }
-                        }
 
-                        let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(&info.ty)).unwrap_or(&Type::Void);
-                        let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
+                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(&info.ty)).unwrap_or(&Type::Void);
+                            let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
 
-                        if actual_return_value != &expected_return_type {
-                            details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
+                            if actual_return_value != &expected_return_type {
+                                details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
+                            }
+                        } else {
+                            details.push(format!("missing method `{}`", expected_method_unwrapped.name.as_str().bold()));
                         }
-                    } else {
-                        details.push(format!("missing method `{}`", expected_method_unwrapped.name.as_str().bold()));
                     }
                 }
 
@@ -205,7 +222,6 @@ impl Type {
             },
             Type::TypeParameter(info) | Type::FunctionParameter(info) => info.required_interfaces.contains(interface),
             Type::Associated(info) => info.associated.required_interfaces.contains(interface),
-            Type::TypeRef(_) => unreachable!(),
         };
 
         if !ok {
@@ -225,11 +241,15 @@ impl Type {
             Type::TypeParameter(_) => false,
             Type::FunctionParameter(_) => false,
             Type::Associated(info) => info.root.is_ambiguous(),
-            Type::TypeRef(ty) => ty.is_ambiguous(),
         }
     }
 
-    pub fn get_maybe_static_method(&self, is_static: bool, name: &str) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_method(&self, kind: FieldKind, name: &str) -> Option<Link<FunctionBlueprint>> {
+        let is_static = match kind {
+            FieldKind::Regular => false,
+            FieldKind::Static => true,
+        };
+        
         match self {
             Type::Undefined => None,
             Type::Any => None,
@@ -239,7 +259,7 @@ impl Type {
                 info.type_wrapped.with_ref(|type_unwrapped| {
                     let index_map = match is_static {
                         true => &type_unwrapped.static_methods,
-                        false => &type_unwrapped.methods,
+                        false => &type_unwrapped.regular_methods,
                     };
 
                     index_map.get(name).cloned()
@@ -248,16 +268,15 @@ impl Type {
             Type::TypeParameter(info) => info.required_interfaces.get_method(is_static, name),
             Type::FunctionParameter(info) => info.required_interfaces.get_method(is_static, name),
             Type::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
-            Type::TypeRef(ty) => ty.get_maybe_static_method(true, name)
         }
     }
 
-    pub fn get_method(&self, method_name: &str) -> Option<Link<FunctionBlueprint>> {
-        self.get_maybe_static_method(false, method_name)
+    pub fn get_regular_method(&self, name: &str) -> Option<Link<FunctionBlueprint>> {
+        self.get_method(FieldKind::Regular, name)
     }
 
-    pub fn get_static_method(&self, method_name: &str) -> Option<Link<FunctionBlueprint>> {
-        self.get_maybe_static_method(true, method_name)
+    pub fn get_static_method(&self, name: &str) -> Option<Link<FunctionBlueprint>> {
+        self.get_method(FieldKind::Static, name)
     }
 
     pub fn get_field(&self, field_name: &str) -> Option<Rc<FieldDetails>> {
@@ -270,7 +289,6 @@ impl Type {
             Type::TypeParameter(info) => None,
             Type::FunctionParameter(info) => None,
             Type::Associated(info) => None,
-            Type::TypeRef(_) => None,
         }
     }
 
@@ -311,7 +329,6 @@ impl Type {
                     associated.resolve(&type_index, context)
                 })
             },
-            Type::TypeRef(ty) => unreachable!(),
         }
     }
 }
@@ -333,7 +350,6 @@ impl PartialEq for Type {
         match (self, other) {
             (Self::Actual(l0), Self::Actual(r0)) => l0 == r0,
             (Self::TypeParameter(l0), Self::TypeParameter(r0)) => Rc::as_ptr(l0) == Rc::as_ptr(r0),
-            (Self::TypeRef(l0), Self::TypeRef(r0)) => l0 == r0,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
@@ -361,7 +377,6 @@ impl Display for Type {
             Type::TypeParameter(info) => format!("{}", &info.name),
             Type::FunctionParameter(info) => format!("{}", &info.name),
             Type::Associated(info) => format!("{}", &info.associated.name),
-            Type::TypeRef(typeref) => format!("<type {}>", &typeref),
         };
 
         write!(f, "{}", s.bold())

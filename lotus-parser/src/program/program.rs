@@ -48,10 +48,12 @@ impl LotusProgram {
                     comment_start: Some(COMMENT_START_TOKEN),
                 };
 
-                match LotusFile::parse(file_content, parse_options) {
-                    Ok(lotus_file) => parsed_files.push(lotus_file),
-                    Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
-                };
+                if !file_content.starts_with("// ignore") {
+                    match LotusFile::parse(file_content, parse_options) {
+                        Ok(lotus_file) => parsed_files.push(lotus_file),
+                        Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
+                    };
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 use std::{cell::Ref, collections::HashMap};
 use parsable::parsable;
-use crate::{program::{AccessType, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
+use colored::*;
+use crate::{program::{AccessType, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, FieldKind, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
 use super::{ArgumentList, Identifier, VarPrefix};
 
 #[parsable]
@@ -14,9 +15,9 @@ impl FieldOrMethodAccess {
         self.arguments.is_some()
     }
 
-    pub fn process(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, parent_type: &Type, field_kind: FieldKind, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.arguments {
-            Some(arguments) => process_method_call(parent_type, &self.name, &[], arguments, access_type, context),
+            Some(arguments) => process_method_call(parent_type, field_kind, &self.name, &[], arguments, access_type, context),
             None => process_field_access(parent_type, &self.name, access_type, context)
         }
     }
@@ -41,13 +42,13 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     result
 }
 
-pub fn process_method_call(caller_type: &Type, method_name: &Identifier, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_name: &Identifier, parameters: &[Type], arguments: &ArgumentList, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(function_blueprint) = caller_type.get_method(method_name.as_str()) {
+    if let Some(function_blueprint) = caller_type.get_method(field_kind, method_name.as_str()) {
         result = process_function_call(Some(caller_type), function_blueprint, parameters, arguments, access_type, context);
     } else if !caller_type.is_undefined() {
-        context.errors.add(method_name, format!("type `{}` has no method `{}`", caller_type, method_name));
+        context.errors.add(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));
     }
 
     result
@@ -68,14 +69,12 @@ pub fn process_function_call(caller_type: Option<&Type>, function_wrapped: Link<
             let s = if expected_arg_count > 1 { "s" } else { "" };
 
             context.errors.add(arguments, format!("expected {} argument{}, got {}", expected_arg_count, s, arguments.as_vec().len()));
-        }
+        } else {
+            for (i, (expected_arg, arg_expr)) in function_unwrapped.arguments.iter().zip(arguments.as_vec().iter()).enumerate() {
+                if let Some(arg_vasm) = arg_expr.process(context) {
+                    let expected_type = expected_arg.ty.replace_generics(caller_type, parameters);
 
-        for (i, arg_expr) in arguments.as_vec().iter().enumerate() {
-            if let Some(arg_vasm) = arg_expr.process(context) {
-                if i < expected_arg_count {
-                    let expected_type = function_unwrapped.arguments[0].ty.replace_generics(caller_type, parameters);
-
-                    if expected_type.is_assignable_to(&arg_vasm.ty) {
+                    if arg_vasm.ty.is_assignable_to(&expected_type) {
                         result.extend(arg_vasm);
                     } else {
                         context.errors.add(arg_expr, format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));

@@ -10,6 +10,9 @@ export type(f32) float {
     le(float) -> bool {{ f32.le }}
     lt(float) -> bool {{ f32.lt }}
 
+    as_int() -> int {{ i32.reinterpret_f32 }}
+    to_int() -> int {{ i32.trunc_f32_s }}
+
     abs() -> float {{ f32.abs }}
     neg() -> float {{ f32.neg }}
     ceil() -> float {{ f32.ceil }}

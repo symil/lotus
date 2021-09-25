@@ -9,7 +9,6 @@ pub struct UnaryOperatorWrapper {
 #[parsable(impl_display=true)]
 pub enum UnaryOperator {
     Not = "!",
-    ToBool = "?",
     // Plus = "+",
     // Minus = "-"
 }
@@ -18,7 +17,6 @@ impl UnaryOperatorWrapper {
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         let required_interface = match &self.value {
             UnaryOperator::Not => BuiltinInterface::Not,
-            UnaryOperator::ToBool => BuiltinInterface::ToBool,
             // UnaryOperator::Plus => BuiltinInterface::Plus,
             // UnaryOperator::Minus => BuiltinInterface::Minus,
         };

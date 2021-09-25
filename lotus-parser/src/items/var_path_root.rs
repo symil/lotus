@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, FieldOrMethodAccess};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FieldOrMethodAccess, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -37,7 +37,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
                 context.errors.add(set_location, format!("cannot assign value to a literal"));
@@ -47,14 +47,14 @@ impl VarPathRoot {
         }
 
         match self {
-            VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
-            VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context),
-            VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context),
-            VarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
-            VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(context),
-            VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
+            VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::StringLiteral(string_literal) => string_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::Variable(root_var_ref) => root_var_ref.process(access_type, context),
-            VarPathRoot::Parenthesized(expr) => expr.process(context),
+            VarPathRoot::Parenthesized(expr) => expr.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
         }
     }
 }

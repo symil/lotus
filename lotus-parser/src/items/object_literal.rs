@@ -64,7 +64,7 @@ impl ObjectLiteral {
                         };
 
                         result.extend(vasm![
-                            VI::call_method(&object_type, object_type.get_method(SET_AS_PTR_METHOD_NAME).unwrap(), &[], vasm![
+                            VI::call_method(&object_type, object_type.get_regular_method(SET_AS_PTR_METHOD_NAME).unwrap(), &[], vasm![
                                 init_vasm,
                                 VI::get(&object_var),
                                 VI::int(field_info.offset)

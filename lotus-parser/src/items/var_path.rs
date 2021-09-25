@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{AccessType, ProgramContext, Type, Vasm};
+use crate::{items::ValueOrType, program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
 use super::{VarPathRoot, VarPathSegment};
 
 #[parsable]
@@ -26,17 +26,25 @@ impl VarPath {
         let mut ok = true;
         let mut source = vec![];
 
-        if let Some(root_wasm) = self.root.process(current_access_type, context) {
-            parent_type = root_wasm.ty.clone();
-            source.push(root_wasm);
+        if let Some(value_or_type) = self.root.process(current_access_type, context) {
+            let (mut parent_type, mut field_kind) = match value_or_type {
+                ValueOrType::Value(root_vasm) => {
+                    let ty = root_vasm.ty.clone();
+                    source.push(root_vasm);
+
+                    (ty, FieldKind::Regular)
+                },
+                ValueOrType::Type(ty) => (ty, FieldKind::Static),
+            };
 
             for (i, segment) in self.path.iter().enumerate() {
                 if i == self.path.len() - 1 {
                     current_access_type = access_type;
                 }
 
-                if let Some(segment_wasm) = segment.process(&parent_type, current_access_type, context) {
+                if let Some(segment_wasm) = segment.process(&parent_type, field_kind, current_access_type, context) {
                     parent_type = segment_wasm.ty.clone();
+                    field_kind = FieldKind::Regular;
                     source.push(segment_wasm);
                 } else {
                     ok = false;

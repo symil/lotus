@@ -1,5 +1,10 @@
 export type(i32) bool {
+    and(int) -> int {{ i32.and }}
+    or(int) -> int {{ i32.or }}
+    eq(int) -> bool {{ i32.eq }}
+    ne(int) -> bool {{ i32.ne }}
     to_bool() -> bool {{ }}
+    to_int() -> int {{ }}
 
     log() {{ (call $__log_bool) }}
 }

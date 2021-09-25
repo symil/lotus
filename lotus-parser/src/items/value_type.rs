@@ -23,11 +23,19 @@ impl ValueType {
         let mut result = Type::Undefined;
         let mut associated = false;
         let mut parameter = false;
+        let mut typedef = false;
         let parameters = self.arguments.process(context);
         let has_parameters = !parameters.is_empty();
 
         if self.name.as_str() == THIS_TYPE_NAME {
             result = context.get_this_type();
+        }
+
+        if result.is_undefined() {
+            if let Some(typedef_blueprint) = context.typedefs.get_by_identifier(&self.name) {
+                typedef = true;
+                result = typedef_blueprint.borrow().target.clone();
+            }
         }
 
         if result.is_undefined() {
@@ -69,8 +77,10 @@ impl ValueType {
                     context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
+                        dbg!(&parameter.required_interfaces.list);
                         for interface_blueprint in &parameter.required_interfaces.list {
-                            argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
+                            let ok = argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
+                            dbg!(ok);
                         }
                     }
 
@@ -87,6 +97,8 @@ impl ValueType {
                 context.errors.add(&self.arguments, format!("associated types do not take parameters"));
             } else if parameter {
                 context.errors.add(&self.arguments, format!("parameter types do not take parameters"));
+            } else if typedef {
+                context.errors.add(&self.arguments, format!("alias types do not take parameters"));
             }
         }
 

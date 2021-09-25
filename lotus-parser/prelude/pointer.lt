@@ -1,0 +1,15 @@
+interface WasmRepr {
+    static __store(int, This);
+    static __load(int) -> This;
+}
+
+export type ptr = Pointer<int>;
+
+export type(i32) Pointer<T : WasmRepr> {
+    static set(value: T, pointer: This, index: int) {
+        let byte_index = ((value as int) + (pointer as int)) * 4;
+
+        T.__store(byte_index, value);
+    }
+}
+

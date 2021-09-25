@@ -19,7 +19,7 @@ impl MethodDeclaration {
         type_wrapped.with_mut(|mut type_unwrapped| {
             let mut index_map = match is_static {
                 true => &mut type_unwrapped.static_methods,
-                false => &mut type_unwrapped.methods
+                false => &mut type_unwrapped.regular_methods
             };
 
             if index_map.insert(name.to_string(), function_wrapped.clone()).is_some() {

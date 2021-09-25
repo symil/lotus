@@ -34,14 +34,14 @@ impl TypeDeclaration {
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             qualifier: self.qualifier,
-            stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Pointer),
+            stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Int),
             parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
             parent: None,
             inheritance_chain: vec![],
             fields: IndexMap::new(),
             static_fields: IndexMap::new(),
-            methods: IndexMap::new(),
+            regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
             dynamic_methods: vec![],
             hook_event_callbacks: IndexMap::new(),
@@ -229,7 +229,7 @@ impl TypeDeclaration {
             for parent_blueprint in &parent_type_list {
                 let parent_unwrapped = parent_blueprint.borrow();
 
-                for method_blueprint in parent_unwrapped.methods.values().chain(parent_unwrapped.static_methods.values()) {
+                for method_blueprint in parent_unwrapped.regular_methods.values().chain(parent_unwrapped.static_methods.values()) {
                     let method_unwrapped = method_blueprint.borrow();
                     let is_static = method_unwrapped.is_static();
                     let is_dynamic = method_unwrapped.is_dynamic;
@@ -274,7 +274,7 @@ impl TypeDeclaration {
                 }
             }
 
-            type_wrapped.borrow_mut().methods = methods;
+            type_wrapped.borrow_mut().regular_methods = methods;
             type_wrapped.borrow_mut().static_methods = static_methods;
             type_wrapped.borrow_mut().dynamic_methods = dynamic_methods;
         });

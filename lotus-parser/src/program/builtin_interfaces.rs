@@ -19,7 +19,6 @@ pub enum BuiltinInterface {
     Not,
     Plus,
     Minus,
-    ToBool,
     GetAtIndex,
     SetAtIndex,
     Iterable
@@ -47,7 +46,6 @@ impl BuiltinInterface {
             BuiltinInterface::Not => "Not",
             BuiltinInterface::Plus => "Plus",
             BuiltinInterface::Minus => "Minus",
-            BuiltinInterface::ToBool => "ToBool",
             BuiltinInterface::GetAtIndex => "GetAtIndex",
             BuiltinInterface::SetAtIndex => "SetAtIndex",
             BuiltinInterface::Iterable => "Iterable",

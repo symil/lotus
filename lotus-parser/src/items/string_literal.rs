@@ -54,7 +54,7 @@ impl StringLiteral {
 
         for (i, code) in unescaped_chars.into_iter().enumerate() {
             content.push(
-                VI::call_method(&string_type, string_type.get_method(SET_CHAR_FUNC_NAME).unwrap(), &[], vec![VI::int(i), VI::int(code)]),
+                VI::call_method(&string_type, string_type.get_regular_method(SET_CHAR_FUNC_NAME).unwrap(), &[], vec![VI::int(i), VI::int(code)]),
             );
         }
 

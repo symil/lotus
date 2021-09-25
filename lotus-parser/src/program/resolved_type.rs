@@ -13,7 +13,6 @@ impl ResolvedType {
             StackType::Void => None,
             StackType::Int => Some("i32"),
             StackType::Float => Some("f32"),
-            StackType::Pointer => Some("i32"),
         }
     }
 }
