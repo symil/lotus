@@ -19,7 +19,7 @@ pub enum Type {
 
 #[derive(Debug, Clone)]
 pub struct ActualTypeInfo {
-    pub type_wrapped: Link<TypeBlueprint>,
+    pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Type>
 }
 
@@ -47,7 +47,7 @@ impl Type {
         let name = builtin_type.get_name();
 
         if let Type::Actual(info) = self {
-            if info.type_wrapped.borrow().name.as_str() == name {
+            if info.type_blueprint.borrow().name.as_str() == name {
                 return true;
             }
         }
@@ -70,20 +70,29 @@ impl Type {
             Type::Any => Type::Any,
             Type::This(_) => this_type.unwrap().clone(),
             Type::Actual(info) => {
-                let type_wrapped = info.type_wrapped.clone();
+                let type_blueprint = info.type_blueprint.clone();
                 let parameters = info.parameters.iter().map(|p| p.replace_generics(this_type, function_parameters)).collect();
 
                 Type::Actual(ActualTypeInfo {
-                    type_wrapped,
+                    type_blueprint,
                     parameters,
                 })
             },
             Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
             Type::FunctionParameter(info) => function_parameters[info.index].clone(),
-            Type::Associated(info) => Type::Associated(AssociatedTypeInfo {
-                root: Box::new(info.root.replace_generics(this_type, function_parameters)),
-                associated: info.associated.clone(),
-            })
+            Type::Associated(info) => {
+                let root = info.root.replace_generics(this_type, function_parameters);
+
+                match root {
+                    Type::Actual(ref actual_type) => actual_type.type_blueprint.with_ref(|type_unwrapped| {
+                        type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().replace_generics(Some(&root), &[])
+                    }),
+                    _ => Type::Associated(AssociatedTypeInfo {
+                        root: Box::new(root),
+                        associated: info.associated.clone(),
+                    })
+                }
+            }
         }
     }
 
@@ -114,7 +123,7 @@ impl Type {
                     None => None,
                 }
             }),
-            Type::Actual(info) => info.type_wrapped.with_ref(|type_unwrapped| {
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.associated_types.get(name).cloned()
             }),
             Type::TypeParameter(info) | Type::FunctionParameter(info) => {
@@ -146,7 +155,7 @@ impl Type {
         match (self, target) {
             (_, Type::Any) => true,
             (Type::This(_), Type::This(_)) => true,
-            (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_wrapped.borrow().inheritance_chain.contains(target_info),
+            (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
@@ -164,7 +173,7 @@ impl Type {
             Type::This(interface_wrapped) => interface_wrapped == interface,
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
-                let type_blueprint = info.type_wrapped.borrow();
+                let type_blueprint = info.type_blueprint.borrow();
 
                 for associated_type in interface_blueprint.associated_types.values() {
                     if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
@@ -179,8 +188,6 @@ impl Type {
                         FieldKind::Regular => &interface_blueprint.regular_methods,
                         FieldKind::Static => &interface_blueprint.static_methods,
                     };
-                    dbg!(method_kind);
-                    dbg!(interface_methods.len());
 
                     for expected_method_wrapped in interface_methods.values() {
                         let expected_method_unwrapped = expected_method_wrapped.borrow();
@@ -198,18 +205,19 @@ impl Type {
                                 details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
                             } else {
                                 for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
+                                    let actual_type = actual_arg.ty.replace_generics(Some(self), &[]);
                                     let expected_type = expected_arg.ty.replace_generics(Some(self), &[]);
 
-                                    if &expected_type != &actual_arg.ty {
-                                        details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_arg.ty));
+                                    if &expected_type != &actual_type {
+                                        details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
                                     }
                                 }
                             }
 
-                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(&info.ty)).unwrap_or(&Type::Void);
+                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
                             let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
 
-                            if actual_return_value != &expected_return_type {
+                            if actual_return_value != expected_return_type {
                                 details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
                             }
                         } else {
@@ -256,7 +264,7 @@ impl Type {
             Type::Void => None,
             Type::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
             Type::Actual(info) => {
-                info.type_wrapped.with_ref(|type_unwrapped| {
+                info.type_blueprint.with_ref(|type_unwrapped| {
                     let index_map = match is_static {
                         true => &type_unwrapped.static_methods,
                         false => &type_unwrapped.regular_methods,
@@ -285,7 +293,7 @@ impl Type {
             Type::Void => None,
             Type::Any => None,
             Type::This(_) => None,
-            Type::Actual(info) => info.type_wrapped.with_ref(|type_unwrapped| type_unwrapped.fields.get(field_name).cloned()),
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| type_unwrapped.fields.get(field_name).cloned()),
             Type::TypeParameter(info) => None,
             Type::FunctionParameter(info) => None,
             Type::Associated(info) => None,
@@ -300,7 +308,7 @@ impl Type {
             Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
             Type::Actual(info) => {
                 let parameters = TypeInstanceParameters {
-                    type_blueprint: info.type_wrapped.clone(),
+                    type_blueprint: info.type_blueprint.clone(),
                     type_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
 
@@ -335,7 +343,7 @@ impl Type {
 
 impl PartialEq for ActualTypeInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.type_wrapped == other.type_wrapped && self.parameters == other.parameters
+        self.type_blueprint == other.type_blueprint && self.parameters == other.parameters
     }
 }
 
@@ -370,8 +378,8 @@ impl Display for Type {
             Type::This(_) => format!("{}", THIS_TYPE_NAME),
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
-                    true => format!("{}", &info.type_wrapped.borrow().name),
-                    false => format!("{}<{}>", &info.type_wrapped.borrow().name, display_join(&info.parameters, ",")),
+                    true => format!("{}", &info.type_blueprint.borrow().name),
+                    false => format!("{}<{}>", &info.type_blueprint.borrow().name, display_join(&info.parameters, ",")),
                 }
             },
             Type::TypeParameter(info) => format!("{}", &info.name),

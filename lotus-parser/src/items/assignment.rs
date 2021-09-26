@@ -19,9 +19,7 @@ impl Assignment {
 
             if let Some(left_vasm) = left_vasm_opt {
                 if let Some(right_vasm) = right_vasm_opt {
-                    if !right_vasm.ty.is_assignable() {
-                        context.errors.add(rvalue, format!("cannot assign type `{}`", &right_vasm.ty));
-                    } else if left_vasm.ty.is_assignable_to(&right_vasm.ty) {
+                    if left_vasm.ty.is_assignable_to(&right_vasm.ty) {
                         let mut source = vec![];
                         let mut ok = true;
 

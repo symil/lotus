@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeInfo, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeInfo, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -78,8 +78,8 @@ impl InterfaceDeclaration {
             let mut static_methods = IndexMap::new();
 
             for method in &self.body.methods {
-                let (is_static, name, arguments, return_type) = method.process(context);
-                let function_blueprint = FunctionBlueprint {
+                let (method_kind, name, arguments, return_type) = method.process(context);
+                let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
                     visibility: Visibility::Member,
@@ -88,7 +88,7 @@ impl InterfaceDeclaration {
                     owner_interface: Some(interface_wrapped.clone()),
                     parameters: IndexMap::new(),
                     conditions: vec![],
-                    this_arg: Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), Type::This(interface_wrapped.clone()), VariableKind::Local)),
+                    this_arg: None,
                     payload_arg: None,
                     arguments: arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect(),
                     return_value: return_type.and_then(|ty| Some(VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), ty, VariableKind::Argument))),
@@ -98,13 +98,17 @@ impl InterfaceDeclaration {
                     body: Vasm::empty(),
                 };
 
-                let index_map = match is_static {
-                    true => &mut static_methods,
-                    false => &mut regular_methods
+                let index_map = match method_kind {
+                    FieldKind::Static => &mut static_methods,
+                    FieldKind::Regular => &mut regular_methods
                 };
 
+                if !method_kind.is_static() {
+                    function_blueprint.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), Type::This(interface_wrapped.clone()), VariableKind::Local));
+                }
+
                 if index_map.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
-                    context.errors.add(method, format!("duplicate method `{}`", &name));
+                    context.errors.add(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
                 }
             }
 

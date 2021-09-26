@@ -3,7 +3,7 @@ use crate::{program::{ProgramContext, Wat}};
 
 #[parsable]
 pub struct WasmToken {
-    #[parsable(regex=r"-?\$?\w+(\.\w+)?")]
+    #[parsable(regex=r"-?\$?[\w:.]+")]
     pub value: String
 }
 

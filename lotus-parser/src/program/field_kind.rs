@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FieldKind {
     Regular,
     Static
@@ -10,5 +10,9 @@ impl FieldKind {
             FieldKind::Regular => "",
             FieldKind::Static => "static ",
         }
+    }
+
+    pub fn is_static(self) -> bool {
+        self == FieldKind::Static
     }
 }

@@ -21,7 +21,6 @@ pub struct ProgramContext {
     pub depth: u32,
     pub return_found: bool,
 
-    // pub instances: GeneratedItems,
     pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
     pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,
     pub global_var_instances: Vec<GlobalVarInstance>,
@@ -37,7 +36,7 @@ impl ProgramContext {
         let type_name = builtin_type.get_name();
         let type_blueprint = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
         let mut info = ActualTypeInfo {
-            type_wrapped: type_blueprint,
+            type_blueprint,
             parameters: vec![],
         };
 
@@ -149,7 +148,7 @@ impl ProgramContext {
         let interface_wrapped = self.get_builtin_interface(interface);
 
         interface_wrapped.with_ref(|interface_unwrapped| {
-            let (_, method_wrapped) = interface_unwrapped.regular_methods.first().unwrap();
+            let (_, method_wrapped) = interface_unwrapped.regular_methods.first().unwrap_or_else(|| interface_unwrapped.static_methods.first().unwrap());
 
             method_wrapped.with_ref(|function_unwrapped| {
                 let method_name = function_unwrapped.name.as_str();
@@ -194,6 +193,8 @@ impl ProgramContext {
             }
         }
 
+        // TODO: index builtin types at some point?
+
         for interface_declaration in &interfaces {
             interface_declaration.process_name(self);
         }
@@ -201,12 +202,6 @@ impl ProgramContext {
         for type_declaration in &types {
             type_declaration.process_name(self);
         }
-
-        for typedef_declaration in &typedefs {
-            typedef_declaration.process(self);
-        }
-
-        // TODO: index builtin types?
 
         for interface_declaration in &interfaces {
             interface_declaration.process_associated_types(self);
@@ -218,6 +213,10 @@ impl ProgramContext {
 
         for interface_declaration in &interfaces {
             interface_declaration.process_methods(self);
+        }
+        
+        for typedef_declaration in &typedefs {
+            typedef_declaration.process(self);
         }
 
         for type_declaration in &types {

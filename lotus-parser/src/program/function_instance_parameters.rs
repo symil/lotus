@@ -27,15 +27,29 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
                 Some(type_instance) => format!("{}_{}_{}", &type_instance.name, &function_unwrapped.name, id),
                 None => format!("{}_{}", &function_unwrapped.name, id),
             };
-            let wasm_call = match function_unwrapped.is_raw_wasm {
+            let mut wasm_call = match function_unwrapped.is_raw_wasm {
                 true => function_unwrapped.body.resolve_without_context(),
                 false => vec![
                     Wat::call_from_stack(&wasm_name)
                 ],
             };
+            let this_type = self.this_type.clone();
+
+            if let Some(this_type) = &self.this_type {
+                this_type.type_blueprint.with_ref(|type_unwrapped| {
+                    for parameter in type_unwrapped.parameters.values() {
+                        let wasm_type = this_type.parameters[parameter.index].type_blueprint.borrow().get_wasm_type().unwrap();
+
+                        for wat in &mut wasm_call {
+                            wat.replace(parameter.name.as_str(), wasm_type);
+                        }
+                    }
+                });
+            }
 
             FunctionInstanceHeader {
                 id,
+                this_type,
                 wasm_name,
                 wasm_call,
             }

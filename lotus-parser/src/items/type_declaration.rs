@@ -93,7 +93,7 @@ impl TypeDeclaration {
                             context.errors.add(parsed_parent_type, format!("cannot inherit from generic parameter"));
                         },
                         Type::Actual(info) => {
-                            let parent_unwrapped = info.type_wrapped.borrow();
+                            let parent_unwrapped = info.type_blueprint.borrow();
 
                             match &parent_unwrapped.qualifier {
                                 TypeQualifier::Type => {
@@ -123,13 +123,13 @@ impl TypeDeclaration {
             let mut parent_opt = type_wrapped.borrow().parent.clone();
 
             while let Some(parent_info) = &parent_opt {
-                if types.iter().any(|info| info.type_wrapped == parent_info.type_wrapped) {
-                    if &parent_info.type_wrapped == &type_wrapped {
+                if types.iter().any(|info| info.type_blueprint == parent_info.type_blueprint) {
+                    if &parent_info.type_blueprint == &type_wrapped {
                         context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
                     }
                 } else {
                     types.push(parent_info.clone());
-                    parent_opt = parent_info.type_wrapped.with_ref(|parent_unwrapped| parent_unwrapped.parent.clone());
+                    parent_opt = parent_info.type_blueprint.with_ref(|parent_unwrapped| parent_unwrapped.parent.clone());
                 }
             }
 
@@ -190,7 +190,7 @@ impl TypeDeclaration {
 
     fn process_inheritance<'a, F : FnMut(Link<TypeBlueprint>, Vec<Link<TypeBlueprint>>, &mut ProgramContext)>(&self, context: &'a mut ProgramContext, mut f : F) {
         let type_blueprint = context.types.get_by_location(&self.name);
-        let parent_type_list : Vec<Link<TypeBlueprint>> = type_blueprint.borrow().inheritance_chain.iter().map(|info| info.type_wrapped.clone()).collect();
+        let parent_type_list : Vec<Link<TypeBlueprint>> = type_blueprint.borrow().inheritance_chain.iter().map(|info| info.type_blueprint.clone()).collect();
 
         f(type_blueprint, parent_type_list, context);
     }

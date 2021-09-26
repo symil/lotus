@@ -77,13 +77,13 @@ export interface Minus {
 export interface GetAtIndex {
     type Item;
 
-    get_at_index(int) -> Item;
+    static get_at_index(This, int) -> Item;
 }
 
 export interface SetAtIndex {
     type Item;
 
-    set_at_index(int, Item);
+    static set_at_index(Item, This, int);
 }
 
 export interface Iterable {

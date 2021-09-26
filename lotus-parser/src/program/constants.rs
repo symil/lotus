@@ -28,6 +28,8 @@ pub const THIS_TYPE_NAME : &'static str = "This";
 
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
 pub const NEW_FUNC_NAME : &'static str = "__new";
+pub const STORE_FUNC_NAME : &'static str = "__store";
+pub const LOAD_FUNC_NAME : &'static str = "__load";
 pub const DEFAULT_FUNC_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "__get_body";

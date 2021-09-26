@@ -77,16 +77,14 @@ impl ValueType {
                     context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
-                        dbg!(&parameter.required_interfaces.list);
                         for interface_blueprint in &parameter.required_interfaces.list {
-                            let ok = argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
-                            dbg!(ok);
+                            argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
                         }
                     }
 
                     result = Type::Actual(ActualTypeInfo {
                         parameters: parameter_list,
-                        type_wrapped: type_blueprint.clone(),
+                        type_blueprint: type_blueprint.clone(),
                     })
                 }
             }

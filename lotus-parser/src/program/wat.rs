@@ -257,10 +257,11 @@ impl Wat {
 
     // OTHER
     
-    pub fn replace(&self, pattern: &str, replacement: &str) -> Wat {
-        Wat {
-            keyword: self.keyword.replace(pattern, replacement),
-            arguments: self.arguments.iter().map(|w| w.replace(pattern, replacement)).collect(),
+    pub fn replace(&mut self, pattern: &str, replacement: &str) {
+        self.keyword = self.keyword.replace(pattern, replacement);
+
+        for arg in &mut self.arguments.iter_mut() {
+            arg.replace(pattern, replacement);
         }
     }
 

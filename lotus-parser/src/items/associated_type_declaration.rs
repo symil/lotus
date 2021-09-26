@@ -6,7 +6,7 @@ use super::{FullType, Identifier};
 pub struct AssociatedTypeDeclaration {
     #[parsable(prefix="type")]
     pub name: Identifier,
-    #[parsable(prefix="=")]
+    #[parsable(prefix="=", suffix=";")]
     pub value: FullType
 }
 

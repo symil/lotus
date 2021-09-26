@@ -2,7 +2,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeInfo, FunctionBlueprint, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeInstanceContent};
+use super::{ActualTypeInfo, FunctionBlueprint, GenericTypeInfo, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -41,12 +41,19 @@ impl TypeBlueprint {
             StackType::Float => Some("f32"),
         }
     }
+
+    pub fn generate_builtin_methods(&mut self) {
+        let methods = &[
+            (STORE_FUNC_NAME, "store"),
+            (LOAD_FUNC_NAME, "load")
+        ];
+    }
 }
 
 impl Link<TypeBlueprint> {
     pub fn get_info(&self) -> ActualTypeInfo {
         ActualTypeInfo {
-            type_wrapped: self.clone(),
+            type_blueprint: self.clone(),
             parameters: self.borrow().parameters.values().map(|info| Type::TypeParameter(Rc::clone(info))).collect(),
         }
     }

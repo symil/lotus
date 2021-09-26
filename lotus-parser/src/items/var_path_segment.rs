@@ -13,7 +13,7 @@ pub enum VarPathSegment {
 impl VarPathSegment {
     pub fn has_side_effects(&self) -> bool {
         match self {
-            VarPathSegment::FieldOrMethodAccess(var_ref) => todo!(),
+            VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.has_side_effects(),
             VarPathSegment::BracketIndexing(_) => true,
         }
     }

@@ -10,8 +10,8 @@ pub struct Vasm {
 }
 
 impl Vasm {
-    pub fn new(ty: Type, variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
-        Self { ty, variables, instructions: content }
+    pub fn new(ty: Type, variables: Vec<Rc<VariableInfo>>, instructions: Vec<VirtualInstruction>) -> Self {
+        Self { ty, variables, instructions }
     }
 
     pub fn void(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
