@@ -16,11 +16,11 @@ export type(i32) Pointer<T> {
     }
 
     static __store(int, T) {{
-        T.store
+        <T>.store
     }}
 
     static __load(int) -> T {{
-        T.load
+        <T>.load
     }}
 
     set(index: int, value: T) {

@@ -6,7 +6,8 @@ use super::{InterfaceBlueprint, InterfaceList, Type};
 pub struct GenericTypeInfo {
     pub name: Identifier,
     pub index: usize,
-    pub required_interfaces: InterfaceList
+    pub required_interfaces: InterfaceList,
+    pub wasm_pattern: String
 }
 
 impl GenericTypeInfo {

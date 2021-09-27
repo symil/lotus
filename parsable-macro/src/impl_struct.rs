@@ -46,6 +46,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
                 let optional = is_option || attributes.optional.map_or(false, |value| value);
                 let on_success = quote! { reader__.eat_spaces(); };
+                let mut handle_failure = quote! {};
                 let mut on_fail = quote ! {
                     reader__.set_index(start_index__);
                     #pop_markers
@@ -58,6 +59,14 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         reader__.set_index(field_index__);
                         <#field_type as Default>::default()
                     };
+
+                    if attributes.suffix.is_some() {
+                        handle_failure = quote! {
+                            if field_failed__ {
+                                #field_name = <#field_type as Default>::default();
+                            }
+                        }
+                    }
                 }
 
                 let mut check = vec![];
@@ -99,7 +108,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 }
 
                 let mut assignment = quote! {
-                    let #field_name = match <#field_type as parsable::Parsable>::#parse_method {
+                    let mut #field_name = match <#field_type as parsable::Parsable>::#parse_method {
                         Some(value) => value,
                         None => {
                             reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
@@ -110,7 +119,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
                 if has_prefix && optional {
                     assignment = quote! {
-                        let #field_name = match prefix_ok__ {
+                        let mut #field_name = match prefix_ok__ {
                             true => match <#field_type as parsable::Parsable>::#parse_method {
                                 Some(value) => value,
                                 None => {
@@ -180,6 +189,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         #(#check)*
                         #suffix_parsing
                         #on_success
+                        #handle_failure
                         #pop_markers
                     });
                 }

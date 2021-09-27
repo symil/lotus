@@ -34,10 +34,12 @@ impl TypeParameters {
             }
 
             let index = result.len();
+            let wasm_pattern = format!("<{}>", name.as_str());
             let item = Rc::new(GenericTypeInfo {
                 name,
                 index,
                 required_interfaces: InterfaceList::new(required_interfaces),
+                wasm_pattern
             });
 
             if result.insert(parameter.name.to_string(), item).is_some() {

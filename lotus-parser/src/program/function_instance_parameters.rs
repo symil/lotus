@@ -41,7 +41,7 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
                         let wasm_type = this_type.parameters[parameter.index].type_blueprint.borrow().get_wasm_type().unwrap();
 
                         for wat in &mut wasm_call {
-                            wat.replace(parameter.name.as_str(), wasm_type);
+                            wat.replace(&parameter.wasm_pattern, wasm_type);
                         }
                     }
                 });

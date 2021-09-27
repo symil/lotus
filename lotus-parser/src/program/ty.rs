@@ -155,7 +155,8 @@ impl Type {
         match (self, target) {
             (_, Type::Any) => true,
             (Type::This(_), Type::This(_)) => true,
-            (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
+            // (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
+            (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
@@ -356,8 +357,11 @@ impl PartialEq for AssociatedTypeInfo {
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
+            (Self::This(l0), Self::This(r0)) => l0 == r0,
             (Self::Actual(l0), Self::Actual(r0)) => l0 == r0,
-            (Self::TypeParameter(l0), Self::TypeParameter(r0)) => Rc::as_ptr(l0) == Rc::as_ptr(r0),
+            (Self::TypeParameter(l0), Self::TypeParameter(r0)) => Rc::ptr_eq(l0, r0),
+            (Self::FunctionParameter(l0), Self::FunctionParameter(r0)) => Rc::ptr_eq(l0, r0),
+            (Self::Associated(l0), Self::Associated(r0)) => l0 == r0,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }

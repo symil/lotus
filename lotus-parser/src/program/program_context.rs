@@ -313,7 +313,6 @@ impl ProgramContext {
         for global_var in self.global_var_instances {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
             globals_initialization.extend(global_var.init_value);
-            globals_initialization.push(Wat::set_global_from_stack(&global_var.wasm_name));
         }
 
         // let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
