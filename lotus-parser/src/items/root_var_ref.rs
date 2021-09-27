@@ -1,11 +1,11 @@
 use parsable::parsable;
 use colored::*;
-use crate::{items::{process_field_access, process_function_call}, program::{AccessType, ProgramContext, Type, VI, VariableKind, Vasm}};
+use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, FieldKind, ProgramContext, Type, VI, VariableKind, Vasm}};
 use super::{ArgumentList, FieldOrMethodAccess, FullType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
 pub enum RootVarRef {
-    Prefixed(VarPrefixWrapper, Option<Identifier>),
+    Prefixed(VarPrefixWrapper, Option<Identifier>, Option<ArgumentList>),
     Unprefixed(FullType, Option<ArgumentList>)
 }
 
@@ -17,20 +17,32 @@ pub enum ValueOrType {
 impl RootVarRef {
     pub fn has_side_effects(&self) -> bool {
         match self {
-            RootVarRef::Prefixed(_, _) => false,
+            RootVarRef::Prefixed(_, _, args) => args.is_some(),
             RootVarRef::Unprefixed(_, args) => args.is_some(),
         }
     }
 
     pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
         match self {
-            RootVarRef::Prefixed(prefix, field_name_opt) => match prefix.process(context) {
+            RootVarRef::Prefixed(prefix, field_name_opt, args_opt) => match prefix.process(context) {
                 Some(prefix_vasm) => match field_name_opt {
-                    Some(field_name) => match process_field_access(&prefix_vasm.ty, field_name, access_type, context) {
-                        Some(field_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, field_vasm]))),
-                        None => None
+                    Some(field_name) => match args_opt {
+                        Some(args) => match process_method_call(&prefix_vasm.ty, FieldKind::Regular, field_name, &[], args, access_type, context) {
+                            Some(method_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, method_vasm]))),
+                            None => None,
+                        },
+                        None => match process_field_access(&prefix_vasm.ty, field_name, access_type, context) {
+                            Some(field_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, field_vasm]))),
+                            None => None
+                        },
                     },
-                    None => Some(ValueOrType::Value(prefix_vasm))
+                    None => match args_opt {
+                        Some(args) => {
+                            context.errors.add(args, format!("missing method name"));
+                            None
+                        },
+                        None => Some(ValueOrType::Value(prefix_vasm)),
+                    }
                 },
                 None => None
             },

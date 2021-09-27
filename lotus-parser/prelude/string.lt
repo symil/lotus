@@ -1,3 +1,46 @@
 export type(i32) string {
-    
+    static __new(length: int) -> string {
+        let result = @alloc(length + 1);
+
+        result[0] = length;
+
+        return (result as string);
+    }
+
+    __set_char(index: int, char: int) -> string {
+        (this as ptr)[index + 1] = char;
+
+        return this;
+    }
+
+    eq(other: string) -> bool {
+        let left = this as ptr;
+        let right = other as ptr;
+        let left_length = left[0];
+        let right_length = right[0];
+
+        if left_length != right_length {
+            return false;
+        }
+
+        for i in 1..(left_length + 1) {
+            if left[i] != right[i] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    ne(other: string) -> bool {
+        return !this.eq(other);
+    }
+
+    len() -> int {
+        return (this as ptr)[0];
+    }
+
+    log() {{
+        (call $__log_string)
+    }}
 }

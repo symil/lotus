@@ -15,6 +15,6 @@ impl BooleanLiteral {
             _ => unreachable!()
         };
 
-        Some(Vasm::new(context.int_type(), vec![], vec![VI::int(i32_value)]))
+        Some(Vasm::new(context.bool_type(), vec![], vec![VI::int(i32_value)]))
     }
 }

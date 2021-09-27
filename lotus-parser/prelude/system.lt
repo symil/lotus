@@ -1,3 +1,13 @@
-type system(void) {
-    
+export type(void) system {
+    alloc(block_size: int) -> ptr {
+        return mem_alloc(block_size);
+    }
+
+    free(pointer: ptr) {
+        mem_free(pointer);
+    }
+
+    log() {
+        // TODO
+    }
 }

@@ -2,11 +2,11 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
-use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
+use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, MethodQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
 
 #[parsable]
 pub struct FunctionContent {
-    pub qualifier: Option<FunctionQualifier>,
+    pub qualifier: Option<MethodQualifier>,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub name: Identifier,
     pub parameters: TypeParameters,
@@ -21,6 +21,7 @@ impl FunctionContent {
             function_id: self.location.get_hash(),
             name: self.name.clone(),
             visibility: Visibility::Private,
+            qualifier: self.qualifier.unwrap_or(MethodQualifier::Regular),
             parameters: IndexMap::new(),
             event_callback_qualifier: None,
             owner_type: None,
@@ -30,14 +31,14 @@ impl FunctionContent {
             conditions: vec![],
             arguments: vec![],
             return_value: None,
-            is_dynamic: self.qualifier.contains(&FunctionQualifier::Dynamic),
+            is_dynamic: self.qualifier.contains(&MethodQualifier::Dynamic),
             dynamic_index: -1,
             is_raw_wasm: false,
             body: Vasm::empty(),
         };
 
         let function_blueprint = context.functions.insert(function_unwrapped);
-        let is_static = self.qualifier.contains(&FunctionQualifier::Static);
+        let is_static = self.qualifier.contains(&MethodQualifier::Static);
         let parameters = self.parameters.process(context);
 
         context.current_function = Some(function_blueprint.clone());

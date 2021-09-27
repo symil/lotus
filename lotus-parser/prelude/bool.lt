@@ -3,6 +3,7 @@ export type(i32) bool {
     or(int) -> int {{ i32.or }}
     eq(int) -> bool {{ i32.eq }}
     ne(int) -> bool {{ i32.ne }}
+    not() -> bool {{ i32.eqz }}
     to_bool() -> bool {{ }}
     to_int() -> int {{ }}
 

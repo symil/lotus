@@ -78,11 +78,13 @@ impl InterfaceDeclaration {
             let mut static_methods = IndexMap::new();
 
             for method in &self.body.methods {
-                let (method_kind, name, arguments, return_type) = method.process(context);
+                let (method_qualifier, name, arguments, return_type) = method.process(context);
+                let method_kind = method_qualifier.to_field_kind();
                 let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
                     visibility: Visibility::Member,
+                    qualifier: method_qualifier,
                     event_callback_qualifier: None,
                     owner_type: None,
                     owner_interface: Some(interface_wrapped.clone()),

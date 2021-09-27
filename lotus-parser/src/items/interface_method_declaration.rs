@@ -1,24 +1,21 @@
 use parsable::parsable;
 use crate::program::{FieldKind, ProgramContext, Type};
-use super::{FunctionQualifier, FunctionSignature, Identifier};
+use super::{MethodQualifier, FunctionSignature, Identifier};
 
 #[parsable]
 pub struct InterfaceMethodDeclaration {
-    pub qualifier: Option<FunctionQualifier>,
+    pub qualifier: Option<MethodQualifier>,
     pub name: Identifier,
     #[parsable(suffix=";")]
     pub signature: FunctionSignature
 }
 
 impl InterfaceMethodDeclaration {
-    pub fn process(&self, context: &mut ProgramContext) -> (FieldKind, Identifier, Vec<(Identifier, Type)>, Option<Type>) {
+    pub fn process(&self, context: &mut ProgramContext) -> (MethodQualifier, Identifier, Vec<(Identifier, Type)>, Option<Type>) {
         let (arguments, return_type) = self.signature.process(context);
         let name = self.name.clone();
-        let method_kind = match &self.qualifier {
-            Some(FunctionQualifier::Static) => FieldKind::Static,
-            _ => FieldKind::Regular,
-        };
+        let method_qualifier = self.qualifier.unwrap_or(MethodQualifier::Regular);
 
-        (method_kind, name, arguments, return_type)
+        (method_qualifier, name, arguments, return_type)
     }
 }
