@@ -1,4 +1,6 @@
 export type(i32) string {
+    type Item = int;
+
     static __new(length: int) -> string {
         let result = @alloc(length + 1);
 
@@ -11,6 +13,42 @@ export type(i32) string {
         (this as ptr)[index + 1] = char;
 
         return this;
+    }
+
+    static get_at_index(str: This, index: int) -> int {
+        return (str as ptr)[index + 1];
+    }
+
+    get_iterable_len() -> int {
+        return this.len();
+    }
+
+    get_iterable_ptr() -> ptr {
+        return ((this as int) + 1) as ptr;
+    }
+
+    add(other: string) -> string {
+        let left = this as ptr;
+        let right = other as ptr;
+        let left_length = left[0];
+        let right_length = right[0];
+        let new_length = left_length + right_length;
+        let new_string = @alloc(new_length + 1);
+        let offset = 1;
+
+        new_string[0] = new_length;
+
+        for i in 0..left_length {
+            new_string[offset] = left[i + 1];
+            offset += 1;
+        }
+
+        for i in 0..right_length {
+            new_string[offset] = right[i + 1];
+            offset += 1;
+        }
+
+        return new_string as string;
     }
 
     eq(other: string) -> bool {

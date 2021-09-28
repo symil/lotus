@@ -90,5 +90,5 @@ export interface Iterable {
     type Item;
     
     get_iterable_len() -> int;
-    // get_iterable_ptr() -> Pointer<This>;
+    get_iterable_ptr() -> Pointer<Item>;
 }

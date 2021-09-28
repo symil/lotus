@@ -89,8 +89,6 @@ impl ForBlock {
             let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined);
             let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
-            iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context);
-
             let iterable_var = VariableInfo::new(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);
             let iterable_len_var = VariableInfo::new(Identifier::unique("iterable_len", self), context.int_type(), VariableKind::Local);
             let iterable_ptr_var = VariableInfo::new(Identifier::unique("iterable_ptr", self), context.int_type(), VariableKind::Local);
@@ -101,25 +99,29 @@ impl ForBlock {
             context.push_var(&index_var);
             context.push_var(&item_var);
 
-            if let Some(block_vasm) = self.statements.process(context) {
-                let iterable_type = iterable_vasm.ty.clone();
+            if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
+                if let Some(block_vasm) = self.statements.process(context) {
+                    let iterable_type = iterable_vasm.ty.clone();
 
-                result = Some(Vasm::new(Type::Undefined, variables, vec![
-                    VI::set(&iterable_var, iterable_vasm),
-                    VI::set(&index_var, VI::int(-1)),
-                    VI::set(&iterable_len_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_LEN_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
-                    VI::set(&iterable_ptr_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_PTR_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
-                    VI::block(vec![
-                        VI::loop_(vasm![
-                            VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
-                            VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
-                            VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
-                            VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_regular_method(GET_AT_INDEX_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
-                            block_vasm,
-                            VI::jump(0)
+                    result = Some(Vasm::new(Type::Undefined, variables, vec![
+                        VI::set(&iterable_var, iterable_vasm),
+                        VI::set(&index_var, VI::int(-1)),
+                        VI::set(&iterable_len_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_LEN_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
+                        VI::set(&iterable_ptr_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_PTR_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
+                        VI::block(vec![
+                            VI::loop_(vasm![
+                                VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
+                                VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
+                                VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
+                                VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_static_method(GET_AT_INDEX_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
+                                block_vasm,
+                                VI::jump(0)
+                            ])
                         ])
-                    ])
-                ]));
+                    ]));
+                }
+            } else {
+                self.statements.process(context);
             }
         } else {
             self.statements.process(context);
