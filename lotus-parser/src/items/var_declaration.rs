@@ -21,37 +21,37 @@ impl VarDeclaration {
         let mut ok = false;
         let mut final_var_type = Type::Undefined;
 
-        if let Some(vasm) = self.init_value.process(context) {
-            if !vasm.ty.is_assignable() {
-                context.errors.add(&self.init_value, format!("cannot assign type `{}`", &vasm.ty));
-            } else {
-                match &self.var_type {
-                    Some(parsed_type) => match parsed_type.process(context) {
-                        Some(var_type) => {
-                            final_var_type = var_type.clone();
+        match &self.var_type {
+            Some(parsed_type) => match parsed_type.process(context) {
+                Some(var_type) => {
+                    final_var_type = var_type.clone();
 
-                            if var_type.is_assignable_to(&vasm.ty) {
-                                final_var_type = var_type;
-                                ok = true;
-                            } else {
-                                context.errors.add(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &vasm.ty, &var_type));
-                            }
-                        },
-                        None => {}
-                    },
-                    None => {
-                        if !vasm.ty.is_ambiguous() {
-                            final_var_type = vasm.ty.clone();
+                    if let Some(vasm) = self.init_value.process(Some(&var_type), context) {
+                        if var_type.is_assignable_to(&vasm.ty) {
+                            final_var_type = var_type;
                             ok = true;
                         } else {
-                            context.errors.add(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &vasm.ty));
+                            context.errors.add(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &vasm.ty, &var_type));
                         }
-                    }
-                };
-            }
 
-            source.push(vasm);
-        }
+                        source.push(vasm);
+                    }
+                },
+                None => {}
+            },
+            None => {
+                if let Some(vasm) = self.init_value.process(None, context) {
+                    if !vasm.ty.is_ambiguous() {
+                        final_var_type = vasm.ty.clone();
+                        ok = true;
+                    } else {
+                        context.errors.add(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &vasm.ty));
+                    }
+
+                    source.push(vasm);
+                }
+            }
+        };
 
         let var_info = VariableInfo::new(self.var_name.clone(), final_var_type.clone(), kind);
 

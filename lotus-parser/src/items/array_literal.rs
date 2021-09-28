@@ -24,8 +24,12 @@ impl ArrayLiteral {
 
         for item in self.items.iter() {
             let mut item_ok = false;
+            let type_hint = match &final_item_type {
+                Type::Any => None,
+                _ => Some(&final_item_type)
+            };
 
-            if let Some(item_vasm) = item.process(context) {
+            if let Some(item_vasm) = item.process(type_hint, context) {
                 if final_item_type.is_assignable_to(&item_vasm.ty) {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;

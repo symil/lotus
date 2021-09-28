@@ -12,7 +12,7 @@ impl BracketIndexing {
     pub fn process(&self, parent_type: &Type, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
-        if let Some(index_vasm) = self.index_expr.process(context) {
+        if let Some(index_vasm) = self.index_expr.process(None, context) {
             let required_interface = match access_type {
                 AccessType::Get => BuiltinInterface::GetAtIndex,
                 AccessType::Set(_) => BuiltinInterface::SetAtIndex,

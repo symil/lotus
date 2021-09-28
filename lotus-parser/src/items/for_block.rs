@@ -42,8 +42,8 @@ impl ForBlock {
         context.push_scope(ScopeKind::Loop);
 
         let mut result = None;
-        let range_start_vasm_opt = self.range_start.process(context);
-        let range_end_vasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(context));
+        let range_start_vasm_opt = self.range_start.process(None, context);
+        let range_end_vasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(None, context));
 
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {

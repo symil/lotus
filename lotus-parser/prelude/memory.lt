@@ -22,6 +22,14 @@ const HEADER_END_ADDR = HEADER_WASM_PAGE_COUNT * WASM_PAGE_CELL_COUNT;
 
 const MEMORY = (0 as ptr);
 
+pub fn wasm_store<T>(int, T) {{
+    <T>.store
+}}
+
+pub fn wasm_load<T>(int) -> T {{
+    <T>.load
+}}
+
 fn wasm_memory_copy(int, int, int) {{
     memory.copy
 }}

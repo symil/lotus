@@ -46,7 +46,7 @@ impl ObjectLiteral {
                             context.errors.add(&field.name, format!("duplicate field initialization `{}`", &field.name));
                         }
 
-                        if let Some(field_vasm) = field.value.process(context) {
+                        if let Some(field_vasm) = field.value.process(None, context) {
                             if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
                                 if field_vasm.ty.is_assignable_to(&field_info.ty) {
                                     fields_init.insert(field.name.as_str(), field_vasm);

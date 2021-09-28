@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{ProgramContext, VI, Vasm}, vasm, wat};
+use crate::{program::{ProgramContext, Type, VI, Vasm}, vasm, wat};
 use super::{BinaryOperatorWrapper, Operand, FullType};
 
 #[parsable]
@@ -16,10 +16,11 @@ impl BinaryOperation {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let operation_tree = OperationTree::from_operation(self);
-
-        operation_tree.process(context)
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
+        match self.others.is_empty() {
+            true => self.first.process(type_hint, context),
+            false => OperationTree::from_operation(self).process(context),
+        }
     }
 }
 
@@ -64,7 +65,7 @@ impl<'a> OperationTree<'a> {
                     _ => None
                 }
             },
-            OperationTree::Value(operand) => operand.process(context),
+            OperationTree::Value(operand) => operand.process(None, context),
         }
     }
 

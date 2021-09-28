@@ -18,9 +18,9 @@ impl VarPathSegment {
         }
     }
 
-    pub fn process(&self, parent_type: &Type, field_kind: FieldKind, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
-            VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.process(parent_type, field_kind, access_type, context),
+            VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.process(parent_type, field_kind, type_hint, access_type, context),
             VarPathSegment::BracketIndexing(bracket_indexing) => bracket_indexing.process(parent_type, access_type, context),
         }
     }

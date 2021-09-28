@@ -13,7 +13,7 @@ impl Branch {
     pub fn process_condition(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
-        if let Some(condition_wasm) = self.condition.process(context) {
+        if let Some(condition_wasm) = self.condition.process(None, context) {
             if condition_wasm.ty.is_bool() {
                 result = Some(condition_wasm);
             } else {

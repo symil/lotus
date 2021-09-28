@@ -6,22 +6,14 @@ export type(i32) Pointer<T> {
     static set_at_index(value: T, pointer: This, index: int) {
         let byte_index = ((pointer as int) + index) * 4;
 
-        This.__store(byte_index, value);
+        wasm_store(byte_index, value);
     }
 
     static get_at_index(pointer: This, index: int) -> T {
         let byte_index = ((pointer as int) + index) * 4;
 
-        return This.__load(byte_index);
+        return wasm_load(byte_index);
     }
-
-    static __store(int, T) {{
-        <T>.store
-    }}
-
-    static __load(int) -> T {{
-        <T>.load
-    }}
 
     set(index: int, value: T) {
         This.set_at_index(value, this, index);

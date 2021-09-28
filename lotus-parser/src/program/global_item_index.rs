@@ -68,8 +68,11 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
                 let item_name = item.get_name();
                 let item_location = &item_name.location;
                 match item.get_visibility() {
+                    Visibility::Private => false,
+                    Visibility::Public => false,
                     Visibility::Export => true,
-                    _ => false
+                    Visibility::System => true,
+                    Visibility::Member => false,
                 }
             });
 

@@ -25,6 +25,10 @@ export type(i32) int {
     to_bool() -> bool {{ (i32.eqz i32.eqz) }}
 
     log() {{ (call $__log_int) }}
+
+    static default() -> int {
+        return 0;
+    }
     
     log2() -> int {
         if this < 2 {

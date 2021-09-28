@@ -145,12 +145,6 @@ impl Type {
         }
     }
 
-    pub fn is_assignable(&self) -> bool {
-        match self {
-            _ => true
-        }
-    }
-
     pub fn is_assignable_to(&self, target: &Type) -> bool {
         match (self, target) {
             (_, Type::Any) => true,
@@ -161,6 +155,26 @@ impl Type {
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
             _ => false
+        }
+    }
+
+    pub fn is_function_parameter(&self, parameter: &Rc<GenericTypeInfo>) -> bool {
+        match self {
+            Type::FunctionParameter(info) => Rc::ptr_eq(info, parameter),
+            _ => false
+        }
+    }
+
+    pub fn contains_function_parameter(&self) -> bool {
+        match self {
+            Type::Undefined => false,
+            Type::Void => false,
+            Type::Any => false,
+            Type::This(_) => false,
+            Type::Actual(info) => info.parameters.iter().any(|param| param.contains_function_parameter()),
+            Type::TypeParameter(_) => false,
+            Type::FunctionParameter(_) => true,
+            Type::Associated(info) => info.root.contains_function_parameter(),
         }
     }
     

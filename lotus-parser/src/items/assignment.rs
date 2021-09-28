@@ -14,11 +14,8 @@ impl Assignment {
         let mut result = None;
 
         if let Some((equal_token, rvalue)) = &self.rvalue {
-            let left_vasm_opt = self.lvalue.process(AccessType::Set(&equal_token), context);
-            let right_vasm_opt = rvalue.process(context);
-
-            if let Some(left_vasm) = left_vasm_opt {
-                if let Some(right_vasm) = right_vasm_opt {
+            if let Some(left_vasm) = self.lvalue.process(None, AccessType::Set(&equal_token), context) {
+                if let Some(right_vasm) = rvalue.process(Some(&left_vasm.ty), context) {
                     if left_vasm.ty.is_assignable_to(&right_vasm.ty) {
                         let mut source = vec![];
                         let mut ok = true;
@@ -41,7 +38,7 @@ impl Assignment {
                             };
                             let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
 
-                            if let Some(left_rvalue_vasm) = self.lvalue.process(AccessType::Get, context) {
+                            if let Some(left_rvalue_vasm) = self.lvalue.process(None, AccessType::Get, context) {
                                 if let Some(operator_vasm) = wrapper.process(&left_rvalue_vasm.ty, &right_vasm.ty, context) {
                                     source.push(left_rvalue_vasm);
                                     source.push(right_vasm);
@@ -66,7 +63,7 @@ impl Assignment {
                 }
             }
         } else {
-            if let Some(vasm) = self.lvalue.process(AccessType::Get, context) {
+            if let Some(vasm) = self.lvalue.process(None, AccessType::Get, context) {
                 let is_void = vasm.ty.is_undefined();
                 let mut source = vec![vasm];
 

@@ -92,3 +92,11 @@ export interface Iterable {
     get_iterable_len() -> int;
     get_iterable_ptr() -> Pointer<Item>;
 }
+
+export interface Log {
+    log();
+}
+
+export interface Default {
+    static default() -> This;
+}

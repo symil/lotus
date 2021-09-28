@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Vasm};
+use crate::program::{ProgramContext, Type, Vasm};
 
 use super::Expression;
 
@@ -14,7 +14,7 @@ impl ParenthesizedExpression {
         self.expression.has_side_effects()
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        self.expression.process(context)
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
+        self.expression.process(type_hint, context)
     }
 }

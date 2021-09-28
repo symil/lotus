@@ -22,12 +22,12 @@ impl RootVarRef {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
+    pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
         match self {
             RootVarRef::Prefixed(prefix, field_name_opt, args_opt) => match prefix.process(context) {
                 Some(prefix_vasm) => match field_name_opt {
                     Some(field_name) => match args_opt {
-                        Some(args) => match process_method_call(&prefix_vasm.ty, FieldKind::Regular, field_name, &[], args, access_type, context) {
+                        Some(args) => match process_method_call(&prefix_vasm.ty, FieldKind::Regular, field_name, &[], args, type_hint, access_type, context) {
                             Some(method_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, method_vasm]))),
                             None => None,
                         },
@@ -50,7 +50,7 @@ impl RootVarRef {
                 Some(args) => match full_type.as_single_name() {
                     Some(name) => {
                         if let Some(function_blueprint) = context.functions.get_by_identifier(name) {
-                            process_function_call(None, function_blueprint, &[], args, access_type, context).and_then(|vasm| {
+                            process_function_call(None, name, function_blueprint, &[], args, type_hint, access_type, context).and_then(|vasm| {
                                 Some(ValueOrType::Value(vasm))
                             })
                         } else {

@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{AccessType, ProgramContext, VariableKind, Vasm}};
+use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
 use super::{ArrayLiteral, BooleanLiteral, Expression, FieldOrMethodAccess, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType};
 
 #[parsable]
@@ -37,7 +37,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn process(&self, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
+    pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
                 context.errors.add(set_location, format!("cannot assign value to a literal"));
@@ -53,8 +53,8 @@ impl VarPathRoot {
             VarPathRoot::StringLiteral(string_literal) => string_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::Variable(root_var_ref) => root_var_ref.process(access_type, context),
-            VarPathRoot::Parenthesized(expr) => expr.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::Variable(root_var_ref) => root_var_ref.process(type_hint, access_type, context),
+            VarPathRoot::Parenthesized(expr) => expr.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
         }
     }
 }

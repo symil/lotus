@@ -24,7 +24,9 @@ impl Action {
                 match &function_unwrapped.return_value {
                     Some(return_value) => match &self.value {
                         Some(expr) => {
-                            if let Some(vasm) = expr.process(context) {
+                            let type_hint = Some(&return_value.ty);
+
+                            if let Some(vasm) = expr.process(type_hint, context) {
                                 if return_value.ty.is_assignable_to(&vasm.ty) {
                                     result = Some(vasm![
                                         VI::set(return_value, vasm),
@@ -43,7 +45,7 @@ impl Action {
                     },
                     None => match &self.value {
                         Some(expr) => {
-                            if let Some(vasm) = expr.process(context) {
+                            if let Some(vasm) = expr.process(None, context) {
                                 context.errors.add(expr, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
                             }
                         },
@@ -55,7 +57,7 @@ impl Action {
             },
             ActionKeywordToken::Break | ActionKeywordToken::Continue => {
                 if let Some(value) = &self.value {
-                    value.process(context);
+                    value.process(None, context);
                     context.errors.add(value, format!("keyword `{}` must not be followed by an expression", &self.keyword.token));
                 } else {
                     match context.get_scope_depth(ScopeKind::Loop) {

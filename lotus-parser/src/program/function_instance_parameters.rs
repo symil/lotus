@@ -47,6 +47,16 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
                 });
             }
 
+            self.function_blueprint.with_ref(|function_unwrapped| {
+                for parameter in function_unwrapped.parameters.values() {
+                    let wasm_type = self.function_parameters[parameter.index].type_blueprint.borrow().get_wasm_type().unwrap();
+
+                    for wat in &mut wasm_call {
+                        wat.replace(&parameter.wasm_pattern, wasm_type);
+                    }
+                }
+            });
+
             FunctionInstanceHeader {
                 id,
                 this_type,
