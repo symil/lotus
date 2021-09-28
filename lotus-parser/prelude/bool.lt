@@ -7,5 +7,5 @@ export type(i32) bool {
     to_bool() -> bool {{ }}
     to_int() -> int {{ }}
 
-    log() {{ (call $__log_bool) }}
+    print() {{ (call $__log_bool) }}
 }

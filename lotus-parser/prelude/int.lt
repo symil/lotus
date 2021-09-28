@@ -24,7 +24,7 @@ export type(i32) int {
     to_float() -> float {{ f32.convert_i32_s }}
     to_bool() -> bool {{ (i32.eqz i32.eqz) }}
 
-    log() {{ (call $__log_int) }}
+    print() {{ (call $__log_int) }}
 
     static default() -> int {
         return 0;

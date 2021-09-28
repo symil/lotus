@@ -78,7 +78,7 @@ export type(i32) string {
         return (this as ptr)[0];
     }
 
-    log() {{
+    print() {{
         (call $__log_string)
     }}
 }

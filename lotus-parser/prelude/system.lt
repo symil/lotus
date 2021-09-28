@@ -7,7 +7,7 @@ export type(void) system {
         mem_free(pointer);
     }
 
-    log<T : Log>(value: T) {
-        value.log();
+    log<T : Print>(value: T) {
+        value.print();
     }
 }

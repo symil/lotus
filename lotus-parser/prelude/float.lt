@@ -23,5 +23,5 @@ export type(f32) float {
     min(float) -> float {{ f32.min }}
     max(float) -> float {{ f32.max }}
 
-    log() {{ (call $__log_float) }}
+    print() {{ (call $__log_float) }}
 }

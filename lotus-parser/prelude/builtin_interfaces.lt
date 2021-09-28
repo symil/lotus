@@ -93,8 +93,8 @@ export interface Iterable {
     get_iterable_ptr() -> Pointer<Item>;
 }
 
-export interface Log {
-    log();
+export interface Print {
+    print();
 }
 
 export interface Default {
