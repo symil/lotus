@@ -13,6 +13,8 @@ pub enum VirtualInstruction {
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
+    GetField(VirtualGetFieldInfo),
+    SetField(VirtualSetFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
     Loop(VirtualLoopInfo),
     Block(VasmInfo),
@@ -28,6 +30,19 @@ pub struct VirtualGetVariableInfo {
 #[derive(Debug)]
 pub struct VirtualSetVariableInfo {
     pub var_info: Rc<VariableInfo>,
+    pub value: Option<Vasm>
+}
+
+#[derive(Debug)]
+pub struct VirtualGetFieldInfo {
+    pub caller_type: Type,
+    pub field_name: String
+}
+
+#[derive(Debug)]
+pub struct VirtualSetFieldInfo {
+    pub caller_type: Type,
+    pub field_name: String,
     pub value: Option<Vasm>
 }
 
@@ -126,6 +141,29 @@ impl VirtualInstruction {
         })
     }
 
+    pub fn get_field(caller_type: &Type, field_name: &str) -> Self {
+        Self::GetField(VirtualGetFieldInfo {
+            caller_type: caller_type.clone(),
+            field_name: field_name.to_string(),
+        })
+    }
+
+    pub fn set_field(caller_type: &Type, field_name: &str, value: Vasm) -> Self {
+        Self::SetField(VirtualSetFieldInfo {
+            caller_type: caller_type.clone(),
+            field_name: field_name.to_string(),
+            value: Some(value),
+        })
+    }
+
+    pub fn set_field_from_stack(caller_type: &Type, field_name: &str) -> Self {
+        Self::SetField(VirtualSetFieldInfo {
+            caller_type: caller_type.clone(),
+            field_name: field_name.to_string(),
+            value: None,
+        })
+    }
+
     pub fn loop_<T : ToVasm>(content: T) -> Self {
         Self::Loop(VirtualLoopInfo {
             content: content.to_vasm(),
@@ -175,6 +213,8 @@ impl VirtualInstruction {
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(_) => {},
             VirtualInstruction::TeeVariable(_) => {},
+            VirtualInstruction::GetField(_) => {},
+            VirtualInstruction::SetField(_) => {},
             VirtualInstruction::FunctionCall(_) => {},
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
@@ -205,6 +245,8 @@ impl VirtualInstruction {
 
                 content
             },
+            VirtualInstruction::GetField(_) => {},
+            VirtualInstruction::SetField(_) => {},
             VirtualInstruction::FunctionCall(info) => {
                 let mut content = vec![];
 
@@ -289,6 +331,8 @@ impl VirtualInstruction {
             VirtualInstruction::GetVariable(_) => unreachable!(),
             VirtualInstruction::SetVariable(_) => unreachable!(),
             VirtualInstruction::TeeVariable(_) => unreachable!(),
+            VirtualInstruction::GetField(_) => unreachable!(),
+            VirtualInstruction::SetField(_) => unreachable!(),
             VirtualInstruction::FunctionCall(_) => unreachable!(),
             VirtualInstruction::Loop(_) => unreachable!(),
             VirtualInstruction::Block(_) => unreachable!(),

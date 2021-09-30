@@ -13,8 +13,8 @@ pub struct TypeBlueprint {
     pub stack_type: StackType,
     pub parameters: IndexMap<String, Rc<GenericTypeInfo>>,
     pub associated_types: IndexMap<String, Type>,
-    pub parent: Option<ActualTypeInfo>,
-    pub inheritance_chain: Vec<ActualTypeInfo>, // from the most "parent" type to the most "child", including self
+    pub self_type: Type,
+    pub parent_type: Option<Type>,
     pub fields: IndexMap<String, Rc<FieldDetails>>,
     pub static_fields: IndexMap<String, Rc<FieldDetails>>,
     pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
@@ -30,7 +30,6 @@ pub struct FieldDetails {
     pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
     pub ty: Type,
-    pub offset: usize,
 }
 
 impl TypeBlueprint {
@@ -48,24 +47,13 @@ impl TypeBlueprint {
             (LOAD_FUNC_NAME, "load")
         ];
     }
-}
 
-impl Link<TypeBlueprint> {
-    pub fn get_info(&self) -> ActualTypeInfo {
-        ActualTypeInfo {
-            type_blueprint: self.clone(),
-            parameters: self.borrow().parameters.values().map(|info| Type::TypeParameter(Rc::clone(info))).collect(),
-        }
+    pub fn get_type(&self) -> Type {
+        self.self_type.clone()
     }
 }
 
 impl GlobalItem for TypeBlueprint {
     fn get_name(&self) -> &Identifier { &self.name }
     fn get_visibility(&self) -> Visibility { self.visibility }
-}
-
-impl Default for StackType {
-    fn default() -> Self {
-        Self::Void
-    }
 }
