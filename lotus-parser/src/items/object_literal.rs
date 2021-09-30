@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_FUNC_NAME, Error, NEW_FUNC_NAME, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::TypeQualifier, program::{DEFAULT_FUNC_NAME, Error, NEW_FUNC_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
 use super::{Expression, FullType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -63,13 +63,7 @@ impl ObjectLiteral {
                             None => vasm![VI::call_method(&field_info.ty, field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), &[], vec![])],
                         };
 
-                        result.extend(vasm![
-                            VI::call_method(&object_type, object_type.get_regular_method(SET_AS_PTR_METHOD_NAME).unwrap(), &[], vasm![
-                                init_vasm,
-                                VI::get(&object_var),
-                                VI::int(field_info.offset)
-                            ])
-                        ]);
+                        result.extend(vasm![VI::set_field(&object_type, field_info.name.as_str(), init_vasm)]);
                     }
 
                     result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get(&object_var)]));

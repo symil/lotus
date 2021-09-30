@@ -49,7 +49,7 @@ impl ProgramContext {
 
     pub fn get_this_type(&self) -> Type {
         if let Some(type_wrapped) = &self.current_type {
-            Type::Actual(type_wrapped.get_info())
+            type_wrapped.borrow().self_type.clone()
         } else if let Some(interface_wrapped) = &self.current_interface {
             Type::This(interface_wrapped.clone())
         } else {
@@ -231,17 +231,17 @@ impl ProgramContext {
             type_declaration.process_fields(self);
         }
         
-        for type_declaration in &types {
-            type_declaration.process_fields_inheritance(self);
-        }
+        // for type_declaration in &types {
+        //     type_declaration.process_fields_inheritance(self);
+        // }
 
         for type_declaration in &types {
             type_declaration.process_method_signatures(self);
         }
 
-        for type_declaration in &types {
-            type_declaration.process_methods_inheritance(self);
-        }
+        // for type_declaration in &types {
+        //     type_declaration.process_methods_inheritance(self);
+        // }
 
         for function_declaration in &functions {
             function_declaration.process_signature(self);

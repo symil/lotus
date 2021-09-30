@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::IndexMap;
-use crate::{items::StackType, utils::Link};
-use super::{ItemGenerator, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, type_blueprint};
+use crate::{items::StackType, program::OBJECT_HEADER_SIZE, utils::Link};
+use super::{FieldInstance, ItemGenerator, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, type_blueprint};
 
 #[derive(Debug, Clone)]
 pub struct TypeInstanceParameters {
@@ -24,10 +24,35 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
             let type_blueprint = self.type_blueprint.clone();
             let parameters = self.type_parameters.clone();
             let wasm_type = type_unwrapped.get_wasm_type();
+            let mut fields = IndexMap::new();
             let mut name = type_unwrapped.name.to_string();
 
             for parameter in &self.type_parameters {
                 name.push_str(&format!("_{}", &parameter.name));
+            }
+
+            let mut current_type_opt = Some(self.type_blueprint.borrow().self_type.clone());
+            let mut field_list = vec![];
+            let mut offset = 0;
+
+            while let Some(current_type) = &current_type_opt {
+                current_type.get_type_blueprint().with_ref(|type_unwrapped| {
+                    for field_info in type_unwrapped.fields.values().rev() {
+                        field_list.push((
+                            field_info.name.to_string(),
+                            field_info.ty.get_type_blueprint().borrow().get_wasm_type().unwrap()
+                        ));
+                    }
+
+                    current_type_opt = type_unwrapped.parent_type.clone();
+                });
+            }
+
+            for (i, (field_name, wasm_type)) in field_list.into_iter().rev().enumerate() {
+                fields.insert(field_name, Rc::new(FieldInstance {
+                    offset: i + OBJECT_HEADER_SIZE,
+                    wasm_type
+                }));
             }
 
             TypeInstanceHeader {
@@ -35,6 +60,7 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
                 name,
                 type_blueprint,
                 parameters,
+                fields,
                 wasm_type,
             }
         })

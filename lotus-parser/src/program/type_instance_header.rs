@@ -1,4 +1,4 @@
-use std::{hash::Hash, rc::Rc};
+use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 
 use crate::utils::Link;
@@ -10,14 +10,14 @@ pub struct TypeInstanceHeader {
     pub name: String,
     pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Rc<TypeInstanceHeader>>,
-    pub fields: IndexMap<String, FieldInstance>,
+    pub fields: IndexMap<String, Rc<FieldInstance>>,
     pub wasm_type: Option<&'static str>
 }
 
 #[derive(Debug)]
 pub struct FieldInstance {
-    pub ty: Rc<TypeInstanceHeader>,
-    pub offset: usize
+    pub offset: usize,
+    pub wasm_type: &'static str
 }
 
 impl Hash for TypeInstanceHeader {

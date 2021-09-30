@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator}, utils::Link, wat};
+use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, Vasm, Wat};
 
 pub type VI = VirtualInstruction;
@@ -245,8 +245,33 @@ impl VirtualInstruction {
 
                 content
             },
-            VirtualInstruction::GetField(_) => {},
-            VirtualInstruction::SetField(_) => {},
+            VirtualInstruction::GetField(info) => {
+                let this_type = info.caller_type.resolve(type_index, context);
+                let field = this_type.fields.get(&info.field_name).unwrap();
+                let content = vec![
+                    wat!["i32.mul", Wat::const_i32(4), wat!["i32.add", Wat::const_i32(field.offset) ]],
+                    wat![format!("{}.load", field.wasm_type)]
+                ];
+
+                content
+            },
+            VirtualInstruction::SetField(info) => {
+                let this_type = info.caller_type.resolve(type_index, context);
+                let field = this_type.fields.get(&info.field_name).unwrap();
+                let mut content = vec![];
+
+                if let Some(value) = &info.value {
+                    content.extend(value.resolve(type_index, context));
+                }
+
+                content.push(wat!["i32.mul", Wat::const_i32(4), wat!["i32.add", Wat::const_i32(field.offset)]]);
+
+                todo!(); // TODO: reverse top two values of stack
+
+                content.push(wat![format!("{}.store", field.wasm_type)]);
+
+                content
+            },
             VirtualInstruction::FunctionCall(info) => {
                 let mut content = vec![];
 

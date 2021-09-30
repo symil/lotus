@@ -50,7 +50,7 @@ impl FunctionContent {
                 function_unwrapped.owner_type = Some(type_blueprint.clone());
 
                 if !is_static {
-                    function_unwrapped.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), Type::Actual(type_blueprint.get_info()), VariableKind::Argument));
+                    function_unwrapped.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
                 }
             } else if is_static {
                 context.errors.add(self, "regular functions cannot be static");
@@ -83,7 +83,7 @@ impl FunctionContent {
                 }
 
                 if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
-                    function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::new(Identifier::new(PAYLOAD_VAR_NAME, self), Type::Actual(event_type_blueprint.get_info()), VariableKind::Argument));
+                    function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::new(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
 
                     if event_type_blueprint.borrow().qualifier != TypeQualifier::Class {
                         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));

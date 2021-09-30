@@ -15,8 +15,8 @@ pub struct TypeBlueprint {
     pub associated_types: IndexMap<String, Type>,
     pub self_type: Type,
     pub parent_type: Option<Type>,
-    pub fields: IndexMap<String, Rc<FieldDetails>>,
-    pub static_fields: IndexMap<String, Rc<FieldDetails>>,
+    pub fields: IndexMap<String, Rc<FieldInfo>>,
+    pub static_fields: IndexMap<String, Rc<FieldInfo>>,
     pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
@@ -26,7 +26,7 @@ pub struct TypeBlueprint {
 }
 
 #[derive(Debug, Clone)]
-pub struct FieldDetails {
+pub struct FieldInfo {
     pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
     pub ty: Type,

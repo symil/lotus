@@ -2,8 +2,8 @@ use std::{convert::TryInto, fmt::{Display, write}, rc::Rc, result};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{GET_AS_PTR_METHOD_NAME, ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{BuiltinType, FieldDetails, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
+use super::{BuiltinType, FieldInfo, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -61,6 +61,13 @@ impl Type {
 
     pub fn is_bool(&self) -> bool {
         self.is_builtin_type(BuiltinType::Bool)
+    }
+
+    pub fn get_type_blueprint(&self) -> Link<TypeBlueprint> {
+        match self {
+            Type::Actual(info) => info.type_blueprint.clone(),
+            _ => unreachable!()
+        }
     }
 
     pub fn replace_generics(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
@@ -267,6 +274,27 @@ impl Type {
         }
     }
 
+    pub fn get_field(&self, name: &str) -> Option<Rc<FieldInfo>> {
+        match self {
+            Type::Undefined => None,
+            Type::Void => None,
+            Type::Any => None,
+            Type::This(_) => None,
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                match type_unwrapped.fields.get(name) {
+                    Some(field_info) => Some(field_info.clone()),
+                    None => match &type_unwrapped.parent_type {
+                        Some(parent) => parent.get_field(name),
+                        None => None,
+                    }
+                }
+            }),
+            Type::TypeParameter(info) => None,
+            Type::FunctionParameter(info) => None,
+            Type::Associated(info) => None,
+        }
+    }
+
     pub fn get_method(&self, kind: FieldKind, name: &str) -> Option<Link<FunctionBlueprint>> {
         let is_static = match kind {
             FieldKind::Regular => false,
@@ -300,19 +328,6 @@ impl Type {
 
     pub fn get_static_method(&self, name: &str) -> Option<Link<FunctionBlueprint>> {
         self.get_method(FieldKind::Static, name)
-    }
-
-    pub fn get_field(&self, field_name: &str) -> Option<Rc<FieldDetails>> {
-        match self {
-            Type::Undefined => None,
-            Type::Void => None,
-            Type::Any => None,
-            Type::This(_) => None,
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| type_unwrapped.fields.get(field_name).cloned()),
-            Type::TypeParameter(info) => None,
-            Type::FunctionParameter(info) => None,
-            Type::Associated(info) => None,
-        }
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {

@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, FieldKind, FunctionBlueprint, GET_AS_PTR_METHOD_NAME, GenericTypeInfo, ProgramContext, SET_AS_PTR_METHOD_NAME, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{program::{AccessType, FieldKind, FunctionBlueprint, GenericTypeInfo, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
 use super::{ArgumentList, Identifier, VarPrefix};
 
 #[parsable]
@@ -28,14 +28,12 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     let mut result = None;
 
     if let Some(field_details) = parent_type.get_field(field_name.as_str()) {
-        let method_name = match access_type {
-            AccessType::Get => GET_AS_PTR_METHOD_NAME,
-            AccessType::Set(_) => SET_AS_PTR_METHOD_NAME,
+        let instruction = match access_type {
+            AccessType::Get => VI::get_field(parent_type, field_details.name.as_str()),
+            AccessType::Set(_) => VI::set_field_from_stack(parent_type, field_details.name.as_str()),
         };
 
-        result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![
-            VI::call_method(parent_type, parent_type.get_static_method(method_name).unwrap(), &[], vec![VI::int(field_details.offset)])
-        ]));
+        result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![instruction]));
     } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
     }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::Identifier, program::{BuiltinType, GET_AS_PTR_METHOD_NAME, GET_BODY_FUNC_NAME, NEW_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinType, GET_BODY_FUNC_NAME, NEW_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
