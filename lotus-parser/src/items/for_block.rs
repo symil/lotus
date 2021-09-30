@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, vasm, wat};
+use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, TypeIndex, VI, VariableInfo, VariableKind, Vasm, Wat}, vasm, wat};
 use super::{Expression, Identifier, Statement, StatementList};
 
 #[parsable]
@@ -86,7 +86,7 @@ impl ForBlock {
             }
         } else if let Some(iterable_vasm) = range_start_vasm_opt {
             let required_interface_wrapped = context.get_builtin_interface(BuiltinInterface::Iterable);
-            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined);
+            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined).replace_generics(Some(&iterable_vasm.ty), &[]);
             let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
             let iterable_var = VariableInfo::new(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);

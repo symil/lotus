@@ -9,6 +9,7 @@ pub enum RootVarRef {
     Unprefixed(FullType, Option<ArgumentList>)
 }
 
+#[derive(Debug)]
 pub enum ValueOrType {
     Value(Vasm),
     Type(Type)

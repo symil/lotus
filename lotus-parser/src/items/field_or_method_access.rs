@@ -91,7 +91,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
 
                         if arg_vasm.ty.is_assignable_to(&expected_type) {
                             result.extend(arg_vasm);
-                        } else {
+                        } else if !arg_vasm.ty.is_undefined() {
                             context.errors.add(&arguments.as_vec()[i], format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));
                         }
                     }

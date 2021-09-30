@@ -22,6 +22,7 @@ pub struct TypeDeclaration {
 #[derive(Default)]
 pub struct TypeDeclarationBody {
     pub associated_types: Vec<AssociatedTypeDeclaration>,
+    #[parsable(separator=",")]
     pub fields: Vec<FieldDeclaration>,
     pub methods: Vec<MethodDeclaration>
 }

@@ -1,3 +1,115 @@
-class Array<T> {
+export class Array<T> {
     type Item = T;
+
+    static __new(length: int) -> This {
+        let capacity = length.next_power_of_4();
+        let header = @alloc(4);
+        let body = @alloc(capacity);
+
+        header[0] = body as int;
+        header[1] = length;
+        header[2] = capacity;
+
+        return header as This;
+    }
+
+    body() -> Pointer<T> {
+        return (this as ptr)[0] as Pointer<T>;
+    }
+
+    len() -> int {
+        return (this as ptr)[1];
+    }
+
+    capacity() -> int {
+        return (this as ptr)[2];
+    }
+
+    get(index: int) -> T {
+        return this.body()[index];
+    }
+
+    set(index: int, value: T) {
+        this.body().set(index, value);
+    }
+
+    push(value: T) -> This {
+        let header = this as ptr;
+        let body = this.body();
+        let length = this.len();
+        let capacity = this.capacity();
+
+        if length == capacity {
+            capacity *= 4;
+
+            let new_body = @alloc(capacity) as Pointer<T>;
+
+            for i in 0..length {
+                new_body[i] = body[i];
+            }
+
+            body = new_body;
+            header[0] = body as int;
+            header[2] = capacity;
+        }
+
+        body[length] = value;
+        header[1] = length + 1;
+
+        return this;
+    }
+
+    pop() -> This {
+        let header = this as ptr;
+        let length = header[1];
+
+        if length > 0 {
+            header[1] = length - 1;
+        }
+
+        return this;
+    }
+
+    concat(other: This) -> This {
+        let new_array = This.__new(this.len() + other.len());
+        let new_body = new_array.body();
+
+        let offset = 0;
+
+        for item in this {
+            new_body[offset] = item;
+            offset += 1;
+        }
+
+        for item in other {
+            new_body[offset] = item;
+            offset += 1;
+        }
+
+        return new_array;
+    }
+
+    static default() -> This {
+        return This.__new(0);
+    }
+
+    static set_at_index(value: T, array: This, index: int) {
+        array.set(index, value);
+    }
+
+    static get_at_index(array: This, index: int) -> T {
+        return array.get(index);
+    }
+
+    get_iterable_len() -> int {
+        return this.len();
+    }
+
+    get_iterable_ptr() -> Pointer<T> {
+        return this.body();
+    }
+
+    add(other: This) -> This {
+        return this.concat(other);
+    }
 }

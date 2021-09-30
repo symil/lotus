@@ -4,23 +4,23 @@ export type(i32) Pointer<T> {
     type Item = T;
 
     static set_at_index(value: T, pointer: This, index: int) {
-        let byte_index = ((pointer as int) + index) * 4;
-
-        wasm_store(byte_index, value);
+        pointer.set(index, value);
     }
 
     static get_at_index(pointer: This, index: int) -> T {
-        let byte_index = ((pointer as int) + index) * 4;
-
-        return wasm_load(byte_index);
+        return pointer.get(index);
     }
 
     set(index: int, value: T) {
-        This.set_at_index(value, this, index);
+        let byte_index = ((this as int) + index) * 4;
+        
+        wasm_store(byte_index, value);
     }
 
     get(index: int) -> T {
-        return This.get_at_index(this, index);
+        let byte_index = ((this as int) + index) * 4;
+
+        return wasm_load(byte_index);
     }
 }
 

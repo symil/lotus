@@ -31,9 +31,9 @@ impl ArrayLiteral {
 
             if let Some(item_vasm) = item.process(type_hint, context) {
                 if final_item_type.is_assignable_to(&item_vasm.ty) {
-                    final_item_type = item_vasm.ty.clone();
                     item_ok = true;
                 } else if item_vasm.ty.is_assignable_to(&final_item_type) {
+                    final_item_type = item_vasm.ty.clone();
                     item_ok = true;
                 }
 
@@ -52,20 +52,20 @@ impl ArrayLiteral {
 
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let final_pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![final_item_type.clone()]);
-        let mut result = Vasm::new(Type::Undefined, variables, vec![
+        let mut instructions = vec![
             VI::set(&array_var, VI::call_method(&final_array_type, final_array_type.get_static_method(NEW_FUNC_NAME).unwrap(), &[], vec![VI::int(self.items.len())])),
             VI::set(&array_body_var, VI::call_method(&final_array_type, final_array_type.get_regular_method(GET_BODY_FUNC_NAME).unwrap(), &[], vec![VI::get(&array_var)])),
-        ]);
+        ];
 
         for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
-            result.extend(vasm![
+            instructions.extend(vec![
                 VI::get(&array_body_var),
-                VI::call_method(&final_pointer_type, final_pointer_type.get_regular_method(SET_AT_INDEX_FUNC_NAME).unwrap(), &[], vasm![VI::int(i), item_vasm])
+                VI::call_method(&final_pointer_type, final_pointer_type.get_regular_method("set").unwrap(), &[], vasm![VI::int(i), item_vasm])
             ]);
         }
 
-        result.extend(VI::get(&array_var));
+        instructions.push(VI::get(&array_var));
 
-        Some(result)
+        Some(Vasm::new(final_array_type, variables, instructions))
     }
 }

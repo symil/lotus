@@ -354,6 +354,10 @@ impl Type {
             },
         }
     }
+
+    pub fn print(&self) {
+        println!("{}", self);
+    }
 }
 
 impl PartialEq for ActualTypeInfo {
@@ -391,8 +395,8 @@ impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Type::Undefined => format!("<undefined>"),
-            Type::Void => format!("<void>"),
-            Type::Any => format!("<any>"),
+            Type::Void => format!("void"),
+            Type::Any => format!("any"),
             Type::This(_) => format!("{}", THIS_TYPE_NAME),
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
