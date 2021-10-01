@@ -46,7 +46,9 @@ impl ObjectLiteral {
 
                         if let Some(field_vasm) = field.value.process(None, context) {
                             if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
-                                if field_vasm.ty.is_assignable_to(&field_info.ty) {
+                                let field_type = field_info.ty.replace_generics(Some(&object_type), &[]);
+
+                                if field_vasm.ty.is_assignable_to(&field_type) {
                                     fields_init.insert(field.name.as_str(), field_vasm);
                                 } else {
                                     context.errors.add(&field.value, format!("expected `{}`, got `{}`", &field_info.ty, &field_vasm.ty));
@@ -56,14 +58,16 @@ impl ObjectLiteral {
                     }
 
                     for field_info in type_unwrapped.fields.values() {
+                        let field_type = field_info.ty.replace_generics(Some(&object_type), &[]);
+                        
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
-                            None => vasm![VI::call_method(&field_info.ty, field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), &[], vec![])],
+                            None => vasm![VI::call_method(&field_type, field_info.ty.get_static_method(DEFAULT_FUNC_NAME, context).unwrap(), &[], vec![])],
                         };
 
                         result.extend(vasm![
                             VI::get(&object_var),
-                            VI::set_field(&object_type, field_info.name.as_str(), init_vasm)
+                            VI::set_field(&field_type, field_info.offset, init_vasm)
                         ]);
                     }
 

@@ -281,13 +281,7 @@ impl Type {
             Type::Any => None,
             Type::This(_) => None,
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                match type_unwrapped.fields.get(name) {
-                    Some(field_info) => Some(field_info.clone()),
-                    None => match &type_unwrapped.parent_type {
-                        Some(parent) => parent.get_field(name),
-                        None => None,
-                    }
-                }
+                type_unwrapped.fields.get(name).cloned()
             }),
             Type::TypeParameter(info) => None,
             Type::FunctionParameter(info) => None,
@@ -295,7 +289,7 @@ impl Type {
         }
     }
 
-    pub fn get_method(&self, kind: FieldKind, name: &str) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
         let is_static = match kind {
             FieldKind::Regular => false,
             FieldKind::Static => true,
@@ -316,18 +310,24 @@ impl Type {
                     index_map.get(name).cloned()
                 })
             },
-            Type::TypeParameter(info) => info.required_interfaces.get_method(is_static, name),
-            Type::FunctionParameter(info) => info.required_interfaces.get_method(is_static, name),
+            Type::TypeParameter(info) => {
+                info.required_interfaces.get_method(is_static, name)
+                    .or_else(|| context.default_interfaces.get_method(is_static, name))
+            },
+            Type::FunctionParameter(info) => {
+                info.required_interfaces.get_method(is_static, name)
+                    .or_else(|| context.default_interfaces.get_method(is_static, name))
+            },
             Type::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
         }
     }
 
-    pub fn get_regular_method(&self, name: &str) -> Option<Link<FunctionBlueprint>> {
-        self.get_method(FieldKind::Regular, name)
+    pub fn get_regular_method(&self, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
+        self.get_method(FieldKind::Regular, name, context)
     }
 
-    pub fn get_static_method(&self, name: &str) -> Option<Link<FunctionBlueprint>> {
-        self.get_method(FieldKind::Static, name)
+    pub fn get_static_method(&self, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
+        self.get_method(FieldKind::Static, name, context)
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {

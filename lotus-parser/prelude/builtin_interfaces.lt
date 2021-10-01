@@ -97,6 +97,6 @@ export interface Print {
     print();
 }
 
-export interface Default {
-    static default() -> This;
+sys interface Default {
+    static __default() -> This;
 }

@@ -40,7 +40,6 @@ impl TypeDeclaration {
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
             parent_type: None,
-            self_fields: IndexMap::new(),
             fields: IndexMap::new(),
             regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -158,6 +157,7 @@ impl TypeDeclaration {
     pub fn process_fields(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
             let mut fields = IndexMap::new();
+            let mut offset = OBJECT_HEADER_SIZE;
 
             type_wrapped.with_ref(|type_unwrapped| {
                 if let Some(parent_type) = &type_unwrapped.parent_type {
@@ -166,9 +166,11 @@ impl TypeDeclaration {
                             let field_details = Rc::new(FieldInfo {
                                 owner: type_wrapped.clone(),
                                 ty: field_info.ty.replace_generics(Some(parent_type), &[]),
-                                name: field_info.name.clone()
+                                name: field_info.name.clone(),
+                                offset
                             });
 
+                            offset += 1;
                             fields.insert(field_info.name.to_string(), field_details);
                         }
                     });
@@ -184,8 +186,10 @@ impl TypeDeclaration {
                             owner: type_wrapped.clone(),
                             ty: field_type,
                             name: field.name.clone(),
+                            offset
                         });
-
+                        
+                        offset += 1;
                         fields.insert(field.name.to_string(), field_details);
                     }
                 }

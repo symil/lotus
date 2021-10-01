@@ -24,18 +24,10 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
             let type_blueprint = self.type_blueprint.clone();
             let parameters = self.type_parameters.clone();
             let wasm_type = type_unwrapped.get_wasm_type();
-            let mut fields = IndexMap::new();
             let mut name = type_unwrapped.name.to_string();
 
             for parameter in &self.type_parameters {
                 name.push_str(&format!("_{}", &parameter.name));
-            }
-
-            for (i, field_info) in type_unwrapped.fields.values().enumerate() {
-                fields.insert(field_info.name.to_string(), Rc::new(FieldInstance {
-                    offset: i + OBJECT_HEADER_SIZE,
-                    wasm_type: field_info.ty.get_type_blueprint().borrow().get_wasm_type().unwrap()
-                }));
             }
 
             TypeInstanceHeader {
@@ -43,7 +35,6 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
                 name,
                 type_blueprint,
                 parameters,
-                fields,
                 wasm_type,
             }
         })

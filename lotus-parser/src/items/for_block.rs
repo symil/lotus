@@ -106,14 +106,14 @@ impl ForBlock {
                     result = Some(Vasm::new(Type::Undefined, variables, vec![
                         VI::set(&iterable_var, iterable_vasm),
                         VI::set(&index_var, VI::int(-1)),
-                        VI::set(&iterable_len_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_LEN_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
-                        VI::set(&iterable_ptr_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_PTR_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_var)])),
+                        VI::set(&iterable_len_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_LEN_FUNC_NAME, context).unwrap(), &[], vec![VI::get(&iterable_var)])),
+                        VI::set(&iterable_ptr_var, VI::call_method(&iterable_type, iterable_type.get_regular_method(GET_ITERABLE_PTR_FUNC_NAME, context).unwrap(), &[], vec![VI::get(&iterable_var)])),
                         VI::block(vec![
                             VI::loop_(vasm![
                                 VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
                                 VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
                                 VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
-                                VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_regular_method(GET_AT_INDEX_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
+                                VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_regular_method(GET_AT_INDEX_FUNC_NAME, context).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
                                 block_vasm,
                                 VI::jump(0)
                             ])

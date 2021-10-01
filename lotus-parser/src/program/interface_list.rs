@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use crate::utils::Link;
-use super::{FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, Type};
+use super::{FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, Type, interface_blueprint};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct InterfaceList {
     pub list: Vec<Link<InterfaceBlueprint>>
 }
@@ -10,6 +10,10 @@ pub struct InterfaceList {
 impl InterfaceList {
     pub fn new(list: Vec<Link<InterfaceBlueprint>>) -> Self {
         Self { list }
+    }
+
+    pub fn push(&mut self, interface_blueprint: Link<InterfaceBlueprint>) {
+        self.list.push(interface_blueprint);
     }
 
     pub fn get_associated_type_info(&self, name: &str) -> Option<Rc<InterfaceAssociatedTypeInfo>> {

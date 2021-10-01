@@ -27,13 +27,14 @@ impl FieldOrMethodAccess {
 pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(field_details) = parent_type.get_field(field_name.as_str()) {
+    if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
+        let field_type = field_info.ty.replace_generics(Some(parent_type), &[]);
         let instruction = match access_type {
-            AccessType::Get => VI::get_field(parent_type, field_details.name.as_str()),
-            AccessType::Set(_) => VI::set_field_from_stack(parent_type, field_details.name.as_str()),
+            AccessType::Get => VI::get_field(&field_type, field_info.offset),
+            AccessType::Set(_) => VI::set_field_from_stack(&field_type, field_info.offset),
         };
 
-        result = Some(Vasm::new(field_details.ty.clone(), vec![], vec![instruction]));
+        result = Some(Vasm::new(field_type, vec![], vec![instruction]));
     } else {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name));
     }
@@ -44,7 +45,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_name: &Identifier, parameters: &[Type], arguments: &ArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(function_blueprint) = caller_type.get_method(field_kind, method_name.as_str()) {
+    if let Some(function_blueprint) = caller_type.get_method(field_kind, method_name.as_str(), context) {
         result = process_function_call(Some(caller_type), method_name, function_blueprint, parameters, arguments, type_hint, access_type, context);
     } else if !caller_type.is_undefined() {
         context.errors.add(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));

@@ -49,12 +49,12 @@ impl StringLiteral {
 
         let string_type = context.get_builtin_type(BuiltinType::String, vec![]);
         let mut content = vec![
-            VI::call_method(&string_type, string_type.get_static_method(NEW_FUNC_NAME).unwrap(), &[], vec![VI::int(unescaped_chars.len())])
+            VI::call_method(&string_type, string_type.get_static_method(NEW_FUNC_NAME, context).unwrap(), &[], vec![VI::int(unescaped_chars.len())])
         ];
 
         for (i, code) in unescaped_chars.into_iter().enumerate() {
             content.push(
-                VI::call_method(&string_type, string_type.get_regular_method(SET_CHAR_FUNC_NAME).unwrap(), &[], vec![VI::int(i), VI::int(code)]),
+                VI::call_method(&string_type, string_type.get_regular_method(SET_CHAR_FUNC_NAME, context).unwrap(), &[], vec![VI::int(i), VI::int(code)]),
             );
         }
 

@@ -15,7 +15,6 @@ pub struct TypeBlueprint {
     pub associated_types: IndexMap<String, Type>,
     pub self_type: Type,
     pub parent_type: Option<Type>,
-    pub self_fields: IndexMap<String, Rc<FieldInfo>>,
     pub fields: IndexMap<String, Rc<FieldInfo>>,
     pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
     pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
@@ -30,6 +29,7 @@ pub struct FieldInfo {
     pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
     pub ty: Type,
+    pub offset: usize
 }
 
 impl TypeBlueprint {

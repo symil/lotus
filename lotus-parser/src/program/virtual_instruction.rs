@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use parsable::DataLocation;
 
-use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
+use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat};
 
 pub type VI = VirtualInstruction;
@@ -45,20 +45,20 @@ pub struct VirtualSetVariableInfo {
 }
 
 #[derive(Debug)]
-pub struct VirtualGetFieldInfo {
-    pub caller_type: Type,
-    pub field_name: String
-}
-
-#[derive(Debug)]
 pub struct VirtualCreateObjectInfo {
     pub object_type: Type,
 }
 
 #[derive(Debug)]
+pub struct VirtualGetFieldInfo {
+    pub field_type: Type,
+    pub field_offset: usize
+}
+
+#[derive(Debug)]
 pub struct VirtualSetFieldInfo {
-    pub caller_type: Type,
-    pub field_name: String,
+    pub field_type: Type,
+    pub field_offset: usize,
     pub value: Option<Vasm>
 }
 
@@ -177,25 +177,25 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn get_field(caller_type: &Type, field_name: &str) -> Self {
+    pub fn get_field(field_type: &Type, field_offset: usize) -> Self {
         Self::GetField(VirtualGetFieldInfo {
-            caller_type: caller_type.clone(),
-            field_name: field_name.to_string(),
+            field_type: field_type.clone(),
+            field_offset,
         })
     }
 
-    pub fn set_field(caller_type: &Type, field_name: &str, value: Vasm) -> Self {
+    pub fn set_field(field_type: &Type, field_offset: usize, value: Vasm) -> Self {
         Self::SetField(VirtualSetFieldInfo {
-            caller_type: caller_type.clone(),
-            field_name: field_name.to_string(),
+            field_type: field_type.clone(),
+            field_offset,
             value: Some(value)
         })
     }
 
-    pub fn set_field_from_stack(caller_type: &Type, field_name: &str) -> Self {
+    pub fn set_field_from_stack(field_type: &Type, field_offset: usize) -> Self {
         Self::SetField(VirtualSetFieldInfo {
-            caller_type: caller_type.clone(),
-            field_name: field_name.to_string(),
+            field_type: field_type.clone(),
+            field_offset,
             value: None
         })
     }
@@ -294,35 +294,35 @@ impl VirtualInstruction {
             },
             VirtualInstruction::CreateObject(info) => {
                 let object_type = info.object_type.resolve(type_index, context);
-                let object_size = object_type.get_size();
+                let object_size = object_type.type_blueprint.borrow().fields.len() + OBJECT_HEADER_SIZE;
 
                 vec![
                     Wat::call("mem_alloc", vec![Wat::const_i32(object_size)])
                 ]
             },
             VirtualInstruction::GetField(info) => {
-                let this_type = info.caller_type.resolve(type_index, context);
-                let field = this_type.fields.get(&info.field_name).unwrap();
+                let field_type = info.field_type.resolve(type_index, context);
+                
                 let content = vec![
-                    wat!["i32.add", Wat::const_i32(field.offset)],
+                    wat!["i32.add", Wat::const_i32(info.field_offset)],
                     wat!["i32.mul", Wat::const_i32(4)],
-                    wat![format!("{}.load", field.wasm_type)]
+                    wat![format!("{}.load", field_type.wasm_type.unwrap())]
                 ];
 
                 content
             },
             VirtualInstruction::SetField(info) => {
-                let this_type = info.caller_type.resolve(type_index, context);
-                let field = this_type.fields.get(&info.field_name).unwrap();
                 let mut content = vec![];
+                let field_type = info.field_type.resolve(type_index, context);
+                let field_wasm_type = field_type.wasm_type.unwrap();
 
-                content.push(wat!["i32.add", Wat::const_i32(field.offset)]);
+                content.push(wat!["i32.add", Wat::const_i32(info.field_offset)]);
                 content.push(wat!["i32.mul", Wat::const_i32(4)]);
 
                 if let Some(init_value) = &info.value {
                     content.extend(init_value.resolve(type_index, context));
                 } else {
-                    let swap_func_name = match field.wasm_type {
+                    let swap_func_name = match field_wasm_type {
                         "i32" => SWAP_INT_INT_WASM_FUNC_NAME,
                         "f32" => SWAP_FLOAT_INT_WASM_FUNC_NAME,
                         _ => unreachable!()
@@ -331,7 +331,7 @@ impl VirtualInstruction {
                     content.push(Wat::call_from_stack(swap_func_name));
                 }
 
-                content.push(wat![format!("{}.store", field.wasm_type)]);
+                content.push(wat![format!("{}.store", field_wasm_type)]);
 
                 content
             },

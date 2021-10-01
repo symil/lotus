@@ -9,7 +9,6 @@ pub struct TypeInstanceHeader {
     pub name: String,
     pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Rc<TypeInstanceHeader>>,
-    pub fields: IndexMap<String, Rc<FieldInstance>>,
     pub wasm_type: Option<&'static str>
 }
 
@@ -17,12 +16,6 @@ pub struct TypeInstanceHeader {
 pub struct FieldInstance {
     pub offset: usize,
     pub wasm_type: &'static str
-}
-
-impl TypeInstanceHeader {
-    pub fn get_size(&self) -> usize {
-        self.fields.len() + OBJECT_HEADER_SIZE
-    }
 }
 
 impl Hash for TypeInstanceHeader {

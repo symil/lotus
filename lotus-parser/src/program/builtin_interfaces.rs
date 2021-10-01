@@ -21,8 +21,13 @@ pub enum BuiltinInterface {
     Minus,
     GetAtIndex,
     SetAtIndex,
-    Iterable
+    Iterable,
+    Default
 }
+
+pub const DEFAULT_INTERFACES : &'static[BuiltinInterface] = &[
+    BuiltinInterface::Default
+];
 
 impl BuiltinInterface {
     pub fn get_name(&self) -> &'static str {
@@ -49,6 +54,7 @@ impl BuiltinInterface {
             BuiltinInterface::GetAtIndex => "GetAtIndex",
             BuiltinInterface::SetAtIndex => "SetAtIndex",
             BuiltinInterface::Iterable => "Iterable",
+            BuiltinInterface::Default => "Default",
         }
     }
 }

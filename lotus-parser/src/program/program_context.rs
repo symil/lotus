@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat}, utils::Link, vasm, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -14,6 +14,8 @@ pub struct ProgramContext {
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
+    pub default_interfaces: InterfaceList,
+
     pub current_function: Option<Link<FunctionBlueprint>>,
     pub current_type: Option<Link<TypeBlueprint>>,
     pub current_interface: Option<Link<InterfaceBlueprint>>,
@@ -24,12 +26,18 @@ pub struct ProgramContext {
     pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
     pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,
     pub global_var_instances: Vec<GlobalVarInstance>,
-    pub entry_function: Option<Rc<FunctionInstanceHeader>>
+    pub entry_function: Option<Rc<FunctionInstanceHeader>>,
 }
 
 impl ProgramContext {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn index_builtin_entities(&mut self) {
+        for builtin_interface in DEFAULT_INTERFACES {
+            self.default_interfaces.push(self.interfaces.get_by_name(builtin_interface.get_name()).unwrap());
+        }
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
@@ -193,8 +201,6 @@ impl ProgramContext {
             }
         }
 
-        // TODO: index builtin types at some point?
-
         for interface_declaration in &interfaces {
             interface_declaration.process_name(self);
         }
@@ -202,6 +208,8 @@ impl ProgramContext {
         for type_declaration in &types {
             type_declaration.process_name(self);
         }
+
+        self.index_builtin_entities();
 
         for interface_declaration in &interfaces {
             interface_declaration.process_associated_types(self);
