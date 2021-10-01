@@ -14,7 +14,7 @@ impl Vasm {
         Self { ty, variables, instructions }
     }
 
-    pub fn void(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
+    pub fn undefined(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
         Self::new(Type::Undefined, variables, content)
     }
 

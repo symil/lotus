@@ -81,4 +81,8 @@ export type(i32) string {
     print() {{
         (call $__log_string)
     }}
+
+    static __default() -> string {
+        return "";
+    }
 }

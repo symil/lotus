@@ -223,9 +223,9 @@ impl ProgramContext {
             type_declaration.process_parent(self);
         }
 
-        for type_declaration in &types {
-            type_declaration.process_inheritance_chain(self);
-        }
+        types.sort_by_cached_key(|type_declaration| {
+            type_declaration.process_inheritance_chain(self)
+        });
 
         for type_declaration in &types {
             type_declaration.process_fields(self);

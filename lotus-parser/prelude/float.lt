@@ -24,4 +24,8 @@ export type(f32) float {
     max(float) -> float {{ f32.max }}
 
     print() {{ (call $__log_float) }}
+
+    static __default() -> float {
+        return 0f;
+    }
 }

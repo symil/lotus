@@ -1,7 +1,65 @@
-sys fn __object_alloc(field_count: int, type_id: int) -> ptr {
-    let object = @alloc(field_count + 1);
+class object {
+    autogen static __new() -> This {
+        let p = @alloc(#FIELD_COUNT);
+        p[0] = #OBJECT_ID;
 
-    object[0] = type_id;
+        return p as This;
+    }
 
-    return object;
+    autogen static default() -> This {
+        let obj = This.__new();
+
+        iter_fields {
+            obj.#FIELD_NAME = #FIELD_TYPE.default();
+        }
+
+        return obj;
+    }
+
+    autogen static serialize(buffer: Buffer, value: This) {
+        buffer.write(this as i32);
+
+        if !buffer.has(this as i32) {
+            buffer.register(this as i32);
+
+            iter_fields {
+                #FIELD_TYPE.serialize(buffer, this.#FIELD_NAME);
+            }
+        }
+    }
+
+    autogen static deserialize(buffer: Buffer) -> Option<This> {
+        let addr = buffer.read();
+        let result = buffer.get(addr);
+
+        if result.is_some() {
+            return result;
+        } else {
+            let value = This.__new();
+
+            iter_fields {
+                let field_opt = #FIELD_TYPE.deserialize(buffer);
+
+                if !field_opt.is_some() {
+                    return none();
+                } else {
+                    value.#FIELD_NAME = field_opt.value();
+                }
+            }
+
+            return some(value);
+        }
+    }
+
+    autogen static retain() {
+
+    }
+
+    is_null() -> bool {
+        return (this as int) == 0;
+    }
+
+    null() -> This {
+        return (0 as This);
+    }
 }

@@ -26,7 +26,7 @@ export type(i32) int {
 
     print() {{ (call $__log_int) }}
 
-    static default() -> int {
+    static __default() -> int {
         return 0;
     }
     

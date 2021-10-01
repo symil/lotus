@@ -1,6 +1,6 @@
 use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::IndexMap;
-use crate::{program::{TypeIndex, VariableKind, Wat}, utils::Link};
+use crate::{items::Visibility, program::{TypeIndex, VariableKind, Wat}, utils::Link};
 use super::{FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, GeneratedItemIndex, ItemGenerator, ProgramContext, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader};
 
 #[derive(Debug, Clone)]
@@ -23,9 +23,12 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
 
     fn generate_header(&self, id: u64) -> FunctionInstanceHeader {
         self.function_blueprint.with_ref(|function_unwrapped| {
-            let wasm_name = match &self.this_type {
-                Some(type_instance) => format!("{}_{}_{}", &type_instance.name, &function_unwrapped.name, id),
-                None => format!("{}_{}", &function_unwrapped.name, id),
+            let wasm_name = match function_unwrapped.visibility {
+                Visibility::System => function_unwrapped.name.to_string(),
+                _ => match &self.this_type {
+                    Some(type_instance) => format!("{}_{}_{}", &type_instance.name, &function_unwrapped.name, id),
+                    None => format!("{}_{}", &function_unwrapped.name, id),
+                }
             };
             let mut wasm_call = match function_unwrapped.is_raw_wasm {
                 true => function_unwrapped.body.resolve_without_context(),

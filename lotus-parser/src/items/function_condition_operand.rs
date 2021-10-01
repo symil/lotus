@@ -11,20 +11,20 @@ pub struct FunctionConditionOperand {
 impl FunctionConditionOperand {
     pub fn process(&self, side: Side, event_type_blueprint: &Link<TypeBlueprint>, context: &mut ProgramContext) -> Option<Identifier> {
         let mut result = None;
-        let (required_prefix, target_type_blueprint) = match side {
-            Side::Left => (VarPrefix::Payload, event_type_blueprint),
-            Side::Right => (VarPrefix::This, context.current_type.as_ref().unwrap()),
-        };
+        // let (required_prefix, target_type_blueprint) = match side {
+        //     Side::Left => (VarPrefix::Payload, event_type_blueprint),
+        //     Side::Right => (VarPrefix::This, context.current_type.as_ref().unwrap()),
+        // };
 
-        if !self.has_prefix(&required_prefix) {
-            context.errors.add(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
-        }
+        // if !self.has_prefix(&required_prefix) {
+        //     context.errors.add(&self, format!("{}-hand side of event callback condition must be prefixed by '{}'", side, required_prefix));
+        // }
 
-        if let Some(field) = target_type_blueprint.borrow().fields.get(self.field_name.as_str()) {
-            result = Some(self.field_name.clone());
-        } else {
-            context.errors.add(&self.field_name, format!("type `{}` does not have a `{}` field", &target_type_blueprint.borrow().name, &self.field_name));
-        }
+        // if let Some(field) = target_type_blueprint.borrow().fields.get(self.field_name.as_str()) {
+        //     result = Some(self.field_name.clone());
+        // } else {
+        //     context.errors.add(&self.field_name, format!("type `{}` does not have a `{}` field", &target_type_blueprint.borrow().name, &self.field_name));
+        // }
 
         result
     }

@@ -1,8 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
-
 use crate::utils::Link;
-use super::TypeBlueprint;
+use super::{OBJECT_HEADER_SIZE, TypeBlueprint};
 
 #[derive(Debug)]
 pub struct TypeInstanceHeader {
@@ -18,6 +17,12 @@ pub struct TypeInstanceHeader {
 pub struct FieldInstance {
     pub offset: usize,
     pub wasm_type: &'static str
+}
+
+impl TypeInstanceHeader {
+    pub fn get_size(&self) -> usize {
+        self.fields.len() + OBJECT_HEADER_SIZE
+    }
 }
 
 impl Hash for TypeInstanceHeader {

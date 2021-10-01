@@ -31,27 +31,10 @@ impl ItemGenerator<TypeInstanceHeader, TypeInstanceContent> for TypeInstancePara
                 name.push_str(&format!("_{}", &parameter.name));
             }
 
-            let mut current_type_opt = Some(self.type_blueprint.borrow().self_type.clone());
-            let mut field_list = vec![];
-            let mut offset = 0;
-
-            while let Some(current_type) = &current_type_opt {
-                current_type.get_type_blueprint().with_ref(|type_unwrapped| {
-                    for field_info in type_unwrapped.fields.values().rev() {
-                        field_list.push((
-                            field_info.name.to_string(),
-                            field_info.ty.get_type_blueprint().borrow().get_wasm_type().unwrap()
-                        ));
-                    }
-
-                    current_type_opt = type_unwrapped.parent_type.clone();
-                });
-            }
-
-            for (i, (field_name, wasm_type)) in field_list.into_iter().rev().enumerate() {
-                fields.insert(field_name, Rc::new(FieldInstance {
+            for (i, field_info) in type_unwrapped.fields.values().enumerate() {
+                fields.insert(field_info.name.to_string(), Rc::new(FieldInstance {
                     offset: i + OBJECT_HEADER_SIZE,
-                    wasm_type
+                    wasm_type: field_info.ty.get_type_blueprint().borrow().get_wasm_type().unwrap()
                 }));
             }
 

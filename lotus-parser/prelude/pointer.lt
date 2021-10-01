@@ -14,5 +14,13 @@ export type(i32) Pointer<T> {
 
         return wasm_load(byte_index);
     }
+
+    is_null() -> bool {{
+        i32.eqz
+    }}
+
+    static null() -> This {{
+        (i32.const 0)
+    }}
 }
 

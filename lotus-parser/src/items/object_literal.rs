@@ -30,15 +30,13 @@ impl ObjectLiteral {
                 if type_unwrapped.qualifier == TypeQualifier::Class {
                     let mut fields_init = HashMap::new();
 
-                    result.extend(Vasm::void(
-                        vec![object_var.clone()],
-                        vec![
-                            VI::set(&object_var, vasm![VI::call_method(&object_type, object_type.get_static_method(NEW_FUNC_NAME).unwrap(), &[], vec![])])
-                        ]
-                    ));
+                    result.extend(Vasm::undefined(vec![object_var.clone()], vec![
+                        VI::create_object(&object_type),
+                        VI::set_from_stack(&object_var)
+                    ]));
 
                     for field in &self.fields {
-                        if !type_unwrapped.fields.contains_key(field.name.as_str()) {
+                        if type_unwrapped.fields.get(field.name.as_str()).is_none() {
                             context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, &field.name));
                         }
 
@@ -63,7 +61,10 @@ impl ObjectLiteral {
                             None => vasm![VI::call_method(&field_info.ty, field_info.ty.get_static_method(DEFAULT_FUNC_NAME).unwrap(), &[], vec![])],
                         };
 
-                        result.extend(vasm![VI::set_field(&object_type, field_info.name.as_str(), init_vasm)]);
+                        result.extend(vasm![
+                            VI::get(&object_var),
+                            VI::set_field(&object_type, field_info.name.as_str(), init_vasm)
+                        ]);
                     }
 
                     result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get(&object_var)]));

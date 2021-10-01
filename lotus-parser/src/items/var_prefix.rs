@@ -10,8 +10,8 @@ pub struct VarPrefixWrapper {
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Clone, Copy)]
 pub enum VarPrefix {
-    This = "#",
-    Payload = "$",
+    // This = "#",
+    // Payload = "$",
     System = "@"
 }
 
@@ -20,24 +20,24 @@ impl VarPrefixWrapper {
         let mut result = None;
 
         match &self.value {
-            VarPrefix::This => match &context.current_function {
-                Some(function_blueprint) => match &function_blueprint.borrow().this_arg {
-                    Some(this_var) => {
-                        result = Some(Vasm::new(this_var.ty.clone(), vec![], vec![VI::get(this_var)]));
-                    },
-                    None => context.errors.add(self, "no `this` value can be referenced in this context")
-                }
-                None => context.errors.add(self, "no `this` value can be referenced in this context")
-            },
-            VarPrefix::Payload => match &context.current_function {
-                Some(function_blueprint) => match &function_blueprint.borrow().payload_arg {
-                    Some(payload_var) => {
-                        result = Some(Vasm::new(payload_var.ty.clone(), vec![], vec![VI::get(payload_var)]));
-                    },
-                    None => context.errors.add(self, "no `payload` value can be referenced in this context")
-                }
-                None => context.errors.add(self, "no `payload` value can be referenced in this context")
-            },
+            // VarPrefix::This => match &context.current_function {
+            //     Some(function_blueprint) => match &function_blueprint.borrow().this_arg {
+            //         Some(this_var) => {
+            //             result = Some(Vasm::new(this_var.ty.clone(), vec![], vec![VI::get(this_var)]));
+            //         },
+            //         None => context.errors.add(self, "no `this` value can be referenced in this context")
+            //     }
+            //     None => context.errors.add(self, "no `this` value can be referenced in this context")
+            // },
+            // VarPrefix::Payload => match &context.current_function {
+            //     Some(function_blueprint) => match &function_blueprint.borrow().payload_arg {
+            //         Some(payload_var) => {
+            //             result = Some(Vasm::new(payload_var.ty.clone(), vec![], vec![VI::get(payload_var)]));
+            //         },
+            //         None => context.errors.add(self, "no `payload` value can be referenced in this context")
+            //     }
+            //     None => context.errors.add(self, "no `payload` value can be referenced in this context")
+            // },
             VarPrefix::System => {
                 result = Some(Vasm::new(context.get_builtin_type(BuiltinType::System, vec![]), vec![], vec![]))
             },

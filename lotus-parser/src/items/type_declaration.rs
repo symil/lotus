@@ -12,7 +12,7 @@ pub struct TypeDeclaration {
     pub stack_type: Option<StackTypeWrapped>,
     pub name: Identifier,
     pub parameters: TypeParameters,
-    #[parsable(prefix=":")]
+    #[parsable(prefix="extends")]
     pub parent: Option<FullType>,
     #[parsable(brackets="{}")]
     pub body: TypeDeclarationBody,
@@ -40,8 +40,8 @@ impl TypeDeclaration {
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
             parent_type: None,
+            self_fields: IndexMap::new(),
             fields: IndexMap::new(),
-            static_fields: IndexMap::new(),
             regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
             dynamic_methods: vec![],
@@ -128,7 +128,9 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn process_inheritance_chain(&self, context: &mut ProgramContext) {
+    pub fn process_inheritance_chain(&self, context: &mut ProgramContext) -> usize {
+        let mut chain_length = 0;
+
         self.process(context, |type_wrapped, context| {
             let mut types = vec![type_wrapped.clone()];
             let mut parent_opt = type_wrapped.borrow().parent_type.as_ref().and_then(|ty| Some(ty.get_type_blueprint()));
@@ -142,10 +144,15 @@ impl TypeDeclaration {
 
                     parent_opt = None;
                 } else {
+                    types.push(parent_blueprint.clone());
                     parent_opt = parent_blueprint.borrow().parent_type.as_ref().and_then(|ty| Some(ty.get_type_blueprint()));
                 }
             }
+
+            chain_length = types.len();
         });
+
+        chain_length
     }
 
     pub fn process_fields(&self, context: &mut ProgramContext) {
@@ -153,13 +160,23 @@ impl TypeDeclaration {
             let mut fields = IndexMap::new();
 
             type_wrapped.with_ref(|type_unwrapped| {
+                if let Some(parent_type) = &type_unwrapped.parent_type {
+                    parent_type.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for field_info in parent_unwrapped.fields.values() {
+                            let field_details = Rc::new(FieldInfo {
+                                owner: type_wrapped.clone(),
+                                ty: field_info.ty.replace_generics(Some(parent_type), &[]),
+                                name: field_info.name.clone()
+                            });
+
+                            fields.insert(field_info.name.to_string(), field_details);
+                        }
+                    });
+                }
+
                 for field in &self.body.fields {
                     if fields.contains_key(field.name.as_str()) {
                         context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
-                    } else if let Some(parent) = &type_unwrapped.parent_type {
-                        if let Some(field_info) = parent.get_field(field.name.as_str()) {
-                            context.errors.add(&field.name, format!("duplicate field `{}` (already declared by parent type `{}`)", &self.name, field_info.owner.borrow().name.as_str()));
-                        }
                     }
 
                     if let Some(field_type) = field.ty.process(context) {
@@ -177,6 +194,12 @@ impl TypeDeclaration {
             type_wrapped.with_mut(|mut type_unwrapped| {
                 type_unwrapped.fields = fields;
             });
+        });
+    }
+
+    pub fn process_fields_inheritance(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            
         });
     }
 

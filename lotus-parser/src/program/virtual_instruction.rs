@@ -17,6 +17,7 @@ pub enum VirtualInstruction {
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
+    CreateObject(VirtualCreateObjectInfo),
     GetField(VirtualGetFieldInfo),
     SetField(VirtualSetFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
@@ -47,6 +48,11 @@ pub struct VirtualSetVariableInfo {
 pub struct VirtualGetFieldInfo {
     pub caller_type: Type,
     pub field_name: String
+}
+
+#[derive(Debug)]
+pub struct VirtualCreateObjectInfo {
+    pub object_type: Type,
 }
 
 #[derive(Debug)]
@@ -165,6 +171,12 @@ impl VirtualInstruction {
         })
     }
 
+    pub fn create_object(object_type: &Type) -> Self {
+        Self::CreateObject(VirtualCreateObjectInfo {
+            object_type: object_type.clone(),
+        })
+    }
+
     pub fn get_field(caller_type: &Type, field_name: &str) -> Self {
         Self::GetField(VirtualGetFieldInfo {
             caller_type: caller_type.clone(),
@@ -240,6 +252,7 @@ impl VirtualInstruction {
             VirtualInstruction::Load(_) => {},
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(_) => {},
+            VirtualInstruction::CreateObject(_) => {},
             VirtualInstruction::TeeVariable(_) => {},
             VirtualInstruction::GetField(_) => {},
             VirtualInstruction::SetField(_) => {},
@@ -279,11 +292,20 @@ impl VirtualInstruction {
 
                 content
             },
+            VirtualInstruction::CreateObject(info) => {
+                let object_type = info.object_type.resolve(type_index, context);
+                let object_size = object_type.get_size();
+
+                vec![
+                    Wat::call("mem_alloc", vec![Wat::const_i32(object_size)])
+                ]
+            },
             VirtualInstruction::GetField(info) => {
                 let this_type = info.caller_type.resolve(type_index, context);
                 let field = this_type.fields.get(&info.field_name).unwrap();
                 let content = vec![
-                    wat!["i32.mul", Wat::const_i32(4), wat!["i32.add", Wat::const_i32(field.offset) ]],
+                    wat!["i32.add", Wat::const_i32(field.offset)],
+                    wat!["i32.mul", Wat::const_i32(4)],
                     wat![format!("{}.load", field.wasm_type)]
                 ];
 
@@ -294,7 +316,8 @@ impl VirtualInstruction {
                 let field = this_type.fields.get(&info.field_name).unwrap();
                 let mut content = vec![];
 
-                content.push(wat!["i32.mul", Wat::const_i32(4), wat!["i32.add", Wat::const_i32(field.offset)]]);
+                content.push(wat!["i32.add", Wat::const_i32(field.offset)]);
+                content.push(wat!["i32.mul", Wat::const_i32(4)]);
 
                 if let Some(init_value) = &info.value {
                     content.extend(init_value.resolve(type_index, context));
@@ -398,6 +421,7 @@ impl VirtualInstruction {
             VirtualInstruction::GetVariable(_) => unreachable!(),
             VirtualInstruction::SetVariable(_) => unreachable!(),
             VirtualInstruction::TeeVariable(_) => unreachable!(),
+            VirtualInstruction::CreateObject(_) => unreachable!(),
             VirtualInstruction::GetField(_) => unreachable!(),
             VirtualInstruction::SetField(_) => unreachable!(),
             VirtualInstruction::FunctionCall(_) => unreachable!(),
