@@ -11,6 +11,9 @@ pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE *
 pub const GENERATED_METHODS_TABLE_START : usize = MEMORY_METADATA_SIZE;
 pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize, deserialize
 
+pub const SWAP_INT_INT_WASM_FUNC_NAME : &'static str = "swap_i32_i32";
+pub const SWAP_FLOAT_INT_WASM_FUNC_NAME : &'static str = "swap_f32_i32";
+
 pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
 pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
 pub const MEMORY_COPY_FUNC_NAME : &'static str = "__mem_copy";
@@ -34,7 +37,7 @@ pub const DEFAULT_FUNC_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "body";
 
-pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at_index";
-pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at_index";
+pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
+pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";

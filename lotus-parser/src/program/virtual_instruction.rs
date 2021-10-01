@@ -1,6 +1,8 @@
 use std::rc::Rc;
-use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
-use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, Vasm, Wat};
+use parsable::DataLocation;
+
+use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
+use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat};
 
 pub type VI = VirtualInstruction;
 
@@ -10,6 +12,8 @@ pub enum VirtualInstruction {
     Raw(Wat),
     IntConstant(i32),
     FloatConstant(f32),
+    Store(VirtualStashInfo),
+    Load(VirtualStashInfo),
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
@@ -20,6 +24,12 @@ pub enum VirtualInstruction {
     Block(VasmInfo),
     Jump(VirtualJumpInfo),
     JumpIf(VirtualJumpIfInfo)
+}
+
+#[derive(Debug)]
+pub struct VirtualStashInfo {
+    pub value_type: Type,
+    pub wasm_var_name: String
 }
 
 #[derive(Debug)]
@@ -89,6 +99,20 @@ impl VirtualInstruction {
         Self::FloatConstant(value)
     }
 
+    pub fn store(value_type: &Type, id: u64) -> Self {
+        Self::Store(VirtualStashInfo {
+            value_type: value_type.clone(),
+            wasm_var_name: format!("tmp_{}", id),
+        })
+    }
+
+    pub fn load(value_type: &Type, id: u64) -> Self {
+        Self::Load(VirtualStashInfo {
+            value_type: value_type.clone(),
+            wasm_var_name: format!("tmp_{}", id),
+        })
+    }
+
     pub fn get(var_info: &Rc<VariableInfo>) -> Self {
         Self::GetVariable(VirtualGetVariableInfo{
             var_info: Rc::clone(var_info),
@@ -152,7 +176,7 @@ impl VirtualInstruction {
         Self::SetField(VirtualSetFieldInfo {
             caller_type: caller_type.clone(),
             field_name: field_name.to_string(),
-            value: Some(value),
+            value: Some(value)
         })
     }
 
@@ -160,7 +184,7 @@ impl VirtualInstruction {
         Self::SetField(VirtualSetFieldInfo {
             caller_type: caller_type.clone(),
             field_name: field_name.to_string(),
-            value: None,
+            value: None
         })
     }
 
@@ -210,6 +234,10 @@ impl VirtualInstruction {
             VirtualInstruction::Raw(_) => {},
             VirtualInstruction::IntConstant(_) => {},
             VirtualInstruction::FloatConstant(_) => {},
+            VirtualInstruction::Store(info) => {
+                list.push(VariableInfo::from_wasm_name(info.wasm_var_name.to_string(), info.value_type.clone(), VariableKind::Local))
+            },
+            VirtualInstruction::Load(_) => {},
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(_) => {},
             VirtualInstruction::TeeVariable(_) => {},
@@ -230,6 +258,12 @@ impl VirtualInstruction {
             VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
             VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
             VirtualInstruction::GetVariable(info) => vec![info.var_info.get_to_stack()],
+            VirtualInstruction::Store(info) => {
+                vec![Wat::set_local_from_stack(&info.wasm_var_name)]
+            },
+            VirtualInstruction::Load(info) => {
+                vec![Wat::get_local(&info.wasm_var_name)]
+            },
             VirtualInstruction::SetVariable(info) | VirtualInstruction::TeeVariable(info) => {
                 let mut content = vec![];
 
@@ -260,13 +294,19 @@ impl VirtualInstruction {
                 let field = this_type.fields.get(&info.field_name).unwrap();
                 let mut content = vec![];
 
-                if let Some(value) = &info.value {
-                    content.extend(value.resolve(type_index, context));
-                }
-
                 content.push(wat!["i32.mul", Wat::const_i32(4), wat!["i32.add", Wat::const_i32(field.offset)]]);
 
-                todo!(); // TODO: reverse top two values of stack
+                if let Some(init_value) = &info.value {
+                    content.extend(init_value.resolve(type_index, context));
+                } else {
+                    let swap_func_name = match field.wasm_type {
+                        "i32" => SWAP_INT_INT_WASM_FUNC_NAME,
+                        "f32" => SWAP_FLOAT_INT_WASM_FUNC_NAME,
+                        _ => unreachable!()
+                    };
+
+                    content.push(Wat::call_from_stack(swap_func_name));
+                }
 
                 content.push(wat![format!("{}.store", field.wasm_type)]);
 
@@ -353,6 +393,8 @@ impl VirtualInstruction {
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(_) => unreachable!(),
             VirtualInstruction::FloatConstant(_) => unreachable!(),
+            VirtualInstruction::Store(_) => unreachable!(),
+            VirtualInstruction::Load(_) => unreachable!(),
             VirtualInstruction::GetVariable(_) => unreachable!(),
             VirtualInstruction::SetVariable(_) => unreachable!(),
             VirtualInstruction::TeeVariable(_) => unreachable!(),

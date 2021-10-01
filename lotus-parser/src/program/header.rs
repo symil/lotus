@@ -1,13 +1,12 @@
 use crate::{program::VALUE_BYTE_SIZE, wat};
-
-use super::{HEADER_MEMORY_WASM_PAGE_COUNT, Wat};
+use super::{HEADER_MEMORY_WASM_PAGE_COUNT, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, Wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
 type Table = (usize, &'static str);
 type FunctionType = (&'static str, &'static[&'static str], Option<&'static str>);
 type Global = (&'static str, &'static str);
-type Function = (&'static str, &'static[(&'static str, &'static str)], Option<&'static str>, &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
+type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[&'static str], &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
 pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
@@ -16,13 +15,6 @@ pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
 pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
 pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
 pub const LOG_STRING_FUNC_NAME : &'static str = "__log_string";
-
-// get stack order: self, index
-pub const DEREF_INT_POINTER_GET_FUNC_NAME : &'static str = "__ptr_get_i32";
-pub const DEREF_FLOAT_POINTER_GET_FUNC_NAME : &'static str = "__ptr_get_f32";
-// set order: value, self, index
-pub const DEREF_INT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_i32";
-pub const DEREF_FLOAT_POINTER_SET_FUNC_NAME : &'static str = "__ptr_set_f32";
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "empty", LOG_EMPTY_FUNC_NAME, &[], None),
@@ -44,37 +36,13 @@ pub const HEADER_GLOBALS : &'static[Global] = &[
 ];
 
 pub static HEADER_FUNCTIONS : &'static[Function] = &[
-    (DEREF_INT_POINTER_GET_FUNC_NAME, &[("pointer", "i32"), ("index", "i32")], Some("i32"), &[], ptr_get_int),
-    (DEREF_INT_POINTER_SET_FUNC_NAME, &[("value", "i32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_int),
-
-    (DEREF_FLOAT_POINTER_GET_FUNC_NAME, &[("pointer", "i32"), ("index", "i32")], Some("f32"), &[], ptr_get_float),
-    (DEREF_FLOAT_POINTER_SET_FUNC_NAME, &[("value", "f32"), ("pointer", "i32"), ("index", "i32")], None, &[], ptr_set_float)
+    (SWAP_INT_INT_WASM_FUNC_NAME, &[("arg1", "i32"), ("arg2", "i32")], &["i32", "i32"], &[], swap_values),
+    (SWAP_FLOAT_INT_WASM_FUNC_NAME, &[("arg1", "f32"), ("arg2", "i32")], &["i32", "f32"], &[], swap_values),
 ];
 
-fn ptr_get_int() -> Vec<Wat> {
+fn swap_values() -> Vec<Wat> {
     vec![
-        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
-        wat!["i32.load"],
-    ]
-}
-
-fn ptr_set_int() -> Vec<Wat> {
-    vec![
-        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
-        wat!["i32.store", Wat::get_local("value")]
-    ]
-}
-
-fn ptr_get_float() -> Vec<Wat> {
-    vec![
-        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
-        wat!["f32.load"],
-    ]
-}
-
-fn ptr_set_float() -> Vec<Wat> {
-    vec![
-        wat!["i32.mul", wat!["i32.add", Wat::get_local("pointer"), Wat::get_local("index")], Wat::const_i32(VALUE_BYTE_SIZE)],
-        wat!["f32.store", Wat::get_local("value")]
+        Wat::get_local("arg2"),
+        Wat::get_local("arg1"),
     ]
 }

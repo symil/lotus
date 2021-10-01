@@ -15,8 +15,8 @@ export type(i32) string {
         return this;
     }
 
-    static get_at_index(str: This, index: int) -> int {
-        return (str as ptr)[index + 1];
+    get_at(index: int) -> int {
+        return (this as ptr)[index + 1];
     }
 
     get_iterable_len() -> int {

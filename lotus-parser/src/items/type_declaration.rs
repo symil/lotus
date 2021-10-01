@@ -67,8 +67,6 @@ impl TypeDeclaration {
                 }).collect(),
             })
         });
-
-        type_wrapped.borrow_mut().parameters = self.parameters.process(context);
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {

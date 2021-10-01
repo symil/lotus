@@ -338,16 +338,16 @@ impl ProgramContext {
 
         // let mut init_globals_body = vec![];
 
-        // for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
-        //     content.push(Wat::declare_function(name, None, args.to_vec(), ret.clone(), locals.to_vec(), body()))
-        // }
+        for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
+            content.push(Wat::declare_function(name, None, args.to_vec(), ret.to_vec(), locals.to_vec(), body()))
+        }
 
         let mut entry_function_body = vec![Wat::call(INIT_GLOBALS_FUNC_NAME, vec![])];
         entry_function_body.extend(self.entry_function.unwrap().wasm_call.clone());
 
         content.extend(globals_declaration);
-        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], None, vec![], globals_initialization));
-        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], None, vec![], entry_function_body));
+        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_initialization));
+        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], vec![], vec![], entry_function_body));
 
         for (function_instance_header, function_instance_content) in self.function_instances.consume() {
             if let Some(wasm_declaration) = function_instance_content.wasm_declaration {

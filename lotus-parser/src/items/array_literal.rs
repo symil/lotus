@@ -60,7 +60,7 @@ impl ArrayLiteral {
         for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
             instructions.extend(vec![
                 VI::get(&array_body_var),
-                VI::call_method(&final_pointer_type, final_pointer_type.get_regular_method("set").unwrap(), &[], vasm![VI::int(i), item_vasm])
+                VI::call_method(&final_pointer_type, final_pointer_type.get_regular_method(SET_AT_INDEX_FUNC_NAME).unwrap(), &[], vasm![VI::int(i), item_vasm])
             ]);
         }
 

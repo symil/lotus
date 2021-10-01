@@ -158,8 +158,8 @@ impl Type {
             (Type::This(_), Type::This(_)) => true,
             // (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
             (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
-            (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
-            (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::as_ptr(self_info) == Rc::as_ptr(target_info),
+            (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
+            (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
             _ => false
         }

@@ -3,21 +3,13 @@ export type ptr = Pointer<int>;
 export type(i32) Pointer<T> {
     type Item = T;
 
-    static set_at_index(value: T, pointer: This, index: int) {
-        pointer.set(index, value);
-    }
-
-    static get_at_index(pointer: This, index: int) -> T {
-        return pointer.get(index);
-    }
-
-    set(index: int, value: T) {
+    set_at(index: int, value: T) {
         let byte_index = ((this as int) + index) * 4;
-        
+
         wasm_store(byte_index, value);
     }
 
-    get(index: int) -> T {
+    get_at(index: int) -> T {
         let byte_index = ((this as int) + index) * 4;
 
         return wasm_load(byte_index);

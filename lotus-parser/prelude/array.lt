@@ -25,12 +25,12 @@ export class Array<T> {
         return (this as ptr)[2];
     }
 
-    get(index: int) -> T {
+    get_at(index: int) -> T {
         return this.body()[index];
     }
 
-    set(index: int, value: T) {
-        this.body().set(index, value);
+    set_at(index: int, value: T) {
+        this.body().set_at(index, value);
     }
 
     push(value: T) -> This {
@@ -91,14 +91,6 @@ export class Array<T> {
 
     static default() -> This {
         return This.__new(0);
-    }
-
-    static set_at_index(value: T, array: This, index: int) {
-        array.set(index, value);
-    }
-
-    static get_at_index(array: This, index: int) -> T {
-        return array.get(index);
     }
 
     get_iterable_len() -> int {

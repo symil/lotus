@@ -25,6 +25,15 @@ impl VariableInfo {
         Rc::new(value)
     }
 
+    pub fn from_wasm_name(wasm_name: String, ty: Type, kind: VariableKind) -> Rc<Self> {
+        Rc::new(Self {
+            name: Identifier::unlocated(""),
+            ty,
+            kind,
+            wasm_name,
+        })
+    }
+
     pub fn get_to_stack(&self) -> Wat {
         match &self.kind {
             VariableKind::Global => Wat::get_global(&self.wasm_name),

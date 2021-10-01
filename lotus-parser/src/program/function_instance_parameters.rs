@@ -79,7 +79,7 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
                     let is_static = function_unwrapped.this_arg.is_none();
                     let mut variables = vec![];
                     let mut wat_args : Vec<(&str, &str)> = vec![];
-                    let mut wat_ret = None;
+                    let mut wat_ret = vec![];
                     let mut wat_locals : Vec<(&str, &str)> = vec![];
                     let mut wat_body = function_unwrapped.body.resolve(&type_index, context);
 
@@ -98,7 +98,7 @@ impl ItemGenerator<FunctionInstanceHeader, FunctionInstanceContent> for Function
 
                         if let Some(return_value) = &function_unwrapped.return_value {
                             if let Some(wasm_type) = return_value.ty.resolve(&type_index, context).wasm_type {
-                                wat_ret = Some(wasm_type);
+                                wat_ret.push(wasm_type);
                                 wat_locals.push((&return_value.wasm_name, wasm_type));
                                 wat_body.push(Wat::get_local(&return_value.wasm_name));
                             }

@@ -113,7 +113,7 @@ impl ForBlock {
                                 VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
                                 VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
                                 VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
-                                VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_static_method(GET_AT_INDEX_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
+                                VI::set(&item_var, VI::call_method(&pointer_type, pointer_type.get_regular_method(GET_AT_INDEX_FUNC_NAME).unwrap(), &[], vec![VI::get(&iterable_ptr_var), VI::get(&index_var)])),
                                 block_vasm,
                                 VI::jump(0)
                             ])
