@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeInfo, Error, FieldInfo, OBJECT_HEADER_SIZE, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, OBJECT_HEADER_SIZE, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -39,7 +39,7 @@ impl TypeDeclaration {
             parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
-            parent_type: None,
+            parent: None,
             fields: IndexMap::new(),
             regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -59,7 +59,7 @@ impl TypeDeclaration {
             let parameters = self.parameters.process(context);
 
             type_unwrapped.parameters = parameters;
-            type_unwrapped.self_type = Type::Actual(ActualTypeInfo {
+            type_unwrapped.self_type = Type::Actual(ActualTypeContent {
                 type_blueprint: type_wrapped.clone(),
                 parameters: type_unwrapped.parameters.values().map(|param| {
                     Type::TypeParameter(param.clone())
@@ -68,32 +68,12 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn process_associated_types(&self, context: &mut ProgramContext) {
-        self.process(context, |type_blueprint, context| {
-            let mut associated_types = IndexMap::new();
-
-            for associated_type in &self.body.associated_types {
-                let (name, ty) = associated_type.process(context);
-
-                if associated_types.insert(name.to_string(), ty).is_some() {
-                    context.errors.add(&associated_type.name, format!("duplicate associated type `{}`", &name));
-                }
-                
-                if name.as_str() == THIS_TYPE_NAME {
-                    context.errors.add(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
-                }
-            }
-
-            type_blueprint.borrow_mut().associated_types = associated_types;
-        });
-    }
-
     pub fn process_parent(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
             let mut result = None;
 
             if let Some(parsed_parent_type) = &self.parent {
-                if let Some(parent_type) = parsed_parent_type.process(context) {
+                if let Some(parent_type) = parsed_parent_type.process(false, context) {
                     if self.qualifier == TypeQualifier::Type {
                         context.errors.add(parsed_parent_type, format!("regular types cannot inherit"));
                     }
@@ -113,7 +93,10 @@ impl TypeDeclaration {
                                     if parent_unwrapped.qualifier != self.qualifier {
                                         context.errors.add(parsed_parent_type, format!("`{}` types cannot inherit from `{}` types", self.qualifier, parent_unwrapped.qualifier));
                                     } else if self.qualifier != TypeQualifier::Type {
-                                        result = Some(parent_type.clone());
+                                        result = Some(ParentInfo{
+                                            location: parsed_parent_type.location.clone(),
+                                            ty: parent_type.clone(),
+                                        });
                                     }
                                 }
                             };
@@ -123,7 +106,9 @@ impl TypeDeclaration {
                 }
             }
 
-            type_wrapped.borrow_mut().parent_type = result;
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.parent = result;
+            });
         });
     }
 
@@ -132,19 +117,19 @@ impl TypeDeclaration {
 
         self.process(context, |type_wrapped, context| {
             let mut types = vec![type_wrapped.clone()];
-            let mut parent_opt = type_wrapped.borrow().parent_type.as_ref().and_then(|ty| Some(ty.get_type_blueprint()));
+            let mut parent_opt = type_wrapped.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
 
             while let Some(parent_blueprint) = parent_opt {
                 if types.contains(&parent_blueprint) {
                     if parent_blueprint == type_wrapped {
                         context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
-                        type_wrapped.borrow_mut().parent_type = None;
+                        type_wrapped.borrow_mut().parent = None;
                     }
 
                     parent_opt = None;
                 } else {
                     types.push(parent_blueprint.clone());
-                    parent_opt = parent_blueprint.borrow().parent_type.as_ref().and_then(|ty| Some(ty.get_type_blueprint()));
+                    parent_opt = parent_blueprint.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
                 }
             }
 
@@ -154,18 +139,64 @@ impl TypeDeclaration {
         chain_length
     }
 
+    pub fn process_associated_types(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let mut associated_types = IndexMap::new();
+
+            type_wrapped.with_ref(|type_unwrapped| {
+                if let Some(parent) = &type_unwrapped.parent {
+                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for associated in parent_unwrapped.associated_types.values() {
+                            let associatd_type_info = Rc::new(AssociatedTypeInfo {
+                                owner: associated.owner.clone(),
+                                name: associated.name.clone(),
+                                ty: associated.ty.replace_generics(Some(&parent.ty), &[]),
+                                wasm_pattern: associated.wasm_pattern.clone(),
+                            });
+
+                            associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info);
+                        }
+                    });
+                }
+
+                for associated_type in &self.body.associated_types {
+                    let (name, ty) = associated_type.process(context);
+                    let wasm_pattern = format!("<{}>", name);
+                    let associatd_type_info = Rc::new(AssociatedTypeInfo {
+                        owner: type_wrapped.clone(),
+                        name: name.clone(),
+                        ty,
+                        wasm_pattern,
+                    });
+
+                    if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
+                        context.errors.add(&associated_type.name, format!("duplicate associated type `{}`", &name));
+                    }
+
+                    if name.as_str() == THIS_TYPE_NAME {
+                        context.errors.add(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
+                    }
+                }
+            });
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.associated_types = associated_types;
+            });
+        });
+    }
+
     pub fn process_fields(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
             let mut fields = IndexMap::new();
             let mut offset = OBJECT_HEADER_SIZE;
 
             type_wrapped.with_ref(|type_unwrapped| {
-                if let Some(parent_type) = &type_unwrapped.parent_type {
-                    parent_type.get_type_blueprint().with_ref(|parent_unwrapped| {
+                if let Some(parent) = &type_unwrapped.parent {
+                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
                         for field_info in parent_unwrapped.fields.values() {
                             let field_details = Rc::new(FieldInfo {
-                                owner: type_wrapped.clone(),
-                                ty: field_info.ty.replace_generics(Some(parent_type), &[]),
+                                owner: field_info.owner.clone(),
+                                ty: field_info.ty.replace_generics(Some(&parent.ty), &[]),
                                 name: field_info.name.clone(),
                                 offset
                             });
@@ -181,7 +212,7 @@ impl TypeDeclaration {
                         context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
                     }
 
-                    if let Some(field_type) = field.ty.process(context) {
+                    if let Some(field_type) = field.ty.process(false, context) {
                         let field_details = Rc::new(FieldInfo {
                             owner: type_wrapped.clone(),
                             ty: field_type,
@@ -201,14 +232,8 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn process_fields_inheritance(&self, context: &mut ProgramContext) {
-        self.process(context, |type_wrapped, context| {
-            
-        });
-    }
-
     pub fn process_method_signatures(&self, context: &mut ProgramContext) {
-        self.process(context, |type_blueprint, context| {
+        self.process(context, |type_wrapped, context| {
             for method in self.body.methods.iter() {
                 method.process_signature(context);
             }
@@ -216,14 +241,14 @@ impl TypeDeclaration {
     }
 
     pub fn process_methods_bodies(&self, context: &mut ProgramContext) {
-        self.process(context, |type_blueprint, context| {
+        self.process(context, |type_wrapped, context| {
             for method in self.body.methods.iter() {
                 method.process_body(context);
             }
         });
     }
 
-    fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f : F) {
+    fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f: F) {
         let type_blueprint = context.types.get_by_location(&self.name);
 
         context.current_type = Some(type_blueprint.clone());

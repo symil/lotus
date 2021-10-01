@@ -16,9 +16,9 @@ impl ItemType {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         match self {
-            ItemType::Value(value_type) => value_type.process(context),
+            ItemType::Value(value_type) => value_type.process(check_interfaces, context),
             ItemType::Function(_) => todo!(),
         }
     }

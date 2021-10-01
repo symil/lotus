@@ -1,8 +1,8 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat}, utils::Link, vasm, wat};
-use super::{ActualTypeInfo, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::Link, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -43,7 +43,7 @@ impl ProgramContext {
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
         let type_name = builtin_type.get_name();
         let type_blueprint = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
-        let mut info = ActualTypeInfo {
+        let mut info = ActualTypeContent {
             type_blueprint,
             parameters: vec![],
         };
@@ -211,6 +211,10 @@ impl ProgramContext {
 
         self.index_builtin_entities();
 
+        for type_declaration in &types {
+            type_declaration.process_parent(self);
+        }
+
         for interface_declaration in &interfaces {
             interface_declaration.process_associated_types(self);
         }
@@ -227,10 +231,6 @@ impl ProgramContext {
             typedef_declaration.process(self);
         }
 
-        for type_declaration in &types {
-            type_declaration.process_parent(self);
-        }
-
         types.sort_by_cached_key(|type_declaration| {
             type_declaration.process_inheritance_chain(self)
         });
@@ -238,22 +238,28 @@ impl ProgramContext {
         for type_declaration in &types {
             type_declaration.process_fields(self);
         }
-        
-        // for type_declaration in &types {
-        //     type_declaration.process_fields_inheritance(self);
-        // }
 
         for type_declaration in &types {
             type_declaration.process_method_signatures(self);
         }
 
-        // for type_declaration in &types {
-        //     type_declaration.process_methods_inheritance(self);
-        // }
-
         for function_declaration in &functions {
             function_declaration.process_signature(self);
         }
+
+        // TYPE PARAMS CHECK START
+        for type_blueprint in self.types.get_all() {
+            type_blueprint.borrow().check_types_parameters(self);
+        }
+
+        for function_blueprint in self.functions.get_all() {
+            function_blueprint.borrow().check_types_parameters(self);
+        }
+
+        for typedef_blueprint in self.typedefs.get_all() {
+            typedef_blueprint.borrow().check_types_parameters(self);
+        }
+        // TYPE PARAMS CHECK END
 
         for global_var_declaration in &global_vars {
             global_var_declaration.process(self);

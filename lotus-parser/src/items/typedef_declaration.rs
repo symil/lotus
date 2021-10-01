@@ -14,7 +14,7 @@ pub struct TypedefDeclaration {
 
 impl TypedefDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
-        if let Some(ty) = self.target.process(context) {
+        if let Some(ty) = self.target.process(true, context) {
             let typedef_blueprint = TypedefBlueprint {
                 type_id: self.location.get_hash(),
                 name: self.name.clone(),

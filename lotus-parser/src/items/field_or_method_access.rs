@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, FieldKind, FunctionBlueprint, GenericTypeInfo, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{program::{AccessType, FieldKind, FunctionBlueprint, ParameterTypeInfo, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
 use super::{ArgumentList, Identifier, VarPrefix};
 
 #[parsable]
@@ -85,6 +85,10 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
 
             match infer_function_parameters(function_name, &function_unwrapped, &arg_types, type_hint, context) {
                 Some(parameters) => {
+                    for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(parameters.iter()) {
+                        actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+                    }
+
                     for (i, (expected_arg, arg_vasm)) in function_unwrapped.arguments.iter().zip(arg_vasms.into_iter()).enumerate() {
                         let expected_type = expected_arg.ty.replace_generics(caller_type, &parameters);
 

@@ -22,7 +22,7 @@ impl VarDeclaration {
         let mut final_var_type = Type::Undefined;
 
         match &self.var_type {
-            Some(parsed_type) => match parsed_type.process(context) {
+            Some(parsed_type) => match parsed_type.process(true, context) {
                 Some(var_type) => {
                     final_var_type = var_type.clone();
 

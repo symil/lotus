@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeInfo, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FunctionBlueprint, ParameterTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]

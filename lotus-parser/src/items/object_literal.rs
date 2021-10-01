@@ -22,7 +22,7 @@ impl ObjectLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = Vasm::empty();
 
-        if let Some(object_type) = self.object_type.process(context) {
+        if let Some(object_type) = self.object_type.process(true, context) {
             if let Type::Actual(info) = &object_type {
                 let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
                 let type_unwrapped = info.type_blueprint.borrow();

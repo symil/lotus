@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{BuiltinType, FieldInfo, FieldKind, FunctionBlueprint, GenericTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use super::{BuiltinType, FieldInfo, FieldKind, FunctionBlueprint, ParameterTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -11,26 +11,20 @@ pub enum Type {
     Void,
     Any,
     This(Link<InterfaceBlueprint>),
-    Actual(ActualTypeInfo),
-    TypeParameter(Rc<GenericTypeInfo>),
-    FunctionParameter(Rc<GenericTypeInfo>),
-    Associated(AssociatedTypeInfo),
+    Actual(ActualTypeContent),
+    TypeParameter(Rc<ParameterTypeInfo>),
+    FunctionParameter(Rc<ParameterTypeInfo>),
+    Associated(AssociatedTypeContent),
 }
 
 #[derive(Debug, Clone)]
-pub struct ActualTypeInfo {
+pub struct ActualTypeContent {
     pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Type>
 }
 
 #[derive(Debug, Clone)]
-pub struct FunctionResultInfo {
-    pub function_wrapped: Link<FunctionBlueprint>,
-    pub this_type: Option<Box<Type>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct AssociatedTypeInfo {
+pub struct AssociatedTypeContent {
     pub root: Box<Type>,
     pub associated: Rc<InterfaceAssociatedTypeInfo>,
 }
@@ -80,7 +74,7 @@ impl Type {
                 let type_blueprint = info.type_blueprint.clone();
                 let parameters = info.parameters.iter().map(|p| p.replace_generics(this_type, function_parameters)).collect();
 
-                Type::Actual(ActualTypeInfo {
+                Type::Actual(ActualTypeContent {
                     type_blueprint,
                     parameters,
                 })
@@ -92,9 +86,9 @@ impl Type {
 
                 match root {
                     Type::Actual(ref actual_type) => actual_type.type_blueprint.with_ref(|type_unwrapped| {
-                        type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().replace_generics(Some(&root), &[])
+                        type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().ty.replace_generics(Some(&root), &[])
                     }),
-                    _ => Type::Associated(AssociatedTypeInfo {
+                    _ => Type::Associated(AssociatedTypeContent {
                         root: Box::new(root),
                         associated: info.associated.clone(),
                     })
@@ -123,7 +117,7 @@ impl Type {
             Type::Any => None,
             Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
                 match interface_unwrapped.associated_types.get(name) {
-                    Some(info) => Some(Type::Associated(AssociatedTypeInfo {
+                    Some(info) => Some(Type::Associated(AssociatedTypeContent {
                         root: Box::new(self.clone()),
                         associated: info.clone(),
                     })),
@@ -131,11 +125,11 @@ impl Type {
                 }
             }),
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                type_unwrapped.associated_types.get(name).cloned()
+                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.clone()))
             }),
             Type::TypeParameter(info) | Type::FunctionParameter(info) => {
                 match info.required_interfaces.get_associated_type_info(name) {
-                    Some(type_info) => Some(Type::Associated(AssociatedTypeInfo {
+                    Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
                         root: Box::new(self.clone()),
                         associated: type_info.clone()
                     })),
@@ -143,7 +137,7 @@ impl Type {
                 }
             },
             Type::Associated(info) => match info.associated.required_interfaces.get_associated_type_info(name) {
-                Some(type_info) => Some(Type::Associated(AssociatedTypeInfo {
+                Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
                     root: Box::new(self.clone()),
                     associated: type_info.clone()
                 })),
@@ -165,7 +159,7 @@ impl Type {
         }
     }
 
-    pub fn is_function_parameter(&self, parameter: &Rc<GenericTypeInfo>) -> bool {
+    pub fn is_function_parameter(&self, parameter: &Rc<ParameterTypeInfo>) -> bool {
         match self {
             Type::FunctionParameter(info) => Rc::ptr_eq(info, parameter),
             _ => false
@@ -184,7 +178,47 @@ impl Type {
             Type::Associated(info) => info.root.contains_function_parameter(),
         }
     }
+
+    pub fn check_parameters(&self, location: &DataLocation, context: &mut ProgramContext) -> bool {
+        match self {
+            Type::Actual(info) => {
+                info.type_blueprint.with_ref(|type_unwrapped| {
+                    let mut ok = true;
+
+                    for (actual, expected) in info.parameters.iter().zip(type_unwrapped.parameters.values()) {
+                        match actual.check_parameters(location, context) {
+                            true => {
+                                for interface in expected.required_interfaces.list.iter() {
+                                    if !actual.check_match_interface(interface, location, context) {
+                                        ok = false;
+                                    }
+                                }
+                            },
+                            false => {
+                                ok = false;
+                            }
+                        }
+                    }
+
+                    ok
+                })
+            },
+            _ => true
+        }
+    }
     
+    pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &DataLocation, context: &mut ProgramContext) -> bool {
+        let mut ok = true;
+        
+        for interface in interface_list.list.iter() {
+            if !self.check_match_interface(interface, location, context) {
+                ok = false;
+            }
+        }
+
+        ok
+    }
+
     pub fn check_match_interface(&self, interface: &Link<InterfaceBlueprint>, location: &DataLocation, context: &mut ProgramContext) -> bool {
         let mut details = vec![];
 
@@ -201,7 +235,7 @@ impl Type {
                     if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
                         // later: check that the associated type matches the interfaces required by the interface
                     } else {
-                        details.push(format!("missing associated type `{}`", &associated_type.name));
+                        details.push(format!("missing associated type `{}`", associated_type.name.as_str().bold()));
                     }
                 }
 
@@ -364,7 +398,7 @@ impl Type {
                         current_function_parameters: vec![],
                     };
 
-                    associated.resolve(&type_index, context)
+                    associated.ty.resolve(&type_index, context)
                 })
             },
         }
@@ -375,13 +409,13 @@ impl Type {
     }
 }
 
-impl PartialEq for ActualTypeInfo {
+impl PartialEq for ActualTypeContent {
     fn eq(&self, other: &Self) -> bool {
         self.type_blueprint == other.type_blueprint && self.parameters == other.parameters
     }
 }
 
-impl PartialEq for AssociatedTypeInfo {
+impl PartialEq for AssociatedTypeContent {
     fn eq(&self, other: &Self) -> bool {
         self.root == other.root && Rc::as_ptr(&self.associated) == Rc::as_ptr(&other.associated)
     }

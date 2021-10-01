@@ -16,8 +16,8 @@ impl FullType {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
-        if let Some(mut final_type) = self.item.process(context) {
+    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
+        if let Some(mut final_type) = self.item.process(check_interfaces, context) {
             for suffix in &self.suffix {
                 final_type = match suffix {
                     TypeSuffix::Array => context.get_builtin_type(BuiltinType::Array, vec![final_type])

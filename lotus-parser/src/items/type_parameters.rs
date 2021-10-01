@@ -1,7 +1,7 @@
 use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
-use crate::{program::{self, GenericTypeInfo, InterfaceList, ProgramContext}, utils::Link};
+use crate::{program::{self, ParameterTypeInfo, InterfaceList, ProgramContext}, utils::Link};
 use super::Identifier;
 
 #[parsable]
@@ -18,7 +18,7 @@ pub struct TypeParameter {
 }
 
 impl TypeParameters {
-    pub fn process(&self, context: &mut ProgramContext) -> IndexMap<String, Rc<GenericTypeInfo>> {
+    pub fn process(&self, context: &mut ProgramContext) -> IndexMap<String, Rc<ParameterTypeInfo>> {
         let mut result = IndexMap::new();
 
         for parameter in &self.list {
@@ -35,7 +35,7 @@ impl TypeParameters {
 
             let index = result.len();
             let wasm_pattern = format!("<{}>", name.as_str());
-            let item = Rc::new(GenericTypeInfo {
+            let item = Rc::new(ParameterTypeInfo {
                 name,
                 index,
                 required_interfaces: InterfaceList::new(required_interfaces),

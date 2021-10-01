@@ -19,7 +19,7 @@ impl Expression {
 
         if let Some(vasm) = self.operation.process(type_hint, context) {
             result = match &self.as_type {
-                Some(as_type) => match as_type.process(context) {
+                Some(as_type) => match as_type.process(true, context) {
                     Some(new_type) => Some(Vasm::merge(vec![vasm, Vasm::new(new_type, vec![], vec![])])),
                     None => None
                 },

@@ -10,11 +10,11 @@ pub struct TypeArguments {
 }
 
 impl TypeArguments {
-    pub fn process(&self, context: &mut ProgramContext) -> Vec<Type> {
+    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Vec<Type> {
         let mut type_list = vec![];
 
         for arg in &self.list {
-            let arg_type = match arg.process(context) {
+            let arg_type = match arg.process(check_interfaces, context) {
                 Some(ty) => ty,
                 None => Type::Undefined,
             };

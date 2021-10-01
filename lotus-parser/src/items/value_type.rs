@@ -1,6 +1,6 @@
 use std::{rc::Rc};
 use parsable::parsable;
-use crate::program::{ActualTypeInfo, AssociatedTypeInfo, ProgramContext, THIS_TYPE_NAME, THIS_VAR_NAME, Type};
+use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, THIS_TYPE_NAME, THIS_VAR_NAME, Type};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
@@ -19,12 +19,12 @@ impl ValueType {
         }
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         let mut result = Type::Undefined;
         let mut associated = false;
         let mut parameter = false;
         let mut typedef = false;
-        let parameters = self.arguments.process(context);
+        let parameters = self.arguments.process(check_interfaces, context);
         let has_parameters = !parameters.is_empty();
 
         if self.name.as_str() == THIS_TYPE_NAME {
@@ -51,7 +51,7 @@ impl ValueType {
             if let Some(current_interface) = context.get_current_interface() {
                 if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
-                    result = Type::Associated(AssociatedTypeInfo {
+                    result = Type::Associated(AssociatedTypeContent {
                         root: Box::new(Type::This(current_interface.clone())),
                         associated: associated_type.clone(),
                     });
@@ -62,7 +62,7 @@ impl ValueType {
                     result = Type::TypeParameter(Rc::clone(parameter_type));
                 } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
                     associated = true;
-                    result = associated_type.clone();
+                    result = associated_type.ty.clone();
                 }
             }
         }
@@ -77,12 +77,14 @@ impl ValueType {
                     context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
-                        for interface_blueprint in &parameter.required_interfaces.list {
-                            argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
+                        if check_interfaces {
+                            for interface_blueprint in &parameter.required_interfaces.list {
+                                argument.check_match_interface(interface_blueprint, &self.arguments.list[i], context);
+                            }
                         }
                     }
 
-                    result = Type::Actual(ActualTypeInfo {
+                    result = Type::Actual(ActualTypeContent {
                         parameters: parameter_list,
                         type_blueprint: type_blueprint.clone(),
                     })

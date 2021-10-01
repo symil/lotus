@@ -30,7 +30,7 @@ impl FunctionSignature {
         }
 
         if let Some(ret) = &self.return_type {
-            if let Some(ret_type) = ret.process(context) {
+            if let Some(ret_type) = ret.process(false, context) {
                 return_type = Some(ret_type);
             }
         }

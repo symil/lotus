@@ -1,5 +1,5 @@
 use crate::items::{Identifier, Visibility};
-use super::{GlobalItem, Type};
+use super::{GlobalItem, ProgramContext, Type};
 
 #[derive(Debug)]
 pub struct TypedefBlueprint {
@@ -7,6 +7,12 @@ pub struct TypedefBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub target: Type
+}
+
+impl TypedefBlueprint {
+    pub fn check_types_parameters(&self, context: &mut ProgramContext) {
+        self.target.check_parameters(&self.name, context);
+    }
 }
 
 impl GlobalItem for TypedefBlueprint {

@@ -60,7 +60,7 @@ impl RootVarRef {
                         }
                     },
                     None => {
-                        if let Some(ty) = full_type.process(context) {
+                        if let Some(ty) = full_type.process(true, context) {
                             context.errors.add(full_type, format!("type `{}` is not a function", &ty));
                         }
 
@@ -75,7 +75,7 @@ impl RootVarRef {
                         },
                         None => {
                             context.errors.set_enabled(false);
-                            let type_opt = full_type.process(context);
+                            let type_opt = full_type.process(true, context);
                             context.errors.set_enabled(true);
 
                             match type_opt {
@@ -87,7 +87,7 @@ impl RootVarRef {
                             }
                         },
                     },
-                    None => match full_type.process(context) {
+                    None => match full_type.process(true, context) {
                         Some(ty) => Some(ValueOrType::Type(ty)),
                         None => None
                     }

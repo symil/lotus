@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use crate::{items::Identifier};
-use super::{Type, Wat};
+use super::{ProgramContext, Type, Wat};
 
 #[derive(Debug)]
 pub struct VariableInfo {
@@ -32,6 +32,10 @@ impl VariableInfo {
             kind,
             wasm_name,
         })
+    }
+
+    pub fn check_parameters(&self, context: &mut ProgramContext) {
+        self.ty.check_parameters(&self.name, context);
     }
 
     pub fn get_to_stack(&self) -> Wat {

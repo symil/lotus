@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, MethodQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstanceContent, GenericTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
+use super::{FunctionInstanceContent, ParameterTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -10,7 +10,7 @@ pub struct FunctionBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub qualifier: MethodQualifier,
-    pub parameters: IndexMap<String, Rc<GenericTypeInfo>>,
+    pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
@@ -28,6 +28,16 @@ pub struct FunctionBlueprint {
 impl FunctionBlueprint {
     pub fn is_static(&self) -> bool {
         self.this_arg.is_none()
+    }
+
+    pub fn check_types_parameters(&self, context: &mut ProgramContext) {
+        for arg in &self.arguments {
+            arg.check_parameters(context);
+        }
+
+        if let Some(return_value) = &self.return_value {
+            return_value.check_parameters(context);
+        }
     }
 }
 
