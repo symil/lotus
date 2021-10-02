@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, OBJECT_HEADER_SIZE, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -150,7 +150,7 @@ impl TypeDeclaration {
                             let associatd_type_info = Rc::new(AssociatedTypeInfo {
                                 owner: associated.owner.clone(),
                                 name: associated.name.clone(),
-                                ty: associated.ty.replace_generics(Some(&parent.ty), &[]),
+                                ty: associated.ty.replace_parameters(Some(&parent.ty), &[]),
                                 wasm_pattern: associated.wasm_pattern.clone(),
                             });
 
@@ -196,7 +196,7 @@ impl TypeDeclaration {
                         for field_info in parent_unwrapped.fields.values() {
                             let field_details = Rc::new(FieldInfo {
                                 owner: field_info.owner.clone(),
-                                ty: field_info.ty.replace_generics(Some(&parent.ty), &[]),
+                                ty: field_info.ty.replace_parameters(Some(&parent.ty), &[]),
                                 name: field_info.name.clone(),
                                 offset
                             });
@@ -234,6 +234,36 @@ impl TypeDeclaration {
 
     pub fn process_method_signatures(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
+            let mut regular_methods = IndexMap::new();
+            let mut static_methods = IndexMap::new();
+            
+            type_wrapped.with_ref(|type_unwrapped| {
+                if let Some(parent) = &type_unwrapped.parent {
+                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for (name, func_ref) in parent_unwrapped.regular_methods.iter() {
+                            regular_methods.insert(name.clone(), FuncRef {
+                                function: func_ref.function.clone(),
+                                this_type: func_ref.this_type.replace_parameters(Some(&parent.ty), &[]),
+                            });
+                        }
+                    });
+
+                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for (name, func_ref) in parent_unwrapped.static_methods.iter() {
+                            static_methods.insert(name.clone(), FuncRef {
+                                function: func_ref.function.clone(),
+                                this_type: func_ref.this_type.replace_parameters(Some(&parent.ty), &[]),
+                            });
+                        }
+                    });
+                }
+            });
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.regular_methods = regular_methods;
+                type_unwrapped.static_methods = static_methods;
+            });
+
             for method in self.body.methods.iter() {
                 method.process_signature(context);
             }

@@ -156,14 +156,15 @@ impl ProgramContext {
         let interface_wrapped = self.get_builtin_interface(interface);
 
         interface_wrapped.with_ref(|interface_unwrapped| {
-            let (_, method_wrapped) = interface_unwrapped.regular_methods.first().unwrap_or_else(|| interface_unwrapped.static_methods.first().unwrap());
+            let (_, func_ref) = interface_unwrapped.regular_methods.first().unwrap_or_else(|| interface_unwrapped.static_methods.first().unwrap());
+            let method_wrapped = &func_ref.function;
 
             method_wrapped.with_ref(|function_unwrapped| {
                 let method_name = function_unwrapped.name.as_str();
 
                 match target_type.check_match_interface(&interface_wrapped, location, self) {
                     true => {
-                        let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_generics(Some(target_type), &[]))).unwrap_or(Type::Undefined);
+                        let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(target_type), &[]))).unwrap_or(Type::Undefined);
                         let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], vasm![]);
                         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 

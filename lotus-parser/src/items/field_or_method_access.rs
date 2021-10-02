@@ -28,7 +28,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     let mut result = None;
 
     if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
-        let field_type = field_info.ty.replace_generics(Some(parent_type), &[]);
+        let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
         let instruction = match access_type {
             AccessType::Get => VI::get_field(&field_type, field_info.offset),
             AccessType::Set(_) => VI::set_field_from_stack(&field_type, field_info.offset),
@@ -45,8 +45,11 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
 pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_name: &Identifier, parameters: &[Type], arguments: &ArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(function_blueprint) = caller_type.get_method(field_kind, method_name.as_str(), context) {
-        result = process_function_call(Some(caller_type), method_name, function_blueprint, parameters, arguments, type_hint, access_type, context);
+    if let Some(func_ref) = caller_type.get_method(field_kind, method_name.as_str(), context) {
+        let this_type = func_ref.this_type.replace_parameters(Some(caller_type), &[]);
+        let function_blueprint = func_ref.function.clone();
+
+        result = process_function_call(Some(&this_type), method_name, function_blueprint, parameters, arguments, type_hint, access_type, context);
     } else if !caller_type.is_undefined() {
         context.errors.add(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));
     }
@@ -90,7 +93,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                     }
 
                     for (i, (expected_arg, arg_vasm)) in function_unwrapped.arguments.iter().zip(arg_vasms.into_iter()).enumerate() {
-                        let expected_type = expected_arg.ty.replace_generics(caller_type, &parameters);
+                        let expected_type = expected_arg.ty.replace_parameters(caller_type, &parameters);
 
                         if arg_vasm.ty.is_assignable_to(&expected_type) {
                             result.extend(arg_vasm);
@@ -100,7 +103,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                     }
 
                     final_function_parameters = parameters;
-                    return_type = function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_generics(caller_type, &final_function_parameters)));
+                    return_type = function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_parameters(caller_type, &final_function_parameters)));
                 },
                 None => {}
             }

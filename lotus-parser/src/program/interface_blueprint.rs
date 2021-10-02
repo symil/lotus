@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, Visibility}, utils::Link};
-use super::{FunctionBlueprint, ParameterTypeInfo, GlobalItem, InterfaceList, Type};
+use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type};
 
 #[derive(Debug)]
 pub struct InterfaceBlueprint {
@@ -10,8 +10,8 @@ pub struct InterfaceBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub associated_types: IndexMap<String, Rc<InterfaceAssociatedTypeInfo>>,
-    pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
-    pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub regular_methods: IndexMap<String, FuncRef>,
+    pub static_methods: IndexMap<String, FuncRef>,
 }
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct InterfaceAssociatedTypeInfo {
 }
 
 impl Link<InterfaceBlueprint> {
-    pub fn get_method(&self, is_static: bool, name: &str) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_method(&self, is_static: bool, name: &str) -> Option<FuncRef> {
         self.with_ref(|interface_unwrapped| {
             let index_map = match is_static {
                 true => &interface_unwrapped.static_methods,

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use crate::utils::Link;
-use super::{FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, Type, interface_blueprint};
+use super::{FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, Type, interface_blueprint};
 
 #[derive(Debug, Default, Clone)]
 pub struct InterfaceList {
@@ -30,7 +30,7 @@ impl InterfaceList {
         None
     }
 
-    pub fn get_method(&self, is_static: bool, name: &str) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_method(&self, is_static: bool, name: &str) -> Option<FuncRef> {
         for interface_wrapped in &self.list {
             if let Some(result) = interface_wrapped.get_method(is_static, name) {
                 return Some(result);

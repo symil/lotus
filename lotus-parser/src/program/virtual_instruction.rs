@@ -2,7 +2,7 @@ use std::rc::Rc;
 use parsable::DataLocation;
 
 use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters, VALUE_BYTE_SIZE}, utils::Link, wat};
-use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat};
+use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
 
@@ -169,6 +169,18 @@ impl VirtualInstruction {
             parameters: parameters.to_vec(),
             args: Some(args.to_vasm()),
         })
+    }
+
+    pub fn call_regular_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
+        let function = caller_type.get_regular_method(method_name, context).unwrap().function.clone();
+
+        Self::call_method(caller_type, function, parameters, args)
+    }
+    
+    pub fn call_static_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
+        let function = caller_type.get_static_method(method_name, context).unwrap().function.clone();
+
+        Self::call_method(caller_type, function, parameters, args)
     }
 
     pub fn create_object(object_type: &Type) -> Self {
@@ -354,7 +366,7 @@ impl VirtualInstruction {
                                 false => &type_unwrapped.regular_methods,
                             };
 
-                            index_map.get(function_unwrapped.name.as_str()).unwrap().clone()
+                            index_map.get(function_unwrapped.name.as_str()).unwrap().function.clone()
                         }),
                     }
                 });

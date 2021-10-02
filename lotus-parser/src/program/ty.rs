@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{BuiltinType, FieldInfo, FieldKind, FunctionBlueprint, ParameterTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use super::{BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -64,7 +64,7 @@ impl Type {
         }
     }
 
-    pub fn replace_generics(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
+    pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,
             Type::Void => Type::Void,
@@ -72,7 +72,7 @@ impl Type {
             Type::This(_) => this_type.unwrap().clone(),
             Type::Actual(info) => {
                 let type_blueprint = info.type_blueprint.clone();
-                let parameters = info.parameters.iter().map(|p| p.replace_generics(this_type, function_parameters)).collect();
+                let parameters = info.parameters.iter().map(|p| p.replace_parameters(this_type, function_parameters)).collect();
 
                 Type::Actual(ActualTypeContent {
                     type_blueprint,
@@ -82,11 +82,11 @@ impl Type {
             Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
             Type::FunctionParameter(info) => function_parameters[info.index].clone(),
             Type::Associated(info) => {
-                let root = info.root.replace_generics(this_type, function_parameters);
+                let root = info.root.replace_parameters(this_type, function_parameters);
 
                 match root {
                     Type::Actual(ref actual_type) => actual_type.type_blueprint.with_ref(|type_unwrapped| {
-                        type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().ty.replace_generics(Some(&root), &[])
+                        type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().ty.replace_parameters(Some(&root), &[])
                     }),
                     _ => Type::Associated(AssociatedTypeContent {
                         root: Box::new(root),
@@ -246,14 +246,14 @@ impl Type {
                     };
 
                     for expected_method_wrapped in interface_methods.values() {
-                        let expected_method_unwrapped = expected_method_wrapped.borrow();
+                        let expected_method_unwrapped = expected_method_wrapped.function.borrow();
                         let type_methods = match method_kind {
                             FieldKind::Regular => &type_blueprint.regular_methods,
                             FieldKind::Static => &type_blueprint.static_methods,
                         };
                         
                         if let Some(actual_method_wrapped) = type_methods.get(expected_method_unwrapped.name.as_str()) {
-                            let actual_method_unwrapped = actual_method_wrapped.borrow();
+                            let actual_method_unwrapped = actual_method_wrapped.function.borrow();
                             let actual_argument_count = actual_method_unwrapped.arguments.len();
                             let expected_argument_count = expected_method_unwrapped.arguments.len();
 
@@ -261,8 +261,8 @@ impl Type {
                                 details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
                             } else {
                                 for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
-                                    let actual_type = actual_arg.ty.replace_generics(Some(self), &[]);
-                                    let expected_type = expected_arg.ty.replace_generics(Some(self), &[]);
+                                    let actual_type = actual_arg.ty.replace_parameters(Some(self), &[]);
+                                    let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
 
                                     if &expected_type != &actual_type {
                                         details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
@@ -270,8 +270,8 @@ impl Type {
                                 }
                             }
 
-                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
-                            let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_generics(Some(self), &[]))).unwrap_or(Type::Void);
+                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
+                            let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
 
                             if actual_return_value != expected_return_type {
                                 details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
@@ -323,7 +323,7 @@ impl Type {
         }
     }
 
-    pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<FuncRef> {
         let is_static = match kind {
             FieldKind::Regular => false,
             FieldKind::Static => true,
@@ -356,11 +356,11 @@ impl Type {
         }
     }
 
-    pub fn get_regular_method(&self, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_regular_method(&self, name: &str, context: &ProgramContext) -> Option<FuncRef> {
         self.get_method(FieldKind::Regular, name, context)
     }
 
-    pub fn get_static_method(&self, name: &str, context: &ProgramContext) -> Option<Link<FunctionBlueprint>> {
+    pub fn get_static_method(&self, name: &str, context: &ProgramContext) -> Option<FuncRef> {
         self.get_method(FieldKind::Static, name, context)
     }
 

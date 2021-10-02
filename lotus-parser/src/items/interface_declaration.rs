@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FunctionBlueprint, ParameterTypeInfo, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -105,11 +105,18 @@ impl InterfaceDeclaration {
                     FieldKind::Regular => &mut regular_methods
                 };
 
+                let this_type = Type::This(interface_wrapped.clone());
+
                 if !method_kind.is_static() {
-                    function_blueprint.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), Type::This(interface_wrapped.clone()), VariableKind::Local));
+                    function_blueprint.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local));
                 }
 
-                if index_map.insert(name.to_string(), Link::new(function_blueprint)).is_some() {
+                let func_ref = FuncRef {
+                    function: Link::new(function_blueprint),
+                    this_type: this_type,
+                };
+
+                if index_map.insert(name.to_string(), func_ref).is_some() {
                     context.errors.add(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
                 }
             }

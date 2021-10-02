@@ -31,7 +31,7 @@ impl VarDeclaration {
                             final_var_type = var_type;
                             ok = true;
                         } else {
-                            context.errors.add(&self.init_value, format!("assignment: type `{}` does not match type `{}`", &vasm.ty, &var_type));
+                            context.errors.add(&self.init_value, format!("expected `{}`, got `{}`", &var_type, &vasm.ty));
                         }
 
                         source.push(vasm);

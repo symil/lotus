@@ -2,7 +2,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -16,8 +16,8 @@ pub struct TypeBlueprint {
     pub self_type: Type,
     pub parent: Option<ParentInfo>,
     pub fields: IndexMap<String, Rc<FieldInfo>>,
-    pub regular_methods: IndexMap<String, Link<FunctionBlueprint>>,
-    pub static_methods: IndexMap<String, Link<FunctionBlueprint>>,
+    pub regular_methods: IndexMap<String, FuncRef>,
+    pub static_methods: IndexMap<String, FuncRef>,
     pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
@@ -52,10 +52,6 @@ impl TypeBlueprint {
             (STORE_FUNC_NAME, "store"),
             (LOAD_FUNC_NAME, "load")
         ];
-    }
-
-    pub fn get_type(&self) -> Type {
-        self.self_type.clone()
     }
 
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {
