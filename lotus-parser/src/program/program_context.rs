@@ -22,6 +22,7 @@ pub struct ProgramContext {
     pub scopes: Vec<Scope>,
     pub depth: u32,
     pub return_found: bool,
+    pub iter_fields_counter: Option<usize>,
 
     pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
     pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,

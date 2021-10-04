@@ -3,11 +3,11 @@ use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
 use crate::{program::{AccessType, FieldKind, FunctionBlueprint, ParameterTypeInfo, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
-use super::{ArgumentList, Identifier, VarPrefix};
+use super::{ArgumentList, FieldOrMethodName, Identifier, VarPrefix};
 
 #[parsable]
 pub struct FieldOrMethodAccess {
-    pub name: Identifier,
+    pub name: FieldOrMethodName,
     pub arguments: Option<ArgumentList>
 }
 
@@ -17,9 +17,12 @@ impl FieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        match &self.arguments {
-            Some(arguments) => process_method_call(parent_type, field_kind, &self.name, &[], arguments, type_hint, access_type, context),
-            None => process_field_access(parent_type, &self.name, access_type, context)
+        match self.name.process(context) {
+            Some(name) => match &self.arguments {
+                Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
+                None => process_field_access(parent_type, &name, access_type, context)
+            },
+            None => None,
         }
     }
 }

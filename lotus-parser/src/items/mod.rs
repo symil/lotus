@@ -69,6 +69,9 @@ mod associated_type_declaration;
 mod interface_associated_type_declaration;
 mod typedef_declaration;
 mod field_qualifier;
+mod iter_fields;
+mod compiler_constant;
+mod field_or_method_name;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -141,3 +144,6 @@ pub use associated_type_declaration::*;
 pub use interface_associated_type_declaration::*;
 pub use typedef_declaration::*;
 pub use field_qualifier::*;
+pub use iter_fields::*;
+pub use compiler_constant::*;
+pub use field_or_method_name::*;

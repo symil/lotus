@@ -1,9 +1,10 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FieldOrMethodAccess, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType};
+use super::{ArrayLiteral, BooleanLiteral, CompilerConstant, Expression, FieldOrMethodAccess, FloatLiteral, IntegerLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, compiler_constant};
 
 #[parsable]
 pub enum VarPathRoot {
+    CompilerConstant(CompilerConstant),
     BooleanLiteral(BooleanLiteral),
     FloatLiteral(FloatLiteral),
     IntegerLiteral(IntegerLiteral),
@@ -26,6 +27,7 @@ impl VarPathRoot {
 
     pub fn has_side_effects(&self) -> bool {
         match self {
+            VarPathRoot::CompilerConstant(_) => false,
             VarPathRoot::BooleanLiteral(_) => false,
             VarPathRoot::FloatLiteral(_) => false,
             VarPathRoot::IntegerLiteral(_) => false,
@@ -47,6 +49,7 @@ impl VarPathRoot {
         }
 
         match self {
+            VarPathRoot::CompilerConstant(compiler_constant) => compiler_constant.process_as_value(context),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),

@@ -41,3 +41,8 @@ pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
+
+pub const COMPILER_CONSTANT_CLASS_ID : &'static str = "CLASS_ID";
+pub const COMPILER_CONSTANT_FIELD_COUNT : &'static str = "FIELD_COUNT";
+pub const COMPILER_CONSTANT_FIELD_NAME : &'static str = "FIELD_NAME";
+pub const COMPILER_CONSTANT_FIELD_TYPE : &'static str = "FIELD_TYPE";
