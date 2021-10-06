@@ -276,7 +276,7 @@ impl ProgramContext {
         }
 
         for type_declaration in &types {
-            type_declaration.process_methods_bodies(self);
+            type_declaration.process_method_bodies(self);
         }
 
         for type_declaration in &types {

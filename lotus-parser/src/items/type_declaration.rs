@@ -316,9 +316,9 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn process_methods_bodies(&self, context: &mut ProgramContext) {
+    pub fn process_method_bodies(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
-            for method in self.body.methods.iter() {
+            for method in self.body.methods.iter().filter(|method| !method.is_autogen()) {
                 method.process_body(context);
             }
         });
