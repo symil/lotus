@@ -11,6 +11,8 @@ pub struct TypeBlueprint {
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
+    pub inheritance_chain_length: usize,
+    pub children: Vec<Link<TypeBlueprint>>,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
     pub associated_types: IndexMap<String, Rc<AssociatedTypeInfo>>,
     pub self_type: Type,

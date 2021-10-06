@@ -27,7 +27,7 @@ impl GlobalVarDeclaration {
                 context.errors.add(&self.var_declaration.var_name, format!("duplicate global variable declaration: `{}`", &self.var_declaration.var_name));
             }
 
-            context.global_vars.insert(global_var_blueprint);
+            context.global_vars.insert(global_var_blueprint, None);
         }
     }
 }

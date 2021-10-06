@@ -2,10 +2,11 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
-use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, MethodQualifier, FunctionSignature, Identifier, StatementList, TypeParameters, Visibility};
+use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, StatementList, TypeParameters, Visibility};
 
 #[parsable]
 pub struct FunctionContent {
+    pub meta_qualifier: Option<MethodMetaQualifier>,
     pub qualifier: Option<MethodQualifier>,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub name: Identifier,
@@ -16,6 +17,10 @@ pub struct FunctionContent {
 }
 
 impl FunctionContent {
+    pub fn is_autogen(&self) -> bool {
+        self.meta_qualifier.contains(&MethodMetaQualifier::Autogen)
+    }
+
     pub fn process_signature(&self, context: &mut ProgramContext) -> Link<FunctionBlueprint> {
         let function_unwrapped = FunctionBlueprint {
             function_id: self.location.get_hash(),
@@ -37,8 +42,10 @@ impl FunctionContent {
             body: Vasm::empty(),
         };
 
-        let function_blueprint = context.functions.insert(function_unwrapped);
+        let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
+        let function_blueprint = context.functions.insert(function_unwrapped, type_id);
         let is_static = self.qualifier.contains(&MethodQualifier::Static);
+        let is_autogen = self.meta_qualifier.contains(&MethodMetaQualifier::Autogen);
         let parameters = self.parameters.process(context);
 
         context.current_function = Some(function_blueprint.clone());
@@ -52,10 +59,18 @@ impl FunctionContent {
                 if !is_static {
                     function_unwrapped.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
                 }
-            } else if is_static {
-                context.errors.add(self, "regular functions cannot be static");
-            } else if function_unwrapped.is_dynamic {
-                context.errors.add(self, "regular functions cannot be dynamic");
+            } else {
+                if is_static {
+                    context.errors.add(self, "regular functions cannot be static");
+                }
+                
+                if function_unwrapped.is_dynamic {
+                    context.errors.add(self, "regular functions cannot be dynamic");
+                }
+
+                if is_autogen {
+                    context.errors.add(self, "regular functions cannot be autogen");
+                }
             }
         });
 
@@ -112,7 +127,8 @@ impl FunctionContent {
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        let function_wrapped = context.functions.get_by_location(&self.name);
+        let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
+        let function_wrapped = context.functions.get_by_location(&self.name, type_id);
         
         context.current_function = Some(function_wrapped.clone());
         context.reset_local_scope();

@@ -237,12 +237,20 @@ impl ProgramContext {
             type_declaration.process_inheritance_chain(self)
         });
 
+        for type_declaration in types.iter().rev() {
+            type_declaration.compute_children(self);
+        }
+
         for type_declaration in &types {
             type_declaration.process_fields(self);
         }
 
         for type_declaration in &types {
             type_declaration.process_method_signatures(self);
+        }
+
+        for type_declaration in &types {
+            type_declaration.process_autogen_method_signatures(self);
         }
 
         for function_declaration in &functions {
@@ -269,6 +277,10 @@ impl ProgramContext {
 
         for type_declaration in &types {
             type_declaration.process_methods_bodies(self);
+        }
+
+        for type_declaration in &types {
+            type_declaration.process_autogen_method_bodies(self);
         }
 
         for function_declaration in &functions {

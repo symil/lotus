@@ -39,7 +39,10 @@ impl FunctionDeclaration {
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        context.current_function = Some(context.functions.get_by_location(&self.content.name).clone());
+        let function_name = &self.content.name;
+        let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
+
+        context.current_function = Some(context.functions.get_by_location(function_name, type_id).clone());
 
         self.content.process_body(context);
 

@@ -8,6 +8,10 @@ pub struct MethodDeclaration {
 }
 
 impl MethodDeclaration {
+    pub fn is_autogen(&self) -> bool {
+        self.content.is_autogen()
+    }
+
     pub fn process_signature(&self, context: &mut ProgramContext) {
         let function_wrapped = self.content.process_signature(context);
         let mut type_wrapped = context.get_current_type().unwrap();

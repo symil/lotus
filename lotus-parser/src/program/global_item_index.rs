@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::Ref, collections::HashMap, hash::Hash, mem::take};
+use std::{borrow::Borrow, cell::Ref, collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, mem::take};
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, Visibility}, utils::Link};
@@ -14,13 +14,25 @@ pub trait GlobalItem {
     fn get_visibility(&self) -> Visibility;
 }
 
+fn get_id_from_location(location: &DataLocation, marker: Option<u64>) -> u64 {
+    let mut state = DefaultHasher::new();
+
+    location.hash(&mut state);
+
+    if let Some(n) = marker {
+        n.hash(&mut state);
+    }
+
+    state.finish()
+}
+
 impl<V : GlobalItem> GlobalItemIndex<V> {
     pub fn len(&self) -> usize {
         self.items_by_name.len()
     }
 
-    pub fn insert(&mut self, value: V) -> Link<V> {
-        let id = value.get_name().location.get_hash();
+    pub fn insert(&mut self, value: V, marker: Option<u64>) -> Link<V> {
+        let id = get_id_from_location(&value.get_name().location, marker);
         let name = value.get_name().to_string();
         let item = Link::new(value);
 
@@ -84,8 +96,10 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         None
     }
 
-    pub fn get_by_location(&self, value_name: &Identifier) -> Link<V> {
-        self.items_by_id.get(&value_name.location.get_hash()).unwrap().clone()
+    pub fn get_by_location(&self, value_name: &Identifier, marker: Option<u64>) -> Link<V> {
+        let id = get_id_from_location(&value_name, marker);
+
+        self.items_by_id.get(&id).unwrap().clone()
     }
 
     pub fn get_all(&self) -> Vec<Link<V>> {

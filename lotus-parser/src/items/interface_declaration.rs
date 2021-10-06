@@ -35,11 +35,11 @@ impl InterfaceDeclaration {
             context.errors.add(self, format!("interface `{}` already exists", &self.name));
         }
 
-        context.interfaces.insert(interface_blueprint);
+        context.interfaces.insert(interface_blueprint, None);
     }
 
     fn process<'a, F : FnMut(Link<InterfaceBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f : F) {
-        let interface_blueprint = context.interfaces.get_by_location(&self.name);
+        let interface_blueprint = context.interfaces.get_by_location(&self.name, None);
 
         context.current_interface = Some(interface_blueprint.clone());
         f(interface_blueprint, context);

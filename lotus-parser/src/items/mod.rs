@@ -72,6 +72,7 @@ mod field_qualifier;
 mod iter_fields;
 mod compiler_constant;
 mod field_or_method_name;
+mod method_meta_qualifier;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -147,3 +148,4 @@ pub use field_qualifier::*;
 pub use iter_fields::*;
 pub use compiler_constant::*;
 pub use field_or_method_name::*;
+pub use method_meta_qualifier::*;

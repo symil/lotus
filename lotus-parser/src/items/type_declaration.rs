@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
-use parsable::parsable;
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use parsable::{DataLocation, parsable};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -36,6 +36,8 @@ impl TypeDeclaration {
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             qualifier: self.qualifier,
             stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Int),
+            inheritance_chain_length: 0,
+            children: vec![],
             parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
@@ -53,7 +55,7 @@ impl TypeDeclaration {
             context.errors.add(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
 
-        let type_wrapped = context.types.insert(type_unwrapped);
+        let type_wrapped = context.types.insert(type_unwrapped, None);
 
         type_wrapped.with_mut(|mut type_unwrapped| {
             let parameters = self.parameters.process(context);
@@ -104,6 +106,15 @@ impl TypeDeclaration {
                         _ => unreachable!()
                     }
                 }
+            } else {
+                let base_object = context.types.get_by_name(OBJECT_TYPE_NAME).unwrap();
+
+                if type_wrapped != base_object {
+                    result = Some(ParentInfo {
+                        location: DataLocation::default(),
+                        ty: base_object.borrow().self_type.clone(),
+                    });
+                }
             }
 
             type_wrapped.with_mut(|mut type_unwrapped| {
@@ -134,9 +145,31 @@ impl TypeDeclaration {
             }
 
             chain_length = types.len();
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.inheritance_chain_length = chain_length;
+            });
         });
 
         chain_length
+    }
+
+    pub fn compute_children(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let mut children = vec![type_wrapped.clone()];
+
+            type_wrapped.with_ref(|type_unwrapped| {
+                if let Some(parent_info) = &type_unwrapped.parent {
+                    parent_info.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        children.extend_from_slice(&parent_unwrapped.children);
+                    });
+                }
+            });
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.children = children;
+            });
+        });
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
@@ -264,8 +297,21 @@ impl TypeDeclaration {
                 type_unwrapped.static_methods = static_methods;
             });
 
-            for method in self.body.methods.iter() {
+            for method in self.body.methods.iter().filter(|method| !method.is_autogen()) {
                 method.process_signature(context);
+            }
+        });
+    }
+
+    pub fn process_autogen_method_signatures(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let children = type_wrapped.borrow().children.clone();
+
+            for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
+                for child in &children {
+                    context.current_type = Some(child.clone());
+                    method.process_signature(context);
+                }
             }
         });
     }
@@ -278,8 +324,21 @@ impl TypeDeclaration {
         });
     }
 
+    pub fn process_autogen_method_bodies(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let children = type_wrapped.borrow().children.clone();
+
+            for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
+                for child in &children {
+                    context.current_type = Some(child.clone());
+                    method.process_body(context);
+                }
+            }
+        });
+    }
+
     fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f: F) {
-        let type_blueprint = context.types.get_by_location(&self.name);
+        let type_blueprint = context.types.get_by_location(&self.name, None);
 
         context.current_type = Some(type_blueprint.clone());
         f(type_blueprint, context);

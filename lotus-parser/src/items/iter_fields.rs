@@ -31,6 +31,8 @@ impl IterFields {
                             }
                         }
 
+                        context.iter_fields_counter = None;
+
                         result = Some(block_vasm);
                     },
                 }

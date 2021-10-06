@@ -27,6 +27,7 @@ pub const THIS_VAR_NAME : &'static str = "this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 
+pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const THIS_TYPE_NAME : &'static str = "This";
 
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";

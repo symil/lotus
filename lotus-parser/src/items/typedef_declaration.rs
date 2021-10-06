@@ -22,7 +22,7 @@ impl TypedefDeclaration {
                 target: ty,
             };
 
-            context.typedefs.insert(typedef_blueprint);
+            context.typedefs.insert(typedef_blueprint, None);
         }
     }
 }
