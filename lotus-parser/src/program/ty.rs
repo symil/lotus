@@ -150,8 +150,15 @@ impl Type {
         match (self, target) {
             (_, Type::Any) => true,
             (Type::This(_), Type::This(_)) => true,
-            // (Type::Actual(self_info), Type::Actual(target_info)) => self_info.type_blueprint.borrow().inheritance_chain.contains(target_info),
-            (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
+            (Type::Actual(self_info), Type::Actual(target_info)) => {
+                self_info.type_blueprint.with_ref(|self_type_unwrapped| {
+                    match self_type_unwrapped.ancestors.iter().find(|ty| ty.get_type_blueprint() == target_info.type_blueprint) {
+                        Some(ancestor_type) => target == &ancestor_type.replace_parameters(Some(self), &[]),
+                        None => false
+                    }
+                })
+            },
+            // (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
@@ -176,6 +183,35 @@ impl Type {
             Type::TypeParameter(_) => false,
             Type::FunctionParameter(_) => true,
             Type::Associated(info) => info.root.contains_function_parameter(),
+        }
+    }
+
+    pub fn infer_function_parameter(&self, function_param_to_infer: &Rc<ParameterTypeInfo>, actual_type: &Type) -> Option<Type> {
+        match self {
+            Type::Undefined => None,
+            Type::Void => None,
+            Type::Any => None,
+            Type::This(_) => None,
+            Type::Actual(info) => {
+                match actual_type {
+                    Type::Actual(actual_info) => {
+                        for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
+                            if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
+                                return Some(inferred_type);
+                            }
+                        }
+
+                        None
+                    },
+                    _ => None
+                }
+            },
+            Type::TypeParameter(_) => None,
+            Type::FunctionParameter(info) => match Rc::ptr_eq(info, function_param_to_infer) {
+                true => Some(actual_type.clone()),
+                false => None
+            },
+            Type::Associated(_) => todo!(),
         }
     }
 
@@ -288,7 +324,7 @@ impl Type {
             Type::Associated(info) => info.associated.required_interfaces.contains(interface),
         };
 
-        if !ok {
+        if !ok && !self.is_undefined() {
             context.errors.add_detailed(location, format!("type `{}` does not match interface `{}`:", self, interface.borrow().name.as_str().bold()), details);
         }
 

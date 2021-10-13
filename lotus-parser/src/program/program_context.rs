@@ -238,7 +238,11 @@ impl ProgramContext {
         });
 
         for type_declaration in types.iter().rev() {
-            type_declaration.compute_children(self);
+            type_declaration.compute_descendants(self);
+        }
+
+        for type_declaration in types.iter() {
+            type_declaration.compute_ancestors(self);
         }
 
         for type_declaration in &types {

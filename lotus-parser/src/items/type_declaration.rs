@@ -37,7 +37,8 @@ impl TypeDeclaration {
             qualifier: self.qualifier,
             stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Int),
             inheritance_chain_length: 0,
-            children: vec![],
+            descendants: vec![],
+            ancestors: vec![],
             parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
@@ -154,20 +155,43 @@ impl TypeDeclaration {
         chain_length
     }
 
-    pub fn compute_children(&self, context: &mut ProgramContext) {
+    pub fn compute_descendants(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
-            let mut children = vec![type_wrapped.clone()];
-
             type_wrapped.with_ref(|type_unwrapped| {
                 if let Some(parent_info) = &type_unwrapped.parent {
-                    parent_info.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
-                        children.extend_from_slice(&parent_unwrapped.children);
+                    parent_info.ty.get_type_blueprint().with_mut(|mut parent_unwrapped| {
+                        parent_unwrapped.descendants.push(type_wrapped.clone());
                     });
                 }
             });
 
             type_wrapped.with_mut(|mut type_unwrapped| {
-                type_unwrapped.children = children;
+                type_unwrapped.descendants.push(type_wrapped.clone());
+                type_unwrapped.descendants.reverse();
+            });
+        });
+    }
+
+    pub fn compute_ancestors(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let mut ancestors = vec![];
+
+            type_wrapped.with_ref(|type_unwrapped| {
+                ancestors.push(type_unwrapped.self_type.clone());
+
+                if let Some(parent_info) = &type_unwrapped.parent {
+                    parent_info.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for parent_ancestor in &parent_unwrapped.ancestors {
+                            let ancestor = parent_ancestor.replace_parameters(Some(&parent_info.ty), &[]);
+
+                            ancestors.push(ancestor);
+                        }
+                    });
+                }
+            });
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.ancestors = ancestors;
             });
         });
     }
@@ -305,9 +329,10 @@ impl TypeDeclaration {
 
     pub fn process_autogen_method_signatures(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
-            let children = type_wrapped.borrow().children.clone();
+            let children = type_wrapped.borrow().descendants.clone();
 
             for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
+                dbg!(children.len());
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_signature(context);
@@ -326,7 +351,7 @@ impl TypeDeclaration {
 
     pub fn process_autogen_method_bodies(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
-            let children = type_wrapped.borrow().children.clone();
+            let children = type_wrapped.borrow().descendants.clone();
 
             for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
                 for child in &children {

@@ -138,8 +138,8 @@ fn infer_function_parameters(function_name: &Identifier, function_unwrapped: &Fu
             if let Some(return_value) = &function_unwrapped.return_value {
                 let expected_return_type = &return_value.ty;
 
-                if expected_return_type.is_function_parameter(parameter) {
-                    result.push(hint_return_type.clone());
+                if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
+                    result.push(inferred_type);
                     ok = true;
                 }
             }
@@ -149,8 +149,8 @@ fn infer_function_parameters(function_name: &Identifier, function_unwrapped: &Fu
             for (expected_arg_var, actual_arg_type) in function_unwrapped.arguments.iter().zip(arg_types.iter()) {
                 let expected_arg_type = &expected_arg_var.ty;
 
-                if expected_arg_type.is_function_parameter(parameter) {
-                    result.push((*actual_arg_type).clone());
+                if let Some(inferred_type) = expected_arg_type.infer_function_parameter(parameter, *actual_arg_type) {
+                    result.push(inferred_type);
                     ok = true;
                     break;
                 }
