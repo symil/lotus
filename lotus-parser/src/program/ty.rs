@@ -64,6 +64,13 @@ impl Type {
         }
     }
 
+    pub fn get_actual_type_content(&self) -> &ActualTypeContent {
+        match self {
+            Type::Actual(info) => info,
+            _ => unreachable!()
+        }
+    }
+
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,
@@ -150,19 +157,29 @@ impl Type {
         match (self, target) {
             (_, Type::Any) => true,
             (Type::This(_), Type::This(_)) => true,
-            (Type::Actual(self_info), Type::Actual(target_info)) => {
-                self_info.type_blueprint.with_ref(|self_type_unwrapped| {
-                    match self_type_unwrapped.ancestors.iter().find(|ty| ty.get_type_blueprint() == target_info.type_blueprint) {
-                        Some(ancestor_type) => target == &ancestor_type.replace_parameters(Some(self), &[]),
-                        None => false
-                    }
-                })
+            (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
+                Some(ty) => &ty == target,
+                None => false,
             },
             // (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
             _ => false
+        }
+    }
+
+    pub fn get_as(&self, target: &Link<TypeBlueprint>) -> Option<Type> {
+        match self {
+            Type::Actual(self_info) => {
+                self_info.type_blueprint.with_ref(|self_type_unwrapped| {
+                    match self_type_unwrapped.ancestors.iter().find(|ty| &ty.get_type_blueprint() == target) {
+                        Some(ancestor_type) => Some(ancestor_type.replace_parameters(Some(self), &[])),
+                        None => None
+                    }
+                })
+            },
+            _ => None
         }
     }
 
@@ -192,19 +209,19 @@ impl Type {
             Type::Void => None,
             Type::Any => None,
             Type::This(_) => None,
-            Type::Actual(info) => {
-                match actual_type {
-                    Type::Actual(actual_info) => {
-                        for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
-                            if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
-                                return Some(inferred_type);
-                            }
-                        }
+            Type::Actual(info) => match actual_type.get_as(&info.type_blueprint) {
+                Some(actual_type) => {
+                    let actual_info = actual_type.get_actual_type_content();
 
-                        None
-                    },
-                    _ => None
-                }
+                    for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
+                        if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
+                            return Some(inferred_type);
+                        }
+                    }
+
+                    None
+                },
+                None => None,
             },
             Type::TypeParameter(_) => None,
             Type::FunctionParameter(info) => match Rc::ptr_eq(info, function_param_to_infer) {
@@ -486,7 +503,7 @@ impl Display for Type {
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
                     true => format!("{}", &info.type_blueprint.borrow().name),
-                    false => format!("{}<{}>", &info.type_blueprint.borrow().name, display_join(&info.parameters, ",")),
+                    false => format!("{}<{}>", &info.type_blueprint.borrow().name, display_join(&info.parameters, ", ")),
                 }
             },
             Type::TypeParameter(info) => format!("{}", &info.name),

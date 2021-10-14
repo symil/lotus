@@ -85,4 +85,8 @@ export type(i32) string {
     static __default() -> string {
         return "";
     }
+
+    static __chosen() -> string {
+        return "lotus";
+    }
 }

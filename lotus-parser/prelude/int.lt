@@ -29,6 +29,10 @@ export type(i32) int {
     static __default() -> int {
         return 0;
     }
+
+    static __chosen() -> int {
+        return 23;
+    }
     
     log2() -> int {
         if this < 2 {
