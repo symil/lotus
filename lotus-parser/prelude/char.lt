@@ -1,0 +1,12 @@
+export type(i32) char {
+    to_int() {{ }}
+    print() {{ (call $__log_char) }}
+
+    static __default() -> char {
+        return 0 as char;
+    }
+
+    static __chosen() -> char {
+        return 's';
+    }
+}

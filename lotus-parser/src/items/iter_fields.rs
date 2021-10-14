@@ -38,7 +38,7 @@ impl IterFields {
                 }
             },
             None => {
-                context.errors.add(self, format!("`{}` can only be used from within a method", "iter_fields".bold()));
+                context.errors.add(self, format!("`{}` can only be used from inside a method", "iter_fields".bold()));
             },
         };
 

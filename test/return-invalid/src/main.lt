@@ -1,5 +1,3 @@
-// no-prelude
-
 export fn main() {
     @log(get_result(0, 4, 2));
     @log(get_result(0, 1, 2));

@@ -131,7 +131,7 @@ sys fn mem_retain(addr: ptr) -> bool {
     return success;
 }
 
-sys fn mem_copy(dest: ptr, src: ptr, count: int) {
+pub fn mem_copy(dest: ptr, src: ptr, count: int) {
     let dest_arg = (dest as int) * 4;
     let src_arg = (src as int) * 4;
     let count_arg = count * 4;

@@ -82,33 +82,30 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                 let arg_type = &function_unwrapped.arguments[i].ty;
                 let hint = match arg_type.contains_function_parameter() {
                     true => None,
-                    false => Some(arg_type),
+                    false => Some(arg_type.replace_parameters(caller_type, &[])),
                 };
 
-                arg.process(hint, context).unwrap_or_default()
+                arg.process(hint.as_ref(), context).unwrap_or_default()
             }).collect();
             let arg_types : Vec<&Type> = arg_vasms.iter().map(|vasm| &vasm.ty).collect();
 
-            match infer_function_parameters(function_name, &function_unwrapped, &arg_types, type_hint, context) {
-                Some(parameters) => {
-                    for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(parameters.iter()) {
-                        actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+            if let Some(parameters) = infer_function_parameters(function_name, &function_unwrapped, &arg_types, type_hint, context) {
+                for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(parameters.iter()) {
+                    actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+                }
+
+                for (i, (expected_arg, arg_vasm)) in function_unwrapped.arguments.iter().zip(arg_vasms.into_iter()).enumerate() {
+                    let expected_type = expected_arg.ty.replace_parameters(caller_type, &parameters);
+
+                    if arg_vasm.ty.is_assignable_to(&expected_type) {
+                        result.extend(arg_vasm);
+                    } else if !arg_vasm.ty.is_undefined() {
+                        context.errors.add(&arguments.as_vec()[i], format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));
                     }
+                }
 
-                    for (i, (expected_arg, arg_vasm)) in function_unwrapped.arguments.iter().zip(arg_vasms.into_iter()).enumerate() {
-                        let expected_type = expected_arg.ty.replace_parameters(caller_type, &parameters);
-
-                        if arg_vasm.ty.is_assignable_to(&expected_type) {
-                            result.extend(arg_vasm);
-                        } else if !arg_vasm.ty.is_undefined() {
-                            context.errors.add(&arguments.as_vec()[i], format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));
-                        }
-                    }
-
-                    final_function_parameters = parameters;
-                    return_type = function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_parameters(caller_type, &final_function_parameters)));
-                },
-                None => {}
+                final_function_parameters = parameters;
+                return_type = function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_parameters(caller_type, &final_function_parameters)));
             }
         }
 

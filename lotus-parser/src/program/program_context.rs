@@ -37,7 +37,9 @@ impl ProgramContext {
 
     pub fn index_builtin_entities(&mut self) {
         for builtin_interface in DEFAULT_INTERFACES {
-            self.default_interfaces.push(self.interfaces.get_by_name(builtin_interface.get_name()).unwrap());
+            let interface = self.interfaces.get_by_name(builtin_interface.get_name()).unwrap();
+
+            self.default_interfaces.push(interface);
         }
     }
 

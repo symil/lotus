@@ -48,11 +48,11 @@ impl ForBlock {
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {
                 if !range_start_vasm.ty.is_int() {
-                    context.errors.add(&self.range_start, format!("range start: expected `{}`, got `{}`", context.int_type(), &range_start_vasm.ty));
+                    context.errors.add(&self.range_start, format!("expected `{}`, got `{}`", context.int_type(), &range_start_vasm.ty));
                 }
 
                 if !range_end_vasm.ty.is_int() {
-                    context.errors.add(range_end, format!("range end: expected `{}`, got `{}`", context.int_type(), &range_end_vasm.ty));
+                    context.errors.add(range_end, format!("expected `{}`, got `{}`", context.int_type(), &range_end_vasm.ty));
                 }
 
                 let range_end_var_name = Identifier::unique("range_end", self);

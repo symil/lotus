@@ -1,12 +1,12 @@
-struct Foo {
+class Foo {
     value: string,
 
     static hello() {
-        @log(#value);
+        @log(this.value);
     }
 
     display() {
-        @log(#value);
+        @log(this.value);
     }
 }
 

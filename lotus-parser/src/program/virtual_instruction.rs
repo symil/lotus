@@ -245,7 +245,7 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn jump_if_from_stack<T : ToVasm>(depth: u32) -> Self {
+    pub fn jump_if_from_stack(depth: u32) -> Self {
         Self::JumpIf(VirtualJumpIfInfo {
             depth,
             condition: None
@@ -263,16 +263,16 @@ impl VirtualInstruction {
             },
             VirtualInstruction::Load(_) => {},
             VirtualInstruction::GetVariable(_) => {},
-            VirtualInstruction::SetVariable(_) => {},
+            VirtualInstruction::SetVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
+            VirtualInstruction::TeeVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::CreateObject(_) => {},
-            VirtualInstruction::TeeVariable(_) => {},
             VirtualInstruction::GetField(_) => {},
-            VirtualInstruction::SetField(_) => {},
+            VirtualInstruction::SetField(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::FunctionCall(_) => {},
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},
-            VirtualInstruction::JumpIf(_) => {},
+            VirtualInstruction::JumpIf(info) => info.condition.iter().for_each(|vasm| vasm.collect_variables(list)),
         }
     }
 

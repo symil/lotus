@@ -269,7 +269,7 @@ impl Wat {
         if self.arguments.is_empty() {
             let wrap = match self.keyword.as_str() {
                 "block" => true,
-                _ => self.keyword.contains(".") && (!self.keyword.chars().next().unwrap().is_numeric() && !self.keyword.starts_with("memory"))
+                _ => self.keyword.contains(".") && (!is_number_char(self.keyword.chars().next().unwrap()) && !self.keyword.starts_with("memory"))
             };
 
             match wrap {
@@ -297,4 +297,8 @@ impl Wat {
 
 fn indent_level_to_string(level: usize) -> String {
     String::from_utf8(vec![b' '; level * 2]).unwrap()
+}
+
+fn is_number_char(c: char) -> bool {
+    c == '-' || c.is_numeric()
 }

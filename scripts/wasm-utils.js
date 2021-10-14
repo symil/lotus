@@ -21,6 +21,9 @@ function getImportsObject(env) {
             float(value) {
                 env.log(value);
             },
+            char(value) {
+                env.log(String.fromCodePoint(value));
+            },
             string(addr) {
                 let memory = env.getMemory();
                 let length = memory[addr];

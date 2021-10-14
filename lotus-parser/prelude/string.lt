@@ -1,5 +1,5 @@
 export type(i32) string {
-    type Item = int;
+    type Item = char;
 
     static __new(length: int) -> string {
         let result = @alloc(length + 1);
@@ -9,22 +9,22 @@ export type(i32) string {
         return (result as string);
     }
 
-    __set_char(index: int, char: int) -> string {
-        (this as ptr)[index + 1] = char;
+    __set_char(index: int, c: char) -> string {
+        (this as ptr)[index + 1] = (c as int);
 
         return this;
     }
 
-    get_at(index: int) -> int {
-        return (this as ptr)[index + 1];
+    get_at(index: int) -> char {
+        return (this as ptr)[index + 1] as char;
     }
 
     get_iterable_len() -> int {
         return this.len();
     }
 
-    get_iterable_ptr() -> ptr {
-        return ((this as int) + 1) as ptr;
+    get_iterable_ptr() -> Pointer<char> {
+        return ((this as int) + 1) as Pointer<char>;
     }
 
     add(other: string) -> string {

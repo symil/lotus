@@ -22,5 +22,13 @@ export type(i32) Pointer<T> {
     static null() -> This {{
         (i32.const 0)
     }}
+
+    print() {{
+        (call $__log_int)
+    }}
+
+    copy_to(target: This, count: int) {
+        mem_copy(target as ptr, this as ptr, count);
+    }
 }
 

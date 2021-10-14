@@ -67,7 +67,7 @@ impl BinaryOperatorWrapper {
                     content.push(VI::Raw(wat!["i32.eqz"]));
                 }
 
-                content.push(VI::jump(0));
+                content.push(VI::jump_if_from_stack(0));
 
                 Some(Vasm::new(context.bool_type(), vec![tmp_var], content))
             }

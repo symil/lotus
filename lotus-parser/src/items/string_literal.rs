@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, NEW_FUNC_NAME, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm}, wat};
+use crate::{items::escape_char, program::{BuiltinType, NEW_FUNC_NAME, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm}, wat};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -24,17 +24,8 @@ impl StringLiteral {
 
         for c in chars {
             if escaping {
-                let unescaped_char_opt = match c {
-                    '0' => Some('\0'),
-                    '\\' => Some('\\'),
-                    '"' => Some('"'),
-                    't' => Some('\t'),
-                    'n' => Some('\n'),
-                    _ => None
-                };
-
-                if let Some(unescaped_char) = unescaped_char_opt {
-                    unescaped_chars.push(unescaped_char as u32);
+                if let Some(escaped_char) = escape_char(c, '"') {
+                    unescaped_chars.push(escaped_char as u32);
                 } else {
                     context.errors.add(self, format!("invalid character '\\{}'", c));
                 }

@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, FieldKind, ProgramContext, Type, VI, VariableKind, Vasm}};
+use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, FieldKind, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}};
 use super::{ArgumentList, FieldOrMethodAccess, FullType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
@@ -81,7 +81,12 @@ impl RootVarRef {
                             match type_opt {
                                 Some(ty) => Some(ValueOrType::Type(ty)),
                                 None => {
-                                    context.errors.add(name, format!("undefined variable `{}`", name.as_str().bold()));
+                                    if name.as_str() == THIS_VAR_NAME {
+                                        context.errors.add(name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold()));
+                                    } else {
+                                        context.errors.add(name, format!("undefined variable `{}`", name.as_str().bold()));
+                                    }
+
                                     None
                                 },
                             }

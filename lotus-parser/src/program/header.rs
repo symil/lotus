@@ -14,6 +14,7 @@ pub const LOG_EMPTY_FUNC_NAME : &'static str = "__log_empty";
 pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
 pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
 pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
+pub const LOG_CHAR_FUNC_NAME : &'static str = "__log_char";
 pub const LOG_STRING_FUNC_NAME : &'static str = "__log_string";
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
@@ -21,6 +22,7 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "bool", LOG_BOOL_FUNC_NAME, &["i32"], None),
     ("log", "int", LOG_INT_FUNC_NAME, &["i32"], None),
     ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),
+    ("log", "char", LOG_CHAR_FUNC_NAME, &["i32"], None),
     ("log", "string", LOG_STRING_FUNC_NAME, &["i32"], None),
 ];
 

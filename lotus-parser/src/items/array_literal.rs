@@ -10,7 +10,7 @@ pub struct ArrayLiteral {
 }
 
 impl ArrayLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let array_var = VariableInfo::new(Identifier::unique("array", self), context.int_type(), VariableKind::Local);
         let array_body_var = VariableInfo::new(Identifier::unique("array_body", self), context.int_type(), VariableKind::Local);
         let variables = vec![
@@ -19,26 +19,35 @@ impl ArrayLiteral {
         ];
 
         let mut all_items_ok = true;
-        let mut final_item_type = Type::Any;
+        let mut final_item_type = match type_hint {
+            Some(ty) => match ty.get_array_item() {
+                Some(item_type) => item_type,
+                None => Type::Any
+            },
+            None => Type::Any,
+        };
         let mut item_vasm_list = vec![];
 
         for item in self.items.iter() {
             let mut item_ok = false;
-            let type_hint = match &final_item_type {
+            let item_type_hint = match &final_item_type {
                 Type::Any => None,
                 _ => Some(&final_item_type)
             };
 
-            if let Some(item_vasm) = item.process(type_hint, context) {
-                if final_item_type.is_assignable_to(&item_vasm.ty) {
+            if let Some(item_vasm) = item.process(item_type_hint, context) {
+                if final_item_type == Type::Any {
+                    final_item_type = item_vasm.ty.clone();
                     item_ok = true;
                 } else if item_vasm.ty.is_assignable_to(&final_item_type) {
+                    item_ok = true;
+                } else if type_hint.is_none() && final_item_type.is_assignable_to(&item_vasm.ty) {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;
                 }
 
                 if !item_ok {
-                    context.errors.add(item, format!("incompatible item types `{}` and `{}`", &final_item_type, &item_vasm.ty));
+                    context.errors.add(item, format!("expected `{}`, got `{}`", &final_item_type, &item_vasm.ty));
                     all_items_ok = false;
                 } else {
                     item_vasm_list.push(item_vasm);

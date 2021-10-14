@@ -10,9 +10,11 @@ function main() {
 
     let validateOutput = process.argv.includes('--validate');
     let testDirList = fs.readdirSync(TEST_DIR).filter(dirName => fs.statSync(path.join(TEST_DIR, dirName)).isDirectory());
+    let passedTestList = process.argv.filter(str => testDirList.includes(str));
+    let testsToRun = passedTestList.length > 0 ? passedTestList : testDirList;
 
     describe('Lotus', () => {
-        for (let dirName of testDirList) {
+        for (let dirName of testsToRun) {
             let testName = dirName;
             let dirPath = path.join(TEST_DIR, dirName);
             let sourcePath = path.join(dirPath, SRC_DIR_NAME);

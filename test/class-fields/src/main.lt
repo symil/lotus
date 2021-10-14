@@ -1,4 +1,4 @@
-struct Foo {
+class Foo {
     a: int,
     b: bool,
     c: string,

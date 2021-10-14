@@ -57,6 +57,20 @@ impl Type {
         self.is_builtin_type(BuiltinType::Bool)
     }
 
+    pub fn get_array_item(&self) -> Option<Type> {
+        match self.is_builtin_type(BuiltinType::Array) {
+            true => {
+                let info = self.get_actual_type_content();
+
+                match info.parameters.first() {
+                    Some(item_type) => Some(item_type.clone()),
+                    None => None,
+                }
+            },
+            false => None
+        }
+    }
+
     pub fn get_type_blueprint(&self) -> Link<TypeBlueprint> {
         match self {
             Type::Actual(info) => info.type_blueprint.clone(),

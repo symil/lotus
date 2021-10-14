@@ -6,13 +6,13 @@ export fn main() {
         a[i] = i + 1;
     }
 
-    @copy(b, a, 4);
+    a.copy_to(b, 4);
 
     for i in 0..4 {
         @log(a[i]);
     }
 
-    @log();
+    @log_empty();
 
     for i in 0..4 {
         @log(b[i]);

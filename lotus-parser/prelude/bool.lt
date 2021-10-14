@@ -1,8 +1,8 @@
 export type(i32) bool {
-    and(int) -> int {{ i32.and }}
-    or(int) -> int {{ i32.or }}
-    eq(int) -> bool {{ i32.eq }}
-    ne(int) -> bool {{ i32.ne }}
+    and(bool) -> bool {{ i32.and }}
+    or(bool) -> bool {{ i32.or }}
+    eq(bool) -> bool {{ i32.eq }}
+    ne(bool) -> bool {{ i32.ne }}
     not() -> bool {{ i32.eqz }}
     to_bool() -> bool {{ }}
     to_int() -> int {{ }}

@@ -1,9 +1,9 @@
 fn log(f: float) {
-    f.log();
+    f.print();
 }
 
 fn logb(b: bool) {
-    b.log();
+    b.print();
 }
 
 export fn main() {

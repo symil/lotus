@@ -1,2 +1,0 @@
-main.lt:8:13: error: cannot assign type `<type Foo>`
-main.lt:11:9: error: cannot assign type `<type Foo>`

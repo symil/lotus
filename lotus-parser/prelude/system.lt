@@ -10,4 +10,8 @@ export type(void) system {
     log<T : Print>(value: T) {
         value.print();
     }
+
+    log_empty() {{
+        (call $__log_empty)
+    }}
 }

@@ -1,17 +1,17 @@
-struct Foo {
+class Foo {
     value: string,
     number: float
 
     print() {
-        @log(#value);
+        @log(this.value);
     }
 
     set(value: string) {
-        #value = value;
+        this.value = value;
     }
 
     get() -> float {
-        return #number;
+        return this.number;
     }
 }
 
