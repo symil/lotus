@@ -1,10 +1,10 @@
 use crate::{program::VALUE_BYTE_SIZE, wat};
-use super::{HEADER_MEMORY_WASM_PAGE_COUNT, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, Wat};
+use super::{DUMMY_FUNC_NAME, DUPLICATE_INT_WASM_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, Wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
 type Table = (usize, &'static str);
-type FunctionType = (&'static str, &'static[&'static str], Option<&'static str>);
+type FunctionType = (&'static str, &'static[&'static str], &'static[&'static str]);
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[&'static str], &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
@@ -31,16 +31,29 @@ pub const HEADER_MEMORIES : &'static[Memory] = &[
 ];
 
 pub const HEADER_FUNC_TYPES : &'static[FunctionType] = &[
-    (RETAIN_FUNC_TYPE_NAME, &["i32"], None)
+    
 ];
 
 pub const HEADER_GLOBALS : &'static[Global] = &[
 ];
 
 pub static HEADER_FUNCTIONS : &'static[Function] = &[
+    (DUMMY_FUNC_NAME, &[], &[], &[], dummy),
+    (DUPLICATE_INT_WASM_FUNC_NAME, &[("arg", "i32")], &["i32", "i32"], &[], duplicate_value),
     (SWAP_INT_INT_WASM_FUNC_NAME, &[("arg1", "i32"), ("arg2", "i32")], &["i32", "i32"], &[], swap_values),
     (SWAP_FLOAT_INT_WASM_FUNC_NAME, &[("arg1", "f32"), ("arg2", "i32")], &["i32", "f32"], &[], swap_values),
 ];
+
+fn dummy() -> Vec<Wat> {
+    vec![]
+}
+
+fn duplicate_value() -> Vec<Wat> {
+    vec![
+        Wat::get_local("arg"),
+        Wat::get_local("arg"),
+    ]
+}
 
 fn swap_values() -> Vec<Wat> {
     vec![

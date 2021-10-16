@@ -1,8 +1,8 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::Link, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::Link, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -24,8 +24,11 @@ pub struct ProgramContext {
     pub return_found: bool,
     pub iter_fields_counter: Option<usize>,
 
-    pub type_instances: GeneratedItemIndex<TypeInstanceHeader, TypeInstanceContent>,
-    pub function_instances: GeneratedItemIndex<FunctionInstanceHeader, FunctionInstanceContent>,
+    pub dynamic_method_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
+    pub dynamic_method_wasm_types: HashMap<FunctionInstanceWasmType, String>,
+    pub placeholder_to_wasm_type: HashMap<String, String>,
+    pub type_instances: HashMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
+    pub function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
     pub global_var_instances: Vec<GlobalVarInstance>,
     pub entry_function: Option<Rc<FunctionInstanceHeader>>,
 }
@@ -74,6 +77,10 @@ impl ProgramContext {
 
     pub fn int_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Int, vec![])
+    }
+    
+    pub fn pointer_type(&self) -> Type {
+        self.get_builtin_type(BuiltinType::Pointer, vec![self.int_type()])
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {
@@ -168,7 +175,7 @@ impl ProgramContext {
                 match target_type.check_match_interface(&interface_wrapped, location, self) {
                     true => {
                         let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(target_type), &[]))).unwrap_or(Type::Undefined);
-                        let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], vasm![]);
+                        let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], None, vasm![]);
                         let result = Vasm::new(ty, vec![], vec![method_instruction]);
 
                         Some(result)
@@ -184,6 +191,54 @@ impl ProgramContext {
             L : Deref<Target=DataLocation>
     {
         self.call_builtin_interface(location, interface, target_type, &[], || String::new())
+    }
+
+    pub fn get_type_instance(&mut self, parameters: TypeInstanceParameters) -> Rc<TypeInstanceHeader> {
+        let id = parameters.get_id();
+
+        if let Some((header, _)) = self.type_instances.get(&id) {
+            return header.clone();
+        }
+
+        let header = TypeInstanceHeader::from_parameters(&parameters, self);
+
+        self.type_instances.insert(id, (header.clone(), None));
+
+        let content = TypeInstanceContent::from_parameters(&parameters, header.clone(), self);
+
+        self.type_instances.get_mut(&id).unwrap().1.insert(content);
+
+        header
+    }
+
+    pub fn get_function_instance(&mut self, parameters: FunctionInstanceParameters) -> Rc<FunctionInstanceHeader> {
+        let id = parameters.get_id();
+
+        if let Some((header, _)) = self.function_instances.get(&id) {
+            return header.clone();
+        }
+
+        let header = FunctionInstanceHeader::from_parameters(&parameters, self);
+
+        self.function_instances.insert(id, (header.clone(), None));
+
+        let content = FunctionInstanceContent::from_parameters(&parameters, header.clone(), self);
+
+        self.function_instances.get_mut(&id).unwrap().1.insert(content);
+
+        header
+    }
+
+    pub fn get_function_instance_wasm_type_name(&mut self, wasm_type: FunctionInstanceWasmType) -> String {
+        if let Some(name) = self.dynamic_method_wasm_types.get(&wasm_type) {
+            return name.clone()
+        }
+        
+        let name = format!("type_{}", self.dynamic_method_wasm_types.len() + 1);
+
+        self.dynamic_method_wasm_types.insert(wasm_type, name.clone());
+
+        name
     }
 
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
@@ -259,6 +314,10 @@ impl ProgramContext {
             type_declaration.process_autogen_method_signatures(self);
         }
 
+        for type_declaration in &types {
+            type_declaration.process_dynamic_methods(self);
+        }
+
         for function_declaration in &functions {
             function_declaration.process_signature(self);
         }
@@ -318,10 +377,8 @@ impl ProgramContext {
                 function_parameters: vec![],
             };
 
-            let (function_instance_header, exists) = self.function_instances.get_header(&parameters);
-            let function_instance_content = parameters.generate_content(&function_instance_header, &mut self);
+            let function_instance_header = self.get_function_instance(parameters);
 
-            self.function_instances.set_content(&parameters, function_instance_content);
             self.entry_function = Some(function_instance_header);
         }
 
@@ -340,8 +397,27 @@ impl ProgramContext {
             });
         }
 
-        for (type_name, arguments, result) in HEADER_FUNC_TYPES {
-            content.push(Wat::declare_function_type(type_name, arguments, result.clone()));
+        for (type_name, arguments, results) in HEADER_FUNC_TYPES {
+            content.push(Wat::declare_function_type(type_name, arguments, results));
+        }
+
+        content.push(wat!["table", self.dynamic_method_table.len(), "funcref"]);
+
+        let mut elems = wat!["elem", Wat::const_i32(0)];
+
+        for function_instance in &self.dynamic_method_table {
+            let wasm_func_name = match function_instance {
+                Some(header) => &header.wasm_name,
+                None => DUMMY_FUNC_NAME,
+            };
+
+            elems.push(Wat::var_name(wasm_func_name));
+        }
+
+        content.push(elems);
+
+        for (wasm_type, wasm_type_name) in self.dynamic_method_wasm_types.iter() {
+            content.push(Wat::declare_function_type(&wasm_type_name, &wasm_type.arg_types, &wasm_type.return_types));
         }
 
         for global_var in self.global_var_instances {
@@ -383,8 +459,14 @@ impl ProgramContext {
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_initialization));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], vec![], vec![], entry_function_body));
 
-        for (function_instance_header, function_instance_content) in self.function_instances.consume() {
-            if let Some(wasm_declaration) = function_instance_content.wasm_declaration {
+        let placeholder_to_wasm_type = take(&mut self.placeholder_to_wasm_type);
+        
+        for (function_instance_header, function_instance_content) in self.function_instances.into_values() {
+            if let Some(mut wasm_declaration) = function_instance_content.unwrap().wasm_declaration {
+                wasm_declaration.replace_placeholder(&|placeholder| {
+                    format!("${}", placeholder_to_wasm_type.get(placeholder).unwrap())
+                });
+
                 content.push(wasm_declaration);
             }
         }

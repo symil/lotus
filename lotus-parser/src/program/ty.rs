@@ -443,15 +443,7 @@ impl Type {
                     type_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
 
-                let (type_instance, exists) = context.type_instances.get_header(&parameters);
-
-                if !exists {
-                    let content = parameters.generate_content(&type_instance, context);
-                    
-                    context.type_instances.set_content(&parameters, content);
-                }
-
-                type_instance
+                context.get_type_instance(parameters)
             },
             Type::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
             Type::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),

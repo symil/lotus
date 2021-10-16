@@ -31,7 +31,7 @@ impl ObjectLiteral {
                     let mut fields_init = HashMap::new();
 
                     result.extend(Vasm::undefined(vec![object_var.clone()], vec![
-                        VI::create_object(&object_type),
+                        VI::call_static_method(&object_type, NEW_FUNC_NAME, &[], vec![], context),
                         VI::set_from_stack(&object_var)
                     ]));
 

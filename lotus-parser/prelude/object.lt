@@ -1,3 +1,9 @@
 export class Object {
-    
+    autogen static __new() -> This {
+        let data = @alloc(#FIELD_COUNT + 1);
+
+        data[0] = #TYPE_ID;
+
+        return data as This;
+    }
 }

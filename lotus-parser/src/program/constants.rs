@@ -11,6 +11,8 @@ pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE *
 pub const GENERATED_METHODS_TABLE_START : usize = MEMORY_METADATA_SIZE;
 pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize, deserialize
 
+pub const DUMMY_FUNC_NAME : &'static str = "dummy";
+pub const DUPLICATE_INT_WASM_FUNC_NAME : &'static str = "dup_i32";
 pub const SWAP_INT_INT_WASM_FUNC_NAME : &'static str = "swap_i32_i32";
 pub const SWAP_FLOAT_INT_WASM_FUNC_NAME : &'static str = "swap_f32_i32";
 
@@ -43,7 +45,7 @@ pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 
-pub const COMPILER_CONSTANT_CLASS_ID : &'static str = "CLASS_ID";
-pub const COMPILER_CONSTANT_FIELD_COUNT : &'static str = "FIELD_COUNT";
-pub const COMPILER_CONSTANT_FIELD_NAME : &'static str = "FIELD_NAME";
-pub const COMPILER_CONSTANT_FIELD_TYPE : &'static str = "FIELD_TYPE";
+pub const MACRO_TYPE_ID : &'static str = "TYPE_ID";
+pub const MACRO_FIELD_COUNT : &'static str = "FIELD_COUNT";
+pub const MACRO_FIELD_NAME : &'static str = "FIELD_NAME";
+pub const MACRO_FIELD_TYPE : &'static str = "FIELD_TYPE";

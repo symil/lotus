@@ -15,6 +15,10 @@ export type(i32) Pointer<T> {
         return wasm_load(byte_index);
     }
 
+    deref_get() -> T {
+        return wasm_load((this as int) * 4);
+    }
+
     is_null() -> bool {{
         i32.eqz
     }}

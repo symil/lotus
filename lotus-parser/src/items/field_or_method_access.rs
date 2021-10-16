@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, FieldKind, FunctionBlueprint, ParameterTypeInfo, ProgramContext, Type, VI, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{program::{AccessType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, GET_AT_INDEX_FUNC_NAME, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, utils::Link, vasm, wat};
 use super::{ArgumentList, FieldOrMethodName, Identifier, VarPrefix};
 
 #[parsable]
@@ -67,11 +67,24 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
     }
 
     let mut result = Vasm::empty();
+    let mut dynamic_methods_index = None;
     let mut final_function_parameters = vec![];
 
     let (function_name, return_type) = function_wrapped.with_ref(|function_unwrapped| {
         let mut return_type = None;
         let expected_arg_count = function_unwrapped.arguments.len();
+
+        if function_unwrapped.is_dynamic {
+            let dynamic_methods_index_var = VariableInfo::new(Identifier::new("dyn_index", function_name), context.int_type(), VariableKind::Local);
+
+            result.extend(vec![
+                VI::raw(Wat::call_from_stack(DUPLICATE_INT_WASM_FUNC_NAME)),
+                VI::call_regular_method(&context.pointer_type(), "deref_get", &[], vec![], context),
+                VI::set_from_stack(&dynamic_methods_index_var)
+            ]);
+
+            dynamic_methods_index = Some(dynamic_methods_index_var);
+        }
 
         if arguments.len() != expected_arg_count {
             let s = if expected_arg_count > 1 { "s" } else { "" };
@@ -116,7 +129,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
     });
 
     let call_instruction = match caller_type {
-        Some(ty) => VI::call_method(ty, function_wrapped.clone(), &final_function_parameters, vasm![]),
+        Some(ty) => VI::call_method(ty, function_wrapped.clone(), &final_function_parameters, dynamic_methods_index, vasm![]),
         None => VI::call_function(function_wrapped.clone(), &final_function_parameters, vasm![]),
     };
 

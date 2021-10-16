@@ -1,4 +1,4 @@
-export class Array<T> {
+export type(i32) Array<T> {
     type Item = T;
 
     static __new(length: int) -> This {

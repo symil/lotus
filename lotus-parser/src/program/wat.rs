@@ -46,6 +46,10 @@ impl Wat {
         wat![name]
     }
 
+    pub fn placeholder(value: &str) -> Self {
+        Self::single(format!("#{}", value))
+    }
+
     // BASIC
 
     pub fn nop() -> Self {
@@ -212,15 +216,15 @@ impl Wat {
         func
     }
 
-    pub fn declare_function_type(type_name: &str, arguments: &[&str], result: Option<&str>) -> Wat {
+    pub fn declare_function_type(type_name: &str, arguments: &[&str], results: &[&str]) -> Wat {
         let mut body = wat!["func"];
 
         for arg_type in arguments {
             body.push(wat!["param", *arg_type]);
         }
 
-        if let Some(result_type) = result {
-            body.push(wat!["result", result_type]);
+        for result_type in results {
+            body.push(wat!["result", *result_type]);
         }
 
         wat!["type", Self::var_name(type_name), body]
@@ -265,9 +269,20 @@ impl Wat {
         }
     }
 
+    pub fn replace_placeholder<F : Fn(&str) -> String>(&mut self, f: &F) {
+        if self.keyword.starts_with("#") {
+            self.keyword = f(&self.keyword[1..]);
+        }
+
+        for arg in &mut self.arguments.iter_mut() {
+            arg.replace_placeholder(f);
+        }
+    }
+
     pub fn to_string(&self, indent: usize) -> String {
         if self.arguments.is_empty() {
             let wrap = match self.keyword.as_str() {
+                "func" => true,
                 "block" => true,
                 _ => self.keyword.contains(".") && (!is_number_char(self.keyword.chars().next().unwrap()) && !self.keyword.starts_with("memory"))
             };

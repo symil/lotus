@@ -21,7 +21,7 @@ pub struct TypeBlueprint {
     pub fields: IndexMap<String, Rc<FieldInfo>>,
     pub regular_methods: IndexMap<String, FuncRef>,
     pub static_methods: IndexMap<String, FuncRef>,
-    pub dynamic_methods: Vec<Link<FunctionBlueprint>>,
+    pub dynamic_methods: Vec<FuncRef>,
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub after_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
@@ -39,6 +39,13 @@ pub struct FieldInfo {
     pub name: Identifier,
     pub ty: Type,
     pub offset: usize
+}
+
+#[derive(Debug)]
+pub struct DynamicMethodInfo {
+    pub function: Link<FunctionBlueprint>,
+    pub this_type: Type,
+    pub index: usize
 }
 
 impl TypeBlueprint {

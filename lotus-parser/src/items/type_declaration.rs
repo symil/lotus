@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DynamicMethodInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -107,7 +107,7 @@ impl TypeDeclaration {
                         _ => unreachable!()
                     }
                 }
-            } else {
+            } else if self.qualifier == TypeQualifier::Class {
                 let base_object = context.types.get_by_name(OBJECT_TYPE_NAME).unwrap();
 
                 if type_wrapped != base_object {
@@ -157,17 +157,18 @@ impl TypeDeclaration {
 
     pub fn compute_descendants(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.descendants.insert(0, type_wrapped.clone());
+            });
+
             type_wrapped.with_ref(|type_unwrapped| {
                 if let Some(parent_info) = &type_unwrapped.parent {
                     parent_info.ty.get_type_blueprint().with_mut(|mut parent_unwrapped| {
-                        parent_unwrapped.descendants.push(type_wrapped.clone());
+                        for d in &type_unwrapped.descendants {
+                            parent_unwrapped.descendants.push(d.clone());
+                        }
                     });
                 }
-            });
-
-            type_wrapped.with_mut(|mut type_unwrapped| {
-                type_unwrapped.descendants.push(type_wrapped.clone());
-                type_unwrapped.descendants.reverse();
             });
         });
     }
@@ -332,12 +333,43 @@ impl TypeDeclaration {
             let children = type_wrapped.borrow().descendants.clone();
 
             for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
-                dbg!(children.len());
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_signature(context);
                 }
             }
+        });
+    }
+
+    pub fn process_dynamic_methods(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let dynamic_methods = type_wrapped.with_ref(|type_unwrapped| {
+                let mut result : Vec<FuncRef> = type_unwrapped.regular_methods.values()
+                    .filter_map(|func_ref| match func_ref.function.borrow().is_dynamic {
+                        true => Some(func_ref.clone()),
+                        false => None,
+                    })
+                    .collect();
+                
+                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().name.to_string());
+                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().owner_type.as_ref().unwrap().borrow().ancestors.len());
+
+                result
+            });
+
+            for (i, func_ref) in dynamic_methods.iter().enumerate() {
+                func_ref.function.with_mut(|mut function_unwrapped| {
+                    if function_unwrapped.dynamic_index == -1 {
+                        function_unwrapped.dynamic_index = i as i32;
+                    } else if function_unwrapped.dynamic_index != i as i32 {
+                        panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), function_unwrapped.dynamic_index);
+                    }
+                });
+            }
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.dynamic_methods = dynamic_methods;
+            });
         });
     }
 

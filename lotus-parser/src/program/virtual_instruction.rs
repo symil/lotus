@@ -12,12 +12,12 @@ pub enum VirtualInstruction {
     Raw(Wat),
     IntConstant(i32),
     FloatConstant(f32),
+    TypeId(Type),
     Store(VirtualStashInfo),
     Load(VirtualStashInfo),
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
-    CreateObject(VirtualCreateObjectInfo),
     GetField(VirtualGetFieldInfo),
     SetField(VirtualSetFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
@@ -67,6 +67,7 @@ pub struct VirtualFunctionCallInfo {
     pub caller_type: Option<Type>,
     pub function: Link<FunctionBlueprint>,
     pub parameters: Vec<Type>,
+    pub dynamic_methods_index_var: Option<Rc<VariableInfo>>,
     pub args: Option<Vasm>,
 }
 
@@ -103,6 +104,10 @@ impl VirtualInstruction {
 
     pub fn float(value: f32) -> Self {
         Self::FloatConstant(value)
+    }
+
+    pub fn type_id(ty: &Type) -> Self {
+        Self::TypeId(ty.clone())
     }
 
     pub fn store(value_type: &Type, id: u64) -> Self {
@@ -158,15 +163,17 @@ impl VirtualInstruction {
             caller_type: None,
             function,
             parameters: parameters.to_vec(),
+            dynamic_methods_index_var: None,
             args: Some(args.to_vasm()),
         })
     }
 
-    pub fn call_method<T : ToVasm>(caller_type: &Type, function: Link<FunctionBlueprint>, parameters: &[Type], args: T) -> Self {
+    pub fn call_method<T : ToVasm>(caller_type: &Type, function: Link<FunctionBlueprint>, parameters: &[Type], dynamic_methods_index_var: Option<Rc<VariableInfo>>, args: T) -> Self {
         Self::FunctionCall(VirtualFunctionCallInfo {
             caller_type: Some(caller_type.clone()),
             function,
             parameters: parameters.to_vec(),
+            dynamic_methods_index_var,
             args: Some(args.to_vasm()),
         })
     }
@@ -174,19 +181,13 @@ impl VirtualInstruction {
     pub fn call_regular_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
         let function = caller_type.get_regular_method(method_name, context).unwrap().function.clone();
 
-        Self::call_method(caller_type, function, parameters, args)
+        Self::call_method(caller_type, function, parameters, None, args)
     }
     
     pub fn call_static_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
         let function = caller_type.get_static_method(method_name, context).unwrap().function.clone();
 
-        Self::call_method(caller_type, function, parameters, args)
-    }
-
-    pub fn create_object(object_type: &Type) -> Self {
-        Self::CreateObject(VirtualCreateObjectInfo {
-            object_type: object_type.clone(),
-        })
+        Self::call_method(caller_type, function, parameters, None, args)
     }
 
     pub fn get_field(field_type: &Type, field_offset: usize) -> Self {
@@ -258,6 +259,7 @@ impl VirtualInstruction {
             VirtualInstruction::Raw(_) => {},
             VirtualInstruction::IntConstant(_) => {},
             VirtualInstruction::FloatConstant(_) => {},
+            VirtualInstruction::TypeId(_) => {},
             VirtualInstruction::Store(info) => {
                 list.push(VariableInfo::from_wasm_name(info.wasm_var_name.to_string(), info.value_type.clone(), VariableKind::Local))
             },
@@ -265,10 +267,9 @@ impl VirtualInstruction {
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::TeeVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
-            VirtualInstruction::CreateObject(_) => {},
             VirtualInstruction::GetField(_) => {},
             VirtualInstruction::SetField(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
-            VirtualInstruction::FunctionCall(_) => {},
+            VirtualInstruction::FunctionCall(info) => info.dynamic_methods_index_var.iter().for_each(|var_info| list.push(var_info.clone())),
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},
@@ -282,6 +283,11 @@ impl VirtualInstruction {
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
             VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
+            VirtualInstruction::TypeId(ty) => {
+                let type_instance = ty.resolve(type_index, context);
+
+                vec![Wat::const_i32(type_instance.dynamic_method_table_offset)]
+            },
             VirtualInstruction::GetVariable(info) => vec![info.var_info.get_to_stack()],
             VirtualInstruction::Store(info) => {
                 vec![Wat::set_local_from_stack(&info.wasm_var_name)]
@@ -303,14 +309,6 @@ impl VirtualInstruction {
                 }
 
                 content
-            },
-            VirtualInstruction::CreateObject(info) => {
-                let object_type = info.object_type.resolve(type_index, context);
-                let object_size = object_type.type_blueprint.borrow().fields.len() + OBJECT_HEADER_SIZE;
-
-                vec![
-                    Wat::call("mem_alloc", vec![Wat::const_i32(object_size)])
-                ]
             },
             VirtualInstruction::GetField(info) => {
                 let field_type = info.field_type.resolve(type_index, context);
@@ -355,37 +353,44 @@ impl VirtualInstruction {
                 }
 
                 let this_type = info.caller_type.as_ref().and_then(|ty| Some(ty.resolve(type_index, context)));
-                let function_parameters = info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
-                let function_blueprint = info.function.with_ref(|function_unwrapped| {
-                    match function_unwrapped.owner_interface.is_none() {
-                        true => info.function.clone(),
-                        false => this_type.as_ref().unwrap().type_blueprint.with_ref(|type_unwrapped| {
-                            let is_static = function_unwrapped.is_static();
-                            let index_map = match is_static {
-                                true => &type_unwrapped.static_methods,
-                                false => &type_unwrapped.regular_methods,
-                            };
 
-                            index_map.get(function_unwrapped.name.as_str()).unwrap().function.clone()
-                        }),
-                    }
-                });
-
-                let parameters = FunctionInstanceParameters {
-                    function_blueprint,
-                    this_type,
-                    function_parameters,
-                };
-
-                let (function_instance, exists) = context.function_instances.get_header(&parameters);
-
-                if !exists {
-                    let content = parameters.generate_content(&function_instance, context);
+                if let Some(dynamic_methods_index_var) = &info.dynamic_methods_index_var {
+                    let method_offset = info.function.borrow().dynamic_index;
+                    let func_wasm_type_name = this_type.unwrap().get_placeholder_function_wasm_type_name(&info.function);
                     
-                    context.function_instances.set_content(&parameters, content);
-                }
+                    content.extend(vec![
+                        dynamic_methods_index_var.get_to_stack(),
+                        Wat::const_i32(method_offset),
+                        wat!["i32.add"],
+                        wat!["call_indirect", wat!["type", Wat::placeholder(&func_wasm_type_name)]]
+                    ]);
+                } else {
+                    let function_parameters = info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
+                    let function_blueprint = info.function.with_ref(|function_unwrapped| {
+                        match function_unwrapped.owner_interface.is_none() {
+                            true => info.function.clone(),
+                            false => this_type.as_ref().unwrap().type_blueprint.with_ref(|type_unwrapped| {
+                                let is_static = function_unwrapped.is_static();
+                                let index_map = match is_static {
+                                    true => &type_unwrapped.static_methods,
+                                    false => &type_unwrapped.regular_methods,
+                                };
 
-                content.extend_from_slice(&function_instance.wasm_call);
+                                index_map.get(function_unwrapped.name.as_str()).unwrap().function.clone()
+                            }),
+                        }
+                    });
+
+                    let parameters = FunctionInstanceParameters {
+                        function_blueprint,
+                        this_type,
+                        function_parameters,
+                    };
+
+                    let function_instance = context.get_function_instance(parameters);
+
+                    content.extend_from_slice(&function_instance.wasm_call);
+                }
 
                 content
             },
@@ -428,12 +433,12 @@ impl VirtualInstruction {
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(_) => unreachable!(),
             VirtualInstruction::FloatConstant(_) => unreachable!(),
+            VirtualInstruction::TypeId(_) => unreachable!(),
             VirtualInstruction::Store(_) => unreachable!(),
             VirtualInstruction::Load(_) => unreachable!(),
             VirtualInstruction::GetVariable(_) => unreachable!(),
             VirtualInstruction::SetVariable(_) => unreachable!(),
             VirtualInstruction::TeeVariable(_) => unreachable!(),
-            VirtualInstruction::CreateObject(_) => unreachable!(),
             VirtualInstruction::GetField(_) => unreachable!(),
             VirtualInstruction::SetField(_) => unreachable!(),
             VirtualInstruction::FunctionCall(_) => unreachable!(),

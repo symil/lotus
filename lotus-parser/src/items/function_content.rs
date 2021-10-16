@@ -43,10 +43,12 @@ impl FunctionContent {
         };
 
         let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
+        let is_dynamic = function_unwrapped.is_dynamic;
         let function_blueprint = context.functions.insert(function_unwrapped, type_id);
         let is_static = self.qualifier.contains(&MethodQualifier::Static);
         let is_autogen = self.meta_qualifier.contains(&MethodMetaQualifier::Autogen);
         let parameters = self.parameters.process(context);
+        let has_parameters = !parameters.is_empty();
 
         context.current_function = Some(function_blueprint.clone());
 
@@ -54,6 +56,16 @@ impl FunctionContent {
             function_unwrapped.parameters = parameters;
 
             if let Some(type_blueprint) = &context.current_type {
+                if is_dynamic {
+                    if has_parameters {
+                        context.errors.add(self, "dynamic methods cannot have parameters");
+                    }
+
+                    if self.body.is_raw_wasm() {
+                        context.errors.add(self, "dynamic methods cannot be raw wasm");
+                    }
+                }
+
                 function_unwrapped.owner_type = Some(type_blueprint.clone());
 
                 if !is_static {

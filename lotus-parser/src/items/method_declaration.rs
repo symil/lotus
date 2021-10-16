@@ -1,4 +1,5 @@
 use parsable::parsable;
+use colored::*;
 use crate::{items::Visibility, program::{FuncRef, FunctionBlueprint, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, VariableKind, display_join, insert_in_vec_hashmap}, utils::Link};
 use super::{EventCallbackQualifier, FunctionCondition, FunctionContent, FunctionDeclaration, FunctionSignature, Identifier, Statement, StatementList, TypeDeclaration, TypeQualifier, VarPath};
 
@@ -31,12 +32,13 @@ impl MethodDeclaration {
                 false => &mut type_unwrapped.regular_methods
             };
 
-            if index_map.insert(name.to_string(), func_ref).is_some() {
+            if let Some(prev) = index_map.insert(name.to_string(), func_ref) {
+                let parent_class_name = prev.function.borrow().owner_type.as_ref().unwrap().borrow().name.to_string();
                 let s = match is_static {
                     true => "static ",
                     false => ""
                 };
-                context.errors.add(self, format!("duplicate {}method `{}`", s, &name));
+                // context.errors.add(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
             }
         });
     }
