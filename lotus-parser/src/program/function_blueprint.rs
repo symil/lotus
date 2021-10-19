@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, MethodQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstanceContent, ParameterTypeInfo, GlobalItem, InterfaceBlueprint, ProgramContext, ResolvedType, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
+use super::{FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, ResolvedType, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -37,6 +37,13 @@ impl FunctionBlueprint {
 
         if let Some(return_value) = &self.return_value {
             return_value.check_parameters(context);
+        }
+    }
+
+    pub fn get_signature(&self) -> Signature {
+        Signature {
+            arguments: self.arguments.iter().map(|var_info| var_info.ty.clone()).collect(),
+            return_value: self.return_value.as_ref().and_then(|var_info| Some(var_info.ty.clone())),
         }
     }
 }

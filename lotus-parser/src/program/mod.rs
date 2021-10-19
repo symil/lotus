@@ -42,6 +42,7 @@ mod field_kind;
 mod associated_type_info;
 mod func_ref;
 mod function_instance_wasm_type;
+mod signature;
 
 pub use error::*;
 pub use program::*;
@@ -86,3 +87,4 @@ pub use field_kind::*;
 pub use associated_type_info::*;
 pub use func_ref::*;
 pub use function_instance_wasm_type::*;
+pub use signature::*;

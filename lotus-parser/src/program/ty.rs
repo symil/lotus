@@ -15,6 +15,7 @@ pub enum Type {
     TypeParameter(Rc<ParameterTypeInfo>),
     FunctionParameter(Rc<ParameterTypeInfo>),
     Associated(AssociatedTypeContent),
+    // Function(FunctionTypeContent)
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +28,12 @@ pub struct ActualTypeContent {
 pub struct AssociatedTypeContent {
     pub root: Box<Type>,
     pub associated: Rc<InterfaceAssociatedTypeInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionTypeContent {
+    pub function: Link<FunctionBlueprint>,
+    pub this_type: Box<Option<Type>>
 }
 
 impl Type {
