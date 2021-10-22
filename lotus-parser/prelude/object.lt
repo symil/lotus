@@ -6,4 +6,12 @@ export class Object {
 
         return data as This;
     }
+
+    autogen static null() -> This {
+        return 0 as This;
+    }
+
+    is_null() -> bool {
+        return (this as int) == 0;
+    }
 }

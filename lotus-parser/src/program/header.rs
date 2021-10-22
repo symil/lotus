@@ -1,4 +1,4 @@
-use crate::{program::VALUE_BYTE_SIZE, wat};
+use crate::{program::MEMORY_CELL_BYTE_SIZE, wat};
 use super::{DUMMY_FUNC_NAME, DUPLICATE_INT_WASM_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, Wat};
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);

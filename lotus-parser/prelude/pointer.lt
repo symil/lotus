@@ -3,6 +3,10 @@ export type ptr = Pointer<int>;
 export type(i32) Pointer<T> {
     type Item = T;
 
+    add(offset: int) -> This {
+        return ((this as int) + offset) as This;
+    }
+
     set_at(index: int, value: T) {
         let byte_index = ((this as int) + index) * 4;
 

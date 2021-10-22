@@ -33,7 +33,7 @@ pub struct AssociatedTypeContent {
 #[derive(Debug, Clone)]
 pub struct FunctionTypeContent {
     pub function: Link<FunctionBlueprint>,
-    pub this_type: Box<Option<Type>>
+    pub parameters: Vec<Type>
 }
 
 impl Type {
@@ -121,7 +121,11 @@ impl Type {
                         associated: info.associated.clone(),
                     })
                 }
-            }
+            },
+            // Type::Function(info) => Type::Function(FunctionTypeContent {
+            //     function: info.function.clone(),
+            //     parameters: info.parameters.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
+            // }),
         }
     }
 
@@ -135,6 +139,7 @@ impl Type {
             Type::TypeParameter(_) => unreachable!(),
             Type::FunctionParameter(_) => unreachable!(),
             Type::Associated(_) => unreachable!(),
+            // Type::Function(_) => unreachable!(),
         }
     }
 
@@ -171,6 +176,7 @@ impl Type {
                 })),
                 None => None
             },
+            // Type::Function(info) => None,
         }
     }
 
