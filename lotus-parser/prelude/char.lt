@@ -1,10 +1,19 @@
 export type(i32) char {
-    to_int() {{ }}
+    to_int() -> int {{ }}
     print() {{ (call $__log_char) }}
 
-    static __default() -> char {
-        return 0 as char;
-    }
+    static __default() -> char {{
+        (i32.const 0)
+    }}
+
+    static __none() -> char {{
+        (i32.const -2147483648)
+    }}
+
+    __is_none() -> bool {{
+        (i32.const -2147483648)
+        (i32.eq)
+    }}
 
     static __chosen() -> char {
         return 's';

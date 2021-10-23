@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, FieldKind, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}};
+use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, BuiltinInterface, FieldKind, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}};
 use super::{ArgumentList, FieldOrMethodAccess, FullType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
@@ -59,7 +59,7 @@ impl RootVarRef {
                 None => None
             },
             RootVarRef::Unprefixed(full_type, args_opt) => match args_opt {
-                Some(args) => match full_type.as_single_name() {
+                Some(args) => match full_type.as_var_name() {
                     Some(name) => {
                         if let Some(function_blueprint) = context.functions.get_by_identifier(name) {
                             process_function_call(None, name, function_blueprint, &[], args, type_hint, access_type, context).and_then(|vasm| {
@@ -78,11 +78,31 @@ impl RootVarRef {
                         None
                     },
                 },
-                None => match full_type.as_single_name() {
+                None => match full_type.as_var_name() {
                     Some(name) => match context.get_var_info(name) {
-                        Some(var_info) => match access_type {
-                            AccessType::Get => Some(ValueOrType::Value(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(&var_info)]))),
-                            AccessType::Set(_) => Some(ValueOrType::Value(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(&var_info)]))),
+                        Some(var_info) => {
+                            let mut var_vasm = match access_type {
+                                AccessType::Get => Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(&var_info)]),
+                                AccessType::Set(_) => Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(&var_info)]),
+                            };
+
+                            for unwrap_token in &full_type.suffix {
+                                match context.call_builtin_interface_no_arg(unwrap_token, BuiltinInterface::Unwrap, &var_info.ty) {
+                                    Some(vasm) => var_vasm.extend(vasm),
+                                    None => return None,
+                                }
+                            }
+
+                            let mut result = Some(ValueOrType::Value(var_vasm));
+
+                            if !full_type.suffix.is_empty() {
+                                if let AccessType::Set(location) = access_type {
+                                    context.errors.add(location, format!("cannot set result of unwrap operator"));
+                                    result = None;
+                                }
+                            }
+
+                            result
                         },
                         None => {
                             context.errors.set_enabled(false);

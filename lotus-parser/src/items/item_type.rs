@@ -9,7 +9,7 @@ pub enum ItemType {
 }
 
 impl ItemType {
-    pub fn as_single_name(&self) -> Option<&Identifier> {
+    pub fn as_var_name(&self) -> Option<&Identifier> {
         match self {
             ItemType::Value(value_type) => value_type.as_single_name(),
             ItemType::Function(_) => None,

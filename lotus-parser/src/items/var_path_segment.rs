@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use parsable::parsable;
 use crate::{program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
-use super::{ArgumentList, BracketIndexing, Expression, Identifier, FieldOrMethodAccess};
+use super::{ArgumentList, BracketIndexing, Expression, FieldOrMethodAccess, Identifier, UnwrapToken};
 
 #[parsable]
 pub enum VarPathSegment {
     #[parsable(prefix=".")]
     FieldOrMethodAccess(FieldOrMethodAccess),
     BracketIndexing(BracketIndexing),
+    Unwrap(UnwrapToken)
 }
 
 impl VarPathSegment {
@@ -15,6 +16,7 @@ impl VarPathSegment {
         match self {
             VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.has_side_effects(),
             VarPathSegment::BracketIndexing(_) => true,
+            VarPathSegment::Unwrap(_) => true,
         }
     }
 
@@ -22,6 +24,7 @@ impl VarPathSegment {
         match self {
             VarPathSegment::FieldOrMethodAccess(var_ref) => var_ref.process(parent_type, field_kind, type_hint, access_type, context),
             VarPathSegment::BracketIndexing(bracket_indexing) => bracket_indexing.process(parent_type, access_type, context),
+            VarPathSegment::Unwrap(unwrap_token) => unwrap_token.process(parent_type, context),
         }
     }
 }

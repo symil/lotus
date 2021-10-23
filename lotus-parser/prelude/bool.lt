@@ -8,5 +8,17 @@ export type(i32) bool {
     to_int() -> int {{ }}
 
     print() {{ (call $__log_bool) }}
-    static __default() {{  (i32.const 0) }}
+
+    static __default() {{ 
+        (i32.const 0)
+    }}
+
+    static __none() -> bool {{
+        (i32.const -2147483648)
+    }}
+
+    is_none() -> bool {{
+        (i32.const -2147483648)
+        (i32.eq)
+    }}
 }

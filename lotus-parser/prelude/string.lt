@@ -9,6 +9,18 @@ export type(i32) string {
         return (result as string);
     }
 
+    static __default() -> string {
+        return "";
+    }
+
+    static __none() -> string {{
+        (i32.const 0)
+    }}
+
+    __is_none() -> bool {{
+        (i32.eqz)
+    }}
+
     __set_char(index: int, c: char) -> string {
         (this as ptr)[index + 1] = (c as int);
 
@@ -81,10 +93,6 @@ export type(i32) string {
     print() {{
         (call $__log_string)
     }}
-
-    static __default() -> string {
-        return "";
-    }
 
     static __chosen() -> string {
         return "lotus";

@@ -40,6 +40,8 @@ pub const LOAD_FUNC_NAME : &'static str = "__load";
 pub const DEFAULT_FUNC_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "body";
+pub const NONE_FUNC_NAME : &'static str = "none";
+pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";

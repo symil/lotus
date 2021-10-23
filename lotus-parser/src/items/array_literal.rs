@@ -21,7 +21,7 @@ impl ArrayLiteral {
         let mut all_items_ok = true;
         let mut final_item_type = match type_hint {
             Some(ty) => match ty.get_array_item() {
-                Some(item_type) => item_type,
+                Some(item_type) => item_type.clone(),
                 None => Type::Any
             },
             None => Type::Any,

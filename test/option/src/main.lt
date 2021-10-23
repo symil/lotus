@@ -1,0 +1,7 @@
+export fn main() {
+    let a : int? = none;
+
+    a = 8;
+
+    @log(a?);
+}

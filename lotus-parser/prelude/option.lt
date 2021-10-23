@@ -1,0 +1,27 @@
+export type(i32) Option<T> {
+    type Item = T;
+
+    static some(arg: T) -> This {{
+        
+    }}
+
+    static none() -> This {
+        return T.__none() as This;
+    }
+
+    is_none() -> bool {
+        return (this as T).__is_none();
+    }
+
+    is_some() -> bool {
+        return !(this as T).__is_none();
+    }
+
+    unwrap() -> T {{
+
+    }}
+
+    to_bool() -> bool {
+        return this.is_some();
+    }
+}

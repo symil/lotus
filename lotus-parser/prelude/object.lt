@@ -7,15 +7,17 @@ export class Object {
         return data as This;
     }
 
-    autogen static null() -> This {
+    autogen static __default() -> This {
+        // TODO
+
         return 0 as This;
     }
 
-    autogen static __default() -> This {
-        return This.null();
-    }
+    autogen static __none() -> This {{
+        (i32.const 0)
+    }}
 
-    is_null() -> bool {
-        return (this as int) == 0;
-    }
+    __is_none() -> bool {{
+        (i32.eqz)
+    }}
 }

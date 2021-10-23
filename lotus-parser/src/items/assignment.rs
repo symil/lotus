@@ -16,7 +16,7 @@ impl Assignment {
         if let Some((equal_token, rvalue)) = &self.rvalue {
             if let Some(left_vasm) = self.lvalue.process(None, AccessType::Set(&equal_token), context) {
                 if let Some(right_vasm) = rvalue.process(Some(&left_vasm.ty), context) {
-                    if left_vasm.ty.is_assignable_to(&right_vasm.ty) {
+                    if right_vasm.ty.is_assignable_to(&left_vasm.ty) {
                         let mut source = vec![];
                         let mut ok = true;
 

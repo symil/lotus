@@ -49,9 +49,10 @@ sys fn mem_alloc(block_size: int) -> ptr {
     let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
 
     for i in list_start_addr..list_end_addr {
-        let page_ptr = MEMORY[i] as ptr;
+        let page_addr = MEMORY[i];
+        let page_ptr = page_addr as ptr;
 
-        if page_ptr.is_null() {
+        if page_addr == 0 {
             page_ptr = alloc_page();
             MEMORY[i] = page_ptr as int;
 
@@ -99,15 +100,16 @@ sys fn mem_free(pointer: ptr) {
 sys fn mem_trigger_garbage_collection() {
     for i in 0..BLOCK_SIZE_COUNT {
         for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
-            let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j] as ptr;
+            let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
 
-            if page_addr.is_null() {
+            if page_addr == 0 {
                 break;
             }
 
-            let block_list_start_addr = page_addr[1];
-            let full_block_size = page_addr[2];
-            let block_count = page_addr[3];
+            let page_ptr = page_addr as ptr;
+            let block_list_start_addr = page_ptr[1];
+            let full_block_size = page_ptr[2];
+            let block_count = page_ptr[3];
 
             for k in 0..block_count {
                 let metadata_addr = block_list_start_addr + (full_block_size * k) as ptr;

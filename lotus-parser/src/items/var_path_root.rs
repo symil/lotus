@@ -1,10 +1,11 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, char_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, char_literal, none_literal};
 
 #[parsable]
 pub enum VarPathRoot {
     Macro(Macro),
+    NoneLiteral(NoneLiteral),
     BooleanLiteral(BooleanLiteral),
     FloatLiteral(FloatLiteral),
     IntegerLiteral(IntegerLiteral),
@@ -29,6 +30,7 @@ impl VarPathRoot {
     pub fn has_side_effects(&self) -> bool {
         match self {
             VarPathRoot::Macro(_) => false,
+            VarPathRoot::NoneLiteral(_) => false,
             VarPathRoot::BooleanLiteral(_) => false,
             VarPathRoot::FloatLiteral(_) => false,
             VarPathRoot::IntegerLiteral(_) => false,
@@ -44,6 +46,7 @@ impl VarPathRoot {
     pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
         match self {
             VarPathRoot::Macro(_) => {},
+            VarPathRoot::NoneLiteral(_) => {},
             VarPathRoot::BooleanLiteral(_) => {},
             VarPathRoot::FloatLiteral(_) => {},
             VarPathRoot::IntegerLiteral(_) => {},
@@ -66,7 +69,8 @@ impl VarPathRoot {
         }
 
         match self {
-            VarPathRoot::Macro(compiler_constant) => compiler_constant.process_as_value(context),
+            VarPathRoot::Macro(mac) => mac.process_as_value(context),
+            VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),

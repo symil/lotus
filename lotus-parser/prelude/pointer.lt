@@ -3,6 +3,18 @@ export type ptr = Pointer<int>;
 export type(i32) Pointer<T> {
     type Item = T;
 
+    static __default() -> This {{
+        (i32.const 0)
+    }}
+
+    static __none() -> This {{
+        (i32.const 0)
+    }}
+
+    __is_none() -> bool {{
+        (i32.eqz)
+    }}
+
     add(offset: int) -> This {
         return ((this as int) + offset) as This;
     }
@@ -22,14 +34,6 @@ export type(i32) Pointer<T> {
     deref_get() -> T {
         return wasm_load((this as int) * 4);
     }
-
-    is_null() -> bool {{
-        i32.eqz
-    }}
-
-    static null() -> This {{
-        (i32.const 0)
-    }}
 
     print() {{
         (call $__log_int)

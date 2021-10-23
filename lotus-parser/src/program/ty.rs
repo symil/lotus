@@ -64,18 +64,22 @@ impl Type {
         self.is_builtin_type(BuiltinType::Bool)
     }
 
-    pub fn get_array_item(&self) -> Option<Type> {
-        match self.is_builtin_type(BuiltinType::Array) {
+    pub fn get_builtin_type_parameter(&self, builtin_type: BuiltinType) -> Option<&Type> {
+        match self.is_builtin_type(builtin_type) {
             true => {
                 let info = self.get_actual_type_content();
 
                 match info.parameters.first() {
-                    Some(item_type) => Some(item_type.clone()),
+                    Some(item_type) => Some(item_type),
                     None => None,
                 }
             },
             false => None
         }
+    }
+
+    pub fn get_array_item(&self) -> Option<&Type> {
+        self.get_builtin_type_parameter(BuiltinType::Array)
     }
 
     pub fn get_type_blueprint(&self) -> Link<TypeBlueprint> {
@@ -186,7 +190,11 @@ impl Type {
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
                 Some(ty) => &ty == target,
-                None => false,
+                None => match target.get_builtin_type_parameter(BuiltinType::Option) {
+                    // Special case: a type T is always assignable to Option<T>
+                    Some(option_type) => self == option_type,
+                    None => false,
+                },
             },
             // (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),

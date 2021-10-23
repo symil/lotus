@@ -29,6 +29,15 @@ export type(f32) float {
         (f32.const 0)
     }}
 
+    static __none() -> float {{
+        (f32.const nan:0x200000)
+    }}
+
+    is_none() -> bool {{
+        (f32.const nan:0x200000)
+        (f32.eq)
+    }}
+
     static __chosen() -> float {
         return 18.5f;
     }

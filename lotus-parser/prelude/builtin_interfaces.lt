@@ -97,6 +97,14 @@ export interface Print {
     print();
 }
 
-sys interface Default {
+export interface Unwrap {
+    type Item;
+
+    unwrap() -> Item;
+}
+
+sys interface Builtin {
     static __default() -> This;
+    static __none() -> This;
+    __is_none() -> bool;
 }

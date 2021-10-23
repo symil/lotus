@@ -22,11 +22,12 @@ pub enum BuiltinInterface {
     GetAtIndex,
     SetAtIndex,
     Iterable,
-    Default
+    Unwrap,
+    Builtin
 }
 
 pub const DEFAULT_INTERFACES : &'static[BuiltinInterface] = &[
-    BuiltinInterface::Default
+    BuiltinInterface::Builtin,
 ];
 
 impl BuiltinInterface {
@@ -54,7 +55,8 @@ impl BuiltinInterface {
             BuiltinInterface::GetAtIndex => "GetAtIndex",
             BuiltinInterface::SetAtIndex => "SetAtIndex",
             BuiltinInterface::Iterable => "Iterable",
-            BuiltinInterface::Default => "Default",
+            BuiltinInterface::Unwrap => "Unwrap",
+            BuiltinInterface::Builtin => "Builtin",
         }
     }
 }

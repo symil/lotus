@@ -17,6 +17,14 @@ export type(i32) Array<T> {
         return This.__new(0);
     }
 
+    static __none() -> This {{
+        (i32.const 0)
+    }}
+
+    __is_none() -> bool {{
+        (i32.eqz)
+    }}
+
     get_iterable_len() -> int {
         return this.len();
     }
