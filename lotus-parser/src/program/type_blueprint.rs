@@ -2,7 +2,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent, Vasm};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -11,7 +11,7 @@ pub struct TypeBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
-    pub stack_type: StackType,
+    pub stack_type: WasmStackType,
     // pub inheritance_chain_length: usize,
     pub descendants: Vec<Link<TypeBlueprint>>,
     pub ancestors: Vec<Type>,
@@ -26,6 +26,12 @@ pub struct TypeBlueprint {
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub after_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
+}
+
+#[derive(Debug)]
+pub enum WasmStackType {
+    Fixed(StackType),
+    TypeParameter(usize)
 }
 
 #[derive(Debug)]
@@ -51,19 +57,15 @@ pub struct DynamicMethodInfo {
 }
 
 impl TypeBlueprint {
-    pub fn get_wasm_type(&self) -> Option<&'static str> {
+    pub fn get_wasm_type(&self, parameters: &[Rc<TypeInstanceHeader>]) -> Option<&'static str> {
         match self.stack_type {
-            StackType::Void => None,
-            StackType::Int => Some("i32"),
-            StackType::Float => Some("f32"),
+            WasmStackType::Fixed(stack_type) => match stack_type {
+                StackType::Void => None,
+                StackType::Int => Some("i32"),
+                StackType::Float => Some("f32"),
+            },
+            WasmStackType::TypeParameter(index) => parameters[index].wasm_type,
         }
-    }
-
-    pub fn generate_builtin_methods(&mut self) {
-        let methods = &[
-            (STORE_FUNC_NAME, "store"),
-            (LOAD_FUNC_NAME, "load")
-        ];
     }
 
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {

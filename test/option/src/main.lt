@@ -1,7 +1,9 @@
 export fn main() {
-    let a : int? = none;
+    let a : int???? = none;
+    let b : float? = 8.5f;
 
-    a = 8;
+    a = 9;
 
-    @log(a?);
+    @log(a????);
+    @log(b.unwrap());
 }

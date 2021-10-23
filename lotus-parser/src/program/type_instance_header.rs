@@ -31,7 +31,7 @@ impl TypeInstanceHeader {
             let id = instance_parameters.get_id();
             let type_blueprint = instance_parameters.type_blueprint.clone();
             let parameters = instance_parameters.type_parameters.clone();
-            let wasm_type = type_unwrapped.get_wasm_type();
+            let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
             let dynamic_method_table_offset = context.dynamic_method_table.len();
             let mut name = type_unwrapped.name.to_string();

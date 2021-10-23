@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
 use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, ResolvedType, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use super::{BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -192,7 +192,7 @@ impl Type {
                 Some(ty) => &ty == target,
                 None => match target.get_builtin_type_parameter(BuiltinType::Option) {
                     // Special case: a type T is always assignable to Option<T>
-                    Some(option_type) => self == option_type,
+                    Some(option_type) => self.is_assignable_to(option_type),
                     None => false,
                 },
             },

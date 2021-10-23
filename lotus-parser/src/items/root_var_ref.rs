@@ -87,7 +87,7 @@ impl RootVarRef {
                             };
 
                             for unwrap_token in &full_type.suffix {
-                                match context.call_builtin_interface_no_arg(unwrap_token, BuiltinInterface::Unwrap, &var_info.ty) {
+                                match context.call_builtin_interface_no_arg(unwrap_token, BuiltinInterface::Unwrap, &var_vasm.ty) {
                                     Some(vasm) => var_vasm.extend(vasm),
                                     None => return None,
                                 }

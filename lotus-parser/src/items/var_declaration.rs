@@ -27,7 +27,7 @@ impl VarDeclaration {
                     final_var_type = var_type.clone();
 
                     if let Some(vasm) = self.init_value.process(Some(&var_type), context) {
-                        if var_type.is_assignable_to(&vasm.ty) {
+                        if vasm.ty.is_assignable_to(&var_type) {
                             final_var_type = var_type;
                             ok = true;
                         } else {

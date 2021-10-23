@@ -32,7 +32,8 @@ impl FunctionInstanceHeader {
             if let Some(this_type) = &parameters.this_type {
                 this_type.type_blueprint.with_ref(|type_unwrapped| {
                     for parameter in type_unwrapped.parameters.values() {
-                        let wasm_type = this_type.parameters[parameter.index].type_blueprint.borrow().get_wasm_type().unwrap();
+                        let p = &this_type.parameters[parameter.index];
+                        let wasm_type = p.type_blueprint.borrow().get_wasm_type(&p.parameters).unwrap();
 
                         for wat in &mut wasm_call {
                             wat.replace(&parameter.wasm_pattern, wasm_type);
@@ -42,7 +43,8 @@ impl FunctionInstanceHeader {
             }
 
             for parameter in function_unwrapped.parameters.values() {
-                let wasm_type = parameters.function_parameters[parameter.index].type_blueprint.borrow().get_wasm_type().unwrap();
+                let p = &parameters.function_parameters[parameter.index];
+                let wasm_type = p.type_blueprint.borrow().get_wasm_type(&p.parameters).unwrap();
 
                 for wat in &mut wasm_call {
                     wat.replace(&parameter.wasm_pattern, wasm_type);

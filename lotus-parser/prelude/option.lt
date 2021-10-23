@@ -1,5 +1,17 @@
-export type(i32) Option<T> {
+export type(T) Option<T> {
     type Item = T;
+
+    static __default() -> This {
+        return This.none();
+    }
+
+    static __none() -> This {
+        return This.none();
+    }
+
+    __is_none() -> bool {
+        return this.is_none();
+    }
 
     static some(arg: T) -> This {{
         
