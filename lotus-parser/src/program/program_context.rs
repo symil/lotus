@@ -1,7 +1,8 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
+use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -264,11 +265,55 @@ impl ProgramContext {
             interface_declaration.process_name(self);
         }
 
-        for type_declaration in &types {
-            type_declaration.process_name(self);
+        for (i, type_declaration) in types.iter().enumerate() {
+            type_declaration.process_name(i, self);
         }
 
         self.index_builtin_entities();
+
+        let mut links = vec![];
+        for (i, type_declaration) in types.iter().enumerate() {
+            let dependancies = type_declaration.compute_type_dependencies(self);
+
+            // let mut s = format!("{}: ", &type_declaration.name);
+            // for t in &dependancies {
+            //     s.push_str(&format!("{}, ", t.borrow().name.as_str()));
+            // }
+            // println!("{}", s);
+
+            let indexes = dependancies.into_iter().map(|ty| ty.borrow().declaration_index).collect();
+            links.push(indexes);
+        }
+
+        match sort_dependancy_graph(links) {
+            Ok(result) => {
+                let mut wrapped : Vec<Option<TypeDeclaration>> = types.into_iter().map(|ty| Some(ty)).collect();
+                types = vec![];
+
+                for index in result {
+                    types.push(take(&mut wrapped[index]).unwrap())
+                }
+            },
+            Err(cycles) => {
+                for cycle in cycles {
+                    let first = &types[cycle[0]];
+                    let mut s = format!("{}", &first.name.as_str().bold());
+
+                    for index in &cycle[1..] {
+                        s.push_str(&format!(" -> {}", types[*index].name.as_str().bold()));
+                    }
+
+                    self.errors.add(&first.name, format!("type dependancy cycle: {}", s));
+                }
+
+                return;
+            },
+        }
+
+        // println!("====");
+        // for t in &types {
+        //     println!("{}", &t.name);
+        // }
 
         for type_declaration in &types {
             type_declaration.process_parent(self);
@@ -290,9 +335,9 @@ impl ProgramContext {
             typedef_declaration.process(self);
         }
 
-        types.sort_by_cached_key(|type_declaration| {
-            type_declaration.process_inheritance_chain(self)
-        });
+        // types.sort_by_cached_key(|type_declaration| {
+        //     type_declaration.process_inheritance_chain(self)
+        // });
 
         for type_declaration in types.iter().rev() {
             type_declaration.compute_descendants(self);

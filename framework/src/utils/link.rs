@@ -1,4 +1,4 @@
-use std::{cell::{UnsafeCell}, fmt::Debug, mem, rc::Rc};
+use std::{cell::{UnsafeCell}, fmt::Debug, hash::Hash, mem, rc::Rc};
 use serializable::{ReadBuffer, Serializable, WriteBuffer};
 
 pub struct Link<T : ?Sized> {
@@ -48,6 +48,22 @@ impl<T> Link<T> {
 
         f(ref_mut)
     }
+}
+
+impl<T> Hash for Link<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.get_addr().hash(state);
+    }
+}
+
+impl<T> PartialEq for Link<T> {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.value, &other.value)
+    }
+}
+
+impl<T> Eq for Link<T> {
+    
 }
 
 impl<T> Default for Link<T> {

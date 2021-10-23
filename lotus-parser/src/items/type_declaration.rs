@@ -28,15 +28,16 @@ pub struct TypeDeclarationBody {
 }
 
 impl TypeDeclaration {
-    pub fn process_name(&self, context: &mut ProgramContext) {
+    pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let type_unwrapped = TypeBlueprint {
+            declaration_index: index,
             type_id,
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
             qualifier: self.qualifier,
             stack_type: self.stack_type.as_ref().and_then(|stack_type| Some(stack_type.value)).unwrap_or(StackType::Int),
-            inheritance_chain_length: 0,
+            // inheritance_chain_length: 0,
             descendants: vec![],
             ancestors: vec![],
             parameters: IndexMap::new(),
@@ -69,6 +70,36 @@ impl TypeDeclaration {
                 }).collect(),
             })
         });
+    }
+
+    pub fn compute_type_dependencies(&self, context: &ProgramContext) -> Vec<Link<TypeBlueprint>> {
+        let mut list = vec![];
+
+        match &self.parent {
+            Some(parent) => parent.collect_type_identifiers(&mut list),
+            None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier != TypeQualifier::Class {
+                true => {},
+                false => {
+                    list.push(Identifier::unlocated(OBJECT_TYPE_NAME))
+                },
+            },
+        };
+
+        for field_declaration in &self.body.fields {
+            if let Some(default_value) = &field_declaration.default_value {
+                default_value.collect_type_identifiers(&mut list);
+            }
+        }
+
+        let mut dependancies = vec![];
+
+        for identifier in list {
+            if let Some(type_blueprint) = context.types.get_by_identifier(&identifier) {
+                dependancies.push(type_blueprint);
+            }
+        }
+
+        dependancies
     }
 
     pub fn process_parent(&self, context: &mut ProgramContext) {
@@ -124,36 +155,36 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn process_inheritance_chain(&self, context: &mut ProgramContext) -> usize {
-        let mut chain_length = 0;
+    // pub fn process_inheritance_chain(&self, context: &mut ProgramContext) -> usize {
+    //     let mut chain_length = 0;
 
-        self.process(context, |type_wrapped, context| {
-            let mut types = vec![type_wrapped.clone()];
-            let mut parent_opt = type_wrapped.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
+    //     self.process(context, |type_wrapped, context| {
+    //         let mut types = vec![type_wrapped.clone()];
+    //         let mut parent_opt = type_wrapped.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
 
-            while let Some(parent_blueprint) = parent_opt {
-                if types.contains(&parent_blueprint) {
-                    if parent_blueprint == type_wrapped {
-                        context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
-                        type_wrapped.borrow_mut().parent = None;
-                    }
+    //         while let Some(parent_blueprint) = parent_opt {
+    //             if types.contains(&parent_blueprint) {
+    //                 if parent_blueprint == type_wrapped {
+    //                     context.errors.add(&self.name, format!("circular inheritance: `{}`", &self.name));
+    //                     type_wrapped.borrow_mut().parent = None;
+    //                 }
 
-                    parent_opt = None;
-                } else {
-                    types.push(parent_blueprint.clone());
-                    parent_opt = parent_blueprint.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
-                }
-            }
+    //                 parent_opt = None;
+    //             } else {
+    //                 types.push(parent_blueprint.clone());
+    //                 parent_opt = parent_blueprint.borrow().parent.as_ref().and_then(|parent| Some(parent.ty.get_type_blueprint()));
+    //             }
+    //         }
 
-            chain_length = types.len();
+    //         chain_length = types.len();
 
-            type_wrapped.with_mut(|mut type_unwrapped| {
-                type_unwrapped.inheritance_chain_length = chain_length;
-            });
-        });
+    //         type_wrapped.with_mut(|mut type_unwrapped| {
+    //             type_unwrapped.inheritance_chain_length = chain_length;
+    //         });
+    //     });
 
-        chain_length
-    }
+    //     chain_length
+    // }
 
     pub fn compute_descendants(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
@@ -351,7 +382,7 @@ impl TypeDeclaration {
                 if let Some(parent) = &type_unwrapped.parent {
                     parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
                         for field_info in parent_unwrapped.fields.values() {
-                            default_values.insert(field_info.name.to_string(), field_info.default_value.replace_type_parameters(&parent.ty));
+                            default_values.insert(field_info.name.to_string(), field_info.default_value.replace_type_parameters(&parent.ty, self.location.get_hash()));
                         }
                     });
                 }

@@ -16,6 +16,13 @@ impl ItemType {
         }
     }
 
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        match self {
+            ItemType::Value(value_type) => value_type.collect_type_identifiers(list),
+            ItemType::Function(_) => {},
+        }
+    }
+
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         match self {
             ItemType::Value(value_type) => value_type.process(check_interfaces, context),

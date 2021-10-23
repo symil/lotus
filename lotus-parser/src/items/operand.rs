@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::program::{AccessType, ProgramContext, Type, Vasm};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, ObjectLiteral, StringLiteral, FullType, UnaryOperation, VarPath};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, FullType, Identifier, ObjectLiteral, StringLiteral, UnaryOperation, VarPath};
 
 #[parsable]
 pub enum Operand {
@@ -20,6 +20,13 @@ impl Operand {
         match self {
             Operand::UnaryOperation(unary_operation) => unary_operation.has_side_effects(),
             Operand::VarPath(var_path) => var_path.has_side_effects(),
+        }
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        match self {
+            Operand::UnaryOperation(unary_operation) => unary_operation.collect_type_identifiers(list),
+            Operand::VarPath(var_path) => var_path.collect_type_identifiers(list),
         }
     }
 

@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{items::ValueOrType, program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
-use super::{VarPathRoot, VarPathSegment};
+use super::{Identifier, VarPathRoot, VarPathSegment};
 
 #[parsable]
 pub struct VarPath {
@@ -14,6 +14,10 @@ impl VarPath {
             true => true,
             false => self.path.iter().any(|segment| segment.has_side_effects()),
         }
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.root.collect_type_identifiers(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

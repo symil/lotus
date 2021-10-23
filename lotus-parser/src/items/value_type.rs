@@ -19,6 +19,11 @@ impl ValueType {
         }
     }
 
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        list.push(self.name.clone());
+        self.arguments.collect_type_identifiers(list);
+    }
+
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         let mut result = Type::Undefined;
         let mut associated = false;

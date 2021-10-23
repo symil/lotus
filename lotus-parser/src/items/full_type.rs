@@ -16,6 +16,10 @@ impl FullType {
         }
     }
 
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.item.collect_type_identifiers(list);
+    }
+
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         if let Some(mut final_type) = self.item.process(check_interfaces, context) {
             for suffix in &self.suffix {

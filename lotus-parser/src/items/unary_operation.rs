@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, Type, Vasm}, wat};
-use super::{Operand, UnaryOperatorWrapper};
+use super::{Identifier, Operand, UnaryOperatorWrapper};
 
 #[parsable]
 pub struct UnaryOperation {
@@ -11,6 +11,10 @@ pub struct UnaryOperation {
 impl UnaryOperation {
     pub fn has_side_effects(&self) -> bool {
         self.operand.has_side_effects()
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.operand.collect_type_identifiers(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

@@ -47,11 +47,11 @@ impl Vasm {
         Self::new(ty, variables, instructions)
     }
 
-    pub fn replace_type_parameters(&self, this_type: &Type) -> Self {
+    pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Self {
         Self {
             ty: self.ty.replace_parameters(Some(this_type), &[]),
-            variables: self.variables.iter().map(|var_info| Rc::new(var_info.replace_type_parameters(this_type))).collect(),
-            instructions: self.instructions.iter().map(|inst| inst.replace_type_parameters(this_type)).collect()
+            variables: self.variables.iter().map(|var_info| Rc::new(var_info.replace_type_parameters(this_type, id))).collect(),
+            instructions: self.instructions.iter().map(|inst| inst.replace_type_parameters(this_type, id)).collect()
         }
     }
 

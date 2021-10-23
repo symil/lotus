@@ -6,12 +6,13 @@ use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, G
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
+    pub declaration_index: usize,
     pub type_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: StackType,
-    pub inheritance_chain_length: usize,
+    // pub inheritance_chain_length: usize,
     pub descendants: Vec<Link<TypeBlueprint>>,
     pub ancestors: Vec<Type>,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,

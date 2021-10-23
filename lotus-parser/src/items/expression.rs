@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type, Vasm};
-use super::{BinaryOperation, FullType};
+use super::{BinaryOperation, FullType, Identifier};
 
 #[parsable]
 pub struct Expression {
@@ -12,6 +12,10 @@ pub struct Expression {
 impl Expression {
     pub fn has_side_effects(&self) -> bool {
         self.operation.has_side_effects()
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.operation.collect_type_identifiers(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

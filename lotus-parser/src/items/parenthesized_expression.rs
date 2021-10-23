@@ -1,7 +1,7 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type, Vasm};
 
-use super::Expression;
+use super::{Expression, Identifier};
 
 #[parsable]
 pub struct ParenthesizedExpression {
@@ -12,6 +12,10 @@ pub struct ParenthesizedExpression {
 impl ParenthesizedExpression {
     pub fn has_side_effects(&self) -> bool {
         self.expression.has_side_effects()
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.expression.collect_type_identifiers(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

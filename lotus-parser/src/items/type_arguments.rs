@@ -10,6 +10,12 @@ pub struct TypeArguments {
 }
 
 impl TypeArguments {
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        for ty in &self.list {
+            ty.collect_type_identifiers(list);
+        }
+    }
+
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Vec<Type> {
         let mut type_list = vec![];
 

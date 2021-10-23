@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{ProgramContext, Type, VI, Vasm}, vasm, wat};
-use super::{BinaryOperatorWrapper, Operand, FullType};
+use super::{BinaryOperatorWrapper, FullType, Identifier, Operand};
 
 #[parsable]
 pub struct BinaryOperation {
@@ -13,6 +13,14 @@ impl BinaryOperation {
         match self.first.has_side_effects() {
             true => true,
             false => self.others.iter().any(|(_, operand)| operand.has_side_effects())
+        }
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.first.collect_type_identifiers(list);
+        
+        for (_, operand) in &self.others {
+            operand.collect_type_identifiers(list);
         }
     }
 

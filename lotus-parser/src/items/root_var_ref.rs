@@ -23,6 +23,17 @@ impl RootVarRef {
         }
     }
 
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        match self {
+            RootVarRef::Prefixed(_, _, _) => {},
+            RootVarRef::Unprefixed(ty, args) => {
+                if args.is_none() {
+                    ty.collect_type_identifiers(list);
+                }
+            },
+        }
+    }
+
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
         match self {
             RootVarRef::Prefixed(prefix, field_name_opt, args_opt) => match prefix.process(context) {

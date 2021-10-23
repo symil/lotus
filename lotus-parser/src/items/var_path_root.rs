@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, IntegerLiteral, Macro, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, char_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, char_literal};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -38,6 +38,21 @@ impl VarPathRoot {
             VarPathRoot::ObjectLiteral(_) => true,
             VarPathRoot::Variable(var_ref) => var_ref.has_side_effects(),
             VarPathRoot::Parenthesized(expr) => expr.has_side_effects(),
+        }
+    }
+
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        match self {
+            VarPathRoot::Macro(_) => {},
+            VarPathRoot::BooleanLiteral(_) => {},
+            VarPathRoot::FloatLiteral(_) => {},
+            VarPathRoot::IntegerLiteral(_) => {},
+            VarPathRoot::CharLiteral(_) => {},
+            VarPathRoot::StringLiteral(_) => {},
+            VarPathRoot::ArrayLiteral(_) => {},
+            VarPathRoot::ObjectLiteral(object_literal) => object_literal.collect_type_identifiers(list),
+            VarPathRoot::Variable(root_var_ref) => {},
+            VarPathRoot::Parenthesized(expr) => expr.collect_type_identifiers(list),
         }
     }
 

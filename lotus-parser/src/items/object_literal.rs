@@ -19,6 +19,10 @@ pub struct ObjectFieldInitializationList {
 }
 
 impl ObjectLiteral {
+    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+        self.object_type.collect_type_identifiers(list);
+    }
+
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = Vasm::empty();
 
@@ -57,11 +61,11 @@ impl ObjectLiteral {
                         }
                     }
 
-                    for field_info in type_unwrapped.fields.values() {
+                    for (i, field_info) in type_unwrapped.fields.values().enumerate() {
                         let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
-                            None => field_info.default_value.replace_type_parameters(&object_type),
+                            None => field_info.default_value.replace_type_parameters(&object_type, self.location.get_hash() + (i as u64)),
                         };
 
                         result.extend(vasm![
