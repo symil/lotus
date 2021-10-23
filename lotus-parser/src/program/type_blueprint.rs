@@ -2,7 +2,7 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, ResolvedType, STORE_FUNC_NAME, Type, TypeInstanceContent, Vasm};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -38,7 +38,8 @@ pub struct FieldInfo {
     pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
     pub ty: Type,
-    pub offset: usize
+    pub offset: usize,
+    pub default_value: Vasm
 }
 
 #[derive(Debug)]

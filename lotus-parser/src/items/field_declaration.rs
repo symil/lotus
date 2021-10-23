@@ -1,11 +1,11 @@
 use parsable::parsable;
-
-use super::{Identifier, FullType};
+use super::{Expression, FullType, Identifier};
 
 #[parsable]
 pub struct FieldDeclaration {
     pub name: Identifier,
     #[parsable(prefix=":")]
     pub ty: FullType,
-    // TODO: default value
+    #[parsable(prefix="=")]
+    pub default_value: Option<Expression>
 }

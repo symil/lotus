@@ -22,7 +22,7 @@ macro_rules! wat {
 macro_rules! vasm {
     ($($arg:expr),*) => {
         {
-            let mut result = Vasm::empty();
+            let mut result = crate::program::Vasm::empty();
             $(
                 {
                     result.extend($arg);

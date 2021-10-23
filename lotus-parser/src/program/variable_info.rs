@@ -66,6 +66,15 @@ impl VariableInfo {
         self.wasm_name.as_str()
     }
 
+    pub fn replace_type_parameters(&self, this_type: &Type) -> Self {
+        Self {
+            name: self.name.clone(),
+            ty: self.ty.replace_parameters(Some(this_type), &[]),
+            kind: self.kind.clone(),
+            wasm_name: self.wasm_name.clone(),
+        }
+    }
+
     pub fn clone(self: &Rc<Self>) -> Rc<Self> {
         Rc::clone(self)
     }

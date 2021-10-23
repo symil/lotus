@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{DEFAULT_FUNC_NAME, Error, NEW_FUNC_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
@@ -59,10 +59,9 @@ impl ObjectLiteral {
 
                     for field_info in type_unwrapped.fields.values() {
                         let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
-                        
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
-                            None => vasm![VI::call_static_method(&field_type, DEFAULT_FUNC_NAME, &[], vec![], context)],
+                            None => field_info.default_value.replace_type_parameters(&object_type),
                         };
 
                         result.extend(vasm![

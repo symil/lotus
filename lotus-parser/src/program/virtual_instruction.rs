@@ -6,7 +6,7 @@ use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprin
 
 pub type VI = VirtualInstruction;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VirtualInstruction {
     Drop,
     Raw(Wat),
@@ -22,47 +22,47 @@ pub enum VirtualInstruction {
     SetField(VirtualSetFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
     Loop(VirtualLoopInfo),
-    Block(VasmInfo),
+    Block(VirtualBlockInfo),
     Jump(VirtualJumpInfo),
     JumpIf(VirtualJumpIfInfo)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualStashInfo {
     pub value_type: Type,
     pub wasm_var_name: String
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualGetVariableInfo {
     pub var_info: Rc<VariableInfo>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualSetVariableInfo {
     pub var_info: Rc<VariableInfo>,
     pub value: Option<Vasm>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualCreateObjectInfo {
     pub object_type: Type,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualGetFieldInfo {
     pub field_type: Type,
     pub field_offset: usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualSetFieldInfo {
     pub field_type: Type,
     pub field_offset: usize,
     pub value: Option<Vasm>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualFunctionCallInfo {
     pub caller_type: Option<Type>,
     pub function: Link<FunctionBlueprint>,
@@ -71,24 +71,24 @@ pub struct VirtualFunctionCallInfo {
     pub args: Option<Vasm>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualJumpInfo {
     pub depth: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualJumpIfInfo {
     pub depth: u32,
     pub condition: Option<Vasm>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VirtualLoopInfo {
     pub content: Vasm,
 }
 
-#[derive(Debug)]
-pub struct VasmInfo {
+#[derive(Debug, Clone)]
+pub struct VirtualBlockInfo {
     pub result: Vec<Type>,
     pub content: Vasm,
 }
@@ -220,14 +220,14 @@ impl VirtualInstruction {
     }
 
     pub fn block<T : ToVasm>(content: T) -> Self {
-        Self::Block(VasmInfo {
+        Self::Block(VirtualBlockInfo {
             result: vec![],
             content: content.to_vasm(),
         })
     }
 
     pub fn typed_block<T : ToVasm>(result: Vec<Type>, content: T) -> Self {
-        Self::Block(VasmInfo {
+        Self::Block(VirtualBlockInfo {
             result,
             content: content.to_vasm(),
         })
@@ -251,6 +251,65 @@ impl VirtualInstruction {
             depth,
             condition: None
         })
+    }
+
+    pub fn replace_type_parameters(&self, this_type: &Type) -> Self {
+        match self {
+            VirtualInstruction::Drop => VirtualInstruction::Drop,
+            VirtualInstruction::Raw(wat) => VirtualInstruction::Raw(wat.clone()),
+            VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
+            VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(value.clone()),
+            VirtualInstruction::TypeId(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
+            VirtualInstruction::Store(info) => VirtualInstruction::Store(VirtualStashInfo {
+                value_type: info.value_type.replace_parameters(Some(this_type), &[]),
+                wasm_var_name: info.wasm_var_name.clone(),
+            }),
+            VirtualInstruction::Load(info) => VirtualInstruction::Load(VirtualStashInfo {
+                value_type: info.value_type.replace_parameters(Some(this_type), &[]),
+                wasm_var_name: info.wasm_var_name.clone(),
+            }),
+            VirtualInstruction::GetVariable(info) => VirtualInstruction::GetVariable(VirtualGetVariableInfo {
+                var_info: Rc::new(info.var_info.replace_type_parameters(this_type)),
+            }),
+            VirtualInstruction::SetVariable(info) => VirtualInstruction::SetVariable(VirtualSetVariableInfo {
+                var_info: Rc::new(info.var_info.replace_type_parameters(this_type)),
+                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type))),
+            }),
+            VirtualInstruction::TeeVariable(info) => VirtualInstruction::TeeVariable(VirtualSetVariableInfo {
+                var_info: Rc::new(info.var_info.replace_type_parameters(this_type)),
+                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type))),
+            }),
+            VirtualInstruction::GetField(info) => VirtualInstruction::GetField(VirtualGetFieldInfo {
+                field_type: info.field_type.replace_parameters(Some(this_type), &[]),
+                field_offset: info.field_offset,
+            }),
+            VirtualInstruction::SetField(info) => VirtualInstruction::SetField(VirtualSetFieldInfo {
+                field_type: info.field_type.replace_parameters(Some(this_type), &[]),
+                field_offset: info.field_offset,
+                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type))),
+            }),
+            VirtualInstruction::FunctionCall(info) => VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
+                caller_type: info.caller_type.as_ref().and_then(|ty| Some(ty.replace_parameters(Some(this_type), &[]))),
+                function: info.function.clone(),
+                parameters: info.parameters.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
+                dynamic_methods_index_var: info.dynamic_methods_index_var.as_ref().and_then(|var_info| Some(Rc::new(var_info.replace_type_parameters(this_type)))),
+                args: info.args.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type))),
+            }),
+            VirtualInstruction::Loop(info) => VirtualInstruction::Loop(VirtualLoopInfo {
+                content: info.content.replace_type_parameters(this_type),
+            }),
+            VirtualInstruction::Block(info) => VirtualInstruction::Block(VirtualBlockInfo {
+                result: info.result.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
+                content: info.content.replace_type_parameters(this_type),
+            }),
+            VirtualInstruction::Jump(info) => VirtualInstruction::Jump(VirtualJumpInfo {
+                depth: info.depth.clone(),
+            }),
+            VirtualInstruction::JumpIf(info) => VirtualInstruction::JumpIf(VirtualJumpIfInfo {
+                depth: info.depth.clone(),
+                condition: info.condition.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type))),
+            }),
+        }
     }
 
     pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {

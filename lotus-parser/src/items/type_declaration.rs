@@ -1,7 +1,7 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DynamicMethodInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_FUNC_NAME, DynamicMethodInfo, Error, FieldInfo, FuncRef, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -256,7 +256,8 @@ impl TypeDeclaration {
                                 owner: field_info.owner.clone(),
                                 ty: field_info.ty.replace_parameters(Some(&parent.ty), &[]),
                                 name: field_info.name.clone(),
-                                offset
+                                offset,
+                                default_value: vasm![]
                             });
 
                             offset += 1;
@@ -275,7 +276,8 @@ impl TypeDeclaration {
                             owner: type_wrapped.clone(),
                             ty: field_type,
                             name: field.name.clone(),
-                            offset
+                            offset,
+                            default_value: vasm![]
                         });
                         
                         offset += 1;
@@ -338,6 +340,48 @@ impl TypeDeclaration {
                     method.process_signature(context);
                 }
             }
+        });
+    }
+
+    pub fn process_fields_default_values(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let mut default_values = HashMap::new();
+
+            type_wrapped.with_ref(|type_unwrapped| {
+                if let Some(parent) = &type_unwrapped.parent {
+                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        for field_info in parent_unwrapped.fields.values() {
+                            default_values.insert(field_info.name.to_string(), field_info.default_value.replace_type_parameters(&parent.ty));
+                        }
+                    });
+                }
+
+                for field in &self.body.fields {
+                    if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
+                        let mut default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_FUNC_NAME, &[], vec![], context)];
+
+                        if let Some(default_value) = &field.default_value {
+                            if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
+                                if vasm.ty.is_assignable_to(&field_info.ty) {
+                                    default_value_vasm = vasm;
+                                } else {
+                                    context.errors.add(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
+                                }
+                            } 
+                        };
+
+                        default_values.insert(field_info.name.to_string(), default_value_vasm);
+                    }
+                }
+            });
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                for (name, default_value) in default_values.into_iter() {
+                    let mut field_info = Rc::get_mut(type_unwrapped.fields.get_mut(&name).unwrap()).unwrap();
+
+                    field_info.default_value = default_value;
+                }
+            });
         });
     }
 

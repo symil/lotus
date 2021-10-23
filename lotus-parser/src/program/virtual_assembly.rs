@@ -1,8 +1,7 @@
 use std::rc::Rc;
-
 use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Vasm {
     pub ty: Type,
     pub variables: Vec<Rc<VariableInfo>>,
@@ -46,6 +45,14 @@ impl Vasm {
         }
 
         Self::new(ty, variables, instructions)
+    }
+
+    pub fn replace_type_parameters(&self, this_type: &Type) -> Self {
+        Self {
+            ty: self.ty.replace_parameters(Some(this_type), &[]),
+            variables: self.variables.iter().map(|var_info| Rc::new(var_info.replace_type_parameters(this_type))).collect(),
+            instructions: self.instructions.iter().map(|inst| inst.replace_type_parameters(this_type)).collect()
+        }
     }
 
     pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
