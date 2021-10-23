@@ -8,4 +8,5 @@ export type(i32) bool {
     to_int() -> int {{ }}
 
     print() {{ (call $__log_bool) }}
+    static __default() {{  (i32.const 0) }}
 }

@@ -27,9 +27,9 @@ export type(i32) int {
 
     print() {{ (call $__log_int) }}
 
-    static __default() -> int {
-        return 0;
-    }
+    static __default() -> int {{
+        (i32.const 0)
+    }}
 
     static __chosen() -> int {
         return 23;

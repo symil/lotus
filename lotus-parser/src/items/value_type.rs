@@ -1,5 +1,6 @@
 use std::{rc::Rc};
 use parsable::parsable;
+use colored::*;
 use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, THIS_TYPE_NAME, THIS_VAR_NAME, Type};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
@@ -29,6 +30,7 @@ impl ValueType {
         let mut associated = false;
         let mut parameter = false;
         let mut typedef = false;
+        let mut param_count_error = false;
         let parameters = self.arguments.process(check_interfaces, context);
         let has_parameters = !parameters.is_empty();
 
@@ -79,7 +81,8 @@ impl ValueType {
                 let parameters = &type_blueprint.borrow().parameters;
 
                 if parameter_list.len() != parameters.len() {
-                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name, parameters.len(), parameter_list.len()));
+                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name.as_str().bold(), parameters.len(), parameter_list.len()));
+                    param_count_error = true;
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
                         if check_interfaces {
@@ -108,7 +111,9 @@ impl ValueType {
         }
 
         if result.is_undefined() {
-            context.errors.add(&self.name, format!("undefined type `{}`", &self.name));
+            if !param_count_error {
+                context.errors.add(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
+            }
         } else {
             for name in &self.associated_types {
                 if let Some(associated_type) = result.get_associated_type(name.as_str()) {

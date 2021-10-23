@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
+use colored::*;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, StatementList, TypeParameters, Visibility};
@@ -118,7 +119,7 @@ impl FunctionContent {
                         function_blueprint.borrow_mut().conditions = conditions.process(&event_type_blueprint, context);
                     }
                 } else {
-                    context.errors.add(&self.name, format!("undefined type `{}`", &self.name));
+                    context.errors.add(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
                 }
             } else {
                 context.errors.add(self, "regular functions cannot be event callbacks");

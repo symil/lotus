@@ -25,9 +25,9 @@ export type(f32) float {
 
     print() {{ (call $__log_float) }}
 
-    static __default() -> float {
-        return 0f;
-    }
+    static __default() -> float {{
+        (f32.const 0)
+    }}
 
     static __chosen() -> float {
         return 18.5f;

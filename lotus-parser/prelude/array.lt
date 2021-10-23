@@ -13,6 +13,22 @@ export type(i32) Array<T> {
         return header as This;
     }
 
+    static __default() -> This {
+        return This.__new(0);
+    }
+
+    get_iterable_len() -> int {
+        return this.len();
+    }
+
+    get_iterable_ptr() -> Pointer<T> {
+        return this.body();
+    }
+
+    add(other: This) -> This {
+        return this.concat(other);
+    }
+
     body() -> Pointer<T> {
         return (this as ptr)[0] as Pointer<T>;
     }
@@ -87,21 +103,5 @@ export type(i32) Array<T> {
         }
 
         return new_array;
-    }
-
-    static default() -> This {
-        return This.__new(0);
-    }
-
-    get_iterable_len() -> int {
-        return this.len();
-    }
-
-    get_iterable_ptr() -> Pointer<T> {
-        return this.body();
-    }
-
-    add(other: This) -> This {
-        return this.concat(other);
     }
 }
