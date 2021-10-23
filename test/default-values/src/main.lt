@@ -1,0 +1,34 @@
+class Foo {
+    a: int = 7,
+    b: string = some_string(),
+    c: float,
+    d: Bar = Bar { a: 8 },
+    e: Bar
+}
+
+class Bar {
+    a: int = 15,
+    b: float = 1.2f
+}
+
+fn some_string() -> string {
+    return "the string";
+}
+
+export fn main() {
+    let foo = Foo {
+        a: 6
+    };
+
+    @log(foo.a);
+    @log(foo.b);
+    @log(foo.c);
+    @log(foo.d.a);
+    @log(foo.d.b);
+    @log(foo.e as int);
+
+    let foo2 = Foo {};
+
+    @log(foo.d as int);
+    @log(foo2.d as int);
+}
