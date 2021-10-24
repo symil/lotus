@@ -13,7 +13,7 @@ async function main() {
     }
 
     let testName = ARGV.find(string => !string.startsWith('-'));
-    let override = ARGV.includes('--override');
+    let override = ARGV.includes('--overwrite');
     let inheritStdio = !testName;
     let displayMemory = ARGV.includes('-m');
     let options = { inheritStdio, displayMemory };
@@ -27,7 +27,7 @@ async function main() {
             if (override) {
                 fse.rmSync(testDirPath, { recursive: true });
             } else {
-                console.log(`${chalk.bold.red('error:')} ${formattedDirPath} already exists`);
+                console.log(`${chalk.bold.red('error:')} ${formattedDirPath} already exists (specify \`--overwrite\` to overwrite)`);
                 process.exit(1);
             }
         }
