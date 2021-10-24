@@ -14,8 +14,8 @@ impl ParenthesizedExpression {
         self.expression.has_side_effects()
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.expression.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        self.expression.collected_instancied_type_names(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

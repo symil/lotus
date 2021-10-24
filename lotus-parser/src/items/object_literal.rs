@@ -19,8 +19,8 @@ pub struct ObjectFieldInitializationList {
 }
 
 impl ObjectLiteral {
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.object_type.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        self.object_type.collected_instancied_type_names(list);
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {

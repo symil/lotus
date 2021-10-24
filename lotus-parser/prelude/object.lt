@@ -8,9 +8,13 @@ export class Object {
     }
 
     autogen static __default() -> This {
-        // TODO
+        let obj = This.__new();
 
-        return 0 as This;
+        iter_fields {
+            obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
+        }
+
+        return obj;
     }
 
     autogen static __none() -> This {{

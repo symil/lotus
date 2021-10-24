@@ -18,7 +18,7 @@ impl BracketIndexing {
                 AccessType::Set(_) => BuiltinInterface::SetAtIndex,
             };
 
-            if let Some(mut bracket_vasm) = context.call_builtin_interface(self, required_interface, parent_type, &[&index_vasm.ty], || format!("bracket index")) {
+            if let Some(mut bracket_vasm) = context.call_builtin_interface(self, required_interface, parent_type, &[(&index_vasm.ty, &self.index_expr)], || format!("bracket index")) {
                 bracket_vasm.ty = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap().replace_parameters(Some(parent_type), &[]);
 
                 result = Some(match access_type {

@@ -16,8 +16,8 @@ impl VarPath {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.root.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        self.root.collected_instancied_type_names(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

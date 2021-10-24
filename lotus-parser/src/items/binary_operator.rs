@@ -1,4 +1,5 @@
 use parsable::{DataLocation, parsable};
+use colored::*;
 use crate::{items::Identifier, program::{BuiltinInterface, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
@@ -75,7 +76,7 @@ impl BinaryOperatorWrapper {
         }
     }
 
-    pub fn process(&self, left_type: &Type, right_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, left_type: &Type, right_type: &Type, right_location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
         let required_interface = match &self.value {
             BinaryOperator::Plus => BuiltinInterface::Add,
             BinaryOperator::Minus => BuiltinInterface::Sub,
@@ -97,7 +98,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Lt => BuiltinInterface::Lt,
         };
 
-        context.call_builtin_interface(self, required_interface, left_type, &[right_type], || format!("`{}` right operand", &self.value))
+        context.call_builtin_interface(self, required_interface, left_type, &[(right_type, right_location)], || format!(""))
     }
 }
 

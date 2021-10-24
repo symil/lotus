@@ -39,7 +39,7 @@ impl Assignment {
                             let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
 
                             if let Some(left_rvalue_vasm) = self.lvalue.process(None, AccessType::Get, context) {
-                                if let Some(operator_vasm) = wrapper.process(&left_rvalue_vasm.ty, &right_vasm.ty, context) {
+                                if let Some(operator_vasm) = wrapper.process(&left_rvalue_vasm.ty, &right_vasm.ty, rvalue, context) {
                                     source.push(left_rvalue_vasm);
                                     source.push(right_vasm);
                                     source.push(operator_vasm);

@@ -16,9 +16,9 @@ impl ItemType {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
-            ItemType::Value(value_type) => value_type.collect_type_identifiers(list),
+            ItemType::Value(value_type) => value_type.collected_instancied_type_names(list),
             ItemType::Function(_) => {},
         }
     }

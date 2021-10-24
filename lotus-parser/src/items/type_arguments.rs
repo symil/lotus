@@ -10,9 +10,9 @@ pub struct TypeArguments {
 }
 
 impl TypeArguments {
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         for ty in &self.list {
-            ty.collect_type_identifiers(list);
+            ty.collected_instancied_type_names(list);
         }
     }
 

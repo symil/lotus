@@ -159,7 +159,7 @@ impl ProgramContext {
         is_unique
     }
 
-    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[&Type], make_error_prefix: F) -> Option<Vasm>
+    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[(&Type, &DataLocation)], make_error_prefix: F) -> Option<Vasm>
         where
             L : Deref<Target=DataLocation>,
             F : Fn() -> String
@@ -175,9 +175,18 @@ impl ProgramContext {
 
                 match target_type.check_match_interface(&interface_wrapped, location, self) {
                     true => {
-                        let ty = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(target_type), &[]))).unwrap_or(Type::Undefined);
+                        let return_type = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(target_type), &[]))).unwrap_or(Type::Void);
+
+                        for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
+                            let expected_type = expected_arg.ty.replace_parameters(Some(target_type), &[]);
+
+                            if !actual_type.is_assignable_to(&expected_type) {
+                                self.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));
+                            }
+                        }
+
                         let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], None, vasm![]);
-                        let result = Vasm::new(ty, vec![], vec![method_instruction]);
+                        let result = Vasm::new(return_type, vec![], vec![method_instruction]);
 
                         Some(result)
                     },

@@ -52,3 +52,4 @@ pub const MACRO_TYPE_ID : &'static str = "TYPE_ID";
 pub const MACRO_FIELD_COUNT : &'static str = "FIELD_COUNT";
 pub const MACRO_FIELD_NAME : &'static str = "FIELD_NAME";
 pub const MACRO_FIELD_TYPE : &'static str = "FIELD_TYPE";
+pub const MACRO_FIELD_DEFAULT_EXPRESSION : &'static str = "FIELD_DEFAULT_EXPRESSION";

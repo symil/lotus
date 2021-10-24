@@ -43,6 +43,49 @@ export type(i32) int {
     static __chosen() -> int {
         return 23;
     }
+
+    to_string() -> string {
+        if this == 0 {
+            return "0";
+        }
+
+        let base = 10;
+        let n = this;
+        let str = @alloc(16);
+        let is_negative = n < 0;
+        let start = 1;
+
+        if is_negative {
+            n *= -1;
+            str[1] = '-' as int;
+            start = 2;
+        }
+
+        let length = n.log(base);
+        let i = 0;
+
+        while n > 0 {
+            str[start + length - i - 1] = n % base + ('0' as int);
+            n /= base;
+            i += 1;
+        }
+
+        str[0] = i + start - 1;
+
+        return str as string;
+    }
+
+    log(base: int) -> int {
+        let n = this;
+        let result = 1;
+
+        while n > base {
+            result += 1;
+            n /= base;
+        }
+
+        return result;
+    }
     
     log2() -> int {
         if this < 2 {

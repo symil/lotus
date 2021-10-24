@@ -91,7 +91,7 @@ impl TypeDeclaration {
         let mut list = vec![];
 
         match &self.parent {
-            Some(parent) => parent.collect_type_identifiers(&mut list),
+            Some(parent) => parent.collected_instancied_type_names(&mut list),
             None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier != TypeQualifier::Class {
                 true => {},
                 false => {
@@ -101,8 +101,9 @@ impl TypeDeclaration {
         };
 
         for field_declaration in &self.body.fields {
-            if let Some(default_value) = &field_declaration.default_value {
-                default_value.collect_type_identifiers(&mut list);
+            match &field_declaration.default_value {
+                Some(default_value) => default_value.collected_instancied_type_names(&mut list),
+                None => {field_declaration.ty.collected_instancied_type_names(&mut list)}
             }
         }
 
@@ -384,6 +385,8 @@ impl TypeDeclaration {
                                 }
                             } 
                         };
+
+                        default_value_vasm.ty = field_info.ty.clone();
 
                         default_values.insert(field_info.name.to_string(), default_value_vasm);
                     }

@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::program::{ProgramContext, VI, Vasm, MACRO_TYPE_ID, MACRO_FIELD_COUNT, MACRO_FIELD_NAME, MACRO_FIELD_TYPE};
+use crate::{items::make_string_value_from_literal, program::{MACRO_FIELD_COUNT, MACRO_FIELD_DEFAULT_EXPRESSION, MACRO_FIELD_NAME, MACRO_FIELD_TYPE, MACRO_TYPE_ID, ProgramContext, Type, VI, Vasm}};
 use super::{Identifier, ValueOrType};
 
 #[parsable]
@@ -13,7 +13,8 @@ enum MacroName {
     TypeId,
     FieldCount,
     FieldName,
-    FieldType
+    FieldType,
+    FieldDefaultExpression
 }
 
 enum ConstantName {
@@ -34,13 +35,16 @@ impl Macro {
                         match m {
                             MacroName::TypeId => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::type_id(&type_unwrapped.self_type)]))),
                             MacroName::FieldCount => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.fields.len())]))),
-                            MacroName::FieldName => {
-                                context.errors.add(self, format!("macro `{}` cannot be processed as a value", format!("#{}", &self.name).bold()));
-                                None
-                            },
-                            MacroName::FieldType => match context.iter_fields_counter {
+                            MacroName::FieldName | MacroName::FieldType | MacroName::FieldDefaultExpression => match context.iter_fields_counter {
                                 Some(field_index) => {
-                                    Some(ValueOrType::Type(type_unwrapped.fields.get_index(field_index).unwrap().1.ty.clone()))
+                                    let field_info = type_unwrapped.fields.get_index(field_index).unwrap().1;
+
+                                    match m {
+                                        MacroName::FieldName => Some(ValueOrType::Value(make_string_value_from_literal(None, field_info.name.as_str(), context).unwrap())),
+                                        MacroName::FieldType => Some(ValueOrType::Type(field_info.ty.clone())),
+                                        MacroName::FieldDefaultExpression => Some(ValueOrType::Value(field_info.default_value.replace_type_parameters(&type_unwrapped.self_type, self.location.get_hash()))),
+                                        _ => unreachable!()
+                                    }
                                 },
                                 None => {
                                     context.errors.add(self, format!("macro `{}` can only be accessed from inside an `iter_fields` block", format!("#{}", &self.name).bold()));
@@ -88,7 +92,7 @@ impl Macro {
                         },
                     }
                 },
-                MacroName::TypeId | MacroName::FieldCount | MacroName::FieldType =>  {
+                MacroName::TypeId | MacroName::FieldCount | MacroName::FieldType | MacroName::FieldDefaultExpression =>  {
                     context.errors.add(self, format!("macro `{}` cannot be processed as a name", format!("#{}", &self.name).bold()));
                     None
                 },
@@ -106,6 +110,7 @@ impl Macro {
             MACRO_FIELD_COUNT => Some(MacroName::FieldCount),
             MACRO_FIELD_TYPE => Some(MacroName::FieldType),
             MACRO_FIELD_NAME => Some(MacroName::FieldName),
+            MACRO_FIELD_DEFAULT_EXPRESSION => Some(MacroName::FieldDefaultExpression),
             _ => None
         }
     }

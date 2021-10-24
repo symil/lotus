@@ -178,7 +178,7 @@ impl StringReader {
             if self.as_str().starts_with(self.comment_token) {
                 done = false;
 
-                while self.as_char() != '\n' {
+                while self.as_char() != '\n' && self.index < self.string.len() {
                     self.index += 1;
                 }
             }

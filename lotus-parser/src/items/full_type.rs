@@ -16,8 +16,11 @@ impl FullType {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.item.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        match self.suffix.last() {
+            Some(type_suffix) => type_suffix.collected_instancied_type_names(list),
+            None => self.item.collected_instancied_type_names(list),
+        }
     }
 
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {

@@ -13,8 +13,8 @@ impl UnaryOperation {
         self.operand.has_side_effects()
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.operand.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        self.operand.collected_instancied_type_names(list);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

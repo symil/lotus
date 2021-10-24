@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, char_literal, none_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -43,7 +43,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
             VarPathRoot::Macro(_) => {},
             VarPathRoot::NoneLiteral(_) => {},
@@ -52,10 +52,10 @@ impl VarPathRoot {
             VarPathRoot::IntegerLiteral(_) => {},
             VarPathRoot::CharLiteral(_) => {},
             VarPathRoot::StringLiteral(_) => {},
-            VarPathRoot::ArrayLiteral(_) => {},
-            VarPathRoot::ObjectLiteral(object_literal) => object_literal.collect_type_identifiers(list),
+            VarPathRoot::ArrayLiteral(array_literal) => array_literal.collected_instancied_type_names(list),
+            VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list),
             VarPathRoot::Variable(root_var_ref) => {},
-            VarPathRoot::Parenthesized(expr) => expr.collect_type_identifiers(list),
+            VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list),
         }
     }
 

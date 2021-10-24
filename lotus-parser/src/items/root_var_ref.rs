@@ -23,12 +23,12 @@ impl RootVarRef {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
             RootVarRef::Prefixed(_, _, _) => {},
             RootVarRef::Unprefixed(ty, args) => {
                 if args.is_none() {
-                    ty.collect_type_identifiers(list);
+                    ty.collected_instancied_type_names(list);
                 }
             },
         }

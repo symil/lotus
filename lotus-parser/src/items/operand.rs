@@ -23,10 +23,10 @@ impl Operand {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
-            Operand::UnaryOperation(unary_operation) => unary_operation.collect_type_identifiers(list),
-            Operand::VarPath(var_path) => var_path.collect_type_identifiers(list),
+            Operand::UnaryOperation(unary_operation) => unary_operation.collected_instancied_type_names(list),
+            Operand::VarPath(var_path) => var_path.collected_instancied_type_names(list),
         }
     }
 

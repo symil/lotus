@@ -16,11 +16,11 @@ impl BinaryOperation {
         }
     }
 
-    pub fn collect_type_identifiers(&self, list: &mut Vec<Identifier>) {
-        self.first.collect_type_identifiers(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        self.first.collected_instancied_type_names(list);
         
         for (_, operand) in &self.others {
-            operand.collect_type_identifiers(list);
+            operand.collected_instancied_type_names(list);
         }
     }
 
@@ -48,7 +48,7 @@ impl<'a> OperationTree<'a> {
                 match (left_vasm_result, right_vasm_result) {
                     (Some(left_vasm), Some(right_vasm)) => {
                         let mut result = None;
-                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, context);
+                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, right.get_location(), context);
 
                         // TODO: if operator is `&&` or `||`, convert operands to booleans when possible
 
