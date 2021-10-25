@@ -54,5 +54,13 @@ export type(i32) Pointer<T> {
     copy_to(target: This, count: int) {
         mem_copy(target as ptr, this as ptr, count);
     }
+
+    to_string() -> string {
+        return "[Pointer " + this.to_string() + "]";
+    }
+
+    to_debug_string() -> string {
+        return (this as int).to_hexa_string();
+    }
 }
 

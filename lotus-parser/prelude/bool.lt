@@ -6,8 +6,6 @@ export type(i32) bool {
     not() -> bool {{ i32.eqz }}
     to_int() -> int {{ }}
 
-    print() {{ (call $__log_bool) }}
-
     static __default() {{ 
         (i32.const 0)
     }}
@@ -23,5 +21,17 @@ export type(i32) bool {
 
     __hash() -> int {
         return (this as int).__hash();
+    }
+
+    to_string() -> string {
+        if this {
+            return "true";
+        } else {
+            return "false";
+        }
+    }
+
+    to_debug_string() -> string {
+        return this.to_string();
     }
 }

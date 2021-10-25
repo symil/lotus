@@ -124,4 +124,34 @@ export type(i32) Array<T> {
 
         return new_array;
     }
+
+    to_string() -> string {
+        return "";
+    }
+
+    to_debug_string() -> string {
+        let length = this.len();
+
+        if length == 0 {
+            return "[]";
+        } else {
+            let str = "[ ";
+            let i = 0;
+            let last_index = length - 1;
+
+            for item in this {
+                str += item.to_debug_string();
+
+                if i != last_index {
+                    str += ", ";
+                }
+
+                i += 1;
+            }
+
+            str += " ]";
+
+            return str;
+        }
+    }
 }

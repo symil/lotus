@@ -102,11 +102,39 @@ export type(i32) string {
         return (this as ptr)[0];
     }
 
-    print() {{
-        (call $__log_string)
-    }}
-
     static __chosen() -> string {
         return "lotus";
+    }
+
+    to_string() -> string {
+        return this;
+    }
+
+    to_debug_string() -> string {
+        let result = string.__new(this.len() + 2);
+
+        result.__set_char(0, '"');
+        result.__set_char(this.len() + 1, '"');
+
+        mem_copy((result as ptr).add(2), (this as ptr).add(1), this.len());
+
+        return result;
+    }
+
+    pad_start(c: char, target_length: int) -> string {
+        if this.len() >= target_length {
+            return this;
+        } else {
+            let result = string.__new(target_length);
+            let start = target_length - this.len();
+
+            for i in 0..start {
+                result.__set_char(i, c);
+            }
+
+            mem_copy((result as ptr).add(start + 1), (this as ptr).add(1), this.len());
+
+            return result;
+        }
     }
 }

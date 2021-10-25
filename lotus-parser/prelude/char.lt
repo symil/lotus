@@ -7,8 +7,9 @@ export type(i32) char {
         i32.ne
     }}
 
-    to_int() -> int {{ }}
-    print() {{ (call $__log_char) }}
+    to_int() -> int {{
+
+    }}
 
     static __default() -> char {{
         (i32.const 0)
@@ -29,5 +30,35 @@ export type(i32) char {
 
     static __chosen() -> char {
         return 's';
+    }
+
+    to_string() -> string {
+        let str = string.__new(1);
+
+        str.__set_char(0, this);
+
+        return str;
+    }
+
+    to_debug_string() -> string {
+        let c = this;
+
+        if c == '\n' {
+            return "'\\n'";
+        } else if c == '\t' {
+            return "'\\t'";
+        } else if c == '\0' {
+            return "'\\0'";
+        } else if c == '\'' {
+            return "'\\''";
+        } else {
+            let str = string.__new(3);
+
+            str.__set_char(0, '\'');
+            str.__set_char(1, c);
+            str.__set_char(2, '\'');
+
+            return str;
+        }
     }
 }

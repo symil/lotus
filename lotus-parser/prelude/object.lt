@@ -36,4 +36,12 @@ export class Object {
     __hash() -> int {
         return (this as int).__hash();
     }
+
+    autogen dyn to_string() -> string {
+        return "[" + #TYPE_NAME + " " + (this as ptr).to_debug_string() + "]";
+    }
+
+    autogen dyn to_debug_string() -> string {
+        return this.to_string();
+    }
 }

@@ -8,10 +8,22 @@ export type(void) system {
     }
 
     log<T>(value: T) {
-        value.print();
+        let str = value.to_string();
+
+        log_string(str);
+    }
+
+    dbg<T>(value: T) {
+        let str = value.to_debug_string();
+
+        log_string(str);
     }
 
     log_empty() {{
         (call $__log_empty)
     }}
 }
+
+fn log_string(string) {{
+    (call $__log_string)
+}}

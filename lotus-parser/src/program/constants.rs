@@ -29,6 +29,7 @@ pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
+pub const TMP_THIS_VAR_NAME : &'static str = "tmp_this";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const THIS_TYPE_NAME : &'static str = "This";
@@ -52,6 +53,7 @@ pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 pub const NAN_WASM : &'static str = "nan:0x200000";
 
 pub const MACRO_TYPE_ID : &'static str = "TYPE_ID";
+pub const MACRO_TYPE_NAME : &'static str = "TYPE_NAME";
 pub const MACRO_FIELD_COUNT : &'static str = "FIELD_COUNT";
 pub const MACRO_FIELD_NAME : &'static str = "FIELD_NAME";
 pub const MACRO_FIELD_TYPE : &'static str = "FIELD_TYPE";

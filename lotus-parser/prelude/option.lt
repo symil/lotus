@@ -9,11 +9,11 @@ export type(T) Option<T> {
         return T.__none() as This;
     }
 
-    print() {
+    to_debug_string() -> string {
         if this.__is_none() {
-            @log("none");
+            return "none";
         } else {
-            @log(this as T);
+            return (this as T).to_debug_string();
         }
     }
 

@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{items::make_string_value_from_literal, program::{MACRO_FIELD_COUNT, MACRO_FIELD_DEFAULT_EXPRESSION, MACRO_FIELD_NAME, MACRO_FIELD_TYPE, MACRO_TYPE_ID, ProgramContext, Type, VI, Vasm}};
+use crate::{items::make_string_value_from_literal, program::{MACRO_FIELD_COUNT, MACRO_FIELD_DEFAULT_EXPRESSION, MACRO_FIELD_NAME, MACRO_FIELD_TYPE, MACRO_TYPE_ID, MACRO_TYPE_NAME, ProgramContext, Type, VI, Vasm}};
 use super::{Identifier, ValueOrType};
 
 #[parsable]
@@ -11,6 +11,7 @@ pub struct Macro {
 
 enum MacroName {
     TypeId,
+    TypeName,
     FieldCount,
     FieldName,
     FieldType,
@@ -34,6 +35,7 @@ impl Macro {
                     type_wrapped.with_ref(|type_unwrapped| {
                         match m {
                             MacroName::TypeId => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::type_id(&type_unwrapped.self_type)]))),
+                            MacroName::TypeName => Some(ValueOrType::Value(make_string_value_from_literal(None, type_unwrapped.name.as_str(), context).unwrap())),
                             MacroName::FieldCount => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.fields.len())]))),
                             MacroName::FieldName | MacroName::FieldType | MacroName::FieldDefaultExpression => match context.iter_fields_counter {
                                 Some(field_index) => {
@@ -92,7 +94,7 @@ impl Macro {
                         },
                     }
                 },
-                MacroName::TypeId | MacroName::FieldCount | MacroName::FieldType | MacroName::FieldDefaultExpression =>  {
+                MacroName::TypeId | MacroName::TypeName | MacroName::FieldCount | MacroName::FieldType | MacroName::FieldDefaultExpression =>  {
                     context.errors.add(self, format!("macro `{}` cannot be processed as a name", format!("#{}", &self.name).bold()));
                     None
                 },
@@ -107,6 +109,7 @@ impl Macro {
     fn to_enum(&self) -> Option<MacroName> {
         match self.name.as_str() {
             MACRO_TYPE_ID => Some(MacroName::TypeId),
+            MACRO_TYPE_NAME => Some(MacroName::TypeName),
             MACRO_FIELD_COUNT => Some(MacroName::FieldCount),
             MACRO_FIELD_TYPE => Some(MacroName::FieldType),
             MACRO_FIELD_NAME => Some(MacroName::FieldName),

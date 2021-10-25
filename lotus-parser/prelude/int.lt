@@ -45,35 +45,16 @@ export type(i32) int {
         return 23;
     }
 
+    to_hexa_string() -> string {
+        return "0x" + int_to_string(this, 16).pad_start('0', 8);
+    }
+
     to_string() -> string {
-        if this == 0 {
-            return "0";
-        }
+        return int_to_string(this, 10);
+    }
 
-        let base = 10;
-        let n = this;
-        let str = @alloc(16);
-        let is_negative = n < 0;
-        let start = 1;
-
-        if is_negative {
-            n *= -1;
-            str[1] = '-' as int;
-            start = 2;
-        }
-
-        let length = n.log(base);
-        let i = 0;
-
-        while n > 0 {
-            str[start + length - i - 1] = n % base + ('0' as int);
-            n /= base;
-            i += 1;
-        }
-
-        str[0] = i + start - 1;
-
-        return str as string;
+    to_debug_string() -> string {
+        return this.to_string();
     }
 
     log(base: int) -> int {
@@ -136,4 +117,41 @@ export type(i32) int {
 
         return hash & 0x3fffffff;
     }
+}
+
+fn get_char(n: int) -> char {
+    if n < 10 {
+        return ('0'.to_int() + n).to_char();
+    } else {
+        return ('A'.to_int() + (n - 10)).to_char();
+    }
+}
+
+fn int_to_string(n: int, base: int) -> string {
+    if n == 0 {
+        return "0";
+    }
+
+    let str = @alloc(16);
+    let is_negative = n < 0;
+    let start = 1;
+
+    if is_negative {
+        n *= -1;
+        str[1] = '-' as int;
+        start = 2;
+    }
+
+    let length = n.log(base);
+    let i = 0;
+
+    while n > 0 {
+        str[start + length - i - 1] = get_char(n % base) as int;
+        n /= base;
+        i += 1;
+    }
+
+    str[0] = i + start - 1;
+
+    return str as string;
 }

@@ -28,16 +28,16 @@ impl FunctionInstanceContent {
                 let mut wat_body = function_unwrapped.body.resolve(&type_index, context);
 
                 if !function_unwrapped.is_raw_wasm {
-                    if let Some(this_arg) = &function_unwrapped.this_arg {
-                        variables.push(Rc::clone(this_arg));
+                    for arg in &function_unwrapped.arguments {
+                        variables.push(Rc::clone(arg));
                     }
 
                     if let Some(payload_arg) = &function_unwrapped.payload_arg {
                         variables.push(Rc::clone(payload_arg));
                     }
 
-                    for arg in &function_unwrapped.arguments {
-                        variables.push(Rc::clone(arg));
+                    if let Some(this_arg) = &function_unwrapped.this_arg {
+                        variables.push(Rc::clone(this_arg));
                     }
 
                     if let Some(return_value) = &function_unwrapped.return_value {
