@@ -9,6 +9,6 @@ pub struct UnwrapToken {
 
 impl UnwrapToken {
     pub fn process(&self, parent_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
-        context.call_builtin_interface_no_arg(self, BuiltinInterface::Unwrap, parent_type)
+        parent_type.call_builtin_interface_no_arg(self, BuiltinInterface::Unwrap, context)
     }
 }

@@ -14,10 +14,8 @@ impl Branch {
         let mut result = None;
 
         if let Some(condition_wasm) = self.condition.process(None, context) {
-            if condition_wasm.ty.is_bool() {
-                result = Some(condition_wasm);
-            } else {
-                context.errors.add(&self.condition, format!("expected `{}`, got `{}`", BuiltinType::Bool.get_name(), &condition_wasm.ty));
+            if let Some(convert_vasm) = condition_wasm.ty.call_builtin_interface_no_arg(self, BuiltinInterface::ToBool, context) {
+                result = Some(Vasm::merge(vec![condition_wasm, convert_vasm]));
             }
         }
 

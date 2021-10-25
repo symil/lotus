@@ -1,22 +1,22 @@
-// const START_BUCKET_COUNT = 16;
+const START_BUCKET_COUNT = 16;
 
-// export class Map<K, V> {
-//     first: MapItem<V>,
-//     buckets: MapItem<V>[][],
+export class Map<K, V> {
+    first: MapItem<V>?,
+    buckets: MapItem<V>[][],
 
-//     static new() -> This {
-//         let map = This {};
+    static new() -> This {
+        let map = This {};
 
-//         for i in 0..START_BUCKET_COUNT {
-//             map.buckets.push([]);
-//         }
+        for i in 0..START_BUCKET_COUNT {
+            map.buckets.push([]);
+        }
 
-//         return map;
-//     }
-// }
+        return map;
+    }
+}
 
-// class MapItem<V> {
-//     key: int,
-//     value: V,
-//     next: MapItem<V>?
-// }
+class MapItem<V> {
+    key: int,
+    value: V,
+    next: MapItem<V>?
+}

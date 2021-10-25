@@ -159,50 +159,6 @@ impl ProgramContext {
         is_unique
     }
 
-    pub fn call_builtin_interface<L, F>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type, argument_types: &[(&Type, &DataLocation)], make_error_prefix: F) -> Option<Vasm>
-        where
-            L : Deref<Target=DataLocation>,
-            F : Fn() -> String
-    {
-        let interface_wrapped = self.get_builtin_interface(interface);
-
-        interface_wrapped.with_ref(|interface_unwrapped| {
-            let (_, func_ref) = interface_unwrapped.regular_methods.first().unwrap_or_else(|| interface_unwrapped.static_methods.first().unwrap());
-            let method_wrapped = &func_ref.function;
-
-            method_wrapped.with_ref(|function_unwrapped| {
-                let method_name = function_unwrapped.name.as_str();
-
-                match target_type.check_match_interface(&interface_wrapped, location, self) {
-                    true => {
-                        let return_type = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(target_type), &[]))).unwrap_or(Type::Void);
-
-                        for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
-                            let expected_type = expected_arg.ty.replace_parameters(Some(target_type), &[]);
-
-                            if !actual_type.is_assignable_to(&expected_type) {
-                                self.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));
-                            }
-                        }
-
-                        let method_instruction = VI::call_method(target_type, method_wrapped.clone(), &[], None, vasm![]);
-                        let result = Vasm::new(return_type, vec![], vec![method_instruction]);
-
-                        Some(result)
-                    },
-                    false => None,
-                }
-            })
-        })
-    }
-
-    pub fn call_builtin_interface_no_arg<L>(&mut self, location: &L, interface: BuiltinInterface, target_type: &Type) -> Option<Vasm>
-        where
-            L : Deref<Target=DataLocation>
-    {
-        self.call_builtin_interface(location, interface, target_type, &[], || String::new())
-    }
-
     pub fn get_type_instance(&mut self, parameters: TypeInstanceParameters) -> Rc<TypeInstanceHeader> {
         let id = parameters.get_id();
 

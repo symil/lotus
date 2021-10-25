@@ -62,16 +62,20 @@ export interface Lt {
     lt(This) -> bool;
 }
 
-export interface Not {
-    not() -> bool;
-}
-
 export interface Plus {
     plus() -> This;
 }
 
 export interface Minus {
     minus() -> This;
+}
+
+export interface Not {
+    not() -> This;
+}
+
+export interface ToBool {
+    to_bool() -> bool;
 }
 
 export interface GetAtIndex {

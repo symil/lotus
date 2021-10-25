@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, ProgramContext, Type, Vasm}, wat};
+use crate::{program::{BuiltinInterface, ProgramContext, Type, VI, Vasm}, wat};
 
 #[parsable]
 pub struct UnaryOperatorWrapper {
@@ -8,19 +8,23 @@ pub struct UnaryOperatorWrapper {
 
 #[parsable(impl_display=true)]
 pub enum UnaryOperator {
-    Not = "!",
-    // Plus = "+",
-    // Minus = "-"
+    BooleanNot = "!",
+    BinaryNot = "~"
 }
 
 impl UnaryOperatorWrapper {
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
-        let required_interface = match &self.value {
-            UnaryOperator::Not => BuiltinInterface::Not,
-            // UnaryOperator::Plus => BuiltinInterface::Plus,
-            // UnaryOperator::Minus => BuiltinInterface::Minus,
-        };
-
-        context.call_builtin_interface_no_arg(self, required_interface, operand_type)
+        match &self.value {
+            UnaryOperator::BooleanNot => {
+                match operand_type.call_builtin_interface_no_arg(self, BuiltinInterface::ToBool, context) {
+                    Some(mut vasm) => {
+                        vasm.extend(Vasm::new(context.bool_type(), vec![], vec![VI::raw(wat!["i32.eqz"])]));
+                        Some(vasm)
+                    },
+                    None => None,
+                }
+            },
+            UnaryOperator::BinaryNot => operand_type.call_builtin_interface_no_arg(self, BuiltinInterface::Not, context),
+        }
     }
 }

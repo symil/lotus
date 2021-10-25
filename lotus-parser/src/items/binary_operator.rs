@@ -98,7 +98,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Lt => BuiltinInterface::Lt,
         };
 
-        context.call_builtin_interface(self, required_interface, left_type, &[(right_type, right_location)], || format!(""))
+        left_type.call_builtin_interface(self, required_interface, &[(right_type, right_location)], context, || format!(""))
     }
 }
 

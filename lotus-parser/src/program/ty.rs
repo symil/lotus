@@ -1,9 +1,9 @@
-use std::{convert::TryInto, fmt::{Display, write}, rc::Rc, result};
+use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, display_join}, utils::Link, wat};
-use super::{BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -381,6 +381,51 @@ impl Type {
         }
 
         ok
+    }
+
+
+    pub fn call_builtin_interface<L, F>(&self, location: &L, interface: BuiltinInterface, argument_types: &[(&Type, &DataLocation)], context: &mut ProgramContext, make_error_prefix: F) -> Option<Vasm>
+        where
+            L : Deref<Target=DataLocation>,
+            F : Fn() -> String
+    {
+        let interface_wrapped = context.get_builtin_interface(interface);
+
+        interface_wrapped.with_ref(|interface_unwrapped| {
+            let (_, func_ref) = interface_unwrapped.regular_methods.first().unwrap_or_else(|| interface_unwrapped.static_methods.first().unwrap());
+            let method_wrapped = &func_ref.function;
+
+            method_wrapped.with_ref(|function_unwrapped| {
+                let method_name = function_unwrapped.name.as_str();
+
+                match self.check_match_interface(&interface_wrapped, location, context) {
+                    true => {
+                        let return_type = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
+
+                        for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
+                            let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
+
+                            if !actual_type.is_assignable_to(&expected_type) {
+                                context.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));
+                            }
+                        }
+
+                        let method_instruction = VI::call_method(self, method_wrapped.clone(), &[], None, vasm![]);
+                        let result = Vasm::new(return_type, vec![], vec![method_instruction]);
+
+                        Some(result)
+                    },
+                    false => None,
+                }
+            })
+        })
+    }
+
+    pub fn call_builtin_interface_no_arg<L>(&self, location: &L, interface: BuiltinInterface, context: &mut ProgramContext) -> Option<Vasm>
+        where
+            L : Deref<Target=DataLocation>
+    {
+        self.call_builtin_interface(location, interface, &[], context, || String::new())
     }
 
     pub fn is_ambiguous(&self) -> bool {
