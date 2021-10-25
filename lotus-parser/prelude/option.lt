@@ -9,13 +9,13 @@ export type(T) Option<T> {
         return T.__none() as This;
     }
 
-    // print() {
-    //     if this.__is_none() {
-    //         @log("none");
-    //     } else {
-    //         @log(this as T);
-    //     }
-    // }
+    print() {
+        if this.__is_none() {
+            @log("none");
+        } else {
+            @log(this as T);
+        }
+    }
 
     eq(other: This) -> bool {
         return (this as T) == (other as T);
