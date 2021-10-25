@@ -27,7 +27,7 @@ impl Action {
                             let type_hint = Some(&return_value.ty);
 
                             if let Some(vasm) = expr.process(type_hint, context) {
-                                if return_value.ty.is_assignable_to(&vasm.ty) {
+                                if vasm.ty.is_assignable_to(&return_value.ty) {
                                     result = Some(vasm![
                                         VI::set(return_value, vasm),
                                         VI::jump(function_depth)

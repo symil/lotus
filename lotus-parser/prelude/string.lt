@@ -137,4 +137,30 @@ export type(i32) string {
             return result;
         }
     }
+
+    find(str: string, index: int) -> int? {
+        let max_len = this.len() - str.len() + 1;
+
+        for i in index..max_len {
+            if this.starts_with(str, i) {
+                return i;
+            }
+        }
+
+        return none;
+    }
+
+    starts_with(str: string, index: int) -> bool {
+        if index + str.len() > this.len() {
+            return false;
+        } else {
+            for i in 0..str.len() {
+                if this[index + i] != str[i] {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
 }

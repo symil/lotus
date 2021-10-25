@@ -102,8 +102,8 @@ sys interface Builtin {
     __is_none() -> bool;
     __hash() -> int;
 
-    to_string() -> string;
-    to_debug_string() -> string;
+    dyn to_string() -> string;
+    dyn to_debug_string() -> string;
     eq(This) -> bool;
     ne(This) -> bool;
 }

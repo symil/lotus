@@ -74,7 +74,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
         let mut return_type = None;
         let expected_arg_count = function_unwrapped.arguments.len();
 
-        if function_unwrapped.is_dynamic {
+        if function_unwrapped.is_dynamic() {
             let dynamic_methods_index_var = VariableInfo::new(Identifier::new("dyn_index", function_name), context.int_type(), VariableKind::Local);
 
             result.extend(vec![

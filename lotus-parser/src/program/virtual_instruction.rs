@@ -413,26 +413,34 @@ impl VirtualInstruction {
                 }
 
                 let this_type = info.caller_type.as_ref().and_then(|ty| Some(ty.resolve(type_index, context)));
+                let function_blueprint = info.function.with_ref(|function_unwrapped| {
+                    match function_unwrapped.owner_interface.is_none() {
+                        true => info.function.clone(),
+                        false => this_type.as_ref().unwrap().get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str()).unwrap(),
+                    }
+                });
+                let is_dynamic = function_blueprint.borrow().is_dynamic();
+                let mut dynamic_call = false;
 
-                if let Some(dynamic_methods_index_var) = &info.dynamic_methods_index_var {
-                    let method_offset = info.function.borrow().dynamic_index;
-                    let func_wasm_type_name = this_type.unwrap().get_placeholder_function_wasm_type_name(&info.function);
-                    
-                    content.extend(vec![
-                        dynamic_methods_index_var.get_to_stack(),
-                        Wat::const_i32(method_offset),
-                        wat!["i32.add"],
-                        wat!["call_indirect", wat!["type", Wat::placeholder(&func_wasm_type_name)]]
-                    ]);
-                } else {
+                if is_dynamic {
+                    if let Some(dynamic_methods_index_var) = &info.dynamic_methods_index_var {
+                        let method_offset = function_blueprint.borrow().dynamic_index;
+                        let func_wasm_type_name = this_type.as_ref().unwrap().get_placeholder_function_wasm_type_name(&function_blueprint);
+
+                        content.extend(vec![
+                            dynamic_methods_index_var.get_to_stack(),
+                            Wat::const_i32(method_offset),
+                            wat!["i32.add"],
+                            // wat!["call", "$dup_i32"],
+                            // wat!["call", "$__log_int"],
+                            wat!["call_indirect", wat!["type", Wat::placeholder(&func_wasm_type_name)]]
+                        ]);
+                        dynamic_call = true;
+                    }
+                }
+
+                if !dynamic_call {
                     let function_parameters = info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
-                    let function_blueprint = info.function.with_ref(|function_unwrapped| {
-                        match function_unwrapped.owner_interface.is_none() {
-                            true => info.function.clone(),
-                            false => this_type.as_ref().unwrap().get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str()).unwrap(),
-                        }
-                    });
-
                     let parameters = FunctionInstanceParameters {
                         function_blueprint,
                         this_type,
@@ -443,6 +451,7 @@ impl VirtualInstruction {
 
                     content.extend_from_slice(&function_instance.wasm_call);
                 }
+
 
                 content
             },

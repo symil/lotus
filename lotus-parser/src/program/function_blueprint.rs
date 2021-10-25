@@ -20,7 +20,6 @@ pub struct FunctionBlueprint {
     pub arguments: Vec<Rc<VariableInfo>>,
     pub return_value: Option<Rc<VariableInfo>>,
     pub is_raw_wasm: bool,
-    pub is_dynamic: bool,
     pub dynamic_index: i32,
     pub body: Vasm
 }
@@ -28,6 +27,10 @@ pub struct FunctionBlueprint {
 impl FunctionBlueprint {
     pub fn is_static(&self) -> bool {
         self.this_arg.is_none()
+    }
+
+    pub fn is_dynamic(&self) -> bool {
+        self.qualifier == MethodQualifier::Dynamic
     }
 
     pub fn get_method_kind(&self) -> FieldKind {

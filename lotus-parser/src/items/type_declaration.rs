@@ -407,7 +407,7 @@ impl TypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let dynamic_methods = type_wrapped.with_ref(|type_unwrapped| {
                 let mut result : Vec<FuncRef> = type_unwrapped.regular_methods.values()
-                    .filter_map(|func_ref| match func_ref.function.borrow().is_dynamic {
+                    .filter_map(|func_ref| match func_ref.function.borrow().is_dynamic() {
                         true => Some(func_ref.clone()),
                         false => None,
                     })

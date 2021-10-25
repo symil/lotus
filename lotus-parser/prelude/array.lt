@@ -125,6 +125,32 @@ export type(i32) Array<T> {
         return new_array;
     }
 
+    join(separator: string) -> string {
+        let str = "";
+        let length = this.len();
+
+        if length > 0 {
+            let last_index = length - 1;
+            let i = 0;
+
+            for item in this {
+                str += item.to_string();
+
+                if i != last_index {
+                    str += separator;
+                }
+
+                i += 1;
+            }
+        }
+
+        return str;
+    }
+
+    split(separator: string) -> string[] {
+        return [];
+    }
+
     to_string() -> string {
         return "";
     }

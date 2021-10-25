@@ -21,7 +21,7 @@ impl MethodDeclaration {
 
         function_wrapped.with_ref(|function_unwrapped| {
             let is_static = function_unwrapped.is_static();
-            let is_dynamic = function_unwrapped.is_dynamic;
+            let is_dynamic = function_unwrapped.is_dynamic();
             let name = function_unwrapped.name.clone();
 
             let prev_opt = type_wrapped.with_mut(|mut type_unwrapped| {
@@ -42,7 +42,7 @@ impl MethodDeclaration {
                 if let Some(prev) = prev_opt {
                     prev.function.with_ref(|prev_unwrapped| {
                         let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();
-                        let is_prev_dynamic = prev_unwrapped.is_dynamic;
+                        let is_prev_dynamic = prev_unwrapped.is_dynamic();
 
                         if !is_dynamic && is_prev_dynamic {
                             context.errors.add(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));

@@ -28,16 +28,16 @@ impl FunctionInstanceContent {
                 let mut wat_body = function_unwrapped.body.resolve(&type_index, context);
 
                 if !function_unwrapped.is_raw_wasm {
-                    for arg in &function_unwrapped.arguments {
-                        variables.push(Rc::clone(arg));
+                    if let Some(this_arg) = &function_unwrapped.this_arg {
+                        variables.push(Rc::clone(this_arg));
                     }
 
                     if let Some(payload_arg) = &function_unwrapped.payload_arg {
                         variables.push(Rc::clone(payload_arg));
                     }
 
-                    if let Some(this_arg) = &function_unwrapped.this_arg {
-                        variables.push(Rc::clone(this_arg));
+                    for arg in &function_unwrapped.arguments {
+                        variables.push(Rc::clone(arg));
                     }
 
                     if let Some(return_value) = &function_unwrapped.return_value {
@@ -70,7 +70,7 @@ impl FunctionInstanceContent {
 
                 wasm_declaration = Some(Wat::declare_function(&header.wasm_name, None, wat_args, wat_ret, wat_locals, wat_body));
 
-                if function_unwrapped.is_dynamic {
+                if function_unwrapped.is_dynamic() {
                     wasm_type_name = context.get_function_instance_wasm_type_name(wasm_type);
 
                     let placeholder = parameters.this_type.as_ref().unwrap().get_placeholder_function_wasm_type_name(&parameters.function_blueprint);

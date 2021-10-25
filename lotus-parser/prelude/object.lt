@@ -38,10 +38,15 @@ export class Object {
     }
 
     autogen dyn to_string() -> string {
-        return "[" + #TYPE_NAME + " " + (this as ptr).to_debug_string() + "]";
+        return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
     autogen dyn to_debug_string() -> string {
+        if #FIELD_COUNT == 0 {
+            return #TYPE_NAME;
+        } else {
+            
+        }
         return this.to_string();
     }
 }

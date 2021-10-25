@@ -86,17 +86,20 @@ impl BinaryOperatorWrapper {
     pub fn process(&self, left_type: &Type, right_type: &Type, right_location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.value {
             BinaryOperator::Eq | BinaryOperator::Ne => {
+                let method_name = match &self.value {
+                    BinaryOperator::Eq => "eq",
+                    BinaryOperator::Ne => "ne",
+                    _ => unreachable!()
+                };
+
                 match right_type.is_assignable_to(left_type) || left_type.is_assignable_to(right_type) {
                     true => {
-                        let method_name = match &self.value {
-                            BinaryOperator::Eq => "eq",
-                            BinaryOperator::Ne => "ne",
-                            _ => unreachable!()
-                        };
-
                         Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(left_type, method_name, &[], vec![], context)]))
                     },
-                    false => todo!(),
+                    false => {
+                        context.errors.add(right_location, format!("expected `{}` got `{}`", left_type, right_type));
+                        None
+                    },
                 }
             },
             _ => {

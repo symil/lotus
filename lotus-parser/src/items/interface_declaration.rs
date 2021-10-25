@@ -94,7 +94,6 @@ impl InterfaceDeclaration {
                     payload_arg: None,
                     arguments: arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect(),
                     return_value: return_type.and_then(|ty| Some(VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), ty, VariableKind::Argument))),
-                    is_dynamic: false,
                     dynamic_index: -1,
                     is_raw_wasm: false,
                     body: Vasm::empty(),

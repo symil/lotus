@@ -37,14 +37,13 @@ impl FunctionContent {
             conditions: vec![],
             arguments: vec![],
             return_value: None,
-            is_dynamic: self.qualifier.contains(&MethodQualifier::Dynamic),
             dynamic_index: -1,
             is_raw_wasm: false,
             body: Vasm::empty(),
         };
 
         let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
-        let is_dynamic = function_unwrapped.is_dynamic;
+        let is_dynamic = function_unwrapped.is_dynamic();
         let function_blueprint = context.functions.insert(function_unwrapped, type_id);
         let is_static = self.qualifier.contains(&MethodQualifier::Static);
         let is_autogen = self.meta_qualifier.contains(&MethodMetaQualifier::Autogen);
@@ -77,7 +76,7 @@ impl FunctionContent {
                     context.errors.add(self, "regular functions cannot be static");
                 }
                 
-                if function_unwrapped.is_dynamic {
+                if function_unwrapped.is_dynamic() {
                     context.errors.add(self, "regular functions cannot be dynamic");
                 }
 
