@@ -2,8 +2,12 @@ export fn main() {
     let a : int???? = none;
     let b : float? = 8.5f;
 
-    a = 9;
+    @log(a);
+    @log(b);
 
-    @log(a????);
-    @log(b.unwrap());
+    a = 9;
+    b = none;
+
+    @log(a);
+    @log(b);
 }

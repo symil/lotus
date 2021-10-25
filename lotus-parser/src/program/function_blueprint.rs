@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, MethodQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -28,6 +28,13 @@ pub struct FunctionBlueprint {
 impl FunctionBlueprint {
     pub fn is_static(&self) -> bool {
         self.this_arg.is_none()
+    }
+
+    pub fn get_method_kind(&self) -> FieldKind {
+        match self.is_static() {
+            true => FieldKind::Static,
+            false => FieldKind::Regular,
+        }
     }
 
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {

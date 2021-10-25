@@ -14,8 +14,8 @@ impl NoneLiteral {
 
         match type_hint {
             Some(ty) => match ty.get_builtin_type_parameter(BuiltinType::Option) {
-                Some(_) => {
-                    result = Some(Vasm::new(ty.clone(), vec![], vec![VI::call_static_method(ty, NONE_FUNC_NAME, &[], vasm![], context)]));
+                Some(option_type) => {
+                    result = Some(Vasm::new(ty.clone(), vec![], vec![VI::call_static_method(option_type, NONE_FUNC_NAME, &[], vasm![], context)]));
                 },
                 None => {
                     context.errors.add(&self.location, format!("cannot assign `{}` to `{}`", "Option<_>".bold(), ty));

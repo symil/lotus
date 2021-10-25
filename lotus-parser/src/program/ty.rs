@@ -96,6 +96,13 @@ impl Type {
         }
     }
 
+    pub fn get_implicit_type(&self) -> Option<&Type> {
+        match self.get_builtin_type_parameter(BuiltinType::Option) {
+            Some(option_type) => Some(option_type),
+            None => None,
+        }
+    }
+
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,
@@ -147,56 +154,22 @@ impl Type {
         }
     }
 
-    pub fn get_associated_type(&self, name: &str) -> Option<Type> {
-        match self {
-            Type::Undefined => None,
-            Type::Void => None,
-            Type::Any => None,
-            Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
-                match interface_unwrapped.associated_types.get(name) {
-                    Some(info) => Some(Type::Associated(AssociatedTypeContent {
-                        root: Box::new(self.clone()),
-                        associated: info.clone(),
-                    })),
-                    None => None,
-                }
-            }),
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.clone()))
-            }),
-            Type::TypeParameter(info) | Type::FunctionParameter(info) => {
-                match info.required_interfaces.get_associated_type_info(name) {
-                    Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
-                        root: Box::new(self.clone()),
-                        associated: type_info.clone()
-                    })),
-                    None => None
-                }
-            },
-            Type::Associated(info) => match info.associated.required_interfaces.get_associated_type_info(name) {
-                Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
-                    root: Box::new(self.clone()),
-                    associated: type_info.clone()
-                })),
-                None => None
-            },
-            // Type::Function(info) => None,
-        }
-    }
-
     pub fn is_assignable_to(&self, target: &Type) -> bool {
+        // Special case: a type T is always assignable to Option<T>
+        if let Some(target_option_type) = target.get_builtin_type_parameter(BuiltinType::Option) {
+            match self.get_builtin_type_parameter(BuiltinType::Option) {
+                Some(self_option_type) => return self_option_type.is_assignable_to(target_option_type),
+                None => return self.is_assignable_to(target_option_type),
+            }
+        }
+
         match (self, target) {
             (_, Type::Any) => true,
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
                 Some(ty) => &ty == target,
-                None => match target.get_builtin_type_parameter(BuiltinType::Option) {
-                    // Special case: a type T is always assignable to Option<T>
-                    Some(option_type) => self.is_assignable_to(option_type),
-                    None => false,
-                },
+                None => false,
             },
-            // (Type::Actual(self_info), Type::Actual(target_info)) => self_info == target_info,
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
@@ -317,10 +290,9 @@ impl Type {
             Type::This(interface_wrapped) => interface_wrapped == interface,
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
-                let type_blueprint = info.type_blueprint.borrow();
 
                 for associated_type in interface_blueprint.associated_types.values() {
-                    if let Some(associated_type_info) = type_blueprint.associated_types.get(associated_type.name.as_str()) {
+                    if let Some(_) = self.get_associated_type(associated_type.name.as_str()) {
                         // later: check that the associated type matches the interfaces required by the interface
                     } else {
                         details.push(format!("missing associated type `{}`", associated_type.name.as_str().bold()));
@@ -335,12 +307,8 @@ impl Type {
 
                     for expected_method_wrapped in interface_methods.values() {
                         let expected_method_unwrapped = expected_method_wrapped.function.borrow();
-                        let type_methods = match method_kind {
-                            FieldKind::Regular => &type_blueprint.regular_methods,
-                            FieldKind::Static => &type_blueprint.static_methods,
-                        };
                         
-                        if let Some(actual_method_wrapped) = type_methods.get(expected_method_unwrapped.name.as_str()) {
+                        if let Some(actual_method_wrapped) = self.get_method(method_kind.clone(), expected_method_unwrapped.name.as_str(), context) {
                             let actual_method_unwrapped = actual_method_wrapped.function.borrow();
                             let actual_argument_count = actual_method_unwrapped.arguments.len();
                             let expected_argument_count = expected_method_unwrapped.arguments.len();
@@ -442,7 +410,7 @@ impl Type {
     }
 
     pub fn get_field(&self, name: &str) -> Option<Rc<FieldInfo>> {
-        match self {
+        let mut result = match self {
             Type::Undefined => None,
             Type::Void => None,
             Type::Any => None,
@@ -453,7 +421,15 @@ impl Type {
             Type::TypeParameter(info) => None,
             Type::FunctionParameter(info) => None,
             Type::Associated(info) => None,
+        };
+
+        if result.is_none() {
+            if let Some(implicit_type) = self.get_implicit_type() {
+                result = implicit_type.get_field(name);
+            }
         }
+
+        result
     }
 
     pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<FuncRef> {
@@ -462,7 +438,7 @@ impl Type {
             FieldKind::Static => true,
         };
         
-        match self {
+        let mut result = match self {
             Type::Undefined => None,
             Type::Any => None,
             Type::Void => None,
@@ -486,7 +462,60 @@ impl Type {
                     .or_else(|| context.default_interfaces.get_method(is_static, name))
             },
             Type::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
+        };
+
+        if result.is_none() && !is_static {
+            if let Some(implicit_type) = self.get_implicit_type() {
+                result = implicit_type.get_method(kind, name, context);
+            }
         }
+
+        result
+    }
+
+    pub fn get_associated_type(&self, name: &str) -> Option<Type> {
+        let mut result = match self {
+            Type::Undefined => None,
+            Type::Void => None,
+            Type::Any => None,
+            Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
+                match interface_unwrapped.associated_types.get(name) {
+                    Some(info) => Some(Type::Associated(AssociatedTypeContent {
+                        root: Box::new(self.clone()),
+                        associated: info.clone(),
+                    })),
+                    None => None,
+                }
+            }),
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.clone()))
+            }),
+            Type::TypeParameter(info) | Type::FunctionParameter(info) => {
+                match info.required_interfaces.get_associated_type_info(name) {
+                    Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
+                        root: Box::new(self.clone()),
+                        associated: type_info.clone()
+                    })),
+                    None => None
+                }
+            },
+            Type::Associated(info) => match info.associated.required_interfaces.get_associated_type_info(name) {
+                Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
+                    root: Box::new(self.clone()),
+                    associated: type_info.clone()
+                })),
+                None => None
+            },
+            // Type::Function(info) => None,
+        };
+
+        if result.is_none() {
+            if let Some(implicit_type) = self.get_implicit_type() {
+                result = implicit_type.get_associated_type(name);
+            }
+        }
+
+        result
     }
 
     pub fn get_regular_method(&self, name: &str, context: &ProgramContext) -> Option<FuncRef> {

@@ -1,43 +1,17 @@
-export type(T) Option<T> {
-    type Item = T;
-
+export type(T) Option<T : Print> {
     static __default() -> This {
-        return This.none();
-    }
-
-    static __none() -> This {
-        return This.none();
-    }
-
-    __is_none() -> bool {
-        return this.is_none();
-    }
-
-    __hash() -> int {
-        return (this as T).__hash();
-    }
-
-    static some(arg: T) -> This {{
-        
-    }}
-
-    static none() -> This {
         return T.__none() as This;
     }
 
-    is_none() -> bool {
-        return (this as T).__is_none();
+    static __none() -> This {
+        return T.__none() as This;
     }
 
-    is_some() -> bool {
-        return !(this as T).__is_none();
-    }
-
-    unwrap() -> T {{
-
-    }}
-
-    to_bool() -> bool {
-        return this.is_some();
+    print() {
+        if this.__is_none() {
+            @log("none");
+        } else {
+            @log(this as T);
+        }
     }
 }

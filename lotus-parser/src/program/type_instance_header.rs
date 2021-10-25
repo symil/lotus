@@ -1,7 +1,7 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use crate::utils::Link;
-use super::{FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, TypeBlueprint, TypeInstanceParameters};
+use super::{FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, TypeBlueprint, TypeInstanceParameters};
 
 #[derive(Debug)]
 pub struct TypeInstanceHeader {
@@ -58,6 +58,24 @@ impl TypeInstanceHeader {
     pub fn get_placeholder_function_wasm_type_name(&self, function_wrapped: &Link<FunctionBlueprint>) -> String {
         function_wrapped.with_ref(|function_unwrapped| {
             format!("{}_{}_{}_{}", &function_unwrapped.owner_type.as_ref().unwrap().borrow().name, &function_unwrapped.name, function_unwrapped.dynamic_index, self.id)
+        })
+    }
+
+    pub fn get_method(&self, kind: FieldKind, name: &str) -> Option<Link<FunctionBlueprint>> {
+        self.type_blueprint.with_ref(|type_unwrapped| {
+            let index_map = match kind {
+                FieldKind::Static => &type_unwrapped.static_methods,
+                FieldKind::Regular => &type_unwrapped.regular_methods,
+            };
+
+            if let Some(func) = index_map.get(name).and_then(|func_ref| Some(func_ref.function.clone())) {
+                Some(func)
+            } else if self.name.starts_with("Option_") {
+                // TODO: do this properly
+                self.parameters[0].get_method(kind, name)
+            } else {
+                None
+            }
         })
     }
 }

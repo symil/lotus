@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use parsable::DataLocation;
 
-use crate::{items::Identifier, program::{FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters, MEMORY_CELL_BYTE_SIZE}, utils::Link, wat};
+use crate::{items::Identifier, program::{FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -429,15 +429,7 @@ impl VirtualInstruction {
                     let function_blueprint = info.function.with_ref(|function_unwrapped| {
                         match function_unwrapped.owner_interface.is_none() {
                             true => info.function.clone(),
-                            false => this_type.as_ref().unwrap().type_blueprint.with_ref(|type_unwrapped| {
-                                let is_static = function_unwrapped.is_static();
-                                let index_map = match is_static {
-                                    true => &type_unwrapped.static_methods,
-                                    false => &type_unwrapped.regular_methods,
-                                };
-
-                                index_map.get(function_unwrapped.name.as_str()).unwrap().function.clone()
-                            }),
+                            false => this_type.as_ref().unwrap().get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str()).unwrap(),
                         }
                     });
 

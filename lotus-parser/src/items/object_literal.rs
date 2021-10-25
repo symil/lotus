@@ -51,6 +51,7 @@ impl ObjectLiteral {
                         if let Some(field_vasm) = field.value.process(None, context) {
                             if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
                                 let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
+                                // println!("{}, {}, {}", &field_vasm.ty, field_type, field_vasm.ty.is_assignable_to(&field_type));
 
                                 if field_vasm.ty.is_assignable_to(&field_type) {
                                     fields_init.insert(field.name.as_str(), field_vasm);

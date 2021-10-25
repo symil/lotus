@@ -1,22 +1,66 @@
-const START_BUCKET_COUNT = 16;
+// const START_BUCKET_COUNT = 16;
 
-export class Map<K, V> {
-    first: MapItem<V>?,
-    buckets: MapItem<V>[][],
+// export class Map<K, V> {
+//     hash_table: Entry<K, V>?[],
+//     data_table: Entry<K, V>[],
+//     next_slot: int,
+//     size: int,
 
-    static new() -> This {
-        let map = This {};
+//     static new() -> This {
+//         let map = This {};
 
-        for i in 0..START_BUCKET_COUNT {
-            map.buckets.push([]);
-        }
+//         for i in 0..START_BUCKET_COUNT {
+//             map.hash_table.push(none);
+//         }
 
-        return map;
-    }
-}
+//         return map;
+//     }
 
-class MapItem<V> {
-    key: int,
-    value: V,
-    next: MapItem<V>?
-}
+//     set(key: K, value: V) -> bool {
+//         let hash = key.__hash();
+//         let index = hash % this.hash_table.len();
+//         let entry = this.hash_table[index];
+
+//         if !entry {
+//             entry = Entry<K, V> {
+//                 key: key,
+//                 value: value,
+//                 next: none
+//             };
+
+//             this.hash_table[index] = entry;
+//             this.data_table.push(entry?);
+
+//             return false;
+//         } else {
+//             let last : Entry<K, V>? = none;
+//             while entry && entry?.key != key {
+//                 last = entry;
+//                 entry = entry?.next;
+//             }
+
+//             if entry {
+//                 entry?.key = key;
+//                 entry?.value = value;
+
+//                 return true;
+//             } else {
+//                 entry = Entry<K, V> {
+//                     key: key,
+//                     value: value,
+//                     next: none
+//                 };
+//                 last?.next = entry;
+//                 this.data_table.push(entry?);
+
+//                 return false;
+//             }
+//         }
+//     }
+// }
+
+// class Entry<K, V> {
+//     key: K?,
+//     value: V?,
+//     next: Entry<K, V>?
+// }
