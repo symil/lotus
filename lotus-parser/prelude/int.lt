@@ -15,6 +15,7 @@ export type(i32) int {
     gt(int) -> bool {{ i32.gt_s }}
     le(int) -> bool {{ i32.le_s }}
     lt(int) -> bool {{ i32.lt_s }}
+    not() -> int {{ (i32.xor (i32.const 0xffffffff)) }}
     plus() -> int {{ }}
     minus() -> int {{ (i32.mul (i32.const -1)) }}
 
