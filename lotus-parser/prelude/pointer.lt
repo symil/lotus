@@ -19,6 +19,14 @@ export type(i32) Pointer<T> {
         return (this as int).__hash();
     }
 
+    eq(other: This) -> bool {{
+        i32.eq
+    }}
+
+    ne(other: This) -> bool {{
+        i32.ne
+    }}
+
     add(offset: int) -> This {
         return ((this as int) + offset) as This;
     }

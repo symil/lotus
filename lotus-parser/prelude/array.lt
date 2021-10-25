@@ -41,6 +41,14 @@ export type(i32) Array<T> {
         return this.concat(other);
     }
 
+    eq(other: This) -> bool {{
+        i32.eq
+    }}
+
+    ne(other: This) -> bool {{
+        i32.ne
+    }}
+
     body() -> Pointer<T> {
         return (this as ptr)[0] as Pointer<T>;
     }

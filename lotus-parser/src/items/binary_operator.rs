@@ -41,6 +41,13 @@ impl BinaryOperatorWrapper {
         result
     }
 
+    pub fn is_boolean_operator(&self) -> bool {
+        match &self.value {
+            BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => true,
+            _ => false
+        }
+    }
+
     pub fn get_priority(&self) -> usize {
         match &self.value {
             BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => 1,
@@ -77,28 +84,46 @@ impl BinaryOperatorWrapper {
     }
 
     pub fn process(&self, left_type: &Type, right_type: &Type, right_location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
-        let required_interface = match &self.value {
-            BinaryOperator::Plus => BuiltinInterface::Add,
-            BinaryOperator::Minus => BuiltinInterface::Sub,
-            BinaryOperator::Mult => BuiltinInterface::Mul,
-            BinaryOperator::Div => BuiltinInterface::Div,
-            BinaryOperator::Mod => BuiltinInterface::Mod,
-            BinaryOperator::Shl => BuiltinInterface::Shl,
-            BinaryOperator::Shr => BuiltinInterface::Shr,
-            BinaryOperator::Xor => BuiltinInterface::Xor,
-            BinaryOperator::DoubleAnd => BuiltinInterface::And,
-            BinaryOperator::DoubleOr => BuiltinInterface::Or,
-            BinaryOperator::SingleAnd => BuiltinInterface::And,
-            BinaryOperator::SingleOr => BuiltinInterface::Or,
-            BinaryOperator::Eq => BuiltinInterface::Eq,
-            BinaryOperator::Ne => BuiltinInterface::Ne,
-            BinaryOperator::Ge => BuiltinInterface::Ge,
-            BinaryOperator::Gt => BuiltinInterface::Gt,
-            BinaryOperator::Le => BuiltinInterface::Le,
-            BinaryOperator::Lt => BuiltinInterface::Lt,
-        };
+        match &self.value {
+            BinaryOperator::Eq | BinaryOperator::Ne => {
+                match right_type.is_assignable_to(left_type) || left_type.is_assignable_to(right_type) {
+                    true => {
+                        let method_name = match &self.value {
+                            BinaryOperator::Eq => "eq",
+                            BinaryOperator::Ne => "ne",
+                            _ => unreachable!()
+                        };
 
-        left_type.call_builtin_interface(self, required_interface, &[(right_type, right_location)], context, || format!(""))
+                        Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(left_type, method_name, &[], vec![], context)]))
+                    },
+                    false => todo!(),
+                }
+            },
+            _ => {
+                let required_interface = match &self.value {
+                    BinaryOperator::Plus => BuiltinInterface::Add,
+                    BinaryOperator::Minus => BuiltinInterface::Sub,
+                    BinaryOperator::Mult => BuiltinInterface::Mul,
+                    BinaryOperator::Div => BuiltinInterface::Div,
+                    BinaryOperator::Mod => BuiltinInterface::Mod,
+                    BinaryOperator::Shl => BuiltinInterface::Shl,
+                    BinaryOperator::Shr => BuiltinInterface::Shr,
+                    BinaryOperator::Xor => BuiltinInterface::Xor,
+                    BinaryOperator::DoubleAnd => BuiltinInterface::And,
+                    BinaryOperator::DoubleOr => BuiltinInterface::Or,
+                    BinaryOperator::SingleAnd => BuiltinInterface::And,
+                    BinaryOperator::SingleOr => BuiltinInterface::Or,
+                    BinaryOperator::Ge => BuiltinInterface::Ge,
+                    BinaryOperator::Gt => BuiltinInterface::Gt,
+                    BinaryOperator::Le => BuiltinInterface::Le,
+                    BinaryOperator::Lt => BuiltinInterface::Lt,
+                    BinaryOperator::Eq => unreachable!(),
+                    BinaryOperator::Ne => unreachable!(),
+                };
+
+                left_type.call_builtin_interface(self, required_interface, &[(right_type, right_location)], context, || format!(""))
+            }
+        }
     }
 }
 

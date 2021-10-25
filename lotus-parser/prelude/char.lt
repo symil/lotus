@@ -1,4 +1,12 @@
 export type(i32) char {
+    eq(other: This) -> bool {{
+        i32.eq
+    }}
+
+    ne(other: This) -> bool {{
+        i32.ne
+    }}
+
     to_int() -> int {{ }}
     print() {{ (call $__log_char) }}
 

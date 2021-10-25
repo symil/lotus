@@ -4,7 +4,6 @@ export type(i32) bool {
     eq(bool) -> bool {{ i32.eq }}
     ne(bool) -> bool {{ i32.ne }}
     not() -> bool {{ i32.eqz }}
-    to_bool() -> bool {{ }}
     to_int() -> int {{ }}
 
     print() {{ (call $__log_bool) }}

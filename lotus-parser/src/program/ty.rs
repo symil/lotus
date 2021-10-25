@@ -96,7 +96,7 @@ impl Type {
         }
     }
 
-    pub fn get_implicit_type(&self) -> Option<&Type> {
+    pub fn get_wrapped_type(&self) -> Option<&Type> {
         match self.get_builtin_type_parameter(BuiltinType::Option) {
             Some(option_type) => Some(option_type),
             None => None,
@@ -424,7 +424,7 @@ impl Type {
         };
 
         if result.is_none() {
-            if let Some(implicit_type) = self.get_implicit_type() {
+            if let Some(implicit_type) = self.get_wrapped_type() {
                 result = implicit_type.get_field(name);
             }
         }
@@ -465,7 +465,7 @@ impl Type {
         };
 
         if result.is_none() && !is_static {
-            if let Some(implicit_type) = self.get_implicit_type() {
+            if let Some(implicit_type) = self.get_wrapped_type() {
                 result = implicit_type.get_method(kind, name, context);
             }
         }
@@ -510,7 +510,7 @@ impl Type {
         };
 
         if result.is_none() {
-            if let Some(implicit_type) = self.get_implicit_type() {
+            if let Some(implicit_type) = self.get_wrapped_type() {
                 result = implicit_type.get_associated_type(name);
             }
         }

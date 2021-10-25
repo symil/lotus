@@ -21,6 +21,14 @@ export class Object {
         (i32.const 0)
     }}
 
+    eq(other: This) -> bool {{
+        i32.eq
+    }}
+
+    ne(other: This) -> bool {{
+        i32.ne
+    }}
+
     __is_none() -> bool {{
         (i32.eqz)
     }}

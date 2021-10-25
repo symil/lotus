@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, ProgramContext, VI, Vasm}};
+use crate::{program::{BuiltinType, NAN_WASM, ProgramContext, VI, Vasm}, wat};
 
 #[parsable(name="float")]
 pub struct FloatLiteral {
@@ -9,11 +9,11 @@ pub struct FloatLiteral {
 
 impl FloatLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let f32_value = match self.value.as_str() {
-            "nan" => f32::NAN,
-            _ => self.value[0..self.value.len() - 1].parse().unwrap()
+        let instruction = match self.value.as_str() {
+            "nan" => VI::Raw(wat!["f32.const", NAN_WASM]),
+            _ => VI::float(self.value[0..self.value.len() - 1].parse().unwrap())
         };
 
-        Some(Vasm::new(context.get_builtin_type(BuiltinType::Float, vec![]), vec![], vec![VI::float(f32_value)]))
+        Some(Vasm::new(context.get_builtin_type(BuiltinType::Float, vec![]), vec![], vec![instruction]))
     }
 }

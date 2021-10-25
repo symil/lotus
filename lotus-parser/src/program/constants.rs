@@ -49,6 +49,8 @@ pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 
+pub const NAN_WASM : &'static str = "nan:0x200000";
+
 pub const MACRO_TYPE_ID : &'static str = "TYPE_ID";
 pub const MACRO_FIELD_COUNT : &'static str = "FIELD_COUNT";
 pub const MACRO_FIELD_NAME : &'static str = "FIELD_NAME";

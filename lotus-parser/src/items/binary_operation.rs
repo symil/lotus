@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{ProgramContext, Type, VI, Vasm}, vasm, wat};
+use crate::{program::{BuiltinType, IS_NONE_FUNC_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
 use super::{BinaryOperatorWrapper, FullType, Identifier, Operand};
 
 #[parsable]
@@ -46,11 +46,36 @@ impl<'a> OperationTree<'a> {
                 let right_vasm_result = right.process(context);
 
                 match (left_vasm_result, right_vasm_result) {
-                    (Some(left_vasm), Some(right_vasm)) => {
+                    (Some(mut left_vasm), Some(mut right_vasm)) => {
                         let mut result = None;
-                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, right.get_location(), context);
 
-                        // TODO: if operator is `&&` or `||`, convert operands to booleans when possible
+                        if operator.is_boolean_operator() {
+                            let left_convert_vasm = match left_vasm.ty.get_builtin_type_parameter(BuiltinType::Option) {
+                                Some(left_option_type) => Some(Vasm::new(context.bool_type(), vec![], vec![
+                                    VI::call_regular_method(left_option_type, IS_NONE_FUNC_NAME, &[], vec![], context),
+                                    VI::Raw(wat!["i32.eqz"])
+                                ])),
+                                None => None
+                            };
+
+                            let right_convert_vasm = match right_vasm.ty.get_builtin_type_parameter(BuiltinType::Option) {
+                                Some(right_option_type) => Some(Vasm::new(context.bool_type(), vec![], vec![
+                                    VI::call_regular_method(right_option_type, IS_NONE_FUNC_NAME, &[], vec![], context),
+                                    VI::Raw(wat!["i32.eqz"])
+                                ])),
+                                None => None
+                            };
+
+                            if let Some(vasm) = left_convert_vasm {
+                                left_vasm.extend(vasm);
+                            }
+
+                            if let Some(vasm) = right_convert_vasm {
+                                right_vasm.extend(vasm);
+                            }
+                        }
+
+                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, right.get_location(), context);
 
                         if let Some(operator_vasm) = operator_vasm_opt {
                             let vasm = if let Some(short_circuit_vasm) = operator.get_short_circuit_vasm(context) {
