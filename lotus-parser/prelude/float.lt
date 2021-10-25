@@ -33,10 +33,14 @@ export type(f32) float {
         (f32.const nan:0x200000)
     }}
 
-    is_none() -> bool {{
+    __is_none() -> bool {{
         (f32.const nan:0x200000)
         (f32.eq)
     }}
+
+    __hash() -> int {
+        return this.as_int().__hash();
+    }
 
     static __chosen() -> float {
         return 18.5f;

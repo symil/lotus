@@ -15,6 +15,10 @@ export type(i32) char {
         (i32.eq)
     }}
 
+    __hash() -> int {
+        return (this as int).__hash();
+    }
+
     static __chosen() -> char {
         return 's';
     }

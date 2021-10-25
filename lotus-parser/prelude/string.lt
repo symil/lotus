@@ -21,6 +21,18 @@ export type(i32) string {
         (i32.eqz)
     }}
 
+    __hash() -> int {
+        let hash = 0;
+
+        for c in this {
+            let char_hash = c.__hash();
+
+            hash += char_hash;
+        }
+
+        return hash & 0x3fffffff;
+    }
+
     __set_char(index: int, c: char) -> string {
         (this as ptr)[index + 1] = (c as int);
 

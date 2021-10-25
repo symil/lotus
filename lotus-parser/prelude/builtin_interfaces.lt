@@ -112,4 +112,5 @@ sys interface Builtin {
     static __default() -> This;
     static __none() -> This;
     __is_none() -> bool;
+    __hash() -> int;
 }

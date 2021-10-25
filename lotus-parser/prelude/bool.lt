@@ -21,4 +21,8 @@ export type(i32) bool {
         (i32.const -2147483648)
         (i32.eq)
     }}
+
+    __hash() -> int {
+        return (this as int).__hash();
+    }
 }

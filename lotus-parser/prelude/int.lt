@@ -5,7 +5,7 @@ export type(i32) int {
     div(int) -> int {{ i32.div_s }}
     mod(int) -> int {{ i32.rem_s }}
     shl(int) -> int {{ i32.shl }}
-    shr(int) -> int {{ i32.shr_s }}
+    shr(int) -> int {{ i32.shr_u }}
     and(int) -> int {{ i32.and }}
     or(int) -> int {{ i32.or }}
     xor(int) -> int {{ i32.xor }}
@@ -121,5 +121,19 @@ export type(i32) int {
         }
 
         return result;
+    }
+
+    // https://github.com/nodejs/node/blob/238104c531219db05e3421521c305404ce0c0cce/deps/v8/src/utils/utils.h#L213
+    __hash() -> int {
+        let hash = this;
+
+        hash = ~hash + (hash << 15);
+        hash = hash ^ (hash >> 12);
+        hash = hash + (hash << 2);
+        hash = hash ^ (hash >> 4);
+        hash = hash * 2057;
+        hash = hash ^ (hash >> 16);
+
+        return hash & 0x3fffffff;
     }
 }

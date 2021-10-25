@@ -15,6 +15,10 @@ export type(i32) Pointer<T> {
         (i32.eqz)
     }}
 
+    __hash() -> int {
+        return (this as int).__hash();
+    }
+
     add(offset: int) -> This {
         return ((this as int) + offset) as This;
     }

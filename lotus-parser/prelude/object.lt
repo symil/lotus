@@ -24,4 +24,8 @@ export class Object {
     __is_none() -> bool {{
         (i32.eqz)
     }}
+
+    __hash() -> int {
+        return (this as int).__hash();
+    }
 }

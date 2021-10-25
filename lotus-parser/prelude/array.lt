@@ -25,6 +25,10 @@ export type(i32) Array<T> {
         (i32.eqz)
     }}
 
+    __hash() -> int {
+        return (this as int).__hash();
+    }
+
     get_iterable_len() -> int {
         return this.len();
     }

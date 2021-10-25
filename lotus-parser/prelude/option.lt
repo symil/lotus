@@ -13,6 +13,10 @@ export type(T) Option<T> {
         return this.is_none();
     }
 
+    __hash() -> int {
+        return (this as T).__hash();
+    }
+
     static some(arg: T) -> This {{
         
     }}
