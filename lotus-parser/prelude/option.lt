@@ -9,6 +9,14 @@ export type(T) Option<T> {
         return T.__none() as This;
     }
 
+    is_none() -> bool {
+        return (this as T).__is_none();
+    }
+
+    is_some() -> bool {
+        return !this.is_none();
+    }
+
     to_string() -> string {
         if this.__is_none() {
             return "none";

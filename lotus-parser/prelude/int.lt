@@ -74,10 +74,14 @@ export type(i32) int {
     }
 
     log(base: int) -> int {
-        let n = this;
-        let result = 1;
+        if this < 1 {
+            return 1;
+        }
 
-        while n > base {
+        let n = this;
+        let result = 0;
+
+        while n > 0 {
             result += 1;
             n /= base;
         }
@@ -171,3 +175,7 @@ fn int_to_string(n: int, base: int) -> string {
 
     return str as string;
 }
+
+fn log_int(n: int) {{
+    (call $log_int)
+}}

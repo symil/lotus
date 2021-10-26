@@ -81,6 +81,20 @@ export type(i32) Array<T> {
         this.body().set_at(index, value);
     }
 
+    get(index: int) -> T? {
+        if index >= this.len() {
+            return none;
+        } else {
+            return this.get_at(index);
+        }
+    }
+
+    clear() {
+        let header = this as ptr;
+
+        header[1] = 0;
+    }
+
     push(value: T) -> This {
         let header = this as ptr;
         let body = this.body();
@@ -169,23 +183,24 @@ export type(i32) Array<T> {
         if length == 0 {
             return "[]";
         } else {
-            let str = "[ ";
-            let i = 0;
-            let last_index = length - 1;
+            let strings : string[] = [];
+            let has_line_breaks = false;
 
             for item in this {
-                str += item.to_debug_string();
+                let str = item.to_debug_string();
 
-                if i != last_index {
-                    str += ", ";
+                if str.contains("\n") {
+                    has_line_breaks = true;
                 }
 
-                i += 1;
+                strings.push(str);
             }
 
-            str += " ]";
-
-            return str;
+            if has_line_breaks {
+                return "[\n" + strings.join(",\n").indent(2) + "\n]";
+            } else {
+                return "[ " + strings.join(", ") + " ]";
+            }
         }
     }
 }

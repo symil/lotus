@@ -1,0 +1,54 @@
+export fn main() {
+    let map = Map<int, string>.new();
+
+    @dbg(map.size());
+    @dbg(map.get(5));
+    @dbg(map.set(5, "foo"));
+    @dbg(map.size());
+    @dbg(map.get(5));
+    @dbg(map.set(5, "bar"));
+    @dbg(map.size());
+    @dbg(map.get(5));
+    @dbg(map.delete(5));
+    @dbg(map.size());
+    @dbg(map.get(5));
+    @dbg(map.delete(5));
+    @dbg(map.size());
+    @dbg(map.get(5));
+
+    for i in 0..1000 {
+        map.set(i, i.to_string());
+    }
+
+    @dbg(map.size());
+    @dbg(map.get(0));
+    @dbg(map.get(500));
+    @dbg(map.get(999));
+    @dbg(map.get(1000));
+    @dbg(map.get(1500));
+    @dbg(map.delete(500));
+    @dbg(map.get(500));
+
+    @dbg(map.capacity());
+    for i in 1000..2000 {
+        map.set(i, i.to_string());
+    }
+    @dbg(map.capacity());
+
+    map.clear();
+    @dbg(map.size());
+    @dbg(map.capacity());
+    @dbg(map.get(0));
+    @dbg(map.get(500));
+
+    for i in 0..5 {
+        map.set(i, i.to_string());
+    }
+
+    map.set(2, "foo");
+    map.delete(3);
+
+    @dbg(map.keys());
+    @dbg(map.values());
+    @dbg(map.entries());
+}

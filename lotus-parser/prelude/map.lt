@@ -1,10 +1,10 @@
 const START_CAPACITY = 32;
 
 export class Map<K, V> {
-    type Item = Entry<K, V>;
+    type Item = MapEntry<K, V>;
 
-    hash_table: Entry<K, V>?[],
-    data_table: Entry<K, V>[],
+    hash_table: MapEntry<K, V>?[],
+    data_table: MapEntry<K, V>[],
     size: int,
 
     static new() -> This {
@@ -15,7 +15,7 @@ export class Map<K, V> {
         let bucket_count = capacity.next_power_of_2() / 2;
         let map = This {};
 
-        for i in 0..capacity {
+        for i in 0..bucket_count {
             map.hash_table.push(none);
         }
 
@@ -23,7 +23,7 @@ export class Map<K, V> {
     }
 
     _rehash() {
-        let new_map = This.with_capacity(this.hash_table.len() * 2);
+        let new_map = This.with_capacity(this.data_table.len() * 2);
 
         for entry in this.data_table {
             if entry.key {
@@ -54,8 +54,69 @@ export class Map<K, V> {
         return entry;
     }
 
+    capacity() -> int {
+        return this.hash_table.len() * 2;
+    }
+
+    keys() -> K[] {
+        let array = Array<K>.__new(this.size);
+        let body = array.body();
+        let i = 0;
+
+        for entry in this.data_table {
+            if entry.key {
+                body[i] = entry.key;
+                i += 1;
+            }
+        }
+
+        return array;
+    }
+
+    values() -> V[] {
+        let array = Array<V>.__new(this.size);
+        let body = array.body();
+        let i = 0;
+
+        for entry in this.data_table {
+            if entry.key {
+                body[i] = entry.value;
+                i += 1;
+            }
+        }
+
+        return array;
+    }
+
+    entries() -> Entry<K, V>[] {
+        let array = Array<Entry<K, V>>.__new(this.size);
+        let body = array.body();
+        let i = 0;
+
+        for entry in this.data_table {
+            if entry.key {
+                body[i] = Entry<K, V> {
+                    key: entry.key,
+                    value: entry.value
+                };
+                i += 1;
+            }
+        }
+
+        return array;
+    }
+
     size() -> int {
         return this.size;
+    }
+
+    clear() {
+        for i in 0..this.hash_table.len() {
+            this.hash_table[i] = none;
+        }
+
+        this.data_table.clear();
+        this.size = 0;
     }
 
     get(key: K) -> V? {
@@ -71,7 +132,7 @@ export class Map<K, V> {
     set(key: K, value: V) -> bool {
         let index = this._get_index(key);
         let entry = this.hash_table[index];
-        let last : Entry<K, V>? = none;
+        let last : MapEntry<K, V>? = none;
         let already_present = false;
 
         while entry && entry.key != key {
@@ -80,7 +141,7 @@ export class Map<K, V> {
         }
 
         if !entry {
-            entry = Entry<K, V> {
+            entry = MapEntry<K, V> {
                 key: key,
                 value: value,
                 next: none
@@ -123,8 +184,13 @@ export class Map<K, V> {
     }
 }
 
-class Entry<K, V> {
+class MapEntry<K, V> {
     key: K?,
     value: V?,
-    next: Entry<K, V>?
+    next: MapEntry<K, V>?
+}
+
+class Entry<K, V> {
+    key: K,
+    value: V
 }

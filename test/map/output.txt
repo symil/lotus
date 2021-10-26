@@ -1,0 +1,48 @@
+0
+none
+false
+1
+"foo"
+true
+1
+"bar"
+true
+0
+none
+false
+0
+none
+1000
+"0"
+"500"
+"999"
+none
+none
+true
+none
+2048
+2048
+0
+2048
+none
+none
+[ 0, 1, 2, 4 ]
+[ "0", "1", "foo", "4" ]
+[
+  Entry {
+    key: 0,
+    value: "0",
+  },
+  Entry {
+    key: 1,
+    value: "1",
+  },
+  Entry {
+    key: 2,
+    value: "foo",
+  },
+  Entry {
+    key: 4,
+    value: "4",
+  }
+]

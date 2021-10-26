@@ -154,6 +154,10 @@ export type(i32) string {
         return none;
     }
 
+    contains(str: string) -> bool {
+        return this.find(str, 0).is_some();
+    }
+
     starts_with(str: string, index: int) -> bool {
         if index + str.len() > this.len() {
             return false;
