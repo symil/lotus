@@ -152,28 +152,29 @@ fn int_to_string(n: int, base: int) -> string {
         return "0";
     }
 
-    let str = @alloc(16);
     let is_negative = n < 0;
-    let start = 1;
+    let offset = 0;
 
     if is_negative {
         n *= -1;
-        str[1] = '-' as int;
-        start = 2;
+        offset = 1;
     }
 
     let length = n.log(base);
+    let str = string.__new(length + offset);
     let i = 0;
 
     while n > 0 {
-        str[start + length - i - 1] = get_char(n % base) as int;
+        str.__set_char(offset + length - i - 1, get_char(n % base));
         n /= base;
         i += 1;
     }
 
-    str[0] = i + start - 1;
+    if is_negative {
+        str.__set_char(0, '-');
+    }
 
-    return str as string;
+    return str;
 }
 
 fn log_int(n: int) {{

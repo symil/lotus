@@ -47,8 +47,8 @@ export type(i32) Pointer<T> {
         (call $__log_int)
     }}
 
-    copy_to(target: This, count: int) {
-        mem_copy(target as ptr, this as ptr, count);
+    copy_to(target: This, data_size: int) {
+        mem_copy(target as ptr, this as ptr, data_size);
     }
 
     to_string() -> string {

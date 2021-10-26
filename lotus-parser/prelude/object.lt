@@ -37,6 +37,10 @@ export class Object {
         return (this as int).__hash();
     }
 
+    as_ptr() -> ptr {
+        return this as ptr;
+    }
+
     autogen dyn to_string() -> string {
         return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
     }

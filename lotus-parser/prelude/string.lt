@@ -1,10 +1,15 @@
 export type(i32) string {
     type Item = char;
 
+    static __chosen() -> string {
+        return "lotus";
+    }
+
     static __new(length: int) -> string {
-        let result = @alloc(length + 1);
+        let result = @alloc(length + 2);
 
         result[0] = length;
+        result[1] = 0;
 
         return (result as string);
     }
@@ -21,26 +26,41 @@ export type(i32) string {
         (i32.eqz)
     }}
 
+    _header() -> ptr {
+        return this as ptr;
+    }
+
+    _content() -> Pointer<char> {
+        return (this as Pointer<char>).add(2);
+    }
+
     __hash() -> int {
-        let hash = 0;
+        let header = this._header();
+        let hash = header[1];
 
-        for c in this {
-            let char_hash = c.__hash();
+        if hash == 0 {
+            hash = 1;
 
-            hash += char_hash;
+            for c in this {
+                hash += c.__hash();
+            }
+
+            hash &= 0x3fffffff;
+
+            header[1] = hash;
         }
 
-        return hash & 0x3fffffff;
+        return hash;
     }
 
     __set_char(index: int, c: char) -> string {
-        (this as ptr)[index + 1] = (c as int);
+        this._content()[index] = c;
 
         return this;
     }
 
     get_at(index: int) -> char {
-        return (this as ptr)[index + 1] as char;
+        return this._content()[index];
     }
 
     get_iterable_len() -> int {
@@ -48,50 +68,24 @@ export type(i32) string {
     }
 
     get_iterable_ptr() -> Pointer<char> {
-        return ((this as int) + 1) as Pointer<char>;
+        return this._content();
     }
 
     add(other: string) -> string {
-        let left = this as ptr;
-        let right = other as ptr;
-        let left_length = left[0];
-        let right_length = right[0];
-        let new_length = left_length + right_length;
-        let new_string = @alloc(new_length + 1);
-        let offset = 1;
+        let new_string = string.__new(this.len() + other.len());
+        let new_content =  new_string._content();
 
-        new_string[0] = new_length;
+        this._content().copy_to(new_content, this.len());
+        other._content().copy_to(new_content.add(this.len()), other.len());
 
-        for i in 0..left_length {
-            new_string[offset] = left[i + 1];
-            offset += 1;
-        }
-
-        for i in 0..right_length {
-            new_string[offset] = right[i + 1];
-            offset += 1;
-        }
-
-        return new_string as string;
+        return new_string;
     }
 
     eq(other: string) -> bool {
-        let left = this as ptr;
-        let right = other as ptr;
-        let left_length = left[0];
-        let right_length = right[0];
+        let hash_1 = this.__hash();
+        let hash_2 = other.__hash();
 
-        if left_length != right_length {
-            return false;
-        }
-
-        for i in 1..(left_length + 1) {
-            if left[i] != right[i] {
-                return false;
-            }
-        }
-
-        return true;
+        return hash_1 == hash_2;
     }
 
     ne(other: string) -> bool {
@@ -100,10 +94,6 @@ export type(i32) string {
 
     len() -> int {
         return (this as ptr)[0];
-    }
-
-    static __chosen() -> string {
-        return "lotus";
     }
 
     to_string() -> string {
@@ -116,7 +106,7 @@ export type(i32) string {
         result.__set_char(0, '"');
         result.__set_char(this.len() + 1, '"');
 
-        mem_copy((result as ptr).add(2), (this as ptr).add(1), this.len());
+        this._content().copy_to(result._content().add(1), this.len());
 
         return result;
     }
@@ -136,7 +126,7 @@ export type(i32) string {
                 result.__set_char(i, c);
             }
 
-            mem_copy((result as ptr).add(start + 1), (this as ptr).add(1), this.len());
+            this._content().copy_to(result._content().add(start), this.len());
 
             return result;
         }
@@ -203,7 +193,7 @@ export type(i32) string {
         let result_length = end_index - start_index;
         let result = string.__new(result_length);
 
-        mem_copy(result.get_iterable_ptr() as ptr, this.get_iterable_ptr().add(start_index) as ptr, result_length);
+        this._content().add(start_index).copy_to(result._content(), result_length);
 
         return result;
     }

@@ -1,3 +1,6 @@
+==> PAD_START
+-----hello
+hello
 ==> FIND
 0
 none

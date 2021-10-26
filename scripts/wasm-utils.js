@@ -30,7 +30,7 @@ function getImportsObject(env) {
                 let codes = new Array(length);
 
                 for (let i = 0; i < length; ++i) {
-                    codes[i] = memory[addr + 1 + i];
+                    codes[i] = memory[addr + 2 + i];
                 }
 
                 let string = String.fromCodePoint(...codes);
@@ -46,7 +46,7 @@ function getImportsObject(env) {
                 memory[result_addr] = str.length;
 
                 for (let i = 0; i < str.length; ++i) {
-                    memory[result_addr + i + 1] = str.charCodeAt(i);
+                    memory[result_addr + i + 2] = str.charCodeAt(i);
                 }
             }
         }

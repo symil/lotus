@@ -1,4 +1,8 @@
 export fn main() {
+    @log("==> PAD_START");
+    @log("hello".pad_start('-', 10));
+    @log("hello".pad_start('-', 0));
+
     @log("==> FIND");
     @log("hello".find("he", 0));
     @log("hello".find("he", 1));
