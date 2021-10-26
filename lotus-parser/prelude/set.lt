@@ -1,0 +1,43 @@
+export class Set<V> {
+    _map: Map<V, int>,
+
+    static new() -> This {
+        return This {
+            _map: Map<V, int>.new()
+        };
+    }
+
+    static with_capacity(capacity: int) -> This {
+        return This {
+            _map: Map<V, int>.with_capacity(capacity)
+        };
+    }
+
+    capacity() -> int {
+        return this._map.capacity();
+    }
+
+    size() -> int {
+        return this._map.size();
+    }
+
+    values() -> V[] {
+        return this._map.keys();
+    }
+
+    add(value: V) -> bool {
+        return this._map.set(value, 0);
+    }
+
+    delete(value: V) -> bool {
+        return this._map.delete(value);
+    }
+
+    clear() {
+        this._map.clear();
+    }
+
+    has(value: V) -> bool {
+        return this._map.get(value).is_some();
+    }
+}

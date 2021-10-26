@@ -1,0 +1,20 @@
+export fn main() {
+    let set = Set<int>.new();
+
+    @dbg(set.size());
+    @dbg(set.has(5));
+    @dbg(set.add(5));
+    @dbg(set.has(5));
+    @dbg(set.add(5));
+    @dbg(set.delete(5));
+    @dbg(set.has(5));
+    @dbg(set.delete(5));
+
+    for i in 0..4 {
+        set.add(i);
+    }
+
+    @dbg(set.values());
+    set.clear();
+    @dbg(set.values());
+}
