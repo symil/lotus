@@ -13,7 +13,7 @@ pub struct FieldOrMethodAccess {
 
 impl FieldOrMethodAccess {
     pub fn has_side_effects(&self) -> bool {
-        self.arguments.is_some()
+        true
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

@@ -1,25 +1,83 @@
-const START_BUCKET_COUNT = 16;
+const START_CAPACITY = 32;
 
 export class Map<K, V> {
+    type Item = Entry<K, V>;
+
     hash_table: Entry<K, V>?[],
     data_table: Entry<K, V>[],
-    next_slot: int,
     size: int,
 
     static new() -> This {
+        return This.with_capacity(START_CAPACITY);
+    }
+
+    static with_capacity(capacity: int) -> This {
+        let bucket_count = capacity.next_power_of_2() / 2;
         let map = This {};
 
-        for i in 0..START_BUCKET_COUNT {
+        for i in 0..capacity {
             map.hash_table.push(none);
         }
 
         return map;
     }
 
-    set(key: K, value: V) -> bool {
+    _rehash() {
+        let new_map = This.with_capacity(this.hash_table.len() * 2);
+
+        for entry in this.data_table {
+            if entry.key {
+                new_map.set(entry.key, entry.value);
+            }
+        }
+
+        this.hash_table = new_map.hash_table;
+        this.data_table = new_map.data_table;
+        this.size = new_map.size;
+    }
+
+    _get_index(key: K) -> int {
         let hash = key.__hash();
         let index = hash % this.hash_table.len();
+
+        return index;
+    }
+
+    _get_entry(key: K) -> Item? {
+        let index = this._get_index(key);
         let entry = this.hash_table[index];
+
+        while entry && entry.key != key {
+            entry = entry.next;
+        }
+
+        return entry;
+    }
+
+    size() -> int {
+        return this.size;
+    }
+
+    get(key: K) -> V? {
+        let entry = this._get_entry(key);
+
+        if entry {
+            return entry.value;
+        } else {
+            return none;
+        }
+    }
+
+    set(key: K, value: V) -> bool {
+        let index = this._get_index(key);
+        let entry = this.hash_table[index];
+        let last : Entry<K, V>? = none;
+        let already_present = false;
+
+        while entry && entry.key != key {
+            last = entry;
+            entry = entry.next;
+        }
 
         if !entry {
             entry = Entry<K, V> {
@@ -28,37 +86,40 @@ export class Map<K, V> {
                 next: none
             };
 
-            this.hash_table[index] = entry;
             this.data_table.push(entry?);
+            this.size += 1;
+
+            if last {
+                last.next = entry;
+            } else {
+                this.hash_table[index] = entry;
+            }
+
+            if this.data_table.len() > this.hash_table.len() * 2 {
+                this._rehash();
+            }
 
             return false;
         } else {
-            let last : Entry<K, V>? = none;
-            
-            while entry && entry.key != key {
-                last = entry;
-                entry = entry.next;
-            }
+            entry.key = key;
+            entry.value = value;
 
-            if entry {
-                entry.key = key;
-                entry.value = value;
-
-                return true;
-            } else {
-                entry = Entry<K, V> {
-                    key: key,
-                    value: value,
-                    next: none
-                };
-                last.next = entry;
-                this.data_table.push(entry?);
-
-                return false;
-            }
+            return true;
         }
+    }
 
-        return false;
+    delete(key: K) -> bool {
+        let entry = this._get_entry(key);
+
+        if entry && entry.key {
+            entry.key = none;
+            entry.value = none;
+            this.size -= 1;
+
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

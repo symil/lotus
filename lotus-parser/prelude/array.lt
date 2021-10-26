@@ -13,6 +13,18 @@ export type(i32) Array<T> {
         return header as This;
     }
 
+    static with_capacity(capacity: int) -> This {
+        capacity = capacity.next_power_of_4();
+        let header = @alloc(4);
+        let body = @alloc(capacity);
+
+        header[0] = body as int;
+        header[1] = 0;
+        header[2] = capacity;
+
+        return header as This;
+    }
+
     static __default() -> This {
         return This.__new(0);
     }
