@@ -44,4 +44,10 @@ export type(T) Option<T> {
     unwrap() -> T {{
 
     }}
+
+    __retain() {
+        if this.is_some() {
+            (this as T).__retain();
+        }
+    }
 }

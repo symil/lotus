@@ -137,6 +137,10 @@ export type(i32) int {
 
         return hash & 0x3fffffff;
     }
+
+    __retain() {{
+
+    }}
 }
 
 fn get_char(n: int) -> char {

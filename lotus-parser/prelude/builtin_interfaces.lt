@@ -106,4 +106,5 @@ sys interface Builtin {
     dyn to_debug_string(set: Set<ptr>) -> string;
     eq(This) -> bool;
     ne(This) -> bool;
+    dyn __retain();
 }

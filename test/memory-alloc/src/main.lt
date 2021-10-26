@@ -1,11 +1,15 @@
 export fn main() {
-    @dbg(@alloc(4));
-    @dbg(@alloc(4));
-    @dbg(@alloc(4));
-    @dbg(@alloc(-1));
-    @dbg(@alloc(5));
+    log_addr(@alloc(4));
+    log_addr(@alloc(4));
+    log_addr(@alloc(4));
+    log_addr(@alloc(-1));
+    log_addr(@alloc(5));
 
     for i in 0..20 {
-        @dbg(@alloc(8000));
+        log_addr(@alloc(8000));
     }
 }
+
+fn log_addr<T>(value: T) {{
+    (call $log_int)
+}}

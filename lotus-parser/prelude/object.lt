@@ -64,4 +64,12 @@ export class Object {
             return str;
         }
     }
+
+    autogen dyn __retain() {
+        if mem_retain(this.as_ptr()) {
+            iter_fields {
+                this.#FIELD_NAME.__retain();
+            }
+        }
+    }
 }

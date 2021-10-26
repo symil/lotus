@@ -236,4 +236,8 @@ export type(i32) string {
 
         return lines.join("\n");
     }
+
+    __retain() {
+        mem_retain(this as ptr);
+    }
 }

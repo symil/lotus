@@ -89,12 +89,12 @@ sys fn mem_alloc(block_size: int) -> ptr {
 
 sys fn mem_free(pointer: ptr) {
     let addr = pointer as int;
-    let page_addr = (((addr - HEADER_SIZE) >> VIRTUAL_PAGE_SIZE_POWER_OF_TWO) << VIRTUAL_PAGE_SIZE_POWER_OF_TWO) + HEADER_SIZE as ptr;
-    let avilable_block_count = page_addr[0];
+    let page_ptr = (((addr - HEADER_SIZE) >> VIRTUAL_PAGE_SIZE_POWER_OF_TWO) << VIRTUAL_PAGE_SIZE_POWER_OF_TWO) + HEADER_SIZE as ptr;
+    let avilable_block_count = page_ptr[0];
 
     pointer[-1] = 0;
-    page_addr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = addr;
-    page_addr[0] = avilable_block_count + 1;
+    page_ptr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = addr;
+    page_ptr[0] = avilable_block_count + 1;
 }
 
 sys fn mem_trigger_garbage_collection() {
@@ -112,13 +112,13 @@ sys fn mem_trigger_garbage_collection() {
             let block_count = page_ptr[3];
 
             for k in 0..block_count {
-                let metadata_addr = block_list_start_addr + (full_block_size * k) as ptr;
-                let metadata_value = metadata_addr[0];
+                let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
+                let metadata_value = metadata_ptr[0];
 
                 if metadata_value == 1 {
-                    mem_free(metadata_addr.add(1));
+                    mem_free(metadata_ptr.add(1));
                 } else if metadata_value == 2 {
-                    metadata_addr[0] = 1;
+                    metadata_ptr[0] = 1;
                 }
             }
         }
@@ -128,7 +128,7 @@ sys fn mem_trigger_garbage_collection() {
 sys fn mem_retain(addr: ptr) -> bool {
     let success = false;
 
-    if (addr as int) > 0 && addr[-1] == 1 {
+    if addr[-1] == 1 {
         addr[-1] = 2;
         success = true;
     }

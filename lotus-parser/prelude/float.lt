@@ -61,6 +61,10 @@ export type(f32) float {
     to_debug_string(set: Set<ptr>) -> string {
         return this.to_string();
     }
+
+    __retain() {{
+
+    }}
 }
 
 fn call_float_to_string(float, ptr) {{

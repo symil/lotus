@@ -1,0 +1,53 @@
+class Foo {
+    a: int = 6,
+    b: float = -1.5f,
+    c: string = "hey",
+    d: Foo?,
+    e: Object,
+    f: Object[]
+}
+
+class Bar {
+
+}
+
+export fn main() {
+    let p = @alloc(1);
+
+    log_addr(p);
+
+    @collect_garbage();
+    p = @alloc(1);
+    log_addr(p);
+
+    @retain(p);
+    @collect_garbage();
+    log_addr(@alloc(1));
+
+    @collect_garbage();
+    log_addr(@alloc(1));
+    log_addr(@alloc(1));
+
+    @log_empty();
+    @collect_garbage();
+
+    let foo = Foo {};
+    foo.f.push(foo);
+    foo.f.push(foo.e);
+    foo.f.push(Bar {});
+
+    log_addr(foo);
+    log_addr(foo.c);
+    log_addr(foo.e);
+    log_addr(foo.f);
+    log_addr(foo.f[0]);
+    log_addr(foo.f[1]);
+    log_addr(foo.f[2]);
+
+    @retain(foo);
+    log_addr(Foo {});
+}
+
+fn log_addr<T>(value: T) {{
+    (call $log_int)
+}}

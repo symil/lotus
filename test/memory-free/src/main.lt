@@ -3,8 +3,8 @@ export fn main() {
     @free(p1);
     let p2 = @alloc(1);
 
-    @dbg(p1);
-    @dbg(p2);
+    log_addr(p1);
+    log_addr(p2);
 
     for i in 0..10 {
         let p = @alloc(1);
@@ -14,5 +14,9 @@ export fn main() {
         }
     }
 
-    @dbg(@alloc(1));
+    log_addr(@alloc(1));
 }
+
+fn log_addr<T>(value: T) {{
+    (call $log_int)
+}}

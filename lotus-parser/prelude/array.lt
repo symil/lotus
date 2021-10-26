@@ -207,4 +207,12 @@ export type(i32) Array<T> {
             }
         }
     }
+
+    __retain() {
+        if mem_retain(this.as_ptr()) {
+            for item in this {
+                item.__retain();
+            }
+        }
+    }
 }

@@ -61,4 +61,8 @@ export type(i32) char {
             return str;
         }
     }
+
+    __retain() {{
+
+    }}
 }

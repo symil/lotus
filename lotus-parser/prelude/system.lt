@@ -7,6 +7,14 @@ export type(void) system {
         mem_free(pointer);
     }
 
+    retain<T>(value: T) {
+        value.__retain();
+    }
+
+    collect_garbage() {
+        mem_trigger_garbage_collection();
+    }
+
     log<T>(value: T) {
         let str = value.to_string();
 
