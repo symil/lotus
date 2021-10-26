@@ -1,11 +1,11 @@
 export fn main() {
-    @log(@alloc(4));
-    @log(@alloc(4));
-    @log(@alloc(4));
-    @log(@alloc(-1));
-    @log(@alloc(5));
+    @dbg(@alloc(4));
+    @dbg(@alloc(4));
+    @dbg(@alloc(4));
+    @dbg(@alloc(-1));
+    @dbg(@alloc(5));
 
     for i in 0..20 {
-        @log(@alloc(8000));
+        @dbg(@alloc(8000));
     }
 }

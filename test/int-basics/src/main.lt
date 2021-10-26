@@ -1,65 +1,57 @@
-fn log(i: int) {
-    i.print();
-}
-
-fn logb(b: bool) {
-    b.print();
-}
-
 export fn main() {
-    log(1 + 2);
-    log(1 - 2);
-    log(3 * 9);
-    log(10 / 3);
-    log(10 % 3);
-    log(3 << 2);
-    log(15 >> 2);
-    log(15 & 3);
-    log(8 | 4);
-    log(7 ^ 2);
+    @log(1 + 2);
+    @log(1 - 2);
+    @log(3 * 9);
+    @log(10 / 3);
+    @log(10 % 3);
+    @log(3 << 2);
+    @log(15 >> 2);
+    @log(15 & 3);
+    @log(8 | 4);
+    @log(7 ^ 2);
 
-    logb(5 == 5);
-    logb(5 == 6);
-    logb(5 != 6);
-    logb(5 != 5);
-    logb(6 > 5);
-    logb(6 > 6);
-    logb(5 > 6);
-    logb(6 >= 5);
-    logb(6 >= 6);
-    logb(5 >= 6);
-    logb(5 < 6);
-    logb(6 < 6);
-    logb(6 < 5);
-    logb(5 <= 6);
-    logb(6 <= 6);
-    logb(6 <= 5);
+    @log(5 == 5);
+    @log(5 == 6);
+    @log(5 != 6);
+    @log(5 != 5);
+    @log(6 > 5);
+    @log(6 > 6);
+    @log(5 > 6);
+    @log(6 >= 5);
+    @log(6 >= 6);
+    @log(5 >= 6);
+    @log(5 < 6);
+    @log(6 < 6);
+    @log(6 < 5);
+    @log(5 <= 6);
+    @log(6 <= 6);
+    @log(6 <= 5);
 
-    log(+7);
-    log(-7);
-    log(8.clz());
-    log(8.ctz());
+    @log(+7);
+    @log(-7);
+    @log(8.clz());
+    @log(8.ctz());
 
-    log((-4).log2());
-    log(5.log2());
-    log(8.log2());
-    log(9.log2());
-    log((-4).next_power_of_2());
-    log(1.next_power_of_2());
-    log(2.next_power_of_2());
-    log(5.next_power_of_2());
-    log(8.next_power_of_2());
+    @log((-4).log2());
+    @log(5.log2());
+    @log(8.log2());
+    @log(9.log2());
+    @log((-4).next_power_of_2());
+    @log(1.next_power_of_2());
+    @log(2.next_power_of_2());
+    @log(5.next_power_of_2());
+    @log(8.next_power_of_2());
 
-    log((-4).log4());
-    log(5.log4());
-    log(8.log4());
-    log(9.log4());
-    log((-4).next_power_of_4());
-    log(1.next_power_of_4());
-    log(2.next_power_of_4());
-    log(5.next_power_of_4());
-    log(8.next_power_of_4());
+    @log((-4).log4());
+    @log(5.log4());
+    @log(8.log4());
+    @log(9.log4());
+    @log((-4).next_power_of_4());
+    @log(1.next_power_of_4());
+    @log(2.next_power_of_4());
+    @log(5.next_power_of_4());
+    @log(8.next_power_of_4());
 
-    log(4.pow(6));
-    log((-2).pow(3));
+    @log(4.pow(6));
+    @log((-2).pow(3));
 }

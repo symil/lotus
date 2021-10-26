@@ -76,7 +76,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
         let expected_arg_count = function_unwrapped.arguments.len();
 
         if function_unwrapped.is_dynamic() {
-            dynamic_methods_index = Some(VariableInfo::new(Identifier::new("dyn_index", function_name), context.int_type(), VariableKind::Local));
+            dynamic_methods_index = Some(VariableInfo::new(Identifier::unique("dyn_index", function_name), context.int_type(), VariableKind::Local));
         }
 
         if arguments.len() != expected_arg_count {

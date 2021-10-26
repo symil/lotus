@@ -20,7 +20,7 @@ export type(void) system {
     }
 
     log_empty() {{
-        (call $__log_empty)
+        (call $log_empty)
     }}
 }
 
