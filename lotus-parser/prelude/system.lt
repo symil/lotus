@@ -31,6 +31,14 @@ export type(void) system {
     log_empty() {{
         (call $log_empty)
     }}
+
+    serialize<T>(value: T) -> int[] {
+        let buffer = Buffer.new();
+
+        value.__serialize(buffer);
+
+        return buffer.array;
+    }
 }
 
 fn log_string(string) {{

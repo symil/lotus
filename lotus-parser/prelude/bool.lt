@@ -38,4 +38,8 @@ export type(i32) bool {
     __retain() {{
         
     }}
+
+    __serialize(buffer: Buffer) {
+        buffer.push(this.to_int());
+    }
 }

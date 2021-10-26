@@ -210,8 +210,20 @@ export type(i32) Array<T> {
 
     __retain() {
         if mem_retain(this.as_ptr()) {
+            mem_retain(this.body() as ptr);
+
             for item in this {
                 item.__retain();
+            }
+        }
+    }
+
+    __serialize(buffer: Buffer) {
+        if buffer.register(this) {
+            buffer.push(this.len());
+
+            for item in this {
+                item.__serialize(buffer);
             }
         }
     }

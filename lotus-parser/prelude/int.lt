@@ -141,6 +141,10 @@ export type(i32) int {
     __retain() {{
 
     }}
+
+    __serialize(buffer: Buffer) {
+        buffer.push(this);
+    }
 }
 
 fn get_char(n: int) -> char {

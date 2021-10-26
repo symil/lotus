@@ -1,0 +1,25 @@
+pub class Buffer {
+    array: int[],
+    set: Set<ptr>,
+
+    static new() -> This {
+        return This {
+            array: [],
+            set: Set<ptr>.new()
+        };
+    }
+
+    register<T>(value: T) -> bool {
+        if (this.set.add(value as ptr)) {
+            this.array.push(value as int);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    push(value: int) {
+        this.array.push(value);
+    }
+}

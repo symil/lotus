@@ -62,5 +62,9 @@ export type(i32) Pointer<T> {
     __retain() {
         mem_retain(this as ptr);
     }
+
+    __serialize(buffer: Buffer) {
+        buffer.push(this.to_int());
+    }
 }
 

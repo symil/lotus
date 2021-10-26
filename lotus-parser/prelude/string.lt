@@ -240,4 +240,15 @@ export type(i32) string {
     __retain() {
         mem_retain(this as ptr);
     }
+
+    __serialize(buffer: Buffer) {
+        if buffer.register(this) {
+            buffer.push(this.len());
+            buffer.push(this.__hash());
+            
+            for c in this {
+                buffer.push(c.to_int());
+            }
+        }
+    }
 }

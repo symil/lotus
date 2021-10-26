@@ -72,4 +72,12 @@ export class Object {
             }
         }
     }
+
+    autogen dyn __serialize(buffer: Buffer) {
+        if buffer.register(this) {
+            iter_fields {
+                this.#FIELD_NAME.__serialize(buffer);
+            }
+        }
+    }
 }
