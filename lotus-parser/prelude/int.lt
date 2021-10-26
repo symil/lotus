@@ -45,6 +45,22 @@ export type(i32) int {
         return 23;
     }
 
+    min(other: int) -> int {
+        if this < other {
+            return this;
+        } else {
+            return other;
+        }
+    }
+
+    max(other: int) -> int {
+        if this > other {
+            return this;
+        } else {
+            return other;
+        }
+    }
+
     to_hexa_string() -> string {
         return "0x" + int_to_string(this, 16).pad_start('0', 8);
     }

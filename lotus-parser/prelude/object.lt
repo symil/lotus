@@ -45,8 +45,15 @@ export class Object {
         if #FIELD_COUNT == 0 {
             return #TYPE_NAME;
         } else {
-            
+            let str = #TYPE_NAME + " {\n";
+
+            iter_fields {
+                str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string()).indent(2) + ",\n";
+            }
+
+            str += "}";
+
+            return str;
         }
-        return this.to_string();
     }
 }

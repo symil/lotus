@@ -10,12 +10,13 @@ type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[
 
 pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
-pub const LOG_EMPTY_FUNC_NAME : &'static str = "__log_empty";
-pub const LOG_BOOL_FUNC_NAME : &'static str = "__log_bool";
-pub const LOG_INT_FUNC_NAME : &'static str = "__log_int";
-pub const LOG_FLOAT_FUNC_NAME : &'static str = "__log_float";
-pub const LOG_CHAR_FUNC_NAME : &'static str = "__log_char";
-pub const LOG_STRING_FUNC_NAME : &'static str = "__log_string";
+pub const LOG_EMPTY_FUNC_NAME : &'static str = "log_empty";
+pub const LOG_BOOL_FUNC_NAME : &'static str = "log_bool";
+pub const LOG_INT_FUNC_NAME : &'static str = "log_int";
+pub const LOG_FLOAT_FUNC_NAME : &'static str = "log_float";
+pub const LOG_CHAR_FUNC_NAME : &'static str = "log_char";
+pub const LOG_STRING_FUNC_NAME : &'static str = "log_string";
+pub const FLOAT_TO_STRING_FUNC_NAME : &'static str = "float_to_string";
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "empty", LOG_EMPTY_FUNC_NAME, &[], None),
@@ -24,6 +25,7 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),
     ("log", "char", LOG_CHAR_FUNC_NAME, &["i32"], None),
     ("log", "string", LOG_STRING_FUNC_NAME, &["i32"], None),
+    ("utils", "float_to_string", FLOAT_TO_STRING_FUNC_NAME, &["f32", "i32"], None),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[

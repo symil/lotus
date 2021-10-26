@@ -147,12 +147,8 @@ export type(i32) Array<T> {
         return str;
     }
 
-    split(separator: string) -> string[] {
-        return [];
-    }
-
     to_string() -> string {
-        return "";
+        return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
     to_debug_string() -> string {

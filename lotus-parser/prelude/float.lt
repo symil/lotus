@@ -38,11 +38,6 @@ export type(f32) float {
         (i32.eq)
     }}
 
-    // __is_none() -> bool {{
-    //     (f32.const nan:0x200000)
-    //     (f32.eq)
-    // }}
-
     __hash() -> int {
         return this.as_int().__hash();
     }
@@ -51,13 +46,23 @@ export type(f32) float {
         return 18.5f;
     }
 
-    to_string() -> string {
-        // TODO
+    is_nan() -> bool {
+        return !(this == this);
+    }
 
-        return "";
+    to_string() -> string {
+        let result = @alloc(16);
+
+        call_float_to_string(this, result);
+
+        return result as string;
     }
 
     to_debug_string() -> string {
         return this.to_string();
     }
 }
+
+fn call_float_to_string(float, ptr) {{
+    (call $float_to_string)
+}}

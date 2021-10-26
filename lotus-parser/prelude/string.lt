@@ -121,6 +121,10 @@ export type(i32) string {
         return result;
     }
 
+    is_empty() -> bool {
+        return this.len() == 0;
+    }
+
     pad_start(c: char, target_length: int) -> string {
         if this.len() >= target_length {
             return this;
@@ -162,5 +166,80 @@ export type(i32) string {
 
             return true;
         }
+    }
+
+    substring(start: int?, end: int?) -> string {
+        let length = this.len();
+        let start_index = 0;
+        let end_index = length;
+
+        if (start) {
+            start_index = start?;
+        }
+
+        if (end) {
+            end_index = end?;
+        }
+
+        if start_index < 0 {
+            start_index = length + start_index;
+        }
+
+        if end_index < 0 {
+            end_index = length + end_index;
+        }
+
+        start_index = start_index.min(length);
+        end_index = end_index.min(length);
+
+        if end_index <= start_index {
+            return "";
+        }
+
+        let result_length = end_index - start_index;
+        let result = string.__new(result_length);
+
+        mem_copy(result.get_iterable_ptr() as ptr, this.get_iterable_ptr().add(start_index) as ptr, result_length);
+
+        return result;
+    }
+
+    split(separator: string) -> string[] {
+        if this.len() == 0 {
+            return [];
+        }
+
+        let result : string[] = [];
+        let separator_length = separator.len();
+
+        if separator_length == 0 {
+            for c in this {
+                result.push(c.to_string());
+            }
+        } else {
+            let start = 0;
+            let index = this.find(separator, 0);
+
+            while index {
+                result.push(this.substring(start, index));
+                start = index + separator_length;
+                index = this.find(separator, start);
+            }
+
+            result.push(this.substring(start, none));
+        }
+
+        return result;
+    }
+
+    indent(tab_length: int) -> string {
+        let lines = this.split("\n");
+        let tab = "".pad_start(' ', tab_length);
+
+        for i in 0..lines.len() {
+            lines[i] = tab + lines[i];
+        }
+
+        return lines.join("\n");
     }
 }

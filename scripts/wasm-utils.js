@@ -37,6 +37,18 @@ function getImportsObject(env) {
 
                 env.log(string);
             }
+        },
+        utils: {
+            float_to_string(value, result_addr) {
+                let memory = env.getMemory();
+                let str = '' + value;
+
+                memory[result_addr] = str.length;
+
+                for (let i = 0; i < str.length; ++i) {
+                    memory[result_addr + i + 1] = str.charCodeAt(i);
+                }
+            }
         }
     };
 }

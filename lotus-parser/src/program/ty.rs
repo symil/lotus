@@ -155,16 +155,22 @@ impl Type {
     }
 
     pub fn is_assignable_to(&self, target: &Type) -> bool {
-        // Special case: a type T is always assignable to Option<T>
+        // Special case: a type T is always assignable to Option<T> and vice-versa
         if let Some(target_option_type) = target.get_builtin_type_parameter(BuiltinType::Option) {
             match self.get_builtin_type_parameter(BuiltinType::Option) {
                 Some(self_option_type) => return self_option_type.is_assignable_to(target_option_type),
                 None => return self.is_assignable_to(target_option_type),
             }
+        } else if let Some(self_option_type) = self.get_builtin_type_parameter(BuiltinType::Option) {
+            match target.get_builtin_type_parameter(BuiltinType::Option) {
+                Some(target_option_type) => return target_option_type.is_assignable_to(self_option_type),
+                None => return target.is_assignable_to(self_option_type),
+            }
         }
 
         match (self, target) {
             (_, Type::Any) => true,
+            (Type::Void, Type::Void) => true,
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
                 Some(ty) => &ty == target,
@@ -320,7 +326,7 @@ impl Type {
                                     let actual_type = actual_arg.ty.replace_parameters(Some(self), &[]);
                                     let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
 
-                                    if &expected_type != &actual_type {
+                                    if !actual_type.is_assignable_to(&expected_type) {
                                         details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
                                     }
                                 }
@@ -329,7 +335,7 @@ impl Type {
                             let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
                             let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
 
-                            if actual_return_value != expected_return_type {
+                            if !actual_return_value.is_assignable_to(&expected_return_type) {
                                 details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
                             }
                         } else {

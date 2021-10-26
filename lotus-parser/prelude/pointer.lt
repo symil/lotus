@@ -43,10 +43,6 @@ export type(i32) Pointer<T> {
         return wasm_load(byte_index);
     }
 
-    deref_get() -> T {
-        return wasm_load((this as int) * 4);
-    }
-
     print() {{
         (call $__log_int)
     }}
@@ -56,7 +52,7 @@ export type(i32) Pointer<T> {
     }
 
     to_string() -> string {
-        return "[Pointer " + this.to_string() + "]";
+        return "[Pointer " + (this as int).to_hexa_string() + "]";
     }
 
     to_debug_string() -> string {

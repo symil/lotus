@@ -67,6 +67,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
     }
 
     let mut result = Vasm::empty();
+    let mut arg_vasm_list = vasm![];
     let mut dynamic_methods_index = None;
     let mut final_function_parameters = vec![];
 
@@ -75,15 +76,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
         let expected_arg_count = function_unwrapped.arguments.len();
 
         if function_unwrapped.is_dynamic() {
-            let dynamic_methods_index_var = VariableInfo::new(Identifier::new("dyn_index", function_name), context.int_type(), VariableKind::Local);
-
-            result.extend(vec![
-                VI::raw(Wat::call_from_stack(DUPLICATE_INT_WASM_FUNC_NAME)),
-                VI::call_regular_method(&context.pointer_type(), "deref_get", &[], vec![], context),
-                VI::set_from_stack(&dynamic_methods_index_var)
-            ]);
-
-            dynamic_methods_index = Some(dynamic_methods_index_var);
+            dynamic_methods_index = Some(VariableInfo::new(Identifier::new("dyn_index", function_name), context.int_type(), VariableKind::Local));
         }
 
         if arguments.len() != expected_arg_count {
@@ -111,7 +104,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                     let expected_type = expected_arg.ty.replace_parameters(caller_type, &parameters);
 
                     if arg_vasm.ty.is_assignable_to(&expected_type) {
-                        result.extend(arg_vasm);
+                        arg_vasm_list.extend(arg_vasm);
                     } else if !arg_vasm.ty.is_undefined() {
                         context.errors.add(&arguments.as_vec()[i], format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));
                     }
@@ -129,8 +122,8 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
     });
 
     let call_instruction = match caller_type {
-        Some(ty) => VI::call_method(ty, function_wrapped.clone(), &final_function_parameters, dynamic_methods_index, vasm![]),
-        None => VI::call_function(function_wrapped.clone(), &final_function_parameters, vasm![]),
+        Some(ty) => VI::call_method(ty, function_wrapped.clone(), &final_function_parameters, dynamic_methods_index, arg_vasm_list),
+        None => VI::call_function(function_wrapped.clone(), &final_function_parameters, arg_vasm_list),
     };
 
     result.extend(Vasm::new(return_type, vec![], vec![call_instruction]));

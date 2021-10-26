@@ -1,0 +1,31 @@
+==> FIND
+0
+none
+0
+none
+2
+0
+none
+0
+==> SUBSTRING
+hel
+hello
+
+ll
+
+ello
+hel
+hello
+==> SPLIT
+[ "this", "is", "a", "test" ]
+[ "t", "h", "i", "s" ]
+[ "", "" ]
+[]
+[]
+[ "hello" ]
+[ "", "", "", "", "", "" ]
+[ "", "", "a" ]
+==> INDENT
+  hello
+    a
+    b

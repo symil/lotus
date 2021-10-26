@@ -1,0 +1,30 @@
+true
+true
+-5
+-5
+5
+'5'
+-1.1233999729156494
+Infinity
+NaN
+-1.1233999729156494
+Infinity
+NaN
+hello
+"hello"
+8
+none
+8
+none
+[Array 0x0000EAC8]
+[ 1, 2, 3 ]
+[Pointer 0x0000EAB9]
+0x0000EAB9
+[Foo 0x0000EAAF]
+Foo {
+  a: 8,
+  b: "hello",
+  c: Bar {
+    a: false,
+  },
+}

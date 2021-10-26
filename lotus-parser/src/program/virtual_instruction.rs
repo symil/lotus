@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use parsable::DataLocation;
 
-use crate::{items::Identifier, program::{FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters}, utils::Link, wat};
+use crate::{items::Identifier, program::{DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -68,7 +68,7 @@ pub struct VirtualFunctionCallInfo {
     pub function: Link<FunctionBlueprint>,
     pub parameters: Vec<Type>,
     pub dynamic_methods_index_var: Option<Rc<VariableInfo>>,
-    pub args: Option<Vasm>,
+    pub args: Vasm,
 }
 
 #[derive(Debug, Clone)]
@@ -164,7 +164,7 @@ impl VirtualInstruction {
             function,
             parameters: parameters.to_vec(),
             dynamic_methods_index_var: None,
-            args: Some(args.to_vasm()),
+            args: args.to_vasm(),
         })
     }
 
@@ -174,7 +174,7 @@ impl VirtualInstruction {
             function,
             parameters: parameters.to_vec(),
             dynamic_methods_index_var,
-            args: Some(args.to_vasm()),
+            args: args.to_vasm(),
         })
     }
 
@@ -294,7 +294,7 @@ impl VirtualInstruction {
                 function: info.function.clone(),
                 parameters: info.parameters.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
                 dynamic_methods_index_var: info.dynamic_methods_index_var.as_ref().and_then(|var_info| Some(Rc::new(var_info.replace_type_parameters(this_type, id)))),
-                args: info.args.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
+                args: info.args.replace_type_parameters(this_type, id)
             }),
             VirtualInstruction::Loop(info) => VirtualInstruction::Loop(VirtualLoopInfo {
                 content: info.content.replace_type_parameters(this_type, id),
@@ -329,7 +329,10 @@ impl VirtualInstruction {
             VirtualInstruction::TeeVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::GetField(_) => {},
             VirtualInstruction::SetField(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
-            VirtualInstruction::FunctionCall(info) => info.dynamic_methods_index_var.iter().for_each(|var_info| list.push(var_info.clone())),
+            VirtualInstruction::FunctionCall(info) => {
+                info.dynamic_methods_index_var.iter().for_each(|var_info| list.push(var_info.clone()));
+                info.args.collect_variables(list);
+            },
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},
@@ -408,10 +411,6 @@ impl VirtualInstruction {
             VirtualInstruction::FunctionCall(info) => {
                 let mut content = vec![];
 
-                if let Some(args) = &info.args {
-                    content.extend(args.resolve(type_index, context));
-                }
-
                 let this_type = info.caller_type.as_ref().and_then(|ty| Some(ty.resolve(type_index, context)));
                 let function_blueprint = info.function.with_ref(|function_unwrapped| {
                     match function_unwrapped.owner_interface.is_none() {
@@ -422,17 +421,23 @@ impl VirtualInstruction {
                 let is_dynamic = function_blueprint.borrow().is_dynamic();
                 let mut dynamic_call = false;
 
-                if is_dynamic {
+                if is_dynamic && this_type.as_ref().unwrap().wasm_type.contains(&"i32") {
                     if let Some(dynamic_methods_index_var) = &info.dynamic_methods_index_var {
                         let method_offset = function_blueprint.borrow().dynamic_index;
                         let func_wasm_type_name = this_type.as_ref().unwrap().get_placeholder_function_wasm_type_name(&function_blueprint);
 
                         content.extend(vec![
+                            Wat::call_from_stack(DUPLICATE_INT_WASM_FUNC_NAME),
+                            wat![Wat::const_i32(4)],
+                            wat!["i32.mul"],
+                            wat!["i32.load"],
+                            Wat::set_local_from_stack(&dynamic_methods_index_var.wasm_name)
+                        ]);
+                        content.extend(info.args.resolve(type_index, context));
+                        content.extend(vec![
                             dynamic_methods_index_var.get_to_stack(),
                             Wat::const_i32(method_offset),
                             wat!["i32.add"],
-                            // wat!["call", "$dup_i32"],
-                            // wat!["call", "$__log_int"],
                             wat!["call_indirect", wat!["type", Wat::placeholder(&func_wasm_type_name)]]
                         ]);
                         dynamic_call = true;
@@ -449,6 +454,7 @@ impl VirtualInstruction {
 
                     let function_instance = context.get_function_instance(parameters);
 
+                    content.extend(info.args.resolve(type_index, context));
                     content.extend_from_slice(&function_instance.wasm_call);
                 }
 

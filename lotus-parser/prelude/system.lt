@@ -25,5 +25,5 @@ export type(void) system {
 }
 
 fn log_string(string) {{
-    (call $__log_string)
+    (call $log_string)
 }}

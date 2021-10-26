@@ -1,0 +1,35 @@
+export fn main() {
+    @log("==> FIND");
+    @log("hello".find("he", 0));
+    @log("hello".find("he", 1));
+    @log("hello".find("hello", 0));
+    @log("hello".find("helloz", 0));
+    @log("hello".find("llo", 0));
+    @log("hello".find("", 0));
+    @log("hello".find("", 6));
+    @log("".find("", 0));
+
+    @log("==> SUBSTRING");
+    @log("hello".substring(0, 3));
+    @log("hello".substring(0, 10));
+    @log("hello".substring(8, 3));
+    @log("hello".substring(-3, -1));
+    @log("hello".substring(-1, -3));
+    @log("hello".substring(1, none));
+    @log("hello".substring(none, 3));
+    @log("hello".substring(none, none));
+
+    @log("==> SPLIT");
+    @dbg("this is a test".split(" "));
+    @dbg("this".split(""));
+    @dbg("this".split("this"));
+    @dbg("".split(""));
+    @dbg("".split("hello"));
+    @dbg("hello".split("this"));
+    @dbg("aaaaa".split("a"));
+    @dbg("aaaaa".split("aa"));
+
+    @log("==> INDENT");
+    @log("hello".indent(2));
+    @log("a\nb".indent(4));
+}
