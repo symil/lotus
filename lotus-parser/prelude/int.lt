@@ -69,7 +69,7 @@ export type(i32) int {
         return int_to_string(this, 10);
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         return this.to_string();
     }
 

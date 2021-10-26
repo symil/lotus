@@ -59,9 +59,12 @@ export async function runWasmFile(wasmPath, { log = console.log } = {}) {
     let wasi = new WASI();
     let wasm = await WebAssembly.compile(fs.readFileSync(wasmPath));
     let instance = await WebAssembly.instantiate(wasm, imports);
+    let start = performance.now();
 
     env.init(instance);
     wasi.start(instance);
 
-    return instance;
+    let time = performance.now() - start;
+
+    return { instance, time };
 }

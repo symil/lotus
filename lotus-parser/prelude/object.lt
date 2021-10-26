@@ -45,14 +45,18 @@ export class Object {
         return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
-    autogen dyn to_debug_string() -> string {
+    autogen dyn to_debug_string(set: Set<ptr>) -> string {
+        if set.add(this.as_ptr()) {
+            return "<cycle>";
+        }
+
         if #FIELD_COUNT == 0 {
             return #TYPE_NAME;
         } else {
             let str = #TYPE_NAME + " {\n";
 
             iter_fields {
-                str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string()).indent(2) + ",\n";
+                str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string(set)).indent(2) + ",\n";
             }
 
             str += "}";

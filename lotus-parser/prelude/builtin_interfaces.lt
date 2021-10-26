@@ -103,7 +103,7 @@ sys interface Builtin {
     __hash() -> int;
 
     dyn to_string() -> string;
-    dyn to_debug_string() -> string;
+    dyn to_debug_string(set: Set<ptr>) -> string;
     eq(This) -> bool;
     ne(This) -> bool;
 }

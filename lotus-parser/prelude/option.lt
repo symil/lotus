@@ -25,11 +25,11 @@ export type(T) Option<T> {
         }
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         if this.__is_none() {
             return "none";
         } else {
-            return (this as T).to_debug_string();
+            return (this as T).to_debug_string(set);
         }
     }
 

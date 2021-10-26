@@ -16,7 +16,7 @@ hello
 none
 8
 none
-[Array 0x0000EAC8]
+[Array 0x0000EAD7]
 [ 1, 2, 3 ]
 [Pointer 0x0000EAB9]
 0x0000EAB9

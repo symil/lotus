@@ -173,11 +173,15 @@ export type(i32) Array<T> {
         return str;
     }
 
+    as_ptr() -> ptr {
+        return this as ptr;
+    }
+
     to_string() -> string {
         return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         let length = this.len();
 
         if length == 0 {
@@ -187,7 +191,7 @@ export type(i32) Array<T> {
             let has_line_breaks = false;
 
             for item in this {
-                let str = item.to_debug_string();
+                let str = item.to_debug_string(set);
 
                 if str.contains("\n") {
                     has_line_breaks = true;

@@ -55,7 +55,7 @@ export type(i32) Pointer<T> {
         return "[Pointer " + (this as int).to_hexa_string() + "]";
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         return (this as int).to_hexa_string();
     }
 }

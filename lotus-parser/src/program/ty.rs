@@ -326,7 +326,7 @@ impl Type {
                                     let actual_type = actual_arg.ty.replace_parameters(Some(self), &[]);
                                     let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
 
-                                    if !actual_type.is_assignable_to(&expected_type) {
+                                    if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                         details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
                                     }
                                 }
@@ -379,7 +379,7 @@ impl Type {
                         for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
                             let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
 
-                            if !actual_type.is_assignable_to(&expected_type) {
+                            if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                 context.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));
                             }
                         }

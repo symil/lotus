@@ -40,7 +40,7 @@ export type(i32) char {
         return str;
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         let c = this;
 
         if c == '\n' {

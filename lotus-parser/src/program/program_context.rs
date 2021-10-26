@@ -234,6 +234,10 @@ impl ProgramContext {
             type_declaration.process_name(i, self);
         }
 
+        for typedef_declaration in &typedefs {
+            typedef_declaration.process(self);
+        }
+
         self.index_builtin_entities();
 
         let mut links = vec![];
@@ -294,10 +298,6 @@ impl ProgramContext {
 
         for interface_declaration in &interfaces {
             interface_declaration.process_methods(self);
-        }
-        
-        for typedef_declaration in &typedefs {
-            typedef_declaration.process(self);
         }
 
         // types.sort_by_cached_key(|type_declaration| {

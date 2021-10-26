@@ -58,7 +58,7 @@ export type(f32) float {
         return result as string;
     }
 
-    to_debug_string() -> string {
+    to_debug_string(set: Set<ptr>) -> string {
         return this.to_string();
     }
 }

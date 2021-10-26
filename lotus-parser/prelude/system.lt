@@ -14,7 +14,8 @@ export type(void) system {
     }
 
     dbg<T>(value: T) {
-        let str = value.to_debug_string();
+        let set = Set<ptr>.new();
+        let str = value.to_debug_string(set);
 
         log_string(str);
     }
