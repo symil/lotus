@@ -25,6 +25,16 @@ export type(i32) Array<T> {
         return header as This;
     }
 
+    static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> This {
+        let header = @alloc(4);
+
+        header[0] = pointer as int;
+        header[1] = length;
+        header[2] = capacity;
+
+        return header as This;
+    }
+
     static default() -> This {
         return This.__create(0);
     }

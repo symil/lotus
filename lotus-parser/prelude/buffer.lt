@@ -1,11 +1,14 @@
-pub class Buffer {
-    array: int[],
+export class Buffer {
+    buffer: ptr,
+    size: int,
+    capacity: int,
+    read_index: int,
     set: Set<ptr>,
 
     register<T>(value: T) -> bool {
-        this.array.push(value as int);
+        this.push(value as int);
 
-        if (this.set.add(value as ptr)) {
+        if this.set.add(value as ptr) {
             return true;
         } else {
             return false;
@@ -13,6 +16,35 @@ pub class Buffer {
     }
 
     push(value: int) {
-        this.array.push(value);
+        if this.size == this.capacity {
+            let new_capacity = (this.capacity + 1).next_power_of_4();
+            let new_buffer = @alloc(new_capacity);
+
+            if !this.buffer.is_null() {
+                this.buffer.copy_to(new_buffer, this.size);
+            }
+
+            this.capacity = new_capacity;
+            this.buffer = new_buffer;
+        }
+
+        this.buffer[this.size] = value;
+        this.size += 1;
+    }
+
+    read() -> int? {
+        if this.read_index >= this.size {
+            return none;
+        } else {
+            let value = this.buffer[this.read_index];
+
+            this.read_index += 1;
+
+            return value;
+        }
+    }
+
+    consume() -> int[] {
+        return int[].from_raw_parts(this.buffer, this.size, this.capacity);
     }
 }

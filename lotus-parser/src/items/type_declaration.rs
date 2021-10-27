@@ -2,7 +2,7 @@ use std::{collections::HashMap, hash::Hash, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, DynamicMethodInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -374,7 +374,7 @@ impl TypeDeclaration {
 
                 for field in &self.body.fields {
                     if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
-                        let mut default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
+                        let mut default_value_vasm = vasm![];
 
                         if let Some(default_value) = &field.default_value {
                             if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
@@ -386,6 +386,10 @@ impl TypeDeclaration {
                             }
                         } else if field.ty.is_option() {
                             default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
+                        } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
+                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
+                        } else {
+                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, BUILTIN_DEFAULT_METHOD_NAME, &[], vec![], context)];
                         }
 
                         default_value_vasm.ty = field_info.ty.clone();
@@ -425,6 +429,10 @@ impl TypeDeclaration {
                 func_ref.function.with_mut(|mut function_unwrapped| {
                     if function_unwrapped.dynamic_index == -1 {
                         function_unwrapped.dynamic_index = i as i32;
+
+                        if function_unwrapped.name.as_str() == DESERIALIZE_DYN_METHOD_NAME {
+                            context.deserialize_dyn_index = i;
+                        }
                     } else if function_unwrapped.dynamic_index != i as i32 {
                         panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), function_unwrapped.dynamic_index);
                     }

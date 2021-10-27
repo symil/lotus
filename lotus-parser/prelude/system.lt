@@ -37,7 +37,7 @@ export type(void) system {
 
         value.__serialize(buffer);
 
-        return buffer.array;
+        return buffer.consume();
     }
 
     int<T>(value: T) {

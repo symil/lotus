@@ -25,6 +25,7 @@ pub struct ProgramContext {
     pub return_found: bool,
     pub iter_fields_counter: Option<usize>,
     pub iter_ancestors_counter: Option<usize>,
+    pub deserialize_dyn_index: usize,
 
     pub dynamic_method_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
     pub dynamic_method_wasm_types: HashMap<FunctionInstanceWasmType, String>,

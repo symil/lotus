@@ -33,11 +33,14 @@ pub const CREATE_METHOD_NAME : &'static str = "__create";
 pub const STORE_FUNC_NAME : &'static str = "__store";
 pub const LOAD_FUNC_NAME : &'static str = "__load";
 pub const DEFAULT_METHOD_NAME : &'static str = "default";
+pub const BUILTIN_DEFAULT_METHOD_NAME : &'static str = "__default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "body";
 pub const NONE_METHOD_NAME : &'static str = "__none";
 pub const IS_NONE_FUNC_NAME : &'static str = "__is_none";
 pub const IS_METHOD_NAME : &'static str = "__is";
+pub const DESERIALIZE_METHOD_NAME : &'static str = "__deserialize";
+pub const DESERIALIZE_DYN_METHOD_NAME : &'static str = "__deserialize_dyn";
 pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";

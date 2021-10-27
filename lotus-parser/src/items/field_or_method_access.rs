@@ -103,7 +103,9 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                 for (i, (expected_arg, arg_vasm)) in function_unwrapped.arguments.iter().zip(arg_vasms.into_iter()).enumerate() {
                     let expected_type = expected_arg.ty.replace_parameters(caller_type, &parameters);
 
-                    if arg_vasm.ty.is_assignable_to(&expected_type) {
+                    if arg_vasm.ty.is_ambiguous() {
+                        context.errors.add(&arguments.as_vec()[i], format!("cannot infer type"));
+                    } else if arg_vasm.ty.is_assignable_to(&expected_type) {
                         arg_vasm_list.extend(arg_vasm);
                     } else if !arg_vasm.ty.is_undefined() {
                         context.errors.add(&arguments.as_vec()[i], format!("argument #{}: expected `{}`, got `{}`", i + 1, &expected_type, &arg_vasm.ty));

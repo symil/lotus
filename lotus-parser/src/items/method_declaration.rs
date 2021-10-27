@@ -46,9 +46,7 @@ impl MethodDeclaration {
                             false => ""
                         };
 
-                        if is_static && name.as_str() == DEFAULT_METHOD_NAME {
-                            // ok
-                        } else if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
+                        if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
                             context.errors.add(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
                         } else {
                             let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();

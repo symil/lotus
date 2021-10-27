@@ -12,12 +12,16 @@ export type(i32) Pointer<T> {
     }}
 
     __is_none() -> bool {{
-        (i32.eqz)
+        i32.eqz
     }}
 
     __hash() -> int {
         return (this as int).__hash();
     }
+
+    is_null() -> bool {{
+        i32.eqz
+    }}
 
     eq(other: This) -> bool {{
         i32.eq
