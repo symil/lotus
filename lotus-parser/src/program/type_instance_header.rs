@@ -77,14 +77,7 @@ impl TypeInstanceHeader {
                 FieldKind::Regular => &type_unwrapped.regular_methods,
             };
 
-            if let Some(func) = index_map.get(name).and_then(|func_ref| Some(func_ref.function.clone())) {
-                Some(func)
-            } else if self.name.starts_with("Option_") {
-                // TODO: do this properly
-                self.parameters[0].get_method(kind, name)
-            } else {
-                None
-            }
+            index_map.get(name).and_then(|func_ref| Some(func_ref.function.clone()))
         })
     }
 

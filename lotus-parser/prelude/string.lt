@@ -5,7 +5,7 @@ export type(i32) string {
         return "lotus";
     }
 
-    static __new(length: int) -> string {
+    static __create(length: int) -> string {
         let result = @alloc(length + 2);
 
         result[0] = length;
@@ -14,7 +14,7 @@ export type(i32) string {
         return (result as string);
     }
 
-    static __default() -> string {
+    static default() -> string {
         return "";
     }
 
@@ -72,7 +72,7 @@ export type(i32) string {
     }
 
     add(other: string) -> string {
-        let new_string = string.__new(this.len() + other.len());
+        let new_string = string.__create(this.len() + other.len());
         let new_content =  new_string._content();
 
         this._content().copy_to(new_content, this.len());
@@ -101,7 +101,11 @@ export type(i32) string {
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        let result = string.__new(this.len() + 2);
+        if this.__is_none() {
+            return "none";
+        }
+
+        let result = string.__create(this.len() + 2);
 
         result.__set_char(0, '"');
         result.__set_char(this.len() + 1, '"');
@@ -119,7 +123,7 @@ export type(i32) string {
         if this.len() >= target_length {
             return this;
         } else {
-            let result = string.__new(target_length);
+            let result = string.__create(target_length);
             let start = target_length - this.len();
 
             for i in 0..start {
@@ -145,7 +149,7 @@ export type(i32) string {
     }
 
     contains(str: string) -> bool {
-        return this.find(str, 0).is_some();
+        return !!this.find(str, 0);
     }
 
     starts_with(str: string, index: int) -> bool {
@@ -164,36 +168,34 @@ export type(i32) string {
 
     substring(start: int?, end: int?) -> string {
         let length = this.len();
-        let start_index = 0;
-        let end_index = length;
 
-        if (start) {
-            start_index = start?;
+        if (!start) {
+            start = 0;
         }
 
-        if (end) {
-            end_index = end?;
+        if (!end) {
+            end = length;
         }
 
-        if start_index < 0 {
-            start_index = length + start_index;
+        if start < 0 {
+            start = length + start;
         }
 
-        if end_index < 0 {
-            end_index = length + end_index;
+        if end < 0 {
+            end = length + end;
         }
 
-        start_index = start_index.min(length);
-        end_index = end_index.min(length);
+        start = start.min(length);
+        end = end.min(length);
 
-        if end_index <= start_index {
+        if end <= start {
             return "";
         }
 
-        let result_length = end_index - start_index;
-        let result = string.__new(result_length);
+        let result_length = end - start;
+        let result = string.__create(result_length);
 
-        this._content().add(start_index).copy_to(result._content(), result_length);
+        this._content().add(start).copy_to(result._content(), result_length);
 
         return result;
     }

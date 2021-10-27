@@ -2,13 +2,6 @@ pub class Buffer {
     array: int[],
     set: Set<ptr>,
 
-    static new() -> This {
-        return This {
-            array: [],
-            set: Set<ptr>.new()
-        };
-    }
-
     register<T>(value: T) -> bool {
         this.array.push(value as int);
 

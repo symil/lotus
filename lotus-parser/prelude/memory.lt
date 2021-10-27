@@ -128,7 +128,7 @@ sys fn mem_trigger_garbage_collection() {
 sys fn mem_retain(addr: ptr) -> bool {
     let success = false;
 
-    if addr[-1] == 1 {
+    if (addr as int) != 0 && addr[-1] == 1 {
         addr[-1] = 2;
         success = true;
     }

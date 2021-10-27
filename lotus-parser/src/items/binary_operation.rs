@@ -50,28 +50,18 @@ impl<'a> OperationTree<'a> {
                         let mut result = None;
 
                         if operator.is_boolean_operator() {
-                            let left_convert_vasm = match left_vasm.ty.get_builtin_type_parameter(BuiltinType::Option) {
-                                Some(left_option_type) => Some(Vasm::new(context.bool_type(), vec![], vec![
-                                    VI::call_regular_method(left_option_type, IS_NONE_FUNC_NAME, &[], vec![], context),
+                            if !left_vasm.ty.is_bool() {
+                                left_vasm.extend(Vasm::new(context.bool_type(), vec![], vec![
+                                    VI::call_regular_method(&left_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
                                     VI::Raw(wat!["i32.eqz"])
-                                ])),
-                                None => None
-                            };
-
-                            let right_convert_vasm = match right_vasm.ty.get_builtin_type_parameter(BuiltinType::Option) {
-                                Some(right_option_type) => Some(Vasm::new(context.bool_type(), vec![], vec![
-                                    VI::call_regular_method(right_option_type, IS_NONE_FUNC_NAME, &[], vec![], context),
-                                    VI::Raw(wat!["i32.eqz"])
-                                ])),
-                                None => None
-                            };
-
-                            if let Some(vasm) = left_convert_vasm {
-                                left_vasm.extend(vasm);
+                                ]));
                             }
 
-                            if let Some(vasm) = right_convert_vasm {
-                                right_vasm.extend(vasm);
+                            if !right_vasm.ty.is_bool() {
+                                right_vasm.extend(Vasm::new(context.bool_type(), vec![], vec![
+                                    VI::call_regular_method(&right_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
+                                    VI::Raw(wat!["i32.eqz"])
+                                ]));
                             }
                         }
 

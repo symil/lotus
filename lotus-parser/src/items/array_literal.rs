@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::Identifier, program::{BuiltinType, GET_BODY_FUNC_NAME, NEW_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinType, GET_BODY_FUNC_NAME, CREATE_METHOD_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
@@ -68,7 +68,7 @@ impl ArrayLiteral {
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let final_pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![final_item_type.clone()]);
         let mut instructions = vec![
-            VI::set(&array_var, VI::call_static_method(&final_array_type, NEW_FUNC_NAME, &[], vec![VI::int(self.items.len())], context)),
+            VI::set(&array_var, VI::call_static_method(&final_array_type, CREATE_METHOD_NAME, &[], vec![VI::int(self.items.len())], context)),
             VI::set(&array_body_var, VI::call_regular_method(&final_array_type, GET_BODY_FUNC_NAME, &[], vec![VI::get(&array_var)], context)),
         ];
 

@@ -17,16 +17,17 @@ impl Branch {
         if let Some(condition_vasm) = self.condition.process(None, context) {
             if condition_vasm.ty.is_bool() {
                 result = Some(condition_vasm);
-            } else if let Some(option_type) = condition_vasm.ty.get_builtin_type_parameter(BuiltinType::Option) {
+            } else {
                 let convert_vasm = Vasm::new(context.bool_type(), vec![], vec![
-                    VI::call_regular_method(option_type, IS_NONE_FUNC_NAME, &[], vec![], context),
+                    VI::call_regular_method(&condition_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
                     VI::raw(wat!["i32.eqz"])
                 ]);
 
                 result = Some(vasm![condition_vasm, convert_vasm]);
-            } else {
-                context.errors.add(&self.condition, format!("expected `{}` or `{}`, got `{}`", BuiltinType::Bool.get_name(), "Option<_>".bold(), &condition_vasm.ty));
             }
+            // else {
+                // context.errors.add(&self.condition, format!("expected `{}` or `{}`, got `{}`", BuiltinType::Bool.get_name(), "Option<_>".bold(), &condition_vasm.ty));
+            // }
         }
 
         result

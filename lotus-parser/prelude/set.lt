@@ -1,15 +1,13 @@
 export class Set<V> {
     _map: Map<V, int>,
 
+    static default() -> This {
+        return This.new();
+    }
+
     static new() -> This {
         return This {
             _map: Map<V, int>.new()
-        };
-    }
-
-    static with_capacity(capacity: int) -> This {
-        return This {
-            _map: Map<V, int>.with_capacity(capacity)
         };
     }
 
@@ -30,7 +28,7 @@ export class Set<V> {
     }
 
     delete(value: V) -> bool {
-        return this._map.delete(value);
+        return !!this._map.delete(value);
     }
 
     clear() {
@@ -38,6 +36,6 @@ export class Set<V> {
     }
 
     has(value: V) -> bool {
-        return this._map.get(value).is_some();
+        return !!this._map.get(value);
     }
 }

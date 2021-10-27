@@ -1,7 +1,7 @@
 export type(i32) Array<T> {
     type Item = T;
 
-    static __new(length: int) -> This {
+    static __create(length: int) -> This {
         let capacity = length.next_power_of_4();
         let header = @alloc(4);
         let body = @alloc(capacity);
@@ -25,8 +25,8 @@ export type(i32) Array<T> {
         return header as This;
     }
 
-    static __default() -> This {
-        return This.__new(0);
+    static default() -> This {
+        return This.__create(0);
     }
 
     static __none() -> This {{
@@ -133,7 +133,7 @@ export type(i32) Array<T> {
     }
 
     concat(other: This) -> This {
-        let new_array = This.__new(this.len() + other.len());
+        let new_array = This.__create(this.len() + other.len());
         let new_body = new_array.body();
 
         let offset = 0;
@@ -178,10 +178,18 @@ export type(i32) Array<T> {
     }
 
     to_string() -> string {
-        return "[" + #TYPE_NAME + " " + (this as int).to_hexa_string() + "]";
+        if this.__is_none() {
+            return "none";
+        }
+
+        return "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
     to_debug_string(set: Set<ptr>) -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         let length = this.len();
 
         if length == 0 {

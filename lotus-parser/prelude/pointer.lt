@@ -3,7 +3,7 @@ export type ptr = Pointer<int>;
 export type(i32) Pointer<T> {
     type Item = T;
 
-    static __default() -> This {{
+    static default() -> This {{
         (i32.const 0)
     }}
 
@@ -52,10 +52,18 @@ export type(i32) Pointer<T> {
     }
 
     to_string() -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return "[Pointer " + (this as int).to_hexa_string() + "]";
     }
 
     to_debug_string(set: Set<ptr>) -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return (this as int).to_hexa_string();
     }
 

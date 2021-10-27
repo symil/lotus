@@ -29,13 +29,13 @@ pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const THIS_TYPE_NAME : &'static str = "This";
 
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
-pub const NEW_FUNC_NAME : &'static str = "__new";
+pub const CREATE_METHOD_NAME : &'static str = "__create";
 pub const STORE_FUNC_NAME : &'static str = "__store";
 pub const LOAD_FUNC_NAME : &'static str = "__load";
-pub const DEFAULT_FUNC_NAME : &'static str = "__default";
+pub const DEFAULT_METHOD_NAME : &'static str = "default";
 pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "body";
-pub const NONE_FUNC_NAME : &'static str = "__none";
+pub const NONE_METHOD_NAME : &'static str = "__none";
 pub const IS_NONE_FUNC_NAME : &'static str = "__is_none";
 pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
 

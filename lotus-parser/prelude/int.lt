@@ -28,7 +28,7 @@ export type(i32) int {
 
     print() {{ (call $__log_int) }}
 
-    static __default() -> int {{
+    static default() -> int {{
         (i32.const 0)
     }}
 
@@ -66,10 +66,18 @@ export type(i32) int {
     }
 
     to_string() -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return int_to_string(this, 10);
     }
 
     to_debug_string(set: Set<ptr>) -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return this.to_string();
     }
 
@@ -169,7 +177,7 @@ fn int_to_string(n: int, base: int) -> string {
     }
 
     let length = n.log(base);
-    let str = string.__new(length + offset);
+    let str = string.__create(length + offset);
     let i = 0;
 
     while n > 0 {

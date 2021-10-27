@@ -33,14 +33,22 @@ export type(void) system {
     }}
 
     serialize<T>(value: T) -> int[] {
-        let buffer = Buffer.new();
+        let buffer = Buffer {};
 
         value.__serialize(buffer);
 
         return buffer.array;
     }
+
+    int<T>(value: T) {
+        log_int(value as int);
+    }
 }
 
 fn log_string(string) {{
     (call $log_string)
+}}
+
+fn log_int(int) {{
+    (call $log_int)
 }}

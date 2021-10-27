@@ -96,13 +96,6 @@ impl Type {
         }
     }
 
-    pub fn get_wrapped_type(&self) -> Option<&Type> {
-        match self.get_builtin_type_parameter(BuiltinType::Option) {
-            Some(option_type) => Some(option_type),
-            None => None,
-        }
-    }
-
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,
@@ -155,19 +148,6 @@ impl Type {
     }
 
     pub fn is_assignable_to(&self, target: &Type) -> bool {
-        // Special case: a type T is always assignable to Option<T> and vice-versa
-        if let Some(target_option_type) = target.get_builtin_type_parameter(BuiltinType::Option) {
-            match self.get_builtin_type_parameter(BuiltinType::Option) {
-                Some(self_option_type) => return self_option_type.is_assignable_to(target_option_type),
-                None => return self.is_assignable_to(target_option_type),
-            }
-        } else if let Some(self_option_type) = self.get_builtin_type_parameter(BuiltinType::Option) {
-            match target.get_builtin_type_parameter(BuiltinType::Option) {
-                Some(target_option_type) => return target_option_type.is_assignable_to(self_option_type),
-                None => return target.is_assignable_to(self_option_type),
-            }
-        }
-
         match (self, target) {
             (_, Type::Any) => true,
             (Type::Void, Type::Void) => true,
@@ -416,7 +396,7 @@ impl Type {
     }
 
     pub fn get_field(&self, name: &str) -> Option<Rc<FieldInfo>> {
-        let mut result = match self {
+        match self {
             Type::Undefined => None,
             Type::Void => None,
             Type::Any => None,
@@ -427,15 +407,7 @@ impl Type {
             Type::TypeParameter(info) => None,
             Type::FunctionParameter(info) => None,
             Type::Associated(info) => None,
-        };
-
-        if result.is_none() {
-            if let Some(implicit_type) = self.get_wrapped_type() {
-                result = implicit_type.get_field(name);
-            }
         }
-
-        result
     }
 
     pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<FuncRef> {
@@ -444,7 +416,7 @@ impl Type {
             FieldKind::Static => true,
         };
         
-        let mut result = match self {
+        match self {
             Type::Undefined => None,
             Type::Any => None,
             Type::Void => None,
@@ -468,19 +440,11 @@ impl Type {
                     .or_else(|| context.default_interfaces.get_method(is_static, name))
             },
             Type::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
-        };
-
-        if result.is_none() && !is_static {
-            if let Some(implicit_type) = self.get_wrapped_type() {
-                result = implicit_type.get_method(kind, name, context);
-            }
         }
-
-        result
     }
 
     pub fn get_associated_type(&self, name: &str) -> Option<Type> {
-        let mut result = match self {
+        match self {
             Type::Undefined => None,
             Type::Void => None,
             Type::Any => None,
@@ -513,15 +477,7 @@ impl Type {
                 None => None
             },
             // Type::Function(info) => None,
-        };
-
-        if result.is_none() {
-            if let Some(implicit_type) = self.get_wrapped_type() {
-                result = implicit_type.get_associated_type(name);
-            }
         }
-
-        result
     }
 
     pub fn get_regular_method(&self, name: &str, context: &ProgramContext) -> Option<FuncRef> {

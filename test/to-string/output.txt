@@ -13,14 +13,14 @@ NaN
 hello
 "hello"
 8
-none
+-2147483648
 8
 none
-[Array 0x0000EBE5]
+[Array 0x0000EBFE]
 [ 1, 2, 3 ]
-[Pointer 0x0000EAB9]
-0x0000EAB9
-[Foo 0x0000EAAF]
+[Pointer 0x0000EAD2]
+0x0000EAD2
+[Foo 0x0000EAC8]
 Foo {
   a: 8,
   b: "hello",

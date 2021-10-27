@@ -3,7 +3,8 @@ class Foo {
     b: string = some_string(),
     c: float,
     d: Bar = Bar { a: 8 },
-    e: Bar
+    e: Bar,
+    f: Bar?
 }
 
 class Bar {
@@ -26,6 +27,7 @@ export fn main() {
     @log(foo.d.a);
     @log(foo.d.b);
     @log(foo.e as int);
+    @log(foo.f as int);
 
     let foo2 = Foo {};
 

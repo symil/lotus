@@ -16,6 +16,13 @@ impl FullType {
         }
     }
 
+    pub fn is_option(&self) -> bool {
+        match self.suffix.last() {
+            Some(s) => s.value == TypeSuffix::Option,
+            None => false,
+        }
+    }
+
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self.suffix.last() {
             Some(type_suffix) => type_suffix.collected_instancied_type_names(list),

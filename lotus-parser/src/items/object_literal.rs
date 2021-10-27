@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_FUNC_NAME, Error, NEW_FUNC_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, Error, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
 use super::{Expression, FullType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -35,7 +35,7 @@ impl ObjectLiteral {
                     let mut fields_init = HashMap::new();
 
                     result.extend(Vasm::undefined(vec![object_var.clone()], vec![
-                        VI::call_static_method(&object_type, NEW_FUNC_NAME, &[], vec![], context),
+                        VI::call_static_method(&object_type, CREATE_METHOD_NAME, &[], vec![], context),
                         VI::set_from_stack(&object_var)
                     ]));
 

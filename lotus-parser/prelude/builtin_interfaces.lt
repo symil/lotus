@@ -97,7 +97,7 @@ export interface Unwrap {
 
 sys interface Builtin {
     static __chosen() -> This;
-    static __default() -> This;
+    static default() -> This;
     static __none() -> This;
     __is_none() -> bool;
     __hash() -> int;

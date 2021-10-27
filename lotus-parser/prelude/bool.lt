@@ -6,17 +6,16 @@ export type(i32) bool {
     not() -> bool {{ i32.eqz }}
     to_int() -> int {{ }}
 
-    static __default() {{ 
+    static default() {{ 
         (i32.const 0)
     }}
 
     static __none() -> bool {{
-        (i32.const -2147483648)
+        (i32.const 0)
     }}
 
-    is_none() -> bool {{
-        (i32.const -2147483648)
-        (i32.eq)
+    __is_none() -> bool {{
+        (i32.eqz)
     }}
 
     __hash() -> int {

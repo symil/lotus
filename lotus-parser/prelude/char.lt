@@ -11,7 +11,7 @@ export type(i32) char {
 
     }}
 
-    static __default() -> char {{
+    static default() -> char {{
         (i32.const 0)
     }}
 
@@ -28,12 +28,12 @@ export type(i32) char {
         return (this as int).__hash();
     }
 
-    static __chosen() -> char {
-        return 's';
-    }
-
     to_string() -> string {
-        let str = string.__new(1);
+        if this.__is_none() {
+            return "none";
+        }
+
+        let str = string.__create(1);
 
         str.__set_char(0, this);
 
@@ -41,6 +41,10 @@ export type(i32) char {
     }
 
     to_debug_string(set: Set<ptr>) -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         let c = this;
 
         if c == '\n' {
@@ -52,7 +56,7 @@ export type(i32) char {
         } else if c == '\'' {
             return "'\\''";
         } else {
-            let str = string.__new(3);
+            let str = string.__create(3);
 
             str.__set_char(0, '\'');
             str.__set_char(1, c);

@@ -23,7 +23,7 @@ export type(f32) float {
     min(float) -> float {{ f32.min }}
     max(float) -> float {{ f32.max }}
 
-    static __default() -> float {{
+    static default() -> float {{
         (f32.const 0)
     }}
 
@@ -51,6 +51,10 @@ export type(f32) float {
     }
 
     to_string() -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         let result = @alloc(16);
 
         call_float_to_string(this, result);
@@ -59,6 +63,10 @@ export type(f32) float {
     }
 
     to_debug_string(set: Set<ptr>) -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return this.to_string();
     }
 

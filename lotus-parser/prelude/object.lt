@@ -3,20 +3,20 @@ export const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>.new();
 export class Object {
     autogen static __init() {
         // @log("INIT: " + #TYPE_NAME);
-        let ancestor_set = Set<int>.new();
+        // let ancestor_set = Set<int>.new();
 
-        iter_ancestors {
-            ancestor_set.add(#ANCESTOR_ID);
-        }
+        // iter_ancestors {
+        //     ancestor_set.add(#ANCESTOR_ID);
+        // }
 
-        TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
+        // TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
     }
 
     autogen static is(object: Object) -> bool {
         let type_id = object.as_ptr()[0];
 
         return TYPE_ID_TO_ANCESTOR_IDS
-            .get(type_id).unwrap()
+            .get(type_id)
             .has(#TYPE_ID);
     }
 
@@ -28,7 +28,7 @@ export class Object {
         return #TYPE_NAME;
     }
 
-    autogen static __new() -> This {
+    autogen static __create() -> This {
         let data = @alloc(#FIELD_COUNT + 1);
 
         data[0] = #TYPE_ID;
@@ -36,8 +36,8 @@ export class Object {
         return data as This;
     }
 
-    autogen static __default() -> This {
-        let obj = This.__new();
+    autogen static default() -> This {
+        let obj = This.__create();
 
         iter_fields {
             obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
@@ -71,11 +71,19 @@ export class Object {
     }
 
     autogen dyn to_string() -> string {
+        if this.__is_none() {
+            return "none";
+        }
+
         return "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]";
     }
 
     autogen dyn to_debug_string(set: Set<ptr>) -> string {
-        if set.add(this.as_ptr()) {
+        if this.__is_none() {
+            return "none";
+        }
+
+        if !set.add(this.as_ptr()) {
             return "<cycle>";
         }
 

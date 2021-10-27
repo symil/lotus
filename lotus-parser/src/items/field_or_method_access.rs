@@ -31,7 +31,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
     let mut result = None;
 
     if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
-        let field_type = field_info.ty.replace_parameters(Some(parent_type.get_wrapped_type().unwrap_or(parent_type)), &[]);
+        let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
         let instruction = match access_type {
             AccessType::Get => VI::get_field(&field_type, field_info.offset),
             AccessType::Set(_) => VI::set_field_from_stack(&field_type, field_info.offset),
