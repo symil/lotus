@@ -37,6 +37,7 @@ pub const SET_CHAR_FUNC_NAME : &'static str = "__set_char";
 pub const GET_BODY_FUNC_NAME : &'static str = "body";
 pub const NONE_METHOD_NAME : &'static str = "__none";
 pub const IS_NONE_FUNC_NAME : &'static str = "__is_none";
+pub const IS_METHOD_NAME : &'static str = "__is";
 pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";

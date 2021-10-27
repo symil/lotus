@@ -3,16 +3,16 @@ export const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>.new();
 export class Object {
     autogen static __init() {
         // @log("INIT: " + #TYPE_NAME);
-        // let ancestor_set = Set<int>.new();
+        let ancestor_set = Set<int>.new();
 
-        // iter_ancestors {
-        //     ancestor_set.add(#ANCESTOR_ID);
-        // }
+        iter_ancestors {
+            ancestor_set.add(#ANCESTOR_ID);
+        }
 
-        // TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
+        TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
     }
 
-    autogen static is(object: Object) -> bool {
+    autogen static __is(object: Object) -> bool {
         let type_id = object.as_ptr()[0];
 
         return TYPE_ID_TO_ANCESTOR_IDS

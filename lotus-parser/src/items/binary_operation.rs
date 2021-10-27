@@ -16,6 +16,13 @@ impl BinaryOperation {
         }
     }
 
+    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
+        match self.others.is_empty() {
+            true => self.first.as_single_local_variable(),
+            false => None,
+        }
+    }
+
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         self.first.collected_instancied_type_names(list);
         

@@ -2,7 +2,7 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{FullType}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use crate::{items::{FullType, TypeQualifier}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
@@ -62,6 +62,13 @@ impl Type {
 
     pub fn is_bool(&self) -> bool {
         self.is_builtin_type(BuiltinType::Bool)
+    }
+
+    pub fn is_object(&self) -> bool {
+        match self {
+            Type::Actual(info) => info.type_blueprint.borrow().qualifier == TypeQualifier::Class,
+            _ => false
+        }
     }
 
     pub fn get_builtin_type_parameter(&self, builtin_type: BuiltinType) -> Option<&Type> {

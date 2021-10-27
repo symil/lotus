@@ -1,4 +1,5 @@
 use std::{collections::HashMap, rc::Rc};
+use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, Error, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
@@ -41,7 +42,7 @@ impl ObjectLiteral {
 
                     for field in &self.fields {
                         if type_unwrapped.fields.get(field.name.as_str()).is_none() {
-                            context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, &field.name));
+                            context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, field.name.as_str().bold()));
                         }
 
                         if fields_init.contains_key(field.name.as_str()) {

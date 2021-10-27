@@ -16,6 +16,13 @@ impl VarPath {
         }
     }
 
+    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
+        match self.path.is_empty() {
+            true => self.root.as_single_local_variable(),
+            false => None,
+        }
+    }
+
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         self.root.collected_instancied_type_names(list);
     }

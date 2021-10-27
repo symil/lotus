@@ -1,12 +1,12 @@
 use std::{collections::HashMap, rc::Rc};
 use crate::items::Identifier;
-use super::VariableInfo;
+use super::{VariableInfo, insert_in_vec_hashmap};
 
 #[derive(Debug)]
 pub struct Scope {
     pub kind: ScopeKind,
     pub depth: u32,
-    pub variables: HashMap<String, Rc<VariableInfo>>,
+    pub variables: HashMap<String, Vec<Rc<VariableInfo>>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -28,11 +28,11 @@ impl Scope {
     }
 
     pub fn get_var_info(&self, var_name: &str) -> Option<&Rc<VariableInfo>> {
-        self.variables.get(var_name)
+        self.variables.get(var_name)?.last()
     }
 
     pub fn insert_var_info(&mut self, info: &Rc<VariableInfo>) {
-        self.variables.insert(info.name.to_string(), Rc::clone(info));
+        insert_in_vec_hashmap(&mut self.variables, &info.name.to_string(), info.clone());
     }
 }
 

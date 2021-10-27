@@ -23,6 +23,13 @@ impl Operand {
         }
     }
 
+    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
+        match self {
+            Operand::UnaryOperation(_) => None,
+            Operand::VarPath(var_path) => var_path.as_single_local_variable(),
+        }
+    }
+
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
             Operand::UnaryOperation(unary_operation) => unary_operation.collected_instancied_type_names(list),

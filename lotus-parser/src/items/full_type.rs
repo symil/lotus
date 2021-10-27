@@ -10,9 +10,9 @@ pub struct FullType {
 
 impl FullType {
     pub fn as_var_name(&self) -> Option<&Identifier> {
-        match self.suffix.iter().all(|suffix| suffix.value == TypeSuffix::Option) {
+        match self.suffix.is_empty() {
             true => self.item.as_var_name(),
-            false => None
+            false => None,
         }
     }
 

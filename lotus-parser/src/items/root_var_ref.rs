@@ -23,6 +23,16 @@ impl RootVarRef {
         }
     }
 
+    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
+        match self {
+            RootVarRef::Prefixed(_, _, _) => None,
+            RootVarRef::Unprefixed(ty, args) => match args {
+                Some(_) => None,
+                None => ty.as_var_name(),
+            },
+        }
+    }
+
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self {
             RootVarRef::Prefixed(_, _, _) => {},

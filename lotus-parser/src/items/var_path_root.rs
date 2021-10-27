@@ -27,6 +27,13 @@ impl VarPathRoot {
         }
     }
 
+    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
+        match self {
+            VarPathRoot::Variable(var_ref) => var_ref.as_single_local_variable(),
+            _ => None
+        }
+    }
+
     pub fn has_side_effects(&self) -> bool {
         match self {
             VarPathRoot::Macro(_) => false,
