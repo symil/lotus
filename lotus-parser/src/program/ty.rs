@@ -564,6 +564,28 @@ impl Type {
         }
     }
 
+    pub fn get_name(&self) -> String {
+        match self {
+            Type::Undefined => format!("<undefined>"),
+            Type::Void => format!("void"),
+            Type::Any => format!("any"),
+            Type::This(_) => format!("{}", THIS_TYPE_NAME),
+            Type::Actual(info) => {
+                match info.parameters.is_empty() {
+                    true => format!("{}", &info.type_blueprint.borrow().name),
+                    false => {
+                        let params = info.parameters.iter().map(|value| value.get_name()).collect::<Vec<String>>().join(", ");
+
+                        format!("{}<{}>", &info.type_blueprint.borrow().name, params)
+                    }
+                }
+            },
+            Type::TypeParameter(info) => format!("{}", &info.name),
+            Type::FunctionParameter(info) => format!("{}", &info.name),
+            Type::Associated(info) => format!("{}", &info.associated.name),
+        }
+    }
+
     pub fn print(&self) {
         println!("{}", self);
     }
@@ -602,22 +624,6 @@ impl Default for Type {
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Type::Undefined => format!("<undefined>"),
-            Type::Void => format!("void"),
-            Type::Any => format!("any"),
-            Type::This(_) => format!("{}", THIS_TYPE_NAME),
-            Type::Actual(info) => {
-                match info.parameters.is_empty() {
-                    true => format!("{}", &info.type_blueprint.borrow().name),
-                    false => format!("{}<{}>", &info.type_blueprint.borrow().name, display_join(&info.parameters, ", ")),
-                }
-            },
-            Type::TypeParameter(info) => format!("{}", &info.name),
-            Type::FunctionParameter(info) => format!("{}", &info.name),
-            Type::Associated(info) => format!("{}", &info.associated.name),
-        };
-
-        write!(f, "{}", s.bold())
+        write!(f, "{}", self.get_name().bold())
     }
 }

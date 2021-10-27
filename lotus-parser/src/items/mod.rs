@@ -76,6 +76,7 @@ mod method_meta_qualifier;
 mod char_literal;
 mod none_literal;
 mod unwrap_token;
+mod iter_ancestors;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -155,3 +156,4 @@ pub use method_meta_qualifier::*;
 pub use char_literal::*;
 pub use none_literal::*;
 pub use unwrap_token::*;
+pub use iter_ancestors::*;

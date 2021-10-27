@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -24,6 +24,7 @@ pub struct ProgramContext {
     pub depth: u32,
     pub return_found: bool,
     pub iter_fields_counter: Option<usize>,
+    pub iter_ancestors_counter: Option<usize>,
 
     pub dynamic_method_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
     pub dynamic_method_wasm_types: HashMap<FunctionInstanceWasmType, String>,
@@ -399,6 +400,7 @@ impl ProgramContext {
         let mut content = wat!["module"];
         let mut globals_declaration = vec![];
         let mut globals_initialization = vec![];
+        let mut types_initialization = vec![];
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
@@ -434,43 +436,42 @@ impl ProgramContext {
             content.push(Wat::declare_function_type(&wasm_type_name, &wasm_type.arg_types, &wasm_type.return_types));
         }
 
+        let type_headers : Vec<Rc<TypeInstanceHeader>> = self.type_instances.values().map(|(header, _)| header.clone()).collect();
+
+        for type_instance_header in type_headers {
+            type_instance_header.type_blueprint.with_ref(|type_unwrapped| {
+                if let Some(func_ref) = type_unwrapped.static_methods.get(INIT_TYPE_METHOD_NAME) {
+                    let parameters = FunctionInstanceParameters {
+                        function_blueprint: func_ref.function.clone(),
+                        this_type: Some(type_instance_header.clone()),
+                        function_parameters: vec![],
+                    };
+
+                    let function_instance = self.get_function_instance(parameters);
+
+                    types_initialization.extend_from_slice(&function_instance.wasm_call);
+                }
+            });
+        }
+
         for global_var in self.global_var_instances {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
             globals_initialization.extend(global_var.init_value);
         }
 
-        // let func_table_size = self.structs.len() * GENERATED_METHOD_COUNT_PER_TYPE;
-        // content.push(wat!["table", func_table_size, "funcref"]);
-
-        // let mut generated_methods_table_populate = vec![];
-        // let mut generated_methods_declarations = vec![];
-
-        // for struct_annotation in self.structs.id_to_item.values() {
-        //     let generated_methods = GeneratedMethods::new(struct_annotation);
-        //     let (retain_name, retain_declaration) = generated_methods.retain;
-        //     let table_offset = struct_annotation.get_id() * GENERATED_METHOD_COUNT_PER_TYPE;
-
-        //     generated_methods_table_populate.push(wat!["elem", Wat::const_i32(table_offset), Wat::var_name(&retain_name)]);
-        //     generated_methods_declarations.push(retain_declaration);
-        // }
-
-        // content.extend(generated_methods_table_populate);
-
-        // for (var_name, var_type) in HEADER_GLOBALS {
-        //     content.push(Wat::declare_global(var_name, var_type));
-        // }
-
-        // let mut init_globals_body = vec![];
-
         for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
             content.push(Wat::declare_function(name, None, args.to_vec(), ret.to_vec(), locals.to_vec(), body()))
         }
 
-        let mut entry_function_body = vec![Wat::call(INIT_GLOBALS_FUNC_NAME, vec![])];
+        let mut entry_function_body = vec![
+            Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
+            Wat::call(INIT_TYPES_FUNC_NAME, vec![]),
+        ];
         entry_function_body.extend(self.entry_function.unwrap().wasm_call.clone());
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_initialization));
+        content.push(Wat::declare_function(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], vec![], vec![], entry_function_body));
 
         let placeholder_to_wasm_type = take(&mut self.placeholder_to_wasm_type);
@@ -484,22 +485,6 @@ impl ProgramContext {
                 content.push(wasm_declaration);
             }
         }
-
-        // for function in self.functions.id_to_item.into_values() {
-        //     content.push(function.wat);
-        // }
-
-        // for struct_annotation in self.structs.id_to_item.into_values() {
-        //     for method in struct_annotation.regular_methods.into_values() {
-        //         content.push(method.wat);
-        //     }
-            
-        //     for method in struct_annotation.static_methods.into_values() {
-        //         content.push(method.wat);
-        //     }
-        // }
-
-        // content.extend(generated_methods_declarations);
         
         Ok(content.to_string(0))
     }

@@ -107,5 +107,5 @@ sys interface Builtin {
     eq(This) -> bool;
     ne(This) -> bool;
     dyn __retain();
-    dyn __seralize();
+    dyn __serialize(buffer: Buffer);
 }

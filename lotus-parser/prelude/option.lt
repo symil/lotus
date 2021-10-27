@@ -50,4 +50,12 @@ export type(T) Option<T> {
             (this as T).__retain();
         }
     }
+
+    __serialize(buffer: Buffer) {
+        if this.is_none() {
+            buffer.push(T.__none() as int);
+        } else {
+            (this as T).__serialize(buffer);
+        }
+    }
 }

@@ -1,12 +1,13 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use crate::utils::Link;
-use super::{FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, TypeBlueprint, TypeInstanceParameters};
+use super::{ActualTypeContent, FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, Type, TypeBlueprint, TypeInstanceParameters};
 
 #[derive(Debug)]
 pub struct TypeInstanceHeader {
     pub id: u64,
     pub name: String,
+    pub ty: Type,
     pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Rc<TypeInstanceHeader>>,
     pub wasm_type: Option<&'static str>,
@@ -34,19 +35,27 @@ impl TypeInstanceHeader {
             let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
             let dynamic_method_table_offset = context.dynamic_method_table.len();
+            let mut type_content = ActualTypeContent {
+                type_blueprint: type_blueprint.clone(),
+                parameters: vec![],
+            };
             let mut name = type_unwrapped.name.to_string();
 
             for parameter in &instance_parameters.type_parameters {
                 name.push_str(&format!("_{}", &parameter.name));
+                type_content.parameters.push(parameter.ty.clone());
             }
 
             for i in 0..dynamic_method_count.max(1) {
                 context.dynamic_method_table.push(None);
             }
 
+            let ty = Type::Actual(type_content);
+
             Rc::new(TypeInstanceHeader {
                 id,
                 name,
+                ty,
                 type_blueprint,
                 parameters,
                 wasm_type,
@@ -77,5 +86,9 @@ impl TypeInstanceHeader {
                 None
             }
         })
+    }
+
+    pub fn get_type_id(&self) -> usize {
+        self.dynamic_method_table_offset
     }
 }

@@ -10,9 +10,9 @@ pub class Buffer {
     }
 
     register<T>(value: T) -> bool {
-        if (this.set.add(value as ptr)) {
-            this.array.push(value as int);
+        this.array.push(value as int);
 
+        if (this.set.add(value as ptr)) {
             return true;
         } else {
             return false;

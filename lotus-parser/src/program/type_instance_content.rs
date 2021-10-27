@@ -1,11 +1,11 @@
 use std::{collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
-use crate::{program::FunctionInstanceParameters, utils::Link};
+use crate::{program::{FunctionInstanceParameters, TypeIndex}, utils::Link};
 use super::{FunctionInstanceContent, ProgramContext, TypeBlueprint, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug)]
 pub struct TypeInstanceContent {
-
+    // pub ancestors: Vec<Rc<TypeInstanceHeader>>
 }
 
 impl TypeInstanceContent {
@@ -25,8 +25,20 @@ impl TypeInstanceContent {
             }
         });
 
+        // let mut ancestors = vec![];
+        // let type_index = TypeIndex {
+        //     current_type_instance: Some(header.clone()),
+        //     current_function_parameters: vec![],
+        // };
+
+        // header.type_blueprint.with_ref(|type_unwrapped| {
+        //     for ancestor in &type_unwrapped.ancestors {
+        //         ancestors.push(ancestor.resolve(&type_index, context));
+        //     }
+        // });
+
         TypeInstanceContent {
-            
+            // ancestors
         }
     }
 }

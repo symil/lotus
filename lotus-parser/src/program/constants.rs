@@ -17,19 +17,13 @@ pub const DUPLICATE_INT_WASM_FUNC_NAME : &'static str = "dup_i32";
 pub const SWAP_INT_INT_WASM_FUNC_NAME : &'static str = "swap_i32_i32";
 pub const SWAP_FLOAT_INT_WASM_FUNC_NAME : &'static str = "swap_f32_i32";
 
-pub const MEMORY_ALLOC_FUNC_NAME : &'static str = "__mem_alloc";
-pub const MEMORY_FREE_FUNC_NAME : &'static str = "__mem_free";
-pub const MEMORY_COPY_FUNC_NAME : &'static str = "__mem_copy";
-pub const MEMORY_RETAIN_FUNC_NAME : &'static str = "__mem_retain";
-pub const MEMORY_RETAIN_OBJECT_FUNC_NAME : &'static str = "__mem_retain_object";
-pub const MEMORY_GARBAGE_COLLECT_FUNC_NAME : &'static str = "__trigger_garbage_collection";
-
-pub const INIT_GLOBALS_FUNC_NAME : &'static str = "__init_globals";
+pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
+pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "this";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const RESULT_VAR_NAME : &'static str = "__fn_result";
-pub const TMP_THIS_VAR_NAME : &'static str = "tmp_this";
+pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const THIS_TYPE_NAME : &'static str = "This";
@@ -52,9 +46,4 @@ pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 
 pub const NAN_WASM : &'static str = "nan:0x200000";
 
-pub const MACRO_TYPE_ID : &'static str = "TYPE_ID";
-pub const MACRO_TYPE_NAME : &'static str = "TYPE_NAME";
-pub const MACRO_FIELD_COUNT : &'static str = "FIELD_COUNT";
-pub const MACRO_FIELD_NAME : &'static str = "FIELD_NAME";
-pub const MACRO_FIELD_TYPE : &'static str = "FIELD_TYPE";
-pub const MACRO_FIELD_DEFAULT_EXPRESSION : &'static str = "FIELD_DEFAULT_EXPRESSION";
+pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";

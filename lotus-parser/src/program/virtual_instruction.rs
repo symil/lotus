@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use parsable::DataLocation;
 
-use crate::{items::Identifier, program::{DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters}, utils::Link, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -13,6 +13,7 @@ pub enum VirtualInstruction {
     IntConstant(i32),
     FloatConstant(f32),
     TypeId(Type),
+    TypeName(Type),
     Store(VirtualStashInfo),
     Load(VirtualStashInfo),
     GetVariable(VirtualGetVariableInfo),
@@ -108,6 +109,10 @@ impl VirtualInstruction {
 
     pub fn type_id(ty: &Type) -> Self {
         Self::TypeId(ty.clone())
+    }
+
+    pub fn type_name(ty: &Type) -> Self {
+        Self::TypeName(ty.clone())
     }
 
     pub fn store(value_type: &Type, id: u64) -> Self {
@@ -261,6 +266,7 @@ impl VirtualInstruction {
             VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
             VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(value.clone()),
             VirtualInstruction::TypeId(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
+            VirtualInstruction::TypeName(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
             VirtualInstruction::Store(info) => VirtualInstruction::Store(VirtualStashInfo {
                 value_type: info.value_type.replace_parameters(Some(this_type), &[]),
                 wasm_var_name: info.wasm_var_name.clone(),
@@ -320,6 +326,7 @@ impl VirtualInstruction {
             VirtualInstruction::IntConstant(_) => {},
             VirtualInstruction::FloatConstant(_) => {},
             VirtualInstruction::TypeId(_) => {},
+            VirtualInstruction::TypeName(_) => {},
             VirtualInstruction::Store(info) => {
                 list.push(VariableInfo::from_wasm_name(info.wasm_var_name.to_string(), info.value_type.clone(), VariableKind::Local))
             },
@@ -350,6 +357,12 @@ impl VirtualInstruction {
                 let type_instance = ty.resolve(type_index, context);
 
                 vec![Wat::const_i32(type_instance.dynamic_method_table_offset)]
+            },
+            VirtualInstruction::TypeName(ty) => {
+                let type_instance = ty.resolve(type_index, context);
+                let vasm = make_string_value_from_literal(None, &type_instance.ty.get_name(), context).unwrap();
+
+                vasm.resolve(type_index, context)
             },
             VirtualInstruction::GetVariable(info) => vec![info.var_info.get_to_stack()],
             VirtualInstruction::Store(info) => {
@@ -501,6 +514,7 @@ impl VirtualInstruction {
             VirtualInstruction::IntConstant(_) => unreachable!(),
             VirtualInstruction::FloatConstant(_) => unreachable!(),
             VirtualInstruction::TypeId(_) => unreachable!(),
+            VirtualInstruction::TypeName(_) => unreachable!(),
             VirtualInstruction::Store(_) => unreachable!(),
             VirtualInstruction::Load(_) => unreachable!(),
             VirtualInstruction::GetVariable(_) => unreachable!(),
