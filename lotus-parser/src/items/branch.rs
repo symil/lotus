@@ -17,7 +17,7 @@ impl Branch {
         if let Some(condition_vasm) = self.condition.process(None, context) {
             if condition_vasm.ty.is_bool() {
                 result = Some(condition_vasm);
-            } else {
+            } else if !condition_vasm.ty.is_undefined() {
                 let convert_vasm = Vasm::new(context.bool_type(), vec![], vec![
                     VI::call_regular_method(&condition_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
                     VI::raw(wat!["i32.eqz"])

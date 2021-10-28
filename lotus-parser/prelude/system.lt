@@ -40,6 +40,17 @@ export type(void) system {
         return buffer.consume();
     }
 
+    deserialize<T>(array: int[]) -> T? {
+        let buffer = Buffer.from_array(array);
+        let value = T.__deserialize(buffer);
+
+        if buffer.read_overflow {
+            return none;
+        } else {
+            return value;
+        }
+    }
+
     int<T>(value: T) {
         log_int(value as int);
     }

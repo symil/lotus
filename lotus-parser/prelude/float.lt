@@ -77,6 +77,10 @@ export type(f32) float {
     __serialize(buffer: Buffer) {
         buffer.push(this.as_int());
     }
+
+    static __deserialize(buffer: Buffer) -> float? {
+        return buffer.read().as_float();
+    }
 }
 
 fn call_float_to_string(float, ptr) {{

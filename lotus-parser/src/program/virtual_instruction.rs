@@ -184,6 +184,7 @@ impl VirtualInstruction {
     }
 
     pub fn call_regular_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
+        // println!("{}: {}", caller_type, method_name);
         let function = caller_type.get_regular_method(method_name, context).unwrap().function.clone();
 
         Self::call_method(caller_type, function, parameters, None, args)

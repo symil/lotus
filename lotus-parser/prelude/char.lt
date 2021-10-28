@@ -73,4 +73,8 @@ export type(i32) char {
     __serialize(buffer: Buffer) {
         buffer.push(this.to_int());
     }
+
+    static __deserialize(buffer: Buffer) -> char? {
+        return buffer.read().to_char();
+    }
 }

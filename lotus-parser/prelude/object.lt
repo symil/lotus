@@ -1,4 +1,5 @@
 export const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>.new();
+const TYPE_ID_TO_FIELD_COUNT = Map<int, int>.new();
 
 export class Object {
     autogen static __init() {
@@ -9,6 +10,7 @@ export class Object {
             ancestor_set.add(#ANCESTOR_ID);
         }
 
+        TYPE_ID_TO_FIELD_COUNT.set(#TYPE_ID, #FIELD_COUNT);
         TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
     }
 
@@ -110,7 +112,13 @@ export class Object {
         }
     }
 
-    autogen dyn __retain() {
+    __retain() {
+        if !this.__is_none() {
+            this.__retain_dyn();
+        }
+    }
+
+    autogen dyn __retain_dyn() {
         if mem_retain(this.as_ptr()) {
             iter_fields {
                 this.#FIELD_NAME.__retain();
@@ -118,8 +126,16 @@ export class Object {
         }
     }
 
-    autogen dyn __serialize(buffer: Buffer) {
-        if buffer.register(this) {
+    __serialize(buffer: Buffer) {
+        if this.__is_none() {
+            buffer.push(0);
+        } else {
+            this.__serialize_dyn(buffer);
+        }
+    }
+
+    autogen dyn __serialize_dyn(buffer: Buffer) {
+        if buffer.save_addr(this) {
             buffer.push(#TYPE_ID);
 
             iter_fields {
@@ -128,11 +144,48 @@ export class Object {
         }
     }
 
-    // static __deserialize(buffer: Buffer) -> This? {
+    static __deserialize(buffer: Buffer) -> This? {
+        let addr = buffer.read();
 
-    // }
+        if !addr || addr == 0 {
+            return none; // no way to differenciate between "none because no more buffer" and "none because got 0"
+        }
 
-    // autogen dyn __deserialize_this() -> This? {
+        let obj : Object = buffer.retrieve(addr);
 
-    // }
+        if obj {
+            return obj;
+        }
+
+        let obj_type_id = buffer.read();
+
+        if !obj_type_id {
+            return none;
+        }
+
+        let obj_size = TYPE_ID_TO_FIELD_COUNT.get(obj_type_id);
+
+        if !obj_size {
+            return none;
+        }
+        
+        let obj_ptr = @alloc(1 + obj_size);
+        obj_ptr[0] = obj_type_id;
+
+        obj = obj_ptr as Object;
+
+        buffer.register(addr, obj);
+
+        if obj.__deserialize_dyn(buffer) {
+            return obj;
+        } else {
+            return none;
+        }
+    }
+
+    autogen dyn __deserialize_dyn(buffer: Buffer) {
+        iter_fields {
+            this.#FIELD_NAME = #FIELD_TYPE.__deserialize(buffer) as #FIELD_TYPE;
+        }
+    }
 }

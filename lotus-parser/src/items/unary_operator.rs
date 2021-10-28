@@ -19,8 +19,10 @@ impl UnaryOperatorWrapper {
             UnaryOperator::BooleanNot => {
                 if operand_type.is_bool() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::raw(wat!["i32.eqz"])]))
-                } else {
+                } else if !operand_type.is_undefined() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_FUNC_NAME, &[], vec![], context)]))
+                } else {
+                    None
                 }
                 // else {
                     // context.errors.add(self, format!("expected `{}` or `{}`, got `{}`", BuiltinType::Bool.get_name(), "Option<_>".bold(), operand_type));

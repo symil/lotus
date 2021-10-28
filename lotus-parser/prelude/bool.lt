@@ -41,4 +41,8 @@ export type(i32) bool {
     __serialize(buffer: Buffer) {
         buffer.push(this.to_int());
     }
+
+    static __deserialize(buffer: Buffer) -> bool? {
+        return buffer.read().to_bool();
+    }
 }

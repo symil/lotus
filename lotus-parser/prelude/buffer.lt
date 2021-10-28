@@ -3,9 +3,19 @@ export class Buffer {
     size: int,
     capacity: int,
     read_index: int,
+    read_overflow: bool,
     set: Set<ptr>,
+    map: Map<int, ptr>
 
-    register<T>(value: T) -> bool {
+    static from_array(array: int[]) -> Buffer {
+        return Buffer {
+            buffer: array.body(),
+            size: array.len(),
+            capacity: array.capacity()
+        };
+    }
+
+    save_addr<T>(value: T) -> bool {
         this.push(value as int);
 
         if this.set.add(value as ptr) {
@@ -13,6 +23,14 @@ export class Buffer {
         } else {
             return false;
         }
+    }
+
+    retrieve<T>(key: int) -> T? {
+        return (this.map.get(key) as T);
+    }
+
+    register<T>(key: int, value: T) {
+        this.map.set(key, value as ptr);
     }
 
     push(value: int) {
@@ -34,6 +52,8 @@ export class Buffer {
 
     read() -> int? {
         if this.read_index >= this.size {
+            this.read_overflow = true;
+
             return none;
         } else {
             let value = this.buffer[this.read_index];

@@ -244,13 +244,37 @@ export type(i32) string {
     }
 
     __serialize(buffer: Buffer) {
-        if buffer.register(this) {
+        if buffer.save_addr(this) {
             buffer.push(this.len());
-            buffer.push(this.__hash());
             
             for c in this {
                 buffer.push(c.to_int());
             }
         }
+    }
+
+    static __deserialize(buffer: Buffer) -> string? {
+        let addr = buffer.read();
+
+        if !addr || addr == 0 {
+            return none;
+        }
+
+        let str : string = buffer.retrieve(addr);
+
+        if (str) {
+            return str;
+        }
+
+        let length = buffer.read();
+        str = string.__create(length);
+
+        buffer.register(addr, str);
+
+        for i in 0..length {
+            str.__set_char(i, char.__deserialize(buffer));
+        }
+
+        return str;
     }
 }

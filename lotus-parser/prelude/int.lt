@@ -153,6 +153,10 @@ export type(i32) int {
     __serialize(buffer: Buffer) {
         buffer.push(this);
     }
+
+    static __deserialize(buffer: Buffer) -> int? {
+        return buffer.read();
+    }
 }
 
 fn get_char(n: int) -> char {

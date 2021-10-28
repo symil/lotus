@@ -237,12 +237,37 @@ export type(i32) Array<T> {
     }
 
     __serialize(buffer: Buffer) {
-        if buffer.register(this) {
+        if buffer.save_addr(this) {
             buffer.push(this.len());
 
             for item in this {
                 item.__serialize(buffer);
             }
         }
+    }
+
+    static __deserialize(buffer: Buffer) -> This? {
+        let addr = buffer.read();
+
+        if !addr || addr == 0 {
+            return none;
+        }
+
+        let array : This = buffer.retrieve(addr);
+
+        if (array) {
+            return array;
+        }
+
+        let length = buffer.read();
+        array = This.with_capacity(length);
+
+        buffer.register(addr, array);
+
+        for i in 0..length {
+            array.push(T.__deserialize(buffer));
+        }
+
+        return array;
     }
 }
