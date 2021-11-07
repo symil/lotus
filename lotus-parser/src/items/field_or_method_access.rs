@@ -119,7 +119,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
 
         (
             function_unwrapped.name.to_string(),
-            return_type.unwrap_or(Type::Undefined)
+            return_type.unwrap_or(Type::Void)
         )
     });
 

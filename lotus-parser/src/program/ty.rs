@@ -44,6 +44,13 @@ impl Type {
         }
     }
 
+    pub fn is_void(&self) -> bool {
+        match self {
+            Type::Void => true,
+            _ => false
+        }
+    }
+
     fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
         let name = builtin_type.get_name();
 

@@ -176,11 +176,9 @@ export class Object {
 
         buffer.register(addr, obj);
 
-        if obj.__deserialize_dyn(buffer) {
-            return obj;
-        } else {
-            return none;
-        }
+        obj.__deserialize_dyn(buffer);
+
+        return obj;
     }
 
     autogen dyn __deserialize_dyn(buffer: Buffer) {

@@ -17,7 +17,10 @@ impl UnaryOperatorWrapper {
     pub fn process(&self, operand_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         match &self.value {
             UnaryOperator::BooleanNot => {
-                if operand_type.is_bool() {
+                if operand_type.is_void() {
+                    context.errors.add(self, format!("cannot apply `{}` operator to untyped expression", "!".bold()));
+                    None
+                } else if operand_type.is_bool() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::raw(wat!["i32.eqz"])]))
                 } else if !operand_type.is_undefined() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_FUNC_NAME, &[], vec![], context)]))

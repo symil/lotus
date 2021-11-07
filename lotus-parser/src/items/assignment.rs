@@ -64,7 +64,7 @@ impl Assignment {
             }
         } else {
             if let Some(vasm) = self.lvalue.process(None, AccessType::Get, context) {
-                let is_void = vasm.ty.is_undefined();
+                let is_void = vasm.ty.is_void();
                 let mut source = vec![vasm];
 
                 if !is_void {

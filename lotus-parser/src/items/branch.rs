@@ -15,7 +15,9 @@ impl Branch {
         let mut result = None;
 
         if let Some(condition_vasm) = self.condition.process(None, context) {
-            if condition_vasm.ty.is_bool() {
+            if condition_vasm.ty.is_void() {
+                context.errors.add(&self.condition, format!("expected typed expression"));
+            } else if condition_vasm.ty.is_bool() {
                 result = Some(condition_vasm);
             } else if !condition_vasm.ty.is_undefined() {
                 let convert_vasm = Vasm::new(context.bool_type(), vec![], vec![
