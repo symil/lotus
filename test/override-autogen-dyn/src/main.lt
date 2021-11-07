@@ -1,0 +1,11 @@
+class Foo {
+    dyn __to_string_dyn() -> string {
+        return "<Foo>";
+    }
+}
+
+export fn main() {
+    let foo = Foo {};
+
+    @log(foo);
+}

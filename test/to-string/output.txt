@@ -16,11 +16,11 @@ hello
 none
 8
 none
-[Array 0x0000EE15]
+[Array 0x0000EECE]
 [ 1, 2, 3 ]
-[Pointer 0x0000ECE9]
-0x0000ECE9
-[Foo 0x0000ECDF]
+[Pointer 0x0000EDA2]
+0x0000EDA2
+[Foo 0x0000ED98]
 Foo {
   a: 8,
   b: "hello",

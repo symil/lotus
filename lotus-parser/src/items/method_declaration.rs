@@ -35,7 +35,12 @@ impl MethodDeclaration {
                     false => &mut type_unwrapped.regular_methods
                 };
 
-                index_map.insert(name.to_string(), func_ref)
+                let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();
+
+                match should_insert {
+                    true => index_map.insert(name.to_string(), func_ref),
+                    false => None,
+                }
             });
 
             type_wrapped.with_ref(|type_unwrapped| {
@@ -46,11 +51,13 @@ impl MethodDeclaration {
                             false => ""
                         };
 
+                        let is_prev_dynamic = prev_unwrapped.is_dynamic();
+
                         if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
+                            // The type declares the same method twice
                             context.errors.add(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
                         } else {
                             let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();
-                            let is_prev_dynamic = prev_unwrapped.is_dynamic();
 
                             if !is_dynamic && is_prev_dynamic {
                                 context.errors.add(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
