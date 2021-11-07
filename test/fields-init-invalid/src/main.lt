@@ -1,0 +1,12 @@
+class Foo {
+    a: int = 2,
+    b: int,
+    c: int?
+}
+
+export fn main() {
+    let v1 = Foo { d: 7 };
+    let v2 = Foo { d };
+    let v3 = Foo { a: "hey" };
+    let v4 = Foo { a };
+}

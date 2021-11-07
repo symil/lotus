@@ -1,0 +1,24 @@
+class A { a: int }
+class B extends A { b: float }
+class C extends B { c: string }
+
+class Test {
+    list: Object[],
+    link: Object?,
+    other: Object?
+}
+
+export fn main() {
+    let value = Test {
+        list: [
+            A { a: 5 },
+            B { a: 8, b: 1.2f },
+            C { a: 8, b: 1.2f, c: "hello" },
+        ]
+    };
+    value.link = value.list[2];
+    let buffer = @serialize(value);
+    let result : Test = @deserialize(buffer);
+
+    @dbg(result);
+}

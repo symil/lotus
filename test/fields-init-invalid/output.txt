@@ -1,0 +1,4 @@
+main.lt:8:20: error: type `Foo` has no field `d`
+main.lt:9:20: error: type `Foo` has no field `d`
+main.lt:10:23: error: expected `int`, got `string`
+main.lt:11:20: error: undefined variable `a`

@@ -51,15 +51,31 @@ impl ObjectLiteral {
 
                         if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
                             let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
+                            let mut field_vasm = None;
 
-                            if let Some(field_vasm) = field.value.process(Some(&field_type), context) {
-                                // println!("{}, {}, {}", &field_vasm.ty, field_type, field_vasm.ty.is_assignable_to(&field_type));
+                            match &field.value {
+                                Some(expr) => {
+                                    if let Some(vasm) = expr.process(Some(&field_type), context) {
+                                        // println!("{}, {}, {}", &field_vasm.ty, field_type, field_vasm.ty.is_assignable_to(&field_type));
 
-                                if field_vasm.ty.is_assignable_to(&field_type) {
-                                    fields_init.insert(field.name.as_str(), field_vasm);
-                                } else {
-                                    context.errors.add(&field.value, format!("expected `{}`, got `{}`", &field_type, &field_vasm.ty));
-                                }
+                                        if vasm.ty.is_assignable_to(&field_type) {
+                                            field_vasm = Some(vasm);
+                                        } else {
+                                            context.errors.add(expr, format!("expected `{}`, got `{}`", &field_type, &vasm.ty));
+                                        }
+                                    }
+                                },
+                                None => {
+                                    if let Some(var_info) = context.get_var_info(&field.name) {
+                                        field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get(&var_info)]));
+                                    } else {
+                                        context.errors.add(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
+                                    }
+                                },
+                            };
+
+                            if let Some(vasm) = field_vasm {
+                                fields_init.insert(field.name.as_str(), vasm);
                             }
                         }
                     }
