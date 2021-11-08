@@ -6,5 +6,6 @@ use super::{VariableInfo, Wat};
 pub struct GlobalVarInstance {
     pub wasm_name: String,
     pub wasm_type: &'static str,
-    pub init_value: Vec<Wat>
+    pub init_value: Vec<Wat>,
+    pub wasm_locals: Vec<(&'static str, String)>
 }

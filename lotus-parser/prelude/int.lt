@@ -65,6 +65,16 @@ export type(i32) int {
         }
     }
 
+    clamp(min: int, max: int) -> int {
+        if this < min {
+            return min;
+        } else if this > max {
+            return max;
+        } else {
+            return this;
+        }
+    }
+
     to_hexa_string() -> string {
         return "0x" + int_to_string(this, 16).pad_start('0', 8);
     }

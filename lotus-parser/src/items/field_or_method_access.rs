@@ -38,7 +38,7 @@ pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_
         };
 
         result = Some(Vasm::new(field_type, vec![], vec![instruction]));
-    } else {
+    } else if !parent_type.is_undefined() {
         context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
     }
 

@@ -455,10 +455,15 @@ impl ProgramContext {
             });
         }
 
+        let mut wasm_locals = vec![];
+
         for global_var in self.global_var_instances {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
             globals_initialization.extend(global_var.init_value);
+            wasm_locals.extend(global_var.wasm_locals);
         }
+
+        let wasm_locals : Vec<(&str, &str)> = wasm_locals.iter().map(|(ty, name)| (name.as_str(), ty.clone())).collect();
 
         for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
             content.push(Wat::declare_function(name, None, args.to_vec(), ret.to_vec(), locals.to_vec(), body()))
@@ -471,7 +476,7 @@ impl ProgramContext {
         entry_function_body.extend(self.entry_function.unwrap().wasm_call.clone());
 
         content.extend(globals_declaration);
-        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_initialization));
+        content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));
         content.push(Wat::declare_function(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
         content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], vec![], vec![], entry_function_body));
 
