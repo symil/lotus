@@ -27,6 +27,10 @@ export type(f32) float {
         (f32.const 0)
     }}
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> float {{
         (f32.const nan:0x200000)
     }}

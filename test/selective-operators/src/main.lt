@@ -1,0 +1,42 @@
+class A {}
+
+export fn main() {
+    let a = A {};
+    let none_int : int = none;
+    let none_obj : Object = none;
+
+    test(log_bool(true) && log_bool(true));
+    test(log_bool(false) && log_bool(false));
+    test(log_bool(false) && log_bool(true));
+    test(log_bool(true) && log_bool(false));
+
+    test(log_bool(true) || log_bool(true));
+    test(log_bool(false) || log_bool(false));
+    test(log_bool(false) || log_bool(true));
+    test(log_bool(true) || log_bool(false));
+
+    log(none_int && none_obj);
+    log(none_int && a);
+    log(5 && a);
+    log(a && none_obj);
+    log(a || none_obj);
+    log(none_obj && a);
+    log(none_obj || a);
+}
+
+fn log<T>(value: T) {
+    let str = @get_debug_string(value) + ": " + T.type_name();
+
+    @log(str);
+}
+
+fn test(value: bool) {
+    @log(value);
+    @log("---");
+}
+
+fn log_bool(value: bool) -> bool {
+    @log(value);
+
+    return value;
+}

@@ -4,7 +4,7 @@ use crate::{program::{BuiltinType, NONE_METHOD_NAME, ProgramContext, Type, VI, V
 
 #[parsable(name="none")]
 pub struct NoneLiteral {
-    #[parsable(regex = r"none")]
+    #[parsable(regex = r"none\b")]
     pub value: String,
 }
 

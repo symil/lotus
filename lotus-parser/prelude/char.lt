@@ -15,6 +15,10 @@ export type(i32) char {
         (i32.const 0)
     }}
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> char {{
         (i32.const -2147483648)
     }}

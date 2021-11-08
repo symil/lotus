@@ -48,6 +48,10 @@ export class Object {
         return obj;
     }
 
+    autogen static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     autogen static __none() -> This {{
         (i32.const 0)
     }}

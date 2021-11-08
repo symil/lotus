@@ -18,6 +18,10 @@ export type(i32) string {
         return "";
     }
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> string {{
         (i32.const 0)
     }}

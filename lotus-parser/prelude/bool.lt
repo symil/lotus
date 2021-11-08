@@ -10,6 +10,10 @@ export type(i32) bool {
         (i32.const 0)
     }}
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> bool {{
         (i32.const 0)
     }}

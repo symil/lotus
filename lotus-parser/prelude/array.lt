@@ -39,6 +39,10 @@ export type(i32) Array<T> {
         return This.__create(0);
     }
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> This {{
         (i32.const 0)
     }}

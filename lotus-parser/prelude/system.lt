@@ -21,11 +21,12 @@ export type(void) system {
         log_string(str);
     }
 
-    dbg<T>(value: T) {
-        let set = Set<ptr>.new();
-        let str = value.to_debug_string(set);
+    get_debug_string<T>(value: T) -> string {
+        return value.to_debug_string(Set<ptr>.new());
+    }
 
-        log_string(str);
+    dbg<T>(value: T) {
+        log_string(@get_debug_string(value));
     }
 
     log_empty() {{
@@ -53,6 +54,10 @@ export type(void) system {
 
     int<T>(value: T) {
         log_int(value as int);
+    }
+
+    type<T>(value: T) {
+        log_string(T.type_name());
     }
 }
 

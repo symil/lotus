@@ -32,6 +32,10 @@ export type(i32) int {
         (i32.const 0)
     }}
 
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+
     static __none() -> int {{
         (i32.const -2147483648)
     }}
