@@ -110,6 +110,16 @@ impl Type {
         }
     }
 
+    pub fn get_common_type<'a>(&'a self, other: &'a Type) -> Option<&'a Type> {
+        if self.is_assignable_to(other) {
+            Some(other)
+        } else if other.is_assignable_to(self) {
+            Some(self)
+        } else {
+            None
+        }
+    }
+
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,

@@ -92,8 +92,8 @@ impl RootVarRef {
                     Some(name) => match context.get_var_info(name) {
                         Some(var_info) => {
                             let mut var_vasm = match access_type {
-                                AccessType::Get => Vasm::new(var_info.ty.clone(), vec![], vec![VI::get(&var_info)]),
-                                AccessType::Set(_) => Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_from_stack(&var_info)]),
+                                AccessType::Get => Vasm::new(var_info.ty.clone(), vec![], vec![VI::get_var(&var_info)]),
+                                AccessType::Set(_) => Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_var_from_stack(&var_info)]),
                             };
 
                             for unwrap_token in &full_type.suffix {

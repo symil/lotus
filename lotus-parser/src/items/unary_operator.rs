@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_FUNC_NAME, ProgramContext, Type, VI, Vasm}, wat};
+use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}, wat};
 
 #[parsable]
 pub struct UnaryOperatorWrapper {
@@ -23,7 +23,7 @@ impl UnaryOperatorWrapper {
                 } else if operand_type.is_bool() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::raw(wat!["i32.eqz"])]))
                 } else if !operand_type.is_undefined() {
-                    Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_FUNC_NAME, &[], vec![], context)]))
+                    Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_METHOD_NAME, &[], vec![], context)]))
                 } else {
                     None
                 }

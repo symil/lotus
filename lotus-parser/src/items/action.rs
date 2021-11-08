@@ -29,7 +29,7 @@ impl Action {
                             if let Some(vasm) = expr.process(type_hint, context) {
                                 if vasm.ty.is_assignable_to(&return_value.ty) {
                                     result = Some(vasm![
-                                        VI::set(return_value, vasm),
+                                        VI::set_var(return_value, vasm),
                                         VI::jump(function_depth)
                                     ]);
                                 } else {

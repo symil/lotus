@@ -84,19 +84,21 @@ export type(i32) Array<T> {
     }
 
     get_at(index: int) -> T {
-        return this.body()[index];
+        let length = this.len();
+
+        if index < 0 {
+            index = length + index;
+        }
+
+        if index < 0 || index >= length {
+            return none;
+        } else {
+            return this.body()[index];
+        }
     }
 
     set_at(index: int, value: T) {
         this.body().set_at(index, value);
-    }
-
-    get(index: int) -> T? {
-        if index >= this.len() {
-            return none;
-        } else {
-            return this.get_at(index);
-        }
     }
 
     clear() {

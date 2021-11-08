@@ -57,7 +57,7 @@ impl VarDeclaration {
 
         context.push_var(&var_info);
 
-        source.push(Vasm::new(Type::Undefined, vec![Rc::clone(&var_info)], vec![VI::set_from_stack(&var_info)]));
+        source.push(Vasm::new(Type::Undefined, vec![Rc::clone(&var_info)], vec![VI::set_var_from_stack(&var_info)]));
 
         match ok {
             true => Some((var_info, Vasm::merge(source))),

@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{BuiltinType, IS_NONE_FUNC_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
+use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
 use super::{BinaryOperatorWrapper, FullType, Identifier, Operand};
 
 #[parsable]
@@ -53,45 +53,7 @@ impl<'a> OperationTree<'a> {
                 let right_vasm_result = right.process(context);
 
                 match (left_vasm_result, right_vasm_result) {
-                    (Some(mut left_vasm), Some(mut right_vasm)) => {
-                        let mut result = None;
-
-                        if operator.is_boolean_operator() {
-                            if !left_vasm.ty.is_bool() {
-                                left_vasm.extend(Vasm::new(context.bool_type(), vec![], vec![
-                                    VI::call_regular_method(&left_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
-                                    VI::Raw(wat!["i32.eqz"])
-                                ]));
-                            }
-
-                            if !right_vasm.ty.is_bool() {
-                                right_vasm.extend(Vasm::new(context.bool_type(), vec![], vec![
-                                    VI::call_regular_method(&right_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
-                                    VI::Raw(wat!["i32.eqz"])
-                                ]));
-                            }
-                        }
-
-                        let operator_vasm_opt = operator.process(&left_vasm.ty, &right_vasm.ty, right.get_location(), context);
-
-                        if let Some(operator_vasm) = operator_vasm_opt {
-                            let vasm = if let Some(short_circuit_vasm) = operator.get_short_circuit_vasm(context) {
-                                if right.has_side_effects() {
-                                    Vasm::new(operator_vasm.ty.clone(), vec![], vec![VI::typed_block(vec![context.bool_type()], vasm![
-                                        left_vasm, short_circuit_vasm, right_vasm, operator_vasm
-                                    ])])
-                                } else {
-                                    Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
-                                }
-                            } else {
-                                Vasm::merge(vec![left_vasm, right_vasm, operator_vasm])
-                            };
-
-                            result = Some(vasm);
-                        }
-
-                        result
-                    },
+                    (Some(left_vasm), Some(right_vasm)) => operator.process(left_vasm, right_vasm, right.get_location(), context),
                     _ => None
                 }
             },

@@ -40,3 +40,16 @@
     (i32.const 80)
     (f32.const 1.5)
 )
+
+;; If-then-else
+(i32.const 1)
+(if (result i32)
+    (then
+        ;; Will execute if the stack top value is true (!= 0)
+        (i32.const 8)
+    )
+    (else
+    ;; Will execute otherwise
+        (i32.const -1)
+    )
+)

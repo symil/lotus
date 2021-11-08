@@ -9,6 +9,7 @@ pub type VI = VirtualInstruction;
 #[derive(Debug, Clone)]
 pub enum VirtualInstruction {
     Drop,
+    Eqz,
     Raw(Wat),
     IntConstant(i32),
     FloatConstant(f32),
@@ -25,7 +26,8 @@ pub enum VirtualInstruction {
     Loop(VirtualLoopInfo),
     Block(VirtualBlockInfo),
     Jump(VirtualJumpInfo),
-    JumpIf(VirtualJumpIfInfo)
+    JumpIf(VirtualJumpIfInfo),
+    IfThenElse(IfThenElseInfo)
 }
 
 #[derive(Debug, Clone)]
@@ -94,6 +96,14 @@ pub struct VirtualBlockInfo {
     pub content: Vasm,
 }
 
+#[derive(Debug, Clone)]
+pub struct IfThenElseInfo {
+    pub return_type: Option<Type>,
+    pub condition: Vasm,
+    pub then_branch: Vasm,
+    pub else_branch: Vasm
+}
+
 impl VirtualInstruction {
     pub fn raw(value: Wat) -> Self {
         Self::Raw(value)
@@ -129,34 +139,34 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn get(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn get_var(var_info: &Rc<VariableInfo>) -> Self {
         Self::GetVariable(VirtualGetVariableInfo{
             var_info: Rc::clone(var_info),
         })
     }
 
-    pub fn set<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+    pub fn set_var<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
         Self::SetVariable(VirtualSetVariableInfo {
             var_info: Rc::clone(var_info),
             value: Some(value.to_vasm())
         })
     }
 
-    pub fn set_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn set_var_from_stack(var_info: &Rc<VariableInfo>) -> Self {
         Self::SetVariable(VirtualSetVariableInfo {
             var_info: Rc::clone(var_info),
             value: None
         })
     }
 
-    pub fn tee<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+    pub fn tee_var<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
         Self::TeeVariable(VirtualSetVariableInfo {
             var_info: Rc::clone(var_info),
             value: Some(value.to_vasm())
         })
     }
 
-    pub fn tee_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn tee_var_from_stack(var_info: &Rc<VariableInfo>) -> Self {
         Self::TeeVariable(VirtualSetVariableInfo {
             var_info: Rc::clone(var_info),
             value: None
@@ -260,9 +270,19 @@ impl VirtualInstruction {
         })
     }
 
+    pub fn if_then_else(return_type: Option<&Type>, condition: Vasm, then_branch: Vasm, else_branch: Vasm) -> Self {
+        Self::IfThenElse(IfThenElseInfo {
+            return_type: return_type.cloned(),
+            condition,
+            then_branch,
+            else_branch,
+        })
+    }
+
     pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Self {
         match self {
             VirtualInstruction::Drop => VirtualInstruction::Drop,
+            VirtualInstruction::Eqz => VirtualInstruction::Eqz,
             VirtualInstruction::Raw(wat) => VirtualInstruction::Raw(wat.clone()),
             VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
             VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(value.clone()),
@@ -317,12 +337,19 @@ impl VirtualInstruction {
                 depth: info.depth.clone(),
                 condition: info.condition.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
             }),
+            VirtualInstruction::IfThenElse(info) => VirtualInstruction::IfThenElse(IfThenElseInfo {
+                return_type: info.return_type.as_ref().and_then(|ty| Some(ty.replace_parameters(Some(this_type), &[]))),
+                condition: info.condition.replace_type_parameters(this_type, id),
+                then_branch: info.then_branch.replace_type_parameters(this_type, id),
+                else_branch: info.else_branch.replace_type_parameters(this_type, id),
+            }),
         }
     }
 
     pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
         match self {
             VirtualInstruction::Drop => {},
+            VirtualInstruction::Eqz => {},
             VirtualInstruction::Raw(_) => {},
             VirtualInstruction::IntConstant(_) => {},
             VirtualInstruction::FloatConstant(_) => {},
@@ -345,12 +372,18 @@ impl VirtualInstruction {
             VirtualInstruction::Block(info) => info.content.collect_variables(list),
             VirtualInstruction::Jump(_) => {},
             VirtualInstruction::JumpIf(info) => info.condition.iter().for_each(|vasm| vasm.collect_variables(list)),
+            VirtualInstruction::IfThenElse(info) => {
+                info.condition.collect_variables(list);
+                info.then_branch.collect_variables(list);
+                info.else_branch.collect_variables(list);
+            },
         }
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {
         match self {
             VirtualInstruction::Drop => vec![wat!["drop"]],
+            VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
             VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
@@ -505,12 +538,35 @@ impl VirtualInstruction {
 
                 vec![jump]
             },
+            VirtualInstruction::IfThenElse(info) => {
+                let condition_wasm = info.condition.resolve(type_index, context);
+                let then_branch = info.then_branch.resolve(type_index, context);
+                let else_branch = info.else_branch.resolve(type_index, context);
+
+                let mut content = vec![];
+                let mut if_block = wat!["if"];
+
+                if let Some(return_type) = &info.return_type {
+                    if let Some(wasm_type) = return_type.resolve(type_index, context).wasm_type {
+                        if_block.push(wat!["result", wasm_type]);
+                    }
+                }
+
+                if_block.push(wat!["then", then_branch]);
+                if_block.push(wat!["else", else_branch]);
+
+                content.extend(condition_wasm);
+                content.push(if_block);
+
+                content
+            },
         }
     }
 
     pub fn resolve_without_context(&self) -> Vec<Wat> {
         match self {
-            VirtualInstruction::Drop => unreachable!(),
+            VirtualInstruction::Drop => vec![wat!["drop"]],
+            VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(_) => unreachable!(),
             VirtualInstruction::FloatConstant(_) => unreachable!(),
@@ -528,6 +584,7 @@ impl VirtualInstruction {
             VirtualInstruction::Block(_) => unreachable!(),
             VirtualInstruction::Jump(_) => unreachable!(),
             VirtualInstruction::JumpIf(_) => unreachable!(),
+            VirtualInstruction::IfThenElse(_) => unreachable!(),
         }
     }
 }

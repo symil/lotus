@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_FUNC_NAME, ProgramContext, VI, Vasm}, vasm, wat};
+use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, VI, Vasm}, vasm, wat};
 use super::{Expression, Statement, StatementList};
 
 #[parsable]
@@ -21,7 +21,7 @@ impl Branch {
                 result = Some(condition_vasm);
             } else if !condition_vasm.ty.is_undefined() {
                 let convert_vasm = Vasm::new(context.bool_type(), vec![], vec![
-                    VI::call_regular_method(&condition_vasm.ty, IS_NONE_FUNC_NAME, &[], vec![], context),
+                    VI::call_regular_method(&condition_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context),
                     VI::raw(wat!["i32.eqz"])
                 ]);
 
