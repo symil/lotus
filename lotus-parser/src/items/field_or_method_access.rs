@@ -20,27 +20,52 @@ impl FieldOrMethodAccess {
         match self.name.process(context) {
             Some(name) => match &self.arguments {
                 Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
-                None => process_field_access(parent_type, &name, access_type, context)
+                None => process_field_access(parent_type, field_kind, &name, access_type, context)
             },
             None => None,
         }
     }
 }
 
-pub fn process_field_access(parent_type: &Type, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_name: &Identifier, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     let mut result = None;
 
-    if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
-        let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
-        let instruction = match access_type {
-            AccessType::Get => VI::get_field(&field_type, field_info.offset),
-            AccessType::Set(_) => VI::set_field_from_stack(&field_type, field_info.offset),
-        };
+    match field_kind {
+        FieldKind::Regular => {
+            if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
+                let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
+                let instruction = match access_type {
+                    AccessType::Get => VI::get_field(&field_type, field_info.offset),
+                    AccessType::Set(_) => VI::set_field_from_stack(&field_type, field_info.offset),
+                };
 
-        result = Some(Vasm::new(field_type, vec![], vec![instruction]));
-    } else if !parent_type.is_undefined() {
-        context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
-    }
+                result = Some(Vasm::new(field_type, vec![], vec![instruction]));
+            } else if !parent_type.is_undefined() {
+                context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
+            }
+        },
+        FieldKind::Static => {
+            match parent_type {
+                Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                    if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
+                        match access_type {
+                            AccessType::Get => {
+                                result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
+                            },
+                            AccessType::Set(location) => {
+                                context.errors.add(location, format!("cannot set value of enum variant"));
+                            },
+                        }
+                    }
+                }),
+                _ => {}
+            }
+
+            if result.is_none() {
+                context.errors.add(field_name, format!("type `{}` has no enum variant `{}`", parent_type, field_name.as_str().bold()));
+            }
+        }
+    };
 
     result
 }

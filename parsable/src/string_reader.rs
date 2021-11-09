@@ -213,6 +213,12 @@ impl StringReader {
         self.advance(length)
     }
 
+    pub fn peek_regex(&mut self, pattern: &'static str) -> bool {
+        let regex = get_regex(pattern);
+
+        regex.find(self.as_str()).is_some()
+    }
+
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         let end = self.get_index_backtracked();
         let file_namespace = self.file_namespace;

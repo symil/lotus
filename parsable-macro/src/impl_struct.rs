@@ -100,6 +100,16 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     },
                     None => quote! {}
                 };
+                let mut followed_by_parsing = quote! {};
+
+                if let Some(followed_by) = &attributes.followed_by {
+                    followed_by_parsing = quote! {
+                        if !field_failed__ && !reader__.peek_regex(#followed_by) {
+                            reader__.set_expected_token(Some(format!("{:?}", #followed_by)));
+                            #on_fail;
+                        }
+                    };
+                }
 
                 let mut parse_method = quote! { parse_item(reader__) };
 
@@ -188,6 +198,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         #assignment
                         #(#check)*
                         #suffix_parsing
+                        #followed_by_parsing
                         #on_success
                         #handle_failure
                         #pop_markers

@@ -1,8 +1,8 @@
-use std::{collections::HashMap, hash::Hash, rc::Rc};
+use std::{collections::HashMap, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -16,19 +16,38 @@ pub struct TypeDeclaration {
     #[parsable(prefix="extends")]
     pub parent: Option<FullType>,
     #[parsable(brackets="{}")]
-    pub body: TypeDeclarationBody,
+    pub body: Vec<TypeItem>,
 }
 
 #[parsable]
-#[derive(Default)]
-pub struct TypeDeclarationBody {
-    pub associated_types: Vec<AssociatedTypeDeclaration>,
-    #[parsable(separator=",")]
-    pub fields: Vec<FieldDeclaration>,
-    pub methods: Vec<MethodDeclaration>
+pub enum TypeItem {
+    AssociatedTypeDeclaration(AssociatedTypeDeclaration),
+    MethodDeclaration(MethodDeclaration),
+    FieldDeclaration(FieldDeclaration)
 }
 
 impl TypeDeclaration {
+    fn get_associated_types(&self) -> Vec<&AssociatedTypeDeclaration> {
+        self.body.iter().filter_map(|item| match item {
+            TypeItem::AssociatedTypeDeclaration(value) => Some(value),
+            _ => None,
+        }).collect()
+    }
+
+    fn get_fields(&self) -> Vec<&FieldDeclaration> {
+        self.body.iter().filter_map(|item| match item {
+            TypeItem::FieldDeclaration(value) => Some(value),
+            _ => None,
+        }).collect()
+    }
+
+    fn get_methods(&self) -> Vec<&MethodDeclaration> {
+        self.body.iter().filter_map(|item| match item {
+            TypeItem::MethodDeclaration(value) => Some(value),
+            _ => None,
+        }).collect()
+    }
+
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let type_unwrapped = TypeBlueprint {
@@ -44,6 +63,7 @@ impl TypeDeclaration {
             associated_types: IndexMap::new(),
             self_type: Type::Undefined,
             parent: None,
+            enum_variants: IndexMap::new(),
             fields: IndexMap::new(),
             regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -100,10 +120,14 @@ impl TypeDeclaration {
             },
         };
 
-        for field_declaration in &self.body.fields {
+        for field_declaration in self.get_fields() {
             match &field_declaration.default_value {
                 Some(default_value) => default_value.collected_instancied_type_names(&mut list),
-                None => {field_declaration.ty.collected_instancied_type_names(&mut list)}
+                None => {
+                    if let Some(ty) = &field_declaration.ty {
+                        ty.collected_instancied_type_names(&mut list);
+                    }
+                }
             }
         }
 
@@ -163,6 +187,13 @@ impl TypeDeclaration {
                         ty: base_object.borrow().self_type.clone(),
                     });
                 }
+            } else if self.qualifier == TypeQualifier::Enum {
+                let base_enum = context.types.get_by_name(ENUM_TYPE_NAME).unwrap();
+
+                result = Some(ParentInfo {
+                    location: DataLocation::default(),
+                    ty: base_enum.borrow().self_type.clone(),
+                });
             }
 
             type_wrapped.with_mut(|mut type_unwrapped| {
@@ -233,7 +264,7 @@ impl TypeDeclaration {
                     });
                 }
 
-                for associated_type in &self.body.associated_types {
+                for associated_type in self.get_associated_types() {
                     let (name, ty) = associated_type.process(context);
                     let wasm_pattern = format!("<{}>", name);
                     let associatd_type_info = Rc::new(AssociatedTypeInfo {
@@ -262,6 +293,7 @@ impl TypeDeclaration {
     pub fn process_fields(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
             let mut fields = IndexMap::new();
+            let mut variants = IndexMap::new();
             let mut offset = OBJECT_HEADER_SIZE;
 
             type_wrapped.with_ref(|type_unwrapped| {
@@ -282,28 +314,59 @@ impl TypeDeclaration {
                     });
                 }
 
-                for field in &self.body.fields {
-                    if fields.contains_key(field.name.as_str()) {
-                        context.errors.add(&field.name, format!("duplicate field `{}`", &self.name));
-                    }
+                for field in self.get_fields() {
+                    match &field.ty {
+                        Some(ty) => {
+                            // Regular field
 
-                    if let Some(field_type) = field.ty.process(false, context) {
-                        let field_details = Rc::new(FieldInfo {
-                            owner: type_wrapped.clone(),
-                            ty: field_type,
-                            name: field.name.clone(),
-                            offset,
-                            default_value: vasm![]
-                        });
-                        
-                        offset += 1;
-                        fields.insert(field.name.to_string(), field_details);
+                            if self.qualifier != TypeQualifier::Class {
+                                context.errors.add(&field.name, format!("only classes can have fields"));
+                                continue;
+                            }
+
+                            if fields.contains_key(field.name.as_str()) {
+                                context.errors.add(&field.name, format!("duplicate field `{}`", self.name.as_str().bold()));
+                            }
+
+                            if let Some(field_type) = ty.process(false, context) {
+                                let field_details = Rc::new(FieldInfo {
+                                    owner: type_wrapped.clone(),
+                                    ty: field_type,
+                                    name: field.name.clone(),
+                                    offset,
+                                    default_value: vasm![]
+                                });
+
+                                offset += 1;
+                                fields.insert(field.name.to_string(), field_details);
+                            }
+                        },
+                        None => {
+                            // Enum variant
+
+                            if self.qualifier != TypeQualifier::Enum {
+                                context.errors.add(&field.name, format!("only enums can have variants"));
+                                continue;
+                            }
+
+                            if variants.contains_key(field.name.as_str()) {
+                                context.errors.add(&field.name, format!("duplicate variant `{}`", self.name.as_str().bold()));
+                            }
+
+                            let variant_details = EnumVariantInfo {
+                                name: field.name.clone(),
+                                value: variants.len(),
+                            };
+
+                            variants.insert(field.name.to_string(), variant_details);
+                        },
                     }
                 }
             });
 
             type_wrapped.with_mut(|mut type_unwrapped| {
                 type_unwrapped.fields = fields;
+                type_unwrapped.enum_variants = variants;
             });
         });
     }
@@ -340,7 +403,7 @@ impl TypeDeclaration {
                 type_unwrapped.static_methods = static_methods;
             });
 
-            for method in self.body.methods.iter().filter(|method| !method.is_autogen()) {
+            for method in self.get_methods().iter().filter(|method| !method.is_autogen()) {
                 method.process_signature(context);
             }
         });
@@ -350,7 +413,7 @@ impl TypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let children = type_wrapped.borrow().descendants.clone();
 
-            for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
+            for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_signature(context);
@@ -360,6 +423,10 @@ impl TypeDeclaration {
     }
 
     pub fn process_fields_default_values(&self, context: &mut ProgramContext) {
+        if self.qualifier != TypeQualifier::Class {
+            return;
+        }
+
         self.process(context, |type_wrapped, context| {
             let mut default_values = HashMap::new();
 
@@ -372,7 +439,11 @@ impl TypeDeclaration {
                     });
                 }
 
-                for field in &self.body.fields {
+                for field in self.get_fields() {
+                    if field.ty.is_none() {
+                        continue;
+                    }
+
                     if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
                         let mut default_value_vasm = vasm![];
 
@@ -384,7 +455,7 @@ impl TypeDeclaration {
                                     context.errors.add(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
                                 }
                             }
-                        } else if field.ty.is_option() {
+                        } else if field.ty.as_ref().unwrap().is_option() {
                             default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
                         } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
                             default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
@@ -447,7 +518,7 @@ impl TypeDeclaration {
 
     pub fn process_method_bodies(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
-            for method in self.body.methods.iter().filter(|method| !method.is_autogen()) {
+            for method in self.get_methods().iter().filter(|method| !method.is_autogen()) {
                 method.process_body(context);
             }
         });
@@ -457,7 +528,7 @@ impl TypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let children = type_wrapped.borrow().descendants.clone();
 
-            for method in self.body.methods.iter().filter(|method| method.is_autogen()) {
+            for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_body(context);

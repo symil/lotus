@@ -26,6 +26,7 @@ pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
+pub const ENUM_TYPE_NAME : &'static str = "Enum";
 pub const THIS_TYPE_NAME : &'static str = "This";
 
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";

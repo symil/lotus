@@ -12,13 +12,13 @@ pub struct TypeBlueprint {
     pub visibility: Visibility,
     pub qualifier: TypeQualifier,
     pub stack_type: WasmStackType,
-    // pub inheritance_chain_length: usize,
     pub descendants: Vec<Link<TypeBlueprint>>,
     pub ancestors: Vec<Type>,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
     pub associated_types: IndexMap<String, Rc<AssociatedTypeInfo>>,
     pub self_type: Type,
     pub parent: Option<ParentInfo>,
+    pub enum_variants: IndexMap<String, EnumVariantInfo>,
     pub fields: IndexMap<String, Rc<FieldInfo>>,
     pub regular_methods: IndexMap<String, FuncRef>,
     pub static_methods: IndexMap<String, FuncRef>,
@@ -38,6 +38,12 @@ pub enum WasmStackType {
 pub struct ParentInfo {
     pub location: DataLocation,
     pub ty: Type
+}
+
+#[derive(Debug)]
+pub struct EnumVariantInfo {
+    pub name: Identifier,
+    pub value: usize
 }
 
 #[derive(Debug)]

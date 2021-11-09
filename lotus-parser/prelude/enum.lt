@@ -1,0 +1,9 @@
+sys type(i32) Enum {
+    eq(other: This) -> bool {{
+        i32.eq
+    }}
+
+    ne(other: This) -> bool {{
+        i32.ne
+    }}
+}

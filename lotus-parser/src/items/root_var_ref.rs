@@ -53,7 +53,7 @@ impl RootVarRef {
                             Some(method_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, method_vasm]))),
                             None => None,
                         },
-                        None => match process_field_access(&prefix_vasm.ty, field_name, access_type, context) {
+                        None => match process_field_access(&prefix_vasm.ty, FieldKind::Regular, field_name, access_type, context) {
                             Some(field_vasm) => Some(ValueOrType::Value(Vasm::merge(vec![prefix_vasm, field_vasm]))),
                             None => None
                         },
