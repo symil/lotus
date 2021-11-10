@@ -24,6 +24,7 @@ pub struct ProgramContext {
     pub depth: u32,
     pub return_found: bool,
     pub iter_fields_counter: Option<usize>,
+    pub iter_variants_counter: Option<usize>,
     pub iter_ancestors_counter: Option<usize>,
     pub deserialize_dyn_index: usize,
 

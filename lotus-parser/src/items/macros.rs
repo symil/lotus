@@ -17,6 +17,9 @@ enum MacroName {
     FieldName,
     FieldType,
     FieldDefaultExpression,
+    VariantName,
+    VariantValue,
+    VariantCount,
     AncestorId,
     AncestorName
 }
@@ -41,6 +44,7 @@ impl Macro {
                             MacroName::TypeName => Some(ValueOrType::Value(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![VI::type_name(&type_unwrapped.self_type)]))),
                             MacroName::TypeShortName => Some(ValueOrType::Value(make_string_value_from_literal(None, type_unwrapped.name.as_str(), context).unwrap())),
                             MacroName::FieldCount => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.fields.len())]))),
+                            MacroName::VariantCount => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.enum_variants.len())]))),
                             MacroName::FieldName | MacroName::FieldType | MacroName::FieldDefaultExpression => match context.iter_fields_counter {
                                 Some(field_index) => {
                                     let field_info = type_unwrapped.fields.get_index(field_index).unwrap().1;
@@ -54,6 +58,21 @@ impl Macro {
                                 },
                                 None => {
                                     context.errors.add(self, format!("macro `{}` can only be accessed from inside an `iter_fields` block", format!("#{}", &self.name).bold()));
+                                    None
+                                },
+                            },
+                            MacroName::VariantName | MacroName::VariantValue => match context.iter_variants_counter {
+                                Some(variant_index) => {
+                                    let variant = &type_unwrapped.enum_variants.get_index(variant_index).unwrap().1;
+
+                                    match m {
+                                        MacroName::VariantValue => Some(ValueOrType::Value(Vasm::new(context.int_type(), vec![], vec![VI::int(variant.value)]))),
+                                        MacroName::VariantName => Some(ValueOrType::Value(make_string_value_from_literal(None, variant.name.as_str(), context).unwrap())),
+                                        _ => unreachable!()
+                                    }
+                                },
+                                None => {
+                                    context.errors.add(self, format!("macro `{}` can only be accessed from inside an `iter_variants` block", format!("#{}", &self.name).bold()));
                                     None
                                 },
                             },
@@ -115,7 +134,8 @@ impl Macro {
                 },
                 MacroName::TypeId | MacroName::TypeName | MacroName::TypeShortName |
                 MacroName::FieldCount | MacroName::FieldType | MacroName::FieldDefaultExpression |
-                MacroName::AncestorId | MacroName::AncestorName =>  {
+                MacroName::VariantCount | MacroName::VariantValue | MacroName::VariantName |
+                MacroName::AncestorId | MacroName::AncestorName => {
                     context.errors.add(self, format!("macro `{}` cannot be processed as a name", format!("#{}", &self.name).bold()));
                     None
                 },
@@ -136,6 +156,9 @@ impl Macro {
             "FIELD_TYPE" => Some(MacroName::FieldType),
             "FIELD_NAME" => Some(MacroName::FieldName),
             "FIELD_DEFAULT_EXPRESSION" => Some(MacroName::FieldDefaultExpression),
+            "VARIANT_NAME" => Some(MacroName::VariantName),
+            "VARIANT_VALUE" => Some(MacroName::VariantValue),
+            "VARIANT_COUNT" => Some(MacroName::VariantCount),
             "ANCESTOR_ID" => Some(MacroName::AncestorId),
             "ANCESTOR_NAME" => Some(MacroName::AncestorName),
             _ => None

@@ -23,4 +23,39 @@ sys type(i32) Enum {
     autogen static type_name() -> string {
         return #TYPE_NAME;
     }
+
+    autogen to_string() -> string {
+        let int_value = this as int;
+
+        // Really ugly & inefficient but it will do for now
+        iter_variants {
+            if int_value == #VARIANT_VALUE {
+                return #VARIANT_NAME;
+            }
+        }
+
+        return "none";
+    }
+
+    autogen to_debug_string(set: Set<ptr>) -> string {
+        return this.to_string();
+    }
+
+    autogen __retain() {{
+
+    }}
+
+    autogen __serialize(buffer: Buffer) {
+        buffer.push(this as int);
+    }
+
+    autogen static __deserialize(buffer: Buffer) -> This? {
+        let int_value = buffer.read();
+
+        if int_value < 0 || int_value >= #VARIANT_COUNT {
+            return none;
+        } else {
+            return int_value as This;
+        }
+    }
 }

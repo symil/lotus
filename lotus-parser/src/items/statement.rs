@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, VariableKind, Vasm};
-use super::{Action, Assignment, Expression, ForBlock, FullType, Identifier, IfBlock, IterAncestors, IterFields, Operand, VarDeclaration, WhileBlock};
+use super::{Action, Assignment, Expression, ForBlock, FullType, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Operand, VarDeclaration, WhileBlock};
 
 #[parsable]
 pub enum Statement {
@@ -9,6 +9,7 @@ pub enum Statement {
     #[parsable(suffix=";")]
     Action(Action),
     IterFields(IterFields),
+    IterVariants(IterVariants),
     IterAncestors(IterAncestors),
     If(IfBlock),
     While(WhileBlock),
@@ -26,6 +27,7 @@ impl Statement {
             },
             Statement::Action(action) => action.process(context),
             Statement::IterFields(iter_fields) => iter_fields.process(context),
+            Statement::IterVariants(iter_variants) => iter_variants.process(context),
             Statement::IterAncestors(iter_ancestors) => iter_ancestors.process(context),
             Statement::If(if_block) => if_block.process(context),
             Statement::While(while_block) => while_block.process(context),
