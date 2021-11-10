@@ -1,10 +1,11 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, MatchBlock, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
 
 #[parsable]
 pub enum VarPathRoot {
     Macro(Macro),
+    MatchBlock(MatchBlock),
     NoneLiteral(NoneLiteral),
     BooleanLiteral(BooleanLiteral),
     FloatLiteral(FloatLiteral),
@@ -47,6 +48,7 @@ impl VarPathRoot {
             VarPathRoot::ObjectLiteral(_) => true,
             VarPathRoot::Variable(var_ref) => var_ref.has_side_effects(),
             VarPathRoot::Parenthesized(expr) => expr.has_side_effects(),
+            VarPathRoot::MatchBlock(match_block) => true,
         }
     }
 
@@ -63,6 +65,7 @@ impl VarPathRoot {
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list),
             VarPathRoot::Variable(root_var_ref) => {},
             VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list),
+            VarPathRoot::MatchBlock(_) => {}, // TODO
         }
     }
 
@@ -87,6 +90,7 @@ impl VarPathRoot {
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::Variable(root_var_ref) => root_var_ref.process(type_hint, access_type, context),
             VarPathRoot::Parenthesized(expr) => expr.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::MatchBlock(match_block) => match_block.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
         }
     }
 }

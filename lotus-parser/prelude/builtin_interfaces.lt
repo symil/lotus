@@ -95,6 +95,10 @@ export interface Unwrap {
     unwrap() -> Item;
 }
 
+export interface ToFloat {
+    to_float() -> float;
+}
+
 sys interface Builtin {
     static __chosen() -> This;
     static default() -> This;

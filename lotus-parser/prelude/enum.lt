@@ -6,4 +6,21 @@ sys type(i32) Enum {
     ne(other: This) -> bool {{
         i32.ne
     }}
+
+    autogen static __default() -> This {{
+        (i32.const -2147483648)
+    }}
+
+    autogen static __none() -> This {{
+        (i32.const -2147483648)
+    }}
+
+    __is_none() -> bool {{
+        (i32.const -2147483648)
+        (i32.eq)
+    }}
+
+    autogen static type_name() -> string {
+        return #TYPE_NAME;
+    }
 }

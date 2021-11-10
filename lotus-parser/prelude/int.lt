@@ -21,6 +21,7 @@ export type(i32) int {
 
     clz() -> int {{ i32.clz }}
     ctz() -> int {{ i32.ctz }}
+    to_int() -> int {{ }}
     as_float() -> float {{ f32.reinterpret_i32 }}
     to_float() -> float {{ f32.convert_i32_s }}
     to_bool() -> bool {{ (i32.eqz i32.eqz) }}

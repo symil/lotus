@@ -77,6 +77,7 @@ mod char_literal;
 mod none_literal;
 mod unwrap_token;
 mod iter_ancestors;
+mod match_block;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -157,3 +158,4 @@ pub use char_literal::*;
 pub use none_literal::*;
 pub use unwrap_token::*;
 pub use iter_ancestors::*;
+pub use match_block::*;

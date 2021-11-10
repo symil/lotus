@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, GET_AT_INDEX_FUNC_NAME, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, utils::Link, vasm, wat};
+use crate::{program::{AccessType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, utils::Link, vasm, wat};
 use super::{ArgumentList, FieldOrMethodName, Identifier, VarPrefix};
 
 #[parsable]
@@ -45,20 +45,25 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
             }
         },
         FieldKind::Static => {
-            match parent_type {
-                Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                    if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
-                        match access_type {
-                            AccessType::Get => {
-                                result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
-                            },
-                            AccessType::Set(location) => {
-                                context.errors.add(location, format!("cannot set value of enum variant"));
-                            },
+            match field_name.as_str() == NONE_LITERAL {
+                true => {
+                    result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::call_static_method(parent_type, NONE_METHOD_NAME, &[], vec![], context)]));
+                },
+                false => match parent_type {
+                    Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                        if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
+                            match access_type {
+                                AccessType::Get => {
+                                    result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
+                                },
+                                AccessType::Set(location) => {
+                                    context.errors.add(location, format!("cannot set value of enum variant"));
+                                },
+                            }
                         }
-                    }
-                }),
-                _ => {}
+                    }),
+                    _ => {}
+                }
             }
 
             if result.is_none() {

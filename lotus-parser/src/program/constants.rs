@@ -12,6 +12,9 @@ pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE *
 pub const GENERATED_METHODS_TABLE_START : usize = MEMORY_METADATA_SIZE;
 pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize, deserialize
 
+pub const INT_NONE_VALUE : i32 = i32::MIN;
+pub const NONE_LITERAL : &'static str = "none";
+
 pub const DUMMY_FUNC_NAME : &'static str = "dummy";
 pub const DUPLICATE_INT_WASM_FUNC_NAME : &'static str = "dup_i32";
 pub const SWAP_INT_INT_WASM_FUNC_NAME : &'static str = "swap_i32_i32";

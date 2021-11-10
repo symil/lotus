@@ -462,7 +462,9 @@ impl VirtualInstruction {
                 let function_blueprint = info.function.with_ref(|function_unwrapped| {
                     match function_unwrapped.owner_interface.is_none() {
                         true => info.function.clone(),
-                        false => this_type.as_ref().unwrap().get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str()).unwrap(),
+                        false => this_type.as_ref().unwrap()
+                            .get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str())
+                            .unwrap(),
                     }
                 });
                 let is_dynamic = function_blueprint.borrow().is_dynamic();
