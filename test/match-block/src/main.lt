@@ -1,0 +1,20 @@
+enum Test {
+    Foo,
+    Bar,
+    Baz
+}
+
+export fn main() {
+    test_match(Test.Foo);
+    test_match(Test.Bar);
+    test_match(Test.Baz);
+    test_match(Test.none);
+}
+
+fn test_match(value: Test) {
+    @dbg(match value {
+        Foo => 4,
+        Bar => 8,
+        none => 12
+    });
+}

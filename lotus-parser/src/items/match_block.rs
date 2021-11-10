@@ -79,7 +79,7 @@ impl MatchBlock {
                             }
                         }
 
-                        let final_type = returned_type.unwrap_or(Type::Void);
+                        let final_type = type_hint.cloned().or(returned_type).unwrap_or(Type::Void);
 
                         if !final_type.is_void() && !final_type.is_undefined() {
                             content.extend(vec![
