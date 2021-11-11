@@ -1,14 +1,14 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
 use crate::{program::{ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
-use super::{Expression, Identifier, FullType, VarDeclarationQualifier};
+use super::{Expression, Identifier, ParsedType, VarDeclarationQualifier};
 
 #[parsable]
 pub struct VarDeclaration {
     pub qualifier: VarDeclarationQualifier,
     pub var_name: Identifier,
     #[parsable(prefix=":")]
-    pub var_type: Option<FullType>,
+    pub var_type: Option<ParsedType>,
     #[parsable(prefix="=")]
     pub init_value: Expression
 }

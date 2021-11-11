@@ -2,7 +2,7 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{FullType, TypeQualifier}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use crate::{items::{ParsedType, TypeQualifier}, program::{ItemGenerator, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
@@ -277,7 +277,7 @@ impl Type {
             _ => true
         }
     }
-    
+
     pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &DataLocation, context: &mut ProgramContext) -> bool {
         let mut ok = true;
         

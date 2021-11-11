@@ -99,6 +99,14 @@ export interface ToFloat {
     to_float() -> float;
 }
 
+export interface Tuple {
+    type First;
+    type Second;
+
+    first() -> First;
+    second() -> Second;
+}
+
 sys interface Builtin {
     static __chosen() -> This;
     static default() -> This;

@@ -1,12 +1,12 @@
 use indexmap::IndexSet;
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{FullType, Identifier};
+use super::{ParsedType, Identifier};
 
 #[parsable]
 pub struct TypeArguments {
     #[parsable(brackets="<>", separator=",", optional=true)]
-    pub list: Vec<FullType>
+    pub list: Vec<ParsedType>
 }
 
 impl TypeArguments {

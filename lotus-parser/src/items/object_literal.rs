@@ -3,11 +3,11 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, Error, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
-use super::{Expression, FullType, Identifier, ObjectFieldInitialization};
+use super::{Expression, ParsedType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
 pub struct ObjectLiteral {
-    pub object_type: FullType,
+    pub object_type: ParsedType,
     // pub field_list: Option<ObjectFieldInitializationList>
     #[parsable(brackets="{}", separator=",")]
     pub fields: Vec<ObjectFieldInitialization>

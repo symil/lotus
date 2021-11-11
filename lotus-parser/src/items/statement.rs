@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, VariableKind, Vasm};
-use super::{Action, Assignment, Expression, ForBlock, FullType, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Operand, VarDeclaration, WhileBlock};
+use super::{Action, Assignment, Expression, ForBlock, ParsedType, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Operand, VarDeclaration, WhileBlock};
 
 #[parsable]
 pub enum Statement {

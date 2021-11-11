@@ -3,7 +3,7 @@ use std::{fmt::format, rc::Rc};
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
 use crate::{items::ValueOrType, program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
-use super::{BinaryOperation, FullType, Identifier, Macro};
+use super::{BinaryOperation, ParsedType, Identifier, Macro};
 
 #[parsable]
 pub struct Expression {
@@ -16,7 +16,7 @@ pub struct Expression {
 
 #[parsable]
 pub enum TargetType {
-    Type(FullType),
+    Type(ParsedType),
     Macro(Macro)
 }
 

@@ -5,14 +5,14 @@ use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, T
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
-pub struct ValueType {
+pub struct ParsedValueType {
     pub name: Identifier,
     pub arguments: TypeArguments,
     #[parsable(prefix="::", separator="::", min=1, optional=true)]
     pub associated_types: Vec<Identifier>
 }
 
-impl ValueType {
+impl ParsedValueType {
     pub fn as_single_name(&self) -> Option<&Identifier> {
         match self.arguments.list.is_empty() {
             true => Some(&self.name),

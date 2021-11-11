@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{FullType, FunctionArgument, Identifier};
+use super::{ParsedType, FunctionArgument, Identifier};
 
 #[parsable]
 pub struct FunctionSignature {
     #[parsable(brackets="()", separator=",")]
     pub arguments: Vec<FunctionArgument>,
     #[parsable(prefix="->")]
-    pub return_type: Option<FullType>,
+    pub return_type: Option<ParsedType>,
 }
 
 impl FunctionSignature {

@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
-use super::{BinaryOperatorWrapper, FullType, Identifier, Operand};
+use super::{BinaryOperatorWrapper, ParsedType, Identifier, Operand};
 
 #[parsable]
 pub struct BinaryOperation {

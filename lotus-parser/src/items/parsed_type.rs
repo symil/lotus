@@ -1,17 +1,17 @@
 use parsable::parsable;
 use crate::program::{BuiltinType, ProgramContext, Type};
-use super::{Identifier, ItemType, TypeSuffix, TypeSuffixWrapper};
+use super::{Identifier, ParsedTypeSingle, ParsedTypeWithoutSuffix, TypeSuffix, TypeSuffixWrapper};
 
 #[parsable]
-pub struct FullType {
-    pub item: ItemType,
+pub struct ParsedType {
+    pub parsed_type: ParsedTypeWithoutSuffix,
     pub suffix: Vec<TypeSuffixWrapper>
 }
 
-impl FullType {
+impl ParsedType {
     pub fn as_var_name(&self) -> Option<&Identifier> {
         match self.suffix.is_empty() {
-            true => self.item.as_var_name(),
+            true => self.parsed_type.as_var_name(),
             false => None,
         }
     }
@@ -26,12 +26,12 @@ impl FullType {
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         match self.suffix.last() {
             Some(type_suffix) => type_suffix.collected_instancied_type_names(list),
-            None => self.item.collected_instancied_type_names(list),
+            None => self.parsed_type.collected_instancied_type_names(list),
         }
     }
 
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
-        if let Some(mut final_type) = self.item.process(check_interfaces, context) {
+        if let Some(mut final_type) = self.parsed_type.process(check_interfaces, context) {
             for suffix in &self.suffix {
                 final_type = suffix.process(final_type, context);
             }

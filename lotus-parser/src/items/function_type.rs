@@ -1,10 +1,10 @@
 use parsable::parsable;
-use super::FullType;
+use super::ParsedType;
 
 #[parsable]
 pub struct FunctionType {
     #[parsable(brackets="()", separator=",")]
-    pub arguments: Vec<FullType>,
+    pub arguments: Vec<ParsedType>,
     #[parsable(prefix="()")]
-    pub return_value: Option<Box<FullType>>
+    pub return_value: Option<Box<ParsedType>>
 }

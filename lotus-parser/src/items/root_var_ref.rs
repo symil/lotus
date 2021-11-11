@@ -1,12 +1,12 @@
 use parsable::parsable;
 use colored::*;
 use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, BuiltinInterface, FieldKind, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}};
-use super::{ArgumentList, FieldOrMethodAccess, FullType, Identifier, VarPrefix, VarPrefixWrapper};
+use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
 pub enum RootVarRef {
     Prefixed(VarPrefixWrapper, Option<Identifier>, Option<ArgumentList>),
-    Unprefixed(FullType, Option<ArgumentList>)
+    Unprefixed(ParsedType, Option<ArgumentList>)
 }
 
 #[derive(Debug)]

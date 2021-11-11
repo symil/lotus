@@ -1,0 +1,19 @@
+export class Pair<T, U> {
+    type First = T;
+    type Second = U;
+
+    first: T,
+    second: U,
+
+    static new(first: T, second: U) -> This {
+        return This { first, second };
+    }
+
+    first() -> T {
+        return this.first;
+    }
+
+    second() -> U {
+        return this.second;
+    }
+}

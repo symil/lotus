@@ -32,6 +32,7 @@ pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const ENUM_TYPE_NAME : &'static str = "Enum";
 pub const THIS_TYPE_NAME : &'static str = "This";
 
+pub const NEW_METHOD_NAME : &'static str = "new";
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
 pub const CREATE_METHOD_NAME : &'static str = "__create";
 pub const STORE_FUNC_NAME : &'static str = "__store";

@@ -1,12 +1,12 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{Identifier, FullType};
+use super::{Identifier, ParsedType};
 
 #[parsable]
 pub struct FunctionArgument {
     #[parsable(suffix=":")]
     pub name: Option<Identifier>,
-    pub ty: FullType,
+    pub ty: ParsedType,
 }
 
 impl FunctionArgument {

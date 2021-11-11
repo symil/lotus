@@ -1,7 +1,7 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, TypedefBlueprint};
 
-use super::{FullType, Identifier, Visibility, VisibilityWrapper};
+use super::{ParsedType, Identifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct TypedefDeclaration {
@@ -9,7 +9,7 @@ pub struct TypedefDeclaration {
     #[parsable(prefix="type")]
     pub name: Identifier,
     #[parsable(prefix="=", suffix=";")]
-    pub target: FullType
+    pub target: ParsedType
 }
 
 impl TypedefDeclaration {

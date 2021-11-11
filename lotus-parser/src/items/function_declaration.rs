@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{items::Visibility, program::{ProgramContext, ScopeKind, VariableKind, RESULT_VAR_NAME}};
-use super::{FullType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityWrapper};
+use super::{ParsedType, FunctionContent, FunctionSignature, Identifier, Statement, StatementList, VisibilityWrapper};
 
 #[parsable]
 pub struct FunctionDeclaration {

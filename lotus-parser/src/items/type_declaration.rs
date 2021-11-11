@@ -3,7 +3,7 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
 use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
-use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, FullType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
+use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
 pub struct TypeDeclaration {
@@ -14,7 +14,7 @@ pub struct TypeDeclaration {
     pub name: Identifier,
     pub parameters: TypeParameters,
     #[parsable(prefix="extends")]
-    pub parent: Option<FullType>,
+    pub parent: Option<ParsedType>,
     #[parsable(brackets="{}")]
     pub body: Vec<TypeItem>,
 }
