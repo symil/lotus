@@ -1,0 +1,129 @@
+export class Rect {
+    // Center of the rectangle
+    x: float,
+    y: float,
+    // Dimensions of the rectangle
+    width: float,
+    height: float,
+
+    static new(x: float, y: float, width: float, height: float) -> This {
+        return This { x, y, width, height };
+    }
+
+    static from_top_left(x1: float, y1: float, width: float, height: float) -> This {
+        let x = x1 + width / 2.0;
+        let y = y1 + height / 2.0;
+
+        return This { x, y, width, height };
+    }
+
+    static from_size(width: float, height: float) -> This {
+        let x = width / 2.0;
+        let y = height / 2.0;
+
+        return This { x, y, width, height };
+    }
+
+    static from_corners(x1: float, y1: float, x2: float, y2: float) -> This {
+        let x = (x1 + x2) / 2.0;
+        let y = (y1 + y2) / 2.0;
+        let width = x2 - x1;
+        let height = y2 - y1;
+
+        return This { x, y, width, height };
+    }
+
+    x1() -> float {
+        return this.x - this.width / 2f;
+    }
+    
+    y1() -> float {
+        return this.y - this.height / 2f;
+    }
+
+    x2() -> float {
+        return this.x + this.width / 2f;
+    }
+
+    y2() -> float {
+        return this.y + this.height / 2f;
+    }
+
+    clone() -> This {
+        return This.new(this.x, this.y, this.width, this.height);
+    }
+
+    round() -> This {
+        return This.from_corners(this.x1().round(), this.y1().round(), this.x2().round(), this.y2().round());
+    }
+
+    contains(x: float, y: float) -> bool {
+        return x > this.x1() && x < this.x2() && y > this.y1() && y < this.y2();
+    }
+
+    with_center(x: float, y: float) -> This {
+        return This.new(x, y, this.width, this.height);
+    }
+
+    with_size(width: float, height: float) -> This {
+        return This.new(this.x, this.y, width, height);
+    }
+
+    translate(tx: float, ty: float) -> This {
+        return This.new(this.x + tx, this.y + ty, this.width, this.height);
+    }
+
+    scale(ratio: float) -> This {
+        return This.new(this.x, this.y, this.width * ratio, this.height * ratio);
+    }
+
+    multiply(ratio: float) -> This {
+        return This.new(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
+    }
+
+    pad(width: float, height: float) -> This {
+        return This.new(this.x, this.y, this.width + width, this.height + height);
+    }
+
+    strip(width: float, height: float) -> This {
+        return This.new(this.x, this.y, this.width - width, this.height - height);
+    }
+
+    pad_to_match_aspect_ratio(aspect_ratio: float?) -> This {
+        if !aspect_ratio {
+            return this.clone();
+        }
+
+        let width_from_height = this.height * aspect_ratio;
+        let height_from_width = this.width / aspect_ratio;
+        let width_to_pad = 0f;
+        let height_to_pad = 0f;
+
+        if this.width < width_from_height {
+            width_to_pad = width_from_height - this.width;
+        } else {
+            height_to_pad = height_from_width - this.height;
+        }
+
+        return this.pad(width_to_pad, height_to_pad);
+    }
+
+    strip_to_match_aspect_ratio(aspect_ratio: float?) -> This {
+        if !aspect_ratio {
+            return this.clone();
+        }
+
+        let width_from_height = this.height * aspect_ratio;
+        let height_from_width = this.width / aspect_ratio;
+        let width_to_strip = 0f;
+        let height_to_strip = 0f;
+
+        if this.width > width_from_height {
+            width_to_strip = this.width - width_from_height;
+        } else {
+            height_to_strip = this.height - height_from_width;
+        }
+
+        return this.strip(width_to_strip, height_to_strip);
+    }
+}
