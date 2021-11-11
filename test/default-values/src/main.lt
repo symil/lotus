@@ -26,11 +26,10 @@ export fn main() {
     @log(foo.c);
     @log(foo.d.a);
     @log(foo.d.b);
-    @log(foo.e as int);
+    @log(foo.e.a);
     @log(foo.f as int);
 
     let foo2 = Foo {};
 
-    @log(foo.d as int);
-    @log(foo2.d as int);
+    @log((foo.d as int) != (foo2.d as int));
 }
