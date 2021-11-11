@@ -82,9 +82,17 @@ impl ProgramContext {
     pub fn int_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Int, vec![])
     }
+
+    pub fn float_type(&self) -> Type {
+        self.get_builtin_type(BuiltinType::Float, vec![])
+    }
     
     pub fn pointer_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Pointer, vec![self.int_type()])
+    }
+
+    pub fn display_size_type(&self) -> Type {
+        self.get_builtin_type(BuiltinType::DisplaySize, vec![])
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {

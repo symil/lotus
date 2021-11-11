@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::program::{AccessType, ProgramContext, Type, Vasm};
-use super::{ArrayLiteral, BooleanLiteral, Expression, FloatLiteral, FullType, Identifier, ObjectLiteral, StringLiteral, UnaryOperation, VarPath};
+use super::{ArrayLiteral, BooleanLiteral, Expression, FullType, Identifier, ObjectLiteral, StringLiteral, UnaryOperation, VarPath};
 
 #[parsable]
 pub enum Operand {

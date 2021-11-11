@@ -1,0 +1,33 @@
+export enum DisplaySizeKind {
+    Real,
+    Virtual,
+    ScaledFromContainerWidth,
+    ScaledFromContainerHeight,
+    ScaledFromContainerMin
+}
+
+export class DisplaySize {
+    kind: DisplaySizeKind,
+    value: float,
+
+    static new(kind: DisplaySizeKind, value: float) -> This {
+        return This { kind, value };
+    }
+
+    scale<F : ToFloat>(ratio: F) -> This {
+        return This {
+            kind: this.kind,
+            value: this.value * ratio.to_float()
+        };
+    }
+
+    compute_final_value(virtual_width: float, virtual_height: float, virtual_to_real_ratio: float) -> float {
+        return match this.kind {
+            Real => this.value,
+            Virtual => this.value * virtual_to_real_ratio,
+            ScaledFromContainerWidth => this.value * virtual_width * virtual_to_real_ratio,
+            ScaledFromContainerHeight => this.value * virtual_height * virtual_to_real_ratio,
+            ScaledFromContainerMin => this.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
+        };
+    }
+}

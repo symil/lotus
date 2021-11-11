@@ -1,0 +1,26 @@
+int
+1
+1.100000023841858
+float
+1
+0.5
+DisplaySize {
+  kind: Real,
+  value: 1,
+}
+DisplaySize {
+  kind: Virtual,
+  value: 0.5,
+}
+DisplaySize {
+  kind: ScaledFromContainerWidth,
+  value: 0.5,
+}
+DisplaySize {
+  kind: ScaledFromContainerHeight,
+  value: 0.5,
+}
+DisplaySize {
+  kind: ScaledFromContainerMin,
+  value: 0.5,
+}

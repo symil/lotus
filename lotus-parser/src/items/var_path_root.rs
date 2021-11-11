@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, FloatLiteral, Identifier, IntegerLiteral, Macro, MatchBlock, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, Identifier, NumberLiteral, Macro, MatchBlock, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -8,8 +8,7 @@ pub enum VarPathRoot {
     MatchBlock(MatchBlock),
     NoneLiteral(NoneLiteral),
     BooleanLiteral(BooleanLiteral),
-    FloatLiteral(FloatLiteral),
-    IntegerLiteral(IntegerLiteral),
+    NumberLiteral(NumberLiteral),
     CharLiteral(CharLiteral),
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
@@ -40,8 +39,7 @@ impl VarPathRoot {
             VarPathRoot::Macro(_) => false,
             VarPathRoot::NoneLiteral(_) => false,
             VarPathRoot::BooleanLiteral(_) => false,
-            VarPathRoot::FloatLiteral(_) => false,
-            VarPathRoot::IntegerLiteral(_) => false,
+            VarPathRoot::NumberLiteral(_) => false,
             VarPathRoot::CharLiteral(_) => false,
             VarPathRoot::StringLiteral(_) => true,
             VarPathRoot::ArrayLiteral(_) => true,
@@ -57,8 +55,7 @@ impl VarPathRoot {
             VarPathRoot::Macro(_) => {},
             VarPathRoot::NoneLiteral(_) => {},
             VarPathRoot::BooleanLiteral(_) => {},
-            VarPathRoot::FloatLiteral(_) => {},
-            VarPathRoot::IntegerLiteral(_) => {},
+            VarPathRoot::NumberLiteral(_) => {},
             VarPathRoot::CharLiteral(_) => {},
             VarPathRoot::StringLiteral(_) => {},
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.collected_instancied_type_names(list),
@@ -82,8 +79,7 @@ impl VarPathRoot {
             VarPathRoot::Macro(mac) => mac.process_as_value(context),
             VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::FloatLiteral(float_literal) => float_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::IntegerLiteral(integer_literal) => integer_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::NumberLiteral(number_literal) => number_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::CharLiteral(char_literal) => char_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::StringLiteral(string_literal) => string_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),

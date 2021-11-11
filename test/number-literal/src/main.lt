@@ -1,0 +1,13 @@
+export fn main() {
+    @type(1);
+    @dbg(1);
+    @dbg(1.1);
+    @type(1f);
+    @dbg(1f);
+    @dbg(.5);
+    @dbg(1r);
+    @dbg(0.5v);
+    @dbg(0.5w);
+    @dbg(0.5h);
+    @dbg(0.5m);
+}
