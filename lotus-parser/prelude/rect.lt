@@ -50,11 +50,11 @@ export class Rect {
     }
 
     clone() -> This {
-        return This.new(this.x, this.y, this.width, this.height);
+        return This::new(this.x, this.y, this.width, this.height);
     }
 
     round() -> This {
-        return This.from_corners(this.x1().round(), this.y1().round(), this.x2().round(), this.y2().round());
+        return This::from_corners(this.x1().round(), this.y1().round(), this.x2().round(), this.y2().round());
     }
 
     contains(x: float, y: float) -> bool {
@@ -62,31 +62,31 @@ export class Rect {
     }
 
     with_center(x: float, y: float) -> This {
-        return This.new(x, y, this.width, this.height);
+        return This::new(x, y, this.width, this.height);
     }
 
     with_size(width: float, height: float) -> This {
-        return This.new(this.x, this.y, width, height);
+        return This::new(this.x, this.y, width, height);
     }
 
     translate(tx: float, ty: float) -> This {
-        return This.new(this.x + tx, this.y + ty, this.width, this.height);
+        return This::new(this.x + tx, this.y + ty, this.width, this.height);
     }
 
     scale(ratio: float) -> This {
-        return This.new(this.x, this.y, this.width * ratio, this.height * ratio);
+        return This::new(this.x, this.y, this.width * ratio, this.height * ratio);
     }
 
     multiply(ratio: float) -> This {
-        return This.new(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
+        return This::new(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
     }
 
     pad(width: float, height: float) -> This {
-        return This.new(this.x, this.y, this.width + width, this.height + height);
+        return This::new(this.x, this.y, this.width + width, this.height + height);
     }
 
     strip(width: float, height: float) -> This {
-        return This.new(this.x, this.y, this.width - width, this.height - height);
+        return This::new(this.x, this.y, this.width - width, this.height - height);
     }
 
     pad_to_match_aspect_ratio(aspect_ratio: float?) -> This {

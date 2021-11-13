@@ -196,7 +196,7 @@ fn int_to_string(n: int, base: int) -> string {
     }
 
     let length = n.log(base);
-    let str = string.__create(length + offset);
+    let str = string::__create(length + offset);
     let i = 0;
 
     while n > 0 {

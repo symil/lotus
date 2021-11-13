@@ -3,11 +3,11 @@ use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
 use crate::{program::{AccessType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, utils::Link, vasm, wat};
-use super::{ArgumentList, FieldOrMethodName, Identifier, VarPrefix};
+use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
 pub struct FieldOrMethodAccess {
-    pub name: FieldOrMethodName,
+    pub name: IdentifierWrapper,
     pub arguments: Option<ArgumentList>
 }
 

@@ -51,6 +51,13 @@ impl Type {
         }
     }
 
+    pub fn is_enum(&self) -> bool {
+        match self {
+            Type::Actual(info) => info.type_blueprint.borrow().qualifier == TypeQualifier::Enum,
+            _ => false
+        }
+    }
+
     fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
         let name = builtin_type.get_name();
 
@@ -482,7 +489,7 @@ impl Type {
                 }
             }),
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.clone()))
+                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.replace_parameters(Some(self), &[])))
             }),
             Type::TypeParameter(info) | Type::FunctionParameter(info) => {
                 match info.required_interfaces.get_associated_type_info(name) {

@@ -1,5 +1,5 @@
 export fn main() {
-    let color = Color.from([100, 50, 20, 200]);
+    let color = Color::from([100, 50, 20, 200]);
 
     @dbg(color.r);
     @dbg(color.g);

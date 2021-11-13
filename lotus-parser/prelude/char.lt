@@ -37,7 +37,7 @@ export type(i32) char {
             return "none";
         }
 
-        let str = string.__create(1);
+        let str = string::__create(1);
 
         str.__set_char(0, this);
 
@@ -60,7 +60,7 @@ export type(i32) char {
         } else if c == '\'' {
             return "'\\''";
         } else {
-            let str = string.__create(3);
+            let str = string::__create(3);
 
             str.__set_char(0, '\'');
             str.__set_char(1, c);

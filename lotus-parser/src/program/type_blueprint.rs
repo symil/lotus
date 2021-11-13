@@ -18,7 +18,7 @@ pub struct TypeBlueprint {
     pub associated_types: IndexMap<String, Rc<AssociatedTypeInfo>>,
     pub self_type: Type,
     pub parent: Option<ParentInfo>,
-    pub enum_variants: IndexMap<String, EnumVariantInfo>,
+    pub enum_variants: IndexMap<String, Rc<EnumVariantInfo>>,
     pub fields: IndexMap<String, Rc<FieldInfo>>,
     pub regular_methods: IndexMap<String, FuncRef>,
     pub static_methods: IndexMap<String, FuncRef>,

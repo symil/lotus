@@ -5,21 +5,21 @@ enum Test {
 }
 
 export fn main() {
-    let a = match Test.Foo {
+    let a = match Test::Foo {
         Foo => 1,
         Bar => "hey",
         Baz => 1.5f
     };
 
-    let b : bool = match Test.Foo {
+    let b : bool = match Test::Foo {
         Foo => 1,
         Bar => "hey",
         Baz => 1.5f
     };
 
-    let c = match Test.Foo {};
+    let c = match Test::Foo {};
 
-    let d = match Test.Foo {
+    let d = match Test::Foo {
         Hey => 6
     };
 

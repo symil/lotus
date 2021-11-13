@@ -1,10 +1,9 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, Identifier, NumberLiteral, Macro, MatchBlock, NoneLiteral, ObjectLiteral, ParenthesizedExpression, RootVarRef, StringLiteral, ValueOrType, array_literal, char_literal, none_literal};
+use super::{ArrayLiteral, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, Identifier, Macro, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, VarRef, StaticFieldOrMethod, StringLiteral};
 
 #[parsable]
 pub enum VarPathRoot {
-    Macro(Macro),
     MatchBlock(MatchBlock),
     NoneLiteral(NoneLiteral),
     BooleanLiteral(BooleanLiteral),
@@ -12,11 +11,13 @@ pub enum VarPathRoot {
     CharLiteral(CharLiteral),
     StringLiteral(StringLiteral),
     ArrayLiteral(ArrayLiteral),
+    StaticFieldOrMethod(StaticFieldOrMethod),
     #[parsable(ignore_if_marker="no-object")]
     ObjectLiteral(ObjectLiteral),
-    Variable(RootVarRef),
+    Variable(VarRef),
     #[parsable(unset_marker="no-object")]
-    Parenthesized(ParenthesizedExpression)
+    Parenthesized(ParenthesizedExpression),
+    Macro(Macro),
 }
 
 impl VarPathRoot {
@@ -44,6 +45,7 @@ impl VarPathRoot {
             VarPathRoot::StringLiteral(_) => true,
             VarPathRoot::ArrayLiteral(_) => true,
             VarPathRoot::ObjectLiteral(_) => true,
+            VarPathRoot::StaticFieldOrMethod(_) => true,
             VarPathRoot::Variable(var_ref) => var_ref.has_side_effects(),
             VarPathRoot::Parenthesized(expr) => expr.has_side_effects(),
             VarPathRoot::MatchBlock(match_block) => true,
@@ -60,13 +62,14 @@ impl VarPathRoot {
             VarPathRoot::StringLiteral(_) => {},
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.collected_instancied_type_names(list),
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list),
+            VarPathRoot::StaticFieldOrMethod(_) => {},
             VarPathRoot::Variable(root_var_ref) => {},
             VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list),
             VarPathRoot::MatchBlock(_) => {}, // TODO
         }
     }
 
-    pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<ValueOrType> {
+    pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         if let AccessType::Set(set_location) = access_type {
             if self.is_literal() {
                 context.errors.add(set_location, format!("cannot assign value to a literal"));
@@ -77,16 +80,17 @@ impl VarPathRoot {
 
         match self {
             VarPathRoot::Macro(mac) => mac.process_as_value(context),
-            VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::NumberLiteral(number_literal) => number_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::CharLiteral(char_literal) => char_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::StringLiteral(string_literal) => string_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context),
+            VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
+            VarPathRoot::NumberLiteral(number_literal) => number_literal.process(context),
+            VarPathRoot::CharLiteral(char_literal) => char_literal.process(context),
+            VarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
+            VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context),
+            VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
+            VarPathRoot::StaticFieldOrMethod(static_field_or_method) => static_field_or_method.process(type_hint, context),
             VarPathRoot::Variable(root_var_ref) => root_var_ref.process(type_hint, access_type, context),
-            VarPathRoot::Parenthesized(expr) => expr.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
-            VarPathRoot::MatchBlock(match_block) => match_block.process(type_hint, context).and_then(|vasm| Some(ValueOrType::Value(vasm))),
+            VarPathRoot::Parenthesized(expr) => expr.process(type_hint, context),
+            VarPathRoot::MatchBlock(match_block) => match_block.process(type_hint, context),
         }
     }
 }

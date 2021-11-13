@@ -2,12 +2,12 @@ export class Set<V> {
     _map: Map<V, int>,
 
     static default() -> This {
-        return This.new();
+        return This::new();
     }
 
     static new() -> This {
         return This {
-            _map: Map<V, int>.new()
+            _map: Map<V, int>::new()
         };
     }
 

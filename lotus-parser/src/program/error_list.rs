@@ -42,6 +42,14 @@ impl ErrorList {
         None
     }
 
+    pub fn add_and_false<S : Deref<Target=str>>(&mut self, location: &DataLocation, error: S) -> bool {
+        if self.enabled {
+            self.errors.push(Error::located(location, error));
+        }
+
+        false
+    }
+
     pub fn set_enabled(&mut self, value: bool) {
         self.enabled = value;
     }

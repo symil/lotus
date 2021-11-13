@@ -2,22 +2,16 @@ use std::{fmt::format, rc::Rc};
 
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
-use crate::{items::ValueOrType, program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
-use super::{BinaryOperation, ParsedType, Identifier, Macro};
+use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
+use super::{BinaryOperation, Identifier, Macro, ParsedType, ParsedTypeWrapper};
 
 #[parsable]
 pub struct Expression {
     pub operation: BinaryOperation,
     #[parsable(prefix="is")]
-    pub is_type: Option<TargetType>,
+    pub is_type: Option<ParsedTypeWrapper>,
     #[parsable(prefix="as")]
-    pub as_type: Option<TargetType>
-}
-
-#[parsable]
-pub enum TargetType {
-    Type(ParsedType),
-    Macro(Macro)
+    pub as_type: Option<ParsedTypeWrapper>
 }
 
 impl Expression {
@@ -34,7 +28,7 @@ impl Expression {
 
         if let Some(mut vasm) = self.operation.process(type_hint, context) {
             if let Some(is_type) = &self.is_type {
-                if let Some((target_type, location)) = is_type.process(context) {
+                if let Some(target_type) = is_type.process(true, context) {
                     match target_type.is_object() {
                         true => {
                             vasm.ty = context.bool_type();
@@ -54,14 +48,14 @@ impl Expression {
                             }
                         },
                         false => {
-                            context.errors.add(location, format!("expected class type, got `{}`", &target_type));
+                            context.errors.add(is_type.get_location(), format!("expected class type, got `{}`", &target_type));
                         }
                     }
                 }
             }
 
             if let Some(as_type) = &self.as_type {
-                if let Some((target_type, location)) = as_type.process(context) {
+                if let Some(target_type) = as_type.process(true, context) {
                     vasm.ty = target_type;
                 }
             }
@@ -70,26 +64,5 @@ impl Expression {
         }
 
         result
-    }
-}
-
-impl TargetType {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<(Type, &DataLocation)> {
-        match self {
-            TargetType::Type(full_type) => match full_type.process(true, context) {
-                Some(ty) => Some((ty, full_type)),
-                None => None,
-            },
-            TargetType::Macro(mac) => match mac.process_as_value(context) {
-                Some(value_or_type) => match value_or_type {
-                    ValueOrType::Value(_) => {
-                        context.errors.add(mac, format!("expected type, got expression"));
-                        None
-                    },
-                    ValueOrType::Type(ty) => Some((ty, mac)),
-                },
-                None => None,
-            },
-        }
     }
 }

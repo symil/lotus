@@ -5,10 +5,10 @@ enum Test {
 }
 
 export fn main() {
-    test_match(Test.Foo);
-    test_match(Test.Bar);
-    test_match(Test.Baz);
-    test_match(Test.none);
+    test_match(Test::Foo);
+    test_match(Test::Bar);
+    test_match(Test::Baz);
+    test_match(Test::none);
 }
 
 fn test_match(value: Test) {

@@ -353,10 +353,10 @@ impl TypeDeclaration {
                                 context.errors.add(&field.name, format!("duplicate variant `{}`", self.name.as_str().bold()));
                             }
 
-                            let variant_details = EnumVariantInfo {
+                            let variant_details = Rc::new(EnumVariantInfo {
                                 name: field.name.clone(),
                                 value: variants.len(),
-                            };
+                            });
 
                             variants.insert(field.name.to_string(), variant_details);
                         },

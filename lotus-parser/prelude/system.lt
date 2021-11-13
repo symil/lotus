@@ -22,7 +22,7 @@ export type(void) system {
     }
 
     get_debug_string<T>(value: T) -> string {
-        return value.to_debug_string(Set<ptr>.new());
+        return value.to_debug_string(Set<ptr>::new());
     }
 
     dbg<T>(value: T) {
@@ -42,8 +42,8 @@ export type(void) system {
     }
 
     deserialize<T>(array: int[]) -> T? {
-        let buffer = Buffer.from_array(array);
-        let value = T.__deserialize(buffer);
+        let buffer = Buffer::from_array(array);
+        let value = T::__deserialize(buffer);
 
         if buffer.read_overflow {
             return none;
@@ -57,7 +57,7 @@ export type(void) system {
     }
 
     type<T>(value: T) {
-        log_string(T.type_name());
+        log_string(T::type_name());
     }
 }
 

@@ -19,14 +19,14 @@ impl BracketIndexing {
             };
 
             if let Some(mut bracket_vasm) = parent_type.call_builtin_interface(self, required_interface, &[(&index_vasm.ty, &self.index_expr)], context, || format!("bracket index")) {
-                bracket_vasm.ty = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap().replace_parameters(Some(parent_type), &[]);
+                bracket_vasm.ty = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
 
                 result = Some(match access_type {
                     AccessType::Get => vasm![index_vasm, bracket_vasm],
                     AccessType::Set(_) => {
                         let this_id = self.location.get_hash();
                         let value_id = this_id + 1;
-                        let item_type = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap().replace_parameters(Some(parent_type), &[]);
+                        let item_type = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
 
                         vasm![
                             VI::store(parent_type, this_id),

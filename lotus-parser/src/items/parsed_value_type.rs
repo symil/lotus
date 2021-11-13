@@ -8,7 +8,7 @@ use super::{TypeArguments, Identifier, TypeSuffix};
 pub struct ParsedValueType {
     pub name: Identifier,
     pub arguments: TypeArguments,
-    #[parsable(prefix="::", separator="::", min=1, optional=true)]
+    #[parsable(prefix=":", separator=":", min=1, optional=true)]
     pub associated_types: Vec<Identifier>
 }
 

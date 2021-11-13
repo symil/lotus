@@ -86,7 +86,7 @@ impl ForBlock {
             }
         } else if let Some(iterable_vasm) = range_start_vasm_opt {
             let required_interface_wrapped = context.get_builtin_interface(BuiltinInterface::Iterable);
-            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined).replace_parameters(Some(&iterable_vasm.ty), &[]);
+            let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined);
             let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
             let iterable_var = VariableInfo::new(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);

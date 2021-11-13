@@ -36,7 +36,7 @@ export type(i32) Array<T> {
     }
 
     static default() -> This {
-        return This.__create(0);
+        return This::__create(0);
     }
 
     static type_name() -> string {
@@ -149,7 +149,7 @@ export type(i32) Array<T> {
     }
 
     concat(other: This) -> This {
-        let new_array = This.__create(this.len() + other.len());
+        let new_array = This::__create(this.len() + other.len());
         let new_body = new_array.body();
 
         let offset = 0;
@@ -266,12 +266,12 @@ export type(i32) Array<T> {
         }
 
         let length = buffer.read();
-        array = This.with_capacity(length);
+        array = This::with_capacity(length);
 
         buffer.register(addr, array);
 
         for i in 0..length {
-            array.push(T.__deserialize(buffer));
+            array.push(T::__deserialize(buffer));
         }
 
         return array;

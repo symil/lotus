@@ -1,5 +1,5 @@
 export fn main() {
-    let map = Map<int, string>.new();
+    let map = Map<int, string>::new();
 
     @dbg(map.size());
     @dbg(map.get(5));

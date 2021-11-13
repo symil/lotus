@@ -17,7 +17,7 @@ class Foo {
 }
 
 export fn main() {
-    Foo.hello();
-    @log(Foo.add(1, 2));
-    @log(Foo.new("world").value);
+    Foo::hello();
+    @log(Foo::add(1, 2));
+    @log(Foo::new("world").value);
 }
