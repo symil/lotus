@@ -15,16 +15,22 @@ impl GlobalVarDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
         context.reset_local_scope();
 
-        if let Some((var_info, init_vasm)) = self.var_declaration.process(VariableKind::Global, context) {
+        if let Some((var_list, init_vasm)) = self.var_declaration.process(VariableKind::Global, context) {
+            if var_list.len() != 1 {
+                context.errors.add(self, format!("cannot declare global variabels as tuples"));
+            }
+
             let global_var_blueprint = GlobalVarBlueprint {
                 var_id: self.location.get_hash(),
                 visibility: self.visibility.value.unwrap_or(Visibility::Private),
-                var_info,
+                var_info: var_list.first().unwrap().clone(),
                 init_vasm,
             };
 
-            if context.global_vars.get_by_identifier(&self.var_declaration.var_name).is_some() {
-                context.errors.add(&self.var_declaration.var_name, format!("duplicate global variable declaration: `{}`", &self.var_declaration.var_name));
+            let var_name = self.var_declaration.get_first_var_name();
+
+            if context.global_vars.get_by_identifier(var_name).is_some() {
+                context.errors.add(var_name, format!("duplicate global variable declaration: `{}`", var_name));
             }
 
             context.global_vars.insert(global_var_blueprint, None);

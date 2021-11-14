@@ -45,7 +45,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         }
 
         if let Some(separator) = attributes.separator {
-            parse_method = quote! { parse_with_separator(reader__, #separator) };
+            parse_method = quote! { parse_item_with_separator(reader__, #separator) };
         }
 
         match &variant.fields {
