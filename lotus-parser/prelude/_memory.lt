@@ -22,6 +22,17 @@ const HEADER_SIZE = HEADER_WASM_PAGE_COUNT * WASM_PAGE_SIZE;
 
 const MEMORY = (0 as ptr);
 
+const ALLOCATED_POINTER_METADATA = 3;
+
+// Each allocated pointer has a single value of metadata that can be one of the following:
+// 0: the pointer has been garbage collected and can be returned by a future call of `@alloc`
+// 1: the pointer is in use but will be garbage collected the next time GC is triggered
+// 2: the pointer has been retained and will ne be garbage collected the next time GC is triggered
+// 3: the pointer is in use and can never be garbage collected
+
+// Triggerring the GC changes the metadata of all pointer from 2 to 1
+// "Retaining" a pointer changes its metadata from 1 to 2
+
 pub fn wasm_store<T>(int, T) {{
     <T>.store
 }}
@@ -40,6 +51,11 @@ fn wasm_memory_grow(int) -> int {{
 
 fn alloc_page() -> ptr {
     return (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
+}
+
+// Will be called after all global variables have been initialized, and before the main function is called
+pub fn notify_end_of_global_allocs() {
+    ALLOCATED_POINTER_METADATA = 1;
 }
 
 sys fn mem_alloc(block_size: int) -> ptr {
@@ -78,7 +94,7 @@ sys fn mem_alloc(block_size: int) -> ptr {
         if offset != 0 {
             offset -= 1;
             result = page_ptr[offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
-            result[-1] = 1;
+            result[-1] = ALLOCATED_POINTER_METADATA;
             page_ptr[0] = offset;
             break;
         }
@@ -128,7 +144,7 @@ sys fn mem_trigger_garbage_collection() {
 sys fn mem_retain(addr: ptr) -> bool {
     let success = false;
 
-    if (addr as int) != 0 && addr[-1] == 1 {
+    if (addr as int) > 0 && addr[-1] == 1 {
         addr[-1] = 2;
         success = true;
     }

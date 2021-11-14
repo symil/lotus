@@ -1,4 +1,8 @@
 export type(void) system {
+    static __init() {
+        notify_end_of_global_allocs();
+    }
+
     alloc(block_size: int) -> ptr {
         return mem_alloc(block_size);
     }

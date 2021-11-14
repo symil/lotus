@@ -1,0 +1,12 @@
+const TEST = @alloc(2000);
+
+export fn main() {
+    let addr1 = TEST as int;
+    @log(TEST[-1]);
+    @collect_garbage();
+    let addr2 = @alloc(2000) as int;
+
+    @log(TEST[-1]);
+    @log((addr2 as ptr)[-1]);
+    @log(addr1 != addr2);
+}
