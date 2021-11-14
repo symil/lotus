@@ -1,0 +1,65 @@
+export class Transform2D {
+    tx: float = 0f,
+    ty: float = 0f,
+    sx: float = 1f,
+    sy: float = 1f,
+
+    static new(scale: float, x: float, y: float) -> This {
+        let sx = scale;
+        let sy = scale;
+        let tx = x;
+        let ty = y;
+
+        return This { sx, sy, tx, ty };
+    }
+
+    static identity() -> This {
+        return This::new(0f, 1f, 1f);
+    }
+
+    apply(x: float, y: float) -> (float, float) {
+        return (
+            x * this.sx + this.tx,
+            y * this.sy + this.ty,
+        );
+    }
+
+    apply_reverse(x: float, y: float) -> (float, float) {
+        return (
+            (x - this.tx) / this.sx,
+            (y - this.ty) / this.sy,
+        );
+    }
+
+    scale(width: float, height: float) -> (float, float) {
+        return (
+            width * this.sx,
+            height * this.sy
+        );
+    }
+
+    scale_reverse(width: float, height: float) -> (float, float) {
+        return (
+            width / this.sx,
+            height / this.sy
+        );
+    }
+
+    multiply(other: This) -> This {
+        return This {
+            tx: other.tx + other.sx * this.tx,
+            ty: other.ty + other.sy * this.ty,
+            sx: other.sx * this.sx,
+            sy: other.sx * this.sy,
+        };
+    }
+
+    divide(other: This) -> This {
+        return This {
+            tx: (this.tx - other.tx) / other.sx,
+            ty: (this.ty - other.ty) / other.sy,
+            sx: this.sx / other.sx,
+            sy: this.sy / other.sy,
+        };
+    }
+}

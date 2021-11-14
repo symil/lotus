@@ -126,4 +126,36 @@ export class Rect {
 
         return this.strip(width_to_strip, height_to_strip);
     }
+
+    split_horizontally(left_width: float) -> (This, This) {
+        let right_width = this.width - left_width;
+
+        return (
+            This::from_top_left(this.x1(), this.y1(), left_width, this.height),
+            This::from_top_left(this.x2() - right_width, this.y1(), right_width, this.height),
+        );
+    }
+
+    split_vertically(top_height: float) -> (This, This) {
+        let bottom_height = this.width - top_height;
+
+        return (
+            This::from_top_left(this.x1(), this.y1(), this.width, top_height),
+            This::from_top_left(this.x1(), this.y2() - bottom_height, this.width, bottom_height),
+        );
+    }
+
+    symmetry(cx: float, cy: float) -> This {
+        let x = 2f * cx - this.x;
+        let y = 2f * cy - this.y;
+
+        return This::new(x, y, this.width, this.height);
+    }
+
+    transform(transform: Transform2D) -> This {
+        let (x, y) = transform.apply(this.x, this.y);
+        let (width, height) = transform.scale(this.width, this.height);
+
+        return This::new(x, y, width, height);
+    }
 }
