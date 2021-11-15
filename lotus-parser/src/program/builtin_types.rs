@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BuiltinType {
     System,
+    Void,
     Bool,
     Int,
     Float,
@@ -16,6 +17,7 @@ impl BuiltinType {
     pub fn get_name(&self) -> &'static str {
         match self {
             BuiltinType::System => "system",
+            BuiltinType::Void => "void",
             BuiltinType::Bool => "bool",
             BuiltinType::Int => "int",
             BuiltinType::Float => "float",

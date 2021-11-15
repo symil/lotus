@@ -8,7 +8,7 @@ pub type VI = VirtualInstruction;
 
 #[derive(Debug, Clone)]
 pub enum VirtualInstruction {
-    Drop,
+    Drop(Type),
     Eqz,
     Raw(Wat),
     IntConstant(i32),
@@ -281,7 +281,7 @@ impl VirtualInstruction {
 
     pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Self {
         match self {
-            VirtualInstruction::Drop => VirtualInstruction::Drop,
+            VirtualInstruction::Drop(ty) => VirtualInstruction::Drop(ty.replace_parameters(Some(this_type), &[])),
             VirtualInstruction::Eqz => VirtualInstruction::Eqz,
             VirtualInstruction::Raw(wat) => VirtualInstruction::Raw(wat.clone()),
             VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
@@ -348,7 +348,7 @@ impl VirtualInstruction {
 
     pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
         match self {
-            VirtualInstruction::Drop => {},
+            VirtualInstruction::Drop(ty) => {},
             VirtualInstruction::Eqz => {},
             VirtualInstruction::Raw(_) => {},
             VirtualInstruction::IntConstant(_) => {},
@@ -382,7 +382,10 @@ impl VirtualInstruction {
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {
         match self {
-            VirtualInstruction::Drop => vec![wat!["drop"]],
+            VirtualInstruction::Drop(ty) => match ty.resolve(type_index, context).wasm_type.is_some() {
+                true => vec![wat!["drop"]],
+                false => vec![],
+            },
             VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
@@ -398,7 +401,10 @@ impl VirtualInstruction {
 
                 vasm.resolve(type_index, context)
             },
-            VirtualInstruction::GetVariable(info) => vec![info.var_info.get_to_stack()],
+            VirtualInstruction::GetVariable(info) => match info.var_info.ty.resolve(type_index, context).wasm_type.is_some() {
+                true => vec![info.var_info.get_to_stack()],
+                false => vec![],
+            },
             VirtualInstruction::Store(info) => {
                 vec![Wat::set_local_from_stack(&info.wasm_var_name)]
             },
@@ -412,46 +418,52 @@ impl VirtualInstruction {
                     content.extend(vasm.resolve(type_index, context));
                 }
 
-                if let VirtualInstruction::TeeVariable(_) = self {
-                    content.push(info.var_info.tee_from_stack());
-                } else {
-                    content.push(info.var_info.set_from_stack());
+                if info.var_info.ty.resolve(type_index, context).wasm_type.is_some() {
+                    if let VirtualInstruction::TeeVariable(_) = self {
+                        content.push(info.var_info.tee_from_stack());
+                    } else {
+                        content.push(info.var_info.set_from_stack());
+                    }
                 }
 
                 content
             },
             VirtualInstruction::GetField(info) => {
                 let field_type = info.field_type.resolve(type_index, context);
-                
-                let content = vec![
-                    wat!["i32.add", Wat::const_i32(info.field_offset)],
-                    wat!["i32.mul", Wat::const_i32(4)],
-                    wat![format!("{}.load", field_type.wasm_type.unwrap())]
-                ];
 
-                content
+                match field_type.wasm_type {
+                    Some(field_wasm_type) => vec![
+                        wat!["i32.add", Wat::const_i32(info.field_offset)],
+                        wat!["i32.mul", Wat::const_i32(4)],
+                        wat![format!("{}.load", field_wasm_type)]
+                    ],
+                    None => vec![wat!["drop"]],
+                }
             },
             VirtualInstruction::SetField(info) => {
                 let mut content = vec![];
                 let field_type = info.field_type.resolve(type_index, context);
-                let field_wasm_type = field_type.wasm_type.unwrap();
 
-                content.push(wat!["i32.add", Wat::const_i32(info.field_offset)]);
-                content.push(wat!["i32.mul", Wat::const_i32(4)]);
+                if let Some(field_wasm_type) = field_type.wasm_type {
+                    content.push(wat!["i32.add", Wat::const_i32(info.field_offset)]);
+                    content.push(wat!["i32.mul", Wat::const_i32(4)]);
 
-                if let Some(init_value) = &info.value {
-                    content.extend(init_value.resolve(type_index, context));
+                    if let Some(init_value) = &info.value {
+                        content.extend(init_value.resolve(type_index, context));
+                    } else {
+                        let swap_func_name = match field_wasm_type {
+                            "i32" => SWAP_INT_INT_WASM_FUNC_NAME,
+                            "f32" => SWAP_FLOAT_INT_WASM_FUNC_NAME,
+                            _ => unreachable!()
+                        };
+
+                        content.push(Wat::call_from_stack(swap_func_name));
+                    }
+
+                    content.push(wat![format!("{}.store", field_wasm_type)]);
                 } else {
-                    let swap_func_name = match field_wasm_type {
-                        "i32" => SWAP_INT_INT_WASM_FUNC_NAME,
-                        "f32" => SWAP_FLOAT_INT_WASM_FUNC_NAME,
-                        _ => unreachable!()
-                    };
-
-                    content.push(Wat::call_from_stack(swap_func_name));
+                    content.push(wat!["drop"]);
                 }
-
-                content.push(wat![format!("{}.store", field_wasm_type)]);
 
                 content
             },
@@ -567,7 +579,7 @@ impl VirtualInstruction {
 
     pub fn resolve_without_context(&self) -> Vec<Wat> {
         match self {
-            VirtualInstruction::Drop => vec![wat!["drop"]],
+            VirtualInstruction::Drop(ty) => unreachable!(),
             VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
             VirtualInstruction::IntConstant(_) => unreachable!(),

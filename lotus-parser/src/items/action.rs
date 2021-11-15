@@ -20,9 +20,10 @@ impl Action {
 
                 let function_wrapped = context.get_current_function().unwrap();
                 let function_unwrapped = function_wrapped.borrow();
+                let return_value = &function_unwrapped.return_value;
 
-                match &function_unwrapped.return_value {
-                    Some(return_value) => match &self.value {
+                match return_value.ty.is_void() {
+                    false => match &self.value {
                         Some(expr) => {
                             let type_hint = Some(&return_value.ty);
 
@@ -40,13 +41,13 @@ impl Action {
                             }
                         },
                         None => {
-                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_value.ty, Type::Void));
+                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_value.ty, context.void_type()));
                         },
                     },
-                    None => match &self.value {
+                    true => match &self.value {
                         Some(expr) => {
                             if let Some(vasm) = expr.process(None, context) {
-                                context.errors.add(expr, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                context.errors.add(expr, format!("expected `{}`, got `{}`", context.void_type(), &vasm.ty));
                             }
                         },
                         None => {

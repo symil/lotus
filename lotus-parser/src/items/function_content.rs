@@ -36,7 +36,7 @@ impl FunctionContent {
             payload_arg: None,
             conditions: vec![],
             arguments: vec![],
-            return_value: None,
+            return_value: VariableInfo::new(Identifier::default(), Type::Undefined, VariableKind::Local),
             dynamic_index: -1,
             is_raw_wasm: false,
             body: Vasm::empty(),
@@ -91,7 +91,7 @@ impl FunctionContent {
 
             function_blueprint.with_mut(|mut function_unwrapped| {
                 function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
-                function_unwrapped.return_value = return_type.and_then(|ty| Some(VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), ty, VariableKind::Local)))
+                function_unwrapped.return_value = VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), return_type.unwrap_or(context.void_type()), VariableKind::Local);
             });
         }
 
@@ -169,11 +169,9 @@ impl FunctionContent {
             });
         }
 
-        if !is_raw_wasm {
-            if let Some(return_type) = &function_wrapped.borrow().return_value {
-                if !context.return_found {
-                    context.errors.add(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
-                }
+        if !is_raw_wasm && !function_wrapped.borrow().return_value.ty.is_void() {
+            if !context.return_found {
+                context.errors.add(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
             }
         }
 

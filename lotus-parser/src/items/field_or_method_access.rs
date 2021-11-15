@@ -102,7 +102,7 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
     let mut final_function_parameters = vec![];
 
     let (function_name, return_type) = function_wrapped.with_ref(|function_unwrapped| {
-        let mut return_type = None;
+        let mut return_type = context.void_type();
         let expected_arg_count = function_unwrapped.arguments.len();
 
         if function_unwrapped.is_dynamic() {
@@ -143,13 +143,13 @@ pub fn process_function_call(caller_type: Option<&Type>, function_name: &Identif
                 }
 
                 final_function_parameters = parameters;
-                return_type = function_unwrapped.return_value.as_ref().and_then(|var_info| Some(var_info.ty.replace_parameters(caller_type, &final_function_parameters)));
+                return_type = function_unwrapped.return_value.ty.replace_parameters(caller_type, &final_function_parameters);
             }
         }
 
         (
             function_unwrapped.name.to_string(),
-            return_type.unwrap_or(Type::Void)
+            return_type
         )
     });
 
@@ -170,13 +170,11 @@ fn infer_function_parameters(function_name: &Identifier, function_unwrapped: &Fu
         let mut ok = false;
 
         if let Some(hint_return_type) = type_hint {
-            if let Some(return_value) = &function_unwrapped.return_value {
-                let expected_return_type = &return_value.ty;
+            let expected_return_type = &function_unwrapped.return_value.ty;
 
-                if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
-                    result.push(inferred_type);
-                    ok = true;
-                }
+            if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
+                result.push(inferred_type);
+                ok = true;
             }
         }
 

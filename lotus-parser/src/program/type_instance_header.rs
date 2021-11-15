@@ -84,4 +84,8 @@ impl TypeInstanceHeader {
     pub fn get_type_id(&self) -> usize {
         self.dynamic_method_table_offset
     }
+
+    pub fn has_wasm_type(&self) -> bool {
+        self.wasm_type.is_some()
+    }
 }

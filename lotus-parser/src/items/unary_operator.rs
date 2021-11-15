@@ -20,17 +20,11 @@ impl UnaryOperatorWrapper {
                 if operand_type.is_void() {
                     context.errors.add(self, format!("cannot apply `{}` operator to untyped expression", "!".bold()));
                     None
-                } else if operand_type.is_bool() {
-                    Some(Vasm::new(context.bool_type(), vec![], vec![VI::raw(wat!["i32.eqz"])]))
                 } else if !operand_type.is_undefined() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_METHOD_NAME, &[], vec![], context)]))
                 } else {
                     None
                 }
-                // else {
-                    // context.errors.add(self, format!("expected `{}` or `{}`, got `{}`", BuiltinType::Bool.get_name(), "Option<_>".bold(), operand_type));
-                    // None
-                // }
 
             },
             UnaryOperator::BinaryNot => operand_type.call_builtin_interface_no_arg(self, BuiltinInterface::Not, context),

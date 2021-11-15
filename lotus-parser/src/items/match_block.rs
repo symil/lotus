@@ -129,9 +129,9 @@ impl MatchBlock {
                             }
                         }
 
-                        let final_type = type_hint.cloned().or(returned_type).unwrap_or(Type::Void);
+                        let final_type = type_hint.cloned().or(returned_type).unwrap_or(context.void_type());
 
-                        if !final_type.is_void() && !final_type.is_undefined() {
+                        if !final_type.is_undefined() {
                             content.extend(vec![
                                 VI::call_static_method(&final_type, NONE_METHOD_NAME, &[], vec![], context),
                                 VI::set_var_from_stack(&result_var)

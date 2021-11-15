@@ -8,7 +8,6 @@ use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, Functi
 #[derive(Debug, Clone)]
 pub enum Type {
     Undefined,
-    Void,
     Any,
     This(Link<InterfaceBlueprint>),
     Actual(ActualTypeContent),
@@ -44,13 +43,6 @@ impl Type {
         }
     }
 
-    pub fn is_void(&self) -> bool {
-        match self {
-            Type::Void => true,
-            _ => false
-        }
-    }
-
     pub fn is_enum(&self) -> bool {
         match self {
             Type::Actual(info) => info.type_blueprint.borrow().qualifier == TypeQualifier::Enum,
@@ -58,7 +50,7 @@ impl Type {
         }
     }
 
-    fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
+    pub fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
         let name = builtin_type.get_name();
 
         if let Type::Actual(info) = self {
@@ -68,6 +60,10 @@ impl Type {
         }
 
         false
+    }
+
+    pub fn is_void(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Void)
     }
 
     pub fn is_int(&self) -> bool {
@@ -130,7 +126,6 @@ impl Type {
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
         match self {
             Type::Undefined => Type::Undefined,
-            Type::Void => Type::Void,
             Type::Any => Type::Any,
             Type::This(_) => this_type.unwrap().clone(),
             Type::Actual(info) => {
@@ -167,7 +162,6 @@ impl Type {
     pub fn get_parameter(&self, index: usize) -> Type {
         match self {
             Type::Undefined => unreachable!(),
-            Type::Void => unreachable!(),
             Type::Any => unreachable!(),
             Type::This(_) => unreachable!(),
             Type::Actual(info) => info.parameters[index].clone(),
@@ -181,7 +175,6 @@ impl Type {
     pub fn is_assignable_to(&self, target: &Type) -> bool {
         match (self, target) {
             (_, Type::Any) => true,
-            (Type::Void, Type::Void) => true,
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
                 Some(ty) => &ty == target,
@@ -218,7 +211,6 @@ impl Type {
     pub fn contains_function_parameter(&self) -> bool {
         match self {
             Type::Undefined => false,
-            Type::Void => false,
             Type::Any => false,
             Type::This(_) => false,
             Type::Actual(info) => info.parameters.iter().any(|param| param.contains_function_parameter()),
@@ -231,7 +223,6 @@ impl Type {
     pub fn infer_function_parameter(&self, function_param_to_infer: &Rc<ParameterTypeInfo>, actual_type: &Type) -> Option<Type> {
         match self {
             Type::Undefined => None,
-            Type::Void => None,
             Type::Any => None,
             Type::This(_) => None,
             Type::Actual(info) => match actual_type.get_as(&info.type_blueprint) {
@@ -311,7 +302,6 @@ impl Type {
         let ok = match self {
             Type::Undefined => false,
             Type::Any => false,
-            Type::Void => false,
             Type::This(interface_wrapped) => interface_wrapped == interface,
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
@@ -351,8 +341,8 @@ impl Type {
                                 }
                             }
 
-                            let actual_return_value = actual_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
-                            let expected_return_type = expected_method_unwrapped.return_value.as_ref().and_then(|info| Some(info.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
+                            let actual_return_value = actual_method_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
+                            let expected_return_type = expected_method_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
 
                             if !actual_return_value.is_assignable_to(&expected_return_type) {
                                 details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
@@ -393,7 +383,7 @@ impl Type {
 
                 match self.check_match_interface(&interface_wrapped, location, context) {
                     true => {
-                        let return_type = function_unwrapped.return_value.as_ref().and_then(|ret| Some(ret.ty.replace_parameters(Some(self), &[]))).unwrap_or(Type::Void);
+                        let return_type = function_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
 
                         for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
                             let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
@@ -424,7 +414,6 @@ impl Type {
     pub fn is_ambiguous(&self) -> bool {
         match self {
             Type::Undefined => false,
-            Type::Void => false,
             Type::Any => true,
             Type::This(_) => false,
             Type::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
@@ -437,7 +426,6 @@ impl Type {
     pub fn get_field(&self, name: &str) -> Option<Rc<FieldInfo>> {
         match self {
             Type::Undefined => None,
-            Type::Void => None,
             Type::Any => None,
             Type::This(_) => None,
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
@@ -458,7 +446,6 @@ impl Type {
         match self {
             Type::Undefined => None,
             Type::Any => None,
-            Type::Void => None,
             Type::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
             Type::Actual(info) => {
                 info.type_blueprint.with_ref(|type_unwrapped| {
@@ -485,7 +472,6 @@ impl Type {
     pub fn get_associated_type(&self, name: &str) -> Option<Type> {
         match self {
             Type::Undefined => None,
-            Type::Void => None,
             Type::Any => None,
             Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
                 match interface_unwrapped.associated_types.get(name) {
@@ -530,7 +516,6 @@ impl Type {
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
         match self {
             Type::Undefined => unreachable!(),
-            Type::Void => unreachable!(),
             Type::Any => unreachable!(),
             Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
             Type::Actual(info) => {
@@ -562,7 +547,6 @@ impl Type {
     pub fn get_name(&self) -> String {
         match self {
             Type::Undefined => format!("<undefined>"),
-            Type::Void => format!("void"),
             Type::Any => format!("any"),
             Type::This(_) => format!("{}", THIS_TYPE_NAME),
             Type::Actual(info) => {

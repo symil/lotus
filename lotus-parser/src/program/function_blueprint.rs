@@ -18,7 +18,7 @@ pub struct FunctionBlueprint {
     pub this_arg: Option<Rc<VariableInfo>>,
     pub payload_arg: Option<Rc<VariableInfo>>,
     pub arguments: Vec<Rc<VariableInfo>>,
-    pub return_value: Option<Rc<VariableInfo>>,
+    pub return_value: Rc<VariableInfo>,
     pub is_raw_wasm: bool,
     pub dynamic_index: i32,
     pub body: Vasm
@@ -45,15 +45,13 @@ impl FunctionBlueprint {
             arg.check_parameters(context);
         }
 
-        if let Some(return_value) = &self.return_value {
-            return_value.check_parameters(context);
-        }
+        self.return_value.check_parameters(context);
     }
 
     pub fn get_signature(&self) -> Signature {
         Signature {
             arguments: self.arguments.iter().map(|var_info| var_info.ty.clone()).collect(),
-            return_value: self.return_value.as_ref().and_then(|var_info| Some(var_info.ty.clone())),
+            return_value: self.return_value.ty.clone()
         }
     }
 }

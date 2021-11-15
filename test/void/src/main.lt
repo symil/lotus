@@ -1,0 +1,13 @@
+export fn main() {
+    let a = hello();
+    let b = void::none;
+
+    @dbg(a);
+    @dbg(b);
+    @dbg(a == b);
+    @dbg(a != b);
+}
+
+fn hello() {
+
+}

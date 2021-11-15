@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, wat};
+use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, vasm, wat};
 use super::{AssignmentOperatorWrapper, Expression, VarPath};
 
 #[parsable]
@@ -61,14 +61,11 @@ impl Assignment {
             }
         } else {
             if let Some(vasm) = self.lvalue.process(None, AccessType::Get, context) {
-                let is_void = vasm.ty.is_void();
-                let mut source = vec![vasm];
+                let drop_vasm = vasm![
+                    VI::Drop(vasm.ty.clone())
+                ];
 
-                if !is_void {
-                    source.push(Vasm::new(Type::Undefined, vec![], vec![VI::Drop]));
-                }
-
-                result = Some(Vasm::merge(source));
+                result = Some(Vasm::merge(vec![vasm, drop_vasm]));
             }
         }
 

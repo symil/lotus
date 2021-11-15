@@ -75,6 +75,10 @@ impl ProgramContext {
         }
     }
 
+    pub fn void_type(&self) -> Type {
+        self.get_builtin_type(BuiltinType::Void, vec![])
+    }
+
     pub fn bool_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Bool, vec![])
     }
