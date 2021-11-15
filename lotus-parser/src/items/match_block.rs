@@ -1,7 +1,7 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{INT_NONE_VALUE, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
-use super::{Expression, Identifier, TypeQualifier};
+use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use super::{Expression, Identifier, ParsedType, TypeQualifier, type_qualifier};
 
 #[parsable]
 pub struct MatchBlock {
@@ -13,7 +13,9 @@ pub struct MatchBlock {
 
 #[parsable]
 pub struct MatchBranch {
-    pub variant_name: Identifier,
+    pub variant_name: ParsedType,
+    #[parsable(brackets="()")]
+    pub var_name: Option<Identifier>,
     #[parsable(prefix="=>")]
     pub expr: Expression
 }
@@ -26,21 +28,71 @@ impl MatchBlock {
             match &matched_vasm.ty {
                 Type::Undefined => {},
                 Type::Actual(info) => info.type_blueprint.clone().with_ref(|type_unwrapped| {
-                    if type_unwrapped.qualifier == TypeQualifier::Enum {
+                    if !type_unwrapped.is_enum() && !type_unwrapped.is_class() {
+                        context.errors.add(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
+                    } else {
                         let tmp_var = VariableInfo::new(Identifier::unique("tmp", self), context.int_type(), VariableKind::Local);
                         let result_var = VariableInfo::new(Identifier::unique("result", self), type_hint.cloned().unwrap_or(context.int_type()), VariableKind::Local);
                         let mut returned_type : Option<Type> = None;
                         let mut content = vec![];
 
                         for branch in &self.branches {
-                            let variant_int_value = if branch.variant_name.as_str() == NONE_LITERAL {
-                                Some(INT_NONE_VALUE)
-                            } else {
-                                type_unwrapped.enum_variants.get(branch.variant_name.as_str()).and_then(|info| Some(info.value as i32))
+                            let mut var_vasm = vasm![];
+
+                            let test_vasm_opt = match &type_unwrapped.qualifier {
+                                TypeQualifier::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
+                                    true => Some(vasm![
+                                        VI::call_regular_method(&matched_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context),
+                                        VI::Eqz
+                                    ]),
+                                    false => match branch.variant_name.process(true, context) {
+                                        Some(ty) => match ty.match_builtin_interface(BuiltinInterface::Object, context) {
+                                            true => {
+                                                if let Some(var_name) = &branch.var_name {
+                                                    let var_info = VariableInfo::new(var_name.clone(), ty.clone(), VariableKind::Local);
+
+                                                    context.check_var_unicity(var_name);
+                                                    context.push_var(&var_info);
+                                                    var_vasm = Vasm::new(ty.clone(), vec![var_info.clone()], vec![
+                                                        VI::get_var(&tmp_var),
+                                                        VI::set_var_from_stack(&var_info)
+                                                    ]);
+                                                }
+
+                                                Some(vasm![
+                                                    VI::call_static_method(&ty, IS_METHOD_NAME, &[], vec![], context),
+                                                    VI::Eqz
+                                                ])
+                                            },
+                                            false => context.errors.add_and_none(&branch.variant_name, format!("type `{}` is not a class", &ty)),
+                                        },
+                                        None => None,
+                                    }
+                                }
+                                TypeQualifier::Enum => {
+                                    match &branch.variant_name.as_single_identifier() {
+                                        Some(name) => match name.as_str() {
+                                            NONE_LITERAL => Some(vasm![
+                                                VI::int(INT_NONE_VALUE),
+                                                VI::raw(wat!["i32.ne"])
+                                            ]),
+                                            _ => match type_unwrapped.enum_variants.get(name.as_str()) {
+                                                Some(variant_info) => Some(vasm![
+                                                    VI::int(variant_info.value),
+                                                    VI::raw(wat!["i32.ne"])
+                                                ]),
+                                                None => context.errors.add_and_none(&self.value_to_match, format!("enum `{}` has no variant `{}`", &matched_vasm.ty, name)),
+                                            }
+                                        },
+                                        None => context.errors.add_and_none(&self.value_to_match, format!("expected variant name")),
+                                    }
+                                },
+                                _ => unreachable!()
                             };
 
-                            if let Some(value) = variant_int_value {
+                            if let Some(test_vasm) = test_vasm_opt {
                                 context.push_scope(ScopeKind::Branch);
+
                                 if let Some(branch_vasm) = branch.expr.process(type_hint, context) {
                                     let new_expected_type = match type_hint {
                                         Some(expected_type) => match branch_vasm.ty.is_assignable_to(expected_type) {
@@ -57,9 +109,9 @@ impl MatchBlock {
                                         Some(ty) => {
                                             let vasm = VI::block(vasm![
                                                 VI::get_var(&tmp_var),
-                                                VI::int(value),
-                                                VI::raw(wat!["i32.ne"]),
+                                                test_vasm,
                                                 VI::jump_if_from_stack(0),
+                                                var_vasm,
                                                 branch_vasm,
                                                 VI::set_var_from_stack(&result_var),
                                                 VI::jump(1)
@@ -74,8 +126,6 @@ impl MatchBlock {
                                     }
                                 }
                                 context.pop_scope();
-                            } else {
-                                context.errors.add(&self.value_to_match, format!("enum `{}` has no variant `{}`", &matched_vasm.ty, branch.variant_name.as_str().bold()));
                             }
                         }
 
@@ -95,8 +145,6 @@ impl MatchBlock {
                         ]);
 
                         result = Some(Vasm::merge(vec![matched_vasm, branches_vasm]));
-                    } else {
-                        context.errors.add(&self.value_to_match, format!("expected enum type, got `{}`", &matched_vasm.ty));
                     }
                 }),
                 _ => {

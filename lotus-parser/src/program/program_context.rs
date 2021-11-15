@@ -160,7 +160,7 @@ impl ProgramContext {
         }
     }
 
-    pub fn ckeck_var_unicity(&mut self, name: &Identifier) -> bool {
+    pub fn check_var_unicity(&mut self, name: &Identifier) -> bool {
         let is_unique = self.get_var_info(name).is_none();
 
         if !is_unique {

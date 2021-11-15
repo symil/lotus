@@ -285,6 +285,14 @@ impl Type {
         }
     }
 
+    pub fn match_builtin_interface(&self, interface: BuiltinInterface, context: &mut ProgramContext) -> bool {
+        context.errors.set_enabled(false);
+        let result = self.check_match_interface(&context.get_builtin_interface(interface), &DataLocation::default(), context);
+        context.errors.set_enabled(true);
+
+        result
+    }
+
     pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &DataLocation, context: &mut ProgramContext) -> bool {
         let mut ok = true;
         

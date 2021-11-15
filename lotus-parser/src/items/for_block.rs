@@ -37,8 +37,8 @@ impl ForBlock {
         };
         let return_found = context.return_found;
 
-        context.ckeck_var_unicity(&index_var_name);
-        context.ckeck_var_unicity(&item_var_name);
+        context.check_var_unicity(&index_var_name);
+        context.check_var_unicity(&item_var_name);
         context.push_scope(ScopeKind::Loop);
 
         let mut result = None;

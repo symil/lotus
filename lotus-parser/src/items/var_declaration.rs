@@ -31,11 +31,11 @@ impl VarDeclaration {
     pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<(Vec<Rc<VariableInfo>>, Vasm)> {
         match &self.var_names {
             VariableNames::Single(name) => {
-                context.ckeck_var_unicity(name);
+                context.check_var_unicity(name);
             },
             VariableNames::Multiple(names) => {
                 for name in names {
-                    context.ckeck_var_unicity(name);
+                    context.check_var_unicity(name);
                 }
             },
         };

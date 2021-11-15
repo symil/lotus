@@ -9,7 +9,7 @@ pub enum ParsedTypeSingle {
 }
 
 impl ParsedTypeSingle {
-    pub fn as_var_name(&self) -> Option<&Identifier> {
+    pub fn as_single_identifier(&self) -> Option<&Identifier> {
         match self {
             ParsedTypeSingle::Value(value_type) => value_type.as_single_name(),
             // ItemType::Function(_) => None,

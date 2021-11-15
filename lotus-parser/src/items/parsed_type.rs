@@ -9,9 +9,9 @@ pub struct ParsedType {
 }
 
 impl ParsedType {
-    pub fn as_var_name(&self) -> Option<&Identifier> {
+    pub fn as_single_identifier(&self) -> Option<&Identifier> {
         match self.suffix.is_empty() {
-            true => self.parsed_type.as_var_name(),
+            true => self.parsed_type.as_single_identifier(),
             false => None,
         }
     }

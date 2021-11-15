@@ -63,6 +63,14 @@ pub struct DynamicMethodInfo {
 }
 
 impl TypeBlueprint {
+    pub fn is_enum(&self) -> bool {
+        self.qualifier == TypeQualifier::Enum
+    }
+
+    pub fn is_class(&self) -> bool {
+        self.qualifier == TypeQualifier::Class
+    }
+
     pub fn get_wasm_type(&self, parameters: &[Rc<TypeInstanceHeader>]) -> Option<&'static str> {
         match self.stack_type {
             WasmStackType::Fixed(stack_type) => match stack_type {

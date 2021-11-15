@@ -4,4 +4,4 @@ main.lt:15:16: error: expected `bool`, got `int`
 main.lt:16:16: error: expected `bool`, got `string`
 main.lt:17:16: error: expected `bool`, got `float`
 main.lt:22:19: error: enum `Test` has no variant `Hey`
-main.lt:26:19: error: expected enum type, got `string`
+main.lt:26:19: error: expected enum or class type, got `string`

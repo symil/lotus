@@ -1,0 +1,28 @@
+class A { a: int = 8 }
+class B extends A { b: string = "hello" }
+
+export fn main() {
+    test_match(Object {});
+    test_match(A {});
+    test_match(B {});
+    test_match(A::none);
+    
+    test_match_var(A {});
+    test_match_var(B {});
+}
+
+fn test_match(value: Object) {
+    @dbg(match value {
+        B => 2,
+        A => 1,
+        Object => 0,
+        none => 3
+    });
+}
+
+fn test_match_var(value: Object) {
+    @dbg(match value {
+        B(b_object) => b_object.b.len(),
+        A(a_object) => a_object.a
+    });
+}

@@ -9,9 +9,9 @@ pub struct ParsedTypeTuple {
 }
 
 impl ParsedTypeTuple {
-    pub fn as_var_name(&self) -> Option<&Identifier> {
+    pub fn as_single_identifier(&self) -> Option<&Identifier> {
         match self.type_list.len() {
-            1 => self.type_list.first().unwrap().as_var_name(),
+            1 => self.type_list.first().unwrap().as_single_identifier(),
             _ => None
         }
     }

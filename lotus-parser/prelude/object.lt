@@ -15,6 +15,10 @@ export class Object {
     }
 
     autogen static __is(object: Object) -> bool {
+        if object.__is_none() {
+            return false;
+        }
+
         let type_id = object.as_ptr()[0];
 
         return TYPE_ID_TO_ANCESTOR_IDS

@@ -107,6 +107,10 @@ export interface Tuple {
     second() -> Second;
 }
 
+export interface Object {
+    static __is(Object) -> bool;
+}
+
 sys interface Builtin {
     static __chosen() -> This;
     static default() -> This;

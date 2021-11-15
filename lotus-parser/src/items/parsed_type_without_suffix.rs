@@ -9,10 +9,10 @@ pub enum ParsedTypeWithoutSuffix {
 }
 
 impl ParsedTypeWithoutSuffix {
-    pub fn as_var_name(&self) -> Option<&Identifier> {
+    pub fn as_single_identifier(&self) -> Option<&Identifier> {
         match self {
-            ParsedTypeWithoutSuffix::Single(single) => single.as_var_name(),
-            ParsedTypeWithoutSuffix::Tuple(tuple) => tuple.as_var_name(),
+            ParsedTypeWithoutSuffix::Single(single) => single.as_single_identifier(),
+            ParsedTypeWithoutSuffix::Tuple(tuple) => tuple.as_single_identifier(),
         }
     }
 
