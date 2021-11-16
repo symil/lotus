@@ -1,5 +1,4 @@
 use std::{fmt::format, rc::Rc};
-
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
 use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};

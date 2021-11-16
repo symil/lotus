@@ -1,0 +1,8 @@
+export interface World {
+    type User;
+
+    on_user_connect(user: User);
+    on_user_disconnect(user: User);
+    on_user_action(user: User, action: Object);
+    update(elapsed: float);
+}

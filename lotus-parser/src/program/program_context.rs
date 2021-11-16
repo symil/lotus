@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -34,7 +34,11 @@ pub struct ProgramContext {
     pub type_instances: HashMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
     pub function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
     pub global_var_instances: Vec<GlobalVarInstance>,
-    pub entry_function: Option<Rc<FunctionInstanceHeader>>,
+    pub main_function: Option<Rc<FunctionInstanceHeader>>,
+    pub start_client_function: Option<Rc<FunctionInstanceHeader>>,
+    pub update_client_function: Option<Rc<FunctionInstanceHeader>>,
+    pub start_server_function: Option<Rc<FunctionInstanceHeader>>,
+    pub update_server_function: Option<Rc<FunctionInstanceHeader>>,
 }
 
 impl ProgramContext {
@@ -222,6 +226,21 @@ impl ProgramContext {
         name
     }
 
+    fn get_exported_function_instance(&mut self, name: &str) -> Option<Rc<FunctionInstanceHeader>> {
+        match self.functions.get_by_name(name) {
+            Some(function_wrapped) => {
+                let parameters = FunctionInstanceParameters {
+                    function_blueprint: function_wrapped.clone(),
+                    this_type: None,
+                    function_parameters: vec![],
+                };
+
+                Some(self.get_function_instance(parameters))
+            },
+            None => None,
+        }
+    }
+
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut interfaces = vec![];
         let mut types = vec![];
@@ -391,12 +410,24 @@ impl ProgramContext {
             return Err(self.errors.consume());
         }
 
+        let mut content = wat!["module"];
+        let mut globals_declaration = vec![];
+        let mut globals_initialization = vec![];
+        let mut types_initialization = vec![];
+        let mut exports = vec![];
+
         for global_var in self.global_vars.get_all() {
             let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
                 global_var_unwrapped.generate_instance(&mut self)
             });
 
             self.global_var_instances.push(global_var_instance);
+        }
+
+        for func_name in EXPORTED_FUNCTIONS {
+            if let Some(function_instance) = self.get_exported_function_instance(func_name) {
+                exports.push(wat!["export", Wat::string(func_name), wat!["func", Wat::var_name(&function_instance.wasm_name)]]);
+            }
         }
 
         if let Some(function_wrapped) = self.functions.get_by_name("main") {
@@ -408,13 +439,8 @@ impl ProgramContext {
 
             let function_instance_header = self.get_function_instance(parameters);
 
-            self.entry_function = Some(function_instance_header);
+            self.main_function = Some(function_instance_header);
         }
-
-        let mut content = wat!["module"];
-        let mut globals_declaration = vec![];
-        let mut globals_initialization = vec![];
-        let mut types_initialization = vec![];
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
@@ -482,16 +508,15 @@ impl ProgramContext {
             content.push(Wat::declare_function(name, None, args.to_vec(), ret.to_vec(), locals.to_vec(), body()))
         }
 
-        let mut entry_function_body = vec![
+        let mut initialize_function_body = vec![
             Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
             Wat::call(INIT_TYPES_FUNC_NAME, vec![]),
         ];
-        entry_function_body.extend(self.entry_function.unwrap().wasm_call.clone());
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));
         content.push(Wat::declare_function(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
-        content.push(Wat::declare_function(ENTRY_POINT_FUNC_NAME, Some("_start"), vec![], vec![], vec![], entry_function_body));
+        content.push(Wat::declare_function("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
 
         let placeholder_to_wasm_type = take(&mut self.placeholder_to_wasm_type);
         
@@ -504,6 +529,8 @@ impl ProgramContext {
                 content.push(wasm_declaration);
             }
         }
+
+        content.extend(exports);
         
         Ok(content.to_string(0))
     }

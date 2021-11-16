@@ -82,6 +82,7 @@ mod parsed_type_without_suffix;
 mod static_field_or_method;
 mod parsed_type_wrapper;
 mod identifier_wrapper;
+mod block_expression;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -168,3 +169,4 @@ pub use parsed_type_without_suffix::*;
 pub use static_field_or_method::*;
 pub use parsed_type_wrapper::*;
 pub use identifier_wrapper::*;
+pub use block_expression::*;

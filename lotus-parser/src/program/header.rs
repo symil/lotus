@@ -10,22 +10,19 @@ type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[
 
 pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
-pub const LOG_EMPTY_FUNC_NAME : &'static str = "log_empty";
-pub const LOG_BOOL_FUNC_NAME : &'static str = "log_bool";
-pub const LOG_INT_FUNC_NAME : &'static str = "log_int";
-pub const LOG_FLOAT_FUNC_NAME : &'static str = "log_float";
-pub const LOG_CHAR_FUNC_NAME : &'static str = "log_char";
-pub const LOG_STRING_FUNC_NAME : &'static str = "log_string";
-pub const FLOAT_TO_STRING_FUNC_NAME : &'static str = "float_to_string";
-
 pub const HEADER_IMPORTS : &'static[Import] = &[
-    ("log", "empty", LOG_EMPTY_FUNC_NAME, &[], None),
-    ("log", "bool", LOG_BOOL_FUNC_NAME, &["i32"], None),
-    ("log", "int", LOG_INT_FUNC_NAME, &["i32"], None),
-    ("log", "float", LOG_FLOAT_FUNC_NAME, &["f32"], None),
-    ("log", "char", LOG_CHAR_FUNC_NAME, &["i32"], None),
-    ("log", "string", LOG_STRING_FUNC_NAME, &["i32"], None),
-    ("utils", "float_to_string", FLOAT_TO_STRING_FUNC_NAME, &["f32", "i32"], None),
+    ("utils", "float_to_string", "float_to_string", &["f32", "i32"], None),
+    ("env", "log", "log", &["i32"], None),
+    // ("env", "get_current_time", "get_current_time", &[], Some("i32")),
+    // ("client", "get_window_width", "get_window_width", &[], Some("i32")),
+    // ("client", "get_window_height", "get_window_height", &[], Some("i32")),
+    // ("client", "connect", "connect", &["i32"], Some("i32")),
+    // ("client", "is_connected", "is_connected", &[], Some("i32")),
+    // ("client", "read_message", "read_message", &["i32"], Some("i32")),
+    // ("client", "send_message", "send_message", &["i32", "i32"], None),
+    // ("client", "get_mouse_x", "get_mouse_x", &[], Some("i32")),
+    // ("client", "get_mouse_y", "get_mouse_y", &[], Some("i32")),
+    // ("client", "get_mouse_wheel", "get_mouse_wheel", &[], Some("i32")),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[

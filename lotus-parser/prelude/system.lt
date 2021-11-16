@@ -22,7 +22,7 @@ export type(void) system {
     log<T>(value: T) {
         let str = value.to_string();
 
-        log_string(str);
+        wasm_log(str);
     }
 
     get_debug_string<T>(value: T) -> string {
@@ -30,12 +30,8 @@ export type(void) system {
     }
 
     dbg<T>(value: T) {
-        log_string(@get_debug_string(value));
+        wasm_log(@get_debug_string(value));
     }
-
-    log_empty() {{
-        (call $log_empty)
-    }}
 
     serialize<T>(value: T) -> int[] {
         let buffer = Buffer {};
@@ -57,18 +53,14 @@ export type(void) system {
     }
 
     int<T>(value: T) {
-        log_int(value as int);
+        @log(value as int);
     }
 
     type<T>(value: T) {
-        log_string(T::type_name());
+        @log(T::type_name());
     }
 }
 
-fn log_string(string) {{
-    (call $log_string)
-}}
-
-fn log_int(int) {{
-    (call $log_int)
+fn wasm_log(string) {{
+    (call $log)
 }}

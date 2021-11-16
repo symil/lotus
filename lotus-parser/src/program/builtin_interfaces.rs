@@ -24,7 +24,8 @@ pub enum BuiltinInterface {
     Unwrap,
     Builtin,
     Tuple,
-    Object
+    Object,
+    World
 }
 
 pub const DEFAULT_INTERFACES : &'static[BuiltinInterface] = &[
@@ -59,6 +60,7 @@ impl BuiltinInterface {
             BuiltinInterface::Builtin => "Builtin",
             BuiltinInterface::Tuple => "Tuple",
             BuiltinInterface::Object => "Object",
+            BuiltinInterface::World => "World",
         }
     }
 }

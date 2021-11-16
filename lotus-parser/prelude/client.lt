@@ -1,0 +1,11 @@
+class Client {
+    
+}
+
+sys fn start_client() {
+    @log("CLIENT START");
+}
+
+sys fn update_client() {
+
+}

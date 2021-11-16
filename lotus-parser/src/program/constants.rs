@@ -38,6 +38,8 @@ pub const TUPLE_SECOND_ASSOCIATED_TYPE_NAME : &'static str = "Second";
 pub const TUPLE_FIRST_METHOD_NAME : &'static str = "first";
 pub const TUPLE_SECOND_METHOD_NAME : &'static str = "second";
 
+pub const WORLD_ENTRY_POINT_NAME : &'static str = "World";
+
 pub const NEW_METHOD_NAME : &'static str = "new";
 pub const CREATE_METHOD_NAME : &'static str = "__create";
 pub const STORE_FUNC_NAME : &'static str = "__store";
@@ -61,3 +63,11 @@ pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 pub const NAN_WASM : &'static str = "nan:0x200000";
 
 pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";
+
+pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
+    "main",
+    "start_client",
+    "update_client",
+    "start_server",
+    "update_server",
+];
