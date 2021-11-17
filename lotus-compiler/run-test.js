@@ -21,8 +21,6 @@ const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
 const MOCHA_BINARY_PATH = path.join(ROOT_DIR, 'node_modules', '.bin', 'mocha');
 
-const SOURCE_EXTENSION = '.lt';
-const MAIN_FILE_NAME = `main${SOURCE_EXTENSION}`;
 const SRC_DIR_NAME = 'src';
 const OUTPUT_FILE_NAME = 'output.txt';
 const WAT_FILE_NAME = 'module.wat';
