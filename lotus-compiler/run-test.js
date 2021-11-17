@@ -19,7 +19,7 @@ const COMPILER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-compi
 const WAT2WASM_BINARY_PATH = 'wat2wasm';
 const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
-const MOCHA_BINARY_PATH = path.join(ROOT_DIR, '..', 'node_modules', '.bin', 'mocha');
+const MOCHA_BINARY_PATH = path.join(ROOT_DIR, 'node_modules', '.bin', 'mocha');
 
 const SOURCE_EXTENSION = '.lt';
 const MAIN_FILE_NAME = `main${SOURCE_EXTENSION}`;
