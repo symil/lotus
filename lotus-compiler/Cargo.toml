@@ -1,0 +1,9 @@
+[package]
+name = "lotus-compiler"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+colored = "2"
+indexmap = "1.7"
+parsable = { path = "../parsable" }

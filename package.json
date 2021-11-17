@@ -1,9 +1,8 @@
 {
-  "name": "lotus-js-client",
+  "name": "lotus",
   "version": "0.1.0",
   "description": "",
   "type": "module",
-  "main": "lotus-framework/js/index.js",
   "scripts": {
     "test": "scripts/npm-test.sh"
   },
