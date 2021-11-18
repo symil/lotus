@@ -4,4 +4,4 @@ if [ "$1" == "--install" ] || [ "$1" == "-i" ] ; then
     cd lotus-cli && npm install
 fi
 
-node --experimental-specifier-resolution=node lotus-cli/src/index.js $@
+node --enable-source-maps --experimental-specifier-resolution=node lotus-cli/src/index.js --root game-test $@
