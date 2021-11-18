@@ -1,8 +1,15 @@
-function main() {
-    console.log('HELLO');
-    // let env = { log, createWebSocket };
-    // console.log(import('./module.wasm'));
-    // let instance = initializeWasm(import('./module.wasm'), env);
+import { initializeWasm } from './wasm-initialization';
+
+async function main() {
+    let env = { log, createWebSocket };
+    let instance = await initializeWasm(fetch('./module.wasm'), env);
+    let update = () => {
+        instance.exports.update_client();
+        window.requestAnimationFrame(update);
+    };
+
+    instance.exports.start_client();
+    update();
 }
 
 function createWebSocket(url) {

@@ -1,11 +1,15 @@
-export async function initializeWasm(wasmPath, { log, getWindow, createWebSocket, createWebSocketServer }) {
+export async function initializeWasm(wasm, { log, getWindow, createWebSocket, createWebSocketServer }) {
     let instance = null;
     let getMemory = () => new Uint32Array(instance.exports.memory.buffer);
     let env = { log, getMemory, getWindow, createWebSocket, createWebSocketServer };
     let imports = getWasmImportsObject(env);
-    let wasm = await WebAssembly.compile(fs.readFileSync(wasmPath));
 
-    instance = await WebAssembly.instantiate(wasm, imports);
+    if (WebAssembly.instantiateStreaming) {
+        instance = (await WebAssembly.instantiateStreaming(wasm, imports)).instance;
+    } else {
+        instance = (await WebAssembly.instantiate(wasm, imports)).instance;
+    }
+
     instance.exports.initialize();
 
     return instance;

@@ -13,6 +13,7 @@ export function computeLocations(root) {
     let outputClientFilePath = path.join(buildDirPath, OUTPUT_CLIENT_FILE_NAME);
     let outputServerFilePath = path.join(buildDirPath, OUTPUT_SERVER_FILE_NAME);
     let outputIndexHtmlFilePath = path.join(buildDirPath, 'index.html');
+    let nodeModulesDirPath = path.join(buildDirPath, 'node_modules');
 
-    return { rootDirPath, srcDirPath, buildDirPath, outputWasmFilePath, outputClientFilePath, outputServerFilePath, outputIndexHtmlFilePath };
+    return { rootDirPath, srcDirPath, buildDirPath, outputWasmFilePath, outputClientFilePath, outputServerFilePath, outputIndexHtmlFilePath, nodeModulesDirPath };
 }

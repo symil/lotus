@@ -46,6 +46,10 @@ async function buildProject(locations) {
         process.exit(1);
     }
 
+    if (!fs.existsSync(locations.nodeModulesDirPath)) {
+        runCommand(`cd ${locations.buildDirPath} && npm install ws`);
+    }
+
     process.stdout.write(chalk.bold.blue('> build bundle...'));
 
     await compileLotus({
@@ -91,7 +95,6 @@ async function compileJs({ inputPath, outputPath, platform }) {
         minify: false,
         sourcemap: true,
         platform,
-        format: 'esm',
         external: ['ws'],
         plugins: [ wasmLoader({}) ]
     });
