@@ -88,6 +88,7 @@ impl InterfaceDeclaration {
                     event_callback_qualifier: None,
                     owner_type: None,
                     owner_interface: Some(interface_wrapped.clone()),
+                    first_declared_by: None,
                     parameters: IndexMap::new(),
                     conditions: vec![],
                     this_arg: None,

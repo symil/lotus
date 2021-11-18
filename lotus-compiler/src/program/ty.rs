@@ -45,7 +45,7 @@ impl Type {
 
     pub fn is_enum(&self) -> bool {
         match self {
-            Type::Actual(info) => info.type_blueprint.borrow().qualifier == TypeQualifier::Enum,
+            Type::Actual(info) => info.type_blueprint.borrow().is_enum(),
             _ => false
         }
     }
@@ -76,7 +76,7 @@ impl Type {
 
     pub fn is_object(&self) -> bool {
         match self {
-            Type::Actual(info) => info.type_blueprint.borrow().qualifier == TypeQualifier::Class,
+            Type::Actual(info) => info.type_blueprint.borrow().is_class(),
             _ => false
         }
     }

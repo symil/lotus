@@ -1,0 +1,47 @@
+export class Graphics {
+    x: float,
+    y: float,
+    z: float,
+    offset_x: float,
+    offset_y: float,
+    width: float,
+    height: float,
+    shape: Shape,
+    aspect_ratio: float?,
+    scale: float,
+    angle: float,
+    border_radius: DisplaySize,
+    border_width: DisplaySize,
+    border_dash_length: DisplaySize,
+    border_gap_length: DisplaySize,
+    border_color: Color,
+    border_alpha: float,
+    background_color: Color,
+    background_alpha: float,
+    overlay_color: Color,
+    overlay_alpha: float,
+    image_url: string?,
+    image_scale: float,
+    text: string?,
+    text_font: Font,
+    text_size: DisplaySize,
+    text_color: Color,
+    text_margin: DisplaySize,
+    text_max_width: DisplaySize?,
+    text_max_height: DisplaySize?,
+    text_background_color: Color,
+    text_border_color: Color,
+    text_horizontal_align: TextHorizontalAlign,
+    text_vertical_align: TextVerticalAlign,
+    text_bold: bool,
+    text_italic: bool,
+    text_cursor_index: int?,
+    detectable: bool,
+    cursor: Cursor,
+}
+
+export enum Shape { Rectangle, Circle, Line }
+export enum Font { Arial }
+export enum TextHorizontalAlign { Center, Left, Right }
+export enum TextVerticalAlign { Middle, Top, Bottom }
+export enum Cursor { Default, Pointer, Text }

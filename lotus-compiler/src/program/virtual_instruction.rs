@@ -297,14 +297,14 @@ impl VirtualInstruction {
                 wasm_var_name: info.wasm_var_name.clone(),
             }),
             VirtualInstruction::GetVariable(info) => VirtualInstruction::GetVariable(VirtualGetVariableInfo {
-                var_info: Rc::new(info.var_info.replace_type_parameters(this_type, id)),
+                var_info: info.var_info.replace_type_parameters(this_type, id),
             }),
             VirtualInstruction::SetVariable(info) => VirtualInstruction::SetVariable(VirtualSetVariableInfo {
-                var_info: Rc::new(info.var_info.replace_type_parameters(this_type, id)),
+                var_info: info.var_info.replace_type_parameters(this_type, id),
                 value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
             }),
             VirtualInstruction::TeeVariable(info) => VirtualInstruction::TeeVariable(VirtualSetVariableInfo {
-                var_info: Rc::new(info.var_info.replace_type_parameters(this_type, id)),
+                var_info: info.var_info.replace_type_parameters(this_type, id),
                 value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
             }),
             VirtualInstruction::GetField(info) => VirtualInstruction::GetField(VirtualGetFieldInfo {
@@ -320,7 +320,7 @@ impl VirtualInstruction {
                 caller_type: info.caller_type.as_ref().and_then(|ty| Some(ty.replace_parameters(Some(this_type), &[]))),
                 function: info.function.clone(),
                 parameters: info.parameters.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
-                dynamic_methods_index_var: info.dynamic_methods_index_var.as_ref().and_then(|var_info| Some(Rc::new(var_info.replace_type_parameters(this_type, id)))),
+                dynamic_methods_index_var: info.dynamic_methods_index_var.as_ref().and_then(|var_info| Some(var_info.replace_type_parameters(this_type, id))),
                 args: info.args.replace_type_parameters(this_type, id)
             }),
             VirtualInstruction::Loop(info) => VirtualInstruction::Loop(VirtualLoopInfo {

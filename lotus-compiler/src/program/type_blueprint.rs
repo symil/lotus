@@ -10,7 +10,7 @@ pub struct TypeBlueprint {
     pub type_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
-    pub qualifier: TypeQualifier,
+    pub category: TypeCategory,
     pub stack_type: WasmStackType,
     pub descendants: Vec<Link<TypeBlueprint>>,
     pub ancestors: Vec<Type>,
@@ -26,6 +26,13 @@ pub struct TypeBlueprint {
     pub hook_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub before_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
     pub after_event_callbacks: IndexMap<String, Vec<Link<FunctionBlueprint>>>,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TypeCategory {
+    Type,
+    Enum,
+    Class
 }
 
 #[derive(Debug)]
@@ -64,11 +71,11 @@ pub struct DynamicMethodInfo {
 
 impl TypeBlueprint {
     pub fn is_enum(&self) -> bool {
-        self.qualifier == TypeQualifier::Enum
+        self.category == TypeCategory::Enum
     }
 
     pub fn is_class(&self) -> bool {
-        self.qualifier == TypeQualifier::Class
+        self.category == TypeCategory::Class
     }
 
     pub fn get_wasm_type(&self, parameters: &[Rc<TypeInstanceHeader>]) -> Option<&'static str> {

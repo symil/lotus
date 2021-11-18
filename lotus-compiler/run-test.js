@@ -58,7 +58,7 @@ async function main() {
                     let actualOutput = await runTest(sourcePath, dirPath);
                     let expectedOutput = fse.readFileSync(expectedOutputPath, 'utf8');
 
-                    if (validate) {
+                    if (validateOutput) {
                         fse.writeFileSync(expectedOutputPath, actualOutput, 'utf8');
                         expectedOutput = actualOutput;
                     }
@@ -136,7 +136,7 @@ function compileWat(inputPath, outputPath, inheritStdio) {
 async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let lines = [];
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
-    let instance = await initializeWasm(wasmPath, { log });
+    let instance = await initializeWasm(fse.readFileSync(wasmPath, null), { log });
 
     instance.exports.main();
 

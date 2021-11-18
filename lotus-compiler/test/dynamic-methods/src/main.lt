@@ -1,0 +1,19 @@
+class A {
+    dyn hello() {
+        @log("hello");
+    }
+}
+
+class B extends A {
+    dyn hello() {
+        @log("hello world");
+    }
+}
+
+export fn main() {
+    let array : A[] = [A{}, B{}];
+
+    for item in array {
+        item.hello();
+    }
+}

@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, VI, WasmStackType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -55,7 +55,7 @@ impl TypeDeclaration {
             type_id,
             name: self.name.clone(),
             visibility: self.visibility.value.unwrap_or(Visibility::Private),
-            qualifier: self.qualifier,
+            category: self.qualifier.to_type_category(),
             stack_type: WasmStackType::Fixed(StackType::Void),
             descendants: vec![],
             ancestors: vec![],
@@ -112,7 +112,7 @@ impl TypeDeclaration {
 
         match &self.parent {
             Some(parent) => parent.collected_instancied_type_names(&mut list),
-            None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier != TypeQualifier::Class {
+            None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier.to_type_category() != TypeCategory::Class {
                 true => {},
                 false => {
                     list.push(Identifier::unlocated(OBJECT_TYPE_NAME))
@@ -148,34 +148,27 @@ impl TypeDeclaration {
 
             if let Some(parsed_parent_type) = &self.parent {
                 if let Some(parent_type) = parsed_parent_type.process(false, context) {
-                    if self.qualifier == TypeQualifier::Type {
-                        context.errors.add(parsed_parent_type, format!("regular types cannot inherit"));
-                    }
+                    if !type_wrapped.borrow().is_class() {
+                        context.errors.add(parsed_parent_type, format!("only class types can inherit"));
+                    } else {
+                        match &parent_type {
+                            Type::TypeParameter(_) => {
+                                context.errors.add(parsed_parent_type, format!("cannot inherit from type parameter"));
+                            },
+                            Type::Actual(info) => {
+                                let parent_unwrapped = info.type_blueprint.borrow();
 
-                    match &parent_type {
-                        Type::TypeParameter(_) => {
-                            context.errors.add(parsed_parent_type, format!("cannot inherit from type parameter"));
-                        },
-                        Type::Actual(info) => {
-                            let parent_unwrapped = info.type_blueprint.borrow();
-
-                            match &parent_unwrapped.qualifier {
-                                TypeQualifier::Type => {
-                                    context.errors.add(parsed_parent_type, format!("cannot inherit from regular types"));
-                                },
-                                _ => {
-                                    if parent_unwrapped.qualifier != self.qualifier {
-                                        context.errors.add(parsed_parent_type, format!("`{}` types cannot inherit from `{}` types", self.qualifier, parent_unwrapped.qualifier));
-                                    } else if self.qualifier != TypeQualifier::Type {
-                                        result = Some(ParentInfo{
-                                            location: parsed_parent_type.location.clone(),
-                                            ty: parent_type.clone(),
-                                        });
-                                    }
+                                if parent_unwrapped.is_class() {
+                                    result = Some(ParentInfo{
+                                        location: parsed_parent_type.location.clone(),
+                                        ty: parent_type.clone(),
+                                    });
+                                } else {
+                                    context.errors.add(parsed_parent_type, format!("cannot inherit from non-class types"));
                                 }
-                            };
-                        },
-                        _ => unreachable!()
+                            },
+                            _ => unreachable!()
+                        }
                     }
                 }
             } else if self.qualifier == TypeQualifier::Class {
@@ -187,6 +180,11 @@ impl TypeDeclaration {
                         ty: base_object.borrow().self_type.clone(),
                     });
                 }
+            } else if self.qualifier == TypeQualifier::View {
+                result = Some(ParentInfo {
+                    location: DataLocation::default(),
+                    ty: context.get_builtin_type(BuiltinType::View, vec![])
+                });
             } else if self.qualifier == TypeQualifier::Enum {
                 let base_enum = context.types.get_by_name(ENUM_TYPE_NAME).unwrap();
 
@@ -319,7 +317,7 @@ impl TypeDeclaration {
                         Some(ty) => {
                             // Regular field
 
-                            if self.qualifier != TypeQualifier::Class {
+                            if !type_unwrapped.is_class() {
                                 context.errors.add(&field.name, format!("only classes can have fields"));
                                 continue;
                             }
@@ -344,7 +342,7 @@ impl TypeDeclaration {
                         None => {
                             // Enum variant
 
-                            if self.qualifier != TypeQualifier::Enum {
+                            if !type_unwrapped.is_enum() {
                                 context.errors.add(&field.name, format!("only enums can have variants"));
                                 continue;
                             }
@@ -413,21 +411,25 @@ impl TypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let children = type_wrapped.borrow().descendants.clone();
 
+            context.autogen_type = Some(type_wrapped);
+
             for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_signature(context);
                 }
             }
+
+            context.autogen_type = None;
         });
     }
 
     pub fn process_fields_default_values(&self, context: &mut ProgramContext) {
-        if self.qualifier != TypeQualifier::Class {
-            return;
-        }
-
         self.process(context, |type_wrapped, context| {
+            if !type_wrapped.borrow().is_class() {
+                return;
+            }
+            
             let mut default_values = HashMap::new();
 
             type_wrapped.with_ref(|type_unwrapped| {
@@ -491,7 +493,7 @@ impl TypeDeclaration {
                     .collect();
                 
                 result.sort_by_cached_key(|func_ref| func_ref.function.borrow().name.to_string());
-                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().owner_type.as_ref().unwrap().borrow().ancestors.len());
+                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().first_declared_by.as_ref().unwrap().borrow().ancestors.len());
 
                 result
             });
@@ -500,10 +502,6 @@ impl TypeDeclaration {
                 func_ref.function.with_mut(|mut function_unwrapped| {
                     if function_unwrapped.dynamic_index == -1 {
                         function_unwrapped.dynamic_index = i as i32;
-
-                        if function_unwrapped.name.as_str() == DESERIALIZE_DYN_METHOD_NAME {
-                            context.deserialize_dyn_index = i;
-                        }
                     } else if function_unwrapped.dynamic_index != i as i32 {
                         panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), function_unwrapped.dynamic_index);
                     }
@@ -528,12 +526,16 @@ impl TypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let children = type_wrapped.borrow().descendants.clone();
 
+            context.autogen_type = Some(type_wrapped);
+
             for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
                     context.current_type = Some(child.clone());
                     method.process_body(context);
                 }
             }
+
+            context.autogen_type = None;
         });
     }
 

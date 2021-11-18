@@ -14,6 +14,7 @@ pub struct FunctionBlueprint {
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
+    pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub conditions: Vec<(Identifier, Identifier)>,
     pub this_arg: Option<Rc<VariableInfo>>,
     pub payload_arg: Option<Rc<VariableInfo>>,

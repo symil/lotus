@@ -1,4 +1,4 @@
-class Client {
+export class Client {
     
 }
 

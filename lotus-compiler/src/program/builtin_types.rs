@@ -10,7 +10,8 @@ pub enum BuiltinType {
     Pointer,
     Array,
     Pair,
-    DisplaySize
+    DisplaySize,
+    View
 }
 
 impl BuiltinType {
@@ -27,6 +28,7 @@ impl BuiltinType {
             BuiltinType::Array => "Array",
             BuiltinType::Pair => "Pair",
             BuiltinType::DisplaySize => "DisplaySize",
+            BuiltinType::View => "View",
         }
     }
 }

@@ -32,7 +32,7 @@ impl ObjectLiteral {
                 let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
                 let type_unwrapped = info.type_blueprint.borrow();
 
-                if type_unwrapped.qualifier == TypeQualifier::Class {
+                if type_unwrapped.is_class() {
                     let mut fields_init = HashMap::new();
 
                     result.extend(Vasm::undefined(vec![object_var.clone()], vec![

@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::{Expression, Identifier, ParsedType, TypeQualifier, type_qualifier};
 
 #[parsable]
@@ -39,8 +39,8 @@ impl MatchBlock {
                         for branch in &self.branches {
                             let mut var_vasm = vasm![];
 
-                            let test_vasm_opt = match &type_unwrapped.qualifier {
-                                TypeQualifier::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
+                            let test_vasm_opt = match &type_unwrapped.category {
+                                TypeCategory::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
                                     true => Some(vasm![
                                         VI::call_regular_method(&matched_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context),
                                         VI::Eqz
@@ -69,7 +69,7 @@ impl MatchBlock {
                                         None => None,
                                     }
                                 }
-                                TypeQualifier::Enum => {
+                                TypeCategory::Enum => {
                                     match &branch.variant_name.as_single_identifier() {
                                         Some(name) => match name.as_str() {
                                             NONE_LITERAL => Some(vasm![

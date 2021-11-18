@@ -19,7 +19,7 @@ impl MethodDeclaration {
 
         function_wrapped.borrow_mut().visibility = Visibility::Member;
 
-        function_wrapped.with_ref(|function_unwrapped| {
+        function_wrapped.with_mut(|mut function_unwrapped| {
             let is_static = function_unwrapped.is_static();
             let is_dynamic = function_unwrapped.is_dynamic();
             let name = function_unwrapped.name.clone();
@@ -34,6 +34,12 @@ impl MethodDeclaration {
                     true => &mut type_unwrapped.static_methods,
                     false => &mut type_unwrapped.regular_methods
                 };
+
+                if let Some(prev) = index_map.get(name.as_str()) {
+                    function_unwrapped.first_declared_by = prev.function.borrow().first_declared_by.clone();
+                } else if let Some(autogen_type_blueprint) = &context.autogen_type {
+                    function_unwrapped.first_declared_by = Some(autogen_type_blueprint.clone());
+                }
 
                 let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();
 

@@ -1,0 +1,17 @@
+export class View {
+    value: int,
+
+    dyn render(client: Client, rect: Rect, output: RenderOutput) {
+
+    }
+
+    dyn hover(client: Client, rect: Rect, output: RenderOutput) {
+
+    }
+}
+
+export class RenderOutput {
+    children: Pair<View, Rect>[],
+    graphics_list: Graphics[],
+    transform: Transform2D
+}

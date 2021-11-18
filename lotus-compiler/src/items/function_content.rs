@@ -32,6 +32,7 @@ impl FunctionContent {
             event_callback_qualifier: None,
             owner_type: None,
             owner_interface: None,
+            first_declared_by: None,
             this_arg: None,
             payload_arg: None,
             conditions: vec![],
@@ -49,6 +50,7 @@ impl FunctionContent {
         let is_autogen = self.meta_qualifier.contains(&MethodMetaQualifier::Autogen);
         let parameters = self.parameters.process(context);
         let has_parameters = !parameters.is_empty();
+        let mut signature_inferred = false;
 
         context.current_function = Some(function_blueprint.clone());
 
@@ -67,6 +69,7 @@ impl FunctionContent {
                 }
 
                 function_unwrapped.owner_type = Some(type_blueprint.clone());
+                function_unwrapped.first_declared_by = Some(type_blueprint.clone());
 
                 if !is_static {
                     function_unwrapped.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
@@ -93,6 +96,29 @@ impl FunctionContent {
                 function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
                 function_unwrapped.return_value = VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), return_type.unwrap_or(context.void_type()), VariableKind::Local);
             });
+        } else if is_dynamic {
+            if let Some(type_wrapped) = context.get_current_type() {
+                type_wrapped.with_ref(|type_unwrapped| {
+                    if let Some(parent) = &type_unwrapped.parent {
+                        parent.ty.get_type_blueprint().with_ref(|parent_type_unwrapped| {
+                            if let Some(prev_method) = parent_type_unwrapped.regular_methods.get(self.name.as_str()) {
+                                prev_method.function.with_ref(|prev_method_unwrapped| {
+                                    let hash = self.location.get_hash();
+                                    let arguments = prev_method_unwrapped.arguments.iter().map(|var_info| var_info.replace_type_parameters(&parent.ty, hash)).collect();
+                                    let return_value = prev_method_unwrapped.return_value.replace_type_parameters(&parent.ty, hash);
+
+                                    signature_inferred = true;
+
+                                    function_blueprint.with_mut(|mut function_unwrapped| {
+                                        function_unwrapped.arguments = arguments;
+                                        function_unwrapped.return_value = return_value;
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         }
 
         if let Some(qualifier) = &self.event_callback_qualifier {
@@ -112,7 +138,7 @@ impl FunctionContent {
                 if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
                     function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::new(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
 
-                    if event_type_blueprint.borrow().qualifier != TypeQualifier::Class {
+                    if !event_type_blueprint.borrow().is_class() {
                         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));
                     } else if let Some(conditions) = &self.conditions {
                         function_blueprint.borrow_mut().conditions = conditions.process(&event_type_blueprint, context);
@@ -128,7 +154,7 @@ impl FunctionContent {
                 context.errors.add(self, "only event callbacks can have conditions");
             }
 
-            if self.signature.is_none() {
+            if self.signature.is_none() && !signature_inferred {
                 context.errors.add(&self.name, "missing function signature");
             }
         }
@@ -169,11 +195,15 @@ impl FunctionContent {
             });
         }
 
-        if !is_raw_wasm && !function_wrapped.borrow().return_value.ty.is_void() {
-            if !context.return_found {
-                context.errors.add(&self.signature.as_ref().unwrap().return_type.as_ref().unwrap(), format!("not all branches return a value for the function"));
+        function_wrapped.with_ref(|function_unwrapped| {
+            if !is_raw_wasm && !function_unwrapped.return_value.ty.is_void() {
+                if !context.return_found {
+                    let location = self.signature.as_ref().and_then(|sig| sig.return_type.as_ref()).and_then(|ret| Some(&ret.location)).unwrap_or(&self.location);
+
+                    context.errors.add(location, format!("not all branches return a value for the function"));
+                }
             }
-        }
+        });
 
         context.pop_scope();
         context.current_function = None;
