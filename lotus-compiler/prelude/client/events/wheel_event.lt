@@ -1,0 +1,12 @@
+export class WheelEvent {
+    delta_x: float,
+    delta_y: float,
+    delta_z: float,
+    delta_mode: DeltaMode,
+}
+
+export enum DeltaMode {
+    Pixel,
+    Line,
+    Page
+}

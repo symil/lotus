@@ -5,7 +5,7 @@ export class View {
 
     }
 
-    dyn hover(client: Client, rect: Rect, output: RenderOutput) {
+    dyn hover(client: Client, graphics: Graphics[]) {
 
     }
 }

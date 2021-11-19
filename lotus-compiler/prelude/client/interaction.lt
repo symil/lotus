@@ -1,0 +1,37 @@
+export class Interaction {
+    dyn is_active(client: Client) -> bool {
+        return true;
+    }
+
+    dyn is_exclusive(client: Client) -> bool {
+        return false;
+    }
+
+    dyn is_valid_target(client: Client, target: View) -> bool {
+        return false;
+    }
+
+    dyn highlight_target(client: Client, target: View, graphics: Graphics[]) {
+
+    }
+
+    dyn highlight_target_on_hover(client: Client, target: View, graphics: Graphics[]) {
+
+    }
+
+    dyn on_mouse_event(client: Client, event: MouseEvent) {
+
+    }
+
+    dyn on_wheel_event(client: Client, event: WheelEvent) {
+        
+    }
+
+    dyn on_keyboard_event(client: Client, event: KeyboardEvent) {
+        
+    }
+
+    dyn on_game_event(client: Client, event: Event) {
+
+    }
+}

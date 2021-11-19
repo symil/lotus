@@ -1,0 +1,19 @@
+export class MouseEvent {
+    action: MouseAction,
+    button: MouseButton,
+    x: float,
+    y: float
+}
+
+export enum MouseAction {
+    Move,
+    Down,
+    Click,
+    Up
+}
+
+export enum MouseButton {
+    Left,
+    Middle,
+    Right
+}

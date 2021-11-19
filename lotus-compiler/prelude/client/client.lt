@@ -1,0 +1,19 @@
+export class Client {
+    virtual_width: float,
+    virtual_height: float,
+    virtual_to_real_ratio: float,
+    cursor_x: float,
+    cursor_y: float,
+
+    send_request(request: Object) {
+
+    }
+}
+
+sys fn start_client() {
+    @log("CLIENT START");
+}
+
+sys fn update_client() {
+    
+}
