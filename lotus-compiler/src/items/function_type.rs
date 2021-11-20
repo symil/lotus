@@ -9,7 +9,7 @@ pub struct FunctionType {
     pub fn_token: String,
     #[parsable(brackets="()", separator=",")]
     pub arguments: Vec<ParsedType>,
-    #[parsable(prefix="->")]
+    #[parsable(brackets="()")]
     pub return_type: Option<Box<ParsedType>>
 }
 

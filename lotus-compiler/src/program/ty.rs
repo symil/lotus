@@ -140,8 +140,14 @@ impl Type {
                     parameters,
                 })
             },
-            Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
-            Type::FunctionParameter(info) => function_parameters[info.index].clone(),
+            Type::TypeParameter(info) => match this_type {
+                Some(ty) => ty.get_parameter(info.index),
+                None => self.clone(),
+            },
+            Type::FunctionParameter(info) => match function_parameters.get(info.index) {
+                Some(ty) => ty.clone(),
+                None => self.clone(),
+            },
             Type::Associated(info) => {
                 let root = info.root.replace_parameters(this_type, function_parameters);
 

@@ -276,4 +276,36 @@ export type(i32) Array<T> {
 
         return array;
     }
+
+    filter(callback: fn(T)(bool)) -> T[] {
+        let result : T[] = [];
+
+        for item in this {
+            if callback(item) {
+                result.push(item);
+            }
+        }
+
+        return result;
+    }
+
+    map<U>(callback: fn(T)(U)) -> U[] {
+        let result : U[] = [];
+
+        for item in this {
+            result.push(callback(item));
+        }
+
+        return result;
+    }
+
+    reduce<U>(init: U, callback: fn(U, T)(U)) -> U {
+        let result = init;
+
+        for item in this {
+            result = callback(result, item);
+        }
+        
+        return result;
+    }
 }

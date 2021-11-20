@@ -1,0 +1,21 @@
+export fn main() {
+    let a = [1, 2, 3, 4, 5].filter(is_odd);
+    let b = a.map(int_to_string);
+    let c = a.reduce(0, add);
+
+    @dbg(a);
+    @dbg(b);
+    @dbg(c);
+}
+
+fn int_to_string(n: int) -> string {
+    return "number: " + n.to_string();
+}
+
+fn is_odd(n: int) -> bool {
+    return n % 2 == 1;
+}
+
+fn add(a: int, b: int) -> int {
+    return a + b;
+}

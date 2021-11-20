@@ -30,7 +30,7 @@ impl Signature {
         let mut s = format!("fn({})", display_join(&self.argument_types, ", "));
 
         if self.return_type.is_builtin_type(BuiltinType::Void) {
-            s.push_str(&format!(" -> {}", &self.return_type));
+            s.push_str(&format!("({})", &self.return_type));
         }
 
         s

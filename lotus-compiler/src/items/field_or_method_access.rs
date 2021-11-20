@@ -112,7 +112,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         FunctionCall::Named(details) => (details.function.borrow().get_signature().clone(), details.caller_type.clone()),
         FunctionCall::Anonymous(details) => (details.signature.clone(), details.signature.this_type.clone()),
     };
-
+    
     let arg_vasms : Vec<Vasm> = arguments.as_vec().iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match ty.contains_function_parameter() {
