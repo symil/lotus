@@ -46,10 +46,6 @@ export type(i32) int {
         (i32.eq)
     }}
 
-    static __chosen() -> int {
-        return 23;
-    }
-
     min(other: int) -> int {
         if this < other {
             return this;

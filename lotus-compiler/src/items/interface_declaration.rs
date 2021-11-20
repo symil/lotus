@@ -80,6 +80,8 @@ impl InterfaceDeclaration {
             for method in &self.body.methods {
                 let (method_qualifier, name, arguments, return_type) = method.process(context);
                 let method_kind = method_qualifier.to_field_kind();
+                let arguments : Vec<Rc<VariableInfo>> = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
+                let return_value = VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), return_type.unwrap_or(context.void_type()), VariableKind::Local);
                 let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
@@ -93,8 +95,8 @@ impl InterfaceDeclaration {
                     conditions: vec![],
                     this_arg: None,
                     payload_arg: None,
-                    arguments: arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect(),
-                    return_value: VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), return_type.unwrap_or(context.void_type()), VariableKind::Local),
+                    arguments,
+                    return_value,
                     dynamic_index: -1,
                     is_raw_wasm: false,
                     body: Vasm::empty(),

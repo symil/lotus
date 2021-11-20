@@ -57,7 +57,7 @@ export type(void) system {
     }
 
     type<T>(value: T) {
-        @log(T::type_name());
+        @log(#FIRST_ARG_TYPE);
     }
 }
 

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use parsable::DataLocation;
-use crate::items::{Identifier, Visibility};
+use crate::{items::{Identifier, Visibility}, program::VariableKind};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm};
 
 #[derive(Debug)]
@@ -27,8 +27,10 @@ impl GlobalVarBlueprint {
         };
 
         for var_info in local_var_list {
-            if let Some(wasm_type) = var_info.ty.resolve(&type_index, context).wasm_type {
-                wasm_locals.push((wasm_type, var_info.wasm_name.clone()));
+            if var_info.kind == VariableKind::Local {
+                if let Some(wasm_type) = var_info.ty.resolve(&type_index, context).wasm_type {
+                    wasm_locals.push((wasm_type, var_info.wasm_name.clone()));
+                }
             }
         }
 

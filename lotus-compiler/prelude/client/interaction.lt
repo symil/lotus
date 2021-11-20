@@ -11,27 +11,27 @@ export class Interaction {
         return false;
     }
 
-    dyn highlight_target(client: Client, target: View, graphics: Graphics[]) {
+    dyn highlight_target(client: Client, target: View) {
 
     }
 
-    dyn highlight_target_on_hover(client: Client, target: View, graphics: Graphics[]) {
+    dyn highlight_target_on_hover(client: Client, target: View) {
 
     }
 
-    dyn on_mouse_event(client: Client, event: MouseEvent) {
-
+    dyn on_mouse_event(client: Client, event: MouseEvent) -> bool {
+        return false;
     }
 
-    dyn on_wheel_event(client: Client, event: WheelEvent) {
-        
+    dyn on_wheel_event(client: Client, event: WheelEvent) -> bool  {
+        return false;
     }
 
-    dyn on_keyboard_event(client: Client, event: KeyboardEvent) {
-        
+    dyn on_keyboard_event(client: Client, event: KeyboardEvent) -> bool  {
+        return false;
     }
 
-    dyn on_game_event(client: Client, event: Event) {
-
+    dyn on_game_event(client: Client, event: Object) -> bool  {
+        return false;
     }
 }

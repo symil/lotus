@@ -37,7 +37,7 @@ async function main() {
 
     let commandLineNames = ARGV.filter(str => !str.startsWith('-'));
     let overwrite = hasOption('--overwrite', '-o');
-    let createTest = overwrite || hasOption('--create', '-c');
+    let createTest = overwrite || hasOption('--write', '-w');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');

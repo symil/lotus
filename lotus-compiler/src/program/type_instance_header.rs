@@ -34,7 +34,7 @@ impl TypeInstanceHeader {
             let parameters = instance_parameters.type_parameters.clone();
             let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
-            let dynamic_method_table_offset = context.dynamic_method_table.len();
+            let dynamic_method_table_offset = context.function_table.len();
             let mut type_content = ActualTypeContent {
                 type_blueprint: type_blueprint.clone(),
                 parameters: vec![],
@@ -47,7 +47,7 @@ impl TypeInstanceHeader {
             }
 
             for i in 0..dynamic_method_count.max(1) {
-                context.dynamic_method_table.push(None);
+                context.function_table.push(None);
             }
 
             let ty = Type::Actual(type_content);
@@ -61,12 +61,6 @@ impl TypeInstanceHeader {
                 wasm_type,
                 dynamic_method_table_offset
             })
-        })
-    }
-
-    pub fn get_placeholder_function_wasm_type_name(&self, function_wrapped: &Link<FunctionBlueprint>) -> String {
-        function_wrapped.with_ref(|function_unwrapped| {
-            format!("{}_{}_{}_{}", &function_unwrapped.owner_type.as_ref().unwrap().borrow().name, &function_unwrapped.name, function_unwrapped.dynamic_index, self.id)
         })
     }
 

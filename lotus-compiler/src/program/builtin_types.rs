@@ -9,6 +9,7 @@ pub enum BuiltinType {
     String,
     Pointer,
     Array,
+    Function,
     Pair,
     DisplaySize,
     View
@@ -26,6 +27,7 @@ impl BuiltinType {
             BuiltinType::String => "string",
             BuiltinType::Pointer => "Pointer",
             BuiltinType::Array => "Array",
+            BuiltinType::Function => "Function",
             BuiltinType::Pair => "Pair",
             BuiltinType::DisplaySize => "DisplaySize",
             BuiltinType::View => "View",

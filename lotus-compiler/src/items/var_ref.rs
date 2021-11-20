@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, BuiltinInterface, FieldKind, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}};
+use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
 use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
@@ -45,18 +45,50 @@ impl VarRef {
                 None => None,
             },
             None => match &self.args {
-                Some(args) => match context.functions.get_by_identifier(&self.name) {
-                    Some(function_blueprint) => process_function_call(None, &self.name, function_blueprint, &[], args, type_hint, access_type, context),
-                    None => context.errors.add_and_none(&self.name, format!("undefined function `{}`", &self.name)),
+                Some(args) => match context.get_var_info(&self.name) {
+                    Some(var_info) => match &var_info.ty {
+                        Type::Function(signature) => {
+                            let function_call = FunctionCall::Anonymous(AnonymousFunctionCallDetails {
+                                signature: Box::as_ref(signature).clone(),
+                                function_offset: 0,
+                            });
+
+                            match process_function_call(&self.name, function_call, args, type_hint, access_type, context) {
+                                Some(function_vasm) => Some(Vasm::merge(vec![vasm![VI::get_var(&var_info)], function_vasm])),
+                                None => None,
+                            }
+                        },
+                        _ => context.errors.add_and_none(&self.name, format!("expected function, got `{}`", &var_info.ty))
+                    },
+                    None => match context.functions.get_by_identifier(&self.name) {
+                        Some(function_blueprint) => {
+                            let function_call = FunctionCall::Named(NamedFunctionCallDetails {
+                                caller_type: None,
+                                function: function_blueprint.clone(),
+                                parameters: vec![],
+                            });
+
+                            process_function_call(&self.name, function_call, args, type_hint, access_type, context)
+                        },
+                        None => context.errors.add_and_none(&self.name, format!("undefined function `{}`", &self.name)),
+                    },
                 },
                 None => match context.get_var_info(&self.name) {
                     Some(var_info) => match access_type {
                         AccessType::Get => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get_var(&var_info)])),
                         AccessType::Set(_) => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_var_from_stack(&var_info)])),
                     },
-                    None => match self.name.as_str() {
-                        THIS_VAR_NAME => context.errors.add_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
-                        _ => context.errors.add_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
+                    None => match context.functions.get_by_identifier(&self.name) {
+                        Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {
+                            match function_unwrapped.parameters.is_empty() {
+                                true => Some(Vasm::new(Type::Function(Box::new(function_unwrapped.get_signature())), vec![], vec![VI::function_index(&function_wrapped, &[])])),
+                                false => context.errors.add_and_none(&self.name, format!("cannot use functions with parameters as variables for now")),
+                            }
+                        }),
+                        None => match self.name.as_str() {
+                            THIS_VAR_NAME => context.errors.add_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
+                            _ => context.errors.add_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
+                        },
                     }
                 },
             },

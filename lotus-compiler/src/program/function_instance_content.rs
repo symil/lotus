@@ -68,12 +68,8 @@ impl FunctionInstanceContent {
 
                 wasm_declaration = Some(Wat::declare_function(&header.wasm_name, None, wat_args, wat_ret, wat_locals, wat_body));
 
-                if function_unwrapped.is_dynamic() {
-                    wasm_type_name = context.get_function_instance_wasm_type_name(wasm_type);
-
-                    let placeholder = parameters.this_type.as_ref().unwrap().get_placeholder_function_wasm_type_name(&parameters.function_blueprint);
-
-                    context.placeholder_to_wasm_type.insert(placeholder, wasm_type_name.clone());
+                if let Some(index) = header.function_index {
+                    context.assign_function_to_index(index, &header);
                 }
             }
 

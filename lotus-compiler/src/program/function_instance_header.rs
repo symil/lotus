@@ -1,10 +1,11 @@
 use std::{hash::Hash, rc::Rc};
-use crate::{items::Visibility, program::FunctionInstanceWasmType};
-use super::{FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat};
+use crate::{items::Visibility, program::FunctionInstanceWasmType, utils::Link};
+use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat};
 
 #[derive(Debug)]
 pub struct FunctionInstanceHeader {
     pub id: u64,
+    pub function_index: Option<usize>,
     pub this_type: Option<Rc<TypeInstanceHeader>>,
     pub wasm_name: String,
     pub wasm_call: Vec<Wat>,
@@ -28,6 +29,7 @@ impl FunctionInstanceHeader {
                 ],
             };
             let this_type = parameters.this_type.clone();
+            let mut function_index = None;
 
             if let Some(this_type) = &parameters.this_type {
                 this_type.type_blueprint.with_ref(|type_unwrapped| {
@@ -40,6 +42,8 @@ impl FunctionInstanceHeader {
                         }
                     }
                 });
+            } else {
+                function_index = Some(context.reserve_next_function_index());
             }
 
             for parameter in function_unwrapped.parameters.values() {
@@ -54,10 +58,17 @@ impl FunctionInstanceHeader {
 
             Rc::new(FunctionInstanceHeader {
                 id,
+                function_index,
                 this_type,
                 wasm_name,
                 wasm_call,
             })
+        })
+    }
+
+    pub fn get_placeholder_function_wasm_type_name(&self, function_wrapped: &Link<FunctionBlueprint>) -> String {
+        function_wrapped.with_ref(|function_unwrapped| {
+            format!("{}_{}", &function_unwrapped.name, self.id)
         })
     }
 }

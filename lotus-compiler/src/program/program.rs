@@ -38,7 +38,9 @@ impl LotusProgram {
         let now = Instant::now();
 
         for (file_namespace, path, prefix) in source_list {
-            let files_to_process = read_path_recursively(path, true)?;
+            let mut files_to_process = read_path_recursively(path, true)?;
+
+            files_to_process.sort_by_cached_key(|(path, content)| path.to_str().unwrap().to_string());
 
             for (file_path, file_content) in files_to_process {
                 let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();

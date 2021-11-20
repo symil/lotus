@@ -51,8 +51,9 @@ impl FunctionBlueprint {
 
     pub fn get_signature(&self) -> Signature {
         Signature {
-            arguments: self.arguments.iter().map(|var_info| var_info.ty.clone()).collect(),
-            return_value: self.return_value.ty.clone()
+            this_type: self.this_arg.as_ref().map(|var_info| var_info.ty.clone()),
+            argument_types: self.arguments.iter().map(|var_info| var_info.ty.clone()).collect(),
+            return_type: self.return_value.ty.clone()
         }
     }
 }

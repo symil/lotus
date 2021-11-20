@@ -1,0 +1,54 @@
+sys type Function {
+    static default() -> This {{
+        (i32.const -2147483648)
+    }}
+
+    static type_name() -> string {
+        return #TYPE_NAME;
+    }
+    
+    static __none() -> This {{
+        (i32.const -2147483648)
+    }}
+
+    __is_none() -> bool {{
+        (i32.const -2147483648)
+        (i32.eq)
+    }}
+
+    __hash() -> int {
+        return (this as int).__hash();
+    }
+
+    to_string() -> string {
+        if this.__is_none() {
+            return "none";
+        } else {
+            return "[Function " + (this as int).to_hexa_string() + "]";
+        }
+    }
+
+    to_debug_string(set: Set<ptr>) -> string {
+        return this.to_string();
+    }
+
+    eq(This) -> bool {{
+        i32.eq
+    }}
+
+    ne(This) -> bool {{
+        i32.ne
+    }}
+
+    __retain() {{
+
+    }}
+
+    __serialize(buffer: Buffer) {{
+
+    }}
+
+    static __deserialize(buffer: Buffer) -> This? {{
+        (i32.const -2147483648)
+    }}
+}

@@ -42,6 +42,7 @@ mod associated_type_info;
 mod func_ref;
 mod function_instance_wasm_type;
 mod signature;
+mod function_call;
 
 pub use error::*;
 pub use program::*;
@@ -86,3 +87,4 @@ pub use associated_type_info::*;
 pub use func_ref::*;
 pub use function_instance_wasm_type::*;
 pub use signature::*;
+pub use function_call::*;

@@ -1,0 +1,17 @@
+export fn main() {
+    let a = hello;
+    let b = world;
+    let array = [a, b];
+
+    for f in array {
+        f();
+    }
+}
+
+fn hello() {
+    @log("hello");
+}
+
+fn world() {
+    @log("world");
+}
