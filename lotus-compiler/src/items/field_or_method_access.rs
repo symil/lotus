@@ -112,12 +112,19 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         FunctionCall::Named(details) => (details.function.borrow().get_signature().clone(), details.caller_type.clone()),
         FunctionCall::Anonymous(details) => (details.signature.clone(), details.signature.this_type.clone()),
     };
-    
+    let is_var_call = match &function_call {
+        FunctionCall::Named(_) => false,
+        FunctionCall::Anonymous(details) => details.signature.this_type.is_none(),
+    };
+
     let arg_vasms : Vec<Vasm> = arguments.as_vec().iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match ty.contains_function_parameter() {
                 true => None,
-                false => Some(ty.replace_parameters(caller_type.as_ref(), &[])),
+                false => match is_var_call {
+                    true => Some(ty.clone()),
+                    false => Some(ty.replace_parameters(caller_type.as_ref(), &[])),
+                }
             },
             None => None,
         };
@@ -146,7 +153,10 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     match arguments.len() == signature.argument_types.len() {
         true => {
             for (i, (arg_type, arg_vasm)) in signature.argument_types.iter().zip(arg_vasms.iter()).enumerate() {
-                let expected_type = arg_type.replace_parameters(caller_type.as_ref(), parameters);
+                let expected_type = match is_var_call {
+                    true => arg_type.clone(),
+                    false => arg_type.replace_parameters(caller_type.as_ref(), parameters),
+                };
 
                 if !arg_vasm.ty.is_undefined() {
                     if arg_vasm.ty.is_ambiguous() {
@@ -164,7 +174,12 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         }
     };
 
-    Some(Vasm::new(signature.return_type.replace_parameters(caller_type.as_ref(), parameters), vec![], vec![
+    let return_type = match is_var_call {
+        true => signature.return_type.clone(),
+        false => signature.return_type.replace_parameters(caller_type.as_ref(), parameters),
+    };
+
+    Some(Vasm::new(return_type, vec![], vec![
         VI::call_function(function_call, Vasm::merge(arg_vasms))
     ]))
 }

@@ -140,14 +140,16 @@ impl Type {
                     parameters,
                 })
             },
-            Type::TypeParameter(info) => match this_type {
-                Some(ty) => ty.get_parameter(info.index),
-                None => self.clone(),
-            },
-            Type::FunctionParameter(info) => match function_parameters.get(info.index) {
-                Some(ty) => ty.clone(),
-                None => self.clone(),
-            },
+            Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
+            Type::FunctionParameter(info) => function_parameters[info.index].clone(),
+            // Type::TypeParameter(info) => match this_type {
+            //     Some(ty) => ty.get_parameter(info.index),
+            //     None => self.clone(),
+            // },
+            // Type::FunctionParameter(info) => match function_parameters.get(info.index) {
+            //     Some(ty) => ty.clone(),
+            //     None => self.clone(),
+            // },
             Type::Associated(info) => {
                 let root = info.root.replace_parameters(this_type, function_parameters);
 
@@ -605,10 +607,7 @@ impl Type {
             Type::TypeParameter(info) => format!("{}", &info.name),
             Type::FunctionParameter(info) => format!("{}", &info.name),
             Type::Associated(info) => format!("{}", &info.associated.name),
-            Type::Function(info) => match info.return_type.is_void() {
-                true => format!("fn({})", info.argument_types.iter().map(|ty| ty.get_name()).collect::<Vec<String>>().join(", ")),
-                false => format!("fn({}) -> {}", info.argument_types.iter().map(|ty| ty.get_name()).collect::<Vec<String>>().join(", "), info.return_type.get_name()),
-            },
+            Type::Function(info) => info.to_string()
         }
     }
 
