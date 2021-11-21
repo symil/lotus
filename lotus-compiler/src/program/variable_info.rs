@@ -44,9 +44,7 @@ impl VariableInfo {
             wasm_name,
         })
     }
-}
-
-impl VariableInfo {
+    
     pub fn check_parameters(&self, context: &mut ProgramContext) {
         self.with_ref(|var_info| {
             var_info.ty.check_parameters(&var_info.name, context);
@@ -108,6 +106,12 @@ impl VariableInfo {
 
     pub fn name(&self) -> Ref<Identifier> {
         Ref::map(self.borrow(), |var_info| &var_info.name)
+    }
+
+    pub fn set_type(&self, ty: Type) {
+        self.with_mut(|mut var_info| {
+            var_info.ty = ty;
+        });
     }
 }
 

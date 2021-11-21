@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::{Branch, BlockExpression};
 
 #[parsable]
@@ -16,15 +16,17 @@ impl IfBlock {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = Vasm::void();
         let mut required_branch_type = Type::Void;
+        let result_var = VariableInfo::from(Identifier::unique("tmp_result", self), Type::Void, VariableKind::Local);
 
         context.push_scope(ScopeKind::Branch);
         if let (Some(condition_vasm), Some(block_vasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(type_hint, context)) {
             required_branch_type = block_vasm.ty.clone();
 
-            result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
+            result.extend(VI::block(vasm![
                 condition_vasm,
                 VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                 block_vasm,
+                VI::set_var_from_stack(&result_var),
                 VI::jump(1)
             ]));
         }
@@ -39,10 +41,11 @@ impl IfBlock {
                     None => context.errors.add(&else_if_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
                 }
 
-                result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
+                result.extend(VI::block(vasm![
                     condition_vasm,
                     VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                     block_vasm,
+                    VI::set_var_from_stack(&result_var),
                     VI::jump(1)
                 ]));
             }
@@ -58,8 +61,9 @@ impl IfBlock {
                     None => context.errors.add(&else_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
                 }
 
-                result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
+                result.extend(VI::block(vasm![
                     block_vasm,
+                    VI::set_var_from_stack(&result_var),
                     VI::jump(1)
                 ]));
             }
@@ -69,6 +73,11 @@ impl IfBlock {
             context.errors.add(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
         }
 
-        Some(Vasm::new(required_branch_type.clone(), vec![], vec![VI::typed_block(vec![required_branch_type], result)]))
+        result_var.set_type(required_branch_type.clone());
+
+        Some(Vasm::new(required_branch_type.clone(), vec![result_var.clone()], vec![
+            VI::block(result),
+            VI::get_var(&result_var)
+        ]))
     }
 }

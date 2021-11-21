@@ -15,5 +15,5 @@ fn separator() {
 fn print(value: bool) -> bool {
     @log(value);
 
-    return value;
+    value
 }

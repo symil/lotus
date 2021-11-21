@@ -12,7 +12,8 @@ fn get_result(a: int, b: int, c: int) -> int {
         }
     }
 
-    return true;
+    return false;
+    0
 }
 
 fn print_result(max: int) {

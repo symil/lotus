@@ -11,7 +11,7 @@ class Foo {
     }
 
     get() -> float {
-        return this.number;
+        this.number
     }
 }
 

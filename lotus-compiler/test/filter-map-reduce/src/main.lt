@@ -9,13 +9,13 @@ export fn main() {
 }
 
 fn int_to_string(n: int) -> string {
-    return "number: " + n.to_string();
+    "number: " + n.to_string()
 }
 
 fn is_odd(n: int) -> bool {
-    return n % 2 == 1;
+    n % 2 == 1
 }
 
 fn add(a: int, b: int) -> int {
-    return a + b;
+    a + b
 }

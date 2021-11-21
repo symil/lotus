@@ -6,13 +6,13 @@ class Foo {
     }
 
     static add(a: int, b: int) -> int {
-        return a + b;
+        a + b
     }
 
     static new(value: string) -> Foo {
-        return Foo {
+        Foo {
             value: value
-        };
+        }
     }
 }
 

@@ -13,7 +13,7 @@ class Bar {
 }
 
 fn some_string() -> string {
-    return "the string";
+    "the string"
 }
 
 export fn main() {

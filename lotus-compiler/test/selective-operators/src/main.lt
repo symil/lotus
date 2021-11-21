@@ -38,5 +38,5 @@ fn test(value: bool) {
 fn log_bool(value: bool) -> bool {
     @log(value);
 
-    return value;
+    value
 }

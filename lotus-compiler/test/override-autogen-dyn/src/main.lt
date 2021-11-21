@@ -1,6 +1,6 @@
 class Foo {
     dyn __to_string_dyn() -> string {
-        return "<Foo>";
+        "<Foo>"
     }
 }
 

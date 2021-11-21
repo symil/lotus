@@ -49,6 +49,7 @@ impl VarPathRoot {
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list),
             VarPathRoot::StaticFieldOrMethod(_) => {},
             VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list),
+            VarPathRoot::VarRef(var_ref) => var_ref.collected_instancied_type_names(list),
             _ => todo!()
         }
     }
