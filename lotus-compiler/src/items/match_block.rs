@@ -32,7 +32,7 @@ impl MatchBlock {
                         context.errors.add(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
                     } else {
                         let tmp_var = VariableInfo::from(Identifier::unique("tmp", self), context.int_type(), VariableKind::Local);
-                        let result_var = VariableInfo::from(Identifier::unique("result", self), type_hint.cloned().unwrap_or(context.int_type()), VariableKind::Local);
+                        let result_var = VariableInfo::from(Identifier::unique("result", self), Type::Undefined, VariableKind::Local);
                         let mut returned_type : Option<Type> = None;
                         let mut content = vec![];
 
@@ -106,15 +106,9 @@ impl MatchBlock {
                                 context.push_scope(ScopeKind::Branch);
 
                                 if let Some(branch_vasm) = branch.expr.process(type_hint, context) {
-                                    let new_expected_type = match type_hint {
-                                        Some(expected_type) => match branch_vasm.ty.is_assignable_to(expected_type) {
-                                            true => Some(expected_type.clone()),
-                                            false => None,
-                                        },
-                                        None => match &returned_type {
-                                            Some(ty) => ty.get_common_type(&branch_vasm.ty).cloned(),
-                                            None => Some(branch_vasm.ty.clone()),
-                                        },
+                                    let new_expected_type = match &returned_type {
+                                        Some(ty) => ty.get_common_type(&branch_vasm.ty).cloned(),
+                                        None => Some(branch_vasm.ty.clone()),
                                     };
 
                                     match new_expected_type {
@@ -133,7 +127,7 @@ impl MatchBlock {
                                             returned_type = Some(ty);
                                         },
                                         None => {
-                                            context.errors.add(&branch.expr, format!("expected `{}`, got `{}`", type_hint.or(returned_type.as_ref()).unwrap() , &branch_vasm.ty))
+                                            context.errors.add(&branch.expr, format!("expected `{}`, got `{}`", returned_type.as_ref().unwrap() , &branch_vasm.ty))
                                         },
                                     }
                                 }
@@ -141,7 +135,9 @@ impl MatchBlock {
                             }
                         }
 
-                        let final_type = type_hint.cloned().or(returned_type).unwrap_or(context.void_type());
+                        let final_type = returned_type.unwrap_or(context.void_type());
+
+                        result_var.set_type(final_type.clone());
 
                         if !final_type.is_undefined() {
                             content.extend(vec![

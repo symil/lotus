@@ -145,6 +145,10 @@ impl ProgramContext {
             }
 
             result += scope.kind.get_depth();
+
+            if scope.kind.is_function() {
+                break;
+            }
         }
 
         None
@@ -161,6 +165,10 @@ impl ProgramContext {
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
                 return Some(var_info.clone());
+            }
+
+            if scope.kind.is_function() {
+                break;
             }
         }
 

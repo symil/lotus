@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::HashMap, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat}, utils::Link, vasm, wat};
+use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list}, utils::Link, vasm, wat};
 use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
@@ -119,17 +119,14 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
 
     let arg_vasms : Vec<Vasm> = arguments.as_vec().iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
-            Some(ty) => match ty.contains_function_parameter() {
-                true => None,
-                false => match is_var_call {
-                    true => Some(ty.clone()),
-                    false => Some(ty.replace_parameters(caller_type.as_ref(), &[])),
-                }
+            Some(ty) => match is_var_call {
+                true => Some(ty.clone()),
+                false => Some(ty.replace_parameters(caller_type.as_ref(), &[])),
             },
             None => None,
         };
 
-        arg.process(hint.as_ref(), context).unwrap_or_default()
+        arg.process(hint.as_ref(), context).unwrap_or_else(|| Vasm::new(Type::Undefined, vec![], vec![]))
     }).collect();
     let arg_types : Vec<&Type> = arg_vasms.iter().map(|vasm| &vasm.ty).collect();
 
@@ -192,7 +189,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
             let mut ok = false;
 
             if let Some(hint_return_type) = type_hint {
-                let expected_return_type = &function_unwrapped.return_value.ty();
+                let expected_return_type = &function_unwrapped.return_type;
 
                 if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
                     result.push(inferred_type);

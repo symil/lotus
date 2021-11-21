@@ -19,7 +19,7 @@ pub struct FunctionBlueprint {
     pub this_arg: Option<VariableInfo>,
     pub payload_arg: Option<VariableInfo>,
     pub arguments: Vec<VariableInfo>,
-    pub return_value: VariableInfo,
+    pub return_type: Type,
     pub is_raw_wasm: bool,
     pub dynamic_index: i32,
     pub body: Vasm
@@ -46,14 +46,14 @@ impl FunctionBlueprint {
             arg.check_parameters(context);
         }
 
-        self.return_value.check_parameters(context);
+        self.return_type.check_parameters(&self.name, context);
     }
 
     pub fn get_signature(&self) -> Signature {
         Signature {
             this_type: self.this_arg.as_ref().map(|var_info| var_info.ty().clone()),
             argument_types: self.arguments.iter().map(|var_info| var_info.ty().clone()).collect(),
-            return_type: self.return_value.ty().clone()
+            return_type: self.return_type.clone()
         }
     }
 }

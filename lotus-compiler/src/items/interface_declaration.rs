@@ -81,7 +81,6 @@ impl InterfaceDeclaration {
                 let (method_qualifier, name, arguments, return_type) = method.process(context);
                 let method_kind = method_qualifier.to_field_kind();
                 let arguments : Vec<VariableInfo> = arguments.into_iter().map(|(name, ty)| VariableInfo::from(name, ty, VariableKind::Argument)).collect();
-                let return_value = VariableInfo::from(Identifier::new(RESULT_VAR_NAME, &name), return_type.unwrap_or(context.void_type()), VariableKind::Local);
                 let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
@@ -96,7 +95,7 @@ impl InterfaceDeclaration {
                     this_arg: None,
                     payload_arg: None,
                     arguments,
-                    return_value,
+                    return_type: return_type.unwrap_or(context.void_type()),
                     dynamic_index: -1,
                     is_raw_wasm: false,
                     body: Vasm::void(),

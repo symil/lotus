@@ -82,6 +82,8 @@ mod static_field_or_method;
 mod parsed_type_wrapper;
 mod identifier_wrapper;
 mod function_literal;
+mod function_literal_body;
+mod function_literal_arguments;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -168,3 +170,5 @@ pub use static_field_or_method::*;
 pub use parsed_type_wrapper::*;
 pub use identifier_wrapper::*;
 pub use function_literal::*;
+pub use function_literal_body::*;
+pub use function_literal_arguments::*;

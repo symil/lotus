@@ -44,4 +44,11 @@ impl ScopeKind {
             ScopeKind::Local => 2,
         }
     }
+
+    pub fn is_function(&self) -> bool {
+        match self {
+            ScopeKind::Function => true,
+            _ => false
+        }
+    }
 }

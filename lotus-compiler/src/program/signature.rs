@@ -29,8 +29,8 @@ impl Signature {
     pub fn to_string(&self) -> String {
         let mut s = format!("fn({})", display_join(&self.argument_types, ", "));
 
-        if self.return_type.is_builtin_type(BuiltinType::Void) {
-            s.push_str(&format!("({})", &self.return_type));
+        if !self.return_type.is_void() {
+            s.push_str(&format!(" -> {}", &self.return_type));
         }
 
         s

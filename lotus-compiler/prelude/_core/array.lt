@@ -275,7 +275,7 @@ export type(i32) Array<T> {
         array
     }
 
-    filter(callback: fn(T)(bool)) -> T[] {
+    filter(callback: fn(T)->bool) -> T[] {
         let result : T[] = [];
 
         for item in this {
@@ -287,7 +287,7 @@ export type(i32) Array<T> {
         result
     }
 
-    map<U>(callback: fn(T)(U)) -> U[] {
+    map<U>(callback: fn(T)->U) -> U[] {
         let result : U[] = [];
 
         for item in this {
@@ -297,7 +297,7 @@ export type(i32) Array<T> {
         result
     }
 
-    reduce<U>(init: U, callback: fn(U, T)(U)) -> U {
+    reduce<U>(init: U, callback: fn(U, T)->U) -> U {
         let result = init;
 
         for item in this {

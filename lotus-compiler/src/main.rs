@@ -1,4 +1,5 @@
 #![feature(option_result_contains)]
+#![feature(array_methods)]
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;

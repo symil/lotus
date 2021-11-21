@@ -37,7 +37,7 @@ impl FunctionContent {
             payload_arg: None,
             conditions: vec![],
             arguments: vec![],
-            return_value: VariableInfo::from(Identifier::default(), Type::Undefined, VariableKind::Local),
+            return_type: Type::Undefined,
             dynamic_index: -1,
             is_raw_wasm: false,
             body: Vasm::void(),
@@ -94,7 +94,7 @@ impl FunctionContent {
 
             function_blueprint.with_mut(|mut function_unwrapped| {
                 function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::from(name, ty, VariableKind::Argument)).collect();
-                function_unwrapped.return_value = VariableInfo::from(Identifier::unlocated(RESULT_VAR_NAME), return_type.unwrap_or(context.void_type()), VariableKind::Local);
+                function_unwrapped.return_type = return_type.unwrap_or(context.void_type());
             });
         } else if is_dynamic {
             if let Some(type_wrapped) = context.get_current_type() {
@@ -105,13 +105,13 @@ impl FunctionContent {
                                 prev_method.function.with_ref(|prev_method_unwrapped| {
                                     let hash = self.location.get_hash();
                                     let arguments = prev_method_unwrapped.arguments.iter().map(|var_info| var_info.replace_type_parameters(&parent.ty, hash)).collect();
-                                    let return_value = prev_method_unwrapped.return_value.replace_type_parameters(&parent.ty, hash);
+                                    let return_type = prev_method_unwrapped.return_type.replace_parameters(Some(&parent.ty), &[]);
 
                                     signature_inferred = true;
 
                                     function_blueprint.with_mut(|mut function_unwrapped| {
                                         function_unwrapped.arguments = arguments;
-                                        function_unwrapped.return_value = return_value;
+                                        function_unwrapped.return_type = return_type;
                                     });
                                 });
                             }
@@ -182,7 +182,7 @@ impl FunctionContent {
                 context.push_var(arg);
             }
 
-            return_type = function_unwrapped.return_value.ty().clone();
+            return_type = function_unwrapped.return_type.clone();
         });
 
         let is_raw_wasm = self.body.is_raw_wasm();
@@ -190,8 +190,8 @@ impl FunctionContent {
         if let Some(vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
-                    if !vasm.ty.is_assignable_to(&function_unwrapped.return_value.ty()) {
-                        context.errors.add(&block, format!("expected `{}`, got `{}`", &function_unwrapped.return_value.ty(), &vasm.ty));
+                    if !vasm.ty.is_assignable_to(&function_unwrapped.return_type) {
+                        context.errors.add(&block, format!("expected `{}`, got `{}`", &function_unwrapped.return_type, &vasm.ty));
                     }
                 }
 

@@ -17,8 +17,7 @@ impl Action {
             ActionKeywordToken::Return => {
                 let function_wrapped = context.get_current_function().unwrap();
                 let function_unwrapped = function_wrapped.borrow();
-                let return_value = &function_unwrapped.return_value;
-                let return_type = return_value.ty().clone();
+                let return_type = function_unwrapped.return_type.clone();
 
                 match return_type.is_void() {
                     false => match &self.value {

@@ -41,7 +41,7 @@ impl FunctionInstanceContent {
                         variables.push(arg.clone());
                     }
 
-                    if let Some(wasm_type) = function_unwrapped.return_value.ty().resolve(&type_index, context).wasm_type {
+                    if let Some(wasm_type) = function_unwrapped.return_type.resolve(&type_index, context).wasm_type {
                         wat_ret.push(wasm_type);
                     }
 
