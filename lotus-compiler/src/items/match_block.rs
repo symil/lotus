@@ -31,8 +31,8 @@ impl MatchBlock {
                     if !type_unwrapped.is_enum() && !type_unwrapped.is_class() && !matched_vasm.ty.is_bool() {
                         context.errors.add(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
                     } else {
-                        let tmp_var = VariableInfo::new(Identifier::unique("tmp", self), context.int_type(), VariableKind::Local);
-                        let result_var = VariableInfo::new(Identifier::unique("result", self), type_hint.cloned().unwrap_or(context.int_type()), VariableKind::Local);
+                        let tmp_var = VariableInfo::from(Identifier::unique("tmp", self), context.int_type(), VariableKind::Local);
+                        let result_var = VariableInfo::from(Identifier::unique("result", self), type_hint.cloned().unwrap_or(context.int_type()), VariableKind::Local);
                         let mut returned_type : Option<Type> = None;
                         let mut content = vec![];
 
@@ -62,7 +62,7 @@ impl MatchBlock {
                                         Some(ty) => match ty.match_builtin_interface(BuiltinInterface::Object, context) {
                                             true => {
                                                 if let Some(var_name) = &branch.var_name {
-                                                    let var_info = VariableInfo::new(var_name.clone(), ty.clone(), VariableKind::Local);
+                                                    let var_info = VariableInfo::from(var_name.clone(), ty.clone(), VariableKind::Local);
 
                                                     context.check_var_unicity(var_name);
                                                     context.push_var(&var_info);

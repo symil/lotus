@@ -25,7 +25,7 @@ impl FunctionDeclaration {
                     context.errors.add(self, format!("main function must not take any argument"));
                 }
 
-                if !function_unwrapped.return_value.ty.is_void() {
+                if !function_unwrapped.return_value.ty().is_void() {
                     context.errors.add(self, format!("main function must not have a return type"));
                 }
 

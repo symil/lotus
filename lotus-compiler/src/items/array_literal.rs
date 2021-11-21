@@ -17,8 +17,8 @@ impl ArrayLiteral {
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let array_var = VariableInfo::new(Identifier::unique("array", self), context.int_type(), VariableKind::Local);
-        let array_body_var = VariableInfo::new(Identifier::unique("array_body", self), context.int_type(), VariableKind::Local);
+        let array_var = VariableInfo::from(Identifier::unique("array", self), context.int_type(), VariableKind::Local);
+        let array_body_var = VariableInfo::from(Identifier::unique("array_body", self), context.int_type(), VariableKind::Local);
         let variables = vec![
             array_var.clone(),
             array_body_var.clone()

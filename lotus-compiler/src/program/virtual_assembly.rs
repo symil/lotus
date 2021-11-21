@@ -4,12 +4,12 @@ use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstru
 #[derive(Debug, Clone)]
 pub struct Vasm {
     pub ty: Type,
-    pub variables: Vec<Rc<VariableInfo>>,
+    pub variables: Vec<VariableInfo>,
     pub instructions: Vec<VirtualInstruction>,
 }
 
 impl Vasm {
-    pub fn new(ty: Type, variables: Vec<Rc<VariableInfo>>, instructions: Vec<VirtualInstruction>) -> Self {
+    pub fn new(ty: Type, variables: Vec<VariableInfo>, instructions: Vec<VirtualInstruction>) -> Self {
         Self { ty, variables, instructions }
     }
 
@@ -58,7 +58,7 @@ impl Vasm {
         }
     }
 
-    pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
+    pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         list.extend(self.variables.clone());
 
         for instruction in &self.instructions {

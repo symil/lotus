@@ -1,9 +1,11 @@
-use std::rc::Rc;
-use crate::{items::Identifier};
-use super::{ProgramContext, Type, Wat};
+use std::{cell::Ref, rc::Rc};
+use crate::{items::Identifier, utils::Link};
+use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat};
+
+pub type VariableInfo = Link<VariableInfoContent>;
 
 #[derive(Debug)]
-pub struct VariableInfo {
+pub struct VariableInfoContent {
     pub name: Identifier,
     pub ty: Type,
     pub kind: VariableKind,
@@ -17,71 +19,105 @@ pub enum VariableKind {
     Argument
 }
 
-impl VariableInfo {
-    pub fn new(name: Identifier, ty: Type, kind: VariableKind) -> Rc<Self> {
-        let wasm_name = name.to_unique_string();
-        let value = Self { name, ty, kind, wasm_name };
+impl VariableKind {
+    pub fn is_local(&self) -> bool {
+        match self {
+            VariableKind::Local => true,
+            _ => false,
+        }
+    }
+}
 
-        Rc::new(value)
+impl VariableInfo {
+    pub fn from(name: Identifier, ty: Type, kind: VariableKind) -> Self {
+        let wasm_name = name.to_unique_string();
+        let value = VariableInfoContent { name, ty, kind, wasm_name };
+
+        Link::new(value)
     }
 
-    pub fn from_wasm_name(wasm_name: String, ty: Type, kind: VariableKind) -> Rc<Self> {
-        Rc::new(Self {
+    pub fn from_wasm_name(wasm_name: String, ty: Type, kind: VariableKind) -> Self {
+        Link::new(VariableInfoContent {
             name: Identifier::unlocated(""),
             ty,
             kind,
             wasm_name,
         })
     }
+}
 
+impl VariableInfo {
     pub fn check_parameters(&self, context: &mut ProgramContext) {
-        self.ty.check_parameters(&self.name, context);
-    }
-
-    pub fn get_to_stack(&self) -> Wat {
-        match &self.kind {
-            VariableKind::Global => Wat::get_global(&self.wasm_name),
-            VariableKind::Local => Wat::get_local(&self.wasm_name),
-            VariableKind::Argument => Wat::get_local(&self.wasm_name),
-        }
-    }
-
-    pub fn set_from_stack(&self) -> Wat {
-        match &self.kind {
-            VariableKind::Global => Wat::set_global_from_stack(&self.wasm_name),
-            VariableKind::Local => Wat::set_local_from_stack(&self.wasm_name),
-            VariableKind::Argument => Wat::set_local_from_stack(&self.wasm_name),
-        }
-    }
-
-    pub fn tee_from_stack(&self) -> Wat {
-        match &self.kind {
-            VariableKind::Global => Wat::tee_global_from_stack(&self.wasm_name),
-            VariableKind::Local => Wat::tee_local_from_stack(&self.wasm_name),
-            VariableKind::Argument => Wat::tee_local_from_stack(&self.wasm_name),
-        }
-    }
-
-    pub fn get_wasm_name(&self) -> &str {
-        self.wasm_name.as_str()
-    }
-
-    pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Rc<Self> {
-        Rc::new(Self {
-            name: self.name.clone(),
-            ty: self.ty.replace_parameters(Some(this_type), &[]),
-            kind: self.kind.clone(),
-            wasm_name: format!("{}_{}", self.wasm_name.clone(), id),
+        self.with_ref(|var_info| {
+            var_info.ty.check_parameters(&var_info.name, context);
         })
     }
 
-    pub fn clone(self: &Rc<Self>) -> Rc<Self> {
-        Rc::clone(self)
+    pub fn get_to_stack(&self) -> Wat {
+        self.with_ref(|var_info| {
+            match &var_info.kind {
+                VariableKind::Global => Wat::get_global(&var_info.wasm_name),
+                VariableKind::Local => Wat::get_local(&var_info.wasm_name),
+                VariableKind::Argument => Wat::get_local(&var_info.wasm_name),
+            }
+        })
+    }
+
+    pub fn set_from_stack(&self) -> Wat {
+        self.with_ref(|var_info| {
+            match &var_info.kind {
+                VariableKind::Global => Wat::set_global_from_stack(&var_info.wasm_name),
+                VariableKind::Local => Wat::set_local_from_stack(&var_info.wasm_name),
+                VariableKind::Argument => Wat::set_local_from_stack(&var_info.wasm_name),
+            }
+        })
+    }
+
+    pub fn tee_from_stack(&self) -> Wat {
+        self.with_ref(|var_info| {
+            match &var_info.kind {
+                VariableKind::Global => Wat::tee_global_from_stack(&var_info.wasm_name),
+                VariableKind::Local => Wat::tee_local_from_stack(&var_info.wasm_name),
+                VariableKind::Argument => Wat::tee_local_from_stack(&var_info.wasm_name),
+            }
+        })
+    }
+
+    pub fn get_wasm_name(&self) -> String {
+        self.borrow().wasm_name.clone()
+    }
+
+    pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> VariableInfo {
+        self.with_ref(|var_info| {
+            Link::new(VariableInfoContent {
+                name: var_info.name.clone(),
+                ty: var_info.ty.replace_parameters(Some(this_type), &[]),
+                kind: var_info.kind.clone(),
+                wasm_name: format!("{}_{}", var_info.wasm_name.clone(), id),
+            })
+        })
+    }
+
+    pub fn ty(&self) -> Ref<Type> {
+        Ref::map(self.borrow(), |var_info| &var_info.ty)
+    }
+
+    pub fn kind(&self) -> Ref<VariableKind> {
+        Ref::map(self.borrow(), |var_info| &var_info.kind)
+    }
+
+    pub fn name(&self) -> Ref<Identifier> {
+        Ref::map(self.borrow(), |var_info| &var_info.name)
     }
 }
 
 impl Default for VariableInfo {
     fn default() -> Self {
-        Rc::try_unwrap(Self::new(Identifier::default(), Type::Undefined, VariableKind::Local)).unwrap()
+        Link::new(VariableInfoContent {
+            name: Identifier::default(),
+            ty: Type::Undefined,
+            kind: VariableKind::Local,
+            wasm_name: String::new(),
+        })
     }
 }

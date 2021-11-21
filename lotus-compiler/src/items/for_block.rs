@@ -56,10 +56,10 @@ impl ForBlock {
 
                 let range_end_var_name = Identifier::unique("range_end", self);
 
-                let index_var = VariableInfo::new(index_var_name.clone(), context.int_type(), VariableKind::Local);
-                let item_var = VariableInfo::new(item_var_name.clone(), context.int_type(), VariableKind::Local);
-                let range_end_var = VariableInfo::new(range_end_var_name.clone(), context.int_type(), VariableKind::Local);
-                let variables = vec![Rc::clone(&index_var), Rc::clone(&item_var), Rc::clone(&range_end_var)];
+                let index_var = VariableInfo::from(index_var_name.clone(), context.int_type(), VariableKind::Local);
+                let item_var = VariableInfo::from(item_var_name.clone(), context.int_type(), VariableKind::Local);
+                let range_end_var = VariableInfo::from(range_end_var_name.clone(), context.int_type(), VariableKind::Local);
+                let variables = vec![index_var.clone(), item_var.clone(), range_end_var.clone()];
 
                 context.push_var(&index_var);
                 context.push_var(&item_var);
@@ -73,11 +73,11 @@ impl ForBlock {
                         VI::set_var(&range_end_var, range_end_vasm),
                         VI::set_var(&item_var, range_start_vasm),
                         VI::set_var(&index_var, VI::int(-1)),
-                        VI::raw(Wat::increment_local_i32(&item_var.wasm_name, -1)),
+                        VI::raw(Wat::increment_local_i32(&item_var.get_wasm_name(), -1)),
                         VI::block(vasm![
                             VI::loop_(vasm![
-                                VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
-                                VI::raw(Wat::increment_local_i32(&item_var.wasm_name, 1)),
+                                VI::raw(Wat::increment_local_i32(&index_var.get_wasm_name(), 1)),
+                                VI::raw(Wat::increment_local_i32(&item_var.get_wasm_name(), 1)),
                                 VI::raw(wat!["i32.lt_s", item_var.get_to_stack(), range_end_var.get_to_stack()]),
                                 VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
                                 block_vasm,
@@ -92,12 +92,12 @@ impl ForBlock {
             let item_type = iterable_vasm.ty.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap_or(Type::Undefined);
             let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![item_type.clone()]);
 
-            let iterable_var = VariableInfo::new(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);
-            let iterable_len_var = VariableInfo::new(Identifier::unique("iterable_len", self), context.int_type(), VariableKind::Local);
-            let iterable_ptr_var = VariableInfo::new(Identifier::unique("iterable_ptr", self), context.int_type(), VariableKind::Local);
-            let index_var = VariableInfo::new(index_var_name, context.int_type(), VariableKind::Local);
-            let item_var = VariableInfo::new(item_var_name, item_type.clone(), VariableKind::Local);
-            let variables = vec![Rc::clone(&iterable_var), Rc::clone(&iterable_len_var), Rc::clone(&iterable_ptr_var), Rc::clone(&index_var), Rc::clone(&item_var)];
+            let iterable_var = VariableInfo::from(Identifier::unique("iterable", self), context.int_type(), VariableKind::Local);
+            let iterable_len_var = VariableInfo::from(Identifier::unique("iterable_len", self), context.int_type(), VariableKind::Local);
+            let iterable_ptr_var = VariableInfo::from(Identifier::unique("iterable_ptr", self), context.int_type(), VariableKind::Local);
+            let index_var = VariableInfo::from(index_var_name, context.int_type(), VariableKind::Local);
+            let item_var = VariableInfo::from(item_var_name, item_type.clone(), VariableKind::Local);
+            let variables = vec![iterable_var.clone(), iterable_len_var.clone(), iterable_ptr_var.clone(), index_var.clone(), item_var.clone()];
 
             context.push_var(&index_var);
             context.push_var(&item_var);
@@ -117,7 +117,7 @@ impl ForBlock {
                         VI::set_var(&iterable_ptr_var, VI::call_regular_method(&iterable_type, GET_ITERABLE_PTR_FUNC_NAME, &[], vec![VI::get_var(&iterable_var)], context)),
                         VI::block(vec![
                             VI::loop_(vasm![
-                                VI::raw(Wat::increment_local_i32(&index_var.wasm_name, 1)),
+                                VI::raw(Wat::increment_local_i32(&index_var.get_wasm_name(), 1)),
                                 VI::raw(wat!["i32.lt_s", index_var.get_to_stack(), iterable_len_var.get_to_stack()]),
                                 VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
                                 VI::set_var(&item_var, VI::call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![VI::get_var(&iterable_ptr_var), VI::get_var(&index_var)], context)),

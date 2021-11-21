@@ -29,7 +29,7 @@ impl ObjectLiteral {
 
         if let Some(object_type) = self.object_type.process(true, context) {
             if let Type::Actual(info) = &object_type {
-                let object_var = VariableInfo::new(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
+                let object_var = VariableInfo::from(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
                 let type_unwrapped = info.type_blueprint.borrow();
 
                 if type_unwrapped.is_class() {

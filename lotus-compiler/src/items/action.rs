@@ -18,26 +18,27 @@ impl Action {
                 let function_wrapped = context.get_current_function().unwrap();
                 let function_unwrapped = function_wrapped.borrow();
                 let return_value = &function_unwrapped.return_value;
+                let return_type = return_value.ty().clone();
 
-                match return_value.ty.is_void() {
+                match return_type.is_void() {
                     false => match &self.value {
                         Some(expr) => {
-                            let type_hint = Some(&return_value.ty);
+                            let type_hint = Some(&return_type);
 
                             if let Some(vasm) = expr.process(type_hint, context) {
-                                if vasm.ty.is_assignable_to(&return_value.ty) {
+                                if vasm.ty.is_assignable_to(&return_type) {
                                     result = Some(vasm![
                                         VI::return_value(vasm)
                                     ]);
                                 } else {
                                     if !vasm.ty.is_undefined() {
-                                        context.errors.add(expr, format!("expected `{}`, got `{}`", &return_value.ty, &vasm.ty));
+                                        context.errors.add(expr, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
                                     }
                                 }
                             }
                         },
                         None => {
-                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_value.ty, context.void_type()));
+                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_type, context.void_type()));
                         },
                     },
                     true => match &self.value {

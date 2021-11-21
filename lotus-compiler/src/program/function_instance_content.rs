@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{program::{FunctionInstanceWasmType, TypeIndex, VariableKind}, utils::Link};
+use crate::{program::{FunctionInstanceWasmType, TypeIndex, VariableInfo, VariableKind}, utils::Link};
 use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat};
 
 #[derive(Debug)]
@@ -26,35 +26,38 @@ impl FunctionInstanceContent {
                 let mut wat_ret = vec![];
                 let mut wat_locals : Vec<(&str, &str)> = vec![];
                 let mut wat_body = function_unwrapped.body.resolve(&type_index, context);
+                let mut list : Vec<(VariableInfo, String)> = vec![];
 
                 if !function_unwrapped.is_raw_wasm {
                     if let Some(this_arg) = &function_unwrapped.this_arg {
-                        variables.push(Rc::clone(this_arg));
+                        variables.push(this_arg.clone());
                     }
 
                     if let Some(payload_arg) = &function_unwrapped.payload_arg {
-                        variables.push(Rc::clone(payload_arg));
+                        variables.push(payload_arg.clone());
                     }
 
                     for arg in &function_unwrapped.arguments {
-                        variables.push(Rc::clone(arg));
+                        variables.push(arg.clone());
                     }
 
-                    if let Some(wasm_type) = function_unwrapped.return_value.ty.resolve(&type_index, context).wasm_type {
+                    if let Some(wasm_type) = function_unwrapped.return_value.ty().resolve(&type_index, context).wasm_type {
                         wat_ret.push(wasm_type);
                     }
 
                     function_unwrapped.body.collect_variables(&mut variables);
 
-                    for var_info in &variables {
-                        if let Some(wasm_type) = var_info.ty.resolve(&type_index, context).wasm_type {
-                            let mut array = match var_info.kind {
+                    list = variables.iter().map(|var_info| (var_info.clone(), var_info.get_wasm_name())).collect();
+
+                    for (var_info, wasm_name) in &list {
+                        if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
+                            let mut array = match var_info.kind().clone() {
                                 VariableKind::Global => unreachable!(),
                                 VariableKind::Local => &mut wat_locals,
                                 VariableKind::Argument => &mut wat_args,
                             };
 
-                            array.push((var_info.wasm_name.as_str(), wasm_type))
+                            array.push((wasm_name.as_str(), wasm_type))
                         }
                     }
                 }

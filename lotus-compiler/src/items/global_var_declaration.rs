@@ -22,6 +22,7 @@ impl GlobalVarDeclaration {
 
             let global_var_blueprint = GlobalVarBlueprint {
                 var_id: self.location.get_hash(),
+                name: var_list.first().unwrap().name().clone(),
                 visibility: self.visibility.value.unwrap_or(Visibility::Private),
                 var_info: var_list.first().unwrap().clone(),
                 init_vasm,

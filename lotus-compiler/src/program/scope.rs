@@ -5,7 +5,7 @@ use super::{VariableInfo, insert_in_vec_hashmap};
 #[derive(Debug)]
 pub struct Scope {
     pub kind: ScopeKind,
-    pub variables: HashMap<String, Vec<Rc<VariableInfo>>>,
+    pub variables: HashMap<String, Vec<VariableInfo>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,12 +25,12 @@ impl Scope {
         }
     }
 
-    pub fn get_var_info(&self, var_name: &str) -> Option<&Rc<VariableInfo>> {
+    pub fn get_var_info(&self, var_name: &str) -> Option<&VariableInfo> {
         self.variables.get(var_name)?.last()
     }
 
-    pub fn insert_var_info(&mut self, info: &Rc<VariableInfo>) {
-        insert_in_vec_hashmap(&mut self.variables, &info.name.to_string(), info.clone());
+    pub fn insert_var_info(&mut self, info: &VariableInfo) {
+        insert_in_vec_hashmap(&mut self.variables, &info.name().to_string(), info.clone());
     }
 }
 

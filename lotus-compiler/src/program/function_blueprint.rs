@@ -16,10 +16,10 @@ pub struct FunctionBlueprint {
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub conditions: Vec<(Identifier, Identifier)>,
-    pub this_arg: Option<Rc<VariableInfo>>,
-    pub payload_arg: Option<Rc<VariableInfo>>,
-    pub arguments: Vec<Rc<VariableInfo>>,
-    pub return_value: Rc<VariableInfo>,
+    pub this_arg: Option<VariableInfo>,
+    pub payload_arg: Option<VariableInfo>,
+    pub arguments: Vec<VariableInfo>,
+    pub return_value: VariableInfo,
     pub is_raw_wasm: bool,
     pub dynamic_index: i32,
     pub body: Vasm
@@ -51,9 +51,9 @@ impl FunctionBlueprint {
 
     pub fn get_signature(&self) -> Signature {
         Signature {
-            this_type: self.this_arg.as_ref().map(|var_info| var_info.ty.clone()),
-            argument_types: self.arguments.iter().map(|var_info| var_info.ty.clone()).collect(),
-            return_type: self.return_value.ty.clone()
+            this_type: self.this_arg.as_ref().map(|var_info| var_info.ty().clone()),
+            argument_types: self.arguments.iter().map(|var_info| var_info.ty().clone()).collect(),
+            return_type: self.return_value.ty().clone()
         }
     }
 }

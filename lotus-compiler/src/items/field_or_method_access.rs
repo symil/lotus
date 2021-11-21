@@ -192,7 +192,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
             let mut ok = false;
 
             if let Some(hint_return_type) = type_hint {
-                let expected_return_type = &function_unwrapped.return_value.ty;
+                let expected_return_type = &function_unwrapped.return_value.ty();
 
                 if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
                     result.push(inferred_type);
@@ -202,7 +202,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
 
             if !ok {
                 for (expected_arg_var, actual_arg_type) in function_unwrapped.arguments.iter().zip(arg_types.iter()) {
-                    let expected_arg_type = &expected_arg_var.ty;
+                    let expected_arg_type = &expected_arg_var.ty();
 
                     if let Some(inferred_type) = expected_arg_type.infer_function_parameter(parameter, *actual_arg_type) {
                         result.push(inferred_type);

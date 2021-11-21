@@ -46,7 +46,7 @@ impl VarRef {
             },
             None => match &self.args {
                 Some(args) => match context.get_var_info(&self.name) {
-                    Some(var_info) => match &var_info.ty {
+                    Some(var_info) => match &var_info.ty().clone() {
                         Type::Function(signature) => {
                             let function_call = FunctionCall::Anonymous(AnonymousFunctionCallDetails {
                                 signature: Box::as_ref(signature).clone(),
@@ -58,7 +58,7 @@ impl VarRef {
                                 None => None,
                             }
                         },
-                        _ => context.errors.add_and_none(&self.name, format!("expected function, got `{}`", &var_info.ty))
+                        _ => context.errors.add_and_none(&self.name, format!("expected function, got `{}`", var_info.ty()))
                     },
                     None => match context.functions.get_by_identifier(&self.name) {
                         Some(function_blueprint) => {
@@ -75,8 +75,8 @@ impl VarRef {
                 },
                 None => match context.get_var_info(&self.name) {
                     Some(var_info) => match access_type {
-                        AccessType::Get => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::get_var(&var_info)])),
-                        AccessType::Set(_) => Some(Vasm::new(var_info.ty.clone(), vec![], vec![VI::set_var_from_stack(&var_info)])),
+                        AccessType::Get => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::get_var(&var_info)])),
+                        AccessType::Set(_) => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::set_var_from_stack(&var_info)])),
                     },
                     None => match context.functions.get_by_identifier(&self.name) {
                         Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {

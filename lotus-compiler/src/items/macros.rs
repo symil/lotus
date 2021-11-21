@@ -155,7 +155,7 @@ impl MacroContext {
                 MacroName::VariantCount => Some(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.enum_variants.len())])),
                 MacroName::AncestorId => Some(Vasm::new(context.int_type(), vec![], vec![VI::type_id(&self.ancestor_type.unwrap())])),
                 MacroName::AncestorName => Some(make_string_value_from_literal(None, &self.ancestor_type.unwrap().get_name(), context).unwrap()),
-                MacroName::FirstArgType => Some(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![VI::type_name(&self.current_function.unwrap().borrow().arguments.first().unwrap().ty)])),
+                MacroName::FirstArgType => Some(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![VI::type_name(&self.current_function.unwrap().borrow().arguments.first().unwrap().ty())])),
             }
         })
     }

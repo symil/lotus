@@ -37,7 +37,7 @@ impl FunctionContent {
             payload_arg: None,
             conditions: vec![],
             arguments: vec![],
-            return_value: VariableInfo::new(Identifier::default(), Type::Undefined, VariableKind::Local),
+            return_value: VariableInfo::from(Identifier::default(), Type::Undefined, VariableKind::Local),
             dynamic_index: -1,
             is_raw_wasm: false,
             body: Vasm::void(),
@@ -72,7 +72,7 @@ impl FunctionContent {
                 function_unwrapped.first_declared_by = Some(type_blueprint.clone());
 
                 if !is_static {
-                    function_unwrapped.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
+                    function_unwrapped.this_arg = Some(VariableInfo::from(Identifier::new(THIS_VAR_NAME, self), type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
                 }
             } else {
                 if is_static {
@@ -93,8 +93,8 @@ impl FunctionContent {
             let (arguments, return_type) = signature.process(context);
 
             function_blueprint.with_mut(|mut function_unwrapped| {
-                function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
-                function_unwrapped.return_value = VariableInfo::new(Identifier::unlocated(RESULT_VAR_NAME), return_type.unwrap_or(context.void_type()), VariableKind::Local);
+                function_unwrapped.arguments = arguments.into_iter().map(|(name, ty)| VariableInfo::from(name, ty, VariableKind::Argument)).collect();
+                function_unwrapped.return_value = VariableInfo::from(Identifier::unlocated(RESULT_VAR_NAME), return_type.unwrap_or(context.void_type()), VariableKind::Local);
             });
         } else if is_dynamic {
             if let Some(type_wrapped) = context.get_current_type() {
@@ -136,7 +136,7 @@ impl FunctionContent {
                 }
 
                 if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
-                    function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::new(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
+                    function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::from(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
 
                     if !event_type_blueprint.borrow().is_class() {
                         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));
@@ -182,7 +182,7 @@ impl FunctionContent {
                 context.push_var(arg);
             }
 
-            return_type = function_unwrapped.return_value.ty.clone();
+            return_type = function_unwrapped.return_value.ty().clone();
         });
 
         let is_raw_wasm = self.body.is_raw_wasm();
@@ -190,8 +190,8 @@ impl FunctionContent {
         if let Some(vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
-                    if !vasm.ty.is_assignable_to(&function_unwrapped.return_value.ty) {
-                        context.errors.add(&block, format!("expected `{}`, got `{}`", &function_unwrapped.return_value.ty, &vasm.ty));
+                    if !vasm.ty.is_assignable_to(&function_unwrapped.return_value.ty()) {
+                        context.errors.add(&block, format!("expected `{}`, got `{}`", &function_unwrapped.return_value.ty(), &vasm.ty));
                     }
                 }
 

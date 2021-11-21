@@ -150,14 +150,14 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, var_info: &Rc<VariableInfo>) {
+    pub fn push_var(&mut self, var_info: &VariableInfo) {
         // global scope is handled differently
         if let Some(current_scope) = self.scopes.iter_mut().last() {
             current_scope.insert_var_info(&var_info);
         }
     }
 
-    pub fn get_var_info(&self, name: &Identifier) -> Option<Rc<VariableInfo>> {
+    pub fn get_var_info(&self, name: &Identifier) -> Option<VariableInfo> {
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
                 return Some(var_info.clone());

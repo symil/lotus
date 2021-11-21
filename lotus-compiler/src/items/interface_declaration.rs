@@ -80,8 +80,8 @@ impl InterfaceDeclaration {
             for method in &self.body.methods {
                 let (method_qualifier, name, arguments, return_type) = method.process(context);
                 let method_kind = method_qualifier.to_field_kind();
-                let arguments : Vec<Rc<VariableInfo>> = arguments.into_iter().map(|(name, ty)| VariableInfo::new(name, ty, VariableKind::Argument)).collect();
-                let return_value = VariableInfo::new(Identifier::new(RESULT_VAR_NAME, &name), return_type.unwrap_or(context.void_type()), VariableKind::Local);
+                let arguments : Vec<VariableInfo> = arguments.into_iter().map(|(name, ty)| VariableInfo::from(name, ty, VariableKind::Argument)).collect();
+                let return_value = VariableInfo::from(Identifier::new(RESULT_VAR_NAME, &name), return_type.unwrap_or(context.void_type()), VariableKind::Local);
                 let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
@@ -110,7 +110,7 @@ impl InterfaceDeclaration {
                 let this_type = Type::This(interface_wrapped.clone());
 
                 if !method_kind.is_static() {
-                    function_blueprint.this_arg = Some(VariableInfo::new(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local));
+                    function_blueprint.this_arg = Some(VariableInfo::from(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local));
                 }
 
                 let func_ref = FuncRef {

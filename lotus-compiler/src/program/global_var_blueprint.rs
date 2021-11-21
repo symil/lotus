@@ -6,8 +6,9 @@ use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableIn
 #[derive(Debug)]
 pub struct GlobalVarBlueprint {
     pub var_id: u64,
+    pub name: Identifier,
     pub visibility: Visibility,
-    pub var_info: Rc<VariableInfo>,
+    pub var_info: VariableInfo,
     pub init_vasm: Vasm
 }
 
@@ -15,7 +16,7 @@ impl GlobalVarBlueprint {
     pub fn generate_instance(&self, context: &mut ProgramContext) -> GlobalVarInstance {
         let type_index = TypeIndex::empty();
         let wasm_name = self.var_info.get_wasm_name().to_string();
-        let wasm_type = self.var_info.ty.resolve(&type_index, context).wasm_type.unwrap();
+        let wasm_type = self.var_info.ty().resolve(&type_index, context).wasm_type.unwrap();
 
         let mut local_var_list = vec![];
         let mut wasm_locals = vec![];
@@ -27,9 +28,9 @@ impl GlobalVarBlueprint {
         };
 
         for var_info in local_var_list {
-            if var_info.kind == VariableKind::Local {
-                if let Some(wasm_type) = var_info.ty.resolve(&type_index, context).wasm_type {
-                    wasm_locals.push((wasm_type, var_info.wasm_name.clone()));
+            if var_info.kind().is_local() {
+                if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
+                    wasm_locals.push((wasm_type, var_info.get_wasm_name()));
                 }
             }
         }
@@ -47,6 +48,6 @@ impl GlobalVarBlueprint {
 }
 
 impl GlobalItem for GlobalVarBlueprint {
-    fn get_name(&self) -> &Identifier { &self.var_info.name }
+    fn get_name(&self) -> &Identifier { &self.name }
     fn get_visibility(&self) -> Visibility { self.visibility }
 }

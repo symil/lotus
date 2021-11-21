@@ -370,8 +370,8 @@ impl Type {
                                 details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
                             } else {
                                 for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
-                                    let actual_type = actual_arg.ty.replace_parameters(Some(self), &[]);
-                                    let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
+                                    let actual_type = actual_arg.ty().replace_parameters(Some(self), &[]);
+                                    let expected_type = expected_arg.ty().replace_parameters(Some(self), &[]);
 
                                     if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                         details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
@@ -379,8 +379,8 @@ impl Type {
                                 }
                             }
 
-                            let actual_return_value = actual_method_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
-                            let expected_return_type = expected_method_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
+                            let actual_return_value = actual_method_unwrapped.return_value.ty().replace_parameters(Some(self), &[]);
+                            let expected_return_type = expected_method_unwrapped.return_value.ty().replace_parameters(Some(self), &[]);
 
                             if !actual_return_value.is_assignable_to(&expected_return_type) {
                                 details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
@@ -422,10 +422,10 @@ impl Type {
 
                 match self.check_match_interface(&interface_wrapped, location, context) {
                     true => {
-                        let return_type = function_unwrapped.return_value.ty.replace_parameters(Some(self), &[]);
+                        let return_type = function_unwrapped.return_value.ty().replace_parameters(Some(self), &[]);
 
                         for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
-                            let expected_type = expected_arg.ty.replace_parameters(Some(self), &[]);
+                            let expected_type = expected_arg.ty().replace_parameters(Some(self), &[]);
 
                             if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                 context.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));

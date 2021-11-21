@@ -1,6 +1,4 @@
-use std::rc::Rc;
 use parsable::DataLocation;
-
 use crate::{items::{Identifier, make_string_value_from_literal}, program::{DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
@@ -40,12 +38,12 @@ pub struct VirtualStashInfo {
 
 #[derive(Debug, Clone)]
 pub struct VirtualGetVariableInfo {
-    pub var_info: Rc<VariableInfo>,
+    pub var_info: VariableInfo,
 }
 
 #[derive(Debug, Clone)]
 pub struct VirtualSetVariableInfo {
-    pub var_info: Rc<VariableInfo>,
+    pub var_info: VariableInfo,
     pub value: Option<Vasm>
 }
 
@@ -70,7 +68,7 @@ pub struct VirtualSetFieldInfo {
 #[derive(Debug, Clone)]
 pub struct VirtualFunctionCallInfo {
     pub call: FunctionCall,
-    pub function_index_var: Option<Rc<VariableInfo>>,
+    pub function_index_var: Option<VariableInfo>,
     pub args: Vasm,
 }
 
@@ -149,36 +147,36 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn get_var(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn get_var(var_info: &VariableInfo) -> Self {
         Self::GetVariable(VirtualGetVariableInfo{
-            var_info: Rc::clone(var_info),
+            var_info: var_info.clone(),
         })
     }
 
-    pub fn set_var<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+    pub fn set_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
         Self::SetVariable(VirtualSetVariableInfo {
-            var_info: Rc::clone(var_info),
+            var_info: var_info.clone(),
             value: Some(value.to_vasm())
         })
     }
 
-    pub fn set_var_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn set_var_from_stack(var_info: &VariableInfo) -> Self {
         Self::SetVariable(VirtualSetVariableInfo {
-            var_info: Rc::clone(var_info),
+            var_info: var_info.clone(),
             value: None
         })
     }
 
-    pub fn tee_var<T : ToVasm>(var_info: &Rc<VariableInfo>, value: T) -> Self {
+    pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
         Self::TeeVariable(VirtualSetVariableInfo {
-            var_info: Rc::clone(var_info),
+            var_info: var_info.clone(),
             value: Some(value.to_vasm())
         })
     }
 
-    pub fn tee_var_from_stack(var_info: &Rc<VariableInfo>) -> Self {
+    pub fn tee_var_from_stack(var_info: &VariableInfo) -> Self {
         Self::TeeVariable(VirtualSetVariableInfo {
-            var_info: Rc::clone(var_info),
+            var_info: var_info.clone(),
             value: None
         })
     }
@@ -186,7 +184,7 @@ impl VirtualInstruction {
     pub fn call_function<T : ToVasm>(call: FunctionCall, args: T) -> Self {
         let function_index_var = match &call {
             FunctionCall::Named(_) => None,
-            FunctionCall::Anonymous(_) => Some(VariableInfo::new(Identifier::unique("function_index", &DataLocation::default()), Type::Int, VariableKind::Local)),
+            FunctionCall::Anonymous(_) => Some(VariableInfo::from(Identifier::unique("function_index", &DataLocation::default()), Type::Int, VariableKind::Local)),
         };
 
         Self::FunctionCall(VirtualFunctionCallInfo {
@@ -365,7 +363,7 @@ impl VirtualInstruction {
         }
     }
 
-    pub fn collect_variables(&self, list: &mut Vec<Rc<VariableInfo>>) {
+    pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         match self {
             VirtualInstruction::Drop(ty) => {},
             VirtualInstruction::Eqz => {},
@@ -428,7 +426,7 @@ impl VirtualInstruction {
 
                 vasm.resolve(type_index, context)
             },
-            VirtualInstruction::GetVariable(info) => match info.var_info.ty.resolve(type_index, context).wasm_type.is_some() {
+            VirtualInstruction::GetVariable(info) => match info.var_info.ty().resolve(type_index, context).wasm_type.is_some() {
                 true => vec![info.var_info.get_to_stack()],
                 false => vec![],
             },
@@ -445,7 +443,7 @@ impl VirtualInstruction {
                     content.extend(vasm.resolve(type_index, context));
                 }
 
-                if info.var_info.ty.resolve(type_index, context).wasm_type.is_some() {
+                if info.var_info.ty().resolve(type_index, context).wasm_type.is_some() {
                     if let VirtualInstruction::TeeVariable(_) = self {
                         content.push(info.var_info.tee_from_stack());
                     } else {
@@ -534,7 +532,7 @@ impl VirtualInstruction {
                                     wat![Wat::const_i32(4)],
                                     wat!["i32.mul"],
                                     wat!["i32.load"],
-                                    Wat::set_local_from_stack(&function_index_var.wasm_name)
+                                    Wat::set_local_from_stack(&function_index_var.get_wasm_name())
                                 ]);
                                 content.extend(info.args.resolve(type_index, context));
                                 content.extend(vec![
@@ -546,7 +544,7 @@ impl VirtualInstruction {
                             },
                             None => {
                                 content.extend(vec![
-                                    Wat::set_local_from_stack(&function_index_var.wasm_name)
+                                    Wat::set_local_from_stack(&function_index_var.get_wasm_name())
                                 ]);
                                 content.extend(info.args.resolve(type_index, context));
                                 content.extend(vec![
