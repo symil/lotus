@@ -1,13 +1,13 @@
 export type(void) void {
     static __chosen() -> This {{ }}
     static default() -> This {{ }}
-    static type_name() -> string { return "void"; }
+    static type_name() -> string { "void" }
     static __none() -> This {{ }}
     __is_none() -> bool  {{ (i32.const 1) }}
     __hash() -> int  {{ (i32.const 0) }}
 
-    to_string() -> string { return "void"; }
-    to_debug_string(set: Set<ptr>) -> string { return "void"; }
+    to_string() -> string { "void" }
+    to_debug_string(set: Set<ptr>) -> string { "void" }
     eq(This) -> bool {{ (i32.const 1) }}
     ne(This) -> bool {{ (i32.const 0) }}
     __retain() {{ }}

@@ -1,16 +1,23 @@
 use std::collections::HashMap;
 use parsable::parsable;
 use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, vasm, wat};
-use super::{AssignmentOperatorWrapper, Expression, VarPath};
+use super::{AssignmentOperatorWrapper, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]
 pub struct Assignment {
     pub lvalue: VarPath,
-    pub rvalue: Option<(AssignmentOperatorWrapper, Expression)>
+    pub rvalue: Option<(AssignmentOperatorWrapper, Expression)>,
 }
 
 impl Assignment {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+        match &self.rvalue {
+            Some(rvalue) => {},
+            None => self.lvalue.collected_instancied_type_names(list),
+        }
+    }
+
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
         if let Some((equal_token, rvalue)) = &self.rvalue {
@@ -52,7 +59,7 @@ impl Assignment {
                         source.push(left_vasm);
 
                         if ok {
-                            result = Some(Vasm::merge(source));
+                            result = Some(Vasm::merge_with_type(context.void_type(), source));
                         }
                     } else {
                         context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_vasm.ty, &right_vasm.ty));
@@ -60,12 +67,8 @@ impl Assignment {
                 }
             }
         } else {
-            if let Some(vasm) = self.lvalue.process(None, AccessType::Get, context) {
-                let drop_vasm = vasm![
-                    VI::Drop(vasm.ty.clone())
-                ];
-
-                result = Some(Vasm::merge(vec![vasm, drop_vasm]));
+            if let Some(vasm) = self.lvalue.process(type_hint, AccessType::Get, context) {
+                result = Some(vasm);
             }
         }
 

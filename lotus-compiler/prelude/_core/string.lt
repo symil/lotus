@@ -1,25 +1,21 @@
 export type(i32) string {
     type Item = char;
 
-    static __chosen() -> string {
-        return "lotus";
-    }
-
     static __create(length: int) -> string {
         let result = @alloc(length + 2);
 
         result[0] = length;
         result[1] = 0;
 
-        return (result as string);
+        (result as string)
     }
 
     static default() -> string {
-        return "";
+        ""
     }
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> string {{
@@ -31,11 +27,11 @@ export type(i32) string {
     }}
 
     _header() -> ptr {
-        return this as ptr;
+        this as ptr
     }
 
     _content() -> Pointer<char> {
-        return (this as Pointer<char>).add(2);
+        (this as Pointer<char>).add(2)
     }
 
     __hash() -> int {
@@ -54,25 +50,25 @@ export type(i32) string {
             header[1] = hash;
         }
 
-        return hash;
+        hash
     }
 
     __set_char(index: int, c: char) -> string {
         this._content()[index] = c;
 
-        return this;
+        this
     }
 
     get_at(index: int) -> char {
-        return this._content()[index];
+        this._content()[index]
     }
 
     get_iterable_len() -> int {
-        return this.len();
+        this.len()
     }
 
     get_iterable_ptr() -> Pointer<char> {
-        return this._content();
+        this._content()
     }
 
     add(other: string) -> string {
@@ -82,26 +78,26 @@ export type(i32) string {
         this._content().copy_to(new_content, this.len());
         other._content().copy_to(new_content.add(this.len()), other.len());
 
-        return new_string;
+        new_string
     }
 
     eq(other: string) -> bool {
         let hash_1 = this.__hash();
         let hash_2 = other.__hash();
 
-        return hash_1 == hash_2;
+        hash_1 == hash_2
     }
 
     ne(other: string) -> bool {
-        return !this.eq(other);
+        !this.eq(other)
     }
 
     len() -> int {
-        return (this as ptr)[0];
+        (this as ptr)[0]
     }
 
     to_string() -> string {
-        return this;
+        this
     }
 
     to_debug_string(set: Set<ptr>) -> string {
@@ -116,27 +112,28 @@ export type(i32) string {
 
         this._content().copy_to(result._content().add(1), this.len());
 
-        return result;
+        result
     }
 
     is_empty() -> bool {
-        return this.len() == 0;
+        this.len() == 0
     }
 
     pad_start(c: char, target_length: int) -> string {
-        if this.len() >= target_length {
-            return this;
-        } else {
-            let result = string::__create(target_length);
-            let start = target_length - this.len();
+        match this.len() >= target_length {
+            true => this,
+            false => {
+                let result = string::__create(target_length);
+                let start = target_length - this.len();
 
-            for i in 0..start {
-                result.__set_char(i, c);
+                for i in 0..start {
+                    result.__set_char(i, c);
+                }
+
+                this._content().copy_to(result._content().add(start), this.len());
+
+                result
             }
-
-            this._content().copy_to(result._content().add(start), this.len());
-
-            return result;
         }
     }
 
@@ -149,16 +146,16 @@ export type(i32) string {
             }
         }
 
-        return none;
+        none
     }
 
     contains(str: string) -> bool {
-        return !!this.find(str, 0);
+        !!this.find(str, 0)
     }
 
     starts_with(str: string, index: int) -> bool {
         if index + str.len() > this.len() {
-            return false;
+            false
         } else {
             for i in 0..str.len() {
                 if this[index + i] != str[i] {
@@ -166,7 +163,7 @@ export type(i32) string {
                 }
             }
 
-            return true;
+            true
         }
     }
 
@@ -201,7 +198,7 @@ export type(i32) string {
 
         this._content().add(start).copy_to(result._content(), result_length);
 
-        return result;
+        result
     }
 
     split(separator: string) -> string[] {
@@ -229,7 +226,7 @@ export type(i32) string {
             result.push(this.substring(start, none));
         }
 
-        return result;
+        result
     }
 
     indent(tab_length: int) -> string {
@@ -240,7 +237,7 @@ export type(i32) string {
             lines[i] = tab + lines[i];
         }
 
-        return lines.join("\n");
+        lines.join("\n")
     }
 
     __retain() {
@@ -279,6 +276,6 @@ export type(i32) string {
             str.__set_char(i, char::__deserialize(buffer));
         }
 
-        return str;
+        str
     }
 }

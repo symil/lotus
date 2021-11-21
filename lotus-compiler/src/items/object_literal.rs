@@ -25,7 +25,7 @@ impl ObjectLiteral {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = Vasm::empty();
+        let mut result = Vasm::void();
 
         if let Some(object_type) = self.object_type.process(true, context) {
             if let Type::Actual(info) = &object_type {
@@ -35,7 +35,7 @@ impl ObjectLiteral {
                 if type_unwrapped.is_class() {
                     let mut fields_init = HashMap::new();
 
-                    result.extend(Vasm::undefined(vec![object_var.clone()], vec![
+                    result.extend(Vasm::new(Type::Void, vec![object_var.clone()], vec![
                         VI::call_static_method(&object_type, CREATE_METHOD_NAME, &[], vec![], context),
                         VI::set_var_from_stack(&object_var)
                     ]));

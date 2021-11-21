@@ -9,10 +9,6 @@ pub struct ParenthesizedExpression {
 }
 
 impl ParenthesizedExpression {
-    pub fn has_side_effects(&self) -> bool {
-        self.expr_list.iter().any(|expr| expr.has_side_effects())
-    }
-
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         for expr in &self.expr_list {
             expr.collected_instancied_type_names(list);

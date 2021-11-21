@@ -15,9 +15,6 @@ impl Action {
 
         match &self.keyword.token {
             ActionKeywordToken::Return => {
-                let function_depth = context.get_scope_depth(ScopeKind::Function).unwrap();
-                context.return_found = true;
-
                 let function_wrapped = context.get_current_function().unwrap();
                 let function_unwrapped = function_wrapped.borrow();
                 let return_value = &function_unwrapped.return_value;
@@ -30,8 +27,7 @@ impl Action {
                             if let Some(vasm) = expr.process(type_hint, context) {
                                 if vasm.ty.is_assignable_to(&return_value.ty) {
                                     result = Some(vasm![
-                                        VI::set_var(return_value, vasm),
-                                        VI::jump(function_depth)
+                                        VI::return_value(vasm)
                                     ]);
                                 } else {
                                     if !vasm.ty.is_undefined() {
@@ -51,7 +47,7 @@ impl Action {
                             }
                         },
                         None => {
-                            result = Some(vasm![VI::jump(function_depth)]);
+                            result = Some(vasm![VI::return_value(vasm![])]);
                         },
                     },
                 }

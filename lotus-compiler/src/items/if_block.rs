@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
-use super::{Branch, StatementList};
+use super::{Branch, BlockExpression};
 
 #[parsable]
 pub struct IfBlock {
@@ -9,22 +9,19 @@ pub struct IfBlock {
     #[parsable(prefix="else if", separator="else if", optional=true)]
     pub else_if_branches: Vec<Branch>,
     #[parsable(prefix="else")]
-    pub else_branch: Option<StatementList>
+    pub else_branch: Option<BlockExpression>
 }
 
 impl IfBlock {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut return_found = context.return_found;
-        let mut branches_return = vec![];
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
+        let mut result = Vasm::void();
+        let mut required_branch_type = Type::Void;
 
-        context.return_found = false;
-
-        let mut result = Vasm::empty();
-
-        context.return_found = false;
         context.push_scope(ScopeKind::Branch);
-        if let (Some(condition_vasm), Some(block_vasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(context)) {
-            result.extend(VI::block(vasm![
+        if let (Some(condition_vasm), Some(block_vasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(type_hint, context)) {
+            required_branch_type = block_vasm.ty.clone();
+
+            result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
                 condition_vasm,
                 VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                 block_vasm,
@@ -32,14 +29,17 @@ impl IfBlock {
             ]));
         }
         context.pop_scope();
-        branches_return.push(context.return_found);
 
-        for branch in &self.else_if_branches {
-            context.return_found = false;
+        for else_if_branch in &self.else_if_branches {
             context.push_scope(ScopeKind::Branch);
 
-            if let (Some(condition_vasm), Some(block_vasm)) = (branch.process_condition(context), branch.process_body(context)) {
-                result.extend(VI::block(vasm![
+            if let (Some(condition_vasm), Some(block_vasm)) = (else_if_branch.process_condition(context), else_if_branch.process_body(Some(&required_branch_type), context)) {
+                match block_vasm.ty.get_common_type(&required_branch_type) {
+                    Some(ty) => required_branch_type = ty.clone(),
+                    None => context.errors.add(&else_if_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
+                }
+
+                result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
                     condition_vasm,
                     VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                     block_vasm,
@@ -47,26 +47,28 @@ impl IfBlock {
                 ]));
             }
             context.pop_scope();
-            branches_return.push(context.return_found);
         }
 
-        context.return_found = false;
         if let Some(else_branch) = &self.else_branch {
             context.push_scope(ScopeKind::Branch);
 
-            if let Some(vasm) = else_branch.process(context) {
-                result.extend(VI::block(vasm![
-                    vasm,
+            if let Some(block_vasm) = else_branch.process(Some(&required_branch_type), context) {
+                match block_vasm.ty.get_common_type(&required_branch_type) {
+                    Some(ty) => {},
+                    None => context.errors.add(&else_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
+                }
+
+                result.extend(VI::typed_block(vec![block_vasm.ty.clone()], vasm![
+                    block_vasm,
                     VI::jump(1)
                 ]));
             }
 
             context.pop_scope();
+        } else if !required_branch_type.is_void() {
+            context.errors.add(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
         }
-        branches_return.push(context.return_found);
 
-        context.return_found = return_found || branches_return.iter().all(|value| *value);
-
-        Some(vasm![VI::block(result)])
+        Some(Vasm::new(required_branch_type.clone(), vec![], vec![VI::typed_block(vec![required_branch_type], result)]))
     }
 }

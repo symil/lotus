@@ -11,7 +11,7 @@ export type(i32) bool {
     }}
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> bool {{
@@ -23,19 +23,18 @@ export type(i32) bool {
     }}
 
     __hash() -> int {
-        return (this as int).__hash();
+        (this as int).__hash()
     }
 
     to_string() -> string {
-        if this {
-            return "true";
-        } else {
-            return "false";
+        match this {
+            true => "true",
+            false => "false"
         }
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        return this.to_string();
+        this.to_string()
     }
 
     __retain() {{
@@ -47,6 +46,6 @@ export type(i32) bool {
     }
 
     static __deserialize(buffer: Buffer) -> bool? {
-        return buffer.read().to_bool();
+        buffer.read().to_bool()
     }
 }

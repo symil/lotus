@@ -34,7 +34,7 @@ export type(i32) int {
     }}
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> int {{
@@ -47,49 +47,42 @@ export type(i32) int {
     }}
 
     min(other: int) -> int {
-        if this < other {
-            return this;
-        } else {
-            return other;
+        match this < other {
+            true => this,
+            false => other
         }
     }
 
     max(other: int) -> int {
-        if this > other {
-            return this;
-        } else {
-            return other;
+        match this > other {
+            true => this,
+            false => other
         }
     }
 
     clamp(min: int, max: int) -> int {
-        if this < min {
-            return min;
-        } else if this > max {
-            return max;
-        } else {
-            return this;
+        match this < min {
+            true => min,
+            false => match this > max {
+                true => max,
+                false => this
+            }
         }
     }
 
     to_hexa_string() -> string {
-        return "0x" + int_to_string(this, 16).pad_start('0', 8);
+        "0x" + int_to_string(this, 16).pad_start('0', 8)
     }
 
     to_string() -> string {
-        if this.__is_none() {
-            return "none";
+        match this.__is_none() {
+            true => "none",
+            false => int_to_string(this, 10)
         }
-
-        return int_to_string(this, 10);
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
-            return "none";
-        }
-
-        return this.to_string();
+        this.to_string()
     }
 
     log(base: int) -> int {
@@ -105,31 +98,29 @@ export type(i32) int {
             n /= base;
         }
 
-        return result;
+        result
     }
     
     log2() -> int {
-        if this < 2 {
-            return 1;
-        } else {
-            return 32 - (this - 1).clz();
+        match this < 2 {
+            true => 1,
+            false => 32 - (this - 1).clz()
         }
     }
 
     next_power_of_2() -> int {
-        return 1 << this.log2();
+        1 << this.log2()
     }
 
     log4() -> int {
-        if this < 4 {
-            return 1;
-        } else {
-            return (33 - (this - 1).clz()) / 2;
+        match this < 4 {
+            true => 1,
+            false => (33 - (this - 1).clz()) / 2
         }
     }
 
     next_power_of_4() -> int {
-        return 1 << (this.log4() * 2);
+        1 << (this.log4() * 2)
     }
 
     pow(exponent: int) -> int {
@@ -140,7 +131,7 @@ export type(i32) int {
             exponent = exponent - 1;
         }
 
-        return result;
+        result
     }
 
     // https://github.com/nodejs/node/blob/238104c531219db05e3421521c305404ce0c0cce/deps/v8/src/utils/utils.h#L213
@@ -154,7 +145,7 @@ export type(i32) int {
         hash = hash * 2057;
         hash = hash ^ (hash >> 16);
 
-        return hash & 0x3fffffff;
+        hash & 0x3fffffff
     }
 
     __retain() {{
@@ -166,15 +157,14 @@ export type(i32) int {
     }
 
     static __deserialize(buffer: Buffer) -> int? {
-        return buffer.read();
+        buffer.read()
     }
 }
 
 fn get_char(n: int) -> char {
-    if n < 10 {
-        return ('0'.to_int() + n).to_char();
-    } else {
-        return ('A'.to_int() + (n - 10)).to_char();
+    match n < 10 {
+        true => ('0'.to_int() + n).to_char(),
+        false => ('A'.to_int() + (n - 10)).to_char()
     }
 }
 
@@ -205,7 +195,7 @@ fn int_to_string(n: int, base: int) -> string {
         str.__set_char(0, '-');
     }
 
-    return str;
+    str
 }
 
 fn log_int(n: int) {{

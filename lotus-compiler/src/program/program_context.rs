@@ -22,8 +22,6 @@ pub struct ProgramContext {
     pub current_interface: Option<Link<InterfaceBlueprint>>,
     pub autogen_type: Option<Link<TypeBlueprint>>,
     pub scopes: Vec<Scope>,
-    pub depth: u32,
-    pub return_found: bool,
     pub iter_fields_counter: Option<usize>,
     pub iter_variants_counter: Option<usize>,
     pub iter_ancestors_counter: Option<usize>,
@@ -127,26 +125,26 @@ impl ProgramContext {
     }
 
     pub fn reset_local_scope(&mut self) {
-        self.return_found = false;
         self.scopes = vec![];
     }
 
     pub fn push_scope(&mut self, kind: ScopeKind) {
-        self.depth += kind.get_depth();
-        self.scopes.push(Scope::new(kind, self.depth));
+        self.scopes.push(Scope::new(kind));
     }
 
     pub fn pop_scope(&mut self) {
-        if let Some(scope) = self.scopes.pop() {
-            self.depth -= scope.kind.get_depth();
-        }
+        self.scopes.pop();
     }
 
     pub fn get_scope_depth(&self, kind: ScopeKind) -> Option<u32> {
+        let mut result = 0;
+
         for scope in self.scopes.iter().rev() {
             if scope.kind == kind {
-                return Some(self.depth - scope.depth);
+                return Some(result);
             }
+
+            result += scope.kind.get_depth();
         }
 
         None

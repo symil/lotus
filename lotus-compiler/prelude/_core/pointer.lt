@@ -8,7 +8,7 @@ export type(i32) Pointer<T> {
     }}
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> This {{
@@ -20,7 +20,7 @@ export type(i32) Pointer<T> {
     }}
 
     __hash() -> int {
-        return (this as int).__hash();
+        (this as int).__hash()
     }
 
     is_null() -> bool {{
@@ -36,7 +36,7 @@ export type(i32) Pointer<T> {
     }}
 
     add(offset: int) -> This {
-        return ((this as int) + offset) as This;
+        ((this as int) + offset) as This
     }
 
     set_at(index: int, value: T) {
@@ -48,7 +48,7 @@ export type(i32) Pointer<T> {
     get_at(index: int) -> T {
         let byte_index = ((this as int) + index) * 4;
 
-        return wasm_load(byte_index);
+        wasm_load(byte_index)
     }
 
     print() {{
@@ -64,7 +64,7 @@ export type(i32) Pointer<T> {
             return "none";
         }
 
-        return "[Pointer " + (this as int).to_hexa_string() + "]";
+        "[Pointer " + (this as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
@@ -72,7 +72,7 @@ export type(i32) Pointer<T> {
             return "none";
         }
 
-        return (this as int).to_hexa_string();
+        (this as int).to_hexa_string()
     }
 
     __retain() {
@@ -84,7 +84,7 @@ export type(i32) Pointer<T> {
     }
 
     static __deserialize(buffer: Buffer) -> This? {
-        return buffer.read() as This;
+        buffer.read() as This
     }
 }
 

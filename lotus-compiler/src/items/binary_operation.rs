@@ -9,20 +9,6 @@ pub struct BinaryOperation {
 }
 
 impl BinaryOperation {
-    pub fn has_side_effects(&self) -> bool {
-        match self.first.has_side_effects() {
-            true => true,
-            false => self.others.iter().any(|(_, operand)| operand.has_side_effects())
-        }
-    }
-
-    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
-        match self.others.is_empty() {
-            true => self.first.as_single_local_variable(),
-            false => None,
-        }
-    }
-
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         self.first.collected_instancied_type_names(list);
         
@@ -58,13 +44,6 @@ impl<'a> OperationTree<'a> {
                 }
             },
             OperationTree::Value(operand) => operand.process(None, context),
-        }
-    }
-
-    fn has_side_effects(&self) -> bool {
-        match self {
-            OperationTree::Operation(left, _, right) => left.has_side_effects() || right.has_side_effects(),
-            OperationTree::Value(operand) => operand.has_side_effects() ,
         }
     }
 

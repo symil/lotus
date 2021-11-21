@@ -16,7 +16,7 @@ export type(i32) char {
     }}
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> char {{
@@ -29,7 +29,7 @@ export type(i32) char {
     }}
 
     __hash() -> int {
-        return (this as int).__hash();
+        (this as int).__hash()
     }
 
     to_string() -> string {
@@ -41,7 +41,7 @@ export type(i32) char {
 
         str.__set_char(0, this);
 
-        return str;
+        str
     }
 
     to_debug_string(set: Set<ptr>) -> string {
@@ -59,15 +59,15 @@ export type(i32) char {
             return "'\\0'";
         } else if c == '\'' {
             return "'\\''";
-        } else {
-            let str = string::__create(3);
-
-            str.__set_char(0, '\'');
-            str.__set_char(1, c);
-            str.__set_char(2, '\'');
-
-            return str;
         }
+        
+        let str = string::__create(3);
+
+        str.__set_char(0, '\'');
+        str.__set_char(1, c);
+        str.__set_char(2, '\'');
+
+        str
     }
 
     __retain() {{
@@ -79,6 +79,6 @@ export type(i32) char {
     }
 
     static __deserialize(buffer: Buffer) -> char? {
-        return buffer.read().to_char();
+        buffer.read().to_char()
     }
 }

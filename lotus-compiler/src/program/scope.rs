@@ -5,7 +5,6 @@ use super::{VariableInfo, insert_in_vec_hashmap};
 #[derive(Debug)]
 pub struct Scope {
     pub kind: ScopeKind,
-    pub depth: u32,
     pub variables: HashMap<String, Vec<Rc<VariableInfo>>>,
 }
 
@@ -19,10 +18,9 @@ pub enum ScopeKind {
 }
 
 impl Scope {
-    pub fn new(kind: ScopeKind, depth: u32) -> Self {
+    pub fn new(kind: ScopeKind) -> Self {
         Self {
             kind,
-            depth,
             variables: HashMap::new()
         }
     }
@@ -40,10 +38,10 @@ impl ScopeKind {
     pub fn get_depth(&self) -> u32 {
         match self {
             ScopeKind::Global => 0,
-            ScopeKind::Function => 1,
+            ScopeKind::Function => 0,
             ScopeKind::Loop => 2,
             ScopeKind::Branch => 2,
-            ScopeKind::Local => 1
+            ScopeKind::Local => 2,
         }
     }
 }

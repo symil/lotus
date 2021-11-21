@@ -50,7 +50,7 @@ fn wasm_memory_grow(int) -> int {{
 }}
 
 fn alloc_page() -> ptr {
-    return (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
+    (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr
 }
 
 // Will be called after all global variables have been initialized, and before the main function is called
@@ -100,7 +100,7 @@ sys fn mem_alloc(block_size: int) -> ptr {
         }
     }
 
-    return result;
+    result
 }
 
 sys fn mem_free(pointer: ptr) {
@@ -149,7 +149,7 @@ sys fn mem_retain(addr: ptr) -> bool {
         success = true;
     }
 
-    return success;
+    success
 }
 
 pub fn mem_copy(dest: ptr, src: ptr, count: int) {

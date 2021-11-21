@@ -10,12 +10,15 @@ pub struct WhileBlock {
 
 impl WhileBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = Vasm::empty();
-        let return_found = context.return_found;
+        let mut result = Vasm::void();
 
         context.push_scope(ScopeKind::Loop);
 
-        if let (Some(condition_vasm), Some(block_vasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(context)) {
+        if let (Some(condition_vasm), Some(block_vasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(None, context)) {
+            if !block_vasm.ty.is_void() {
+                context.errors.add(&self, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+            }
+            
             result.extend(VI::block(
                 VI::loop_(vasm![
                     condition_vasm,
@@ -27,7 +30,6 @@ impl WhileBlock {
         }
 
         context.pop_scope();
-        context.return_found = return_found;
 
         Some(result)
     }

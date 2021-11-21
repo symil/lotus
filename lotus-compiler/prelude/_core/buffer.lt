@@ -8,25 +8,21 @@ export class Buffer {
     map: Map<int, ptr>
 
     static from_array(array: int[]) -> Buffer {
-        return Buffer {
+        Buffer {
             buffer: array.body(),
             size: array.len(),
             capacity: array.capacity()
-        };
+        }
     }
 
     save_addr<T>(value: T) -> bool {
         this.push(value as int);
 
-        if this.set.add(value as ptr) {
-            return true;
-        } else {
-            return false;
-        }
+        this.set.add(value as ptr)
     }
 
     retrieve<T>(key: int) -> T? {
-        return (this.map.get(key) as T);
+        (this.map.get(key) as T)
     }
 
     register<T>(key: int, value: T) {
@@ -54,17 +50,17 @@ export class Buffer {
         if this.read_index >= this.size {
             this.read_overflow = true;
 
-            return none;
+            none
         } else {
             let value = this.buffer[this.read_index];
 
             this.read_index += 1;
 
-            return value;
+            value
         }
     }
 
     consume() -> int[] {
-        return int[]::from_raw_parts(this.buffer, this.size, this.capacity);
+        int[]::from_raw_parts(this.buffer, this.size, this.capacity)
     }
 }

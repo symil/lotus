@@ -4,25 +4,11 @@ use super::{Identifier, VarPathRoot, VarPathSegment};
 
 #[parsable]
 pub struct VarPath {
-    pub root: VarPathRoot,
+    pub root: Box<VarPathRoot>,
     pub path: Vec<VarPathSegment>
 }
 
 impl VarPath {
-    pub fn has_side_effects(&self) -> bool {
-        match self.root.has_side_effects() {
-            true => true,
-            false => self.path.iter().any(|segment| segment.has_side_effects()),
-        }
-    }
-
-    pub fn as_single_local_variable(&self) -> Option<&Identifier> {
-        match self.path.is_empty() {
-            true => self.root.as_single_local_variable(),
-            false => None,
-        }
-    }
-
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         self.root.collected_instancied_type_names(list);
     }

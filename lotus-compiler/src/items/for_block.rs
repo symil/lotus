@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use parsable::parsable;
 use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, TypeIndex, VI, VariableInfo, VariableKind, Vasm, Wat}, vasm, wat};
-use super::{Expression, Identifier, Statement, StatementList};
+use super::{Expression, Identifier, BlockExpression};
 
 #[parsable]
 pub struct ForBlock {
@@ -12,7 +12,7 @@ pub struct ForBlock {
     pub range_start: Expression,
     #[parsable(prefix="..", set_marker="no-object")]
     pub range_end: Option<Expression>,
-    pub statements: StatementList
+    pub body: BlockExpression
 }
 
 #[parsable]
@@ -35,7 +35,6 @@ impl ForBlock {
             ForIterator::Item(item_name) => (Identifier::unique("index", self), item_name.clone()),
             ForIterator::IndexAndItem(index_and_item) => (index_and_item.index_name.clone(), index_and_item.item_name.clone()),
         };
-        let return_found = context.return_found;
 
         context.check_var_unicity(&index_var_name);
         context.check_var_unicity(&item_var_name);
@@ -65,8 +64,12 @@ impl ForBlock {
                 context.push_var(&index_var);
                 context.push_var(&item_var);
 
-                if let Some(block_vasm) = self.statements.process(context) {
-                    result = Some(Vasm::new(Type::Undefined, variables, vec![
+                if let Some(block_vasm) = self.body.process(None, context) {
+                    if !block_vasm.ty.is_void() {
+                        context.errors.add(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                    }
+
+                    result = Some(Vasm::new(Type::Void, variables, vec![
                         VI::set_var(&range_end_var, range_end_vasm),
                         VI::set_var(&item_var, range_start_vasm),
                         VI::set_var(&index_var, VI::int(-1)),
@@ -100,10 +103,14 @@ impl ForBlock {
             context.push_var(&item_var);
 
             if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
-                if let Some(block_vasm) = self.statements.process(context) {
+                if let Some(block_vasm) = self.body.process(None, context) {
+                    if !block_vasm.ty.is_void() {
+                        context.errors.add(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                    }
+
                     let iterable_type = iterable_vasm.ty.clone();
 
-                    result = Some(Vasm::new(Type::Undefined, variables, vec![
+                    result = Some(Vasm::new(Type::Void, variables, vec![
                         VI::set_var(&iterable_var, iterable_vasm),
                         VI::set_var(&index_var, VI::int(-1)),
                         VI::set_var(&iterable_len_var, VI::call_regular_method(&iterable_type, GET_ITERABLE_LEN_FUNC_NAME, &[], vec![VI::get_var(&iterable_var)], context)),
@@ -120,15 +127,10 @@ impl ForBlock {
                         ])
                     ]));
                 }
-            } else {
-                self.statements.process(context);
             }
-        } else {
-            self.statements.process(context);
         }
 
         context.pop_scope();
-        context.return_found = return_found;
 
         result
     }

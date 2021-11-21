@@ -42,8 +42,6 @@ impl FunctionInstanceContent {
 
                     if let Some(wasm_type) = function_unwrapped.return_value.ty.resolve(&type_index, context).wasm_type {
                         wat_ret.push(wasm_type);
-                        wat_locals.push((&function_unwrapped.return_value.wasm_name, wasm_type));
-                        wat_body.push(Wat::get_local(&function_unwrapped.return_value.wasm_name));
                     }
 
                     function_unwrapped.body.collect_variables(&mut variables);

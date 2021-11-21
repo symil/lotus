@@ -29,7 +29,7 @@ export type(f32) float {
     }}
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> float {{
@@ -44,15 +44,11 @@ export type(f32) float {
     }}
 
     __hash() -> int {
-        return this.as_int().__hash();
-    }
-
-    static __chosen() -> float {
-        return 18.5f;
+        this.as_int().__hash()
     }
 
     is_nan() -> bool {
-        return !(this == this);
+        !(this == this)
     }
 
     to_string() -> string {
@@ -64,7 +60,7 @@ export type(f32) float {
 
         call_float_to_string(this, result);
 
-        return result as string;
+        result as string
     }
 
     to_debug_string(set: Set<ptr>) -> string {
@@ -72,7 +68,7 @@ export type(f32) float {
             return "none";
         }
 
-        return this.to_string();
+        this.to_string()
     }
 
     __retain() {{
@@ -84,7 +80,7 @@ export type(f32) float {
     }
 
     static __deserialize(buffer: Buffer) -> float? {
-        return buffer.read().as_float();
+        buffer.read().as_float()
     }
 }
 

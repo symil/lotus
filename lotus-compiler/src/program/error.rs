@@ -55,6 +55,7 @@ impl Error {
                 end: 0,
                 file_name: error.file_name,
                 file_namespace: error.file_namespace,
+                file_content: error.file_content,
                 line: error.line,
                 column: error.column
             }),

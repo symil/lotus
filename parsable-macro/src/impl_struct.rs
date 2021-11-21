@@ -146,11 +146,26 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     // };
                 }
 
+                let make_field_from_string = match is_option {
+                    true => quote! { Some(value) },
+                    false => quote! { value },
+                };
+
                 if let Some(pattern) = attributes.regex {
                     assignment = quote! {
                         let #field_name = match reader__.read_regex(#pattern) {
-                            Some(value) => match <#field_type as std::str::FromStr>::from_str(value) {
-                                Ok(value) => value,
+                            Some(value) => match <String as std::str::FromStr>::from_str(value) {
+                                Ok(value) => #make_field_from_string,
+                                Err(_) => { #on_fail }
+                            },
+                            None => { #on_fail }
+                        };
+                    }
+                } else if let Some(literal) = attributes.value {
+                    assignment = quote! {
+                        let #field_name = match reader__.read_string(#literal) {
+                            Some(value) => match <String as std::str::FromStr>::from_str(value) {
+                                Ok(value) => #make_field_from_string,
                                 Err(_) => { #on_fail }
                             },
                             None => { #on_fail }

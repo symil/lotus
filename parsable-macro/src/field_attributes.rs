@@ -5,6 +5,7 @@ use syn::{*, parse::{Parse, ParseStream}};
 
 #[derive(Default)]
 pub struct FieldAttributes {
+    pub value: Option<String>,
     pub regex: Option<String>,
     pub prefix: Option<String>,
     pub suffix: Option<String>,
@@ -35,6 +36,7 @@ impl Parse for FieldAttributes {
                 content.parse::<Token![=]>()?;
 
                 match name.as_str() {
+                    "value" => attributes.value = Some(content.parse::<LitStr>()?.value()),
                     "regex" => attributes.regex = Some(content.parse::<LitStr>()?.value()),
                     "prefix" => attributes.prefix = Some(content.parse::<LitStr>()?.value()),
                     "suffix" => attributes.suffix = Some(content.parse::<LitStr>()?.value()),

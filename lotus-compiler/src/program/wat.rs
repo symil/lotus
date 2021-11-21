@@ -4,8 +4,8 @@ use super::{ToInt, ToWat, ToWatVec};
 
 #[derive(Default, Debug, Clone)]
 pub struct Wat {
-    keyword: String,
-    arguments: Vec<Wat>
+    pub keyword: String,
+    pub arguments: Vec<Wat>
 }
 
 impl Wat {

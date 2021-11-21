@@ -1,18 +1,18 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, Type, Vasm}};
-use super::{StatementList, WasmExpressionList};
+use super::{BlockExpression, WasmExpressionList};
 
 #[parsable]
 pub enum FunctionBody {
     WebAssembly(WasmExpressionList),
-    Statements(StatementList),
+    Block(BlockExpression),
 }
 
 impl FunctionBody {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             FunctionBody::WebAssembly(wasm) => wasm.process(context),
-            FunctionBody::Statements(statements) => statements.process(context),
+            FunctionBody::Block(statements) => statements.process(type_hint, context),
         }
     }
 

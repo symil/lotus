@@ -21,7 +21,7 @@ sys type(i32) Enum {
     }}
 
     autogen static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     autogen to_string() -> string {
@@ -34,11 +34,11 @@ sys type(i32) Enum {
             }
         }
 
-        return "none";
+        "none"
     }
 
     autogen to_debug_string(set: Set<ptr>) -> string {
-        return this.to_string();
+        this.to_string()
     }
 
     autogen __retain() {{
@@ -51,11 +51,11 @@ sys type(i32) Enum {
 
     autogen static __deserialize(buffer: Buffer) -> This? {
         let int_value = buffer.read();
+        let ok = int_value >= 0 && int_value < #VARIANT_COUNT;
 
-        if int_value < 0 || int_value >= #VARIANT_COUNT {
-            return none;
-        } else {
-            return int_value as This;
+        match ok {
+            true => int_value as This,
+            false => none
         }
     }
 }

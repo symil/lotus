@@ -10,7 +10,7 @@ export type(i32) Array<T> {
         header[1] = length;
         header[2] = capacity;
 
-        return header as This;
+        header as This
     }
 
     static with_capacity(capacity: int) -> This {
@@ -22,7 +22,7 @@ export type(i32) Array<T> {
         header[1] = 0;
         header[2] = capacity;
 
-        return header as This;
+        header as This
     }
 
     static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> This {
@@ -32,15 +32,15 @@ export type(i32) Array<T> {
         header[1] = length;
         header[2] = capacity;
 
-        return header as This;
+        header as This
     }
 
     static default() -> This {
-        return This::__create(0);
+        This::__create(0)
     }
 
     static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     static __none() -> This {{
@@ -52,19 +52,19 @@ export type(i32) Array<T> {
     }}
 
     __hash() -> int {
-        return (this as int).__hash();
+        (this as int).__hash()
     }
 
     get_iterable_len() -> int {
-        return this.len();
+        this.len()
     }
 
     get_iterable_ptr() -> Pointer<T> {
-        return this.body();
+        this.body()
     }
 
     add(other: This) -> This {
-        return this.concat(other);
+        this.concat(other)
     }
 
     eq(other: This) -> bool {{
@@ -76,15 +76,15 @@ export type(i32) Array<T> {
     }}
 
     body() -> Pointer<T> {
-        return (this as ptr)[0] as Pointer<T>;
+        (this as ptr)[0] as Pointer<T>
     }
 
     len() -> int {
-        return (this as ptr)[1];
+        (this as ptr)[1]
     }
 
     capacity() -> int {
-        return (this as ptr)[2];
+        (this as ptr)[2]
     }
 
     get_at(index: int) -> T {
@@ -94,10 +94,9 @@ export type(i32) Array<T> {
             index = length + index;
         }
 
-        if index < 0 || index >= length {
-            return none;
-        } else {
-            return this.body()[index];
+        match index < 0 || index >= length {
+            true => none,
+            false => this.body()[index]
         }
     }
 
@@ -134,7 +133,7 @@ export type(i32) Array<T> {
         body[length] = value;
         header[1] = length + 1;
 
-        return this;
+        this
     }
 
     pop() -> This {
@@ -145,7 +144,7 @@ export type(i32) Array<T> {
             header[1] = length - 1;
         }
 
-        return this;
+        this
     }
 
     concat(other: This) -> This {
@@ -164,7 +163,7 @@ export type(i32) Array<T> {
             offset += 1;
         }
 
-        return new_array;
+        new_array
     }
 
     join(separator: string) -> string {
@@ -186,11 +185,11 @@ export type(i32) Array<T> {
             }
         }
 
-        return str;
+        str
     }
 
     as_ptr() -> ptr {
-        return this as ptr;
+        this as ptr
     }
 
     to_string() -> string {
@@ -198,7 +197,7 @@ export type(i32) Array<T> {
             return "none";
         }
 
-        return "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]";
+        "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
@@ -210,25 +209,24 @@ export type(i32) Array<T> {
 
         if length == 0 {
             return "[]";
-        } else {
-            let strings : string[] = [];
-            let has_line_breaks = false;
+        }
 
-            for item in this {
-                let str = item.to_debug_string(set);
+        let strings : string[] = [];
+        let has_line_breaks = false;
 
-                if str.contains("\n") {
-                    has_line_breaks = true;
-                }
+        for item in this {
+            let str = item.to_debug_string(set);
 
-                strings.push(str);
+            if str.contains("\n") {
+                has_line_breaks = true;
             }
 
-            if has_line_breaks {
-                return "[\n" + strings.join(",\n").indent(2) + "\n]";
-            } else {
-                return "[ " + strings.join(", ") + " ]";
-            }
+            strings.push(str);
+        }
+
+        match has_line_breaks {
+            true => "[\n" + strings.join(",\n").indent(2) + "\n]",
+            false => "[ " + strings.join(", ") + " ]"
         }
     }
 
@@ -274,7 +272,7 @@ export type(i32) Array<T> {
             array.push(T::__deserialize(buffer));
         }
 
-        return array;
+        array
     }
 
     filter(callback: fn(T)(bool)) -> T[] {
@@ -286,7 +284,7 @@ export type(i32) Array<T> {
             }
         }
 
-        return result;
+        result
     }
 
     map<U>(callback: fn(T)(U)) -> U[] {
@@ -296,7 +294,7 @@ export type(i32) Array<T> {
             result.push(callback(item));
         }
 
-        return result;
+        result
     }
 
     reduce<U>(init: U, callback: fn(U, T)(U)) -> U {
@@ -306,6 +304,6 @@ export type(i32) Array<T> {
             result = callback(result, item);
         }
         
-        return result;
+        result
     }
 }

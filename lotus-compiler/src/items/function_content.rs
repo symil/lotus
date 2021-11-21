@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{FunctionBlueprint, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
-use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, StatementList, TypeParameters, Visibility};
+use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility};
 
 #[parsable]
 pub struct FunctionContent {
@@ -40,7 +40,7 @@ impl FunctionContent {
             return_value: VariableInfo::new(Identifier::default(), Type::Undefined, VariableKind::Local),
             dynamic_index: -1,
             is_raw_wasm: false,
-            body: Vasm::empty(),
+            body: Vasm::void(),
         };
 
         let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
@@ -167,6 +167,7 @@ impl FunctionContent {
     pub fn process_body(&self, context: &mut ProgramContext) {
         let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
         let function_wrapped = context.functions.get_by_location(&self.name, type_id);
+        let mut return_type = Type::Void;
         
         context.current_function = Some(function_wrapped.clone());
         context.reset_local_scope();
@@ -180,30 +181,24 @@ impl FunctionContent {
             for arg in &function_unwrapped.arguments {
                 context.push_var(arg);
             }
+
+            return_type = function_unwrapped.return_value.ty.clone();
         });
 
         let is_raw_wasm = self.body.is_raw_wasm();
 
-        if let Some(mut vasm) = self.body.process(context) {
-            if !is_raw_wasm {
-                vasm = vasm![VI::block(vasm)];
-            }
-
+        if let Some(vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
+                if let FunctionBody::Block(block) = &self.body {
+                    if !vasm.ty.is_assignable_to(&function_unwrapped.return_value.ty) {
+                        context.errors.add(&block, format!("expected `{}`, got `{}`", &function_unwrapped.return_value.ty, &vasm.ty));
+                    }
+                }
+
                 function_unwrapped.body = vasm;
                 function_unwrapped.is_raw_wasm = is_raw_wasm;
             });
         }
-
-        function_wrapped.with_ref(|function_unwrapped| {
-            if !is_raw_wasm && !function_unwrapped.return_value.ty.is_void() {
-                if !context.return_found {
-                    let location = self.signature.as_ref().and_then(|sig| sig.return_type.as_ref()).and_then(|ret| Some(&ret.location)).unwrap_or(&self.location);
-
-                    context.errors.add(location, format!("not all branches return a value for the function"));
-                }
-            }
-        });
 
         context.pop_scope();
         context.current_function = None;

@@ -5,21 +5,21 @@ export class Color {
     a: float,
 
     static from(components: int[]) -> This {
-        return Color {
+        Color {
             r: (components[0] || 0).to_float() / 255f,
             g: (components[1] || 0).to_float() / 255f,
             b: (components[2] || 0).to_float() / 255f,
             a: (components[3] || 255).to_float() / 255f,
-        };
+        }
     }
 
     get_components() -> int[] {
-        return [
+        [
             (this.r * 255f).round().to_int(),
             (this.g * 255f).round().to_int(),
             (this.b * 255f).round().to_int(),
             (this.a * 255f).round().to_int(),
-        ];
+        ]
     }
 }
 

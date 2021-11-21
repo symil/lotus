@@ -1,11 +1,14 @@
 use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}};
 
+use crate::line_col_lookup::LineColLookup;
+
 #[derive(Debug, Default, Clone)]
 pub struct DataLocation {
     pub start: usize,
     pub end: usize,
     pub file_namespace: &'static str,
     pub file_name: &'static str,
+    pub file_content: &'static str,
     pub line: usize,
     pub column: usize
 }
@@ -26,5 +29,20 @@ impl DataLocation {
         self.hash(&mut hasher);
 
         hasher.finish()
+    }
+
+    pub fn get_end(&self) -> DataLocation {
+        let line_col_lookup = LineColLookup::new(self.file_content);
+        let (line, column) = line_col_lookup.get(self.end);
+
+        DataLocation {
+            start: self.end,
+            end: self.end,
+            file_namespace: self.file_namespace,
+            file_name: self.file_name,
+            file_content: self.file_content,
+            line,
+            column,
+        }
     }
 }

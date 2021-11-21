@@ -1,12 +1,12 @@
 use parsable::parsable;
 use colored::*;
-use crate::{program::{ProgramContext, Vasm}, vasm};
-use super::StatementList;
+use crate::{program::{ProgramContext, Type, Vasm}, vasm};
+use super::BlockExpression;
 
 #[parsable]
 pub struct IterFields {
     #[parsable(prefix="iter_fields")]
-    pub statements: StatementList
+    pub block: BlockExpression
 }
 
 impl IterFields {
@@ -26,7 +26,11 @@ impl IterFields {
                         for i in 0..field_count {
                             context.iter_fields_counter = Some(i);
 
-                            if let Some(vasm) = self.statements.process(context) {
+                            if let Some(vasm) = self.block.process(None, context) {
+                                if !vasm.ty.is_void() {
+                                    context.errors.add(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                }
+                                
                                 block_vasm.extend(vasm);
                             }
                         }

@@ -1,13 +1,13 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, VI, Vasm}, vasm, wat};
-use super::{Expression, Statement, StatementList};
+use crate::{program::{BuiltinInterface, BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
+use super::{Expression, BlockExpression};
 
 #[parsable]
 pub struct Branch {
     #[parsable(set_marker="no-object")]
     pub condition: Expression,
-    pub statements: StatementList
+    pub body: BlockExpression
 }
 
 impl Branch {
@@ -35,7 +35,7 @@ impl Branch {
         result
     }
 
-    pub fn process_body(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        self.statements.process(context)
+    pub fn process_body(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
+        self.body.process(type_hint, context)
     }
 }

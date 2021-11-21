@@ -28,7 +28,7 @@ impl MatchBlock {
             match &matched_vasm.ty {
                 Type::Undefined => {},
                 Type::Actual(info) => info.type_blueprint.clone().with_ref(|type_unwrapped| {
-                    if !type_unwrapped.is_enum() && !type_unwrapped.is_class() {
+                    if !type_unwrapped.is_enum() && !type_unwrapped.is_class() && !matched_vasm.ty.is_bool() {
                         context.errors.add(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
                     } else {
                         let tmp_var = VariableInfo::new(Identifier::unique("tmp", self), context.int_type(), VariableKind::Local);
@@ -40,6 +40,19 @@ impl MatchBlock {
                             let mut var_vasm = vasm![];
 
                             let test_vasm_opt = match &type_unwrapped.category {
+                                TypeCategory::Type => match &branch.variant_name.as_single_identifier() {
+                                    Some(name) => match name.as_str() {
+                                        NONE_LITERAL | "false" => Some(vasm![
+                                            VI::raw(wat!["i32.eqz"]),
+                                            VI::raw(wat!["i32.eqz"])
+                                        ]),
+                                        "true" => Some(vasm![
+                                            VI::raw(wat!["i32.eqz"])
+                                        ]),
+                                        _ => context.errors.add_and_none(&self.value_to_match, format!("type `{}` has no variant `{}`", &matched_vasm.ty, name)),
+                                    },
+                                    None => context.errors.add_and_none(&self.value_to_match, format!("expected variant name")),
+                                },
                                 TypeCategory::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
                                     true => Some(vasm![
                                         VI::call_regular_method(&matched_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context),
@@ -87,7 +100,6 @@ impl MatchBlock {
                                         None => context.errors.add_and_none(&self.value_to_match, format!("expected variant name")),
                                     }
                                 },
-                                _ => unreachable!()
                             };
 
                             if let Some(test_vasm) = test_vasm_opt {

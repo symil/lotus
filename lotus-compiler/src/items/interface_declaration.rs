@@ -99,7 +99,7 @@ impl InterfaceDeclaration {
                     return_value,
                     dynamic_index: -1,
                     is_raw_wasm: false,
-                    body: Vasm::empty(),
+                    body: Vasm::void(),
                 };
 
                 let index_map = match method_kind {

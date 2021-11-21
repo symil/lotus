@@ -115,12 +115,20 @@ impl ToVasm for Vasm {
 
 impl ToVasm for VirtualInstruction {
     fn to_vasm(self) -> Vasm {
-        Vasm::undefined(vec![], vec![self])
+        let mut vasm = Vasm::void();
+
+        vasm.instructions.push(self);
+
+        vasm
     }
 }
 
 impl ToVasm for Vec<VirtualInstruction> {
     fn to_vasm(self) -> Vasm {
-        Vasm::undefined(vec![], self)
+        let mut vasm = Vasm::void();
+
+        vasm.instructions.extend(self);
+
+        vasm
     }
 }

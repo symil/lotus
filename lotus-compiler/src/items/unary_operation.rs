@@ -5,14 +5,10 @@ use super::{Identifier, Operand, UnaryOperatorWrapper};
 #[parsable]
 pub struct UnaryOperation {
     pub operator: UnaryOperatorWrapper,
-    pub operand: Operand
+    pub operand: Box<Operand>
 }
 
 impl UnaryOperation {
-    pub fn has_side_effects(&self) -> bool {
-        self.operand.has_side_effects()
-    }
-
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
         self.operand.collected_instancied_type_names(list);
     }

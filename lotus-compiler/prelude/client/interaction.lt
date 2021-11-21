@@ -1,14 +1,14 @@
 export class Interaction {
     dyn is_active(client: Client) -> bool {
-        return true;
+        true
     }
 
     dyn is_exclusive(client: Client) -> bool {
-        return false;
+        false
     }
 
     dyn is_valid_target(client: Client, target: View) -> bool {
-        return false;
+        false
     }
 
     dyn highlight_target(client: Client, target: View) {
@@ -20,18 +20,18 @@ export class Interaction {
     }
 
     dyn on_mouse_event(client: Client, event: MouseEvent) -> bool {
-        return false;
+        false
     }
 
     dyn on_wheel_event(client: Client, event: WheelEvent) -> bool  {
-        return false;
+        false
     }
 
     dyn on_keyboard_event(client: Client, event: KeyboardEvent) -> bool  {
-        return false;
+        false
     }
 
     dyn on_game_event(client: Client, event: Object) -> bool  {
-        return false;
+        false
     }
 }

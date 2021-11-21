@@ -11,6 +11,7 @@ pub enum VirtualInstruction {
     Drop(Type),
     Eqz,
     Raw(Wat),
+    Return(Vasm),
     IntConstant(i32),
     FloatConstant(f32),
     TypeId(Type),
@@ -112,6 +113,10 @@ pub struct IfThenElseInfo {
 impl VirtualInstruction {
     pub fn raw(value: Wat) -> Self {
         Self::Raw(value)
+    }
+
+    pub fn return_value(value: Vasm) -> Self {
+        Self::Return(value)
     }
 
     pub fn int<T : ToInt>(value: T) -> Self {
@@ -295,6 +300,7 @@ impl VirtualInstruction {
             VirtualInstruction::Drop(ty) => VirtualInstruction::Drop(ty.replace_parameters(Some(this_type), &[])),
             VirtualInstruction::Eqz => VirtualInstruction::Eqz,
             VirtualInstruction::Raw(wat) => VirtualInstruction::Raw(wat.clone()),
+            VirtualInstruction::Return(ret) => VirtualInstruction::Return(ret.replace_type_parameters(this_type, id)),
             VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
             VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(value.clone()),
             VirtualInstruction::TypeId(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
@@ -364,6 +370,7 @@ impl VirtualInstruction {
             VirtualInstruction::Drop(ty) => {},
             VirtualInstruction::Eqz => {},
             VirtualInstruction::Raw(_) => {},
+            VirtualInstruction::Return(ret) => ret.collect_variables(list),
             VirtualInstruction::IntConstant(_) => {},
             VirtualInstruction::FloatConstant(_) => {},
             VirtualInstruction::TypeId(_) => {},
@@ -402,6 +409,12 @@ impl VirtualInstruction {
             },
             VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
+            VirtualInstruction::Return(ret) => {
+                let mut content = ret.resolve(type_index, context);
+                content.push(wat!["return"]);
+
+                content
+            },
             VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
             VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
             VirtualInstruction::TypeId(ty) => {
@@ -570,7 +583,9 @@ impl VirtualInstruction {
                         }
                     }
 
-                    wat.push(result);
+                    if !result.arguments.is_empty() {
+                        wat.push(result);
+                    }
                 }
 
                 wat.extend(info.content.resolve(type_index, context));
@@ -617,6 +632,7 @@ impl VirtualInstruction {
             VirtualInstruction::Drop(ty) => unreachable!(),
             VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
+            VirtualInstruction::Return(_) => unreachable!(),
             VirtualInstruction::IntConstant(_) => unreachable!(),
             VirtualInstruction::FloatConstant(_) => unreachable!(),
             VirtualInstruction::TypeId(_) => unreachable!(),

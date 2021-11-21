@@ -21,13 +21,13 @@ export class Object {
 
         let type_id = object.as_ptr()[0];
 
-        return TYPE_ID_TO_ANCESTOR_IDS
+        TYPE_ID_TO_ANCESTOR_IDS
             .get(type_id)
-            .has(#TYPE_ID);
+            .has(#TYPE_ID)
     }
 
     autogen static get_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     autogen static __create() -> This {
@@ -35,7 +35,7 @@ export class Object {
 
         data[0] = #TYPE_ID;
 
-        return data as This;
+        data as This
     }
 
     autogen static __default() -> This {
@@ -45,11 +45,11 @@ export class Object {
             obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
         }
 
-        return obj;
+        obj
     }
 
     autogen static type_name() -> string {
-        return #TYPE_NAME;
+        #TYPE_NAME
     }
 
     autogen static __none() -> This {{
@@ -69,31 +69,29 @@ export class Object {
     }}
 
     __hash() -> int {
-        return (this as int).__hash();
+        (this as int).__hash()
     }
 
     as_ptr() -> ptr {
-        return this as ptr;
+        this as ptr
     }
 
     to_string() -> string {
-        if this.__is_none() {
-            return "none";
+        match this.__is_none() {
+            true => "none",
+            false => this.__to_string_dyn()
         }
-
-        return this.__to_string_dyn();
     }
 
     autogen dyn __to_string_dyn() -> string {
-        return "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]";
+        "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
-            return "none";
+        match this.__is_none() {
+            true => "none",
+            false => this.__to_debug_string_dyn(set)
         }
-
-        return this.__to_debug_string_dyn(set);
     }
 
     autogen dyn __to_debug_string_dyn(set: Set<ptr>) -> string {
@@ -101,18 +99,19 @@ export class Object {
             return #TYPE_SHORT_NAME + " { <cycle> }";
         }
 
-        if #FIELD_COUNT == 0 {
-            return #TYPE_SHORT_NAME;
-        } else {
-            let str = #TYPE_SHORT_NAME + " {\n";
+        match #FIELD_COUNT == 0 {
+            true => #TYPE_SHORT_NAME,
+            false => {
+                let str = #TYPE_SHORT_NAME + " {\n";
 
-            iter_fields {
-                str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string(set)).indent(2) + ",\n";
+                iter_fields {
+                    str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string(set)).indent(2) + ",\n";
+                }
+
+                str += "}";
+
+                str
             }
-
-            str += "}";
-
-            return str;
         }
     }
 
@@ -182,7 +181,7 @@ export class Object {
 
         obj.__deserialize_dyn(buffer);
 
-        return obj;
+        obj
     }
 
     autogen dyn __deserialize_dyn(buffer: Buffer) {

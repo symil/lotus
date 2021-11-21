@@ -8,11 +8,11 @@ export class Map<K, V> {
     size: int,
 
     static default() -> This {
-        return This::new();
+        This::new()
     }
 
     static new() -> This {
-        return This::with_capacity(START_CAPACITY);
+        This::with_capacity(START_CAPACITY)
     }
 
     static with_capacity(capacity: int) -> This {
@@ -23,7 +23,7 @@ export class Map<K, V> {
             map.hash_table.push(none);
         }
 
-        return map;
+        map
     }
 
     _rehash() {
@@ -44,7 +44,7 @@ export class Map<K, V> {
         let hash = key.__hash();
         let index = hash % this.hash_table.len();
 
-        return index;
+        index
     }
 
     _get_entry(key: K) -> Item? {
@@ -55,11 +55,11 @@ export class Map<K, V> {
             entry = entry.next;
         }
 
-        return entry;
+        entry
     }
 
     capacity() -> int {
-        return this.hash_table.len() * 2;
+        this.hash_table.len() * 2
     }
 
     keys() -> K[] {
@@ -74,7 +74,7 @@ export class Map<K, V> {
             }
         }
 
-        return array;
+        array
     }
 
     values() -> V[] {
@@ -89,7 +89,7 @@ export class Map<K, V> {
             }
         }
 
-        return array;
+        array
     }
 
     entries() -> Entry<K, V>[] {
@@ -107,11 +107,11 @@ export class Map<K, V> {
             }
         }
 
-        return array;
+        array
     }
 
     size() -> int {
-        return this.size;
+        this.size
     }
 
     clear() {
@@ -126,10 +126,9 @@ export class Map<K, V> {
     get(key: K) -> V? {
         let entry = this._get_entry(key);
 
-        if entry {
-            return entry.value;
-        } else {
-            return none;
+        match !!entry {
+            true => entry.value,
+            false => none
         }
     }
 
@@ -164,14 +163,14 @@ export class Map<K, V> {
                 this._rehash();
             }
 
-            return none;
+            none
         } else {
             let ret = entry.value;
 
             entry.key = key;
             entry.value = value;
 
-            return ret;
+            ret
         }
     }
 
@@ -186,9 +185,9 @@ export class Map<K, V> {
             this.size -= 1;
 
             return ret;
-        } else {
-            return none;
         }
+
+        none
     }
 }
 

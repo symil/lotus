@@ -10,7 +10,7 @@ pub struct VarDeclaration {
     #[parsable(prefix=":")]
     pub var_type: Option<ParsedTypeWrapper>,
     #[parsable(prefix="=")]
-    pub init_value: Expression
+    pub init_value: Expression,
 }
 
 #[parsable]
@@ -28,7 +28,12 @@ impl VarDeclaration {
         }
     }
 
-    pub fn process(&self, kind: VariableKind, context: &mut ProgramContext) -> Option<(Vec<Rc<VariableInfo>>, Vasm)> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<(Vec<Rc<VariableInfo>>, Vasm)> {
+        let kind = match context.get_current_function() {
+            Some(_) => VariableKind::Local,
+            None => VariableKind::Global,
+        };
+
         match &self.var_names {
             VariableNames::Single(name) => {
                 context.check_var_unicity(name);
@@ -120,7 +125,7 @@ impl VarDeclaration {
         }
 
         match ok {
-            true => Some((declared_variables, Vasm::merge(source))),
+            true => Some((declared_variables, Vasm::merge_with_type(Type::Void, source))),
             false => None
         }
     }

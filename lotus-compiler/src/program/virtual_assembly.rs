@@ -13,12 +13,8 @@ impl Vasm {
         Self { ty, variables, instructions }
     }
 
-    pub fn undefined(variables: Vec<Rc<VariableInfo>>, content: Vec<VirtualInstruction>) -> Self {
-        Self::new(Type::Undefined, variables, content)
-    }
-
-    pub fn empty() -> Self {
-        Self::new(Type::Undefined, vec![], vec![])
+    pub fn void() -> Self {
+        Self::new(Type::Void, vec![], vec![])
     }
 
     pub fn is_empty(&self) -> bool {
@@ -34,7 +30,7 @@ impl Vasm {
     }
 
     pub fn merge(source: Vec<Self>) -> Self {
-        let mut ty = Type::Undefined;
+        let mut ty = Type::Void;
         let mut variables = vec![];
         let mut instructions = vec![];
 
@@ -45,6 +41,13 @@ impl Vasm {
         }
 
         Self::new(ty, variables, instructions)
+    }
+
+    pub fn merge_with_type(ty: Type, source: Vec<Self>) -> Self {
+        let mut result = Self::merge(source);
+        result.ty = ty;
+
+        result
     }
 
     pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Self {
@@ -86,6 +89,6 @@ impl Vasm {
 
 impl Default for Vasm {
     fn default() -> Self {
-        Self::empty()
+        Self::void()
     }
 }

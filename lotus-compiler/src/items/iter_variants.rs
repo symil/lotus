@@ -1,12 +1,12 @@
 use parsable::parsable;
 use colored::*;
-use crate::{program::{ProgramContext, Vasm}, vasm};
-use super::StatementList;
+use crate::{program::{ProgramContext, Type, Vasm}, vasm};
+use super::BlockExpression;
 
 #[parsable]
 pub struct IterVariants {
     #[parsable(prefix="iter_variants")]
-    pub statements: StatementList
+    pub block: BlockExpression
 }
 
 const BLOCK_NAME : &'static str = "iter_variants";
@@ -28,8 +28,13 @@ impl IterVariants {
                         for i in 0..variant_count {
                             context.iter_variants_counter = Some(i);
 
-                            if let Some(vasm) = self.statements.process(context) {
+                            if let Some(vasm) = self.block.process(None, context) {
+                                if !vasm.ty.is_void() {
+                                    context.errors.add(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                }
+
                                 block_vasm.extend(vasm);
+
                             }
                         }
 

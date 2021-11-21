@@ -7,8 +7,8 @@ pub struct StringReader {
     comment_token: &'static str,
     file_name: &'static str,
     file_namespace: &'static str,
+    file_content: &'static str,
 
-    string: String,
     line_col: LineColLookup,
     index: usize,
     error_index: usize,
@@ -26,9 +26,9 @@ static mut INITIALIZED : bool = false;
 static mut REGEXES : Option<HashMap<&'static str, Regex>> = None;
 static mut STRINGS : Option<HashSet<String>> = None;
 
-fn get_str(string: &str) -> &'static str {
+fn get_str(string: String) -> &'static str {
     unsafe {
-        STRINGS.as_mut().unwrap().get_or_insert(string.to_string()).as_str()
+        STRINGS.as_mut().unwrap().get_or_insert(string).as_str()
     }
 }
 
@@ -56,12 +56,14 @@ impl StringReader {
     pub fn new(content: String, options: ParseOptions) -> Self {
         Self::init();
 
+        let line_col = LineColLookup::new(&content);
+
         Self {
-            comment_token: get_str(options.comment_start.unwrap_or("")),
-            file_name: get_str(options.file_name.unwrap_or("")),
-            file_namespace: get_str(options.file_namespace.unwrap_or("")),
-            line_col: LineColLookup::new(&content),
-            string: content,
+            comment_token: get_str(options.comment_start.unwrap_or("").to_string()),
+            file_name: get_str(options.file_name.unwrap_or("").to_string()),
+            file_namespace: get_str(options.file_namespace.unwrap_or("").to_string()),
+            file_content: get_str(content),
+            line_col,
             index: 0,
             error_index: 0,
             expected: vec![],
@@ -92,13 +94,13 @@ impl StringReader {
         let mut error_index = self.error_index;
         let mut backtracked = false;
 
-        while error_index > 0 && is_space(self.string.as_bytes()[error_index - 1] as char) {
+        while error_index > 0 && is_space(self.file_content.as_bytes()[error_index - 1] as char) {
             error_index -= 1;
             backtracked = true;
         }
 
         if backtracked {
-            while error_index < self.string.len() && is_inline_space(self.string.as_bytes()[error_index] as char) {
+            while error_index < self.file_content.len() && is_inline_space(self.file_content.as_bytes()[error_index] as char) {
                 error_index += 1;
             }
         }
@@ -107,12 +109,13 @@ impl StringReader {
         let expected = self.expected.clone();
         let file_name = self.file_name;
         let file_namespace = self.file_namespace;
+        let file_content = self.file_content;
 
-        ParseError { file_name, file_namespace, line, column, expected }
+        ParseError { file_name, file_namespace, file_content, line, column, expected }
     }
 
     pub fn is_finished(&self) -> bool {
-        self.index == self.string.len()
+        self.index == self.file_content.len()
     }
 
     pub fn get_index(&self) -> usize {
@@ -123,7 +126,7 @@ impl StringReader {
         let mut index = self.index;
 
         // TODO: handle comments
-        while index > 0 && is_space(self.string.as_bytes()[index - 1] as char) {
+        while index > 0 && is_space(self.file_content.as_bytes()[index - 1] as char) {
             index -= 1;
         }
 
@@ -142,13 +145,13 @@ impl StringReader {
                 let end = self.index + length;
 
                 self.index = end;
-                Some(&self.string[start..end])
+                Some(&self.file_content[start..end])
             }
         }
     }
 
     pub fn as_str(&self) -> &str {
-        &self.string[self.index..]
+        &self.file_content[self.index..]
     }
 
     pub fn as_char(&self) -> char {
@@ -159,7 +162,7 @@ impl StringReader {
     }
 
     pub fn at(&self, index: usize) -> char {
-        match self.string.as_bytes().get(self.index + index) {
+        match self.file_content.as_bytes().get(self.index + index) {
             Some(byte) => *byte as char,
             None => 0 as char,
         }
@@ -178,7 +181,7 @@ impl StringReader {
             if self.as_str().starts_with(self.comment_token) {
                 done = false;
 
-                while self.as_char() != '\n' && self.index < self.string.len() {
+                while self.as_char() != '\n' && self.index < self.file_content.len() {
                     self.index += 1;
                 }
             }
@@ -223,9 +226,10 @@ impl StringReader {
         let end = self.get_index_backtracked();
         let file_namespace = self.file_namespace;
         let file_name = self.file_name;
+        let file_content = self.file_content;
         let (line, column) = self.line_col.get(start);
 
-        DataLocation { start, end, file_name, file_namespace, line, column }
+        DataLocation { start, end, file_name, file_namespace, file_content, line, column }
     }
 
     pub fn get_marker_value(&self, name: &'static str) -> bool {
