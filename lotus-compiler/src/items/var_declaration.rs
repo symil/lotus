@@ -29,22 +29,6 @@ impl VarDeclaration {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
-        let kind = match context.get_current_function() {
-            Some(_) => VariableKind::Local,
-            None => VariableKind::Global,
-        };
-
-        match &self.var_names {
-            VariableNames::Single(name) => {
-                context.check_var_unicity(name);
-            },
-            VariableNames::Multiple(names) => {
-                for name in names {
-                    context.check_var_unicity(name);
-                }
-            },
-        };
-
         let mut source = vec![];
         let mut ok = false;
         let mut final_var_type = Type::Undefined;
@@ -84,7 +68,7 @@ impl VarDeclaration {
 
         match &self.var_names {
             VariableNames::Single(name) => {
-                let var_info = VariableInfo::from(name.clone(), final_var_type.clone(), kind);
+                let var_info = context.declare_local_variable(name.clone(), final_var_type.clone());
 
                 source.push(Vasm::new(Type::Undefined, vec![var_info.clone()], vec![VI::set_var_from_stack(&var_info)]));
                 declared_variables.push(var_info);
@@ -95,9 +79,9 @@ impl VarDeclaration {
                 } else {
                     match (final_var_type.get_associated_type(TUPLE_FIRST_ASSOCIATED_TYPE_NAME), final_var_type.get_associated_type(TUPLE_SECOND_ASSOCIATED_TYPE_NAME)) {
                         (Some(first_type), Some(second_type)) => {
-                            let tmp_var_info = VariableInfo::from(Identifier::unique("tmp", self), final_var_type.clone(), VariableKind::Local);
-                            let var_1 = VariableInfo::from(names[0].clone(), first_type, VariableKind::Local);
-                            let var_2 = VariableInfo::from(names[1].clone(), second_type, VariableKind::Local);
+                            let tmp_var_info = VariableInfo::tmp("tmp", final_var_type.clone());
+                            let var_1 = context.declare_local_variable(names[0].clone(), first_type);
+                            let var_2 = context.declare_local_variable(names[1].clone(), second_type);
 
                             declared_variables.extend(vec![var_1.clone(), var_2.clone()]);
                             source.push(Vasm::new(Type::Undefined, vec![tmp_var_info.clone(), var_1.clone(), var_2.clone()], vec![
@@ -119,10 +103,6 @@ impl VarDeclaration {
                 }
             },
         };
-
-        for var_info in &declared_variables {
-            context.push_var(&var_info);
-        }
 
         match ok {
             true => Some((declared_variables, Vasm::merge_with_type(Type::Void, source))),

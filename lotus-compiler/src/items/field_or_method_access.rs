@@ -81,12 +81,12 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
     if let Some(func_ref) = caller_type.get_method(field_kind, method_name.as_str(), context) {
         let caller_type = func_ref.this_type.replace_parameters(Some(caller_type), &[]);
         let function_call = func_ref.function.with_ref(|function_unwrapped| {
-            match function_unwrapped.is_dynamic() {
-                true => FunctionCall::Anonymous(AnonymousFunctionCallDetails {
-                    signature: function_unwrapped.get_signature().replace_parameters(Some(&caller_type), &[]),
-                    function_offset: function_unwrapped.dynamic_index as usize,
+            match function_unwrapped.get_dynamic_index() {
+                Some(dynamic_index) => FunctionCall::Anonymous(AnonymousFunctionCallDetails {
+                    signature: function_unwrapped.signature.replace_parameters(Some(&caller_type), &[]),
+                    function_offset: dynamic_index,
                 }),
-                false => FunctionCall::Named(NamedFunctionCallDetails {
+                None => FunctionCall::Named(NamedFunctionCallDetails {
                     caller_type: Some(caller_type),
                     function: func_ref.function.clone(),
                     parameters: parameters.to_vec(),
@@ -109,7 +109,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     }
 
     let (signature, caller_type) = match &function_call {
-        FunctionCall::Named(details) => (details.function.borrow().get_signature().clone(), details.caller_type.clone()),
+        FunctionCall::Named(details) => (details.function.borrow().signature.clone(), details.caller_type.clone()),
         FunctionCall::Anonymous(details) => (details.signature.clone(), details.signature.this_type.clone()),
     };
     let is_var_call = match &function_call {
@@ -137,6 +137,11 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
                     actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
                 }
             });
+
+            // if function_name.as_str() == "map" {
+            //     print_type_ref_list(&arg_types);
+            //     print_type_list(&parameters);
+            // }
 
             details.parameters = parameters;
         }
@@ -189,7 +194,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
             let mut ok = false;
 
             if let Some(hint_return_type) = type_hint {
-                let expected_return_type = &function_unwrapped.return_type;
+                let expected_return_type = &function_unwrapped.signature.return_type;
 
                 if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
                     result.push(inferred_type);
@@ -198,9 +203,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
             }
 
             if !ok {
-                for (expected_arg_var, actual_arg_type) in function_unwrapped.arguments.iter().zip(arg_types.iter()) {
-                    let expected_arg_type = &expected_arg_var.ty();
-
+                for (expected_arg_type, actual_arg_type) in function_unwrapped.signature.argument_types.iter().zip(arg_types.iter()) {
                     if let Some(inferred_type) = expected_arg_type.infer_function_parameter(parameter, *actual_arg_type) {
                         result.push(inferred_type);
                         ok = true;

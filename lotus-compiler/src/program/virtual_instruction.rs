@@ -14,8 +14,6 @@ pub enum VirtualInstruction {
     FloatConstant(f32),
     TypeId(Type),
     TypeName(Type),
-    Store(VirtualStashInfo),
-    Load(VirtualStashInfo),
     GetVariable(VirtualGetVariableInfo),
     SetVariable(VirtualSetVariableInfo),
     TeeVariable(VirtualSetVariableInfo),
@@ -133,20 +131,6 @@ impl VirtualInstruction {
         Self::TypeName(ty.clone())
     }
 
-    pub fn store(value_type: &Type, id: u64) -> Self {
-        Self::Store(VirtualStashInfo {
-            value_type: value_type.clone(),
-            wasm_var_name: format!("tmp_{}", id),
-        })
-    }
-
-    pub fn load(value_type: &Type, id: u64) -> Self {
-        Self::Load(VirtualStashInfo {
-            value_type: value_type.clone(),
-            wasm_var_name: format!("tmp_{}", id),
-        })
-    }
-
     pub fn get_var(var_info: &VariableInfo) -> Self {
         Self::GetVariable(VirtualGetVariableInfo{
             var_info: var_info.clone(),
@@ -184,7 +168,7 @@ impl VirtualInstruction {
     pub fn call_function<T : ToVasm>(call: FunctionCall, args: T) -> Self {
         let function_index_var = match &call {
             FunctionCall::Named(_) => None,
-            FunctionCall::Anonymous(_) => Some(VariableInfo::from(Identifier::unique("function_index", &DataLocation::default()), Type::Int, VariableKind::Local)),
+            FunctionCall::Anonymous(_) => Some(VariableInfo::tmp("function_index", Type::Int)),
         };
 
         Self::FunctionCall(VirtualFunctionCallInfo {
@@ -293,76 +277,6 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> Self {
-        match self {
-            VirtualInstruction::Drop(ty) => VirtualInstruction::Drop(ty.replace_parameters(Some(this_type), &[])),
-            VirtualInstruction::Eqz => VirtualInstruction::Eqz,
-            VirtualInstruction::Raw(wat) => VirtualInstruction::Raw(wat.clone()),
-            VirtualInstruction::Return(ret) => VirtualInstruction::Return(ret.replace_type_parameters(this_type, id)),
-            VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(value.clone()),
-            VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(value.clone()),
-            VirtualInstruction::TypeId(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
-            VirtualInstruction::TypeName(ty) => VirtualInstruction::TypeId(ty.replace_parameters(Some(this_type), &[])),
-            VirtualInstruction::Store(info) => VirtualInstruction::Store(VirtualStashInfo {
-                value_type: info.value_type.replace_parameters(Some(this_type), &[]),
-                wasm_var_name: info.wasm_var_name.clone(),
-            }),
-            VirtualInstruction::Load(info) => VirtualInstruction::Load(VirtualStashInfo {
-                value_type: info.value_type.replace_parameters(Some(this_type), &[]),
-                wasm_var_name: info.wasm_var_name.clone(),
-            }),
-            VirtualInstruction::GetVariable(info) => VirtualInstruction::GetVariable(VirtualGetVariableInfo {
-                var_info: info.var_info.replace_type_parameters(this_type, id),
-            }),
-            VirtualInstruction::SetVariable(info) => VirtualInstruction::SetVariable(VirtualSetVariableInfo {
-                var_info: info.var_info.replace_type_parameters(this_type, id),
-                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
-            }),
-            VirtualInstruction::TeeVariable(info) => VirtualInstruction::TeeVariable(VirtualSetVariableInfo {
-                var_info: info.var_info.replace_type_parameters(this_type, id),
-                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
-            }),
-            VirtualInstruction::GetField(info) => VirtualInstruction::GetField(VirtualGetFieldInfo {
-                field_type: info.field_type.replace_parameters(Some(this_type), &[]),
-                field_offset: info.field_offset,
-            }),
-            VirtualInstruction::SetField(info) => VirtualInstruction::SetField(VirtualSetFieldInfo {
-                field_type: info.field_type.replace_parameters(Some(this_type), &[]),
-                field_offset: info.field_offset,
-                value: info.value.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
-            }),
-            VirtualInstruction::FunctionCall(info) => VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
-                call: info.call.replace_parameters(Some(this_type), &[]),
-                function_index_var: info.function_index_var.clone(),
-                args: info.args.replace_type_parameters(this_type, id)
-            }),
-            VirtualInstruction::FunctionIndex(info) => VirtualInstruction::FunctionIndex(VirtualFunctionIndexInfo {
-                function: info.function.clone(),
-                parameters: info.parameters.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
-            }),
-            VirtualInstruction::Loop(info) => VirtualInstruction::Loop(VirtualLoopInfo {
-                content: info.content.replace_type_parameters(this_type, id),
-            }),
-            VirtualInstruction::Block(info) => VirtualInstruction::Block(VirtualBlockInfo {
-                result: info.result.iter().map(|ty| ty.replace_parameters(Some(this_type), &[])).collect(),
-                content: info.content.replace_type_parameters(this_type, id),
-            }),
-            VirtualInstruction::Jump(info) => VirtualInstruction::Jump(VirtualJumpInfo {
-                depth: info.depth.clone(),
-            }),
-            VirtualInstruction::JumpIf(info) => VirtualInstruction::JumpIf(VirtualJumpIfInfo {
-                depth: info.depth.clone(),
-                condition: info.condition.as_ref().and_then(|value| Some(value.replace_type_parameters(this_type, id))),
-            }),
-            VirtualInstruction::IfThenElse(info) => VirtualInstruction::IfThenElse(IfThenElseInfo {
-                return_type: info.return_type.as_ref().and_then(|ty| Some(ty.replace_parameters(Some(this_type), &[]))),
-                condition: info.condition.replace_type_parameters(this_type, id),
-                then_branch: info.then_branch.replace_type_parameters(this_type, id),
-                else_branch: info.else_branch.replace_type_parameters(this_type, id),
-            }),
-        }
-    }
-
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         match self {
             VirtualInstruction::Drop(ty) => {},
@@ -373,10 +287,6 @@ impl VirtualInstruction {
             VirtualInstruction::FloatConstant(_) => {},
             VirtualInstruction::TypeId(_) => {},
             VirtualInstruction::TypeName(_) => {},
-            VirtualInstruction::Store(info) => {
-                list.push(VariableInfo::from_wasm_name(info.wasm_var_name.to_string(), info.value_type.clone(), VariableKind::Local))
-            },
-            VirtualInstruction::Load(_) => {},
             VirtualInstruction::GetVariable(_) => {},
             VirtualInstruction::SetVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::TeeVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
@@ -430,12 +340,6 @@ impl VirtualInstruction {
                 true => vec![info.var_info.get_to_stack()],
                 false => vec![],
             },
-            VirtualInstruction::Store(info) => {
-                vec![Wat::set_local_from_stack(&info.wasm_var_name)]
-            },
-            VirtualInstruction::Load(info) => {
-                vec![Wat::get_local(&info.wasm_var_name)]
-            },
             VirtualInstruction::SetVariable(info) | VirtualInstruction::TeeVariable(info) => {
                 let mut content = vec![];
 
@@ -459,7 +363,7 @@ impl VirtualInstruction {
                 match field_type.wasm_type {
                     Some(field_wasm_type) => vec![
                         wat!["i32.add", Wat::const_i32(info.field_offset)],
-                        wat!["i32.mul", Wat::const_i32(4)],
+                        wat!["i32.mul", Wat::const_i32(4i32)],
                         wat![format!("{}.load", field_wasm_type)]
                     ],
                     None => vec![wat!["drop"]],
@@ -471,7 +375,7 @@ impl VirtualInstruction {
 
                 if let Some(field_wasm_type) = field_type.wasm_type {
                     content.push(wat!["i32.add", Wat::const_i32(info.field_offset)]);
-                    content.push(wat!["i32.mul", Wat::const_i32(4)]);
+                    content.push(wat!["i32.mul", Wat::const_i32(4i32)]);
 
                     if let Some(init_value) = &info.value {
                         content.extend(init_value.resolve(type_index, context));
@@ -497,14 +401,18 @@ impl VirtualInstruction {
 
                 match &info.call {
                     FunctionCall::Named(details) => {
+                        // dbg!(details.function.borrow().name.as_str());
                         let this_type = details.caller_type.as_ref().and_then(|ty| Some(ty.resolve(type_index, context)));
                         let function_parameters = details.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
                         let function_blueprint = details.function.with_ref(|function_unwrapped| {
-                            match function_unwrapped.owner_interface.is_none() {
-                                true => details.function.clone(),
-                                false => this_type.as_ref().unwrap()
-                                    .get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str())
-                                    .unwrap(),
+                            match &function_unwrapped.method_details {
+                                Some(method_details) => match method_details.owner_interface.is_some() {
+                                    true => this_type.as_ref().unwrap()
+                                        .get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str())
+                                        .unwrap(),
+                                    false => details.function.clone(),
+                                },
+                                None => details.function.clone(),
                             }
                         });
 
@@ -658,8 +566,6 @@ impl VirtualInstruction {
             VirtualInstruction::FloatConstant(_) => unreachable!(),
             VirtualInstruction::TypeId(_) => unreachable!(),
             VirtualInstruction::TypeName(_) => unreachable!(),
-            VirtualInstruction::Store(_) => unreachable!(),
-            VirtualInstruction::Load(_) => unreachable!(),
             VirtualInstruction::GetVariable(_) => unreachable!(),
             VirtualInstruction::SetVariable(_) => unreachable!(),
             VirtualInstruction::TeeVariable(_) => unreachable!(),

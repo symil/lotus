@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VI, Vasm}, vasm, wat};
+use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VI, VariableInfo, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
@@ -27,15 +27,21 @@ impl BracketIndexing {
                         let this_id = self.location.get_hash();
                         let value_id = this_id + 1;
                         let item_type = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
+                        let parent_var = VariableInfo::tmp("parent", parent_type.clone());
+                        let item_var = VariableInfo::tmp("item", item_type.clone());
 
-                        vasm![
-                            VI::store(parent_type, this_id),
-                            VI::store(&item_type, value_id),
-                            VI::load(parent_type, this_id),
+                        let mut result = Vasm::new(Type::Void, vec![parent_var.clone(), item_var.clone()], vec![]);
+
+                        result.extend(vasm![
+                            VI::set_var_from_stack(&parent_var),
+                            VI::set_var_from_stack(&item_var),
+                            VI::get_var(&parent_var),
                             index_vasm,
-                            VI::load(&item_type, value_id),
+                            VI::get_var(&item_var),
                             bracket_vasm
-                        ]
+                        ]);
+
+                        result
                     },
                 });
             }

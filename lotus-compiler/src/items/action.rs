@@ -17,27 +17,27 @@ impl Action {
             ActionKeywordToken::Return => {
                 let function_wrapped = context.get_current_function().unwrap();
                 let function_unwrapped = function_wrapped.borrow();
-                let return_type = function_unwrapped.return_type.clone();
+                let return_type = &function_unwrapped.signature.return_type;
 
                 match return_type.is_void() {
                     false => match &self.value {
                         Some(expr) => {
-                            let type_hint = Some(&return_type);
+                            let type_hint = Some(return_type);
 
                             if let Some(vasm) = expr.process(type_hint, context) {
-                                if vasm.ty.is_assignable_to(&return_type) {
+                                if vasm.ty.is_assignable_to(return_type) {
                                     result = Some(vasm![
                                         VI::return_value(vasm)
                                     ]);
                                 } else {
                                     if !vasm.ty.is_undefined() {
-                                        context.errors.add(expr, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
+                                        context.errors.add(expr, format!("expected `{}`, got `{}`", return_type, &vasm.ty));
                                     }
                                 }
                             }
                         },
                         None => {
-                            context.errors.add(self, format!("expected `{}`, got `{}`", &return_type, context.void_type()));
+                            context.errors.add(self, format!("expected `{}`, got `{}`", return_type, context.void_type()));
                         },
                     },
                     true => match &self.value {

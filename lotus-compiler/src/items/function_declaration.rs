@@ -21,11 +21,11 @@ impl FunctionDeclaration {
             function_unwrapped.visibility = self.visibility.value.unwrap_or(Visibility::Private);
 
             if function_unwrapped.name.as_str() == "main" {
-                if !function_unwrapped.arguments.is_empty() {
+                if !function_unwrapped.signature.argument_types.is_empty() {
                     context.errors.add(self, format!("main function must not take any argument"));
                 }
 
-                if !function_unwrapped.return_type.is_void() {
+                if !function_unwrapped.signature.return_type.is_void() {
                     context.errors.add(self, format!("main function must not have a return type"));
                 }
 

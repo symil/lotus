@@ -29,7 +29,7 @@ impl ObjectLiteral {
 
         if let Some(object_type) = self.object_type.process(true, context) {
             if let Type::Actual(info) = &object_type {
-                let object_var = VariableInfo::from(Identifier::unique("object", self), context.int_type(), VariableKind::Local);
+                let object_var = VariableInfo::tmp("object", context.int_type());
                 let type_unwrapped = info.type_blueprint.borrow();
 
                 if type_unwrapped.is_class() {
@@ -66,7 +66,7 @@ impl ObjectLiteral {
                                     }
                                 },
                                 None => {
-                                    if let Some(var_info) = context.get_var_info(&field.name) {
+                                    if let Some(var_info) = context.access_var(&field.name) {
                                         field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get_var(&var_info)]));
                                     } else {
                                         context.errors.add(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
@@ -84,7 +84,7 @@ impl ObjectLiteral {
                         let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
                         let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
-                            None => field_info.default_value.replace_type_parameters(&object_type, self.location.get_hash() + (i as u64)),
+                            None => field_info.default_value.clone(),
                         };
 
                         result.extend(vasm![

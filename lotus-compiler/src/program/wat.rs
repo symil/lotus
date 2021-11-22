@@ -189,7 +189,7 @@ impl Wat {
         wat!["import", Self::string(file_namespace), Self::string(sub_file_namespace), func_content]
     }
 
-    pub fn declare_function(var_name: &str, export_name: Option<&str>, arguments: Vec<(&str, &str)>, results: Vec<&str>, locals: Vec<(&str, &str)>, instructions: Vec<Wat>) -> Self {
+    pub fn declare_function<S : Deref<Target=str>>(var_name: &str, export_name: Option<&str>, arguments: Vec<(S, &str)>, results: Vec<&str>, locals: Vec<(S, &str)>, instructions: Vec<Wat>) -> Self {
         let mut func = wat!["func", Self::var_name(var_name)];
 
         if let Some(name) = export_name {
@@ -197,7 +197,7 @@ impl Wat {
         }
 
         for (name, ty) in arguments {
-            func.push(wat!["param", Self::var_name(name), ty]);
+            func.push(wat!["param", Self::var_name(name.deref()), ty]);
         }
 
         for ty in results {
@@ -205,7 +205,7 @@ impl Wat {
         }
 
         for (name, ty) in locals {
-            func.push(wat!["local", Self::var_name(name), ty]);
+            func.push(wat!["local", Self::var_name(name.deref()), ty]);
         }
 
         for inst in instructions {

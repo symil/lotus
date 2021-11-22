@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
-use crate::items::Identifier;
-use super::{VariableInfo, insert_in_vec_hashmap};
+use crate::{items::Identifier, utils::Link};
+use super::{FunctionBlueprint, VariableInfo, insert_in_vec_hashmap};
 
 #[derive(Debug)]
 pub struct Scope {
@@ -8,21 +8,19 @@ pub struct Scope {
     pub variables: HashMap<String, Vec<VariableInfo>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ScopeKind {
-    Global,
     Function,
     Loop,
     Branch,
-    Local
+    Block
 }
 
 impl Scope {
     pub fn new(kind: ScopeKind) -> Self {
-        Self {
-            kind,
-            variables: HashMap::new()
-        }
+        let variables = HashMap::new();
+
+        Self { kind, variables }
     }
 
     pub fn get_var_info(&self, var_name: &str) -> Option<&VariableInfo> {
@@ -37,11 +35,10 @@ impl Scope {
 impl ScopeKind {
     pub fn get_depth(&self) -> u32 {
         match self {
-            ScopeKind::Global => 0,
             ScopeKind::Function => 0,
             ScopeKind::Loop => 2,
             ScopeKind::Branch => 2,
-            ScopeKind::Local => 2,
+            ScopeKind::Block => 0,
         }
     }
 

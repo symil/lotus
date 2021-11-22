@@ -12,7 +12,7 @@ pub enum Visibility {
     Public = "pub",
     Export = "export",
     System = "sys",
-    Member
+    None
 }
 
 impl Default for Visibility {

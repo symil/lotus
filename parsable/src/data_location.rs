@@ -45,4 +45,8 @@ impl DataLocation {
             column,
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.file_content == ""
+    }
 }

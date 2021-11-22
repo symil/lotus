@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, Signature, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -101,6 +101,7 @@ impl TypeDeclaration {
                 parameters: parameters.values().map(|param| {
                     Type::TypeParameter(param.clone())
                 }).collect(),
+                location: self.name.location.clone()
             });
             type_unwrapped.parameters = parameters;
             type_unwrapped.stack_type = stack_type;
@@ -436,7 +437,7 @@ impl TypeDeclaration {
                 if let Some(parent) = &type_unwrapped.parent {
                     parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
                         for field_info in parent_unwrapped.fields.values() {
-                            default_values.insert(field_info.name.to_string(), field_info.default_value.replace_type_parameters(&parent.ty, self.location.get_hash()));
+                            default_values.insert(field_info.name.to_string(), field_info.default_value.clone());
                         }
                     });
                 }
@@ -452,7 +453,27 @@ impl TypeDeclaration {
                         if let Some(default_value) = &field.default_value {
                             if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
                                 if vasm.ty.is_assignable_to(&field_info.ty) {
-                                    default_value_vasm = vasm;
+                                    let function_blueprint = FunctionBlueprint {
+                                        function_id: field_info.name.location.get_hash(),
+                                        name: Identifier::unique(format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
+                                        visibility: Visibility::None,
+                                        parameters: IndexMap::new(),
+                                        argument_names: vec![],
+                                        signature: Signature {
+                                            this_type: None,
+                                            argument_types: vec![],
+                                            return_type: field_info.ty.clone(),
+                                        },
+                                        is_raw_wasm: false,
+                                        method_details: None,
+                                        body: vasm,
+                                    };
+
+                                    default_value_vasm = vasm![VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
+                                        caller_type: None,
+                                        function: Link::new(function_blueprint),
+                                        parameters: vec![]
+                                    }), vec![])];
                                 } else {
                                     context.errors.add(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
                                 }
@@ -493,17 +514,20 @@ impl TypeDeclaration {
                     .collect();
                 
                 result.sort_by_cached_key(|func_ref| func_ref.function.borrow().name.to_string());
-                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().first_declared_by.as_ref().unwrap().borrow().ancestors.len());
+                result.sort_by_cached_key(|func_ref| func_ref.function.borrow().method_details.as_ref().unwrap().first_declared_by.as_ref().unwrap().borrow().ancestors.len());
 
                 result
             });
 
             for (i, func_ref) in dynamic_methods.iter().enumerate() {
                 func_ref.function.with_mut(|mut function_unwrapped| {
-                    if function_unwrapped.dynamic_index == -1 {
-                        function_unwrapped.dynamic_index = i as i32;
-                    } else if function_unwrapped.dynamic_index != i as i32 {
-                        panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), function_unwrapped.dynamic_index);
+                    let mut method_details = function_unwrapped.method_details.as_mut().unwrap();
+                    let dynamic_index = method_details.dynamic_index;
+
+                    if dynamic_index == -1 {
+                        method_details.dynamic_index = i as i32;
+                    } else if dynamic_index != i as i32 {
+                        panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), dynamic_index);
                     }
                 });
             }

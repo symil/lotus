@@ -3,7 +3,7 @@ use indexmap::IndexSet;
 use colored::*;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -22,15 +22,16 @@ pub struct ProgramContext {
     pub current_interface: Option<Link<InterfaceBlueprint>>,
     pub autogen_type: Option<Link<TypeBlueprint>>,
     pub scopes: Vec<Scope>,
+    pub function_level: u32,
     pub iter_fields_counter: Option<usize>,
     pub iter_variants_counter: Option<usize>,
     pub iter_ancestors_counter: Option<usize>,
 
-    pub function_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
-    pub function_wasm_types: HashMap<FunctionInstanceWasmType, String>,
-    pub type_instances: HashMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
-    pub function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
-    pub global_var_instances: Vec<GlobalVarInstance>,
+    function_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
+    function_wasm_types: HashMap<FunctionInstanceWasmType, String>,
+    type_instances: HashMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
+    function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
+    global_var_instances: Vec<GlobalVarInstance>,
 
     pub main_function: Option<Rc<FunctionInstanceHeader>>,
     pub start_client_function: Option<Rc<FunctionInstanceHeader>>,
@@ -58,6 +59,7 @@ impl ProgramContext {
         let mut info = ActualTypeContent {
             type_blueprint,
             parameters: vec![],
+            location: DataLocation::default()
         };
 
         for ty in parameters {
@@ -129,11 +131,23 @@ impl ProgramContext {
     }
 
     pub fn push_scope(&mut self, kind: ScopeKind) {
+        if kind.is_function() {
+            self.function_level += 1;
+        }
+        
         self.scopes.push(Scope::new(kind));
     }
 
     pub fn pop_scope(&mut self) {
-        self.scopes.pop();
+        if let Some(scope) = self.scopes.pop() {
+            if scope.kind.is_function() {
+                self.function_level -= 1;
+            }
+        }
+    }
+
+    pub fn get_function_level(&self) -> u32 {
+        self.function_level
     }
 
     pub fn get_scope_depth(&self, kind: ScopeKind) -> Option<u32> {
@@ -154,20 +168,62 @@ impl ProgramContext {
         None
     }
 
-    pub fn push_var(&mut self, var_info: &VariableInfo) {
+    fn push_var(&mut self, var_info: &VariableInfo) {
         // global scope is handled differently
         if let Some(current_scope) = self.scopes.iter_mut().last() {
             current_scope.insert_var_info(&var_info);
         }
     }
 
-    pub fn get_var_info(&self, name: &Identifier) -> Option<VariableInfo> {
+    fn check_var_unicity(&mut self, name: &Identifier) -> bool {
+        let is_unique = self.access_var(name).is_none();
+
+        if !is_unique {
+            self.errors.add(name, format!("variable `{}` already exists in this scope", name));
+        }
+
+        is_unique
+    }
+
+    pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {
+        let kind = match self.scopes.last() {
+            Some(_) => VariableKind::Local,
+            None => VariableKind::Global,
+        };
+        let var_info = VariableInfo::create(name, ty, kind, self.get_function_level());
+
+        self.push_var(&var_info);
+
+        var_info
+    }
+
+    pub fn declare_function_arguments(&mut self, function_wrapped: &Link<FunctionBlueprint>) {
+        function_wrapped.with_ref(|function_unwrapped| {
+            if let Some(this_type) = &function_unwrapped.signature.this_type {
+                let var_info = VariableInfo::create(Identifier::unlocated(THIS_VAR_NAME), this_type.clone(), VariableKind::Argument, self.get_function_level());
+
+                self.push_var(&var_info);
+            }
+
+            for (arg_name, arg_type) in function_unwrapped.argument_names.iter().zip(function_unwrapped.signature.argument_types.iter()) {
+                let var_info = VariableInfo::create(arg_name.clone(), arg_type.clone(), VariableKind::Argument, self.get_function_level());
+
+                self.push_var(&var_info);
+            }
+        });
+    }
+
+    pub fn access_var(&self, name: &Identifier) -> Option<VariableInfo> {
+        let mut closure_access = false;
+
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
                 return Some(var_info.clone());
             }
 
             if scope.kind.is_function() {
+                closure_access = true;
+                // TOOD
                 break;
             }
         }
@@ -176,16 +232,6 @@ impl ProgramContext {
             Some(global) => Some(global.borrow().var_info.clone()),
             None => None,
         }
-    }
-
-    pub fn check_var_unicity(&mut self, name: &Identifier) -> bool {
-        let is_unique = self.get_var_info(name).is_none();
-
-        if !is_unique {
-            self.errors.add(name, format!("variable `{}` already exists in this scope", name));
-        }
-
-        is_unique
     }
 
     pub fn get_type_instance(&mut self, parameters: TypeInstanceParameters) -> Rc<TypeInstanceHeader> {
@@ -419,7 +465,7 @@ impl ProgramContext {
         }
 
         for function_blueprint in self.functions.get_all() {
-            function_blueprint.borrow().check_types_parameters(self);
+            function_blueprint.borrow().check_type_parameters(self);
         }
 
         for typedef_blueprint in self.typedefs.get_all() {
@@ -558,8 +604,8 @@ impl ProgramContext {
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));
-        content.push(Wat::declare_function(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
-        content.push(Wat::declare_function("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
+        content.push(Wat::declare_function::<&str>(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
+        content.push(Wat::declare_function::<&str>("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
 
         for (function_instance_header, function_instance_content) in self.function_instances.into_values() {
             if let Some(mut wasm_declaration) = function_instance_content.unwrap().wasm_declaration {

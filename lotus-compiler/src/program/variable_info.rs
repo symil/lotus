@@ -9,7 +9,8 @@ pub struct VariableInfoContent {
     pub name: Identifier,
     pub ty: Type,
     pub kind: VariableKind,
-    pub wasm_name: String
+    pub wasm_name: String,
+    pub declaration_level: Option<u32>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -29,26 +30,44 @@ impl VariableKind {
 }
 
 impl VariableInfo {
-    pub fn from(name: Identifier, ty: Type, kind: VariableKind) -> Self {
+    pub fn create(name: Identifier, ty: Type, kind: VariableKind, function_level: u32) -> Self {
         let wasm_name = name.to_unique_string();
-        let value = VariableInfoContent { name, ty, kind, wasm_name };
+        let declaration_level = Some(function_level);
+        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name };
 
-        Link::new(value)
+        Link::new(content)
     }
 
-    pub fn from_wasm_name(wasm_name: String, ty: Type, kind: VariableKind) -> Self {
-        Link::new(VariableInfoContent {
-            name: Identifier::unlocated(""),
-            ty,
-            kind,
-            wasm_name,
-        })
+    pub fn tmp(name: &str, ty: Type) -> Self {
+        let name = Identifier::unique(name);
+        let wasm_name = name.to_string();
+        let declaration_level = None;
+        let kind = VariableKind::Local;
+        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name };
+
+        Link::new(content)
     }
-    
-    pub fn check_parameters(&self, context: &mut ProgramContext) {
-        self.with_ref(|var_info| {
-            var_info.ty.check_parameters(&var_info.name, context);
-        })
+
+    pub fn ty(&self) -> Ref<Type> {
+        Ref::map(self.borrow(), |var_info| &var_info.ty)
+    }
+
+    pub fn kind(&self) -> Ref<VariableKind> {
+        Ref::map(self.borrow(), |var_info| &var_info.kind)
+    }
+
+    pub fn name(&self) -> Ref<Identifier> {
+        Ref::map(self.borrow(), |var_info| &var_info.name)
+    }
+
+    pub fn get_wasm_name(&self) -> String {
+        self.borrow().wasm_name.clone()
+    }
+
+    pub fn set_type(&self, ty: Type) {
+        self.with_mut(|mut var_info| {
+            var_info.ty = ty;
+        });
     }
 
     pub fn get_to_stack(&self) -> Wat {
@@ -80,39 +99,6 @@ impl VariableInfo {
             }
         })
     }
-
-    pub fn get_wasm_name(&self) -> String {
-        self.borrow().wasm_name.clone()
-    }
-
-    pub fn replace_type_parameters(&self, this_type: &Type, id: u64) -> VariableInfo {
-        self.with_ref(|var_info| {
-            Link::new(VariableInfoContent {
-                name: var_info.name.clone(),
-                ty: var_info.ty.replace_parameters(Some(this_type), &[]),
-                kind: var_info.kind.clone(),
-                wasm_name: format!("{}_{}", var_info.wasm_name.clone(), id),
-            })
-        })
-    }
-
-    pub fn ty(&self) -> Ref<Type> {
-        Ref::map(self.borrow(), |var_info| &var_info.ty)
-    }
-
-    pub fn kind(&self) -> Ref<VariableKind> {
-        Ref::map(self.borrow(), |var_info| &var_info.kind)
-    }
-
-    pub fn name(&self) -> Ref<Identifier> {
-        Ref::map(self.borrow(), |var_info| &var_info.name)
-    }
-
-    pub fn set_type(&self, ty: Type) {
-        self.with_mut(|mut var_info| {
-            var_info.ty = ty;
-        });
-    }
 }
 
 impl Default for VariableInfo {
@@ -121,6 +107,7 @@ impl Default for VariableInfo {
             name: Identifier::default(),
             ty: Type::Undefined,
             kind: VariableKind::Local,
+            declaration_level: None,
             wasm_name: String::new(),
         })
     }

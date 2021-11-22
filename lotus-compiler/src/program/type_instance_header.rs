@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
+use parsable::DataLocation;
 use crate::utils::Link;
 use super::{ActualTypeContent, FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, Type, TypeBlueprint, TypeInstanceParameters};
 
@@ -34,10 +35,11 @@ impl TypeInstanceHeader {
             let parameters = instance_parameters.type_parameters.clone();
             let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
-            let dynamic_method_table_offset = context.function_table.len();
+            let dynamic_method_table_offset = context.reserve_next_function_index();
             let mut type_content = ActualTypeContent {
                 type_blueprint: type_blueprint.clone(),
                 parameters: vec![],
+                location: DataLocation::default(),
             };
             let mut name = type_unwrapped.name.to_string();
 
@@ -46,8 +48,8 @@ impl TypeInstanceHeader {
                 type_content.parameters.push(parameter.ty.clone());
             }
 
-            for i in 0..dynamic_method_count.max(1) {
-                context.function_table.push(None);
+            for _ in 1..dynamic_method_count {
+                context.reserve_next_function_index();
             }
 
             let ty = Type::Actual(type_content);

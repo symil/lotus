@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, RESULT_VAR_NAME, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, RESULT_VAR_NAME, Signature, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -80,25 +80,28 @@ impl InterfaceDeclaration {
             for method in &self.body.methods {
                 let (method_qualifier, name, arguments, return_type) = method.process(context);
                 let method_kind = method_qualifier.to_field_kind();
-                let arguments : Vec<VariableInfo> = arguments.into_iter().map(|(name, ty)| VariableInfo::from(name, ty, VariableKind::Argument)).collect();
                 let mut function_blueprint = FunctionBlueprint {
                     function_id: name.location.get_hash(),
                     name: name.clone(),
-                    visibility: Visibility::Member,
-                    qualifier: method_qualifier,
-                    event_callback_qualifier: None,
-                    owner_type: None,
-                    owner_interface: Some(interface_wrapped.clone()),
-                    first_declared_by: None,
+                    visibility: Visibility::None,
                     parameters: IndexMap::new(),
-                    conditions: vec![],
-                    this_arg: None,
-                    payload_arg: None,
-                    arguments,
-                    return_type: return_type.unwrap_or(context.void_type()),
-                    dynamic_index: -1,
+                    argument_names: arguments.iter().map(|(name, ty)| name.clone()).collect(),
+                    signature: Signature {
+                        this_type: None,
+                        argument_types: arguments.iter().map(|(name, ty)| ty.clone()).collect(),
+                        return_type: return_type.unwrap_or(context.void_type()),
+                    },
                     is_raw_wasm: false,
                     body: Vasm::void(),
+                    method_details: Some(MethodDetails {
+                        qualifier: Some(method_qualifier),
+                        event_callback_qualifier: None,
+                        owner_type: None,
+                        owner_interface: Some(interface_wrapped.clone()),
+                        first_declared_by: None,
+                        conditions: vec![],
+                        dynamic_index: -1,
+                    })
                 };
 
                 let index_map = match method_kind {
@@ -109,7 +112,7 @@ impl InterfaceDeclaration {
                 let this_type = Type::This(interface_wrapped.clone());
 
                 if !method_kind.is_static() {
-                    function_blueprint.this_arg = Some(VariableInfo::from(Identifier::new(THIS_VAR_NAME, self), this_type.clone(), VariableKind::Local));
+                    function_blueprint.signature.this_type = Some(this_type.clone());
                 }
 
                 let func_ref = FuncRef {

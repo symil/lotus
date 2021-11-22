@@ -20,29 +20,30 @@ impl Identifier {
         identifier
     }
 
-    pub fn unlocated<S : Deref<Target=str>>(name: S) -> Self {
-        let mut identifier = Identifier::default();
-
-        identifier.value = name.to_string();
-
-        identifier
-    }
-
-    pub fn unique<S : Deref<Target=str>>(name: S, location: &DataLocation) -> Self {
+    pub fn unique<S : Deref<Target=str>>(name: S) -> Self {
         let mut identifier = Identifier::default();
         let id = unsafe {
             COUNTER += 1;
             COUNTER
         };
 
-        identifier.value = format!("{}{}", name.to_string(), id);
-        identifier.location = location.clone();
+        identifier.value = format!("{}_u{}", name.to_string(), id);
 
         identifier
     }
 
+    pub fn unlocated(name: &str) -> Self {
+        let mut identifier = Identifier::default();
+        identifier.value = name.to_string();
+        
+        identifier
+    }
+
     pub fn to_unique_string(&self) -> String {
-        format!("{}_{}", self.as_str(), self.location.get_hash())
+        match self.location.is_empty() {
+            true => self.to_string(),
+            false => format!("{}_{}", self.as_str(), self.location.get_hash()),
+        }
     }
 
     pub fn is(&self, value: &str) -> bool {

@@ -11,7 +11,7 @@ pub struct TypedefBlueprint {
 
 impl TypedefBlueprint {
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {
-        self.target.check_parameters(&self.name, context);
+        self.target.check_parameters(context);
     }
 }
 

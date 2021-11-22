@@ -95,6 +95,7 @@ impl ParsedValueType {
                     result = Type::Actual(ActualTypeContent {
                         parameters: parameter_list,
                         type_blueprint: type_blueprint.clone(),
+                        location: self.location.clone()
                     })
                 }
             }

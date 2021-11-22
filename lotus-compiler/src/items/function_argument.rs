@@ -11,7 +11,7 @@ pub struct FunctionArgument {
 
 impl FunctionArgument {
     pub fn process(&self, context: &mut ProgramContext) -> Option<(Identifier, Type)> {
-        let arg_name = self.name.clone().unwrap_or_else(|| Identifier::unique("arg", self));
+        let arg_name = self.name.clone().unwrap_or_else(|| Identifier::unique("arg"));
 
         match self.ty.process(false, context) {
             Some(arg_type) => Some((arg_name, arg_type)),

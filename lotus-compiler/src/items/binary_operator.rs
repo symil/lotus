@@ -65,7 +65,7 @@ impl BinaryOperatorWrapper {
     pub fn get_short_circuit_vasm(&self, context: &ProgramContext) -> Option<Vasm> {
         match &self.value {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
-                let tmp_var = VariableInfo::from(Identifier::unique("tmp", self), context.bool_type(), VariableKind::Local);
+                let tmp_var = VariableInfo::tmp("tmp", context.bool_type());
                 let mut content = vec![
                     VI::tee_var_from_stack(&tmp_var),
                     VI::get_var(&tmp_var),
@@ -145,7 +145,7 @@ impl BinaryOperatorWrapper {
                     SelectiveOperator::Or => match left_vasm.ty.get_common_type(&right_vasm.ty) {
                         Some(return_type) => {
                             let return_type = return_type.clone();
-                            let tmp_var = VariableInfo::from(Identifier::unique("tmp", self), return_type.clone(), VariableKind::Local);
+                            let tmp_var = VariableInfo::tmp("tmp", return_type.clone());
                             let mut vasm = Vasm::new(Type::Undefined, vec![tmp_var.clone()], vec![]);
 
                             let mut condition = vasm![

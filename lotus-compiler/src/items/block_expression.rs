@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, Type, VI, Vasm}, vasm};
+use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}, vasm};
 use super::Expression;
 
 #[parsable]
@@ -19,6 +19,8 @@ impl BlockExpression {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut vasm = vasm![];
         let mut ok = true;
+
+        context.push_scope(ScopeKind::Block);
 
         for (i, item) in self.list.iter().enumerate() {
             let is_last = i == self.list.len() - 1;
@@ -41,6 +43,8 @@ impl BlockExpression {
                 ok = false
             }
         }
+
+        context.pop_scope();
 
         match ok {
             true => Some(vasm),

@@ -91,18 +91,18 @@ impl TypeBlueprint {
 
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {
         if let Some(parent) = &self.parent {
-            parent.ty.check_parameters(&parent.location, context);
+            parent.ty.check_parameters(context);
         }
 
         for field_info in self.fields.values() {
             if field_info.owner.borrow().type_id == self.type_id {
-                field_info.ty.check_parameters(&field_info.name, context);
+                field_info.ty.check_parameters(context);
             }
         }
 
         for type_info in self.associated_types.values() {
             if type_info.owner.borrow().type_id == self.type_id {
-                type_info.ty.check_parameters(&type_info.name, context);
+                type_info.ty.check_parameters(context);
             }
         }
     }

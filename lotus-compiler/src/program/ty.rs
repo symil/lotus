@@ -22,7 +22,8 @@ pub enum Type {
 #[derive(Debug, Clone)]
 pub struct ActualTypeContent {
     pub type_blueprint: Link<TypeBlueprint>,
-    pub parameters: Vec<Type>
+    pub parameters: Vec<Type>,
+    pub location: DataLocation
 }
 
 #[derive(Debug, Clone)]
@@ -136,10 +137,12 @@ impl Type {
             Type::Actual(info) => {
                 let type_blueprint = info.type_blueprint.clone();
                 let parameters = info.parameters.iter().map(|p| p.replace_parameters(this_type, function_parameters)).collect();
+                let location = info.location.clone();
 
                 Type::Actual(ActualTypeContent {
                     type_blueprint,
                     parameters,
+                    location
                 })
             },
             // Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
@@ -284,17 +287,17 @@ impl Type {
         }
     }
 
-    pub fn check_parameters(&self, location: &DataLocation, context: &mut ProgramContext) -> bool {
+    pub fn check_parameters(&self, context: &mut ProgramContext) -> bool {
         match self {
             Type::Actual(info) => {
                 info.type_blueprint.with_ref(|type_unwrapped| {
                     let mut ok = true;
 
                     for (actual, expected) in info.parameters.iter().zip(type_unwrapped.parameters.values()) {
-                        match actual.check_parameters(location, context) {
+                        match actual.check_parameters(context) {
                             true => {
                                 for interface in expected.required_interfaces.list.iter() {
-                                    if !actual.check_match_interface(interface, location, context) {
+                                    if !actual.check_match_interface(interface, &info.location, context) {
                                         ok = false;
                                     }
                                 }
@@ -363,15 +366,18 @@ impl Type {
                         
                         if let Some(actual_method_wrapped) = self.get_method(method_kind.clone(), expected_method_unwrapped.name.as_str(), context) {
                             let actual_method_unwrapped = actual_method_wrapped.function.borrow();
-                            let actual_argument_count = actual_method_unwrapped.arguments.len();
-                            let expected_argument_count = expected_method_unwrapped.arguments.len();
+                            let actual_arguments = &actual_method_unwrapped.signature.argument_types;
+                            let expected_arguments = &expected_method_unwrapped.signature.argument_types;
+
+                            let actual_argument_count = actual_arguments.len();
+                            let expected_argument_count = expected_arguments.len();
 
                             if actual_argument_count != expected_argument_count {
                                 details.push(format!("method `{}`: expected {} arguments, got `{}`", expected_method_unwrapped.name.as_str().bold(), expected_argument_count, actual_argument_count));
                             } else {
-                                for (i, (expected_arg, actual_arg)) in expected_method_unwrapped.arguments.iter().zip(actual_method_unwrapped.arguments.iter()).enumerate() {
-                                    let actual_type = actual_arg.ty().replace_parameters(Some(self), &[]);
-                                    let expected_type = expected_arg.ty().replace_parameters(Some(self), &[]);
+                                for (i, (expected_arg_type, actual_arg_type)) in expected_arguments.iter().zip(actual_arguments.iter()).enumerate() {
+                                    let expected_type = expected_arg_type.replace_parameters(Some(self), &[]);
+                                    let actual_type = actual_arg_type.replace_parameters(Some(self), &[]);
 
                                     if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                         details.push(format!("method `{}`, argument #{}: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), i + 1, expected_type, &actual_type));
@@ -379,11 +385,11 @@ impl Type {
                                 }
                             }
 
-                            let actual_return_value = actual_method_unwrapped.return_type.replace_parameters(Some(self), &[]);
-                            let expected_return_type = expected_method_unwrapped.return_type.replace_parameters(Some(self), &[]);
+                            let actual_return_type = actual_method_unwrapped.signature.return_type.replace_parameters(Some(self), &[]);
+                            let expected_return_type = expected_method_unwrapped.signature.return_type.replace_parameters(Some(self), &[]);
 
-                            if !actual_return_value.is_assignable_to(&expected_return_type) {
-                                details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_value));
+                            if !actual_return_type.is_assignable_to(&expected_return_type) {
+                                details.push(format!("method `{}`, return type: expected {}, got `{}`", expected_method_unwrapped.name.as_str().bold(), &expected_return_type, actual_return_type));
                             }
                         } else {
                             details.push(format!("missing method `{}`", expected_method_unwrapped.name.as_str().bold()));
@@ -422,10 +428,10 @@ impl Type {
 
                 match self.check_match_interface(&interface_wrapped, location, context) {
                     true => {
-                        let return_type = function_unwrapped.return_type.replace_parameters(Some(self), &[]);
+                        let return_type = function_unwrapped.signature.return_type.replace_parameters(Some(self), &[]);
 
-                        for (expected_arg, (actual_type, arg_location)) in function_unwrapped.arguments.iter().zip(argument_types.iter()) {
-                            let expected_type = expected_arg.ty().replace_parameters(Some(self), &[]);
+                        for (expected_arg_type, (actual_type, arg_location)) in function_unwrapped.signature.argument_types.iter().zip(argument_types.iter()) {
+                            let expected_type = expected_arg_type.replace_parameters(Some(self), &[]);
 
                             if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
                                 context.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));

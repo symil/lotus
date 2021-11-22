@@ -16,7 +16,7 @@ impl IfBlock {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = Vasm::void();
         let mut required_branch_type = Type::Void;
-        let result_var = VariableInfo::from(Identifier::unique("tmp_result", self), Type::Void, VariableKind::Local);
+        let result_var = VariableInfo::tmp("tmp_result", Type::Void);
 
         context.push_scope(ScopeKind::Branch);
         if let (Some(condition_vasm), Some(block_vasm)) = (self.if_branch.process_condition(context), self.if_branch.process_body(type_hint, context)) {

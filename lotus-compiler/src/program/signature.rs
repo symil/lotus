@@ -26,6 +26,14 @@ impl Signature {
         }
     }
 
+    pub fn check_type_parameters(&self, context: &mut ProgramContext) {
+        for arg_type in &self.argument_types {
+            arg_type.check_parameters(context);
+        }
+
+        self.return_type.check_parameters(context);
+    }
+
     pub fn to_string(&self) -> String {
         let mut s = format!("fn({})", display_join(&self.argument_types, ", "));
 
@@ -41,6 +49,16 @@ impl Signature {
             this_type: self.this_type.as_ref().map(|ty| ty.resolve(type_index, context)),
             argument_types: self.argument_types.iter().map(|ty| ty.resolve(type_index, context)).collect(),
             return_type: self.return_type.resolve(type_index, context),
+        }
+    }
+}
+
+impl Default for Signature {
+    fn default() -> Self {
+        Self {
+            this_type: None,
+            argument_types: vec![],
+            return_type: Type::Void
         }
     }
 }

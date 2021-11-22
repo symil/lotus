@@ -60,7 +60,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
                     Visibility::Public => item_location.file_namespace == getter_location.file_namespace,
                     Visibility::Export => true,
                     Visibility::System => item_location.file_namespace == getter_location.file_namespace,
-                    Visibility::Member => false,
+                    Visibility::None => false,
                 }
             });
 
@@ -84,7 +84,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
                     Visibility::Public => false,
                     Visibility::Export => true,
                     Visibility::System => true,
-                    Visibility::Member => false,
+                    Visibility::None => false,
                 }
             });
 

@@ -9,29 +9,45 @@ pub struct FunctionBlueprint {
     pub function_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
-    pub qualifier: MethodQualifier,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
+    pub argument_names: Vec<Identifier>,
+    pub signature: Signature,
+    pub is_raw_wasm: bool,
+    pub method_details: Option<MethodDetails>,
+    pub body: Vasm
+}
+
+#[derive(Debug)]
+pub struct MethodDetails {
+    pub qualifier: Option<MethodQualifier>,
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub conditions: Vec<(Identifier, Identifier)>,
-    pub this_arg: Option<VariableInfo>,
-    pub payload_arg: Option<VariableInfo>,
-    pub arguments: Vec<VariableInfo>,
-    pub return_type: Type,
-    pub is_raw_wasm: bool,
     pub dynamic_index: i32,
-    pub body: Vasm
 }
 
 impl FunctionBlueprint {
     pub fn is_static(&self) -> bool {
-        self.this_arg.is_none()
+        self.signature.this_type.is_none()
+    }
+
+    pub fn get_dynamic_index(&self) -> Option<usize> {
+        match &self.method_details {
+            Some(details) => match details.dynamic_index > -1 {
+                true => Some(details.dynamic_index as usize),
+                false => None,
+            },
+            None => None,
+        }
     }
 
     pub fn is_dynamic(&self) -> bool {
-        self.qualifier == MethodQualifier::Dynamic
+        match &self.method_details {
+            Some(details) => details.qualifier.contains(&MethodQualifier::Dynamic),
+            None => false,
+        }
     }
 
     pub fn get_method_kind(&self) -> FieldKind {
@@ -41,20 +57,8 @@ impl FunctionBlueprint {
         }
     }
 
-    pub fn check_types_parameters(&self, context: &mut ProgramContext) {
-        for arg in &self.arguments {
-            arg.check_parameters(context);
-        }
-
-        self.return_type.check_parameters(&self.name, context);
-    }
-
-    pub fn get_signature(&self) -> Signature {
-        Signature {
-            this_type: self.this_arg.as_ref().map(|var_info| var_info.ty().clone()),
-            argument_types: self.arguments.iter().map(|var_info| var_info.ty().clone()).collect(),
-            return_type: self.return_type.clone()
-        }
+    pub fn check_type_parameters(&self, context: &mut ProgramContext) {
+        self.signature.check_type_parameters(context);
     }
 }
 

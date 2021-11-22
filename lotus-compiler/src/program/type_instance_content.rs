@@ -19,9 +19,9 @@ impl TypeInstanceContent {
                 };
 
                 let function_instance = context.get_function_instance(parameters);
-                let index = func_ref.function.borrow().dynamic_index as usize;
+                let index = func_ref.function.borrow().get_dynamic_index().unwrap();
 
-                context.function_table[header.dynamic_method_table_offset + index] = Some(function_instance);
+                context.assign_function_to_index(header.dynamic_method_table_offset + index, &function_instance);
             }
         });
 
