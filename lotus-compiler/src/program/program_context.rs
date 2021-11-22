@@ -224,7 +224,7 @@ impl ProgramContext {
         header
     }
 
-    pub fn get_function_instance_wasm_type_name(&mut self, signature: ResolvedSignature) -> String {
+    pub fn get_function_instance_wasm_type_name(&mut self, signature: &ResolvedSignature) -> String {
         let mut function_wasm_type = FunctionInstanceWasmType {
             arg_types: vec![],
             return_types: vec![],

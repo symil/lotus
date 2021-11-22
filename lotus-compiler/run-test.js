@@ -41,6 +41,7 @@ async function main() {
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
+    let onlyCompileWat = hasOption('-c');
     let testOptions = { inheritStdio, displayMemory };
 
     if (isMocha) {
@@ -67,6 +68,8 @@ async function main() {
                 });
             }
         });
+    } else if (onlyCompileWat) {
+        compileWat(path.join(BUILD_DIR, WAT_FILE_NAME), path.join(BUILD_DIR, WASM_FILE_NAME), true);
     } else if (createTest) {
         let testName = commandLineNames[0];
 

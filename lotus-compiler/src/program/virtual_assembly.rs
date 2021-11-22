@@ -1,14 +1,16 @@
 use std::rc::Rc;
 use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat};
 
+pub type Vasm = VirtualAssembly;
+
 #[derive(Debug, Clone)]
-pub struct Vasm {
+pub struct VirtualAssembly {
     pub ty: Type,
     pub variables: Vec<VariableInfo>,
     pub instructions: Vec<VirtualInstruction>,
 }
 
-impl Vasm {
+impl VirtualAssembly {
     pub fn new(ty: Type, variables: Vec<VariableInfo>, instructions: Vec<VirtualInstruction>) -> Self {
         Self { ty, variables, instructions }
     }
