@@ -29,16 +29,8 @@ impl FunctionInstanceContent {
                 let mut list : Vec<(VariableInfo, String)> = vec![];
 
                 if !function_unwrapped.is_raw_wasm {
-                    if let Some(this_type) = &function_unwrapped.signature.this_type {
-                        if let Some(wasm_type) = this_type.resolve(&type_index, context).wasm_type {
-                            wat_args.push((THIS_VAR_NAME.to_string(), wasm_type));
-                        }
-                    }
-
-                    for (arg_name, arg_type) in function_unwrapped.argument_names.iter().zip(function_unwrapped.signature.argument_types.iter()) {
-                        if let Some(wasm_type) = arg_type.resolve(&type_index, context).wasm_type {
-                            wat_args.push((arg_name.to_unique_string(), wasm_type));
-                        }
+                    for arg_var in &function_unwrapped.argument_variables {
+                        variables.push(arg_var.clone());
                     }
 
                     if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
@@ -48,7 +40,7 @@ impl FunctionInstanceContent {
                     function_unwrapped.body.collect_variables(&mut variables);
 
                     for var_info in variables {
-                        if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
+                        if let Some(wasm_type) = var_info.resolve_wasm_type(&type_index, context) {
                             let mut array = match var_info.kind().clone() {
                                 VariableKind::Global => unreachable!(),
                                 VariableKind::Local => &mut wat_locals,

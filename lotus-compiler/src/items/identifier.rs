@@ -46,6 +46,10 @@ impl Identifier {
         }
     }
 
+    pub fn get_u32_hash(&self) -> u32 {
+        self.location.get_hash() as u32
+    }
+
     pub fn is(&self, value: &str) -> bool {
         self.value == value
     }

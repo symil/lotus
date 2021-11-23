@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal}, program::{DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -14,9 +14,8 @@ pub enum VirtualInstruction {
     FloatConstant(f32),
     TypeId(Type),
     TypeName(Type),
-    GetVariable(VirtualGetVariableInfo),
-    SetVariable(VirtualSetVariableInfo),
-    TeeVariable(VirtualSetVariableInfo),
+    InitVariable(VirtualInitVariableInfo),
+    AccessVariable(VirtualVariableAccessInfo),
     GetField(VirtualGetFieldInfo),
     SetField(VirtualSetFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
@@ -29,20 +28,23 @@ pub enum VirtualInstruction {
 }
 
 #[derive(Debug, Clone)]
-pub struct VirtualStashInfo {
-    pub value_type: Type,
-    pub wasm_var_name: String
-}
-
-#[derive(Debug, Clone)]
-pub struct VirtualGetVariableInfo {
+pub struct VirtualInitVariableInfo {
     pub var_info: VariableInfo,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum VariableAccessKind {
+    Get,
+    Set,
+    Tee
+}
+
 #[derive(Debug, Clone)]
-pub struct VirtualSetVariableInfo {
+pub struct VirtualVariableAccessInfo {
     pub var_info: VariableInfo,
-    pub value: Option<Vasm>
+    pub access_kind: VariableAccessKind,
+    pub access_level: u32,
+    pub value: Option<Vasm>,
 }
 
 #[derive(Debug, Clone)]
@@ -131,37 +133,54 @@ impl VirtualInstruction {
         Self::TypeName(ty.clone())
     }
 
-    pub fn get_var(var_info: &VariableInfo) -> Self {
-        Self::GetVariable(VirtualGetVariableInfo{
+    pub fn init_var(var_info: &VariableInfo) -> Self {
+        Self::InitVariable(VirtualInitVariableInfo {
             var_info: var_info.clone(),
+        })
+    }
+
+    pub fn get_var(var_info: &VariableInfo) -> Self {
+        Self::AccessVariable(VirtualVariableAccessInfo{
+            var_info: var_info.clone(),
+            access_kind: VariableAccessKind::Get,
+            access_level: 0,
+            value: None
         })
     }
 
     pub fn set_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
-        Self::SetVariable(VirtualSetVariableInfo {
+        Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
-            value: Some(value.to_vasm())
+            access_kind: VariableAccessKind::Set,
+            access_level: 0,
+            value: Some(value.to_vasm()),
         })
     }
 
     pub fn set_var_from_stack(var_info: &VariableInfo) -> Self {
-        Self::SetVariable(VirtualSetVariableInfo {
+        Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
-            value: None
+            access_kind: VariableAccessKind::Set,
+            access_level: 0,
+            value: None,
         })
     }
 
     pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
-        Self::TeeVariable(VirtualSetVariableInfo {
+        Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
-            value: Some(value.to_vasm())
+            access_kind: VariableAccessKind::Tee,
+            access_level: 0,
+            value: Some(value.to_vasm()),
         })
     }
 
     pub fn tee_var_from_stack(var_info: &VariableInfo) -> Self {
-        Self::TeeVariable(VirtualSetVariableInfo {
+        Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
-            value: None
+            access_kind: VariableAccessKind::Tee,
+            access_level: 0,
+            value: None,
         })
     }
 
@@ -287,9 +306,8 @@ impl VirtualInstruction {
             VirtualInstruction::FloatConstant(_) => {},
             VirtualInstruction::TypeId(_) => {},
             VirtualInstruction::TypeName(_) => {},
-            VirtualInstruction::GetVariable(_) => {},
-            VirtualInstruction::SetVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
-            VirtualInstruction::TeeVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
+            VirtualInstruction::InitVariable(info) => {},
+            VirtualInstruction::AccessVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::GetField(_) => {},
             VirtualInstruction::SetField(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::FunctionCall(info) => {
@@ -336,24 +354,75 @@ impl VirtualInstruction {
 
                 vasm.resolve(type_index, context)
             },
-            VirtualInstruction::GetVariable(info) => match info.var_info.ty().resolve(type_index, context).wasm_type.is_some() {
-                true => vec![info.var_info.get_to_stack()],
-                false => vec![],
+            VirtualInstruction::InitVariable(info) => {
+                info.var_info.with_ref(|var_info| {
+                    match var_info.is_closure_arg {
+                        true => vec![
+                            Wat::call("mem_alloc", vec![Wat::const_i32(1)]),
+                            Wat::set_local_from_stack(&var_info.wasm_name)
+                        ],
+                        false => vec![],
+                    }
+                })
             },
-            VirtualInstruction::SetVariable(info) | VirtualInstruction::TeeVariable(info) => {
+            VirtualInstruction::AccessVariable(info) => {
                 let mut content = vec![];
 
                 if let Some(vasm) = &info.value {
                     content.extend(vasm.resolve(type_index, context));
                 }
 
-                if info.var_info.ty().resolve(type_index, context).wasm_type.is_some() {
-                    if let VirtualInstruction::TeeVariable(_) = self {
-                        content.push(info.var_info.tee_from_stack());
-                    } else {
-                        content.push(info.var_info.set_from_stack());
-                    }
-                }
+                match info.var_info.ty().resolve(type_index, context).wasm_type {
+                    Some(wasm_type) => info.var_info.with_ref(|var_info| {
+                        match var_info.is_closure_arg {
+                            true => {
+                                let access_func_name = match info.access_kind {
+                                    VariableAccessKind::Get => match wasm_type {
+                                        "i32" => LOAD_INT_WASM_FUNC_NAME,
+                                        "f32" => LOAD_FLOAT_WASM_FUNC_NAME,
+                                        _ => unreachable!()
+                                    },
+                                    VariableAccessKind::Set | VariableAccessKind::Tee => match wasm_type {
+                                        "i32" => STORE_INT_WASM_FUNC_NAME,
+                                        "f32" => STORE_FLOAT_WASM_FUNC_NAME,
+                                        _ => unreachable!()
+                                    },
+                                };
+
+                                if info.access_level == var_info.declaration_level {
+                                    content.extend(vec![
+                                        Wat::get_local(&var_info.wasm_name),
+                                        Wat::call_from_stack(access_func_name)
+                                    ]);
+                                } else {
+                                    content.extend(vec![
+                                        Wat::get_local(THIS_VAR_NAME),
+                                    ]);
+
+                                    content.extend(vasm![
+                                        VirtualInstruction::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]), "get", &[], vasm![
+                                            VirtualInstruction::int(var_info.name.get_u32_hash())
+                                        ], context)
+                                    ].resolve(type_index, context));
+
+                                    content.push(
+                                        Wat::call_from_stack(access_func_name)
+                                    );
+                                }
+                            },
+                            false => {
+                                let wat = match info.access_kind {
+                                    VariableAccessKind::Get => info.var_info.get_to_stack(),
+                                    VariableAccessKind::Set => info.var_info.set_from_stack(),
+                                    VariableAccessKind::Tee => info.var_info.tee_from_stack(),
+                                };
+
+                                content.push(wat);
+                            }
+                        }
+                    }),
+                    None => {},
+                };
 
                 content
             },
@@ -430,7 +499,7 @@ impl VirtualInstruction {
                     FunctionCall::Anonymous(details) => {
                         let resolved_signature = details.signature.resolve(type_index, context);
                         let function_index_var = info.function_index_var.as_ref().unwrap().clone();
-                        let signature_resolved = details.signature.resolve(type_index, context);
+                        let mut signature_resolved = details.signature.resolve(type_index, context);
                         let function_wasm_type_name = context.get_function_instance_wasm_type_name(&signature_resolved);
 
                         match &details.signature.this_type {
@@ -463,6 +532,9 @@ impl VirtualInstruction {
                                     wasm_signature.push(wat!["result", wasm_type]);
                                 }
 
+                                signature_resolved.argument_types.push(Type::Int.resolve(type_index, context));
+                                let closure_wasm_type_name = context.get_function_instance_wasm_type_name(&signature_resolved);
+
                                 content.extend(vec![
                                     Wat::set_local_from_stack(&function_index_var.get_wasm_name())
                                 ]);
@@ -477,7 +549,11 @@ impl VirtualInstruction {
                                             wat!["call_indirect", wat!["type", Wat::var_name(&function_wasm_type_name)]]
                                         ],
                                         wat!["else",
-                                            wat!["unreachable"]
+                                            function_index_var.get_to_stack(),
+                                            Wat::call_from_stack(LOAD_INT_WASM_FUNC_NAME),
+                                            wat!["i32.add", Wat::const_i32(1), function_index_var.get_to_stack()],
+                                            Wat::call_from_stack(LOAD_INT_WASM_FUNC_NAME),
+                                            wat!["call_indirect", wat!["type", Wat::var_name(&closure_wasm_type_name)]]
                                         ]
                                     ],
                                 ]);
@@ -566,9 +642,8 @@ impl VirtualInstruction {
             VirtualInstruction::FloatConstant(_) => unreachable!(),
             VirtualInstruction::TypeId(_) => unreachable!(),
             VirtualInstruction::TypeName(_) => unreachable!(),
-            VirtualInstruction::GetVariable(_) => unreachable!(),
-            VirtualInstruction::SetVariable(_) => unreachable!(),
-            VirtualInstruction::TeeVariable(_) => unreachable!(),
+            VirtualInstruction::InitVariable(_) => unreachable!(),
+            VirtualInstruction::AccessVariable(_) => unreachable!(),
             VirtualInstruction::GetField(_) => unreachable!(),
             VirtualInstruction::SetField(_) => unreachable!(),
             VirtualInstruction::FunctionCall(_) => unreachable!(),

@@ -10,7 +10,8 @@ pub struct VariableInfoContent {
     pub ty: Type,
     pub kind: VariableKind,
     pub wasm_name: String,
-    pub declaration_level: Option<u32>,
+    pub declaration_level: u32,
+    pub is_closure_arg: bool
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -27,13 +28,20 @@ impl VariableKind {
             _ => false,
         }
     }
+
+    pub fn is_global(&self) -> bool {
+        match self {
+            VariableKind::Global => true,
+            _ => false
+        }
+    }
 }
 
 impl VariableInfo {
-    pub fn create(name: Identifier, ty: Type, kind: VariableKind, function_level: u32) -> Self {
+    pub fn create(name: Identifier, ty: Type, kind: VariableKind, declaration_level: u32) -> Self {
         let wasm_name = name.to_unique_string();
-        let declaration_level = Some(function_level);
-        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name };
+        let is_closure_arg = false;
+        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name, is_closure_arg };
 
         Link::new(content)
     }
@@ -41,9 +49,10 @@ impl VariableInfo {
     pub fn tmp(name: &str, ty: Type) -> Self {
         let name = Identifier::unique(name);
         let wasm_name = name.to_string();
-        let declaration_level = None;
+        let declaration_level = u32::MAX;
         let kind = VariableKind::Local;
-        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name };
+        let is_closure_arg = false;
+        let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name, is_closure_arg };
 
         Link::new(content)
     }
@@ -64,9 +73,29 @@ impl VariableInfo {
         self.borrow().wasm_name.clone()
     }
 
+    pub fn resolve_wasm_type(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Option<&'static str> {
+        self.with_ref(|var_info| -> Option<&str> {
+            match var_info.ty.resolve(type_index, context).wasm_type {
+                Some(wasm_type) => match var_info.is_closure_arg {
+                    true => Some("i32"),
+                    false => Some(wasm_type),
+                },
+                None => None,
+            }
+        })
+    }
+
     pub fn set_type(&self, ty: Type) {
         self.with_mut(|mut var_info| {
             var_info.ty = ty;
+        });
+    }
+
+    pub fn mark_as_closure_arg(&self) {
+        self.with_mut(|mut var_info| {
+            if !var_info.kind.is_global() {
+                var_info.is_closure_arg = true;
+            }
         });
     }
 
@@ -107,8 +136,9 @@ impl Default for VariableInfo {
             name: Identifier::default(),
             ty: Type::Undefined,
             kind: VariableKind::Local,
-            declaration_level: None,
+            declaration_level: u32::MAX,
             wasm_name: String::new(),
+            is_closure_arg: false
         })
     }
 }

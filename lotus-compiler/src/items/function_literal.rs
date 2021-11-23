@@ -14,6 +14,11 @@ pub struct FunctionLiteral {
 
 const EMPTY_TYPE_LIST : [Type; 0] = [];
 
+// A closure is a memory block containing 3 values, in this order:
+// - Map<int, int> associating a variable id with its address
+// - A function index, to be called with `call_indirect` with the Map as its last argument
+// - A `retain` function index, to be called when the closure is retained
+
 impl FunctionLiteral {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
@@ -52,6 +57,7 @@ impl FunctionLiteral {
             parameters: IndexMap::new(),
             argument_names,
             signature: hint_signature.clone(),
+            argument_variables: vec![],
             is_raw_wasm: false,
             method_details: None,
             body: vasm![],

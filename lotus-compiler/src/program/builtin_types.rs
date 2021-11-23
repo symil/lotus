@@ -11,6 +11,8 @@ pub enum BuiltinType {
     Array,
     Function,
     Pair,
+    Set,
+    Map,
     DisplaySize,
     View
 }
@@ -29,6 +31,8 @@ impl BuiltinType {
             BuiltinType::Array => "Array",
             BuiltinType::Function => "Function",
             BuiltinType::Pair => "Pair",
+            BuiltinType::Set => "Set",
+            BuiltinType::Map => "Map",
             BuiltinType::DisplaySize => "DisplaySize",
             BuiltinType::View => "View",
         }

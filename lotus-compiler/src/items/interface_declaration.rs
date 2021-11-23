@@ -91,6 +91,7 @@ impl InterfaceDeclaration {
                         argument_types: arguments.iter().map(|(name, ty)| ty.clone()).collect(),
                         return_type: return_type.unwrap_or(context.void_type()),
                     },
+                    argument_variables: vec![],
                     is_raw_wasm: false,
                     body: Vasm::void(),
                     method_details: Some(MethodDetails {

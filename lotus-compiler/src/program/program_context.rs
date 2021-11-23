@@ -198,18 +198,24 @@ impl ProgramContext {
     }
 
     pub fn declare_function_arguments(&mut self, function_wrapped: &Link<FunctionBlueprint>) {
-        function_wrapped.with_ref(|function_unwrapped| {
+        function_wrapped.with_mut(|mut function_unwrapped| {
+            let mut variables = vec![];
+
             if let Some(this_type) = &function_unwrapped.signature.this_type {
                 let var_info = VariableInfo::create(Identifier::unlocated(THIS_VAR_NAME), this_type.clone(), VariableKind::Argument, self.get_function_level());
 
                 self.push_var(&var_info);
+                variables.push(var_info);
             }
 
             for (arg_name, arg_type) in function_unwrapped.argument_names.iter().zip(function_unwrapped.signature.argument_types.iter()) {
                 let var_info = VariableInfo::create(arg_name.clone(), arg_type.clone(), VariableKind::Argument, self.get_function_level());
 
                 self.push_var(&var_info);
+                variables.push(var_info);
             }
+
+            function_unwrapped.argument_variables = variables;
         });
     }
 
@@ -218,13 +224,15 @@ impl ProgramContext {
 
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
+                if closure_access {
+                    var_info.mark_as_closure_arg();
+                }
+
                 return Some(var_info.clone());
             }
 
             if scope.kind.is_function() {
                 closure_access = true;
-                // TOOD
-                break;
             }
         }
 

@@ -12,8 +12,9 @@ pub struct FunctionBlueprint {
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
     pub argument_names: Vec<Identifier>,
     pub signature: Signature,
-    pub is_raw_wasm: bool,
+    pub argument_variables: Vec<VariableInfo>,
     pub method_details: Option<MethodDetails>,
+    pub is_raw_wasm: bool,
     pub body: Vasm
 }
 

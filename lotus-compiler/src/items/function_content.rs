@@ -32,6 +32,7 @@ impl FunctionContent {
             body: Vasm::void(),
             argument_names: vec![],
             signature: Signature::default(),
+            argument_variables: vec![],
             method_details: None,
         };
 

@@ -70,7 +70,10 @@ impl VarDeclaration {
             VariableNames::Single(name) => {
                 let var_info = context.declare_local_variable(name.clone(), final_var_type.clone());
 
-                source.push(Vasm::new(Type::Undefined, vec![var_info.clone()], vec![VI::set_var_from_stack(&var_info)]));
+                source.push(Vasm::new(Type::Undefined, vec![var_info.clone()], vec![
+                    VI::init_var(&var_info),
+                    VI::set_var_from_stack(&var_info)
+                ]));
                 declared_variables.push(var_info);
             },
             VariableNames::Multiple(names) => {
@@ -86,6 +89,8 @@ impl VarDeclaration {
                             declared_variables.extend(vec![var_1.clone(), var_2.clone()]);
                             source.push(Vasm::new(Type::Undefined, vec![tmp_var_info.clone(), var_1.clone(), var_2.clone()], vec![
                                 VI::set_var_from_stack(&tmp_var_info),
+                                VI::init_var(&var_1),
+                                VI::init_var(&var_2),
                                 VI::get_var(&tmp_var_info),
                                 VI::call_regular_method(&final_var_type, TUPLE_FIRST_METHOD_NAME, &[], vec![], context),
                                 VI::set_var_from_stack(&var_1),

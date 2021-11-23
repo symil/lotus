@@ -1,5 +1,14 @@
 use crate::{program::MEMORY_CELL_BYTE_SIZE, wat};
-use super::{DUMMY_FUNC_NAME, DUPLICATE_INT_WASM_FUNC_NAME, HEADER_MEMORY_WASM_PAGE_COUNT, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, Wat};
+use super::{HEADER_MEMORY_WASM_PAGE_COUNT, Wat};
+
+pub const DUMMY_FUNC_NAME : &'static str = "dummy";
+pub const DUPLICATE_INT_WASM_FUNC_NAME : &'static str = "dup_i32";
+pub const SWAP_INT_INT_WASM_FUNC_NAME : &'static str = "swap_i32_i32";
+pub const SWAP_FLOAT_INT_WASM_FUNC_NAME : &'static str = "swap_f32_i32";
+pub const LOAD_INT_WASM_FUNC_NAME : &'static str = "load_int";
+pub const STORE_INT_WASM_FUNC_NAME : &'static str = "store_int";
+pub const LOAD_FLOAT_WASM_FUNC_NAME : &'static str = "load_float";
+pub const STORE_FLOAT_WASM_FUNC_NAME : &'static str = "store_float";
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
@@ -7,8 +16,6 @@ type Table = (usize, &'static str);
 type FunctionType = (&'static str, &'static[&'static str], &'static[&'static str]);
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[&'static str], &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
-
-pub const RETAIN_FUNC_TYPE_NAME : &'static str = "_type_func_retain";
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
     ("utils", "float_to_string", "float_to_string", &["f32", "i32"], None),
@@ -41,6 +48,10 @@ pub static HEADER_FUNCTIONS : &'static[Function] = &[
     (DUPLICATE_INT_WASM_FUNC_NAME, &[("arg", "i32")], &["i32", "i32"], &[], duplicate_value),
     (SWAP_INT_INT_WASM_FUNC_NAME, &[("arg1", "i32"), ("arg2", "i32")], &["i32", "i32"], &[], swap_values),
     (SWAP_FLOAT_INT_WASM_FUNC_NAME, &[("arg1", "f32"), ("arg2", "i32")], &["i32", "f32"], &[], swap_values),
+    (LOAD_INT_WASM_FUNC_NAME, &[("addr", "i32")], &["i32"], &[], load_int),
+    (STORE_INT_WASM_FUNC_NAME, &[("addr", "i32"), ("value", "i32")], &[], &[], store_int),
+    (LOAD_FLOAT_WASM_FUNC_NAME, &[("addr", "i32")], &["f32"], &[], load_float),
+    (STORE_FLOAT_WASM_FUNC_NAME, &[("addr", "i32"), ("value", "f32")], &[], &[], store_float),
 ];
 
 fn dummy() -> Vec<Wat> {
@@ -58,5 +69,39 @@ fn swap_values() -> Vec<Wat> {
     vec![
         Wat::get_local("arg2"),
         Wat::get_local("arg1"),
+    ]
+}
+
+fn load_int() -> Vec<Wat> {
+    vec![
+        Wat::get_local("addr"),
+        wat!["i32.mul", Wat::const_i32(4)],
+        wat!["i32.load"]
+    ]
+}
+
+fn store_int() -> Vec<Wat> {
+    vec![
+        Wat::get_local("addr"),
+        wat!["i32.mul", Wat::const_i32(4)],
+        Wat::get_local("value"),
+        wat!["i32.store"]
+    ]
+}
+
+fn load_float() -> Vec<Wat> {
+    vec![
+        Wat::get_local("addr"),
+        wat!["i32.mul", Wat::const_i32(4)],
+        wat!["f32.load"]
+    ]
+}
+
+fn store_float() -> Vec<Wat> {
+    vec![
+        Wat::get_local("addr"),
+        wat!["i32.mul", Wat::const_i32(4)],
+        Wat::get_local("value"),
+        wat!["f32.store"]
     ]
 }

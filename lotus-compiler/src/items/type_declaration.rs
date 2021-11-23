@@ -464,8 +464,9 @@ impl TypeDeclaration {
                                             argument_types: vec![],
                                             return_type: field_info.ty.clone(),
                                         },
-                                        is_raw_wasm: false,
+                                        argument_variables: vec![],
                                         method_details: None,
+                                        is_raw_wasm: false,
                                         body: vasm,
                                     };
 
