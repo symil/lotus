@@ -60,7 +60,13 @@ impl VarRef {
                                 None => None,
                             }
                         },
-                        _ => context.errors.add_and_none(&self.name, format!("expected function, got `{}`", var_info.ty()))
+                        _ => {
+                            if !var_info.ty().is_undefined() {
+                                context.errors.add(&self.name, format!("expected function, got `{}`", var_info.ty()));
+                            }
+
+                            None
+                        }
                     },
                     None => match context.functions.get_by_identifier(&self.name) {
                         Some(function_blueprint) => {

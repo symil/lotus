@@ -78,8 +78,6 @@ impl Signature {
         }
 
         if !other.return_type.is_assignable_to(&self.return_type) {
-            self.return_type.print();
-            other.return_type.print();
             return false;
         }
 

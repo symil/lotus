@@ -109,10 +109,6 @@ impl Wat {
         wat!["global.get", Self::var_name(var_name)]
     }
 
-    pub fn tee_global_from_stack(var_name: &str) -> Self {
-        wat!["global.tee", Self::var_name(var_name)]
-    }
-
     pub fn increment_global_i32<T : ToInt>(var_name: &str, value: T) -> Self {
         Wat::set_global(var_name, wat![
             "i32.add",

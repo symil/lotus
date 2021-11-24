@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, THIS_VAR_NAME, TypeIndex, VariableInfo, VariableKind}, utils::Link};
+use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, THIS_VAR_NAME, TypeIndex, VI, VariableInfo, VariableKind}, utils::Link, vasm};
 use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat};
 
 #[derive(Debug)]
@@ -25,12 +25,15 @@ impl FunctionInstanceContent {
                 let mut wat_args = vec![];
                 let mut wat_ret = vec![];
                 let mut wat_locals = vec![];
-                let mut wat_body = function_unwrapped.body.resolve(&type_index, context);
+                let mut wat_body = vec![];
                 let mut list : Vec<(VariableInfo, String)> = vec![];
 
                 if !function_unwrapped.is_raw_wasm {
                     for arg_var in &function_unwrapped.argument_variables {
                         variables.push(arg_var.clone());
+                        wat_body.extend(vasm![
+                            VI::init_var(arg_var)
+                        ].resolve(&type_index, context));
                     }
 
                     if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
@@ -40,7 +43,7 @@ impl FunctionInstanceContent {
                     function_unwrapped.body.collect_variables(&mut variables);
 
                     for var_info in variables {
-                        if let Some(wasm_type) = var_info.resolve_wasm_type(&type_index, context) {
+                        if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
                             let mut array = match var_info.kind().clone() {
                                 VariableKind::Global => unreachable!(),
                                 VariableKind::Local => &mut wat_locals,
@@ -55,6 +58,10 @@ impl FunctionInstanceContent {
                         wat_args.push((CLOSURE_VARIABLES_VAR_NAME.to_string(), "i32"));
                     }
                 }
+
+
+
+                wat_body.extend(function_unwrapped.body.resolve(&type_index, context));
 
                 let wasm_type = FunctionInstanceWasmType {
                     arg_types: wat_args.iter().map(|(name, ty)| *ty).collect(),

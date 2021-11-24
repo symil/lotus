@@ -77,18 +77,6 @@ impl VariableInfo {
         self.name().get_u32_hash()
     }
 
-    pub fn resolve_wasm_type(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Option<&'static str> {
-        self.with_ref(|var_info| -> Option<&str> {
-            match var_info.ty.resolve(type_index, context).wasm_type {
-                Some(wasm_type) => match var_info.is_closure_arg {
-                    true => Some("i32"),
-                    false => Some(wasm_type),
-                },
-                None => None,
-            }
-        })
-    }
-
     pub fn set_type(&self, ty: Type) {
         self.with_mut(|mut var_info| {
             var_info.ty = ty;
@@ -126,7 +114,7 @@ impl VariableInfo {
     pub fn tee_from_stack(&self) -> Wat {
         self.with_ref(|var_info| {
             match &var_info.kind {
-                VariableKind::Global => Wat::tee_global_from_stack(&var_info.wasm_name),
+                VariableKind::Global => panic!(),
                 VariableKind::Local => Wat::tee_local_from_stack(&var_info.wasm_name),
                 VariableKind::Argument => Wat::tee_local_from_stack(&var_info.wasm_name),
             }

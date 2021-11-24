@@ -16,16 +16,15 @@ impl Action {
         match &self.keyword.token {
             ActionKeywordToken::Return => {
                 let function_wrapped = context.get_current_function().unwrap();
-                let function_unwrapped = function_wrapped.borrow();
-                let return_type = &function_unwrapped.signature.return_type;
+                let return_type = function_wrapped.borrow().signature.return_type.clone();
 
                 match return_type.is_void() {
                     false => match &self.value {
                         Some(expr) => {
-                            let type_hint = Some(return_type);
+                            let type_hint = Some(&return_type);
 
                             if let Some(vasm) = expr.process(type_hint, context) {
-                                if vasm.ty.is_assignable_to(return_type) {
+                                if vasm.ty.is_assignable_to(&return_type) {
                                     result = Some(vasm![
                                         VI::return_value(vasm)
                                     ]);

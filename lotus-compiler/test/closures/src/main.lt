@@ -1,0 +1,75 @@
+export fn main() {
+    let a = "hello";
+    @log(a);
+    let f : fn() = () => {
+        @log(a);
+        a = "world";
+        @log(a);
+    };
+
+    f();
+    @log(a);
+    @log("---");
+
+    let c = create_counter();
+    for i in 0..3 {
+        @log(c());
+    }
+    @log("---");
+
+    let c2 = create_counter_from(2.5);
+    for i in 0..3 {
+        @log(c2());
+    }
+    @log("---");
+
+    let array : fn()[] = [];
+    let other_array : Array<fn() -> fn()> = [];
+
+    for (a, b) in 5..8 {
+        array.push(() => @dbg(a.to_string() + " - " + b.to_string()));
+    }
+
+    for f in array {
+        other_array.push(() => f);
+    }
+
+    for producer in other_array {
+        let f = producer();
+        f();
+    }
+    @log("---");
+
+    let n = 8;
+    let x = 10f;
+    let b = true;
+    let o = BLUE;
+
+    let big : fn(int, float) -> string = (add, mult) => {
+        n += add;
+        x *= mult;
+        b = !b;
+
+        n.to_string() + " " + x.to_string() + " " + b.to_string() + " " + @get_debug_string(o)
+    };
+
+    @log(big(5, 3f));
+}
+
+fn create_counter() -> fn() -> float {
+    let counter = 1f;
+
+    () => {
+        let result = counter;
+        counter += 1f;
+        result
+    }
+}
+
+fn create_counter_from(start: float) -> fn() -> float {
+    () => {
+        let result = start;
+        start += 1f;
+        result
+    }
+}

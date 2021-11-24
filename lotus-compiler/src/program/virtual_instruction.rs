@@ -1,13 +1,14 @@
 use std::rc::Rc;
 
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
 
 #[derive(Debug, Clone)]
 pub enum VirtualInstruction {
+    None,
     Drop(Type),
     Eqz,
     Raw(Wat),
@@ -308,6 +309,7 @@ impl VirtualInstruction {
 
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         match self {
+            VirtualInstruction::None => {},
             VirtualInstruction::Drop(ty) => {},
             VirtualInstruction::Eqz => {},
             VirtualInstruction::Raw(_) => {},
@@ -339,6 +341,7 @@ impl VirtualInstruction {
 
     pub fn replace_placeholder(&mut self, location: &DataLocation, replacement: &Rc<Vasm>) {
         match self {
+            VirtualInstruction::None => {},
             VirtualInstruction::Drop(_) => {},
             VirtualInstruction::Eqz => {},
             VirtualInstruction::Raw(_) => {},
@@ -371,6 +374,7 @@ impl VirtualInstruction {
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {
         match self {
+            VirtualInstruction::None => vec![],
             VirtualInstruction::Drop(ty) => match ty.resolve(type_index, context).wasm_type.is_some() {
                 true => vec![wat!["drop"]],
                 false => vec![],
@@ -409,15 +413,47 @@ impl VirtualInstruction {
                 vasm.resolve(type_index, context)
             },
             VirtualInstruction::InitVariable(info) => {
-                info.var_info.with_ref(|var_info| {
-                    match var_info.is_closure_arg {
-                        true => vec![
-                            Wat::call(MEM_ALLOC_FUNC_NAME, vec![Wat::const_i32(1i32)]),
-                            Wat::set_local_from_stack(&var_info.wasm_name)
-                        ],
-                        false => vec![],
-                    }
-                })
+                match info.var_info.ty().resolve(type_index, context).wasm_type {
+                    Some(wasm_type) => info.var_info.with_ref(|var_info| {
+                        match var_info.is_closure_arg {
+                            true => {
+                                let mut content = vec![];
+
+                                let (store_func_name, convert_wat) = match wasm_type {
+                                    "i32" => (STORE_INT_WASM_FUNC_NAME, vec![]),
+                                    "f32" => (STORE_FLOAT_WASM_FUNC_NAME, vec![wat!["f32.reinterpret_i32"]]),
+                                    _ => unreachable!()
+                                };
+
+                                match var_info.kind {
+                                    VariableKind::Global => unreachable!(),
+                                    VariableKind::Local => {
+                                        content.push(Wat::call(MEM_ALLOC_FUNC_NAME, vec![Wat::const_i32(1i32)]));
+                                        content.extend(convert_wat);
+                                        content.push(Wat::set_local_from_stack(&var_info.wasm_name));
+                                    },
+                                    VariableKind::Argument => {
+                                        content.extend(vec![
+                                            Wat::call(MEM_ALLOC_FUNC_NAME, vec![Wat::const_i32(1i32)]),
+                                            Wat::set_global_from_stack(TMP_VAR_NAME),
+                                            Wat::get_global(TMP_VAR_NAME),
+                                            Wat::get_local(&var_info.wasm_name),
+                                            Wat::call_from_stack(store_func_name),
+                                            Wat::get_global(TMP_VAR_NAME),
+                                        ]);
+                                        content.extend(convert_wat);
+                                        content.push(Wat::set_local_from_stack(&var_info.wasm_name));
+
+                                    },
+                                }
+
+                                content
+                            },
+                            false => vec![],
+                        }
+                    }),
+                    None => vec![]
+                }
             },
             VirtualInstruction::AccessVariable(info) => {
                 let mut content = vec![];
@@ -445,6 +481,9 @@ impl VirtualInstruction {
 
                                 if info.access_level.contains(&var_info.declaration_level) {
                                     content.push(Wat::get_local(&var_info.wasm_name));
+                                    if wasm_type == "f32" {
+                                        content.push(wat!["i32.reinterpret_f32"]);
+                                    }
                                     content.extend(value_wat);
                                     content.push(Wat::call_from_stack(access_func_name));
                                 } else {
@@ -459,9 +498,7 @@ impl VirtualInstruction {
                                     ].resolve(type_index, context));
 
                                     content.extend(value_wat);
-                                    content.push(
-                                        Wat::call_from_stack(access_func_name)
-                                    );
+                                    content.push(Wat::call_from_stack(access_func_name));
                                 }
                             },
                             false => {
@@ -624,14 +661,23 @@ impl VirtualInstruction {
                             ];
 
                             for var_info in &details.variables {
-                                vasm.extend(vasm![
-                                    VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
-                                    VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), "set", &[], vasm![
-                                        VI::int(var_info.get_name_hash()),
-                                        VI::get_var(var_info, None)
-                                    ], context),
-                                    VI::drop(Type::Int)
-                                ]);
+                                if let Some(wasm_type) = var_info.ty().resolve(type_index, context).wasm_type {
+                                    let convert_instruction = match wasm_type {
+                                        "i32" => VI::None,
+                                        "f32" => VI::raw(wat!["i32.reinterpret_f32"]),
+                                        _ => unreachable!()
+                                    };
+
+                                    vasm.extend(vasm![
+                                        VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
+                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), "set", &[], vasm![
+                                            VI::int(var_info.get_name_hash()),
+                                            VI::get_var(var_info, None),
+                                            convert_instruction
+                                        ], context),
+                                        VI::drop(Type::Int)
+                                    ]);
+                                }
                             }
 
                             let mut wat = vasm.resolve(type_index, context);
@@ -727,6 +773,7 @@ impl VirtualInstruction {
 
     pub fn resolve_without_context(&self) -> Vec<Wat> {
         match self {
+            VirtualInstruction::None => vec![],
             VirtualInstruction::Drop(ty) => unreachable!(),
             VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
             VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
