@@ -22,27 +22,15 @@ impl BracketIndexing {
                 bracket_vasm.ty = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
 
                 result = Some(match access_type {
-                    AccessType::Get => vasm![index_vasm, bracket_vasm],
-                    AccessType::Set(_) => {
-                        let this_id = self.location.get_hash();
-                        let value_id = this_id + 1;
-                        let item_type = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
-                        let parent_var = VariableInfo::tmp("parent", parent_type.clone());
-                        let item_var = VariableInfo::tmp("item", item_type.clone());
-
-                        let mut result = Vasm::new(Type::Void, vec![parent_var.clone(), item_var.clone()], vec![]);
-
-                        result.extend(vasm![
-                            VI::set_tmp_var(&parent_var),
-                            VI::set_tmp_var(&item_var),
-                            VI::get_tmp_var(&parent_var),
-                            index_vasm,
-                            VI::get_tmp_var(&item_var),
-                            bracket_vasm
-                        ]);
-
-                        result
-                    },
+                    AccessType::Get => vasm![
+                        index_vasm,
+                        bracket_vasm
+                    ],
+                    AccessType::Set(location) => vasm![
+                        index_vasm,
+                        VI::placeholder(location),
+                        bracket_vasm
+                    ],
                 });
             }
         }

@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use parsable::DataLocation;
 use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat};
 
 pub type Vasm = VirtualAssembly;
@@ -12,11 +13,19 @@ pub struct VirtualAssembly {
 
 impl VirtualAssembly {
     pub fn new<T : ToVasm>(ty: Type, variables: Vec<VariableInfo>, instructions: T) -> Self {
-        Self { ty, variables, instructions: instructions.to_vasm().instructions }
+        Self {
+            ty,
+            variables,
+            instructions: instructions.to_vasm().instructions,
+        }
     }
 
     pub fn void() -> Self {
-        Self::new(Type::Void, vec![], vec![])
+        Self {
+            ty: Type::Void,
+            variables: vec![],
+            instructions: vec![],
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -52,11 +61,19 @@ impl VirtualAssembly {
         result
     }
 
+
+
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         list.extend(self.variables.clone());
 
         for instruction in &self.instructions {
             instruction.collect_variables(list);
+        }
+    }
+
+    pub fn replace_placeholder(&mut self, location: &DataLocation, replacement: &Rc<Vasm>) {
+        for instruction in &mut self.instructions {
+            instruction.replace_placeholder(location, replacement);
         }
     }
 

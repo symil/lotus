@@ -50,3 +50,12 @@ impl DataLocation {
         self.file_content == ""
     }
 }
+
+impl PartialEq for DataLocation {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start &&
+        self.end == other.end &&
+        self.file_namespace == other.file_namespace &&
+        self.file_name == other.file_name
+    }
+}

@@ -149,8 +149,8 @@ impl BinaryOperatorWrapper {
                             let mut vasm = Vasm::new(Type::Undefined, vec![tmp_var.clone()], vec![]);
 
                             let mut condition = vasm![
-                                VI::call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context),
-                                VI::tee_tmp_var(&tmp_var)
+                                VI::tee_tmp_var(&tmp_var),
+                                VI::call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context)
                             ];
                             let then_branch = right_vasm;
                             let else_branch = vasm![VI::get_tmp_var(&tmp_var)];
