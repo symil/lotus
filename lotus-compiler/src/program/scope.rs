@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use crate::{items::Identifier, utils::Link};
-use super::{FunctionBlueprint, VariableInfo, insert_in_vec_hashmap};
+use super::{FunctionBlueprint, InterfaceBlueprint, TypeBlueprint, VariableInfo, insert_in_vec_hashmap};
 
 #[derive(Debug)]
 pub struct Scope {
@@ -10,7 +10,9 @@ pub struct Scope {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScopeKind {
-    Function,
+    Type(Link<TypeBlueprint>),
+    Interface(Link<InterfaceBlueprint>),
+    Function(Link<FunctionBlueprint>),
     Loop,
     Branch,
     Block
@@ -35,7 +37,9 @@ impl Scope {
 impl ScopeKind {
     pub fn get_depth(&self) -> u32 {
         match self {
-            ScopeKind::Function => 0,
+            ScopeKind::Type(_) => 0,
+            ScopeKind::Interface(_) => 0,
+            ScopeKind::Function(_) => 0,
             ScopeKind::Loop => 2,
             ScopeKind::Branch => 2,
             ScopeKind::Block => 0,
@@ -44,7 +48,7 @@ impl ScopeKind {
 
     pub fn is_function(&self) -> bool {
         match self {
-            ScopeKind::Function => true,
+            ScopeKind::Function(_) => true,
             _ => false
         }
     }

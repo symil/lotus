@@ -33,11 +33,11 @@ impl BracketIndexing {
                         let mut result = Vasm::new(Type::Void, vec![parent_var.clone(), item_var.clone()], vec![]);
 
                         result.extend(vasm![
-                            VI::set_var_from_stack(&parent_var),
-                            VI::set_var_from_stack(&item_var),
-                            VI::get_var(&parent_var),
+                            VI::set_tmp_var(&parent_var),
+                            VI::set_tmp_var(&item_var),
+                            VI::get_tmp_var(&parent_var),
                             index_vasm,
-                            VI::get_var(&item_var),
+                            VI::get_tmp_var(&item_var),
                             bracket_vasm
                         ]);
 

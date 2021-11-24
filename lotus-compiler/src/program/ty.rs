@@ -190,8 +190,8 @@ impl Type {
     pub fn is_assignable_to(&self, target: &Type) -> bool {
         match (self, target) {
             (_, Type::Any) => true,
-            (Type::Void, _) => target.is_void(),
-            (Type::Int, _) => target.is_int(),
+            (Type::Void, other) | (other, Type::Void) => other.is_void(),
+            (Type::Int, other) | (other, Type::Int) => other.is_int(),
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
                 Some(ty) => &ty == target,
@@ -200,7 +200,7 @@ impl Type {
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
-            (Type::Function(self_info), Type::Function(target_info)) => self_info == target_info,
+            (Type::Function(self_signature), Type::Function(target_signature)) => self_signature.is_assignable_to(target_signature),
             _ => false
         }
     }

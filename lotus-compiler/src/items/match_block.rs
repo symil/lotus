@@ -65,8 +65,8 @@ impl MatchBlock {
                                                     let var_info = context.declare_local_variable(var_name.clone(), ty.clone());
 
                                                     var_vasm = Vasm::new(ty.clone(), vec![var_info.clone()], vec![
-                                                        VI::get_var(&tmp_var),
-                                                        VI::set_var_from_stack(&var_info)
+                                                        VI::get_tmp_var(&tmp_var),
+                                                        VI::set_tmp_var(&var_info)
                                                     ]);
                                                 }
 
@@ -112,12 +112,12 @@ impl MatchBlock {
                                     match new_expected_type {
                                         Some(ty) => {
                                             let vasm = VI::block(vasm![
-                                                VI::get_var(&tmp_var),
+                                                VI::get_tmp_var(&tmp_var),
                                                 test_vasm,
                                                 VI::jump_if_from_stack(0),
                                                 var_vasm,
                                                 branch_vasm,
-                                                VI::set_var_from_stack(&result_var),
+                                                VI::set_tmp_var(&result_var),
                                                 VI::jump(1)
                                             ]);
 
@@ -140,14 +140,14 @@ impl MatchBlock {
                         if !final_type.is_undefined() {
                             content.extend(vec![
                                 VI::call_static_method(&final_type, NONE_METHOD_NAME, &[], vec![], context),
-                                VI::set_var_from_stack(&result_var)
+                                VI::set_tmp_var(&result_var)
                             ]);
                         }
 
                         let branches_vasm = Vasm::new(final_type.clone(), vec![tmp_var.clone(), result_var.clone()], vec![
-                            VI::set_var_from_stack(&tmp_var),
+                            VI::set_tmp_var(&tmp_var),
                             VI::block(content),
-                            VI::get_var(&result_var)
+                            VI::get_tmp_var(&result_var)
                         ]);
 
                         result = Some(Vasm::merge(vec![matched_vasm, branches_vasm]));

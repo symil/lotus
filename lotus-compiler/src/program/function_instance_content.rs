@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{program::{FunctionInstanceWasmType, THIS_VAR_NAME, TypeIndex, VariableInfo, VariableKind}, utils::Link};
+use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, THIS_VAR_NAME, TypeIndex, VariableInfo, VariableKind}, utils::Link};
 use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat};
 
 #[derive(Debug)]
@@ -49,6 +49,10 @@ impl FunctionInstanceContent {
 
                             array.push((var_info.get_wasm_name(), wasm_type))
                         }
+                    }
+
+                    if function_unwrapped.is_closure() {
+                        wat_args.push((CLOSURE_VARIABLES_VAR_NAME.to_string(), "i32"));
                     }
                 }
 

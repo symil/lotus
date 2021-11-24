@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifier, MethodQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
@@ -13,9 +13,16 @@ pub struct FunctionBlueprint {
     pub argument_names: Vec<Identifier>,
     pub signature: Signature,
     pub argument_variables: Vec<VariableInfo>,
+    pub closure_details: Option<ClosureDetails>,
     pub method_details: Option<MethodDetails>,
     pub is_raw_wasm: bool,
     pub body: Vasm
+}
+
+#[derive(Debug)]
+pub struct ClosureDetails {
+    pub variables: HashSet<VariableInfo>,
+    pub declaration_level: u32
 }
 
 #[derive(Debug)]
@@ -56,6 +63,10 @@ impl FunctionBlueprint {
             true => FieldKind::Static,
             false => FieldKind::Regular,
         }
+    }
+
+    pub fn is_closure(&self) -> bool {
+        self.closure_details.is_some()
     }
 
     pub fn check_type_parameters(&self, context: &mut ProgramContext) {

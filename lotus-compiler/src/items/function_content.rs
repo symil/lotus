@@ -1,8 +1,8 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{FunctionBlueprint, MethodDetails, PAYLOAD_VAR_NAME, ProgramContext, RESULT_VAR_NAME, ScopeKind, Signature, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{items::TypeQualifier, program::{FunctionBlueprint, MethodDetails, PAYLOAD_VAR_NAME, ProgramContext, ScopeKind, Signature, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility};
 
 #[parsable]
@@ -33,6 +33,7 @@ impl FunctionContent {
             argument_names: vec![],
             signature: Signature::default(),
             argument_variables: vec![],
+            closure_details: None,
             method_details: None,
         };
 
@@ -46,7 +47,8 @@ impl FunctionContent {
             dynamic_index: -1,
         };
 
-        let type_id = context.current_type.as_ref().map(|t| t.borrow().type_id);
+        let current_type = context.get_current_type();
+        let type_id = current_type.as_ref().map(|t| t.borrow().type_id);
         let is_method = type_id.is_some();
         let is_dynamic = self.qualifier.contains(&MethodQualifier::Dynamic);
         let is_static = self.qualifier.contains(&MethodQualifier::Static);
@@ -57,7 +59,7 @@ impl FunctionContent {
 
         function_blueprint.parameters = parameters;
 
-        if let Some(type_blueprint) = &context.current_type {
+        if let Some(type_wrapped) = &current_type {
             if is_dynamic {
                 if has_parameters {
                     context.errors.add(self, "dynamic methods cannot have parameters");
@@ -68,11 +70,11 @@ impl FunctionContent {
                 }
             }
 
-            method_details.owner_type = Some(type_blueprint.clone());
-            method_details.first_declared_by = Some(type_blueprint.clone());
+            method_details.owner_type = Some(type_wrapped.clone());
+            method_details.first_declared_by = Some(type_wrapped.clone());
 
             if !is_static {
-                function_blueprint.signature.this_type = Some(type_blueprint.borrow().self_type.clone());
+                function_blueprint.signature.this_type = Some(type_wrapped.borrow().self_type.clone());
             }
 
             function_blueprint.method_details = Some(method_details);
@@ -92,7 +94,7 @@ impl FunctionContent {
 
         let function_wrapped = context.functions.insert(function_blueprint, type_id);
 
-        context.current_function = Some(function_wrapped.clone());
+        context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
         if let Some(signature) = &self.signature {
             let (arguments, return_type) = signature.process(context);
@@ -166,21 +168,18 @@ impl FunctionContent {
             }
         }
 
-        context.current_function = None;
+        context.pop_scope();
 
         function_wrapped
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        let type_id = context.current_type.as_ref().and_then(|t| Some(t.borrow().type_id));
+        let type_id = context.get_current_type().map(|t| t.borrow().type_id);
         let function_wrapped = context.functions.get_by_location(&self.name, type_id);
         let is_raw_wasm = self.body.is_raw_wasm();
         let return_type = function_wrapped.borrow().signature.return_type.clone();
         
-        context.current_function = Some(function_wrapped.clone());
-        context.reset_local_scope();
-        context.push_scope(ScopeKind::Function);
-        context.declare_function_arguments(&function_wrapped);
+        context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
         if let Some(vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
@@ -196,6 +195,5 @@ impl FunctionContent {
         }
 
         context.pop_scope();
-        context.current_function = None;
     }
 }

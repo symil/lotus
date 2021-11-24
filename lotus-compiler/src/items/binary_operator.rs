@@ -67,8 +67,8 @@ impl BinaryOperatorWrapper {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
                 let tmp_var = VariableInfo::tmp("tmp", context.bool_type());
                 let mut content = vec![
-                    VI::tee_var_from_stack(&tmp_var),
-                    VI::get_var(&tmp_var),
+                    VI::tee_tmp_var(&tmp_var),
+                    VI::get_tmp_var(&tmp_var),
                 ];
 
                 if &self.value == &BinaryOperator::DoubleAnd {
@@ -149,11 +149,11 @@ impl BinaryOperatorWrapper {
                             let mut vasm = Vasm::new(Type::Undefined, vec![tmp_var.clone()], vec![]);
 
                             let mut condition = vasm![
-                                VI::tee_var_from_stack(&tmp_var),
-                                VI::call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context)
+                                VI::call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context),
+                                VI::tee_tmp_var(&tmp_var)
                             ];
                             let then_branch = right_vasm;
-                            let else_branch = vasm![VI::get_var(&tmp_var)];
+                            let else_branch = vasm![VI::get_tmp_var(&tmp_var)];
 
                             vasm.extend(left_vasm);
                             vasm.extend(VI::if_then_else(Some(&return_type), condition, then_branch, else_branch));

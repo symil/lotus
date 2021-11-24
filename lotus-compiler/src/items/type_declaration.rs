@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fmt::format, hash::Hash, rc::Rc, slice::Iter};
+use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, Signature, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EnumVariantInfo, Error, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -416,8 +416,9 @@ impl TypeDeclaration {
 
             for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
-                    context.current_type = Some(child.clone());
+                    context.push_scope(ScopeKind::Type(child.clone()));
                     method.process_signature(context);
+                    context.pop_scope();
                 }
             }
 
@@ -465,6 +466,7 @@ impl TypeDeclaration {
                                             return_type: field_info.ty.clone(),
                                         },
                                         argument_variables: vec![],
+                                        closure_details: None,
                                         method_details: None,
                                         is_raw_wasm: false,
                                         body: vasm,
@@ -555,8 +557,9 @@ impl TypeDeclaration {
 
             for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
                 for child in &children {
-                    context.current_type = Some(child.clone());
+                    context.push_scope(ScopeKind::Type(child.clone()));
                     method.process_body(context);
+                    context.pop_scope();
                 }
             }
 
@@ -567,8 +570,8 @@ impl TypeDeclaration {
     fn process<'a, F : FnMut(Link<TypeBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f: F) {
         let type_blueprint = context.types.get_by_location(&self.name, None);
 
-        context.current_type = Some(type_blueprint.clone());
+        context.push_scope(ScopeKind::Type(type_blueprint.clone()));
         f(type_blueprint, context);
-        context.current_type = None;
+        context.pop_scope();
     }
 }

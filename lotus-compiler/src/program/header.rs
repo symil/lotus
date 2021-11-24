@@ -10,6 +10,9 @@ pub const STORE_INT_WASM_FUNC_NAME : &'static str = "store_int";
 pub const LOAD_FLOAT_WASM_FUNC_NAME : &'static str = "load_float";
 pub const STORE_FLOAT_WASM_FUNC_NAME : &'static str = "store_float";
 
+pub const CLOSURE_TMP_VAR_NAME : &'static str = "tmp_closure";
+pub const CLOSURE_VARIABLES_TMP_VAR_NAME : &'static str = "tmp_closure_variables";
+
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
 type Table = (usize, &'static str);
@@ -41,6 +44,8 @@ pub const HEADER_FUNC_TYPES : &'static[FunctionType] = &[
 ];
 
 pub const HEADER_GLOBALS : &'static[Global] = &[
+    (CLOSURE_TMP_VAR_NAME, "i32"),
+    (CLOSURE_VARIABLES_TMP_VAR_NAME, "i32")
 ];
 
 pub static HEADER_FUNCTIONS : &'static[Function] = &[

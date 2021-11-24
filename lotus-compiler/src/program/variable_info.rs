@@ -73,6 +73,10 @@ impl VariableInfo {
         self.borrow().wasm_name.clone()
     }
 
+    pub fn get_name_hash(&self) -> u32 {
+        self.name().get_u32_hash()
+    }
+
     pub fn resolve_wasm_type(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Option<&'static str> {
         self.with_ref(|var_info| -> Option<&str> {
             match var_info.ty.resolve(type_index, context).wasm_type {

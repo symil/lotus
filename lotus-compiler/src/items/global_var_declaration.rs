@@ -13,8 +13,6 @@ pub struct GlobalVarDeclaration {
 
 impl GlobalVarDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
-        context.reset_local_scope();
-
         if let Some((var_list, init_vasm)) = self.var_declaration.process(context) {
             if var_list.len() != 1 {
                 context.errors.add(self, format!("cannot declare global variabels as tuples"));

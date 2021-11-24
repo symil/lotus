@@ -2,8 +2,8 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -17,12 +17,10 @@ pub struct ProgramContext {
 
     pub default_interfaces: InterfaceList,
 
-    pub current_function: Option<Link<FunctionBlueprint>>,
-    pub current_type: Option<Link<TypeBlueprint>>,
-    pub current_interface: Option<Link<InterfaceBlueprint>>,
     pub autogen_type: Option<Link<TypeBlueprint>>,
-    pub scopes: Vec<Scope>,
-    pub function_level: u32,
+    scopes: Vec<Scope>,
+    function_level: u32,
+
     pub iter_fields_counter: Option<usize>,
     pub iter_variants_counter: Option<usize>,
     pub iter_ancestors_counter: Option<usize>,
@@ -33,11 +31,11 @@ pub struct ProgramContext {
     function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
     global_var_instances: Vec<GlobalVarInstance>,
 
-    pub main_function: Option<Rc<FunctionInstanceHeader>>,
-    pub start_client_function: Option<Rc<FunctionInstanceHeader>>,
-    pub update_client_function: Option<Rc<FunctionInstanceHeader>>,
-    pub start_server_function: Option<Rc<FunctionInstanceHeader>>,
-    pub update_server_function: Option<Rc<FunctionInstanceHeader>>,
+    main_function: Option<Rc<FunctionInstanceHeader>>,
+    start_client_function: Option<Rc<FunctionInstanceHeader>>,
+    update_client_function: Option<Rc<FunctionInstanceHeader>>,
+    start_server_function: Option<Rc<FunctionInstanceHeader>>,
+    update_server_function: Option<Rc<FunctionInstanceHeader>>,
 }
 
 impl ProgramContext {
@@ -70,9 +68,9 @@ impl ProgramContext {
     }
 
     pub fn get_this_type(&self) -> Type {
-        if let Some(type_wrapped) = &self.current_type {
+        if let Some(type_wrapped) = self.get_current_type() {
             type_wrapped.borrow().self_type.clone()
-        } else if let Some(interface_wrapped) = &self.current_interface {
+        } else if let Some(interface_wrapped) = self.get_current_interface() {
             Type::This(interface_wrapped.clone())
         } else {
             Type::Undefined
@@ -115,19 +113,63 @@ impl ProgramContext {
     }
 
     pub fn get_current_function(&self) -> Option<Link<FunctionBlueprint>> {
-        self.current_function.as_ref().and_then(|f| Some(f.clone()))
+        for scope in self.scopes.iter().rev() {
+            if let ScopeKind::Function(function_wrapped) = &scope.kind {
+                return Some(function_wrapped.clone());
+            }
+        }
+
+        None
     }
 
     pub fn get_current_type(&self) -> Option<Link<TypeBlueprint>> {
-        self.current_type.as_ref().and_then(|f| Some(f.clone()))
+        for scope in self.scopes.iter().rev() {
+            if let ScopeKind::Type(type_wrapped) = &scope.kind {
+                return Some(type_wrapped.clone());
+            }
+        }
+
+        None
     }
 
     pub fn get_current_interface(&self) -> Option<Link<InterfaceBlueprint>> {
-        self.current_interface.as_ref().and_then(|f| Some(f.clone()))
+        for scope in self.scopes.iter().rev() {
+            if let ScopeKind::Interface(interface_wrapped) = &scope.kind {
+                return Some(interface_wrapped.clone());
+            }
+        }
+
+        None
     }
 
-    pub fn reset_local_scope(&mut self) {
-        self.scopes = vec![];
+    pub fn get_type_parameter(&self, name: &str) -> Option<Type> {
+        for scope in self.scopes.iter().rev() {
+            match &scope.kind {
+                ScopeKind::Type(type_wrapped) => match type_wrapped.borrow().parameters.get(name) {
+                    Some(info) => return Some(Type::TypeParameter(info.clone())),
+                    None => match type_wrapped.borrow().associated_types.get(name) {
+                        Some(info) => return Some(info.ty.clone()),
+                        None => {},
+                    },
+                },
+                ScopeKind::Interface(interface_wrapped) => match interface_wrapped.borrow().associated_types.get(name) {
+                    Some(info) => return Some(Type::Associated(AssociatedTypeContent {
+                        root: Box::new(Type::This(interface_wrapped.clone())),
+                        associated: info.clone(),
+                    })),
+                    None => {},
+                },
+                ScopeKind::Function(function_wrapped) => match function_wrapped.borrow().parameters.get(name) {
+                    Some(info) => return Some(Type::FunctionParameter(info.clone())),
+                    None => {},
+                },
+                ScopeKind::Loop => {},
+                ScopeKind::Branch => {},
+                ScopeKind::Block => {},
+            }
+        }
+
+        None
     }
 
     pub fn push_scope(&mut self, kind: ScopeKind) {
@@ -135,7 +177,11 @@ impl ProgramContext {
             self.function_level += 1;
         }
         
-        self.scopes.push(Scope::new(kind));
+        self.scopes.push(Scope::new(kind.clone()));
+
+        if let ScopeKind::Function(function_wrapped) = kind {
+            self.declare_function_arguments(&function_wrapped);
+        }
     }
 
     pub fn pop_scope(&mut self) {
@@ -197,7 +243,7 @@ impl ProgramContext {
         var_info
     }
 
-    pub fn declare_function_arguments(&mut self, function_wrapped: &Link<FunctionBlueprint>) {
+    fn declare_function_arguments(&mut self, function_wrapped: &Link<FunctionBlueprint>) {
         function_wrapped.with_mut(|mut function_unwrapped| {
             let mut variables = vec![];
 
@@ -226,6 +272,25 @@ impl ProgramContext {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
                 if closure_access {
                     var_info.mark_as_closure_arg();
+
+                    if var_info.borrow().declaration_level != self.function_level {
+                        self.get_current_function().unwrap().with_mut(|mut function_unwrapped| {
+                            let mut closure_details = match &mut function_unwrapped.closure_details {
+                                Some(details) => details,
+                                None => {
+                                    let details = ClosureDetails {
+                                        variables: HashSet::new(),
+                                        declaration_level: self.function_level,
+                                    };
+
+                                    function_unwrapped.closure_details = Some(details);
+                                    function_unwrapped.closure_details.as_mut().unwrap()
+                                },
+                            };
+
+                            closure_details.variables.insert(var_info.clone());
+                        });
+                    }
                 }
 
                 return Some(var_info.clone());
@@ -589,6 +654,10 @@ impl ProgramContext {
                     types_initialization.extend_from_slice(&function_instance.wasm_call);
                 }
             });
+        }
+
+        for (wasm_name, wasm_type) in HEADER_GLOBALS {
+            globals_declaration.push(Wat::declare_global(wasm_name, wasm_type));
         }
 
         let mut wasm_locals = vec![];

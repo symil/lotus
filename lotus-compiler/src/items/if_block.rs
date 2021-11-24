@@ -26,7 +26,7 @@ impl IfBlock {
                 condition_vasm,
                 VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                 block_vasm,
-                VI::set_var_from_stack(&result_var),
+                VI::set_tmp_var(&result_var),
                 VI::jump(1)
             ]));
         }
@@ -45,7 +45,7 @@ impl IfBlock {
                     condition_vasm,
                     VI::jump_if(0, VI::raw(wat!["i32.eqz"])),
                     block_vasm,
-                    VI::set_var_from_stack(&result_var),
+                    VI::set_tmp_var(&result_var),
                     VI::jump(1)
                 ]));
             }
@@ -63,7 +63,7 @@ impl IfBlock {
 
                 result.extend(VI::block(vasm![
                     block_vasm,
-                    VI::set_var_from_stack(&result_var),
+                    VI::set_tmp_var(&result_var),
                     VI::jump(1)
                 ]));
             }
@@ -77,7 +77,7 @@ impl IfBlock {
 
         Some(Vasm::new(required_branch_type.clone(), vec![result_var.clone()], vec![
             VI::block(result),
-            VI::get_var(&result_var)
+            VI::get_tmp_var(&result_var)
         ]))
     }
 }

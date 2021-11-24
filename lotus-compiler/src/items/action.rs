@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{program::{Vasm, ProgramContext, RESULT_VAR_NAME, ScopeKind, Type, VI}, vasm, wat};
+use crate::{program::{Vasm, ProgramContext, ScopeKind, Type, VI}, vasm, wat};
 use super::{ActionKeyword, ActionKeywordToken, Expression};
 
 #[parsable]

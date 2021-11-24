@@ -37,7 +37,7 @@ impl ObjectLiteral {
 
                     result.extend(Vasm::new(Type::Void, vec![object_var.clone()], vec![
                         VI::call_static_method(&object_type, CREATE_METHOD_NAME, &[], vec![], context),
-                        VI::set_var_from_stack(&object_var)
+                        VI::set_tmp_var(&object_var)
                     ]));
 
                     for field in &self.fields {
@@ -67,7 +67,7 @@ impl ObjectLiteral {
                                 },
                                 None => {
                                     if let Some(var_info) = context.access_var(&field.name) {
-                                        field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get_var(&var_info)]));
+                                        field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get_tmp_var(&var_info)]));
                                     } else {
                                         context.errors.add(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
                                     }
@@ -88,12 +88,12 @@ impl ObjectLiteral {
                         };
 
                         result.extend(vasm![
-                            VI::get_var(&object_var),
+                            VI::get_tmp_var(&object_var),
                             VI::set_field(&field_type, field_info.offset, init_vasm)
                         ]);
                     }
 
-                    result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get_var(&object_var)]));
+                    result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get_tmp_var(&object_var)]));
                 } else {
                     context.errors.add(&self.object_type, format!("type `{}` is not a class", &object_type));
                 }

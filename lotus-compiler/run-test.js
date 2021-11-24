@@ -42,7 +42,7 @@ async function main() {
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
     let onlyCompileWat = hasOption('-c');
-    let testOptions = { inheritStdio, displayMemory };
+    let testOptions = { inheritStdio, displayMemory, onlyCompileWat };
 
     if (isMocha) {
         let testsToRun = process.env.LOTUS_TESTS.split(' ');
@@ -68,8 +68,6 @@ async function main() {
                 });
             }
         });
-    } else if (onlyCompileWat) {
-        compileWat(path.join(BUILD_DIR, WAT_FILE_NAME), path.join(BUILD_DIR, WASM_FILE_NAME), true);
     } else if (createTest) {
         let testName = commandLineNames[0];
 
@@ -157,7 +155,7 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     return { result, success };
 }
 
-async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false } = {}) {
+async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false } = {}) {
     let watPath = path.join(buildDirectory, WAT_FILE_NAME);
     let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
@@ -165,6 +163,10 @@ async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, di
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];
+
+    if (onlyCompileWat) {
+        commandChain.pop();
+    }
 
     let actualOutput = '';
 

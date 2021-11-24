@@ -1,8 +1,8 @@
-use std::rc::Rc;
+use std::{collections::HashSet, rc::Rc};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, RESULT_VAR_NAME, Signature, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -41,9 +41,9 @@ impl InterfaceDeclaration {
     fn process<'a, F : FnMut(Link<InterfaceBlueprint>, &mut ProgramContext)>(&self, context: &mut ProgramContext, mut f : F) {
         let interface_blueprint = context.interfaces.get_by_location(&self.name, None);
 
-        context.current_interface = Some(interface_blueprint.clone());
+        context.push_scope(ScopeKind::Interface(interface_blueprint.clone()));
         f(interface_blueprint, context);
-        context.current_interface = None;
+        context.pop_scope();
     }
 
     pub fn process_associated_types(&self, context: &mut ProgramContext) {
@@ -94,6 +94,7 @@ impl InterfaceDeclaration {
                     argument_variables: vec![],
                     is_raw_wasm: false,
                     body: Vasm::void(),
+                    closure_details: None,
                     method_details: Some(MethodDetails {
                         qualifier: Some(method_qualifier),
                         event_callback_qualifier: None,

@@ -30,6 +30,8 @@ impl VarRef {
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+        let current_function_level = Some(context.get_function_level());
+
         match &self.prefix {
             Some(prefix) => match prefix.process(context) {
                 Some(prefix_vasm) => match &self.args {
@@ -54,7 +56,7 @@ impl VarRef {
                             });
 
                             match process_function_call(&self.name, function_call, args, type_hint, access_type, context) {
-                                Some(function_vasm) => Some(Vasm::merge(vec![vasm![VI::get_var(&var_info)], function_vasm])),
+                                Some(function_vasm) => Some(Vasm::merge(vec![vasm![VI::get_var(&var_info, current_function_level)], function_vasm])),
                                 None => None,
                             }
                         },
@@ -75,8 +77,8 @@ impl VarRef {
                 },
                 None => match context.access_var(&self.name) {
                     Some(var_info) => match access_type {
-                        AccessType::Get => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::get_var(&var_info)])),
-                        AccessType::Set(_) => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::set_var_from_stack(&var_info)])),
+                        AccessType::Get => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::get_var(&var_info, current_function_level)])),
+                        AccessType::Set(_) => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::set_var_from_stack(&var_info, current_function_level)])),
                     },
                     None => match context.functions.get_by_identifier(&self.name) {
                         Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {

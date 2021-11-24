@@ -35,7 +35,11 @@ impl Signature {
     }
 
     pub fn to_string(&self) -> String {
-        let mut s = format!("fn({})", display_join(&self.argument_types, ", "));
+        let this_str = match &self.this_type {
+            Some(ty) => format!("[{}]", ty.get_name()),
+            None => format!(""),
+        };
+        let mut s = format!("fn{}({})", this_str, display_join(&self.argument_types, ", "));
 
         if !self.return_type.is_void() {
             s.push_str(&format!(" -> {}", &self.return_type));
@@ -50,6 +54,36 @@ impl Signature {
             argument_types: self.argument_types.iter().map(|ty| ty.resolve(type_index, context)).collect(),
             return_type: self.return_type.resolve(type_index, context),
         }
+    }
+
+    pub fn is_assignable_to(&self, other: &Self) -> bool {
+        if self.argument_types.len() != other.argument_types.len() {
+            return false;
+        }
+
+        let this_ok = match (&self.this_type, &other.this_type) {
+            (None, None) => true,
+            (None, Some(_)) | (Some(_), None) => false,
+            (Some(self_this), Some(other_this)) => other_this.is_assignable_to(self_this),
+        };
+
+        if !this_ok {
+            return false;
+        }
+
+        for (self_arg, other_arg) in self.argument_types.iter().zip(other.argument_types.iter()) {
+            if !other_arg.is_assignable_to(self_arg) {
+                return false;
+            }
+        }
+
+        if !other.return_type.is_assignable_to(&self.return_type) {
+            self.return_type.print();
+            other.return_type.print();
+            return false;
+        }
+
+        true
     }
 }
 

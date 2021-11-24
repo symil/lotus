@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -43,7 +43,7 @@ pub enum VariableAccessKind {
 pub struct VirtualVariableAccessInfo {
     pub var_info: VariableInfo,
     pub access_kind: VariableAccessKind,
-    pub access_level: u32,
+    pub access_level: Option<u32>,
     pub value: Option<Vasm>,
 }
 
@@ -109,6 +109,10 @@ pub struct IfThenElseInfo {
 }
 
 impl VirtualInstruction {
+    pub fn drop(ty: Type) -> Self {
+        Self::Drop(ty)
+    }
+
     pub fn raw(value: Wat) -> Self {
         Self::Raw(value)
     }
@@ -139,49 +143,43 @@ impl VirtualInstruction {
         })
     }
 
-    pub fn get_var(var_info: &VariableInfo) -> Self {
+    pub fn get_var(var_info: &VariableInfo, access_level: Option<u32>) -> Self {
         Self::AccessVariable(VirtualVariableAccessInfo{
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Get,
-            access_level: 0,
+            access_level,
             value: None
         })
     }
 
-    pub fn set_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
+    pub fn get_tmp_var(var_info: &VariableInfo) -> Self {
+        Self::get_var(var_info, None)
+    }
+
+    pub fn set_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
         Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Set,
-            access_level: 0,
+            access_level,
             value: Some(value.to_vasm()),
         })
     }
 
-    pub fn set_var_from_stack(var_info: &VariableInfo) -> Self {
-        Self::AccessVariable(VirtualVariableAccessInfo {
-            var_info: var_info.clone(),
-            access_kind: VariableAccessKind::Set,
-            access_level: 0,
-            value: None,
-        })
+    pub fn set_tmp_var(var_info: &VariableInfo) -> Self {
+        Self::set_var(var_info, None, vec![])
     }
 
-    pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, value: T) -> Self {
+    pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
         Self::AccessVariable(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Tee,
-            access_level: 0,
+            access_level,
             value: Some(value.to_vasm()),
         })
     }
 
-    pub fn tee_var_from_stack(var_info: &VariableInfo) -> Self {
-        Self::AccessVariable(VirtualVariableAccessInfo {
-            var_info: var_info.clone(),
-            access_kind: VariableAccessKind::Tee,
-            access_level: 0,
-            value: None,
-        })
+    pub fn tee_tmp_var(var_info: &VariableInfo) -> Self {
+        Self::tee_var(var_info, None, vec![])
     }
 
     pub fn call_function<T : ToVasm>(call: FunctionCall, args: T) -> Self {
@@ -333,16 +331,24 @@ impl VirtualInstruction {
                 true => vec![wat!["drop"]],
                 false => vec![],
             },
-            VirtualInstruction::Eqz => vec![wat!["i32.eqz"]],
-            VirtualInstruction::Raw(wat) => vec![wat.to_owned()],
+            VirtualInstruction::Eqz => vec![
+                wat!["i32.eqz"]
+            ],
+            VirtualInstruction::Raw(wat) => vec![
+                wat.to_owned()
+            ],
             VirtualInstruction::Return(ret) => {
                 let mut content = ret.resolve(type_index, context);
                 content.push(wat!["return"]);
 
                 content
             },
-            VirtualInstruction::IntConstant(value) => vec![Wat::const_i32(*value)],
-            VirtualInstruction::FloatConstant(value) => vec![Wat::const_f32(*value)],
+            VirtualInstruction::IntConstant(value) => vec![
+                Wat::const_i32(*value)
+            ],
+            VirtualInstruction::FloatConstant(value) => vec![
+                Wat::const_f32(*value)
+            ],
             VirtualInstruction::TypeId(ty) => {
                 let type_instance = ty.resolve(type_index, context);
 
@@ -358,7 +364,7 @@ impl VirtualInstruction {
                 info.var_info.with_ref(|var_info| {
                     match var_info.is_closure_arg {
                         true => vec![
-                            Wat::call("mem_alloc", vec![Wat::const_i32(1)]),
+                            Wat::call(MEM_ALLOC_FUNC_NAME, vec![Wat::const_i32(1i32)]),
                             Wat::set_local_from_stack(&var_info.wasm_name)
                         ],
                         false => vec![],
@@ -367,14 +373,14 @@ impl VirtualInstruction {
             },
             VirtualInstruction::AccessVariable(info) => {
                 let mut content = vec![];
-
-                if let Some(vasm) = &info.value {
-                    content.extend(vasm.resolve(type_index, context));
-                }
+                let value_wat = match &info.value {
+                    Some(vasm) => vasm.resolve(type_index, context),
+                    None => vec![],
+                };
 
                 match info.var_info.ty().resolve(type_index, context).wasm_type {
                     Some(wasm_type) => info.var_info.with_ref(|var_info| {
-                        match var_info.is_closure_arg {
+                        match var_info.is_closure_arg && info.access_level.is_some() {
                             true => {
                                 let access_func_name = match info.access_kind {
                                     VariableAccessKind::Get => match wasm_type {
@@ -389,14 +395,13 @@ impl VirtualInstruction {
                                     },
                                 };
 
-                                if info.access_level == var_info.declaration_level {
-                                    content.extend(vec![
-                                        Wat::get_local(&var_info.wasm_name),
-                                        Wat::call_from_stack(access_func_name)
-                                    ]);
+                                if info.access_level.contains(&var_info.declaration_level) {
+                                    content.push(Wat::get_local(&var_info.wasm_name));
+                                    content.extend(value_wat);
+                                    content.push(Wat::call_from_stack(access_func_name));
                                 } else {
                                     content.extend(vec![
-                                        Wat::get_local(THIS_VAR_NAME),
+                                        Wat::get_local(CLOSURE_VARIABLES_VAR_NAME),
                                     ]);
 
                                     content.extend(vasm![
@@ -405,6 +410,7 @@ impl VirtualInstruction {
                                         ], context)
                                     ].resolve(type_index, context));
 
+                                    content.extend(value_wat);
                                     content.push(
                                         Wat::call_from_stack(access_func_name)
                                     );
@@ -417,6 +423,7 @@ impl VirtualInstruction {
                                     VariableAccessKind::Tee => info.var_info.tee_from_stack(),
                                 };
 
+                                content.extend(value_wat);
                                 content.push(wat);
                             }
                         }
@@ -551,7 +558,7 @@ impl VirtualInstruction {
                                         wat!["else",
                                             function_index_var.get_to_stack(),
                                             Wat::call_from_stack(LOAD_INT_WASM_FUNC_NAME),
-                                            wat!["i32.add", Wat::const_i32(1), function_index_var.get_to_stack()],
+                                            wat!["i32.add", Wat::const_i32(1i32), function_index_var.get_to_stack()],
                                             Wat::call_from_stack(LOAD_INT_WASM_FUNC_NAME),
                                             wat!["call_indirect", wat!["type", Wat::var_name(&closure_wasm_type_name)]]
                                         ]
@@ -571,11 +578,60 @@ impl VirtualInstruction {
                     function_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
                 let function_instance = context.get_function_instance(parameters);
-                let index : u32 = (function_instance.function_index.unwrap() as u32) | 0x80000000;
-                
-                vec![Wat::const_i32(index)]
+                let function_index = function_instance.function_index.unwrap() as u32;
+
+                info.function.with_ref(|function_unwrapped| {
+                    match &function_unwrapped.closure_details {
+                        Some(details) => {
+                            let mut vasm = vasm![
+                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), NEW_METHOD_NAME, &[], vec![], context),
+                                VI::raw(Wat::set_global_from_stack(CLOSURE_VARIABLES_TMP_VAR_NAME))
+                            ];
+
+                            for var_info in &details.variables {
+                                vasm.extend(vasm![
+                                    VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
+                                    VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), "set", &[], vasm![
+                                        VI::int(var_info.get_name_hash()),
+                                        VI::get_var(var_info, None)
+                                    ], context),
+                                    VI::drop(Type::Int)
+                                ]);
+                            }
+
+                            let mut wat = vasm.resolve(type_index, context);
+
+                            wat.extend(vec![
+                                Wat::call(MEM_ALLOC_FUNC_NAME, vec![
+                                    Wat::const_i32(4i32)
+                                ]),
+                                Wat::set_global_from_stack(CLOSURE_TMP_VAR_NAME),
+                                Wat::call(STORE_INT_WASM_FUNC_NAME, vec![
+                                    Wat::get_global(CLOSURE_TMP_VAR_NAME),
+                                    Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME),
+                                ]),
+                                Wat::call(STORE_INT_WASM_FUNC_NAME, vec![
+                                    wat!["i32.add", Wat::get_global(CLOSURE_TMP_VAR_NAME), Wat::const_i32(1i32)],
+                                    Wat::const_i32(function_index)
+                                ]),
+                                Wat::get_global(CLOSURE_TMP_VAR_NAME)
+                            ]);
+
+                            wat
+                        },
+                        None => {
+                            let index : u32 = function_index | 0x80000000;
+
+                            vec![
+                                Wat::const_i32(index)
+                            ]
+                        },
+                    }
+                })
             },
-            VirtualInstruction::Loop(info) => vec![wat!["loop", info.content.resolve(type_index, context)]],
+            VirtualInstruction::Loop(info) => vec![
+                wat!["loop", info.content.resolve(type_index, context)]
+            ],
             VirtualInstruction::Block(info) => {
                 let mut wat = wat!["block"];
 
@@ -597,7 +653,9 @@ impl VirtualInstruction {
 
                 vec![wat]
             },
-            VirtualInstruction::Jump(info) => vec![wat!["br", info.depth]],
+            VirtualInstruction::Jump(info) => vec![
+                wat!["br", info.depth]
+            ],
             VirtualInstruction::JumpIf(info) => {
                 let mut jump = wat!["br_if", info.depth];
 

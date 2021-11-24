@@ -68,18 +68,20 @@ impl ArrayLiteral {
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let final_pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![final_item_type.clone()]);
         let mut instructions = vec![
-            VI::set_var(&array_var, VI::call_static_method(&final_array_type, CREATE_METHOD_NAME, &[], vec![VI::int(self.items.len())], context)),
-            VI::set_var(&array_body_var, VI::call_regular_method(&final_array_type, GET_BODY_FUNC_NAME, &[], vec![VI::get_var(&array_var)], context)),
+            VI::call_static_method(&final_array_type, CREATE_METHOD_NAME, &[], vec![VI::int(self.items.len())], context),
+            VI::set_tmp_var(&array_var),
+            VI::call_regular_method(&final_array_type, GET_BODY_FUNC_NAME, &[], vec![VI::get_tmp_var(&array_var)], context),
+            VI::set_tmp_var(&array_body_var),
         ];
 
         for (i, item_vasm) in item_vasm_list.into_iter().enumerate() {
             instructions.extend(vec![
-                VI::get_var(&array_body_var),
+                VI::get_tmp_var(&array_body_var),
                 VI::call_regular_method(&final_pointer_type, SET_AT_INDEX_FUNC_NAME, &[], vasm![VI::int(i), item_vasm], context)
             ]);
         }
 
-        instructions.push(VI::get_var(&array_var));
+        instructions.push(VI::get_tmp_var(&array_var));
 
         Some(Vasm::new(final_array_type, variables, instructions))
     }

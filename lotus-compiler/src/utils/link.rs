@@ -1,4 +1,4 @@
-use std::{cell::{Ref, RefCell, RefMut}, fmt::Debug, rc::Rc};
+use std::{cell::{Ref, RefCell, RefMut}, fmt::Debug, hash::Hash, rc::Rc};
 
 pub struct Link<T> {
     value: Rc<RefCell<T>>
@@ -50,4 +50,14 @@ impl<T> PartialEq for Link<T> {
     fn eq(&self, other: &Self) -> bool {
         self.value.as_ptr() == other.value.as_ptr()
     }
+}
+
+impl<T> Hash for Link<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.as_ptr().hash(state)
+    }
+}
+
+impl<T> Eq for Link<T> {
+    
 }

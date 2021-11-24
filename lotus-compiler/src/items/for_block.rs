@@ -39,6 +39,7 @@ impl ForBlock {
         let mut result = None;
         let range_start_vasm_opt = self.range_start.process(None, context);
         let range_end_vasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(None, context));
+        let current_function_level = context.get_function_level();
 
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {
@@ -64,10 +65,13 @@ impl ForBlock {
                     let item_var_wasm_name = item_var.get_wasm_name();
                     let range_end_var_wasm_name = range_end_var.get_wasm_name();
 
-                    result = Some(Vasm::new(Type::Void, variables, vec![
-                        VI::set_var(&range_end_var, range_end_vasm),
-                        VI::set_var(&item_var, range_start_vasm),
-                        VI::set_var(&index_var, VI::int(-1i32)),
+                    result = Some(Vasm::new(Type::Void, variables, vasm![
+                        range_end_vasm,
+                        VI::set_tmp_var(&range_end_var),
+                        range_start_vasm,
+                        VI::set_tmp_var(&item_var),
+                        VI::int(-1i32),
+                        VI::set_tmp_var(&index_var),
                         VI::raw(Wat::increment_local_i32(&item_var_wasm_name, -1i32)),
                         VI::block(vasm![
                             VI::loop_(vasm![
@@ -104,17 +108,22 @@ impl ForBlock {
                     let index_var_wasm_name = index_var.get_wasm_name();
                     let iterable_len_var_wasm_name = iterable_len_var.get_wasm_name();
 
-                    result = Some(Vasm::new(Type::Void, variables, vec![
-                        VI::set_var(&iterable_var, iterable_vasm),
-                        VI::set_var(&index_var, VI::int(-1i32)),
-                        VI::set_var(&iterable_len_var, VI::call_regular_method(&iterable_type, GET_ITERABLE_LEN_FUNC_NAME, &[], vec![VI::get_var(&iterable_var)], context)),
-                        VI::set_var(&iterable_ptr_var, VI::call_regular_method(&iterable_type, GET_ITERABLE_PTR_FUNC_NAME, &[], vec![VI::get_var(&iterable_var)], context)),
+                    result = Some(Vasm::new(Type::Void, variables, vasm![
+                        iterable_vasm,
+                        VI::set_tmp_var(&iterable_var),
+                        VI::int(-1i32),
+                        VI::set_tmp_var(&index_var),
+                        VI::call_regular_method(&iterable_type, GET_ITERABLE_LEN_FUNC_NAME, &[], vec![VI::get_tmp_var(&iterable_var)], context),
+                        VI::set_tmp_var(&iterable_len_var),
+                        VI::call_regular_method(&iterable_type, GET_ITERABLE_PTR_FUNC_NAME, &[], vec![VI::get_tmp_var(&iterable_var)], context),
+                        VI::set_tmp_var(&iterable_ptr_var),
                         VI::block(vec![
                             VI::loop_(vasm![
                                 VI::raw(Wat::increment_local_i32(&index_var_wasm_name, 1i32)),
                                 VI::raw(wat!["i32.lt_s", Wat::get_local(&index_var_wasm_name), Wat::get_local(&iterable_len_var_wasm_name)]),
                                 VI::jump_if(1, VI::raw(wat!["i32.eqz"])),
-                                VI::set_var(&item_var, VI::call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![VI::get_var(&iterable_ptr_var), VI::get_var(&index_var)], context)),
+                                VI::call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![VI::get_tmp_var(&iterable_ptr_var), VI::get_tmp_var(&index_var)], context),
+                                VI::set_tmp_var(&item_var),
                                 block_vasm,
                                 VI::jump(0)
                             ])

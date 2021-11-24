@@ -1,4 +1,4 @@
-use std::{array, slice::from_ref};
+use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
@@ -59,12 +59,12 @@ impl FunctionLiteral {
             signature: hint_signature.clone(),
             argument_variables: vec![],
             is_raw_wasm: false,
+            closure_details: None,
             method_details: None,
             body: vasm![],
         }, None);
 
-        context.push_scope(ScopeKind::Function);
-        context.declare_function_arguments(&function_wrapped);
+        context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
         if let Some(vasm) = self.body.process(Some(return_type), context) {
             let signature = function_wrapped.with_mut(|mut function_unwrapped| {

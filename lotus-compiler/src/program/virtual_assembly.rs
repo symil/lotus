@@ -11,8 +11,8 @@ pub struct VirtualAssembly {
 }
 
 impl VirtualAssembly {
-    pub fn new(ty: Type, variables: Vec<VariableInfo>, instructions: Vec<VirtualInstruction>) -> Self {
-        Self { ty, variables, instructions }
+    pub fn new<T : ToVasm>(ty: Type, variables: Vec<VariableInfo>, instructions: T) -> Self {
+        Self { ty, variables, instructions: instructions.to_vasm().instructions }
     }
 
     pub fn void() -> Self {

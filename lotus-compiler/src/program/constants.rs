@@ -19,8 +19,8 @@ pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "this";
+pub const CLOSURE_VARIABLES_VAR_NAME : &'static str = "closure_args";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
-pub const RESULT_VAR_NAME : &'static str = "__fn_result";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
@@ -54,6 +54,8 @@ pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
+
+pub const MEM_ALLOC_FUNC_NAME : &'static str = "mem_alloc";
 
 pub const NAN_WASM : &'static str = "nan:0x200000";
 

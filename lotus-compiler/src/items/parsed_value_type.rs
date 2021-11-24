@@ -27,12 +27,10 @@ impl ParsedValueType {
 
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         let mut result = Type::Undefined;
-        let mut associated = false;
-        let mut parameter = false;
-        let mut typedef = false;
+        let mut must_not_take_parameters = false;
         let mut param_count_error = false;
         let parameters = self.arguments.process(check_interfaces, context);
-        let has_parameters = !parameters.is_empty();
+        let parameter_count = parameters.len();
 
         if self.name.as_str() == THIS_TYPE_NAME {
             result = context.get_this_type();
@@ -40,38 +38,16 @@ impl ParsedValueType {
 
         if result.is_undefined() {
             if let Some(typedef_blueprint) = context.typedefs.get_by_identifier(&self.name) {
-                typedef = true;
+                must_not_take_parameters = true;
                 result = typedef_blueprint.borrow().target.clone();
             }
         }
 
         if result.is_undefined() {
-            if let Some(current_function) = context.get_current_function() {
-                if let Some(info) = current_function.borrow().parameters.get(self.name.as_str()) {
-                    parameter = true;
-                    result = Type::FunctionParameter(Rc::clone(info));
-                }
-            }
-        }
-
-        if result.is_undefined() {
-            if let Some(current_interface) = context.get_current_interface() {
-                if let Some(associated_type) = current_interface.borrow().associated_types.get(self.name.as_str()) {
-                    associated = true;
-                    result = Type::Associated(AssociatedTypeContent {
-                        root: Box::new(Type::This(current_interface.clone())),
-                        associated: associated_type.clone(),
-                    });
-                }
-            } else if let Some(current_type) = context.get_current_type() {
-                if let Some(parameter_type) = current_type.borrow().parameters.get(self.name.as_str()) {
-                    parameter = true;
-                    result = Type::TypeParameter(Rc::clone(parameter_type));
-                } else if let Some(associated_type) = current_type.borrow().associated_types.get(self.name.as_str()) {
-                    associated = true;
-                    result = associated_type.ty.clone();
-                }
-            }
+            if let Some(ty) = context.get_type_parameter(self.name.as_str()) {
+                must_not_take_parameters = true;
+                result = ty;
+            };
         }
 
         if result.is_undefined() {
@@ -101,14 +77,8 @@ impl ParsedValueType {
             }
         }
 
-        if has_parameters {
-            if associated {
-                context.errors.add(&self.arguments, format!("associated types do not take parameters"));
-            } else if parameter {
-                context.errors.add(&self.arguments, format!("parameter types do not take parameters"));
-            } else if typedef {
-                context.errors.add(&self.arguments, format!("alias types do not take parameters"));
-            }
+        if parameter_count > 0 && must_not_take_parameters{
+            context.errors.add(&self.arguments, format!("expected 0 parameter, got {}", parameter_count));
         }
 
         if result.is_undefined() {
