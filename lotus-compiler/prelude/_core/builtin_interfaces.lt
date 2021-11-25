@@ -122,7 +122,7 @@ sys interface Builtin {
     to_debug_string(set: Set<ptr>) -> string;
     eq(This) -> bool;
     ne(This) -> bool;
-    __retain();
+    static __retain(value: This);
     __serialize(buffer: Buffer);
     static __deserialize(buffer: Buffer) -> This?;
 }

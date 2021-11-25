@@ -22,13 +22,12 @@ const HEADER_SIZE = HEADER_WASM_PAGE_COUNT * WASM_PAGE_SIZE;
 
 const MEMORY = (0 as ptr);
 
-const ALLOCATED_POINTER_METADATA = 3;
+const ALLOCATED_POINTER_METADATA = 1;
 
 // Each allocated pointer has a single value of metadata that can be one of the following:
 // 0: the pointer has been garbage collected and can be returned by a future call of `@alloc`
 // 1: the pointer is in use but will be garbage collected the next time GC is triggered
 // 2: the pointer has been retained and will ne be garbage collected the next time GC is triggered
-// 3: the pointer is in use and can never be garbage collected
 
 // Triggerring the GC changes the metadata of all pointer from 2 to 1
 // "Retaining" a pointer changes its metadata from 1 to 2
@@ -49,13 +48,12 @@ fn wasm_memory_grow(int) -> int {{
     memory.grow
 }}
 
+fn retain_globals() {{
+    (call $retain_globals)
+}}
+
 fn alloc_page() -> ptr {
     (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr
-}
-
-// Will be called after all global variables have been initialized, and before the main function is called
-pub fn notify_end_of_global_allocs() {
-    ALLOCATED_POINTER_METADATA = 1;
 }
 
 sys fn mem_alloc(block_size: int) -> ptr {
@@ -114,6 +112,8 @@ sys fn mem_free(pointer: ptr) {
 }
 
 sys fn mem_trigger_garbage_collection() {
+    retain_globals();
+
     for i in 0..BLOCK_SIZE_COUNT {
         for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
             let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
@@ -139,6 +139,36 @@ sys fn mem_trigger_garbage_collection() {
             }
         }
     }
+}
+
+sys fn get_allocated_memory_block_count() -> int {
+    let count = 0;
+
+    for i in 0..BLOCK_SIZE_COUNT {
+        for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
+            let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
+
+            if page_addr == 0 {
+                break;
+            }
+
+            let page_ptr = page_addr as ptr;
+            let block_list_start_addr = page_ptr[1];
+            let full_block_size = page_ptr[2];
+            let block_count = page_ptr[3];
+
+            for k in 0..block_count {
+                let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
+                let metadata_value = metadata_ptr[0];
+
+                if metadata_value != 0 {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    count
 }
 
 sys fn mem_retain(addr: ptr) -> bool {

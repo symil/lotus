@@ -39,6 +39,10 @@ export type(i32) Pointer<T> {
         ((this as int) + offset) as This
     }
 
+    addr() -> int {
+        this as int
+    }
+
     set_at(index: int, value: T) {
         let byte_index = ((this as int) + index) * 4;
 
@@ -75,8 +79,8 @@ export type(i32) Pointer<T> {
         (this as int).to_hexa_string()
     }
 
-    __retain() {
-        mem_retain(this as ptr);
+    static __retain(value: This) {
+        mem_retain(value as ptr);
     }
 
     __serialize(buffer: Buffer) {

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use parsable::DataLocation;
-use crate::{items::{Identifier, Visibility}, program::VariableKind};
+use crate::{items::{Identifier, Visibility}, program::{RETAIN_METHOD_NAME, VI, VariableKind}, vasm};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm};
 
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub struct GlobalVarBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub var_info: VariableInfo,
-    pub init_vasm: Vasm
+    pub init_vasm: Vasm,
 }
 
 impl GlobalVarBlueprint {
@@ -22,11 +22,6 @@ impl GlobalVarBlueprint {
         let mut wasm_locals = vec![];
         self.init_vasm.collect_variables(&mut local_var_list);
 
-        let type_index = TypeIndex {
-            current_type_instance: None,
-            current_function_parameters: vec![],
-        };
-
         for var_info in local_var_list {
             if var_info.kind().is_local() {
                 if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
@@ -35,13 +30,19 @@ impl GlobalVarBlueprint {
             }
         }
 
-        let init_value = self.init_vasm.resolve(&type_index, context);
+        let init_wat = self.init_vasm.resolve(&type_index, context);
+        let retain_wat = vasm![
+            VI::call_static_method(&self.var_info.ty(), RETAIN_METHOD_NAME, &[], vasm![
+                VI::get_var(&self.var_info, None)
+            ], context)
+        ].resolve(&type_index, context);
 
 
         GlobalVarInstance {
             wasm_name,
             wasm_type,
-            init_value,
+            init_wat,
+            retain_wat,
             wasm_locals,
         }
     }

@@ -78,6 +78,13 @@ impl Type {
         }
     }
 
+    pub fn is_function(&self) -> bool {
+        match self {
+            Type::Function(_) => true,
+            _ => false
+        }
+    }
+
     pub fn get_builtin_type_parameter(&self, builtin_type: BuiltinType) -> Option<&Type> {
         match self.is_builtin_type(builtin_type) {
             true => {

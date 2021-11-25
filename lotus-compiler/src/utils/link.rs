@@ -40,9 +40,9 @@ impl<T> Clone for Link<T> {
     }
 }
 
-impl<T> Debug for Link<T> {
+impl<T : Debug> Debug for Link<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("<Link>")
+        write!(f, "{:?}", self.borrow())
     }
 }
 

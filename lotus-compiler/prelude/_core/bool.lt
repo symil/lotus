@@ -37,7 +37,7 @@ export type(i32) bool {
         this.to_string()
     }
 
-    __retain() {{
+    static __retain(This) {{
         
     }}
 

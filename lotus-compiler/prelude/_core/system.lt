@@ -1,6 +1,10 @@
 export type(void) system {
-    static __init() {
-        notify_end_of_global_allocs();
+    static __end_init() {
+        mem_trigger_garbage_collection();
+    }
+
+    assert(line: int, value: bool) {
+        assert(line, value);
     }
 
     alloc(block_size: int) -> ptr {
@@ -12,11 +16,15 @@ export type(void) system {
     }
 
     retain<T>(value: T) {
-        value.__retain();
+        T::__retain(value);
     }
 
     collect_garbage() {
         mem_trigger_garbage_collection();
+    }
+
+    allocated_addr_count() -> int {
+        get_allocated_memory_block_count()
     }
 
     log<T>(value: T) {
@@ -24,6 +32,10 @@ export type(void) system {
 
         wasm_log(str);
     }
+
+    log_int(int) {{
+        (call $log_int)
+    }}
 
     get_debug_string<T>(value: T) -> string {
         value.to_debug_string(Set<ptr>::new())
@@ -62,4 +74,8 @@ export type(void) system {
 
 fn wasm_log(string) {{
     (call $log)
+}}
+
+fn assert(int, bool) {{
+    (call $assert)
 }}

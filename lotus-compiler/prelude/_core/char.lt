@@ -70,7 +70,7 @@ export type(i32) char {
         str
     }
 
-    __retain() {{
+    static __retain(This) {{
 
     }}
 

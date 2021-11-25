@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -549,8 +549,7 @@ impl VirtualInstruction {
 
                 match &info.call {
                     FunctionCall::Named(details) => {
-                        // dbg!(details.function.borrow().name.as_str());
-                        let this_type = details.caller_type.as_ref().and_then(|ty| Some(ty.resolve(type_index, context)));
+                        let this_type = details.caller_type.as_ref().map(|ty| ty.resolve(type_index, context));
                         let function_parameters = details.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
                         let function_blueprint = details.function.with_ref(|function_unwrapped| {
                             match &function_unwrapped.method_details {
@@ -563,6 +562,21 @@ impl VirtualInstruction {
                                 None => details.function.clone(),
                             }
                         });
+
+                        let (is_internal_function, is_empty) = function_blueprint.with_ref(|function_unwrapped| {
+                            (
+                                function_unwrapped.name.as_str() == RETAIN_METHOD_NAME,
+                                function_unwrapped.body.is_empty()
+                            )
+                        });
+
+                        if is_internal_function && is_empty {
+                            return vec![];
+                        }
+
+                        // if details.function.borrow().name.is("__retain") && type_index.current_function_parameters.len() == 1 {
+                        //     println!("{}", &this_type.as_ref().unwrap().ty);
+                        // }
 
                         let parameters = FunctionInstanceParameters {
                             function_blueprint,
@@ -655,8 +669,16 @@ impl VirtualInstruction {
                 info.function.with_ref(|function_unwrapped| {
                     match &function_unwrapped.closure_details {
                         Some(details) => {
+                            let retain_function_index = context.get_function_instance(FunctionInstanceParameters {
+                                function_blueprint: details.retain_function.as_ref().unwrap().clone(),
+                                this_type: None,
+                                function_parameters: vec![],
+                            }).function_index.unwrap();
+
+                            let ptr_type = context.pointer_type();
+
                             let mut vasm = vasm![
-                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), NEW_METHOD_NAME, &[], vec![], context),
+                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, ptr_type.clone()]), NEW_METHOD_NAME, &[], vec![], context),
                                 VI::raw(Wat::set_global_from_stack(CLOSURE_VARIABLES_TMP_VAR_NAME))
                             ];
 
@@ -670,7 +692,7 @@ impl VirtualInstruction {
 
                                     vasm.extend(vasm![
                                         VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
-                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, Type::Int]), "set", &[], vasm![
+                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, ptr_type.clone()]), "set", &[], vasm![
                                             VI::int(var_info.get_name_hash()),
                                             VI::get_var(var_info, None),
                                             convert_instruction
@@ -694,6 +716,10 @@ impl VirtualInstruction {
                                 Wat::call(STORE_INT_WASM_FUNC_NAME, vec![
                                     wat!["i32.add", Wat::get_global(CLOSURE_TMP_VAR_NAME), Wat::const_i32(1i32)],
                                     Wat::const_i32(function_index)
+                                ]),
+                                Wat::call(STORE_INT_WASM_FUNC_NAME, vec![
+                                    wat!["i32.add", Wat::get_global(CLOSURE_TMP_VAR_NAME), Wat::const_i32(2i32)],
+                                    Wat::const_i32(retain_function_index)
                                 ]),
                                 Wat::get_global(CLOSURE_TMP_VAR_NAME)
                             ]);

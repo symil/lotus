@@ -40,11 +40,20 @@ function getWasmImportsObject(env) {
                 env.log(string);
             },
 
+            log_int(value) {
+                console.log(value);
+            },
+
             get_current_time() {
                 return Date.now();
             }
         },
         utils: {
+            assert(line, value) {
+                if (!value) {
+                    console.error(`line ${line}: test failed`);
+                }
+            },
             float_to_string(value, resultAddr) {
                 let memory = env.getMemory();
                 let str = '' + value;

@@ -1,4 +1,4 @@
-sys type Function {
+export type Function {
     static default() -> This {{
         (i32.const -2147483648)
     }}
@@ -40,9 +40,16 @@ sys type Function {
         i32.ne
     }}
 
-    __retain() {{
+    static __retain(f: This) {
+        if ((f as int) & 0x80000000).eqz() {
+            let p = f as ptr;
 
-    }}
+            if mem_retain(p) {
+                Map<int, ptr>::__retain(p[0] as Map<int, ptr>);
+                retain_closure_args(p[0], p[2]);
+            }
+        }
+    }
 
     __serialize(buffer: Buffer) {{
 
@@ -52,3 +59,7 @@ sys type Function {
         (i32.const -2147483648)
     }}
 }
+
+fn retain_closure_args(int, int) {{
+    (call_indirect (type $retain_closure_args_func_type))
+}}

@@ -1,0 +1,34 @@
+export fn main() {
+    let c1 = @allocated_addr_count();
+
+    let a = "hello";
+    let b = " world"
+    let c = "!";
+    let f = () => @log(a + b + c);
+
+    let p = f as ptr;
+    let m = p[0] as Map<int, Pointer<string>>;
+
+    let c2 = @allocated_addr_count();
+    @retain(f);
+    @collect_garbage();
+    let c3 = @allocated_addr_count();
+    @retain(f);
+    @collect_garbage();
+    let c4 = @allocated_addr_count();
+
+    @assert(#LINE, p[-1] == 1);
+    @assert(#LINE, (m as ptr)[-1] == 1);
+    @assert(#LINE, m.hash_table.as_ptr()[-1] == 1);
+    @assert(#LINE, m.data_table.as_ptr()[-1] == 1);
+
+    for entry in m.data_table {
+        @assert(#LINE, (entry as ptr)[-1] == 1);
+        @assert(#LINE, (entry.value[0] as ptr)[-1] == 1);
+        @assert(#LINE, (entry.value as ptr)[-1] == 1);
+    }
+
+    @assert(#LINE, c2 > c1);
+    @assert(#LINE, c3 <= c2);
+    @assert(#LINE, c4 == c3);
+}

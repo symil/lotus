@@ -17,11 +17,13 @@ pub const NONE_LITERAL : &'static str = "none";
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
+pub const RETAIN_GLOBALS_FUNC_NAME : &'static str = "retain_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "this";
 pub const CLOSURE_VARIABLES_VAR_NAME : &'static str = "closure_args";
 pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
+pub const END_INIT_TYPE_METHOD_NAME : &'static str = "__end_init";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const ENUM_TYPE_NAME : &'static str = "Enum";
@@ -48,6 +50,7 @@ pub const IS_NONE_METHOD_NAME : &'static str = "__is_none";
 pub const IS_METHOD_NAME : &'static str = "__is";
 pub const DESERIALIZE_METHOD_NAME : &'static str = "__deserialize";
 pub const DESERIALIZE_DYN_METHOD_NAME : &'static str = "__deserialize_dyn";
+pub const RETAIN_METHOD_NAME : &'static str = "__retain";
 pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";

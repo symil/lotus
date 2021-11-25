@@ -230,12 +230,12 @@ export type(i32) Array<T> {
         }
     }
 
-    __retain() {
-        if mem_retain(this.as_ptr()) {
-            mem_retain(this.body() as ptr);
+    static __retain(value: This) {
+        if mem_retain(value.as_ptr()) {
+            mem_retain(value.body() as ptr);
 
-            for item in this {
-                item.__retain();
+            for item in value {
+                Item::__retain(item);
             }
         }
     }

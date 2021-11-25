@@ -10,7 +10,7 @@ export type(void) void {
     to_debug_string(set: Set<ptr>) -> string { "void" }
     eq(This) -> bool {{ (i32.const 1) }}
     ne(This) -> bool {{ (i32.const 0) }}
-    __retain() {{ }}
+    static __retain(This) {{ }}
     __serialize(buffer: Buffer) {{ }}
     static __deserialize(buffer: Buffer) -> This? {{ }}
 }

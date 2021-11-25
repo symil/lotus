@@ -22,7 +22,8 @@ pub struct FunctionBlueprint {
 #[derive(Debug)]
 pub struct ClosureDetails {
     pub variables: HashSet<VariableInfo>,
-    pub declaration_level: u32
+    pub declaration_level: u32,
+    pub retain_function: Option<Link<FunctionBlueprint>>,
 }
 
 #[derive(Debug)]
@@ -37,6 +38,22 @@ pub struct MethodDetails {
 }
 
 impl FunctionBlueprint {
+    pub fn new(name: Identifier) -> Self {
+        Self {
+            function_id: name.location.get_hash(),
+            name: name.clone(),
+            visibility: Visibility::None,
+            parameters: IndexMap::new(),
+            argument_names: vec!{},
+            signature: Signature::default(),
+            argument_variables: vec![],
+            closure_details: None,
+            method_details: None,
+            is_raw_wasm: false,
+            body: Vasm::void(),
+        }
+    }
+    
     pub fn is_static(&self) -> bool {
         self.signature.this_type.is_none()
     }

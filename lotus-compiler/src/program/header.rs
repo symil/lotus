@@ -13,6 +13,7 @@ pub const STORE_FLOAT_WASM_FUNC_NAME : &'static str = "store_float";
 pub const TMP_VAR_NAME : &'static str = "tmp";
 pub const CLOSURE_TMP_VAR_NAME : &'static str = "tmp_closure";
 pub const CLOSURE_VARIABLES_TMP_VAR_NAME : &'static str = "tmp_closure_variables";
+pub const CLOSURE_ARGS_TYPE_NAME : &'static str = "retain_closure_args_func_type";
 
 type Import = (&'static str, &'static str, &'static str, &'static[&'static str], Option<&'static str>);
 type Memory = (Option<&'static str>, usize);
@@ -22,8 +23,10 @@ type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[&'static str], &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
 pub const HEADER_IMPORTS : &'static[Import] = &[
+    ("utils", "assert", "assert", &["i32", "i32"], None),
     ("utils", "float_to_string", "float_to_string", &["f32", "i32"], None),
     ("env", "log", "log", &["i32"], None),
+    ("env", "log_int", "log_int", &["i32"], None),
     // ("env", "get_current_time", "get_current_time", &[], Some("i32")),
     // ("client", "get_window_width", "get_window_width", &[], Some("i32")),
     // ("client", "get_window_height", "get_window_height", &[], Some("i32")),
@@ -41,7 +44,7 @@ pub const HEADER_MEMORIES : &'static[Memory] = &[
 ];
 
 pub const HEADER_FUNC_TYPES : &'static[FunctionType] = &[
-    
+    (CLOSURE_ARGS_TYPE_NAME, &["i32"], &[])
 ];
 
 pub const HEADER_GLOBALS : &'static[Global] = &[

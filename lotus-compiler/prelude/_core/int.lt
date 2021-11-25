@@ -15,6 +15,7 @@ export type(i32) int {
     gt(int) -> bool {{ i32.gt_s }}
     le(int) -> bool {{ i32.le_s }}
     lt(int) -> bool {{ i32.lt_s }}
+    eqz() -> bool {{ i32.eqz }}
     not() -> int {{ (i32.xor (i32.const 0xffffffff)) }}
     plus() -> int {{ }}
     minus() -> int {{ (i32.mul (i32.const -1)) }}
@@ -148,7 +149,7 @@ export type(i32) int {
         hash & 0x3fffffff
     }
 
-    __retain() {{
+    static __retain(This) {{
 
     }}
 

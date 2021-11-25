@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifier, Visibility}, program::{FunctionBlueprint, ProgramContext, ScopeKind, Signature, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -78,6 +78,30 @@ impl FunctionLiteral {
         }
 
         context.pop_scope();
+
+        function_wrapped.with_mut(|mut function_unwrapped| {
+            if let Some(closure_details) = &mut function_unwrapped.closure_details {
+                let mut function = FunctionBlueprint::new(Identifier::new("retain_function", self));
+                let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), Type::Int, VariableKind::Argument, 0);
+
+                function.argument_variables = vec![closure_args_var.clone()];
+
+                for arg in &closure_details.variables {
+                    let map_type = context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]);
+                    let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![arg.ty().clone()]);
+
+                    function.body.extend(vasm![
+                        VI::call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vasm![
+                            VI::get_tmp_var(&closure_args_var),
+                            VI::call_regular_method(&map_type, "get", &[], vasm![ VI::int(arg.get_name_hash()) ], context),
+                            VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0) ], context)
+                        ], context)
+                    ])
+                }
+
+                closure_details.retain_function = Some(Link::new(function));
+            }
+        });
 
         result
     }

@@ -240,8 +240,8 @@ export type(i32) string {
         lines.join("\n")
     }
 
-    __retain() {
-        mem_retain(this as ptr);
+    static __retain(value: This) {
+        mem_retain(value as ptr);
     }
 
     __serialize(buffer: Buffer) {

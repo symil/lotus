@@ -71,7 +71,7 @@ export type(f32) float {
         this.to_string()
     }
 
-    __retain() {{
+    static __retain(This) {{
 
     }}
 

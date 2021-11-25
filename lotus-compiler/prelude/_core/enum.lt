@@ -41,7 +41,7 @@ sys type(i32) Enum {
         this.to_string()
     }
 
-    autogen __retain() {{
+    autogen static __retain(This) {{
 
     }}
 

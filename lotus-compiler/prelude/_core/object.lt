@@ -115,17 +115,15 @@ export class Object {
         }
     }
 
-    __retain() {
-        if !this.__is_none() {
-            this.__retain_dyn();
+    static __retain(value: This) {
+        if mem_retain(value.as_ptr()) {
+            value.__retain_dyn();
         }
     }
 
     autogen dyn __retain_dyn() {
-        if mem_retain(this.as_ptr()) {
-            iter_fields {
-                this.#FIELD_NAME.__retain();
-            }
+        iter_fields {
+            #FIELD_TYPE::__retain(this.#FIELD_NAME);
         }
     }
 

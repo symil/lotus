@@ -2,7 +2,7 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{s
 use indexmap::IndexSet;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, RETAIN_GLOBALS_FUNC_NAME, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -275,18 +275,11 @@ impl ProgramContext {
 
                     if var_info.borrow().declaration_level != self.function_level {
                         self.get_current_function().unwrap().with_mut(|mut function_unwrapped| {
-                            let mut closure_details = match &mut function_unwrapped.closure_details {
-                                Some(details) => details,
-                                None => {
-                                    let details = ClosureDetails {
-                                        variables: HashSet::new(),
-                                        declaration_level: self.function_level,
-                                    };
-
-                                    function_unwrapped.closure_details = Some(details);
-                                    function_unwrapped.closure_details.as_mut().unwrap()
-                                },
-                            };
+                            let mut closure_details = function_unwrapped.closure_details.get_or_insert_with(|| ClosureDetails {
+                                variables: HashSet::new(),
+                                declaration_level: self.function_level,
+                                retain_function: None,
+                            });
 
                             closure_details.variables.insert(var_info.clone());
                         });
@@ -575,6 +568,7 @@ impl ProgramContext {
         let mut content = wat!["module"];
         let mut globals_declaration = vec![];
         let mut globals_initialization = vec![];
+        let mut globals_retaining = vec![];
         let mut types_initialization = vec![];
         let mut exports = vec![];
 
@@ -640,9 +634,25 @@ impl ProgramContext {
 
         let type_headers : Vec<Rc<TypeInstanceHeader>> = self.type_instances.values().map(|(header, _)| header.clone()).collect();
 
-        for type_instance_header in type_headers {
+        for type_instance_header in &type_headers {
             type_instance_header.type_blueprint.with_ref(|type_unwrapped| {
                 if let Some(func_ref) = type_unwrapped.static_methods.get(INIT_TYPE_METHOD_NAME) {
+                    let parameters = FunctionInstanceParameters {
+                        function_blueprint: func_ref.function.clone(),
+                        this_type: Some(type_instance_header.clone()),
+                        function_parameters: vec![],
+                    };
+
+                    let function_instance = self.get_function_instance(parameters);
+
+                    types_initialization.extend_from_slice(&function_instance.wasm_call);
+                }
+            });
+        }
+
+        for type_instance_header in &type_headers {
+            type_instance_header.type_blueprint.with_ref(|type_unwrapped| {
+                if let Some(func_ref) = type_unwrapped.static_methods.get(END_INIT_TYPE_METHOD_NAME) {
                     let parameters = FunctionInstanceParameters {
                         function_blueprint: func_ref.function.clone(),
                         this_type: Some(type_instance_header.clone()),
@@ -664,7 +674,8 @@ impl ProgramContext {
 
         for global_var in self.global_var_instances {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
-            globals_initialization.extend(global_var.init_value);
+            globals_initialization.extend(global_var.init_wat);
+            globals_retaining.extend(global_var.retain_wat);
             wasm_locals.extend(global_var.wasm_locals);
         }
 
@@ -681,6 +692,7 @@ impl ProgramContext {
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));
+        content.push(Wat::declare_function::<&str>(RETAIN_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_retaining));
         content.push(Wat::declare_function::<&str>(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
         content.push(Wat::declare_function::<&str>("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
 
