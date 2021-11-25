@@ -42,7 +42,7 @@ impl Signature {
         let mut s = format!("fn{}({})", this_str, display_join(&self.argument_types, ", "));
 
         if !self.return_type.is_void() {
-            s.push_str(&format!(" -> {}", &self.return_type));
+            s.push_str(&format!("({})", &self.return_type));
         }
 
         s

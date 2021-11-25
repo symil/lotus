@@ -24,7 +24,7 @@ export fn main() {
     @log("---");
 
     let array : fn()[] = [];
-    let other_array : Array<fn() -> fn()> = [];
+    let other_array : Array<fn()(fn())> = [];
 
     for (a, b) in 5..8 {
         array.push(() => @dbg(a.to_string() + " - " + b.to_string()));
@@ -45,7 +45,7 @@ export fn main() {
     let b = true;
     let o = BLUE;
 
-    let big : fn(int, float) -> string = (add, mult) => {
+    let big : fn(int, float)(string) = (add, mult) => {
         n += add;
         x *= mult;
         b = !b;
@@ -56,7 +56,7 @@ export fn main() {
     @log(big(5, 3f));
 }
 
-fn create_counter() -> fn() -> float {
+fn create_counter() -> fn()(float) {
     let counter = 1f;
 
     () => {
@@ -66,7 +66,7 @@ fn create_counter() -> fn() -> float {
     }
 }
 
-fn create_counter_from(start: float) -> fn() -> float {
+fn create_counter_from(start: float) -> fn()(float) {
     () => {
         let result = start;
         start += 1f;

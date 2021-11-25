@@ -1,19 +1,18 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Signature, Type};
-
 use super::ParsedType;
 
 #[parsable]
-pub struct FunctionType {
+pub struct ParsedFunctionType {
     #[parsable(regex="fn")]
     pub fn_token: String,
     #[parsable(brackets="()", separator=",")]
     pub arguments: Vec<ParsedType>,
-    #[parsable(prefix="->")]
+    #[parsable(brackets="()")]
     pub return_type: Option<Box<ParsedType>>
 }
 
-impl FunctionType {
+impl ParsedFunctionType {
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
         let mut ok = true;
         let mut argument_types = vec![];

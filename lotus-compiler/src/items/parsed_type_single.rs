@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{FunctionType, Identifier, ParsedValueType};
+use super::{ParsedFunctionType, Identifier, ParsedValueType};
 
 #[parsable]
 pub enum ParsedTypeSingle {
-    Function(FunctionType),
+    Function(ParsedFunctionType),
     Value(ParsedValueType),
 }
 
