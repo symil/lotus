@@ -15,7 +15,6 @@ const TEST_DIR = path.join(ROOT_DIR, 'test');
 const WORKSHOP_DIR = path.join(ROOT_DIR, 'workshop');
 const BUILD_DIR = path.join(WORKSHOP_DIR, 'build');
 
-const COMPILER_BINARY_PATH = path.join(ROOT_DIR, 'target', 'debug', 'lotus-compiler');
 const WAT2WASM_BINARY_PATH = 'wat2wasm';
 const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
@@ -30,8 +29,9 @@ const ARGV = process.argv.slice(2);
 
 async function main() {
     let isMocha = process.argv.some(str => str.includes('mocha'));
+    let mode = isMocha ? 'release' : 'debug';
 
-    if (!isMocha && !compileCompiler()) {
+    if (!isMocha && !compileCompiler({ mode })) {
         process.exit(1);
     }
 
@@ -42,7 +42,7 @@ async function main() {
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
     let onlyCompileWat = hasOption('-c');
-    let testOptions = { inheritStdio, displayMemory, onlyCompileWat };
+    let testOptions = { inheritStdio, displayMemory, onlyCompileWat, mode };
 
     if (isMocha) {
         let testsToRun = process.env.LOTUS_TESTS.split(' ');
@@ -56,7 +56,7 @@ async function main() {
                 let expectedOutputPath = path.join(dirPath, OUTPUT_FILE_NAME);
 
                 it(testName, async () => {
-                    let actualOutput = await runTest(sourcePath, dirPath);
+                    let actualOutput = await runTest(sourcePath, dirPath, { mode });
                     let expectedOutput = fse.readFileSync(expectedOutputPath, 'utf8');
 
                     if (validateOutput) {
@@ -119,13 +119,16 @@ function hasOption(longOption, shortOption) {
     return ARGV.includes(longOption) || ARGV.includes(shortOption);
 }
 
-function compileCompiler() {
-    return runCommand(`cd ${ROOT_DIR} && cargo build`, true).success;
+function compileCompiler({ mode = 'debug' } = {}) {
+    let option = mode === "release" ? '--release' : '';
+
+    return runCommand(`cd ${ROOT_DIR} && cargo build --${option}`, true).success;
 }
 
-function compileLotus(inputPath, outputPath, inheritStdio) {
+function compileLotus({ inputPath, outputPath, inheritStdio, mode }) {
+    let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
     let silentOption = inheritStdio ? '' : '--silent';
-    let command = `${COMPILER_BINARY_PATH} ${inputPath} ${outputPath} ${silentOption}`;
+    let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption}`;
 
     return runCommand(command, inheritStdio);
 }
@@ -155,11 +158,11 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     return { result, success };
 }
 
-async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false } = {}) {
+async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false, mode = 'debug' } = {}) {
     let watPath = path.join(buildDirectory, WAT_FILE_NAME);
     let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
-        () => compileLotus(sourceDirPath, watPath, inheritStdio),
+        () => compileLotus({ inputPath: sourceDirPath, outputPath: watPath, inheritStdio, mode }),
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];
