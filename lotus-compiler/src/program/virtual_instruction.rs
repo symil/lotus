@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, make_string_value_from_literal}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, THIS_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -19,8 +19,8 @@ pub enum VirtualInstruction {
     TypeId(Type),
     TypeName(Type),
     InitVariable(VirtualInitVariableInfo),
-    AccessVariable(VirtualVariableAccessInfo),
-    AccessField(VirtualAccessFieldInfo),
+    VariableAccess(VirtualVariableAccessInfo),
+    FieldAccess(VirtualAccessFieldInfo),
     FunctionCall(VirtualFunctionCallInfo),
     FunctionIndex(VirtualFunctionIndexInfo),
     Loop(VirtualLoopInfo),
@@ -162,7 +162,7 @@ impl VirtualInstruction {
     }
 
     pub fn get_var(var_info: &VariableInfo, access_level: Option<u32>) -> Self {
-        Self::AccessVariable(VirtualVariableAccessInfo{
+        Self::VariableAccess(VirtualVariableAccessInfo{
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Get,
             access_level,
@@ -175,7 +175,7 @@ impl VirtualInstruction {
     }
 
     pub fn set_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
-        Self::AccessVariable(VirtualVariableAccessInfo {
+        Self::VariableAccess(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Set,
             access_level,
@@ -188,7 +188,7 @@ impl VirtualInstruction {
     }
 
     pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
-        Self::AccessVariable(VirtualVariableAccessInfo {
+        Self::VariableAccess(VirtualVariableAccessInfo {
             var_info: var_info.clone(),
             access_kind: VariableAccessKind::Tee,
             access_level,
@@ -233,6 +233,10 @@ impl VirtualInstruction {
         }), args)
     }
 
+    pub fn none(ty: &Type, context: &ProgramContext) -> Self {
+        Self::call_static_method(ty, NONE_METHOD_NAME, &[], vec![], context)
+    }
+
     pub fn function_index(function: &Link<FunctionBlueprint>, parameters: &[Type]) -> Self {
         Self::FunctionIndex(VirtualFunctionIndexInfo {
             function: function.clone(),
@@ -241,7 +245,7 @@ impl VirtualInstruction {
     }
 
     pub fn get_field(field_type: &Type, field_offset: usize) -> Self {
-        Self::AccessField(VirtualAccessFieldInfo {
+        Self::FieldAccess(VirtualAccessFieldInfo {
             acess_kind: FieldAccessKind::Get,
             field_type: field_type.clone(),
             field_offset,
@@ -250,7 +254,7 @@ impl VirtualInstruction {
     }
 
     pub fn set_field(field_type: &Type, field_offset: usize, value: Vasm) -> Self {
-        Self::AccessField(VirtualAccessFieldInfo {
+        Self::FieldAccess(VirtualAccessFieldInfo {
             acess_kind: FieldAccessKind::Set,
             field_type: field_type.clone(),
             field_offset,
@@ -320,8 +324,8 @@ impl VirtualInstruction {
             VirtualInstruction::TypeId(_) => {},
             VirtualInstruction::TypeName(_) => {},
             VirtualInstruction::InitVariable(info) => {},
-            VirtualInstruction::AccessVariable(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
-            VirtualInstruction::AccessField(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
+            VirtualInstruction::VariableAccess(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
+            VirtualInstruction::FieldAccess(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::FunctionCall(info) => {
                 info.function_index_var.iter().for_each(|var_info| list.push(var_info.clone()));
                 info.args.collect_variables(list);
@@ -356,8 +360,8 @@ impl VirtualInstruction {
             VirtualInstruction::TypeId(_) => {},
             VirtualInstruction::TypeName(_) => {},
             VirtualInstruction::InitVariable(_) => {},
-            VirtualInstruction::AccessVariable(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
-            VirtualInstruction::AccessField(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
+            VirtualInstruction::VariableAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
+            VirtualInstruction::FieldAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
             VirtualInstruction::FunctionCall(info) => info.args.replace_placeholder(location, replacement),
             VirtualInstruction::FunctionIndex(_) => {},
             VirtualInstruction::Loop(info) => info.content.replace_placeholder(location, replacement),
@@ -407,7 +411,7 @@ impl VirtualInstruction {
                 vec![Wat::const_i32(type_instance.dynamic_method_table_offset)]
             },
             VirtualInstruction::TypeName(ty) => {
-                let name = ty.resolve(type_index, context).ty.get_name();
+                let name = ty.resolve(type_index, context).ty.to_string();
                 let vasm = make_string_value_from_literal(None, &name, context).unwrap();
 
                 vasm.resolve(type_index, context)
@@ -455,7 +459,7 @@ impl VirtualInstruction {
                     None => vec![]
                 }
             },
-            VirtualInstruction::AccessVariable(info) => {
+            VirtualInstruction::VariableAccess(info) => {
                 let mut content = vec![];
                 let value_wat = match &info.value {
                     Some(vasm) => vasm.resolve(type_index, context),
@@ -518,7 +522,7 @@ impl VirtualInstruction {
 
                 content
             },
-            VirtualInstruction::AccessField(info) => {
+            VirtualInstruction::FieldAccess(info) => {
                 let mut content = vec![];
                 let field_type = info.field_type.resolve(type_index, context);
 
@@ -810,8 +814,8 @@ impl VirtualInstruction {
             VirtualInstruction::TypeId(_) => unreachable!(),
             VirtualInstruction::TypeName(_) => unreachable!(),
             VirtualInstruction::InitVariable(_) => unreachable!(),
-            VirtualInstruction::AccessVariable(_) => unreachable!(),
-            VirtualInstruction::AccessField(_) => unreachable!(),
+            VirtualInstruction::VariableAccess(_) => unreachable!(),
+            VirtualInstruction::FieldAccess(_) => unreachable!(),
             VirtualInstruction::FunctionCall(_) => unreachable!(),
             VirtualInstruction::FunctionIndex(_) => unreachable!(),
             VirtualInstruction::Loop(_) => unreachable!(),

@@ -29,13 +29,8 @@ const ARGV = process.argv.slice(2);
 
 async function main() {
     let isMocha = process.argv.some(str => str.includes('mocha'));
-    let mode = isMocha ? 'release' : 'debug';
-
-    if (!isMocha && !compileCompiler({ mode })) {
-        process.exit(1);
-    }
-
     let commandLineNames = ARGV.filter(str => !str.startsWith('-'));
+    let mode = commandLineNames.length > 0 ? 'release' : 'debug';
     let overwrite = hasOption('--overwrite', '-o');
     let createTest = overwrite || hasOption('--write', '-w');
     let validate = hasOption('--validate', '-v');
@@ -43,6 +38,10 @@ async function main() {
     let displayMemory = hasOption('--memory', '-m');
     let onlyCompileWat = hasOption('-c');
     let testOptions = { inheritStdio, displayMemory, onlyCompileWat, mode };
+
+    if (!isMocha && !compileCompiler({ mode })) {
+        process.exit(1);
+    }
 
     if (isMocha) {
         let testsToRun = process.env.LOTUS_TESTS.split(' ');

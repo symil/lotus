@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::Identifier, program::{BuiltinInterface, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinInterface, CompilationError, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 
 #[parsable]
 #[derive(Default, Clone)]
@@ -121,8 +121,7 @@ impl BinaryOperatorWrapper {
                         Some(vasm)
                     },
                     false => {
-                        context.errors.add(right_location, format!("expected `{}` got `{}`", &left_vasm.ty, &right_vasm.ty));
-                        None
+                        context.errors.add_and_none(CompilationError::type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty))
                     },
                 }
             },
@@ -163,8 +162,7 @@ impl BinaryOperatorWrapper {
                             Some(vasm)
                         },
                         None => {
-                            context.errors.add(right_location, format!("expected `{}` got `{}`", &left_vasm.ty, &right_vasm.ty));
-                            None
+                            context.errors.add_and_none(CompilationError::type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty))
                         },
                     },
                 }

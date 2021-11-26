@@ -7,6 +7,17 @@ sys type(i32) Enum {
         i32.ne
     }}
 
+    to_int() -> int {
+        this as int
+    }
+
+    static from_int(value: int) -> This {
+        match value < 0 || value >= #VARIANT_COUNT {
+            true => none,
+            false => value as This
+        }
+    }
+
     autogen static __default() -> This {{
         (i32.const -2147483648)
     }}

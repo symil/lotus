@@ -38,7 +38,7 @@ impl NumberLiteral {
                         "m" => Number::ScaledFromContainerMinSize(value),
                         "f" | "" => Number::Float(value),
                         _ => {
-                            context.errors.add(self, format!("invalid number suffix '{}'", suffix.bold()));
+                            context.errors.add_generic(self, format!("invalid number suffix '{}'", suffix.bold()));
                             return None;
                         }
                     }

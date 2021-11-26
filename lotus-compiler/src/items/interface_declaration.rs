@@ -32,7 +32,7 @@ impl InterfaceDeclaration {
         };
 
         if context.interfaces.get_by_identifier(&self.name).is_some() {
-            context.errors.add(self, format!("interface `{}` already exists", &self.name));
+            context.errors.add_generic(self, format!("interface `{}` already exists", &self.name));
         }
 
         context.interfaces.insert(interface_blueprint, None);
@@ -58,11 +58,11 @@ impl InterfaceDeclaration {
                 });
 
                 if associated_types.insert(name.to_string(), item).is_some() {
-                    context.errors.add(&associated_type.name, format!("duplicate associated type declaration `{}`", &name));
+                    context.errors.add_generic(&associated_type.name, format!("duplicate associated type declaration `{}`", &name));
                 }
 
                 if name.as_str() == THIS_TYPE_NAME {
-                    context.errors.add(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
+                    context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
                 }
             }
 
@@ -123,7 +123,7 @@ impl InterfaceDeclaration {
                 };
 
                 if index_map.insert(name.to_string(), func_ref).is_some() {
-                    context.errors.add(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
+                    context.errors.add_generic(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
                 }
             }
 

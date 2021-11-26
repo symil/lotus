@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use enum_iterator::IntoEnumIterator;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
 pub enum BuiltinType {
     System,
     Void,

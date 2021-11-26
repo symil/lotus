@@ -2,7 +2,7 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{ParsedType, TypeQualifier}, program::{FunctionCall, ItemGenerator, NamedFunctionCallDetails, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
@@ -81,6 +81,28 @@ impl Type {
     pub fn is_function(&self) -> bool {
         match self {
             Type::Function(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn push_parameters(&mut self, parameter_types: Vec<Type>) {
+        match self {
+            Type::Actual(info) => info.parameters.extend(parameter_types),
+            _ => unreachable!()
+        }
+    }
+
+    pub fn inherits_from(&self, parent_name: &str) -> bool {
+        match self {
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                match type_unwrapped.name.as_str() == parent_name {
+                    true => true,
+                    false => match &type_unwrapped.parent {
+                        Some(parent_info) => parent_info.ty.inherits_from(parent_name),
+                        None => false,
+                    },
+                }
+            }),
             _ => false
         }
     }
@@ -411,8 +433,8 @@ impl Type {
             Type::Function(_) => false,
         };
 
-        if !ok && !self.is_undefined() {
-            context.errors.add_detailed(location, format!("type `{}` does not match interface `{}`:", self, interface.borrow().name.as_str().bold()), details);
+        if !ok {
+            context.errors.add(CompilationError::interface_mismatch(location, interface, self));
         }
 
         ok
@@ -441,7 +463,7 @@ impl Type {
                             let expected_type = expected_arg_type.replace_parameters(Some(self), &[]);
 
                             if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
-                                context.errors.add(arg_location, format!("expected `{}`, got `{}`", &expected_type, actual_type));
+                                context.errors.add(CompilationError::type_mismatch(arg_location, &expected_type, actual_type));
                             }
                         }
 
@@ -614,7 +636,7 @@ impl Type {
         }
     }
 
-    pub fn get_name(&self) -> String {
+    pub fn to_string(&self) -> String {
         match self {
             Type::Undefined => format!("<undefined>"),
             Type::Any => format!("any"),
@@ -625,7 +647,7 @@ impl Type {
                 match info.parameters.is_empty() {
                     true => format!("{}", &info.type_blueprint.borrow().name),
                     false => {
-                        let params = info.parameters.iter().map(|value| value.get_name()).collect::<Vec<String>>().join(", ");
+                        let params = info.parameters.iter().map(|value| value.to_string()).collect::<Vec<String>>().join(", ");
 
                         format!("{}<{}>", &info.type_blueprint.borrow().name, params)
                     }
@@ -677,6 +699,6 @@ impl Default for Type {
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.get_name().bold())
+        write!(f, "{}", self.to_string().bold())
     }
 }

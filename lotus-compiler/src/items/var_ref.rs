@@ -62,7 +62,7 @@ impl VarRef {
                         },
                         _ => {
                             if !var_info.ty().is_undefined() {
-                                context.errors.add(&self.name, format!("expected function, got `{}`", var_info.ty()));
+                                context.errors.add_generic(&self.name, format!("expected function, got `{}`", var_info.ty()));
                             }
 
                             None
@@ -78,7 +78,7 @@ impl VarRef {
 
                             process_function_call(&self.name, function_call, args, type_hint, access_type, context)
                         },
-                        None => context.errors.add_and_none(&self.name, format!("undefined function `{}`", &self.name)),
+                        None => context.errors.add_generic_and_none(&self.name, format!("undefined function `{}`", &self.name)),
                     },
                 },
                 None => match context.access_var(&self.name) {
@@ -90,12 +90,12 @@ impl VarRef {
                         Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {
                             match function_unwrapped.parameters.is_empty() {
                                 true => Some(Vasm::new(Type::Function(Box::new(function_unwrapped.signature.clone())), vec![], vec![VI::function_index(&function_wrapped, &[])])),
-                                false => context.errors.add_and_none(&self.name, format!("cannot use functions with parameters as variables for now")),
+                                false => context.errors.add_generic_and_none(&self.name, format!("cannot use functions with parameters as variables for now")),
                             }
                         }),
                         None => match self.name.as_str() {
-                            THIS_VAR_NAME => context.errors.add_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
-                            _ => context.errors.add_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
+                            THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
+                            _ => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
                         },
                     }
                 },

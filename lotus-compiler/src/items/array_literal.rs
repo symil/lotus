@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::Identifier, program::{BuiltinType, GET_BODY_FUNC_NAME, CREATE_METHOD_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinType, CREATE_METHOD_NAME, CompilationError, GET_BODY_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
 use super::Expression;
 
 #[parsable]
@@ -53,7 +53,7 @@ impl ArrayLiteral {
                 }
 
                 if !item_ok {
-                    context.errors.add(item, format!("expected `{}`, got `{}`", &final_item_type, &item_vasm.ty));
+                    context.errors.add(CompilationError::type_mismatch(item, &final_item_type, &item_vasm.ty));
                     all_items_ok = false;
                 } else {
                     item_vasm_list.push(item_vasm);

@@ -6,4 +6,5 @@ edition = "2018"
 [dependencies]
 colored = "2"
 indexmap = "1.7"
+enum-iterator = "*"
 parsable = { path = "../parsable" }

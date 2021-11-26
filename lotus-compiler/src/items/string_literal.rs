@@ -23,7 +23,7 @@ pub fn make_string_value_from_literal(location: Option<&DataLocation>, literal: 
             if let Some(escaped_char) = escape_char(c, '"') {
                 unescaped_chars.push(escaped_char as u32);
             } else if let Some(location) = &location {
-                context.errors.add(location, format!("invalid character '\\{}'", c));
+                context.errors.add_generic(location, format!("invalid character '\\{}'", c));
             }
 
             escaping = false;

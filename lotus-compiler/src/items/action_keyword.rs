@@ -1,13 +1,14 @@
 use parsable::parsable;
 
 #[parsable]
-pub struct ActionKeyword {
-    pub token: ActionKeywordToken
+pub struct ActionKeywordWrapper {
+    pub value: ActionKeyword
 }
 
 #[parsable(impl_display=true)]
-pub enum ActionKeywordToken {
+pub enum ActionKeyword {
     Return = "return",
+    Check = "check",
     Break = "break",
     Continue = "continue"
 }

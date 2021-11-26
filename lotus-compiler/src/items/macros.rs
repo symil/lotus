@@ -2,7 +2,7 @@ use std::{borrow::Borrow, cell::Ref, rc::Rc};
 
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::make_string_value_from_literal, program::{BuiltinType, EnumVariantInfo, FieldInfo, FunctionBlueprint, ProgramContext, Type, TypeBlueprint, VI, VariableInfo, Vasm}, utils::Link};
+use crate::{items::make_string_value_from_literal, program::{BuiltinType, EnumVariantInfo, FieldInfo, FunctionBlueprint, MainType, ProgramContext, Type, TypeBlueprint, VI, VariableInfo, Vasm}, utils::Link};
 use super::{Identifier};
 
 #[parsable]
@@ -34,7 +34,11 @@ enum MacroName {
     AncestorId,
     AncestorName,
     FirstArgType,
-    Line
+    Line,
+    WorldType,
+    UserType,
+    WindowType,
+    LocalDataType
 }
 
 enum ConstantName {
@@ -50,30 +54,31 @@ impl Macro {
     fn check_macro_context(&self, context: &mut ProgramContext) -> Option<MacroContext> {
         let macro_name = match self.to_enum() {
             Some(mac) => match mac {
-                MacroName::Line => Some(mac),
+                MacroName::Line |
+                MacroName::WorldType | MacroName::UserType | MacroName::WindowType | MacroName::LocalDataType => Some(mac),
                 _ => match context.get_current_type() {
                     Some(type_wrapped) => type_wrapped.with_ref(|type_unwrapped| {
                         match mac {
                             MacroName::TypeId | MacroName::TypeName | MacroName::TypeShortName | MacroName::FieldCount | MacroName::VariantCount | MacroName::FirstArgType => Some(mac),
                             MacroName::FieldName | MacroName::FieldType | MacroName::FieldDefaultExpression => match context.iter_fields_counter {
                                 Some(_) => Some(mac),
-                                None => context.errors.add_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_fields` block", format!("#{}", &self.name).bold())),
+                                None => context.errors.add_generic_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_fields` block", format!("#{}", &self.name).bold())),
                             },
                             MacroName::VariantName | MacroName::VariantValue => match context.iter_variants_counter {
                                 Some(_) => Some(mac),
-                                None => context.errors.add_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_variants` block", format!("#{}", &self.name).bold()))
+                                None => context.errors.add_generic_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_variants` block", format!("#{}", &self.name).bold()))
                             },
                             MacroName::AncestorId | MacroName::AncestorName => match context.iter_ancestors_counter {
                                 Some(_) => Some(mac),
-                                None => context.errors.add_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", format!("#{}", &self.name).bold())),
+                                None => context.errors.add_generic_and_none(self, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", format!("#{}", &self.name).bold())),
                             }
-                            MacroName::Line => unreachable!(),
+                            _ => unreachable!(),
                         }
                     }),
-                    None => context.errors.add_and_none(self, format!("macro `{}` can only be accessed from inside a method", format!("#{}", &self.name).bold())),
+                    None => context.errors.add_generic_and_none(self, format!("macro `{}` can only be accessed from inside a method", format!("#{}", &self.name).bold())),
                 },
             },
-            None => context.errors.add_and_none(self, format!("macro `{}` does not exist", format!("#{}", &self.name).bold())),
+            None => context.errors.add_generic_and_none(self, format!("macro `{}` does not exist", format!("#{}", &self.name).bold())),
         };
 
         match macro_name {
@@ -109,21 +114,21 @@ impl Macro {
     pub fn process_as_value(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match self.check_macro_context(context) {
             Some(macro_context) => macro_context.process_as_value(self, context),
-            None => context.errors.add_and_none(self, format!("macro `{}` cannot be processed as a value", format!("#{}", &self.name).bold())),
+            None => context.errors.add_generic_and_none(self, format!("macro `{}` cannot be processed as a value", format!("#{}", &self.name).bold())),
         }
     }
 
     pub fn process_as_type(&self, context: &mut ProgramContext) -> Option<Type> {
         match self.check_macro_context(context) {
             Some(macro_context) => macro_context.process_as_type(self, context),
-            None => context.errors.add_and_none(self, format!("macro `{}` cannot be processed as a type", format!("#{}", &self.name).bold())),
+            None => context.errors.add_generic_and_none(self, format!("macro `{}` cannot be processed as a type", format!("#{}", &self.name).bold())),
         }
     }
 
     pub fn process_as_name(&self, context: &mut ProgramContext) -> Option<Identifier> {
         match self.check_macro_context(context) {
             Some(macro_context) => macro_context.process_as_name(self, context),
-            None => context.errors.add_and_none(self, format!("macro `{}` cannot be processed as a name", format!("#{}", &self.name).bold())),
+            None => context.errors.add_generic_and_none(self, format!("macro `{}` cannot be processed as a name", format!("#{}", &self.name).bold())),
         }
     }
 
@@ -143,6 +148,10 @@ impl Macro {
             "ANCESTOR_NAME" => Some(MacroName::AncestorName),
             "FIRST_ARG_TYPE" => Some(MacroName::FirstArgType),
             "LINE" => Some(MacroName::Line),
+            "WORLD_TYPE" => Some(MacroName::WorldType),
+            "USER_TYPE" => Some(MacroName::UserType),
+            "WINDOW_TYPE" => Some(MacroName::WindowType),
+            "LOCAL_DATA_TYPE" => Some(MacroName::LocalDataType),
             _ => None
         }
     }
@@ -165,9 +174,13 @@ impl MacroContext {
                     MacroName::VariantValue => Some(Vasm::new(context.int_type(), vec![], vec![VI::int(self.variant_info.unwrap().value)])),
                     MacroName::VariantCount => Some(Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.enum_variants.len())])),
                     MacroName::AncestorId => Some(Vasm::new(context.int_type(), vec![], vec![VI::type_id(&self.ancestor_type.unwrap())])),
-                    MacroName::AncestorName => Some(make_string_value_from_literal(None, &self.ancestor_type.unwrap().get_name(), context).unwrap()),
+                    MacroName::AncestorName => Some(make_string_value_from_literal(None, &self.ancestor_type.unwrap().to_string(), context).unwrap()),
                     MacroName::FirstArgType => Some(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![VI::type_name(&self.current_function.unwrap().borrow().signature.argument_types.first().unwrap().clone())])),
-                    MacroName::Line => unreachable!()
+                    MacroName::Line => unreachable!(),
+                    MacroName::WorldType => unreachable!(),
+                    MacroName::UserType => unreachable!(),
+                    MacroName::WindowType => unreachable!(),
+                    MacroName::LocalDataType => unreachable!(),
                 }
             })
         }
@@ -189,6 +202,10 @@ impl MacroContext {
             MacroName::AncestorName => None,
             MacroName::FirstArgType => None,
             MacroName::Line => None,
+            MacroName::WorldType => Some(context.get_main_type(MainType::World)),
+            MacroName::UserType => Some(context.get_main_type(MainType::User)),
+            MacroName::WindowType => Some(context.get_main_type(MainType::Window)),
+            MacroName::LocalDataType => Some(context.get_main_type(MainType::LocalData)),
         }
     }
 
@@ -208,6 +225,10 @@ impl MacroContext {
             MacroName::AncestorName => None,
             MacroName::FirstArgType => None,
             MacroName::Line => None,
+            MacroName::WorldType => None,
+            MacroName::UserType => None,
+            MacroName::WindowType => None,
+            MacroName::LocalDataType => None,
         }
     }
 }

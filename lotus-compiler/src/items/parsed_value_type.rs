@@ -57,7 +57,7 @@ impl ParsedValueType {
                 let parameters = &type_blueprint.borrow().parameters;
 
                 if parameter_list.len() != parameters.len() {
-                    context.errors.add(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name.as_str().bold(), parameters.len(), parameter_list.len()));
+                    context.errors.add_generic(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name.as_str().bold(), parameters.len(), parameter_list.len()));
                     param_count_error = true;
                 } else {
                     for (i, (parameter, argument)) in parameters.values().zip(parameter_list.iter()).enumerate() {
@@ -78,19 +78,19 @@ impl ParsedValueType {
         }
 
         if parameter_count > 0 && must_not_take_parameters{
-            context.errors.add(&self.arguments, format!("expected 0 parameter, got {}", parameter_count));
+            context.errors.add_generic(&self.arguments, format!("expected 0 parameter, got {}", parameter_count));
         }
 
         if result.is_undefined() {
             if !param_count_error {
-                context.errors.add(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
+                context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
             }
         } else {
             for name in &self.associated_types {
                 if let Some(associated_type) = result.get_associated_type(name.as_str()) {
                     result = associated_type;
                 } else {
-                    context.errors.add(&self.name, format!("type `{}` has no associated type `{}`", &result, name));
+                    context.errors.add_generic(&self.name, format!("type `{}` has no associated type `{}`", &result, name));
 
                     result = Type::Undefined;
                     break;

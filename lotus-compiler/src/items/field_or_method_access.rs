@@ -41,7 +41,7 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
 
                 result = Some(Vasm::new(field_type, vec![], vec![instruction]));
             } else if !parent_type.is_undefined() {
-                context.errors.add(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
+                context.errors.add_generic(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
             }
         },
         FieldKind::Static => {
@@ -57,7 +57,7 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                                     result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
                                 },
                                 AccessType::Set(location) => {
-                                    context.errors.add(location, format!("cannot set value of enum variant"));
+                                    context.errors.add_generic(location, format!("cannot set value of enum variant"));
                                 },
                             }
                         }
@@ -67,7 +67,7 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
             }
 
             if result.is_none() {
-                context.errors.add(field_name, format!("type `{}` has no enum variant `{}`", parent_type, field_name.as_str().bold()));
+                context.errors.add_generic(field_name, format!("type `{}` has no enum variant `{}`", parent_type, field_name.as_str().bold()));
             }
         }
     };
@@ -96,7 +96,7 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
 
         result = process_function_call(method_name, function_call, arguments, type_hint, access_type, context);
     } else if !caller_type.is_undefined() {
-        context.errors.add(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));
+        context.errors.add_generic(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));
     }
 
     result
@@ -104,7 +104,7 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
 
 pub fn process_function_call(function_name: &Identifier, mut function_call: FunctionCall, arguments: &ArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let AccessType::Set(set_location) = access_type  {
-        context.errors.add(set_location, format!("cannot set result of a function call"));
+        context.errors.add_generic(set_location, format!("cannot set result of a function call"));
         return None;
     }
 
@@ -162,9 +162,9 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
 
                 if !arg_vasm.ty.is_undefined() {
                     if arg_vasm.ty.is_ambiguous() {
-                        context.errors.add(&arguments.as_vec()[i], format!("cannot infer type"));
+                        context.errors.add_generic(&arguments.as_vec()[i], format!("cannot infer type"));
                     } else if !arg_vasm.ty.is_assignable_to(&expected_type) {
-                        context.errors.add(&arguments.as_vec()[i], format!("expected `{}`, got `{}`", &expected_type, &arg_vasm.ty));
+                        context.errors.add_generic(&arguments.as_vec()[i], format!("expected `{}`, got `{}`", &expected_type, &arg_vasm.ty));
                     }
                 }
             }
@@ -172,7 +172,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         false => {
             let s = if signature.argument_types.len() > 1 { "s" } else { "" };
 
-            context.errors.add(arguments, format!("expected {} argument{}, got {}", signature.argument_types.len(), s, arguments.len()));
+            context.errors.add_generic(arguments, format!("expected {} argument{}, got {}", signature.argument_types.len(), s, arguments.len()));
         }
     };
 
@@ -213,7 +213,7 @@ fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link
             }
 
             if !ok {
-                context.errors.add(function_name, format!("`{}`: cannot infer type parameter #{}", function_name.as_str().bold(), i + 1));
+                context.errors.add_generic(function_name, format!("`{}`: cannot infer type parameter #{}", function_name.as_str().bold(), i + 1));
                 return None;
             }
         }

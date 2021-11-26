@@ -62,11 +62,11 @@ impl FunctionContent {
         if let Some(type_wrapped) = &current_type {
             if is_dynamic {
                 if has_parameters {
-                    context.errors.add(self, "dynamic methods cannot have parameters");
+                    context.errors.add_generic(self, format!("dynamic methods cannot have parameters"));
                 }
 
                 if is_raw_wasm {
-                    context.errors.add(self, "dynamic methods cannot be raw wasm");
+                    context.errors.add_generic(self, format!("dynamic methods cannot be raw wasm"));
                 }
             }
 
@@ -80,15 +80,15 @@ impl FunctionContent {
             function_blueprint.method_details = Some(method_details);
         } else {
             if is_static {
-                context.errors.add(self, "regular functions cannot be static");
+                context.errors.add_generic(self, format!("regular functions cannot be static"));
             }
 
             if is_dynamic {
-                context.errors.add(self, "regular functions cannot be dynamic");
+                context.errors.add_generic(self, format!("regular functions cannot be dynamic"));
             }
 
             if is_autogen {
-                context.errors.add(self, "regular functions cannot be autogen");
+                context.errors.add_generic(self, format!("regular functions cannot be autogen"));
             }
         }
 
@@ -133,38 +133,38 @@ impl FunctionContent {
         if let Some(qualifier) = &self.event_callback_qualifier {
             if let Some(type_wrapped) = context.get_current_type() {
                 if let Some(signature) = &self.signature {
-                    context.errors.add(signature, "event callbacks do not take arguments nor have a return type");
+                    context.errors.add_generic(signature, format!("event callbacks do not take arguments nor have a return type"));
                 }
 
                 if is_static {
-                    context.errors.add(self, "event callbacks cannot be static");
+                    context.errors.add_generic(self, format!("event callbacks cannot be static"));
                 }
 
                 if !self.parameters.list.is_empty() {
-                    context.errors.add(self, "event callbacks cannot have parameters");
+                    context.errors.add_generic(self, format!("event callbacks cannot have parameters"));
                 }
 
                 // if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
                 //     function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::create(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
 
                 //     if !event_type_blueprint.borrow().is_class() {
-                //         context.errors.add(&self.name, format!("type `{}` is not a class", &self.name));
+                //         context.errors.add_generic(&self.name, format!("type `{}` is not a class", &self.name));
                 //     } else if let Some(conditions) = &self.conditions {
                 //         function_blueprint.borrow_mut().conditions = conditions.process(&event_type_blueprint, context);
                 //     }
                 // } else {
-                //     context.errors.add(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
+                //     context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
                 // }
             } else {
-                context.errors.add(self, "regular functions cannot be event callbacks");
+                context.errors.add_generic(self, format!("regular functions cannot be event callbacks"));
             }
         } else {
             if self.conditions.is_some() {
-                context.errors.add(self, "only event callbacks can have conditions");
+                context.errors.add_generic(self, format!("only event callbacks can have conditions"));
             }
 
             if self.signature.is_none() {
-                context.errors.add(&self.name, "missing function signature");
+                context.errors.add_generic(&self.name, format!("missing function signature"));
             }
         }
 
@@ -185,7 +185,7 @@ impl FunctionContent {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
                     if !vasm.ty.is_assignable_to(&return_type) {
-                        context.errors.add(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
+                        context.errors.add_generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
                     }
                 }
 

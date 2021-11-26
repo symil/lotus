@@ -22,7 +22,7 @@ impl FunctionSignature {
                 if !arg_names.insert(arg_name.clone()) {
                     dbg!(arg_name.as_str());
                     println!("{}", &arg_type);
-                    context.errors.add(&argument, format!("duplicate argument: {}", &arg_name));
+                    context.errors.add_generic(&argument, format!("duplicate argument: {}", &arg_name));
                 }
 
                 arguments.push((arg_name, arg_type));

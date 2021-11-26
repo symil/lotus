@@ -31,7 +31,9 @@ fn main() {
         },
         Err(errors) => {
             for error in errors {
-                println!("{}", error.to_string());
+                if let Some(string) = error.to_string() {
+                    println!("{}", string);
+                }
             }
             process::exit(1);
         }

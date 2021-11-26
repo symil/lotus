@@ -35,7 +35,7 @@ impl FunctionLiteral {
             let arg_type = match arg_types.get(i) {
                 Some(ty) => ty.clone(),
                 None => {
-                    context.errors.add(name, format!("cannot infer type of `{}`", name.as_str().bold()));
+                    context.errors.add_generic(name, format!("cannot infer type of `{}`", name.as_str().bold()));
                     Type::Undefined
                 },
             };

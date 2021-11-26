@@ -1,17 +1,17 @@
-// export class BaseWorld {
-//     on_user_connect(user: #USER_TYPE) {
+export class BaseWorld {
+    // on_user_connect(user: #USER_TYPE) {
 
-//     }
+    // }
 
-//     on_user_disconnect(user: #USER_TYPE) {
+    // on_user_disconnect(user: #USER_TYPE) {
 
-//     }
+    // }
 
-//     on_user_action(user: #USER_TYPE, action: Object) {
+    // on_user_action(user: #USER_TYPE, action: Object) {
 
-//     }
+    // }
 
-//     update(elapsed: float) {
+    // update(elapsed: float) {
 
-//     }
-// }
+    // }
+}

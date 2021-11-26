@@ -1,13 +1,16 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
 use indexmap::IndexSet;
+use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, RETAIN_GLOBALS_FUNC_NAME, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, DEFAULT_INTERFACES, Error, ErrorList, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
-    pub errors: ErrorList,
+    pub errors: CompilationErrorList,
+
+    pub default_interfaces: InterfaceList,
 
     pub types: GlobalItemIndex<TypeBlueprint>,
     pub typedefs: GlobalItemIndex<TypedefBlueprint>,
@@ -15,7 +18,8 @@ pub struct ProgramContext {
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
-    pub default_interfaces: InterfaceList,
+    builtin_types: HashMap<BuiltinType, Type>,
+    main_types: HashMap<MainType, Type>,
 
     pub autogen_type: Option<Link<TypeBlueprint>>,
     scopes: Vec<Scope>,
@@ -49,22 +53,43 @@ impl ProgramContext {
 
             self.default_interfaces.push(interface);
         }
+
+        for builtin_type in BuiltinType::into_enum_iter() {
+            let type_name = builtin_type.get_name();
+            let type_wrapped = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
+            let ty = Type::Actual(ActualTypeContent {
+                type_blueprint: type_wrapped,
+                parameters: vec![],
+                location: DataLocation::default(),
+            });
+
+            self.builtin_types.insert(builtin_type, ty);
+        }
+
+        for main_type in MainType::into_enum_iter() {
+            let type_name = main_type.get_name();
+            let default_name = main_type.get_default_name();
+            let type_wrapped = self.types.get_by_name(type_name).unwrap_or_else(|| self.types.get_by_name(default_name).unwrap());
+            let ty = Type::Actual(ActualTypeContent {
+                type_blueprint: type_wrapped,
+                parameters: vec![],
+                location: DataLocation::default(),
+            });
+
+            self.main_types.insert(main_type, ty);
+        }
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
-        let type_name = builtin_type.get_name();
-        let type_blueprint = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
-        let mut info = ActualTypeContent {
-            type_blueprint,
-            parameters: vec![],
-            location: DataLocation::default()
-        };
+        let mut ty = self.builtin_types.get(&builtin_type).unwrap().clone();
 
-        for ty in parameters {
-            info.parameters.push(ty);
-        }
+        ty.push_parameters(parameters);
 
-        Type::Actual(info)
+        ty
+    }
+
+    pub fn get_main_type(&self, main_type: MainType) -> Type {
+        self.main_types.get(&main_type).unwrap().clone()
     }
 
     pub fn get_this_type(&self) -> Type {
@@ -219,16 +244,6 @@ impl ProgramContext {
         if let Some(current_scope) = self.scopes.iter_mut().last() {
             current_scope.insert_var_info(&var_info);
         }
-    }
-
-    fn check_var_unicity(&mut self, name: &Identifier) -> bool {
-        let is_unique = self.access_var(name).is_none();
-
-        if !is_unique {
-            self.errors.add(name, format!("variable `{}` already exists in this scope", name));
-        }
-
-        is_unique
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {
@@ -461,7 +476,7 @@ impl ProgramContext {
                         s.push_str(&format!(" -> {}", types[*index].name.as_str().bold()));
                     }
 
-                    self.errors.add(&first.name, format!("type dependancy cycle: {}", s));
+                    self.errors.add_generic(&first.name, format!("type dependancy cycle: {}", s));
                 }
 
                 return;
@@ -556,11 +571,11 @@ impl ProgramContext {
         }
 
         if self.functions.get_by_name("main").is_none() {
-            self.errors.add_unlocated(format!("missing required function `main`"));
+            self.errors.add_generic_unlocated(format!("missing required function `main`"));
         }
     }
 
-    pub fn generate_wat(mut self) -> Result<String, Vec<Error>> {
+    pub fn generate_wat(mut self) -> Result<String, Vec<CompilationError>> {
         if !self.errors.is_empty() {
             return Err(self.errors.consume());
         }

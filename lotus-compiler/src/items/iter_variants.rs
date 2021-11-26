@@ -19,7 +19,7 @@ impl IterVariants {
             Some(type_wrapped) => {
                 match context.iter_variants_counter {
                     Some(_) => {
-                        context.errors.add(self, format!("an `{}` cannot be nested inside another one ", BLOCK_NAME.bold()));
+                        context.errors.add_generic(self, format!("an `{}` cannot be nested inside another one ", BLOCK_NAME.bold()));
                     },
                     None => {
                         let mut block_vasm = vasm![];
@@ -30,7 +30,7 @@ impl IterVariants {
 
                             if let Some(vasm) = self.block.process(None, context) {
                                 if !vasm.ty.is_void() {
-                                    context.errors.add(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                    context.errors.add_generic(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
                                 }
 
                                 block_vasm.extend(vasm);
@@ -45,7 +45,7 @@ impl IterVariants {
                 }
             },
             None => {
-                context.errors.add(self, format!("`{}` can only be used from inside a method", BLOCK_NAME.bold()));
+                context.errors.add_generic(self, format!("`{}` can only be used from inside a method", BLOCK_NAME.bold()));
             },
         };
 

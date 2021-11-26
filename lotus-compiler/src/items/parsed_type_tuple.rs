@@ -36,10 +36,10 @@ impl ParsedTypeTuple {
         }
 
         match types.len() {
-            0 => context.errors.add_and_none(self, "invalid empty type"),
+            0 => context.errors.add_generic_and_none(self, format!("invalid empty type")),
             1 => Some(types.remove(0)),
             2 => Some(context.get_builtin_type(BuiltinType::Pair, types)),
-            _ => context.errors.add_and_none(self, "tuples can contain 2 values for now"),
+            _ => context.errors.add_generic_and_none(self, format!("tuples can contain 2 values for now")),
         }
     }
 }

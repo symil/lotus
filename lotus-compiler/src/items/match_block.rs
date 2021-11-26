@@ -29,7 +29,7 @@ impl MatchBlock {
                 Type::Undefined => {},
                 Type::Actual(info) => info.type_blueprint.clone().with_ref(|type_unwrapped| {
                     if !type_unwrapped.is_enum() && !type_unwrapped.is_class() && !matched_vasm.ty.is_bool() {
-                        context.errors.add(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
+                        context.errors.add_generic(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
                     } else {
                         let tmp_var = VariableInfo::tmp("tmp", context.int_type());
                         let result_var = VariableInfo::tmp("result", Type::Undefined);
@@ -49,9 +49,9 @@ impl MatchBlock {
                                         "true" => Some(vasm![
                                             VI::raw(wat!["i32.eqz"])
                                         ]),
-                                        _ => context.errors.add_and_none(&self.value_to_match, format!("type `{}` has no variant `{}`", &matched_vasm.ty, name)),
+                                        _ => context.errors.add_generic_and_none(&self.value_to_match, format!("type `{}` has no variant `{}`", &matched_vasm.ty, name)),
                                     },
-                                    None => context.errors.add_and_none(&self.value_to_match, format!("expected variant name")),
+                                    None => context.errors.add_generic_and_none(&self.value_to_match, format!("expected variant name")),
                                 },
                                 TypeCategory::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
                                     true => Some(vasm![
@@ -75,7 +75,7 @@ impl MatchBlock {
                                                     VI::Eqz
                                                 ])
                                             },
-                                            false => context.errors.add_and_none(&branch.variant_name, format!("type `{}` is not a class", &ty)),
+                                            false => context.errors.add_generic_and_none(&branch.variant_name, format!("type `{}` is not a class", &ty)),
                                         },
                                         None => None,
                                     }
@@ -92,10 +92,10 @@ impl MatchBlock {
                                                     VI::int(variant_info.value),
                                                     VI::raw(wat!["i32.ne"])
                                                 ]),
-                                                None => context.errors.add_and_none(&self.value_to_match, format!("enum `{}` has no variant `{}`", &matched_vasm.ty, name)),
+                                                None => context.errors.add_generic_and_none(&self.value_to_match, format!("enum `{}` has no variant `{}`", &matched_vasm.ty, name)),
                                             }
                                         },
-                                        None => context.errors.add_and_none(&self.value_to_match, format!("expected variant name")),
+                                        None => context.errors.add_generic_and_none(&self.value_to_match, format!("expected variant name")),
                                     }
                                 },
                             };
@@ -125,7 +125,7 @@ impl MatchBlock {
                                             returned_type = Some(ty);
                                         },
                                         None => {
-                                            context.errors.add(&branch.expr, format!("expected `{}`, got `{}`", returned_type.as_ref().unwrap() , &branch_vasm.ty))
+                                            context.errors.add_generic(&branch.expr, format!("expected `{}`, got `{}`", returned_type.as_ref().unwrap() , &branch_vasm.ty))
                                         },
                                     }
                                 }
@@ -154,7 +154,7 @@ impl MatchBlock {
                     }
                 }),
                 _ => {
-                    context.errors.add(&self.value_to_match, format!("expected enum type, got `{}`", &matched_vasm.ty));
+                    context.errors.add_generic(&self.value_to_match, format!("expected enum type, got `{}`", &matched_vasm.ty));
                 }
             }
         }

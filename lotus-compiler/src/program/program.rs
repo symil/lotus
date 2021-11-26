@@ -1,7 +1,6 @@
 use std::{fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf}, time::Instant};
 use parsable::*;
-use crate::{items::LotusFile, program::ProgramContext};
-use super::Error;
+use crate::{items::LotusFile, program::{CompilationError, ProgramContext}};
 
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 const COMMENT_START_TOKEN : &'static str = "//";
@@ -14,7 +13,7 @@ pub struct LotusProgram {
 }
 
 impl LotusProgram {
-    pub fn from_path(path: &str, prelude_directory_path: Option<&str>) -> Result<Self, Vec<Error>> {
+    pub fn from_path(path: &str, prelude_directory_path: Option<&str>) -> Result<Self, Vec<CompilationError>> {
         let mut parsed_files = vec![];
         let mut errors = vec![];
 
@@ -53,7 +52,7 @@ impl LotusProgram {
                 if !file_content.starts_with("// ignore") {
                     match LotusFile::parse(file_content, parse_options) {
                         Ok(lotus_file) => parsed_files.push(lotus_file),
-                        Err(parse_error) => errors.push(Error::from_parse_error(parse_error))
+                        Err(parse_error) => errors.push(CompilationError::parse_error(parse_error))
                     };
                 }
             }
@@ -86,7 +85,7 @@ impl LotusProgram {
     }
 }
 
-fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBuf, String)>, Vec<Error>> {
+fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBuf, String)>, Vec<CompilationError>> {
     let mut result = vec![];
     let path = Path::new(input_path);
 
@@ -95,7 +94,7 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
             if extension == SOURCE_FILE_EXTENSION {
                 let file_content = match fs::read_to_string(&path) {
                     Ok(content) => content,
-                    Err(_) => return Err(vec![Error::unlocated(format!("cannot read file `{}`", input_path))])
+                    Err(_) => return Err(vec![CompilationError::generic_unlocated(format!("cannot read file `{}`", input_path))])
                 };
 
                 result.push((path.to_path_buf(), file_content))
@@ -103,12 +102,12 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
         }
 
         if is_first && result.is_empty() {
-            return Err(vec![Error::unlocated(format!("specified source file must have a `.{}` extension", SOURCE_FILE_EXTENSION))]);
+            return Err(vec![CompilationError::generic_unlocated(format!("specified source file must have a `.{}` extension", SOURCE_FILE_EXTENSION))]);
         }
     } else if path.is_dir() {
         let entries = match path.read_dir() {
             Ok(content) => content,
-            Err(_) => return Err(vec![Error::unlocated(format!("cannot read directory `{}`", input_path))]),
+            Err(_) => return Err(vec![CompilationError::generic_unlocated(format!("cannot read directory `{}`", input_path))]),
         };
 
         for entry in entries {
@@ -117,7 +116,7 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
             }
         }
     } else if is_first {
-        return Err(vec![Error::unlocated(format!("path `{}` is not a valid file or directory", input_path))]);
+        return Err(vec![CompilationError::generic_unlocated(format!("path `{}` is not a valid file or directory", input_path))]);
     }
 
     Ok(result)

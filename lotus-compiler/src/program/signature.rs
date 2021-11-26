@@ -36,7 +36,7 @@ impl Signature {
 
     pub fn to_string(&self) -> String {
         let this_str = match &self.this_type {
-            Some(ty) => format!("[{}]", ty.get_name()),
+            Some(ty) => format!("[{}]", ty.to_string()),
             None => format!(""),
         };
         let mut s = format!("fn{}({})", this_str, display_join(&self.argument_types, ", "));

@@ -22,11 +22,11 @@ pub fn print_type_ref_list(types: &[&Type]) {
     let mut s = String::new();
 
     if let Some(ty) = types.first() {
-        s.push_str(&format!("{}", types[0].get_name()));
+        s.push_str(&format!("{}", types[0].to_string()));
     }
 
     for i in 1..types.len() {
-        s.push_str(&format!(", {}", types[0].get_name()));
+        s.push_str(&format!(", {}", types[0].to_string()));
     }
 
     println!("[{}]", s);

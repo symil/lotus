@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{program::{BuiltinType, ProgramContext, VI, Vasm}};
+use crate::{program::{BuiltinType, CompilationError, ProgramContext, VI, Vasm}};
 
 #[parsable(name="char")]
 pub struct CharLiteral {
@@ -22,10 +22,11 @@ impl CharLiteral {
         };
 
         match char_opt {
-            Some(c) => Some(Vasm::new(context.get_builtin_type(BuiltinType::Char, vec![]), vec![], vec![VI::int(c as u32)])),
+            Some(c) => {
+                Some(Vasm::new(context.get_builtin_type(BuiltinType::Char, vec![]), vec![], vec![VI::int(c as u32)]))
+            },
             None => {
-                context.errors.add(self, format!("invalid character '{}'", content.iter().collect::<String>().bold()));
-                None
+                context.errors.add_and_none(CompilationError::invalid_character(self, &content.iter().collect::<String>()))
             },
         }
     }

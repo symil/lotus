@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, ProgramContext, Type, VI, Vasm}, vasm, wat};
+use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, VI, Vasm}, vasm, wat};
 use super::{AssignmentOperatorWrapper, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]
@@ -59,7 +59,7 @@ impl Assignment {
                         
                         result = Some(left_vasm);
                     } else {
-                        context.errors.add(rvalue, format!("expected `{}`, got `{}`", &left_vasm.ty, &right_vasm.ty));
+                        context.errors.add(CompilationError::type_mismatch(rvalue, &left_vasm.ty, &right_vasm.ty));
                     }
                 }
             }

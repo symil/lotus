@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, Error, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
 use super::{Expression, ParsedType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
@@ -42,11 +42,11 @@ impl ObjectLiteral {
 
                     for field in &self.fields {
                         if type_unwrapped.fields.get(field.name.as_str()).is_none() {
-                            context.errors.add(&field.name, format!("type `{}` has no field `{}`", &object_type, field.name.as_str().bold()));
+                            context.errors.add_generic(&field.name, format!("type `{}` has no field `{}`", &object_type, field.name.as_str().bold()));
                         }
 
                         if fields_init.contains_key(field.name.as_str()) {
-                            context.errors.add(&field.name, format!("duplicate field initialization `{}`", &field.name));
+                            context.errors.add_generic(&field.name, format!("duplicate field initialization `{}`", &field.name));
                         }
 
                         if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
@@ -61,7 +61,7 @@ impl ObjectLiteral {
                                         if vasm.ty.is_assignable_to(&field_type) {
                                             field_vasm = Some(vasm);
                                         } else {
-                                            context.errors.add(expr, format!("expected `{}`, got `{}`", &field_type, &vasm.ty));
+                                            context.errors.add_generic(expr, format!("expected `{}`, got `{}`", &field_type, &vasm.ty));
                                         }
                                     }
                                 },
@@ -69,7 +69,7 @@ impl ObjectLiteral {
                                     if let Some(var_info) = context.access_var(&field.name) {
                                         field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get_tmp_var(&var_info)]));
                                     } else {
-                                        context.errors.add(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
+                                        context.errors.add_generic(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
                                     }
                                 },
                             };
@@ -95,10 +95,10 @@ impl ObjectLiteral {
 
                     result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get_tmp_var(&object_var)]));
                 } else {
-                    context.errors.add(&self.object_type, format!("type `{}` is not a class", &object_type));
+                    context.errors.add_generic(&self.object_type, format!("type `{}` is not a class", &object_type));
                 }
             } else {
-                context.errors.add(&self.object_type, format!("cannot manually instanciate type `{}`", &object_type));
+                context.errors.add_generic(&self.object_type, format!("cannot manually instanciate type `{}`", &object_type));
             }
         }
 

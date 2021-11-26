@@ -8,12 +8,13 @@ export fn main() {
 
     let p = f as ptr;
     let m = p[0] as Map<int, Pointer<string>>;
+    let array = [f];
 
     let c2 = @allocated_addr_count();
-    @retain(f);
+    @retain(array);
     @collect_garbage();
     let c3 = @allocated_addr_count();
-    @retain(f);
+    @retain(array);
     @collect_garbage();
     let c4 = @allocated_addr_count();
 
