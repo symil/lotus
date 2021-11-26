@@ -1,0 +1,19 @@
+export fn main() {
+    @log(test(8));
+    @log(test(-2));
+
+    hello("hello");
+    hello("!");
+}
+
+fn test(n: int) -> int {
+    check n > 0;
+
+    n * 2
+}
+
+fn hello(str: string) {
+    check str.len() > 3;
+
+    @log(str);
+}

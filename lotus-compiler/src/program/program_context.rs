@@ -197,6 +197,13 @@ impl ProgramContext {
         None
     }
 
+    pub fn get_current_function_return_type(&self) -> Option<Type> {
+        match self.get_current_function() {
+            Some(function_wrapped) => Some(function_wrapped.borrow().signature.return_type.clone()),
+            None => None,
+        }
+    }
+
     pub fn push_scope(&mut self, kind: ScopeKind) {
         if kind.is_function() {
             self.function_level += 1;

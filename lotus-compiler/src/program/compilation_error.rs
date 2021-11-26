@@ -17,6 +17,7 @@ enum CompilationErrorDetails {
     TypeMismatch(TypeMismatchDetails),
     InterfaceMismatch(InterfaceMismatchDetails),
     UnexpectedKeyword(UnexpectedKeywordDetails),
+    ExpectedExpression,
     UnexpectedExpression,
     UnexpectedVoidExpression,
     InvalidCharacter(InvalidCharacterDetails)
@@ -107,6 +108,13 @@ impl CompilationError {
                 expected_interface: expected_interface.clone(),
                 actual_type: actual_type.clone(),
             }),
+        }
+    }
+
+    pub fn expected_expression(location: &DataLocation) -> Self {
+        Self {
+            location: Some(location.clone()),
+            details: CompilationErrorDetails::ExpectedExpression,
         }
     }
 
@@ -212,6 +220,9 @@ impl CompilationError {
             },
             CompilationErrorDetails::InvalidCharacter(details) => {
                 Some(format!("invalid character '{}'", details.character.bold()))
+            },
+            CompilationErrorDetails::ExpectedExpression => {
+                Some(format!("expected expression"))
             },
         }
     }

@@ -277,8 +277,7 @@ impl Wat {
     pub fn to_string(&self, indent: usize) -> String {
         if self.arguments.is_empty() {
             let wrap = match self.keyword.as_str() {
-                "func" => true,
-                "block" => true,
+                "func" | "block" | "then" | "else" => true,
                 _ => self.keyword.contains(".") && (!is_number_char(self.keyword.chars().next().unwrap()) && !self.keyword.starts_with("memory"))
             };
 

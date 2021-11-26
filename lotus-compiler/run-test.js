@@ -30,9 +30,9 @@ const ARGV = process.argv.slice(2);
 async function main() {
     let isMocha = process.argv.some(str => str.includes('mocha'));
     let commandLineNames = ARGV.filter(str => !str.startsWith('-'));
-    let mode = commandLineNames.length > 0 ? 'release' : 'debug';
-    let overwrite = hasOption('--overwrite', '-o');
     let createTest = overwrite || hasOption('--write', '-w');
+    let mode = (commandLineNames.length > 0 && !createTest) ? 'release' : 'debug';
+    let overwrite = hasOption('--overwrite', '-o');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
