@@ -1,0 +1,25 @@
+class A { foo : int }
+class B extends A { bar: string }
+
+export fn main() {
+    let a = A { foo: 4 };
+    let b = B { foo: 8, bar: "hello" };
+
+    test(a);
+    @log("---");
+    test(b);
+}
+
+fn test(obj: Object) {
+    if obj is Object(o) {
+        @log("Object");
+    }
+
+    if obj is A(a) {
+        @log("A: " + a.foo.to_string());
+    }
+
+    if obj is B(b) {
+        @log("B: " + b.bar);
+    }
+}

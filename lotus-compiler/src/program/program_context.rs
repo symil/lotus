@@ -445,11 +445,11 @@ impl ProgramContext {
             type_declaration.process_name(i, self);
         }
 
+        self.index_builtin_entities();
+
         for typedef_declaration in &typedefs {
             typedef_declaration.process(self);
         }
-
-        self.index_builtin_entities();
 
         let mut links = vec![];
         for (i, type_declaration) in types.iter().enumerate() {

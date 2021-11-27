@@ -1,0 +1,6 @@
+Object
+A: 4
+---
+Object
+A: 8
+B: hello
