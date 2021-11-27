@@ -1,8 +1,8 @@
 export class View {
-    // rect: Rect,
-    // graphics: Graphics[],
-    // transform: Transform2D,
-    // children: View[],
+    rect: Rect,
+    graphics: Graphics[],
+    transform: Transform2D,
+    children: View[],
 
     // dyn render(client: Client) -> Object[] {
     //     return [];

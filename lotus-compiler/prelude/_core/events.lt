@@ -1,5 +1,0 @@
-type EventCallback = fn(Object, Object[]);
-
-sys const TYPE_ID_TO_EVENT_CALLBACK_HOOK = Map<int, EventCallback>::new();
-sys const TYPE_ID_TO_EVENT_CALLBACK_BEFORE = Map<int, EventCallback>::new();
-sys const TYPE_ID_TO_EVENT_CALLBACK_AFTER = Map<int, EventCallback>::new();

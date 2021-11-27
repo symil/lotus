@@ -12,11 +12,16 @@ pub struct VirtualAssembly {
 }
 
 impl VirtualAssembly {
-    pub fn new<T : ToVasm>(ty: Type, variables: Vec<VariableInfo>, instructions: T) -> Self {
+    pub fn new<T : ToVasm>(ty: Type, mut variables: Vec<VariableInfo>, instructions: T) -> Self {
+        let mut base_vasm = instructions.to_vasm();
+        let instructions = base_vasm.instructions;
+
+        variables.extend(base_vasm.variables);
+
         Self {
             ty,
             variables,
-            instructions: instructions.to_vasm().instructions,
+            instructions,
         }
     }
 

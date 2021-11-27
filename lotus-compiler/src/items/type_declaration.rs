@@ -172,7 +172,7 @@ impl TypeDeclaration {
                         }
                     }
                 }
-            } else if self.qualifier == TypeQualifier::Class {
+            } else if self.qualifier == TypeQualifier::Class || self.qualifier == TypeQualifier::Event {
                 let base_object = context.types.get_by_name(OBJECT_TYPE_NAME).unwrap();
 
                 if type_wrapped != base_object {

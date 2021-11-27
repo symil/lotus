@@ -76,6 +76,10 @@ export class Object {
         this as ptr
     }
 
+    get_type_id() -> int {
+        this.as_ptr()[0]
+    }
+
     to_string() -> string {
         match this.__is_none() {
             true => "none",

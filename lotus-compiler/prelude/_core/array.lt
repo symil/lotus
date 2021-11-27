@@ -275,6 +275,10 @@ export type(i32) Array<T> {
         array
     }
 
+    is_empty() -> bool {
+        this.len() == 0
+    }
+
     filter(callback: fn(T)(bool)) -> T[] {
         let result : T[] = [];
 

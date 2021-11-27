@@ -1,0 +1,65 @@
+type EventCallback = fn(Object, Object[]);
+type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
+
+sys const EVENT_HOOKS = EventCallbackMap::new();
+sys const BEFORE_EVENT_CALLBACKS = EventCallbackMap::new();
+sys const AFTER_EVENT_CALLBACKS = EventCallbackMap::new();
+
+export fn emit_event(event: Object, targets: Object[]) {
+    let event_type_id = event.get_type_id();
+
+    for event_map in [EVENT_HOOKS, BEFORE_EVENT_CALLBACKS, AFTER_EVENT_CALLBACKS] {
+        let callback_map = event_map.get(event_type_id);
+
+        if !callback_map {
+            continue;
+        }
+
+        for target in targets {
+            let callback_list = callback_map.get(target.get_type_id());
+
+            if !callback_list {
+                continue;
+            }
+
+            for callback in callback_list {
+                let result : Object[] = [];
+                let stop = false;
+
+                callback(target, result);
+
+                if result.is_empty() {
+                    continue;
+                }
+
+                for obj in result {
+                    match obj {
+                        EventPropagation(_) => {
+                            stop = true;
+                        },
+                    }
+                }
+
+                if target is View(parent_view) {
+                    for obj in result {
+                        match obj {
+                            View(child_view) => {
+                                parent_view.children.push(child_view);
+                            },
+                            Graphics(graphics) => {
+                                parent_view.graphics.push(graphics);
+                            },
+                            Transform2D(transform) => {
+                                parent_view.transform = parent_view.transform.multiply(transform);
+                            }
+                        }
+                    }
+                }
+
+                if stop {
+                    return;
+                }
+            }
+        }
+    }
+}
