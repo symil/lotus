@@ -72,6 +72,10 @@ export type(i32) string {
     }
 
     add(other: string) -> string {
+        if other.len() == 0 {
+            return this;
+        }
+
         let new_string = string::__create(this.len() + other.len());
         let new_content =  new_string._content();
 

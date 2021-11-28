@@ -86,6 +86,10 @@ mod function_literal_body;
 mod function_literal_arguments;
 mod object_initialization_item;
 mod object_spread_operator;
+mod template_string;
+mod template_string_fragment;
+mod template_string_fragment_expression;
+mod template_string_fragment_literal;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -176,3 +180,7 @@ pub use function_literal_body::*;
 pub use function_literal_arguments::*;
 pub use object_initialization_item::*;
 pub use object_spread_operator::*;
+pub use template_string::*;
+pub use template_string_fragment::*;
+pub use template_string_fragment_expression::*;
+pub use template_string_fragment_literal::*;
