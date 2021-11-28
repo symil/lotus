@@ -3,7 +3,7 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
-use super::{Expression, ParsedType, Identifier, ObjectFieldInitialization};
+use super::{Expression, Identifier, ObjectFieldInitialization, ObjectInitializationItem, ParsedType};
 
 #[parsable]
 #[derive(Default)]
@@ -11,13 +11,7 @@ pub struct ObjectLiteral {
     pub object_type: ParsedType,
     // pub field_list: Option<ObjectFieldInitializationList>
     #[parsable(brackets="{}", separator=",")]
-    pub fields: Vec<ObjectFieldInitialization>
-}
-
-#[parsable]
-pub struct ObjectFieldInitializationList {
-    #[parsable(brackets="{}", separator=",", min=1)]
-    pub fields: Vec<ObjectFieldInitialization>
+    pub items: Vec<ObjectInitializationItem>
 }
 
 impl ObjectLiteral {
@@ -41,49 +35,21 @@ impl ObjectLiteral {
                         VI::set_tmp_var(&object_var)
                     ]));
 
-                    for field in &self.fields {
-                        if type_unwrapped.fields.get(field.name.as_str()).is_none() {
-                            context.errors.add_generic(&field.name, format!("type `{}` has no field `{}`", &object_type, field.name.as_str().bold()));
+                    for item in &self.items {
+                        let init_info = item.process(&object_type, context);
+
+                        for (field_name, vasm) in init_info.fields {
+                            fields_init.insert(field_name, vasm);
                         }
 
-                        if fields_init.contains_key(field.name.as_str()) {
-                            context.errors.add_generic(&field.name, format!("duplicate field initialization `{}`", &field.name));
-                        }
-
-                        if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
-                            let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
-                            let mut field_vasm = None;
-
-                            match &field.value {
-                                Some(expr) => {
-                                    if let Some(vasm) = expr.process(Some(&field_type), context) {
-                                        // println!("{}, {}, {}", &field_vasm.ty, field_type, field_vasm.ty.is_assignable_to(&field_type));
-
-                                        if vasm.ty.is_assignable_to(&field_type) {
-                                            field_vasm = Some(vasm);
-                                        } else {
-                                            context.errors.add_generic(expr, format!("expected `{}`, got `{}`", &field_type, &vasm.ty));
-                                        }
-                                    }
-                                },
-                                None => {
-                                    if let Some(var_info) = context.access_var(&field.name) {
-                                        field_vasm = Some(Vasm::new(field_type, vec![], vec![VI::get_tmp_var(&var_info)]));
-                                    } else {
-                                        context.errors.add_generic(&field.name, format!("undefined variable `{}`", &field.name.as_str().bold()));
-                                    }
-                                },
-                            };
-
-                            if let Some(vasm) = field_vasm {
-                                fields_init.insert(field.name.as_str(), vasm);
-                            }
+                        if let Some(vasm) = init_info.init {
+                            result.extend(vasm);
                         }
                     }
 
                     for (i, field_info) in type_unwrapped.fields.values().enumerate() {
                         let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
-                        let init_vasm = match fields_init.remove(&field_info.name.as_str()) {
+                        let init_vasm = match fields_init.remove(field_info.name.as_str()) {
                             Some(field_vasm) => field_vasm,
                             None => field_info.default_value.clone(),
                         };

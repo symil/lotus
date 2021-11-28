@@ -521,6 +521,23 @@ impl Type {
         }
     }
 
+    pub fn get_all_fields(&self) -> Vec<Rc<FieldInfo>> {
+        match self {
+            Type::Undefined => vec![],
+            Type::Any => vec![],
+            Type::Void => vec![],
+            Type::Int => vec![],
+            Type::This(_) => vec![],
+            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                type_unwrapped.fields.values().map(|field_info| field_info.clone()).collect()
+            }),
+            Type::TypeParameter(_) => vec![],
+            Type::FunctionParameter(_) => vec![],
+            Type::Associated(_) => vec![],
+            Type::Function(_) => vec![],
+        }
+    }
+
     pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<FuncRef> {
         let is_static = match kind {
             FieldKind::Regular => false,

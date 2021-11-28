@@ -1,0 +1,40 @@
+class Target {
+    a: int,
+    b: float,
+    c: string
+}
+
+class Foo {
+    a: int,
+    b: int
+}
+
+class Bar {
+    b: float,
+    d: string
+}
+
+export fn main() {
+    let foo = Foo {
+        a: 1,
+        b: 2,
+    };
+    let bar = Bar {
+        b: 1.2,
+        d: "hello"
+    };
+    let target = Target {
+        ..foo,
+        ..bar,
+        c: "world"
+    };
+    let target2 = Target {
+        ..target,
+        a: 8
+    };
+
+    @dbg(foo);
+    @dbg(bar);
+    @dbg(target);
+    @dbg(target2);
+}

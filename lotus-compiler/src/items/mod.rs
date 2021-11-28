@@ -84,6 +84,8 @@ mod identifier_wrapper;
 mod function_literal;
 mod function_literal_body;
 mod function_literal_arguments;
+mod object_initialization_item;
+mod object_spread_operator;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -172,3 +174,5 @@ pub use identifier_wrapper::*;
 pub use function_literal::*;
 pub use function_literal_body::*;
 pub use function_literal_arguments::*;
+pub use object_initialization_item::*;
+pub use object_spread_operator::*;
