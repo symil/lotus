@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use parsable::parsable;
 use colored::*;
-use crate::{items::Visibility, program::{DEFAULT_METHOD_NAME, FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, THIS_VAR_NAME, VariableKind, display_join, insert_in_vec_hashmap}, utils::Link};
+use crate::{items::Visibility, program::{DEFAULT_METHOD_NAME, FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, THIS_VAR_NAME, VariableKind, display_join, hashmap_get_or_insert_with, insert_in_vec_hashmap}, utils::Link};
 use super::{EventCallbackQualifier, FunctionCondition, FunctionContent, FunctionDeclaration, FunctionSignature, Identifier, BlockExpression, TypeDeclaration, TypeQualifier, VarPath};
 
 #[parsable]
@@ -25,27 +27,36 @@ impl MethodDeclaration {
             let name = function_unwrapped.name.clone();
             let mut method_details = function_unwrapped.method_details.as_mut().unwrap();
             let prev_opt = type_wrapped.with_mut(|mut type_unwrapped| {
-                let func_ref = FuncRef {
-                    function: function_wrapped.clone(),
-                    this_type: type_unwrapped.self_type.clone(),
-                };
+                if let Some((qualifier, event_type_wrapped)) = &method_details.event_callback_details {
+                    let event_map = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || HashMap::new());
+                    let callback_list = hashmap_get_or_insert_with(event_map, qualifier, || vec![]);
 
-                let mut index_map = match is_static {
-                    true => &mut type_unwrapped.static_methods,
-                    false => &mut type_unwrapped.regular_methods
-                };
+                    callback_list.push(function_wrapped.clone());
 
-                if let Some(prev) = index_map.get(name.as_str()) {
-                    method_details.first_declared_by = prev.function.borrow().method_details.as_ref().unwrap().first_declared_by.clone();
-                } else if let Some(autogen_type_blueprint) = &context.autogen_type {
-                    method_details.first_declared_by = Some(autogen_type_blueprint.clone());
-                }
+                    None
+                } else {
+                    let func_ref = FuncRef {
+                        function: function_wrapped.clone(),
+                        this_type: type_unwrapped.self_type.clone(),
+                    };
 
-                let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();
+                    let mut index_map = match is_static {
+                        true => &mut type_unwrapped.static_methods,
+                        false => &mut type_unwrapped.regular_methods
+                    };
 
-                match should_insert {
-                    true => index_map.insert(name.to_string(), func_ref),
-                    false => None,
+                    if let Some(prev) = index_map.get(name.as_str()) {
+                        method_details.first_declared_by = prev.function.borrow().method_details.as_ref().unwrap().first_declared_by.clone();
+                    } else if let Some(autogen_type_blueprint) = &context.autogen_type {
+                        method_details.first_declared_by = Some(autogen_type_blueprint.clone());
+                    }
+
+                    let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();
+
+                    match should_insert {
+                        true => index_map.insert(name.to_string(), func_ref),
+                        false => None,
+                    }
                 }
             });
 

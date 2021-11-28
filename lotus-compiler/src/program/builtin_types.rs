@@ -16,7 +16,9 @@ pub enum BuiltinType {
     Set,
     Map,
     DisplaySize,
-    View
+    View,
+    Event,
+    EventOutput,
 }
 
 impl BuiltinType {
@@ -37,6 +39,8 @@ impl BuiltinType {
             BuiltinType::Map => "Map",
             BuiltinType::DisplaySize => "DisplaySize",
             BuiltinType::View => "View",
+            BuiltinType::Event => "Event",
+            BuiltinType::EventOutput => "EventOutput",
         }
     }
 }

@@ -29,11 +29,10 @@ pub struct ClosureDetails {
 #[derive(Debug)]
 pub struct MethodDetails {
     pub qualifier: Option<MethodQualifier>,
-    pub event_callback_qualifier: Option<EventCallbackQualifier>,
+    pub event_callback_details: Option<(EventCallbackQualifier, Link<TypeBlueprint>)>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
-    pub conditions: Vec<(Identifier, Identifier)>,
     pub dynamic_index: i32,
 }
 

@@ -17,11 +17,11 @@ pub const NONE_LITERAL : &'static str = "none";
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
+pub const INIT_EVENTS_FUNC_NAME : &'static str = "init_events";
 pub const RETAIN_GLOBALS_FUNC_NAME : &'static str = "retain_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
 pub const THIS_VAR_NAME : &'static str = "this";
 pub const CLOSURE_VARIABLES_VAR_NAME : &'static str = "closure_args";
-pub const PAYLOAD_VAR_NAME : &'static str = "__payload";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 pub const END_INIT_TYPE_METHOD_NAME : &'static str = "__end_init";
 
@@ -34,8 +34,6 @@ pub const TUPLE_FIRST_ASSOCIATED_TYPE_NAME : &'static str = "First";
 pub const TUPLE_SECOND_ASSOCIATED_TYPE_NAME : &'static str = "Second";
 pub const TUPLE_FIRST_METHOD_NAME : &'static str = "first";
 pub const TUPLE_SECOND_METHOD_NAME : &'static str = "second";
-
-pub const WORLD_ENTRY_POINT_NAME : &'static str = "World";
 
 pub const NEW_METHOD_NAME : &'static str = "new";
 pub const CREATE_METHOD_NAME : &'static str = "__create";
@@ -51,18 +49,20 @@ pub const IS_METHOD_NAME : &'static str = "__is";
 pub const DESERIALIZE_METHOD_NAME : &'static str = "__deserialize";
 pub const DESERIALIZE_DYN_METHOD_NAME : &'static str = "__deserialize_dyn";
 pub const RETAIN_METHOD_NAME : &'static str = "__retain";
-pub const UNWRAP_FUNC_NAME : &'static str = "unwrap";
+pub const MEM_ALLOC_FUNC_NAME : &'static str = "mem_alloc";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 
-pub const MEM_ALLOC_FUNC_NAME : &'static str = "mem_alloc";
+pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";
+pub const EVENT_HOOKS_GLOBAL_NAME : &'static str = "EVENT_HOOKS";
+pub const BEFORE_EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "BEFORE_EVENT_CALLBACKS";
+pub const AFTER_EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "AFTER_EVENT_CALLBACKS";
+pub const INSERT_EVENT_CALLBACK_FUNC_NAME : &'static str = "insert_event_callback";
 
 pub const NAN_WASM : &'static str = "nan:0x200000";
-
-pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";
 
 pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
     "main",

@@ -132,6 +132,18 @@ export class Map<K, V> {
         }
     }
 
+    get_or_insert_with(key: K, f: fn()(V)) -> V {
+        let value = this.get(key);
+
+        if !value {
+            value = f();
+            
+            this.set(key, value);
+        }
+
+        value
+    }
+
     set(key: K, value: V) -> V? {
         let index = this._get_index(key);
         let entry = this.hash_table[index];

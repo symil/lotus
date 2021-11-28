@@ -37,3 +37,11 @@ pub fn print_type_list(types: &[Type]) {
 
     print_type_ref_list(&v);
 }
+
+pub fn hashmap_get_or_insert_with<'a, K : Clone + Eq + Hash, V, F : Fn() -> V>(hashmap: &'a mut HashMap<K, V>, key: &K, f: F) -> &'a mut V {
+    if !hashmap.contains_key(key) {
+        hashmap.insert(key.clone(), f());
+    }
+
+    hashmap.get_mut(key).unwrap()
+}

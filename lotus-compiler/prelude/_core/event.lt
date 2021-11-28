@@ -1,0 +1,74 @@
+type EventCallback = fn(Object, Event, EventOutput);
+type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
+
+export const EVENT_HOOKS = EventCallbackMap::new();
+export const BEFORE_EVENT_CALLBACKS = EventCallbackMap::new();
+export const AFTER_EVENT_CALLBACKS = EventCallbackMap::new();
+
+sys fn insert_event_callback(event_map: EventCallbackMap, event_type_id: int, target_type_id: int, callback: EventCallback) {
+    let callback_map = event_map.get_or_insert_with(event_type_id, () => Map<int, EventCallback[]>::new());
+    let callback_list = callback_map.get_or_insert_with(target_type_id, () => []);
+
+    callback_list.push(callback);
+}
+
+export class EventOutput {
+    intercepted: bool,
+    yielded: Object[]
+}
+
+export class Event {
+    dyn trigger() {
+
+    }
+
+    emit(targets: Object[]) {
+        let event_type_id = this.get_type_id();
+
+        for event_map in [EVENT_HOOKS, BEFORE_EVENT_CALLBACKS, AFTER_EVENT_CALLBACKS] {
+            if event_map == AFTER_EVENT_CALLBACKS {
+                this.trigger();
+            }
+
+            let callback_map = event_map.get(event_type_id);
+
+            if !callback_map {
+                continue;
+            }
+
+            for target in targets {
+                let callback_list = callback_map.get(target.get_type_id());
+
+                if !callback_list {
+                    continue;
+                }
+
+                for callback in callback_list {
+                    let output = EventOutput {};
+
+                    callback(target, this, output);
+
+                    if !output.yielded.is_empty() && target is View(parent_view) {
+                        for obj in output.yielded {
+                            match obj {
+                                View(child_view) => {
+                                    parent_view.children.push(child_view);
+                                },
+                                Graphics(graphics) => {
+                                    parent_view.graphics.push(graphics);
+                                },
+                                Transform2D(transform) => {
+                                    parent_view.transform = parent_view.transform.multiply(transform);
+                                }
+                            }
+                        }
+                    }
+
+                    if output.intercepted {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,9 +1,9 @@
 use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EXPORTED_FUNCTIONS, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, ItemGenerator, RETAIN_GLOBALS_FUNC_NAME, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, AssociatedTypeContent, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_HOOKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, THIS_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
 
 #[derive(Default, Debug)]
@@ -31,7 +31,7 @@ pub struct ProgramContext {
 
     function_table: Vec<Option<Rc<FunctionInstanceHeader>>>,
     function_wasm_types: HashMap<FunctionInstanceWasmType, String>,
-    type_instances: HashMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
+    type_instances: IndexMap<u64, (Rc<TypeInstanceHeader>, Option<TypeInstanceContent>)>,
     function_instances: HashMap<u64, (Rc<FunctionInstanceHeader>, Option<FunctionInstanceContent>)>,
     global_var_instances: Vec<GlobalVarInstance>,
 
@@ -418,6 +418,10 @@ impl ProgramContext {
         self.function_table[index] = Some(function_instance.clone());
     }
 
+    fn get_all_type_instances(&self) -> Vec<Rc<TypeInstanceHeader>> {
+        self.type_instances.values().map(|(header, _)| header.clone()).collect()
+    }
+
     pub fn process_files(&mut self, files: Vec<LotusFile>) {
         let mut interfaces = vec![];
         let mut types = vec![];
@@ -592,6 +596,7 @@ impl ProgramContext {
         let mut globals_initialization = vec![];
         let mut globals_retaining = vec![];
         let mut types_initialization = vec![];
+        let mut events_initialization = vec![];
         let mut exports = vec![];
 
         for global_var in self.global_vars.get_all() {
@@ -620,6 +625,67 @@ impl ProgramContext {
             self.main_function = Some(function_instance_header);
         }
 
+        let mut prev_type_instance_count = 0;
+
+        loop {
+            let type_instances = self.get_all_type_instances();
+            let current_type_instance_count = type_instances.len();
+
+            if current_type_instance_count == prev_type_instance_count {
+                break;
+            }
+
+            let new_type_instances = &type_instances[prev_type_instance_count..];
+
+            prev_type_instance_count = current_type_instance_count;
+            
+            for type_instance in new_type_instances {
+                let insert_function_call = FunctionCall::Named(NamedFunctionCallDetails {
+                    caller_type: None,
+                    function: self.functions.get_by_name(INSERT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
+                    parameters: vec![]
+                });
+                let type_id = type_instance.get_type_id();
+
+                type_instance.type_blueprint.with_ref(|type_unwrapped| {
+                    for (event_type_wrapped, event_callbacks) in type_unwrapped.event_callbacks.iter() {
+                        let event_type_instance = self.get_type_instance(TypeInstanceParameters {
+                            type_blueprint: event_type_wrapped.clone(),
+                            type_parameters: vec![],
+                        });
+                        let event_type_id = event_type_instance.get_type_id();
+
+                        for (qualifier, callback_list) in event_callbacks.iter() {
+                            let global_map_var_name = match qualifier {
+                                EventCallbackQualifier::Hook => EVENT_HOOKS_GLOBAL_NAME,
+                                EventCallbackQualifier::Before => BEFORE_EVENT_CALLBACKS_GLOBAL_NAME,
+                                EventCallbackQualifier::After => AFTER_EVENT_CALLBACKS_GLOBAL_NAME,
+                            };
+                            let global_map_var_info = self.global_vars.get_by_name(global_map_var_name).unwrap().borrow().var_info.clone();
+
+                            for callback in callback_list {
+                                let vasm = vasm![
+                                    VI::call_function(insert_function_call.clone(), vec![
+                                        VI::get_var(&global_map_var_info, None),
+                                        VI::int(event_type_id),
+                                        VI::int(type_id),
+                                        VI::function_index(callback, &[])
+                                    ])
+                                ];
+
+                                let type_index = TypeIndex {
+                                    current_type_instance: Some(type_instance.clone()),
+                                    current_function_parameters: vec![],
+                                };
+
+                                events_initialization.extend(vasm.resolve(&type_index, &mut self));
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
         }
@@ -637,7 +703,7 @@ impl ProgramContext {
 
         content.push(wat!["table", self.function_table.len(), "funcref"]);
 
-        let mut elems = wat!["elem", Wat::const_i32(0)];
+        let mut elems = wat!["elem", Wat::const_i32(0i32)];
 
         for function_instance in &self.function_table {
             let wasm_func_name = match function_instance {
@@ -710,12 +776,14 @@ impl ProgramContext {
         let mut initialize_function_body = vec![
             Wat::call(INIT_GLOBALS_FUNC_NAME, vec![]),
             Wat::call(INIT_TYPES_FUNC_NAME, vec![]),
+            Wat::call(INIT_EVENTS_FUNC_NAME, vec![]),
         ];
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));
         content.push(Wat::declare_function::<&str>(RETAIN_GLOBALS_FUNC_NAME, None, vec![], vec![], vec![], globals_retaining));
         content.push(Wat::declare_function::<&str>(INIT_TYPES_FUNC_NAME, None, vec![], vec![], vec![], types_initialization));
+        content.push(Wat::declare_function::<&str>(INIT_EVENTS_FUNC_NAME, None, vec![], vec![], vec![], events_initialization));
         content.push(Wat::declare_function::<&str>("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
 
         for (function_instance_header, function_instance_content) in self.function_instances.into_values() {

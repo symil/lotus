@@ -97,11 +97,10 @@ impl InterfaceDeclaration {
                     closure_details: None,
                     method_details: Some(MethodDetails {
                         qualifier: Some(method_qualifier),
-                        event_callback_qualifier: None,
+                        event_callback_details: None,
                         owner_type: None,
                         owner_interface: Some(interface_wrapped.clone()),
                         first_declared_by: None,
-                        conditions: vec![],
                         dynamic_index: -1,
                     })
                 };

@@ -1,4 +1,4 @@
-use std::{fmt::Display, hash::Hash, ops::{Deref, DerefMut}};
+use std::{collections::hash_map::DefaultHasher, fmt::Display, hash::{Hash, Hasher}, ops::{Deref, DerefMut}};
 use parsable::*;
 
 static mut COUNTER : usize = 0;
@@ -47,7 +47,12 @@ impl Identifier {
     }
 
     pub fn get_u32_hash(&self) -> u32 {
-        self.location.get_hash() as u32
+        let mut hasher = DefaultHasher::new();
+
+        self.value.hash(&mut hasher);
+        self.location.hash(&mut hasher);
+
+        hasher.finish() as u32
     }
 
     pub fn is(&self, value: &str) -> bool {

@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{FunctionBlueprint, MethodDetails, PAYLOAD_VAR_NAME, ProgramContext, ScopeKind, Signature, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, THIS_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility};
 
 #[parsable]
@@ -12,7 +12,6 @@ pub struct FunctionContent {
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub name: Identifier,
     pub parameters: TypeParameters,
-    pub conditions: Option<FunctionConditionList>,
     pub signature: Option<FunctionSignature>,
     pub body: FunctionBody,
 }
@@ -39,11 +38,10 @@ impl FunctionContent {
 
         let mut method_details = MethodDetails {
             qualifier: self.qualifier,
-            event_callback_qualifier: None,
+            event_callback_details: None,
             owner_type: None,
             owner_interface: None,
             first_declared_by: None,
-            conditions: vec![],
             dynamic_index: -1,
         };
 
@@ -133,7 +131,7 @@ impl FunctionContent {
         if let Some(qualifier) = &self.event_callback_qualifier {
             if let Some(type_wrapped) = context.get_current_type() {
                 if let Some(signature) = &self.signature {
-                    context.errors.add_generic(signature, format!("event callbacks do not take arguments nor have a return type"));
+                    context.errors.add_generic(signature, format!("unexpected function signature"));
                 }
 
                 if is_static {
@@ -144,25 +142,36 @@ impl FunctionContent {
                     context.errors.add_generic(self, format!("event callbacks cannot have parameters"));
                 }
 
-                // if let Some(event_type_blueprint) = context.types.get_by_identifier(&self.name) {
-                //     function_blueprint.borrow_mut().payload_arg = Some(VariableInfo::create(Identifier::new(PAYLOAD_VAR_NAME, self), event_type_blueprint.borrow().self_type.clone(), VariableKind::Argument));
+                if let Some(event_type_wrapped) = context.types.get_by_identifier(&self.name) {
+                    if event_type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
+                        if let Some(type_wrapped) = context.get_current_type() {
+                            function_wrapped.with_mut(|mut function_unwrapped| {
+                                function_unwrapped.argument_names = vec![
+                                    Identifier::new("evt", self),
+                                    Identifier::new("__output", self),
+                                ];
+                                function_unwrapped.signature = Signature {
+                                    this_type: Some(type_wrapped.borrow().self_type.clone()),
+                                    argument_types: vec![
+                                        event_type_wrapped.borrow().self_type.clone(),
+                                        context.get_builtin_type(BuiltinType::EventOutput, vec![])
+                                    ],
+                                    return_type: Type::Void,
+                                };
 
-                //     if !event_type_blueprint.borrow().is_class() {
-                //         context.errors.add_generic(&self.name, format!("type `{}` is not a class", &self.name));
-                //     } else if let Some(conditions) = &self.conditions {
-                //         function_blueprint.borrow_mut().conditions = conditions.process(&event_type_blueprint, context);
-                //     }
-                // } else {
-                //     context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
-                // }
+                                function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert((qualifier.clone(), event_type_wrapped.clone()));
+                            });
+                        }
+                    } else {
+                        context.errors.add_generic(&self.name, format!("type `{}` is not an event", &self.name));
+                    }
+                } else {
+                    context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
+                }
             } else {
                 context.errors.add_generic(self, format!("regular functions cannot be event callbacks"));
             }
         } else {
-            if self.conditions.is_some() {
-                context.errors.add_generic(self, format!("only event callbacks can have conditions"));
-            }
-
             if self.signature.is_none() {
                 context.errors.add_generic(&self.name, format!("missing function signature"));
             }
