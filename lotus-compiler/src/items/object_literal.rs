@@ -6,6 +6,7 @@ use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, CREATE_METHOD_N
 use super::{Expression, ParsedType, Identifier, ObjectFieldInitialization};
 
 #[parsable]
+#[derive(Default)]
 pub struct ObjectLiteral {
     pub object_type: ParsedType,
     // pub field_list: Option<ObjectFieldInitializationList>

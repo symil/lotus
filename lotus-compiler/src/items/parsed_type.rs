@@ -3,6 +3,7 @@ use crate::program::{BuiltinType, ProgramContext, Type};
 use super::{Identifier, ParsedTypeSingle, ParsedTypeWithoutSuffix, TypeSuffix, TypeSuffixWrapper};
 
 #[parsable]
+#[derive(Default)]
 pub struct ParsedType {
     pub parsed_type: ParsedTypeWithoutSuffix,
     pub suffix: Vec<TypeSuffixWrapper>

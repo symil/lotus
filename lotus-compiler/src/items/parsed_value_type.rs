@@ -5,6 +5,7 @@ use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, T
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
+#[derive(Default)]
 pub struct ParsedValueType {
     pub name: Identifier,
     pub arguments: TypeArguments,

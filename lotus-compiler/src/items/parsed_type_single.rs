@@ -30,3 +30,9 @@ impl ParsedTypeSingle {
         }
     }
 }
+
+impl Default for ParsedTypeSingle {
+    fn default() -> Self {
+        Self::Value(ParsedValueType::default())
+    }
+}

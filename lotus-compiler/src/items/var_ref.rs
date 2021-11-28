@@ -1,6 +1,6 @@
-use parsable::parsable;
+use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::{process_field_access, process_function_call, process_method_call}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
+use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
 use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
@@ -93,10 +93,27 @@ impl VarRef {
                                 false => context.errors.add_generic_and_none(&self.name, format!("cannot use functions with parameters as variables for now")),
                             }
                         }),
-                        None => match self.name.as_str() {
-                            THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
-                            _ => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
-                        },
+                        None => match context.types.get_by_identifier(&self.name) {
+                            Some(type_wrapped) => match type_wrapped.borrow().parameters.is_empty() {
+                                true => {
+                                    let type_arguments = TypeArguments::default();
+                                    let mut parsed_type_value = ParsedValueType::default();
+                                    parsed_type_value.name = self.name.clone();
+                                    parsed_type_value.location = self.name.location.clone();
+                                    let mut parsed_type = ParsedType::default();
+                                    parsed_type.parsed_type = ParsedTypeWithoutSuffix::Single(ParsedTypeSingle::Value(parsed_type_value));
+                                    let mut object_literal = ObjectLiteral::default();
+                                    object_literal.object_type = parsed_type;
+
+                                    object_literal.process(context)
+                                },
+                                false => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold())),
+                            },
+                            None => match self.name.as_str() {
+                                THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
+                                _ => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
+                            },
+                        }
                     }
                 },
             },

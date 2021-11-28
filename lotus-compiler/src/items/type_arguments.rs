@@ -4,6 +4,7 @@ use crate::program::{ProgramContext, Type};
 use super::{ParsedType, Identifier};
 
 #[parsable]
+#[derive(Default)]
 pub struct TypeArguments {
     #[parsable(brackets="<>", separator=",", optional=true)]
     pub list: Vec<ParsedType>

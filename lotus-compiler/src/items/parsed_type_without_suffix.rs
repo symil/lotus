@@ -30,3 +30,9 @@ impl ParsedTypeWithoutSuffix {
         }
     }
 }
+
+impl Default for ParsedTypeWithoutSuffix {
+    fn default() -> Self {
+        Self::Single(ParsedTypeSingle::default())
+    }
+}

@@ -1,0 +1,9 @@
+class A {
+    value: int = 8
+}
+
+export fn main() {
+    let a = A;
+
+    @log(a.value);
+}
