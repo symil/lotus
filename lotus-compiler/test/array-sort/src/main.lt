@@ -1,0 +1,13 @@
+fn compare(a: int, b: int) -> int {
+    a - b
+}
+
+export fn main() {
+    let empty : int[] = [];
+
+    @dbg(empty.sort(compare));
+    @dbg([1].sort(compare));
+    @dbg([5, 4, 3, 2, 1].sort(compare));
+    @dbg([1, 2, 3, 4, 5].sort(compare));
+    @dbg([0, 7, 9, 2, 6, 2, 5, 8, 1, 10, 5].sort(compare));
+}

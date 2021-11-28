@@ -90,5 +90,11 @@ export type(i32) Pointer<T> {
     static __deserialize(buffer: Buffer) -> This? {
         buffer.read() as This
     }
+
+    swap(i: int, j: int) {
+        let tmp = this[i];
+        this[i] = this[j];
+        this[j] = tmp;
+    }
 }
 

@@ -28,12 +28,11 @@ pub struct ClosureDetails {
 
 #[derive(Debug)]
 pub struct MethodDetails {
-    pub qualifier: Option<MethodQualifier>,
     pub event_callback_details: Option<(EventCallbackQualifier, Link<TypeBlueprint>)>,
     pub owner_type: Option<Link<TypeBlueprint>>,
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
-    pub dynamic_index: i32,
+    pub dynamic_index: Option<i32>,
 }
 
 impl FunctionBlueprint {
@@ -59,19 +58,16 @@ impl FunctionBlueprint {
 
     pub fn get_dynamic_index(&self) -> Option<usize> {
         match &self.method_details {
-            Some(details) => match details.dynamic_index > -1 {
-                true => Some(details.dynamic_index as usize),
-                false => None,
+            Some(details) => match details.dynamic_index {
+                Some(i) => Some(i as usize),
+                None => None,
             },
             None => None,
         }
     }
 
     pub fn is_dynamic(&self) -> bool {
-        match &self.method_details {
-            Some(details) => details.qualifier.contains(&MethodQualifier::Dynamic),
-            None => false,
-        }
+        self.get_dynamic_index().is_some()
     }
 
     pub fn get_method_kind(&self) -> FieldKind {

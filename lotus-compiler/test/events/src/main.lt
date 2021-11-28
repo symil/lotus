@@ -1,0 +1,68 @@
+event DealDamages {
+    source: Character,
+    target: Character,
+    amount: int,
+
+    trigger() {
+        @log("trigger: " + this.source.name + " deals " + this.amount.to_string() + " damages to " + this.target.name);
+        this.target.health -= this.amount;
+    }
+}
+
+class Character {
+    name: string,
+    health: int = 100,
+    total_damages_received: int = 0
+
+    @DealDamages {
+        check evt.target == this;
+
+        @log(this.name + ": received " + evt.amount.to_string() + " damages");
+        this.total_damages_received += evt.amount;
+    }
+}
+
+class Attacker extends Character {
+    ^DealDamages {
+        check evt.source == this;
+
+        evt.amount *= 2;
+    }
+
+    @DealDamages {
+        check evt.source == this;
+
+        @log(this.name + ": \"Ha!\"");
+    }
+}
+
+class Battlefield {
+    units: Object[],
+}
+
+
+export fn main() {
+    let attacker = Attacker { name: "attacker" };
+    let defender = Character { name: "defender" };
+    let evt1 = DealDamages {
+        source: attacker,
+        target: defender,
+        amount: 10
+    };
+    let evt2 = DealDamages {
+        source: defender,
+        target: attacker,
+        amount: 5
+    };
+    let battlefield = Battlefield {
+        units: [attacker, defender]
+    }
+
+    evt1.emit(battlefield.units);
+    @log(defender.health);
+    @log(defender.total_damages_received);
+
+    evt2.emit(battlefield.units);
+    @log(attacker.health);
+    @log(attacker.total_damages_received);
+}

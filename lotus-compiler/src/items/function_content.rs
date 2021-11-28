@@ -37,12 +37,11 @@ impl FunctionContent {
         };
 
         let mut method_details = MethodDetails {
-            qualifier: self.qualifier,
             event_callback_details: None,
             owner_type: None,
             owner_interface: None,
             first_declared_by: None,
-            dynamic_index: -1,
+            dynamic_index: None,
         };
 
         let current_type = context.get_current_type();
@@ -66,6 +65,8 @@ impl FunctionContent {
                 if is_raw_wasm {
                     context.errors.add_generic(self, format!("dynamic methods cannot be raw wasm"));
                 }
+
+                method_details.dynamic_index = Some(-1);
             }
 
             method_details.owner_type = Some(type_wrapped.clone());

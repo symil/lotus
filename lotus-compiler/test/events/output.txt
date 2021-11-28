@@ -1,0 +1,9 @@
+trigger: attacker deals 20 damages to defender
+attacker: "Ha!"
+defender: received 20 damages
+80
+20
+trigger: defender deals 5 damages to attacker
+attacker: received 5 damages
+95
+5

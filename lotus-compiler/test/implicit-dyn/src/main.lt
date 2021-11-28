@@ -1,0 +1,19 @@
+class A {
+    dyn hello() {
+        @log("hello");
+    }
+}
+
+class B extends A {
+    hello() {
+        @log("world");
+    }
+}
+
+export fn main() {
+    let a = A {};
+    let b = B {};
+
+    a.hello();
+    b.hello();
+}

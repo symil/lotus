@@ -104,90 +104,6 @@ export type(i32) Array<T> {
         this.body().set_at(index, value);
     }
 
-    clear() {
-        let header = this as ptr;
-
-        header[1] = 0;
-    }
-
-    push(value: T) -> This {
-        let header = this as ptr;
-        let body = this.body();
-        let length = this.len();
-        let capacity = this.capacity();
-
-        if length == capacity {
-            capacity *= 4;
-
-            let new_body = @alloc(capacity) as Pointer<T>;
-
-            for i in 0..length {
-                new_body[i] = body[i];
-            }
-
-            body = new_body;
-            header[0] = body as int;
-            header[2] = capacity;
-        }
-
-        body[length] = value;
-        header[1] = length + 1;
-
-        this
-    }
-
-    pop() -> This {
-        let header = this as ptr;
-        let length = header[1];
-
-        if length > 0 {
-            header[1] = length - 1;
-        }
-
-        this
-    }
-
-    concat(other: This) -> This {
-        let new_array = This::__create(this.len() + other.len());
-        let new_body = new_array.body();
-
-        let offset = 0;
-
-        for item in this {
-            new_body[offset] = item;
-            offset += 1;
-        }
-
-        for item in other {
-            new_body[offset] = item;
-            offset += 1;
-        }
-
-        new_array
-    }
-
-    join(separator: string) -> string {
-        let str = "";
-        let length = this.len();
-
-        if length > 0 {
-            let last_index = length - 1;
-            let i = 0;
-
-            for item in this {
-                str += item.to_string();
-
-                if i != last_index {
-                    str += separator;
-                }
-
-                i += 1;
-            }
-        }
-
-        str
-    }
-
     as_ptr() -> ptr {
         this as ptr
     }
@@ -279,6 +195,159 @@ export type(i32) Array<T> {
         this.len() == 0
     }
 
+    clone() -> This {
+        let result : This = [];
+
+        result.extend(this);
+
+        result
+    }
+
+    reverse() -> This {
+        let length = this.len();
+        let body = this.body();
+
+        for i in 0..(length / 2) {
+            let i2 = length - i - 1;
+            let tmp = body[i];
+
+            body[i] = body[i2];
+            body[i2] = tmp;
+        }
+
+        this
+    }
+
+    clear() {
+        let header = this as ptr;
+
+        header[1] = 0;
+    }
+
+    _add_length(additional_length: int) -> int {
+        let header = this as ptr;
+        let current_length = this.len();
+        let new_length = current_length + additional_length;
+
+        if new_length > this.capacity() {
+            let body = this.body();
+            let new_capacity = this.capacity() * 4;
+            let new_body = @alloc(new_capacity) as Pointer<T>;
+
+            for i in 0..current_length {
+                new_body[i] = body[i];
+            }
+
+            header[0] = new_body as int;
+            header[2] = new_capacity;
+        }
+
+        header[1] = new_length;
+
+        current_length
+    }
+
+    push(value: T) -> This {
+        let length = this._add_length(1);
+
+        this.body()[length] = value;
+
+        this
+    }
+
+    pop() -> This {
+        let header = this as ptr;
+        let length = header[1];
+
+        if length > 0 {
+            header[1] = length - 1;
+        }
+
+        this
+    }
+
+    extend(other: This) {
+        let length = this._add_length(other.len());
+        let body = this.body();
+
+        for (i, item) in other {
+            body[length + i] = item;
+        }
+    }
+
+    extend_at(index: int, other: This) {
+        if other.is_empty() {
+            return;
+        }
+
+        this.insert_none(index, other.len());
+        let body = this.body();
+        
+        for (i, item) in other {
+            body[index + i] = item;
+        }
+    }
+
+    insert_at(index: int, item: Item) {
+        this.insert_none(index, 1);
+        this[index] = item;
+    }
+
+    insert_none(index: int, count: int) {
+        let length = this._add_length(count);
+        let body = this.body();
+
+        for i in 0..count {
+            let i2 = count - i - 1;
+            body[index + count + i2] = body[index + i2];
+        }
+
+        for i in 0..count {
+            body[index + i] = none;
+        }
+    }
+
+    concat(other: This) -> This {
+        let new_array = This::__create(this.len() + other.len());
+        let new_body = new_array.body();
+
+        let offset = 0;
+
+        for item in this {
+            new_body[offset] = item;
+            offset += 1;
+        }
+
+        for item in other {
+            new_body[offset] = item;
+            offset += 1;
+        }
+
+        new_array
+    }
+
+    join(separator: string) -> string {
+        let str = "";
+        let length = this.len();
+
+        if length > 0 {
+            let last_index = length - 1;
+            let i = 0;
+
+            for item in this {
+                str += item.to_string();
+
+                if i != last_index {
+                    str += separator;
+                }
+
+                i += 1;
+            }
+        }
+
+        str
+    }
+
     filter(callback: fn(T)(bool)) -> T[] {
         let result : T[] = [];
 
@@ -309,5 +378,36 @@ export type(i32) Array<T> {
         }
         
         result
+    }
+
+    sort(compare: fn(T, T)(int)) -> This {
+        quick_sort(this.body(), 0, this.len() - 1, compare);
+
+        this
+    }
+}
+
+fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) -> int {
+    let pivot = array[end_index];
+    let i = start_index - 1;
+
+    for j in start_index..end_index {
+        if compare(array[j], pivot) < 0 {
+            i += 1;
+            array.swap(i, j);
+        }
+    }
+
+    array.swap(i + 1, end_index);
+
+    i + 1
+}
+
+fn quick_sort<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) {
+    if start_index < end_index {
+        let mid = partition(array, start_index, end_index, compare);
+
+        quick_sort(array, start_index, mid - 1, compare);
+        quick_sort(array, mid + 1, end_index, compare);
     }
 }

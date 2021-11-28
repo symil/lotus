@@ -77,17 +77,17 @@ impl MethodDeclaration {
                         } else {
                             let parent_class_name = prev_method_details.owner_type.as_ref().unwrap().borrow().name.to_string();
 
-                            if !is_dynamic && is_prev_dynamic {
-                                context.errors.add_generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
-                            } else if is_dynamic && !is_prev_dynamic {
-                                context.errors.add_generic(self, format!("method `{}` is not dynamic, but was declared as dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
-                            } else if is_dynamic && is_prev_dynamic {
+                            if is_prev_dynamic {
                                 let prev_signature = &prev_unwrapped.signature;
                                 let current_signature = &function_unwrapped.signature;
 
                                 if current_signature != prev_signature {
                                     context.errors.add_generic(self, format!("dynamic method signature mismatch: expected `{}`, got `{}`", prev_signature, current_signature));
                                 }
+
+                                function_unwrapped.method_details.as_mut().unwrap().dynamic_index = Some(-1);
+                            } else if is_dynamic {
+                                context.errors.add_generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
                             } else {
                                 context.errors.add_generic(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
                             }

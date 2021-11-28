@@ -543,10 +543,10 @@ impl TypeDeclaration {
             for (i, func_ref) in dynamic_methods.iter().enumerate() {
                 func_ref.function.with_mut(|mut function_unwrapped| {
                     let mut method_details = function_unwrapped.method_details.as_mut().unwrap();
-                    let dynamic_index = method_details.dynamic_index;
+                    let dynamic_index = method_details.dynamic_index.unwrap();
 
                     if dynamic_index == -1 {
-                        method_details.dynamic_index = i as i32;
+                        method_details.dynamic_index = Some(i as i32);
                     } else if dynamic_index != i as i32 {
                         panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), dynamic_index);
                     }
