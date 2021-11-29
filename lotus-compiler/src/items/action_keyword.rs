@@ -10,5 +10,7 @@ pub enum ActionKeyword {
     Return = "return",
     Check = "check",
     Break = "break",
-    Continue = "continue"
+    Continue = "continue",
+    Intercept = "intercept",
+    Yield = "yield",
 }

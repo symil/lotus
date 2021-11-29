@@ -56,6 +56,13 @@ impl FunctionBlueprint {
         self.signature.this_type.is_none()
     }
 
+    pub fn is_event_callback(&self) -> bool {
+        match &self.method_details {
+            Some(details) => details.event_callback_details.is_some(),
+            None => false,
+        }
+    }
+
     pub fn get_dynamic_index(&self) -> Option<usize> {
         match &self.method_details {
             Some(details) => match details.dynamic_index {

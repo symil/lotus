@@ -1,0 +1,17 @@
+event MyEvent {
+
+}
+
+class A {
+    @MyEvent {
+        @log("hello");
+        intercept;
+    }
+}
+
+export fn main() {
+    let array : Object[] = [A, A];
+    let my_event = MyEvent;
+
+    my_event.emit(array);
+}

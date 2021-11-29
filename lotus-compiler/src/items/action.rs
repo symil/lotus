@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{items::convert_to_bool, program::{CompilationError, ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
+use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
 use super::{ActionKeywordWrapper, ActionKeyword, Expression};
 
 #[parsable]
@@ -11,6 +11,8 @@ pub struct Action {
 
 impl Action {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+        let keyword = format!("{}", &self.keyword.value);
+
         match &self.keyword.value {
             ActionKeyword::Return => {
                 match context.get_current_function_return_type() {
@@ -47,7 +49,7 @@ impl Action {
                         }
                     },
                     None => {
-                        context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &format!("{}", &self.keyword.value)))
+                        context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
                     }
                 }
             },
@@ -92,12 +94,42 @@ impl Action {
                                 }
                             },
                             None => {
-                                context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &format!("{}", &self.keyword.value)))
+                                context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
                             }
                         }
                     }
                 }
             },
+            ActionKeyword::Intercept | ActionKeyword::Yield => {
+                match context.get_current_function() {
+                    Some(function_wrapped) => match function_wrapped.borrow().is_event_callback() {
+                        true => {
+                            let output_var = function_wrapped.borrow().argument_variables.iter().find(|var_info| var_info.name().as_str() == "__output").unwrap().clone();
+                            let event_output_type = context.get_builtin_type(BuiltinType::EventOutput, vec![]);
+
+                            match &self.keyword.value {
+                                ActionKeyword::Intercept => {
+                                    let intercepted_field_info = event_output_type.get_field("intercepted").unwrap();
+
+                                    Some(vasm![
+                                        VI::get_var(&output_var, None),
+                                        VI::set_field(&intercepted_field_info.ty, intercepted_field_info.offset, vasm![ VI::int(1i32) ]),
+                                        VI::return_value(vasm![])
+                                    ])
+                                },
+                                ActionKeyword::Yield => todo!(),
+                                _ => unreachable!()
+                            }
+                        },
+                        false => {
+                            context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                        },
+                    },
+                    None => {
+                        context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                    },
+                }
+            }
         }
     }
 }
