@@ -6,7 +6,7 @@ use super::{ActionKeywordWrapper, ActionKeyword, Expression};
 #[parsable]
 pub struct Action {
     pub keyword: ActionKeywordWrapper,
-    pub value: Option<Expression>
+    pub expression: Option<Expression>
 }
 
 impl Action {
@@ -19,7 +19,7 @@ impl Action {
                     Some(return_type) => {
                         match return_type.is_void() {
                             true => {
-                                match &self.value {
+                                match &self.expression {
                                     Some(expr) => {
                                         match expr.process(None, context) {
                                             Some(vasm) => match vasm.ty.is_void() {
@@ -35,7 +35,7 @@ impl Action {
                                 }
                             },
                             false => {
-                                match &self.value {
+                                match &self.expression {
                                     Some(expr) => match expr.process(Some(&return_type), context) {
                                         Some(vasm) => match vasm.ty.is_assignable_to(&return_type) {
                                             true => Some(vasm![ VI::return_value(vasm) ]),
@@ -56,7 +56,7 @@ impl Action {
             ActionKeyword::Check => {
                 match context.get_current_function_return_type() {
                     Some(return_type) => {
-                        match &self.value {
+                        match &self.expression {
                             Some(value) => {
                                 match value.process(None, context) {
                                     Some(vasm) => match convert_to_bool(value, vasm, context) {
@@ -79,10 +79,10 @@ impl Action {
                 }
             },
             ActionKeyword::Break | ActionKeyword::Continue => {
-                match &self.value {
-                    Some(value) => {
-                        value.process(None, context);
-                        context.errors.add_and_none(CompilationError::unexpected_expression(value))
+                match &self.expression {
+                    Some(expr) => {
+                        expr.process(None, context);
+                        context.errors.add_and_none(CompilationError::unexpected_expression(expr))
                     },
                     None => {
                         match context.get_scope_depth(ScopeKind::Loop) {
@@ -108,16 +108,38 @@ impl Action {
                             let event_output_type = context.get_builtin_type(BuiltinType::EventOutput, vec![]);
 
                             match &self.keyword.value {
-                                ActionKeyword::Intercept => {
-                                    let intercepted_field_info = event_output_type.get_field("intercepted").unwrap();
+                                ActionKeyword::Intercept => match &self.expression {
+                                    Some(expr) => {
+                                        context.errors.add_and_none(CompilationError::unexpected_expression(expr))
+                                    },
+                                    None => {
+                                        let intercepted_field_info = event_output_type.get_field("intercepted").unwrap();
 
-                                    Some(vasm![
-                                        VI::get_var(&output_var, None),
-                                        VI::set_field(&intercepted_field_info.ty, intercepted_field_info.offset, vasm![ VI::int(1i32) ]),
-                                        VI::return_value(vasm![])
-                                    ])
+                                        Some(vasm![
+                                            VI::get_var(&output_var, None),
+                                            VI::set_field(&intercepted_field_info.ty, intercepted_field_info.offset, vasm![ VI::int(1i32) ]),
+                                            VI::return_value(vasm![])
+                                        ])
+                                    },
                                 },
-                                ActionKeyword::Yield => todo!(),
+                                ActionKeyword::Yield => match &self.expression {
+                                    Some(expr) => match expr.process(None, context) {
+                                        Some(vasm) => {
+                                            let yielded_field_info = event_output_type.get_field("yielded").unwrap();
+
+                                            Some(vasm![
+                                                VI::get_var(&output_var, None),
+                                                VI::get_field(&yielded_field_info.ty, yielded_field_info.offset),
+                                                VI::call_regular_method(&yielded_field_info.ty, "push", &[], vasm, context),
+                                                VI::drop(&yielded_field_info.ty)
+                                            ])
+                                        },
+                                        None => None,
+                                    },
+                                    None => {
+                                        context.errors.add_and_none(CompilationError::expected_expression(&self.keyword.location.get_end()))
+                                    },
+                                },
                                 _ => unreachable!()
                             }
                         },

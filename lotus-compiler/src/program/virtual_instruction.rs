@@ -120,8 +120,8 @@ pub struct IfThenElseInfo {
 }
 
 impl VirtualInstruction {
-    pub fn drop(ty: Type) -> Self {
-        Self::Drop(ty)
+    pub fn drop(ty: &Type) -> Self {
+        Self::Drop(ty.clone())
     }
 
     pub fn raw(value: Wat) -> Self {
@@ -701,7 +701,7 @@ impl VirtualInstruction {
                                             VI::get_var(var_info, None),
                                             convert_instruction
                                         ], context),
-                                        VI::drop(Type::Int)
+                                        VI::drop(&Type::Int)
                                     ]);
                                 }
                             }
