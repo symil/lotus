@@ -2,11 +2,11 @@ class Foo {
     value: string,
 
     static hello() {
-        @log(this.value);
+        log_string(this.value);
     }
 
     display() {
-        @log(this.value);
+        log_string(this.value);
     }
 }
 
@@ -16,4 +16,8 @@ export fn main() {
     a.hello();
 
     Foo::display();
+}
+
+fn log_string(str: string) {
+    @log(str);
 }

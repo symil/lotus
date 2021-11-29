@@ -5,6 +5,7 @@ use super::{TemplateStringFragmentExpression, TemplateStringFragmentLiteral};
 #[parsable]
 pub enum TemplateStringFragment {
     String(TemplateStringFragmentLiteral),
+    #[parsable(consume_spaces=false)]
     Expression(TemplateStringFragmentExpression)
 }
 

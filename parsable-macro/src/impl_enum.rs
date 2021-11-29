@@ -27,18 +27,28 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         let (push_markers, pop_markers) = attributes.get_push_pop_markers();
 
         if let Some(prefix) = attributes.prefix {
+            let prefix_consume_spaces = match attributes.consume_spaces_after_prefix {
+                Some(false) => quote! { {} },
+                _ => quote! { reader__.eat_spaces() },
+            };
+
             parse_prefix = quote! {
                 match reader__.read_string(#prefix) {
-                    Some(_) => { reader__.eat_spaces(); true },
+                    Some(_) => { #prefix_consume_spaces; true },
                     None => { reader__.set_expected_token(Some(format!("{:?}", #prefix))); false }
                 }
             };
         }
 
         if let Some(suffix) = attributes.suffix {
+            let suffix_consume_spaces = match attributes.consume_spaces_after_suffix {
+                Some(false) => quote! { {} },
+                _ => quote! { reader__.eat_spaces() },
+            };
+
             parse_suffix = quote! {
                 match reader__.read_string(#suffix) {
-                    Some(_) => { reader__.eat_spaces(); true },
+                    Some(_) => { #suffix_consume_spaces; true },
                     None => { reader__.set_expected_token(Some(format!("{:?}", #suffix))); false }
                 }
             };
@@ -71,13 +81,16 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                 for (i, field) in fields_unnamed.unnamed.iter().enumerate().rev() {
                     let field_type = &field.ty;
                     let value_name = Ident::new(&format!("value_{}", i), Span::call_site());
+                    let consume_spaces = match attributes.consume_spaces {
+                        Some(false) => quote! { },
+                        _ => quote! { reader__.eat_spaces(); },
+                    };
 
                     value_names.insert(0, quote! { #value_name });
 
                     current_block_single = quote! {
                         if let Some(#value_name) = <#field_type as parsable::Parsable>::#parse_method {
-                            reader__.eat_spaces();
-
+                            #consume_spaces
                             #current_block_single
                         }
                     };

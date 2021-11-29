@@ -283,3 +283,17 @@ export type(i32) string {
         str
     }
 }
+
+sys fn join_strings(strings: string[]) -> string {
+    let total_length = strings.reduce(0, (acc, str) => acc + str.len());
+    let result = string::__create(total_length);
+    let result_content = result._content();
+    let index = 0;
+
+    for str in strings {
+        str._content().copy_to(result_content.add(index), str.len());
+        index += str.len();
+    }
+
+    result
+}

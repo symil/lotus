@@ -1,0 +1,7 @@
+export fn main() {
+    @dbg(``);
+    @dbg(` hello`);
+    @dbg(`${2}`);
+    @dbg(`hello ${"world"} ${2 + 5} `);
+    @dbg(`nested ${ `foo ${true}` } bar` );
+}

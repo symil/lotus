@@ -4,6 +4,11 @@ pub trait Parsable : Sized {
     fn parse_item(reader: &mut StringReader) -> Option<Self>;
 
     #[allow(unused_variables)]
+    fn parse_item_without_consuming_spaces(reader: &mut StringReader) -> Option<Self> {
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
     fn parse_item_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
         unimplemented!()
     }

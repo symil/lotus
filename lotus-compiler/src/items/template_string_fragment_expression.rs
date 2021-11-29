@@ -1,10 +1,10 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, ProgramContext, TO_STRING_METHKD_NAME, VI, Vasm}, vasm};
+use crate::{program::{BuiltinType, ProgramContext, TO_STRING_METHOD_NAME, VI, Vasm}, vasm};
 use super::Expression;
 
 #[parsable]
 pub struct TemplateStringFragmentExpression {
-    #[parsable(prefix="${", suffix="}")]
+    #[parsable(prefix="${", suffix="}", consume_spaces_after_suffix=false)]
     pub expression: Expression
 }
 
@@ -12,7 +12,7 @@ impl TemplateStringFragmentExpression {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match self.expression.process(None, context) {
             Some(vasm) => {
-                let to_string_instruction = VI::call_regular_method(&vasm.ty, TO_STRING_METHKD_NAME, &[], vec![], context);
+                let to_string_instruction = VI::call_regular_method(&vasm.ty, TO_STRING_METHOD_NAME, &[], vec![], context);
 
                 Some(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vasm![
                     vasm,

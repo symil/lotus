@@ -12,6 +12,10 @@ pub struct FieldAttributes {
     pub min: Option<usize>,
     pub separator: Option<String>,
     pub optional: Option<bool>,
+    pub consume_spaces: Option<bool>,
+    pub consume_spaces_after_prefix: Option<bool>,
+    pub consume_spaces_after_suffix: Option<bool>,
+    pub consume_spaces_between_items: Option<bool>,
     pub followed_by: Option<String>,
     pub set_marker: Option<LitStr>,
     pub unset_marker: Option<LitStr>,
@@ -56,6 +60,10 @@ impl Parse for FieldAttributes {
                     "set_marker" => attributes.set_marker = Some(content.parse::<LitStr>()?),
                     "unset_marker" => attributes.unset_marker = Some(content.parse::<LitStr>()?),
                     "ignore_if_marker" => attributes.ignore_if_marker = Some(content.parse::<LitStr>()?),
+                    "consume_spaces" => attributes.consume_spaces = Some(content.parse::<LitBool>()?.value()),
+                    "consume_spaces_after_prefix" => attributes.consume_spaces_after_prefix = Some(content.parse::<LitBool>()?.value()),
+                    "consume_spaces_after_suffix" => attributes.consume_spaces_after_suffix = Some(content.parse::<LitBool>()?.value()),
+                    "consume_spaces_between_items" => attributes.consume_spaces_between_items = Some(content.parse::<LitBool>()?.value()),
                     _ => {}
                 }
             }

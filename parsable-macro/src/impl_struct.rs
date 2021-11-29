@@ -44,8 +44,11 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
                 field_names.push(quote! { #field_name });
 
-                let optional = is_option || attributes.optional.map_or(false, |value| value);
-                let on_success = quote! { reader__.eat_spaces(); };
+                let optional = is_option || attributes.optional.unwrap_or(false);
+                let consume_spaces = match attributes.consume_spaces {
+                    Some(false) => quote! {},
+                    _ => quote! { reader__.eat_spaces(); }
+                };
                 let mut handle_failure = quote! {};
                 let mut on_fail = quote ! {
                     reader__.set_index(start_index__);
@@ -73,29 +76,43 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 let has_prefix = attributes.prefix.is_some();
                 let has_suffix = attributes.suffix.is_some();
                 let prefix_parsing = match attributes.prefix {
-                    Some(prefix) => quote! {
-                        match reader__.read_string(#prefix) {
-                            Some(_) => reader__.eat_spaces(),
-                            None => {
-                                reader__.set_expected_token(Some(format!("{:?}", #prefix)));
-                                prefix_ok__ = false;
-                                field_failed__ = true;
-                                #on_fail;
-                            }
+                    Some(prefix) => {
+                        let prefix_consume_spaces = match attributes.consume_spaces_after_prefix {
+                            Some(false) => quote! { {} },
+                            _ => quote! { reader__.eat_spaces() },
                         };
+
+                        quote! {
+                            match reader__.read_string(#prefix) {
+                                Some(_) => #prefix_consume_spaces,
+                                None => {
+                                    reader__.set_expected_token(Some(format!("{:?}", #prefix)));
+                                    prefix_ok__ = false;
+                                    field_failed__ = true;
+                                    #on_fail;
+                                }
+                            };
+                        }
                     },
                     None => quote! {}
                 };
                 let suffix_parsing = match attributes.suffix {
-                    Some(suffix) => quote! {
-                        if !field_failed__ {
-                            match reader__.read_string(#suffix) {
-                                Some(_) => reader__.eat_spaces(),
-                                None => {
-                                    reader__.set_expected_token(Some(format!("{:?}", #suffix)));
-                                    #on_fail;
-                                }
-                            };
+                    Some(suffix) => {
+                        let suffix_consume_spaces = match attributes.consume_spaces_after_suffix {
+                            Some(false) => quote! { {} },
+                            _ => quote! { reader__.eat_spaces() },
+                        };
+
+                        quote! {
+                            if !field_failed__ {
+                                match reader__.read_string(#suffix) {
+                                    Some(_) => #suffix_consume_spaces,
+                                    None => {
+                                        reader__.set_expected_token(Some(format!("{:?}", #suffix)));
+                                        #on_fail;
+                                    }
+                                };
+                            }
                         }
                     },
                     None => quote! {}
@@ -113,8 +130,12 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
                 let mut parse_method = quote! { parse_item(reader__) };
 
-                if let Some(separator) = attributes.separator {
-                    parse_method = quote! { parse_item_with_separator(reader__, #separator) };
+                if is_vec {
+                    if let Some(separator) = attributes.separator {
+                        parse_method = quote! { parse_item_with_separator(reader__, #separator) };
+                    } else if let Some(false) = attributes.consume_spaces_between_items {
+                        parse_method = quote! { parse_item_without_consuming_spaces(reader__) };
+                    }
                 }
 
                 let mut assignment = quote! {
@@ -212,9 +233,9 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         #prefix_parsing
                         #assignment
                         #(#check)*
+                        #consume_spaces
                         #suffix_parsing
                         #followed_by_parsing
-                        #on_success
                         #handle_failure
                         #pop_markers
                     });

@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Macro, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, VarDeclaration, VarRef, WhileBlock};
+use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Macro, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, TemplateString, VarDeclaration, VarRef, WhileBlock};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -19,6 +19,7 @@ pub enum VarPathRoot {
     NumberLiteral(NumberLiteral),
     CharLiteral(CharLiteral),
     StringLiteral(StringLiteral),
+    TemplateString(TemplateString),
     ArrayLiteral(ArrayLiteral),
     StaticFieldOrMethod(StaticFieldOrMethod),
     #[parsable(ignore_if_marker="no-object")]
@@ -69,6 +70,7 @@ impl VarPathRoot {
             VarPathRoot::NumberLiteral(number_literal) => number_literal.process(context),
             VarPathRoot::CharLiteral(char_literal) => char_literal.process(context),
             VarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
+            VarPathRoot::TemplateString(template_string) => template_string.process(context),
             VarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context),
             VarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
             VarPathRoot::StaticFieldOrMethod(static_field_or_method) => static_field_or_method.process(type_hint, context),

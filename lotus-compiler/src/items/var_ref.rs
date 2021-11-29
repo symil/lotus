@@ -94,7 +94,7 @@ impl VarRef {
                             }
                         }),
                         None => match context.types.get_by_identifier(&self.name) {
-                            Some(type_wrapped) => match type_wrapped.borrow().parameters.is_empty() {
+                            Some(type_wrapped) => match type_wrapped.borrow().parameters.is_empty() && type_wrapped.borrow().is_class() {
                                 true => {
                                     let type_arguments = TypeArguments::default();
                                     let mut parsed_type_value = ParsedValueType::default();
@@ -110,7 +110,7 @@ impl VarRef {
                                 false => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold())),
                             },
                             None => match self.name.as_str() {
-                                THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no {} value can be referenced in this context", THIS_VAR_NAME.bold())),
+                                THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no `{}` value can be referenced in this context", THIS_VAR_NAME.bold())),
                                 _ => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
                             },
                         }

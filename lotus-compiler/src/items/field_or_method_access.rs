@@ -1,4 +1,4 @@
-use std::{cell::Ref, collections::HashMap, rc::Rc};
+use std::{cell::Ref, collections::{HashMap, HashSet}, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
@@ -117,47 +117,62 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         FunctionCall::Anonymous(details) => details.signature.this_type.is_none(),
     };
 
+    let mut function_parameters = match &function_call {
+        FunctionCall::Named(details) => details.function.borrow().parameters.values().map(|info| Type::FunctionParameter(info.clone())).collect(),
+        FunctionCall::Anonymous(_) => vec![],
+    };
+
+    let mut remaining_param_indexes_to_infer : HashSet<usize> = HashSet::new();
+
+    for i in 0..function_parameters.len() {
+        remaining_param_indexes_to_infer.insert(i);
+    }
+
+    if let Some(ty) = type_hint {
+        function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, ty, &signature.return_type);
+    }
+
     let arg_vasms : Vec<Vasm> = arguments.as_vec().iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match is_var_call {
                 true => Some(ty.clone()),
-                false => Some(ty.replace_parameters(caller_type.as_ref(), &[])),
+                false => Some(ty.replace_parameters(caller_type.as_ref(), &function_parameters)),
             },
             None => None,
         };
 
-        arg.process(hint.as_ref(), context).unwrap_or_else(|| Vasm::new(Type::Undefined, vec![], vec![]))
-    }).collect();
-    let arg_types : Vec<&Type> = arg_vasms.iter().map(|vasm| &vasm.ty).collect();
-
-    if let FunctionCall::Named(details) = &mut function_call {
-        if let Some(parameters) = infer_function_parameters(function_name, &details.function, &arg_types, type_hint, context) {
-            details.function.with_ref(|function_unwrapped| {
-                for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(parameters.iter()) {
-                    actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+        match arg.process(hint.as_ref(), context) {
+            Some(vasm) => {
+                if let Some(expected_type) = signature.argument_types.get(i) {
+                    function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, &vasm.ty, expected_type);
                 }
-            });
 
-            // if function_name.as_str() == "map" {
-            //     print_type_ref_list(&arg_types);
-            //     print_type_list(&parameters);
-            // }
-
-            details.parameters = parameters;
+                vasm
+            },
+            None => {
+                Vasm::new(Type::Undefined, vec![], vec![])
+            }
         }
+    }).collect();
+
+    for i in remaining_param_indexes_to_infer.into_iter() {
+        context.errors.add_generic(function_name, format!("`{}`: cannot infer type parameter `{}`", function_name.as_str().bold(), function_parameters[i]));
     }
 
-    let parameters = match &function_call {
-        FunctionCall::Named(details) => details.parameters.as_slice(),
-        FunctionCall::Anonymous(_) => &[],
-    };
+    if let FunctionCall::Named(details) = &mut function_call {
+        details.function.with_ref(|function_unwrapped| {
+            for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(function_parameters.iter()) {
+                actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+            }
+        });
+    }
 
     match arguments.len() == signature.argument_types.len() {
         true => {
             for (i, (arg_type, arg_vasm)) in signature.argument_types.iter().zip(arg_vasms.iter()).enumerate() {
                 let expected_type = match is_var_call {
                     true => arg_type.clone(),
-                    false => arg_type.replace_parameters(caller_type.as_ref(), parameters),
+                    false => arg_type.replace_parameters(caller_type.as_ref(), &function_parameters),
                 };
 
                 if !arg_vasm.ty.is_undefined() {
@@ -178,46 +193,32 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
 
     let return_type = match is_var_call {
         true => signature.return_type.clone(),
-        false => signature.return_type.replace_parameters(caller_type.as_ref(), parameters),
+        false => signature.return_type.replace_parameters(caller_type.as_ref(), &function_parameters),
     };
+
+    if let FunctionCall::Named(details) = &mut function_call {
+        details.parameters = function_parameters;
+    }
 
     Some(Vasm::new(return_type, vec![], vec![
         VI::call_function(function_call, Vasm::merge(arg_vasms))
     ]))
 }
 
-fn infer_function_parameters(function_name: &Identifier, function_wrapped: &Link<FunctionBlueprint>, arg_types: &[&Type], type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vec<Type>> {
-    function_wrapped.with_ref(|function_unwrapped| {
-        let mut result = vec![];
+fn infer_function_parameters(function_parameters: &[Type], remaining_type_indexes_to_infer: &mut HashSet<usize>, actual_type: &Type, expected_type: &Type) -> Vec<Type> {
+    let mut result = vec![];
 
-        for (i, parameter) in function_unwrapped.parameters.values().enumerate() {
-            let mut ok = false;
-
-            if let Some(hint_return_type) = type_hint {
-                let expected_return_type = &function_unwrapped.signature.return_type;
-
-                if let Some(inferred_type) = expected_return_type.infer_function_parameter(parameter, hint_return_type) {
-                    result.push(inferred_type);
-                    ok = true;
-                }
-            }
-
-            if !ok {
-                for (expected_arg_type, actual_arg_type) in function_unwrapped.signature.argument_types.iter().zip(arg_types.iter()) {
-                    if let Some(inferred_type) = expected_arg_type.infer_function_parameter(parameter, *actual_arg_type) {
-                        result.push(inferred_type);
-                        ok = true;
-                        break;
-                    }
-                }
-            }
-
-            if !ok {
-                context.errors.add_generic(function_name, format!("`{}`: cannot infer type parameter #{}", function_name.as_str().bold(), i + 1));
-                return None;
+    for (i, function_parameter) in function_parameters.iter().enumerate() {
+        if let Type::FunctionParameter(info) = function_parameter {
+            if let Some(ty) = expected_type.infer_function_parameter(info, actual_type) {
+                result.push(ty);
+                remaining_type_indexes_to_infer.remove(&i);
+                continue;
             }
         }
 
-        Some(result)
-    })
+        result.push(function_parameter.clone());
+    }
+
+    result
 }

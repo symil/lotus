@@ -47,6 +47,16 @@ impl<T : Parsable> Parsable for Vec<T> {
         Some(result)
     }
 
+    fn parse_item_without_consuming_spaces(reader: &mut StringReader) -> Option<Self> {
+        let mut result = vec![];
+
+        while let Some(value) = T::parse_item(reader) {
+            result.push(value);
+        }
+
+        Some(result)
+    }
+
     fn get_token_name() -> Option<String> {
         <T as Parsable>::get_token_name()
     }

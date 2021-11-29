@@ -1,6 +1,5 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Vasm};
-
 use super::make_string_value_from_literal;
 
 #[parsable]
