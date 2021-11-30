@@ -112,17 +112,16 @@ export interface Object {
 }
 
 sys interface Builtin {
-    static default() -> Self;
+    eq(Self) -> bool;
+    ne(Self) -> bool;
     static type_name() -> string;
+    static default() -> Self;
     static __none() -> Self;
     __is_none() -> bool;
     __hash() -> int;
-
-    to_string() -> string;
-    to_debug_string(set: Set<ptr>) -> string;
-    eq(Self) -> bool;
-    ne(Self) -> bool;
     static __retain(value: Self);
     __serialize(buffer: Buffer);
     static __deserialize(buffer: Buffer) -> Self?;
+    to_string() -> string;
+    to_debug_string(set: Set<ptr>) -> string;
 }

@@ -1,46 +1,24 @@
 export type(i32) Array<T> {
     type Item = T;
 
-    static __create(length: int) -> Self {
-        let capacity = length.next_power_of_4();
-        let header = @alloc(4);
-        let body = @alloc(capacity);
+    eq(other: Self) -> bool {{
+        i32.eq
+    }}
 
-        header[0] = body as int;
-        header[1] = length;
-        header[2] = capacity;
+    ne(other: Self) -> bool {{
+        i32.ne
+    }}
 
-        header as Self
-    }
-
-    static with_capacity(capacity: int) -> Self {
-        capacity = capacity.next_power_of_4();
-        let header = @alloc(4);
-        let body = @alloc(capacity);
-
-        header[0] = body as int;
-        header[1] = 0;
-        header[2] = capacity;
-
-        header as Self
-    }
-
-    static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> Self {
-        let header = @alloc(4);
-
-        header[0] = pointer as int;
-        header[1] = length;
-        header[2] = capacity;
-
-        header as Self
-    }
-
-    static default() -> Self {
-        Self::__create(0)
+    add(other: Self) -> Self {
+        self.concat(other)
     }
 
     static type_name() -> string {
         #TYPE_NAME
+    }
+
+    static default() -> Self {
+        Self::__create(0)
     }
 
     static __none() -> Self {{
@@ -53,97 +31,6 @@ export type(i32) Array<T> {
 
     __hash() -> int {
         (self as int).__hash()
-    }
-
-    get_iterable_len() -> int {
-        self.len()
-    }
-
-    get_iterable_ptr() -> Pointer<T> {
-        self.body()
-    }
-
-    add(other: Self) -> Self {
-        self.concat(other)
-    }
-
-    eq(other: Self) -> bool {{
-        i32.eq
-    }}
-
-    ne(other: Self) -> bool {{
-        i32.ne
-    }}
-
-    body() -> Pointer<T> {
-        (self as ptr)[0] as Pointer<T>
-    }
-
-    len() -> int {
-        (self as ptr)[1]
-    }
-
-    capacity() -> int {
-        (self as ptr)[2]
-    }
-
-    get_at(index: int) -> T {
-        let length = self.len();
-
-        if index < 0 {
-            index = length + index;
-        }
-
-        match index < 0 || index >= length {
-            true => none,
-            false => self.body()[index]
-        }
-    }
-
-    set_at(index: int, value: T) {
-        self.body().set_at(index, value);
-    }
-
-    as_ptr() -> ptr {
-        self as ptr
-    }
-
-    to_string() -> string {
-        if self.__is_none() {
-            return "none";
-        }
-
-        "[" + #TYPE_SHORT_NAME + " " + (self as int).to_hexa_string() + "]"
-    }
-
-    to_debug_string(set: Set<ptr>) -> string {
-        if self.__is_none() {
-            return "none";
-        }
-
-        let length = self.len();
-
-        if length == 0 {
-            return "[]";
-        }
-
-        let strings : string[] = [];
-        let has_line_breaks = false;
-
-        for item in self {
-            let str = item.to_debug_string(set);
-
-            if str.contains("\n") {
-                has_line_breaks = true;
-            }
-
-            strings.push(str);
-        }
-
-        match has_line_breaks {
-            true => "[\n" + strings.join(",\n").indent(2) + "\n]",
-            false => "[ " + strings.join(", ") + " ]"
-        }
     }
 
     static __retain(value: Self) {
@@ -189,6 +76,119 @@ export type(i32) Array<T> {
         }
 
         array
+    }
+
+    to_string() -> string {
+        if self.__is_none() {
+            return "none";
+        }
+
+        "[" + #TYPE_SHORT_NAME + " " + (self as int).to_hexa_string() + "]"
+    }
+
+    to_debug_string(set: Set<ptr>) -> string {
+        if self.__is_none() {
+            return "none";
+        }
+
+        let length = self.len();
+
+        if length == 0 {
+            return "[]";
+        }
+
+        let strings : string[] = [];
+        let has_line_breaks = false;
+
+        for item in self {
+            let str = item.to_debug_string(set);
+
+            if str.contains("\n") {
+                has_line_breaks = true;
+            }
+
+            strings.push(str);
+        }
+
+        match has_line_breaks {
+            true => "[\n" + strings.join(",\n").indent(2) + "\n]",
+            false => "[ " + strings.join(", ") + " ]"
+        }
+    }
+
+    static __create(length: int) -> Self {
+        let capacity = length.next_power_of_4();
+        let header = @alloc(4);
+        let body = @alloc(capacity);
+
+        header[0] = body as int;
+        header[1] = length;
+        header[2] = capacity;
+
+        header as Self
+    }
+
+    static with_capacity(capacity: int) -> Self {
+        capacity = capacity.next_power_of_4();
+        let header = @alloc(4);
+        let body = @alloc(capacity);
+
+        header[0] = body as int;
+        header[1] = 0;
+        header[2] = capacity;
+
+        header as Self
+    }
+
+    static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> Self {
+        let header = @alloc(4);
+
+        header[0] = pointer as int;
+        header[1] = length;
+        header[2] = capacity;
+
+        header as Self
+    }
+
+    get_iterable_len() -> int {
+        self.len()
+    }
+
+    get_iterable_ptr() -> Pointer<T> {
+        self.body()
+    }
+
+    body() -> Pointer<T> {
+        (self as ptr)[0] as Pointer<T>
+    }
+
+    len() -> int {
+        (self as ptr)[1]
+    }
+
+    capacity() -> int {
+        (self as ptr)[2]
+    }
+
+    get_at(index: int) -> T {
+        let length = self.len();
+
+        if index < 0 {
+            index = length + index;
+        }
+
+        match index < 0 || index >= length {
+            true => none,
+            false => self.body()[index]
+        }
+    }
+
+    set_at(index: int, value: T) {
+        self.body().set_at(index, value);
+    }
+
+    as_ptr() -> ptr {
+        self as ptr
     }
 
     is_empty() -> bool {
