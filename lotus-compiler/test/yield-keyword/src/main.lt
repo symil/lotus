@@ -17,7 +17,7 @@ class A {
 }
 
 export fn main() {
-    let array : Object[] = [A];
+    let array = [A];
     let my_event = MyEvent;
 
     my_event.emit(array);

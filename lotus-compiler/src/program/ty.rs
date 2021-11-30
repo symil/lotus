@@ -1,4 +1,4 @@
-use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result};
+use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, borrow::Borrow};
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
@@ -222,9 +222,24 @@ impl Type {
             (Type::Void, other) | (other, Type::Void) => other.is_void(),
             (Type::Int, other) | (other, Type::Int) => other.is_int(),
             (Type::This(_), Type::This(_)) => true,
-            (Type::Actual(self_info), Type::Actual(target_info)) => match self.get_as(&target_info.type_blueprint) {
-                Some(ty) => &ty == target,
-                None => false,
+            (Type::Actual(self_info), Type::Actual(target_info)) => match self_info.type_blueprint == target_info.type_blueprint {
+                true => {
+                    if self_info.parameters.len() != target_info.parameters.len() {
+                        return false;
+                    }
+
+                    for (self_param, target_param) in self_info.parameters.iter().zip(target_info.parameters.iter()) {
+                        if !self_param.is_assignable_to(target_param) {
+                            return false;
+                        }
+                    }
+
+                    true
+                },
+                false => match self.get_as(&target_info.type_blueprint) {
+                    Some(ty) => &ty == target,
+                    None => false,
+                },
             },
             (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),

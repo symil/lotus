@@ -36,7 +36,8 @@ async function main() {
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
-    let onlyCompileWat = hasOption('-c');
+    let clean = hasOption('--clean');
+    let onlyCompileWat = false;
     let testOptions = { inheritStdio, displayMemory, onlyCompileWat, mode };
 
     if (!isMocha && !compileCompiler({ mode })) {
@@ -67,6 +68,20 @@ async function main() {
                 });
             }
         });
+    } else if (clean) {
+        let fileList = readDirRecursive(TEST_DIR);
+        let wasmFileList = fileList.filter(({ path }) => path.endsWith('.wat') || path.endsWith('.wasm'));
+        let buildDirList = fileList.filter(({ type, path }) => type == 'directory' && path.endsWith('build'));
+
+        for (let { path } of wasmFileList) {
+            fse.unlinkSync(path);
+        }
+
+        for (let { path } of buildDirList) {
+            fse.rmdirSync(path);
+        }
+
+        console.log(chalk.bold(`${wasmFileList.length} files removed`));
     } else if (createTest) {
         let testName = commandLineNames[0];
 
@@ -112,6 +127,24 @@ async function main() {
     } else {
         await runTest(WORKSHOP_DIR, BUILD_DIR, testOptions);
     }
+}
+
+function readDirRecursive(dirPath) {
+    let list = [];
+
+    for (let name of fse.readdirSync(dirPath)) {
+        let fullPath = path.join(dirPath, name);
+        let stats = fse.statSync(fullPath);
+
+        if (stats.isDirectory()) {
+            list.push({ type: 'directory', path: fullPath });
+            list.push.apply(list, readDirRecursive(fullPath));
+        } else if (stats.isFile()) {
+            list.push({ type: 'file', path: fullPath });
+        }
+    }
+
+    return list;
 }
 
 function hasOption(longOption, shortOption) {
