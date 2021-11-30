@@ -1,9 +1,9 @@
 export type(i32) char {
-    eq(other: This) -> bool {{
+    eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: This) -> bool {{
+    ne(other: Self) -> bool {{
         i32.ne
     }}
 
@@ -29,27 +29,27 @@ export type(i32) char {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     to_string() -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
         let str = string::__create(1);
 
-        str.__set_char(0, this);
+        str.__set_char(0, self);
 
         str
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        let c = this;
+        let c = self;
 
         if c == '\n' {
             return "'\\n'";
@@ -70,12 +70,12 @@ export type(i32) char {
         str
     }
 
-    static __retain(This) {{
+    static __retain(Self) {{
 
     }}
 
     __serialize(buffer: Buffer) {
-        buffer.push(this.to_int());
+        buffer.push(self.to_int());
     }
 
     static __deserialize(buffer: Buffer) -> char? {

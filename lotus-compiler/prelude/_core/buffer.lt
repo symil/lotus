@@ -16,51 +16,51 @@ export class Buffer {
     }
 
     save_addr<T>(value: T) -> bool {
-        this.push(value as int);
+        self.push(value as int);
 
-        this.set.add(value as ptr)
+        self.set.add(value as ptr)
     }
 
     retrieve<T>(key: int) -> T? {
-        (this.map.get(key) as T)
+        (self.map.get(key) as T)
     }
 
     register<T>(key: int, value: T) {
-        this.map.set(key, value as ptr);
+        self.map.set(key, value as ptr);
     }
 
     push(value: int) {
-        if this.size == this.capacity {
-            let new_capacity = (this.capacity + 1).next_power_of_4();
+        if self.size == self.capacity {
+            let new_capacity = (self.capacity + 1).next_power_of_4();
             let new_buffer = @alloc(new_capacity);
 
-            if !this.buffer.is_null() {
-                this.buffer.copy_to(new_buffer, this.size);
+            if !self.buffer.is_null() {
+                self.buffer.copy_to(new_buffer, self.size);
             }
 
-            this.capacity = new_capacity;
-            this.buffer = new_buffer;
+            self.capacity = new_capacity;
+            self.buffer = new_buffer;
         }
 
-        this.buffer[this.size] = value;
-        this.size += 1;
+        self.buffer[self.size] = value;
+        self.size += 1;
     }
 
     read() -> int? {
-        if this.read_index >= this.size {
-            this.read_overflow = true;
+        if self.read_index >= self.size {
+            self.read_overflow = true;
 
             none
         } else {
-            let value = this.buffer[this.read_index];
+            let value = self.buffer[self.read_index];
 
-            this.read_index += 1;
+            self.read_index += 1;
 
             value
         }
     }
 
     consume() -> int[] {
-        int[]::from_raw_parts(this.buffer, this.size, this.capacity)
+        int[]::from_raw_parts(self.buffer, self.size, self.capacity)
     }
 }

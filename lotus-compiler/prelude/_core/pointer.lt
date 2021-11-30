@@ -3,7 +3,7 @@ export type ptr = Pointer<int>;
 export type(i32) Pointer<T> {
     type Item = T;
 
-    static default() -> This {{
+    static default() -> Self {{
         (i32.const 0)
     }}
 
@@ -11,7 +11,7 @@ export type(i32) Pointer<T> {
         #TYPE_NAME
     }
 
-    static __none() -> This {{
+    static __none() -> Self {{
         (i32.const 0)
     }}
 
@@ -20,37 +20,37 @@ export type(i32) Pointer<T> {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     is_null() -> bool {{
         i32.eqz
     }}
 
-    eq(other: This) -> bool {{
+    eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: This) -> bool {{
+    ne(other: Self) -> bool {{
         i32.ne
     }}
 
-    add(offset: int) -> This {
-        ((this as int) + offset) as This
+    add(offset: int) -> Self {
+        ((self as int) + offset) as Self
     }
 
     addr() -> int {
-        this as int
+        self as int
     }
 
     set_at(index: int, value: T) {
-        let byte_index = ((this as int) + index) * 4;
+        let byte_index = ((self as int) + index) * 4;
 
         wasm_store(byte_index, value);
     }
 
     get_at(index: int) -> T {
-        let byte_index = ((this as int) + index) * 4;
+        let byte_index = ((self as int) + index) * 4;
 
         wasm_load(byte_index)
     }
@@ -59,42 +59,42 @@ export type(i32) Pointer<T> {
         (call $__log_int)
     }}
 
-    copy_to(target: This, data_size: int) {
-        mem_copy(target as ptr, this as ptr, data_size);
+    copy_to(target: Self, data_size: int) {
+        mem_copy(target as ptr, self as ptr, data_size);
     }
 
     to_string() -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        "[Pointer " + (this as int).to_hexa_string() + "]"
+        "[Pointer " + (self as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        (this as int).to_hexa_string()
+        (self as int).to_hexa_string()
     }
 
-    static __retain(value: This) {
+    static __retain(value: Self) {
         mem_retain(value as ptr);
     }
 
     __serialize(buffer: Buffer) {
-        buffer.push(this as int);
+        buffer.push(self as int);
     }
 
-    static __deserialize(buffer: Buffer) -> This? {
-        buffer.read() as This
+    static __deserialize(buffer: Buffer) -> Self? {
+        buffer.read() as Self
     }
 
     swap(i: int, j: int) {
-        let tmp = this[i];
-        this[i] = this[j];
-        this[j] = tmp;
+        let tmp = self[i];
+        self[i] = self[j];
+        self[j] = tmp;
     }
 }
 

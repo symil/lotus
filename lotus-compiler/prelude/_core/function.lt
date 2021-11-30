@@ -1,5 +1,5 @@
 export type Function {
-    static default() -> This {{
+    static default() -> Self {{
         (i32.const -2147483648)
     }}
 
@@ -7,7 +7,7 @@ export type Function {
         #TYPE_NAME
     }
     
-    static __none() -> This {{
+    static __none() -> Self {{
         (i32.const -2147483648)
     }}
 
@@ -17,30 +17,30 @@ export type Function {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     to_string() -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             "none"
         } else {
-            "[Function " + (this as int).to_hexa_string() + "]"
+            "[Function " + (self as int).to_hexa_string() + "]"
         }
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        this.to_string()
+        self.to_string()
     }
 
-    eq(This) -> bool {{
+    eq(Self) -> bool {{
         i32.eq
     }}
 
-    ne(This) -> bool {{
+    ne(Self) -> bool {{
         i32.ne
     }}
 
-    static __retain(f: This) {
+    static __retain(f: Self) {
         if ((f as int) & 0x80000000).eqz() {
             let p = f as ptr;
 
@@ -55,7 +55,7 @@ export type Function {
 
     }}
 
-    static __deserialize(buffer: Buffer) -> This? {{
+    static __deserialize(buffer: Buffer) -> Self? {{
         drop
         (i32.const -2147483648)
     }}

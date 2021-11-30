@@ -23,26 +23,26 @@ export type(i32) bool {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     to_string() -> string {
-        match this {
+        match self {
             true => "true",
             false => "false"
         }
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        this.to_string()
+        self.to_string()
     }
 
-    static __retain(This) {{
+    static __retain(Self) {{
         
     }}
 
     __serialize(buffer: Buffer) {
-        buffer.push(this.to_int());
+        buffer.push(self.to_int());
     }
 
     static __deserialize(buffer: Buffer) -> bool? {

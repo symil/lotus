@@ -23,11 +23,11 @@ export class Event {
     }
 
     emit(targets: Object[]) {
-        let event_type_id = this.get_type_id();
+        let event_type_id = self.get_type_id();
 
         for event_map in [EVENT_HOOKS, BEFORE_EVENT_CALLBACKS, AFTER_EVENT_CALLBACKS] {
             if event_map == AFTER_EVENT_CALLBACKS {
-                this.trigger();
+                self.trigger();
             }
 
             let callback_map = event_map.get(event_type_id);
@@ -46,7 +46,7 @@ export class Event {
                 for callback in callback_list {
                     let output = EventOutput {};
 
-                    callback(target, this, output);
+                    callback(target, self, output);
 
                     if !output.yielded.is_empty() && target is View(parent_view) {
                         for obj in output.yielded {

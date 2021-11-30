@@ -5,15 +5,15 @@ export class Pair<T, U> {
     first: T,
     second: U,
 
-    static new(first: T, second: U) -> This {
-        This { first, second }
+    static new(first: T, second: U) -> Self {
+        Self { first, second }
     }
 
     first() -> T {
-        this.first
+        self.first
     }
 
     second() -> U {
-        this.second
+        self.second
     }
 }

@@ -7,17 +7,17 @@ export class Map<K, V> {
     data_table: MapEntry<K, V>[],
     size: int,
 
-    static default() -> This {
-        This::new()
+    static default() -> Self {
+        Self::new()
     }
 
-    static new() -> This {
-        This::with_capacity(START_CAPACITY)
+    static new() -> Self {
+        Self::with_capacity(START_CAPACITY)
     }
 
-    static with_capacity(capacity: int) -> This {
+    static with_capacity(capacity: int) -> Self {
         let bucket_count = capacity.next_power_of_2() / 2;
-        let map = This {};
+        let map = Self {};
 
         for i in 0..bucket_count {
             map.hash_table.push(none);
@@ -27,29 +27,29 @@ export class Map<K, V> {
     }
 
     _rehash() {
-        let new_map = This::with_capacity(this.data_table.len() * 2);
+        let new_map = Self::with_capacity(self.data_table.len() * 2);
 
-        for entry in this.data_table {
+        for entry in self.data_table {
             if entry.key {
                 new_map.set(entry.key, entry.value);
             }
         }
 
-        this.hash_table = new_map.hash_table;
-        this.data_table = new_map.data_table;
-        this.size = new_map.size;
+        self.hash_table = new_map.hash_table;
+        self.data_table = new_map.data_table;
+        self.size = new_map.size;
     }
 
     _get_index(key: K) -> int {
         let hash = key.__hash();
-        let index = hash % this.hash_table.len();
+        let index = hash % self.hash_table.len();
 
         index
     }
 
     _get_entry(key: K) -> Item? {
-        let index = this._get_index(key);
-        let entry = this.hash_table[index];
+        let index = self._get_index(key);
+        let entry = self.hash_table[index];
 
         while entry && entry.key != key {
             entry = entry.next;
@@ -59,15 +59,15 @@ export class Map<K, V> {
     }
 
     capacity() -> int {
-        this.hash_table.len() * 2
+        self.hash_table.len() * 2
     }
 
     keys() -> K[] {
-        let array = Array<K>::__create(this.size);
+        let array = Array<K>::__create(self.size);
         let body = array.body();
         let i = 0;
 
-        for entry in this.data_table {
+        for entry in self.data_table {
             if entry.key {
                 body[i] = entry.key;
                 i += 1;
@@ -78,11 +78,11 @@ export class Map<K, V> {
     }
 
     values() -> V[] {
-        let array = Array<V>::__create(this.size);
+        let array = Array<V>::__create(self.size);
         let body = array.body();
         let i = 0;
 
-        for entry in this.data_table {
+        for entry in self.data_table {
             if entry.key {
                 body[i] = entry.value;
                 i += 1;
@@ -93,11 +93,11 @@ export class Map<K, V> {
     }
 
     entries() -> Entry<K, V>[] {
-        let array = Array<Entry<K, V>>::__create(this.size);
+        let array = Array<Entry<K, V>>::__create(self.size);
         let body = array.body();
         let i = 0;
 
-        for entry in this.data_table {
+        for entry in self.data_table {
             if entry.key {
                 body[i] = Entry<K, V> {
                     key: entry.key,
@@ -111,20 +111,20 @@ export class Map<K, V> {
     }
 
     size() -> int {
-        this.size
+        self.size
     }
 
     clear() {
-        for i in 0..this.hash_table.len() {
-            this.hash_table[i] = none;
+        for i in 0..self.hash_table.len() {
+            self.hash_table[i] = none;
         }
 
-        this.data_table.clear();
-        this.size = 0;
+        self.data_table.clear();
+        self.size = 0;
     }
 
     get(key: K) -> V? {
-        let entry = this._get_entry(key);
+        let entry = self._get_entry(key);
 
         match !!entry {
             true => entry.value,
@@ -133,20 +133,20 @@ export class Map<K, V> {
     }
 
     get_or_insert_with(key: K, f: fn()(V)) -> V {
-        let value = this.get(key);
+        let value = self.get(key);
 
         if !value {
             value = f();
             
-            this.set(key, value);
+            self.set(key, value);
         }
 
         value
     }
 
     set(key: K, value: V) -> V? {
-        let index = this._get_index(key);
-        let entry = this.hash_table[index];
+        let index = self._get_index(key);
+        let entry = self.hash_table[index];
         let last : MapEntry<K, V>? = none;
         let already_present = false;
 
@@ -162,17 +162,17 @@ export class Map<K, V> {
                 next: none
             };
 
-            this.data_table.push(entry);
-            this.size += 1;
+            self.data_table.push(entry);
+            self.size += 1;
 
             if last {
                 last.next = entry;
             } else {
-                this.hash_table[index] = entry;
+                self.hash_table[index] = entry;
             }
 
-            if this.data_table.len() > this.hash_table.len() * 2 {
-                this._rehash();
+            if self.data_table.len() > self.hash_table.len() * 2 {
+                self._rehash();
             }
 
             none
@@ -187,14 +187,14 @@ export class Map<K, V> {
     }
 
     delete(key: K) -> V? {
-        let entry = this._get_entry(key);
+        let entry = self._get_entry(key);
 
         if entry && entry.key {
             let ret = entry.value;
 
             entry.key = none;
             entry.value = none;
-            this.size -= 1;
+            self.size -= 1;
 
             return ret;
         }

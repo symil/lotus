@@ -1,7 +1,7 @@
 use std::{rc::Rc};
 use parsable::parsable;
 use colored::*;
-use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, THIS_TYPE_NAME, THIS_VAR_NAME, Type};
+use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, SELF_TYPE_NAME, SELF_VAR_NAME, Type};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
@@ -33,7 +33,7 @@ impl ParsedValueType {
         let parameters = self.arguments.process(check_interfaces, context);
         let parameter_count = parameters.len();
 
-        if self.name.as_str() == THIS_TYPE_NAME {
+        if self.name.as_str() == SELF_TYPE_NAME {
             result = context.get_this_type();
         }
 

@@ -1,41 +1,41 @@
 export class Set<V> {
     _map: Map<V, int>,
 
-    static default() -> This {
-        This::new()
+    static default() -> Self {
+        Self::new()
     }
 
-    static new() -> This {
-        This {
+    static new() -> Self {
+        Self {
             _map: Map<V, int>::new()
         }
     }
 
     capacity() -> int {
-        this._map.capacity()
+        self._map.capacity()
     }
 
     size() -> int {
-        this._map.size()
+        self._map.size()
     }
 
     values() -> V[] {
-        this._map.keys()
+        self._map.keys()
     }
 
     add(value: V) -> bool {
-        !this._map.set(value, 0)
+        !self._map.set(value, 0)
     }
 
     delete(value: V) -> bool {
-        !!this._map.delete(value)
+        !!self._map.delete(value)
     }
 
     clear() {
-        this._map.clear()
+        self._map.clear()
     }
 
     has(value: V) -> bool {
-        !!this._map.get(value)
+        !!self._map.get(value)
     }
 }

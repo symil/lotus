@@ -44,39 +44,39 @@ export type(f32) float {
     }}
 
     __hash() -> int {
-        this.as_int().__hash()
+        self.as_int().__hash()
     }
 
     is_nan() -> bool {
-        !(this == this)
+        !(self == self)
     }
 
     to_string() -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
         let result = @alloc(16);
 
-        call_float_to_string(this, result);
+        call_float_to_string(self, result);
 
         result as string
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        this.to_string()
+        self.to_string()
     }
 
-    static __retain(This) {{
+    static __retain(Self) {{
 
     }}
 
     __serialize(buffer: Buffer) {
-        buffer.push(this.as_int());
+        buffer.push(self.as_int());
     }
 
     static __deserialize(buffer: Buffer) -> float? {

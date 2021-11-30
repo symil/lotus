@@ -30,16 +30,16 @@ export class Object {
         #TYPE_NAME
     }
 
-    autogen static __create() -> This {
+    autogen static __create() -> Self {
         let data = @alloc(#FIELD_COUNT + 1);
 
         data[0] = #TYPE_ID;
 
-        data as This
+        data as Self
     }
 
-    autogen static __default() -> This {
-        let obj = This::__create();
+    autogen static __default() -> Self {
+        let obj = Self::__create();
 
         iter_fields {
             obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
@@ -52,15 +52,15 @@ export class Object {
         #TYPE_NAME
     }
 
-    autogen static __none() -> This {{
+    autogen static __none() -> Self {{
         (i32.const 0)
     }}
 
-    eq(other: This) -> bool {{
+    eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: This) -> bool {{
+    ne(other: Self) -> bool {{
         i32.ne
     }}
 
@@ -69,37 +69,37 @@ export class Object {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     as_ptr() -> ptr {
-        this as ptr
+        self as ptr
     }
 
     get_type_id() -> int {
-        this.as_ptr()[0]
+        self.as_ptr()[0]
     }
 
     to_string() -> string {
-        match this.__is_none() {
+        match self.__is_none() {
             true => "none",
-            false => this.__to_string_dyn()
+            false => self.__to_string_dyn()
         }
     }
 
     autogen dyn __to_string_dyn() -> string {
-        "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]"
+        "[" + #TYPE_SHORT_NAME + " " + (self as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        match this.__is_none() {
+        match self.__is_none() {
             true => "none",
-            false => this.__to_debug_string_dyn(set)
+            false => self.__to_debug_string_dyn(set)
         }
     }
 
     autogen dyn __to_debug_string_dyn(set: Set<ptr>) -> string {
-        if !set.add(this.as_ptr()) {
+        if !set.add(self.as_ptr()) {
             return #TYPE_SHORT_NAME + " { <cycle> }";
         }
 
@@ -109,7 +109,7 @@ export class Object {
                 let str = #TYPE_SHORT_NAME + " {\n";
 
                 iter_fields {
-                    str += (#FIELD_NAME + ": " + this.#FIELD_NAME.to_debug_string(set)).indent(2) + ",\n";
+                    str += (#FIELD_NAME + ": " + self.#FIELD_NAME.to_debug_string(set)).indent(2) + ",\n";
                 }
 
                 str += "}";
@@ -119,7 +119,7 @@ export class Object {
         }
     }
 
-    static __retain(value: This) {
+    static __retain(value: Self) {
         if mem_retain(value.as_ptr()) {
             value.__retain_dyn();
         }
@@ -127,29 +127,29 @@ export class Object {
 
     autogen dyn __retain_dyn() {
         iter_fields {
-            #FIELD_TYPE::__retain(this.#FIELD_NAME);
+            #FIELD_TYPE::__retain(self.#FIELD_NAME);
         }
     }
 
     __serialize(buffer: Buffer) {
-        if this.__is_none() {
+        if self.__is_none() {
             buffer.push(0);
         } else {
-            this.__serialize_dyn(buffer);
+            self.__serialize_dyn(buffer);
         }
     }
 
     autogen dyn __serialize_dyn(buffer: Buffer) {
-        if buffer.save_addr(this) {
+        if buffer.save_addr(self) {
             buffer.push(#TYPE_ID);
 
             iter_fields {
-                this.#FIELD_NAME.__serialize(buffer);
+                self.#FIELD_NAME.__serialize(buffer);
             }
         }
     }
 
-    static __deserialize(buffer: Buffer) -> This? {
+    static __deserialize(buffer: Buffer) -> Self? {
         let addr = buffer.read();
 
         if !addr || addr == 0 {
@@ -188,7 +188,7 @@ export class Object {
 
     autogen dyn __deserialize_dyn(buffer: Buffer) {
         iter_fields {
-            this.#FIELD_NAME = #FIELD_TYPE::__deserialize(buffer) as #FIELD_TYPE;
+            self.#FIELD_NAME = #FIELD_TYPE::__deserialize(buffer) as #FIELD_TYPE;
         }
     }
 }

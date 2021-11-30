@@ -20,14 +20,14 @@ pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
 pub const INIT_EVENTS_FUNC_NAME : &'static str = "init_events";
 pub const RETAIN_GLOBALS_FUNC_NAME : &'static str = "retain_globals";
 pub const ENTRY_POINT_FUNC_NAME : &'static str = "__entry_point";
-pub const THIS_VAR_NAME : &'static str = "this";
+pub const SELF_VAR_NAME : &'static str = "self";
 pub const CLOSURE_VARIABLES_VAR_NAME : &'static str = "closure_args";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 pub const END_INIT_TYPE_METHOD_NAME : &'static str = "__end_init";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const ENUM_TYPE_NAME : &'static str = "Enum";
-pub const THIS_TYPE_NAME : &'static str = "This";
+pub const SELF_TYPE_NAME : &'static str = "Self";
 pub const ITERABLE_ASSOCIATED_TYPE_NAME : &'static str = "Item";
 
 pub const TUPLE_FIRST_ASSOCIATED_TYPE_NAME : &'static str = "First";

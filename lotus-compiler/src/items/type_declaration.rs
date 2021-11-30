@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slic
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, ActualTypeContent, AssociatedTypeInfo, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_HOOKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, THIS_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
+use crate::{program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, ActualTypeContent, AssociatedTypeInfo, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_HOOKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -280,8 +280,8 @@ impl TypeDeclaration {
                         context.errors.add_generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
                     }
 
-                    if name.as_str() == THIS_TYPE_NAME {
-                        context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
+                    if name.as_str() == SELF_TYPE_NAME {
+                        context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", SELF_TYPE_NAME));
                     }
                 }
             });

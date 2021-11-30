@@ -3,15 +3,15 @@ class Foo {
     number: float
 
     print() {
-        @log(this.value);
+        @log(self.value);
     }
 
     set(value: string) {
-        this.value = value;
+        self.value = value;
     }
 
     get() -> float {
-        this.number
+        self.number
     }
 }
 

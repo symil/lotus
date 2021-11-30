@@ -48,50 +48,50 @@ export type(i32) int {
     }}
 
     min(other: int) -> int {
-        match this < other {
-            true => this,
+        match self < other {
+            true => self,
             false => other
         }
     }
 
     max(other: int) -> int {
-        match this > other {
-            true => this,
+        match self > other {
+            true => self,
             false => other
         }
     }
 
     clamp(min: int, max: int) -> int {
-        match this < min {
+        match self < min {
             true => min,
-            false => match this > max {
+            false => match self > max {
                 true => max,
-                false => this
+                false => self
             }
         }
     }
 
     to_hexa_string() -> string {
-        "0x" + int_to_string(this, 16).pad_start('0', 8)
+        "0x" + int_to_string(self, 16).pad_start('0', 8)
     }
 
     to_string() -> string {
-        match this.__is_none() {
+        match self.__is_none() {
             true => "none",
-            false => int_to_string(this, 10)
+            false => int_to_string(self, 10)
         }
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        this.to_string()
+        self.to_string()
     }
 
     log(base: int) -> int {
-        if this < 1 {
+        if self < 1 {
             return 1;
         }
 
-        let n = this;
+        let n = self;
         let result = 0;
 
         while n > 0 {
@@ -103,32 +103,32 @@ export type(i32) int {
     }
     
     log2() -> int {
-        match this < 2 {
+        match self < 2 {
             true => 1,
-            false => 32 - (this - 1).clz()
+            false => 32 - (self - 1).clz()
         }
     }
 
     next_power_of_2() -> int {
-        1 << this.log2()
+        1 << self.log2()
     }
 
     log4() -> int {
-        match this < 4 {
+        match self < 4 {
             true => 1,
-            false => (33 - (this - 1).clz()) / 2
+            false => (33 - (self - 1).clz()) / 2
         }
     }
 
     next_power_of_4() -> int {
-        1 << (this.log4() * 2)
+        1 << (self.log4() * 2)
     }
 
     pow(exponent: int) -> int {
         let result = 1;
 
         while exponent > 0 {
-            result = result * this;
+            result = result * self;
             exponent = exponent - 1;
         }
 
@@ -137,7 +137,7 @@ export type(i32) int {
 
     // https://github.com/nodejs/node/blob/238104c531219db05e3421521c305404ce0c0cce/deps/v8/src/utils/utils.h#L213
     __hash() -> int {
-        let hash = this;
+        let hash = self;
 
         hash = ~hash + (hash << 15);
         hash = hash ^ (hash >> 12);
@@ -149,12 +149,12 @@ export type(i32) int {
         hash & 0x3fffffff
     }
 
-    static __retain(This) {{
+    static __retain(Self) {{
 
     }}
 
     __serialize(buffer: Buffer) {
-        buffer.push(this);
+        buffer.push(self);
     }
 
     static __deserialize(buffer: Buffer) -> int? {

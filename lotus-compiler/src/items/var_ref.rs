@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, THIS_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
+use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
 use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper};
 
 #[parsable]
@@ -110,7 +110,7 @@ impl VarRef {
                                 false => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold())),
                             },
                             None => match self.name.as_str() {
-                                THIS_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no `{}` value can be referenced in this context", THIS_VAR_NAME.bold())),
+                                SELF_VAR_NAME => context.errors.add_generic_and_none(&self.name, format!("no `{}` value can be referenced in this context", SELF_VAR_NAME.bold())),
                                 _ => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", self.name.as_str().bold()))
                             },
                         }

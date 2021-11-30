@@ -2,11 +2,11 @@ class Foo {
     value: string,
 
     static hello() {
-        log_string(this.value);
+        log_string(self.value);
     }
 
     display() {
-        log_string(this.value);
+        log_string(self.value);
     }
 }
 

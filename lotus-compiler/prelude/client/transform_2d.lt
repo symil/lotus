@@ -4,62 +4,62 @@ export class Transform2D {
     sx: float = 1f,
     sy: float = 1f,
 
-    static new(scale: float, x: float, y: float) -> This {
+    static new(scale: float, x: float, y: float) -> Self {
         let sx = scale;
         let sy = scale;
         let tx = x;
         let ty = y;
 
-        This { sx, sy, tx, ty }
+        Self { sx, sy, tx, ty }
     }
 
-    static identity() -> This {
-        This::new(0f, 1f, 1f)
+    static identity() -> Self {
+        Self::new(0f, 1f, 1f)
     }
 
     apply(x: float, y: float) -> (float, float) {
         (
-            x * this.sx + this.tx,
-            y * this.sy + this.ty,
+            x * self.sx + self.tx,
+            y * self.sy + self.ty,
         )
     }
 
     apply_reverse(x: float, y: float) -> (float, float) {
         (
-            (x - this.tx) / this.sx,
-            (y - this.ty) / this.sy,
+            (x - self.tx) / self.sx,
+            (y - self.ty) / self.sy,
         )
     }
 
     scale(width: float, height: float) -> (float, float) {
         (
-            width * this.sx,
-            height * this.sy
+            width * self.sx,
+            height * self.sy
         )
     }
 
     scale_reverse(width: float, height: float) -> (float, float) {
         (
-            width / this.sx,
-            height / this.sy
+            width / self.sx,
+            height / self.sy
         )
     }
 
-    multiply(other: This) -> This {
-        This {
-            tx: other.tx + other.sx * this.tx,
-            ty: other.ty + other.sy * this.ty,
-            sx: other.sx * this.sx,
-            sy: other.sx * this.sy,
+    multiply(other: Self) -> Self {
+        Self {
+            tx: other.tx + other.sx * self.tx,
+            ty: other.ty + other.sy * self.ty,
+            sx: other.sx * self.sx,
+            sy: other.sx * self.sy,
         }
     }
 
-    divide(other: This) -> This {
-        This {
-            tx: (this.tx - other.tx) / other.sx,
-            ty: (this.ty - other.ty) / other.sy,
-            sx: this.sx / other.sx,
-            sy: this.sy / other.sy,
+    divide(other: Self) -> Self {
+        Self {
+            tx: (self.tx - other.tx) / other.sx,
+            ty: (self.ty - other.ty) / other.sy,
+            sx: self.sx / other.sx,
+            sy: self.sy / other.sy,
         }
     }
 }

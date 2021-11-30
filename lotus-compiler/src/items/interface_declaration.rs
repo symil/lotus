@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, THIS_TYPE_NAME, THIS_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -61,8 +61,8 @@ impl InterfaceDeclaration {
                     context.errors.add_generic(&associated_type.name, format!("duplicate associated type declaration `{}`", &name));
                 }
 
-                if name.as_str() == THIS_TYPE_NAME {
-                    context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", THIS_TYPE_NAME));
+                if name.as_str() == SELF_TYPE_NAME {
+                    context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", SELF_TYPE_NAME));
                 }
             }
 

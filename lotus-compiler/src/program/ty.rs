@@ -2,7 +2,7 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, b
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, THIS_TYPE_NAME, THIS_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
@@ -674,7 +674,7 @@ impl Type {
             Type::Any => format!("any"),
             Type::Void => format!("void"),
             Type::Int => format!("int"),
-            Type::This(_) => format!("{}", THIS_TYPE_NAME),
+            Type::This(_) => format!("{}", SELF_TYPE_NAME),
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
                     true => format!("{}", &info.type_blueprint.borrow().name),

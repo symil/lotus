@@ -1,7 +1,7 @@
 export type(i32) Array<T> {
     type Item = T;
 
-    static __create(length: int) -> This {
+    static __create(length: int) -> Self {
         let capacity = length.next_power_of_4();
         let header = @alloc(4);
         let body = @alloc(capacity);
@@ -10,10 +10,10 @@ export type(i32) Array<T> {
         header[1] = length;
         header[2] = capacity;
 
-        header as This
+        header as Self
     }
 
-    static with_capacity(capacity: int) -> This {
+    static with_capacity(capacity: int) -> Self {
         capacity = capacity.next_power_of_4();
         let header = @alloc(4);
         let body = @alloc(capacity);
@@ -22,28 +22,28 @@ export type(i32) Array<T> {
         header[1] = 0;
         header[2] = capacity;
 
-        header as This
+        header as Self
     }
 
-    static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> This {
+    static from_raw_parts(pointer: Pointer<T>, length: int, capacity: int) -> Self {
         let header = @alloc(4);
 
         header[0] = pointer as int;
         header[1] = length;
         header[2] = capacity;
 
-        header as This
+        header as Self
     }
 
-    static default() -> This {
-        This::__create(0)
+    static default() -> Self {
+        Self::__create(0)
     }
 
     static type_name() -> string {
         #TYPE_NAME
     }
 
-    static __none() -> This {{
+    static __none() -> Self {{
         (i32.const 0)
     }}
 
@@ -52,43 +52,43 @@ export type(i32) Array<T> {
     }}
 
     __hash() -> int {
-        (this as int).__hash()
+        (self as int).__hash()
     }
 
     get_iterable_len() -> int {
-        this.len()
+        self.len()
     }
 
     get_iterable_ptr() -> Pointer<T> {
-        this.body()
+        self.body()
     }
 
-    add(other: This) -> This {
-        this.concat(other)
+    add(other: Self) -> Self {
+        self.concat(other)
     }
 
-    eq(other: This) -> bool {{
+    eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: This) -> bool {{
+    ne(other: Self) -> bool {{
         i32.ne
     }}
 
     body() -> Pointer<T> {
-        (this as ptr)[0] as Pointer<T>
+        (self as ptr)[0] as Pointer<T>
     }
 
     len() -> int {
-        (this as ptr)[1]
+        (self as ptr)[1]
     }
 
     capacity() -> int {
-        (this as ptr)[2]
+        (self as ptr)[2]
     }
 
     get_at(index: int) -> T {
-        let length = this.len();
+        let length = self.len();
 
         if index < 0 {
             index = length + index;
@@ -96,32 +96,32 @@ export type(i32) Array<T> {
 
         match index < 0 || index >= length {
             true => none,
-            false => this.body()[index]
+            false => self.body()[index]
         }
     }
 
     set_at(index: int, value: T) {
-        this.body().set_at(index, value);
+        self.body().set_at(index, value);
     }
 
     as_ptr() -> ptr {
-        this as ptr
+        self as ptr
     }
 
     to_string() -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        "[" + #TYPE_SHORT_NAME + " " + (this as int).to_hexa_string() + "]"
+        "[" + #TYPE_SHORT_NAME + " " + (self as int).to_hexa_string() + "]"
     }
 
     to_debug_string(set: Set<ptr>) -> string {
-        if this.__is_none() {
+        if self.__is_none() {
             return "none";
         }
 
-        let length = this.len();
+        let length = self.len();
 
         if length == 0 {
             return "[]";
@@ -130,7 +130,7 @@ export type(i32) Array<T> {
         let strings : string[] = [];
         let has_line_breaks = false;
 
-        for item in this {
+        for item in self {
             let str = item.to_debug_string(set);
 
             if str.contains("\n") {
@@ -146,7 +146,7 @@ export type(i32) Array<T> {
         }
     }
 
-    static __retain(value: This) {
+    static __retain(value: Self) {
         if mem_retain(value.as_ptr()) {
             mem_retain(value.body() as ptr);
 
@@ -157,30 +157,30 @@ export type(i32) Array<T> {
     }
 
     __serialize(buffer: Buffer) {
-        if buffer.save_addr(this) {
-            buffer.push(this.len());
+        if buffer.save_addr(self) {
+            buffer.push(self.len());
 
-            for item in this {
+            for item in self {
                 item.__serialize(buffer);
             }
         }
     }
 
-    static __deserialize(buffer: Buffer) -> This? {
+    static __deserialize(buffer: Buffer) -> Self? {
         let addr = buffer.read();
 
         if !addr || addr == 0 {
             return none;
         }
 
-        let array : This = buffer.retrieve(addr);
+        let array : Self = buffer.retrieve(addr);
 
         if (array) {
             return array;
         }
 
         let length = buffer.read();
-        array = This::with_capacity(length);
+        array = Self::with_capacity(length);
 
         buffer.register(addr, array);
 
@@ -192,20 +192,20 @@ export type(i32) Array<T> {
     }
 
     is_empty() -> bool {
-        this.len() == 0
+        self.len() == 0
     }
 
-    clone() -> This {
-        let result : This = [];
+    clone() -> Self {
+        let result : Self = [];
 
-        result.extend(this);
+        result.extend(self);
 
         result
     }
 
-    reverse() -> This {
-        let length = this.len();
-        let body = this.body();
+    reverse() -> Self {
+        let length = self.len();
+        let body = self.body();
 
         for i in 0..(length / 2) {
             let i2 = length - i - 1;
@@ -215,23 +215,23 @@ export type(i32) Array<T> {
             body[i2] = tmp;
         }
 
-        this
+        self
     }
 
     clear() {
-        let header = this as ptr;
+        let header = self as ptr;
 
         header[1] = 0;
     }
 
     _add_length(additional_length: int) -> int {
-        let header = this as ptr;
-        let current_length = this.len();
+        let header = self as ptr;
+        let current_length = self.len();
         let new_length = current_length + additional_length;
 
-        if new_length > this.capacity() {
-            let body = this.body();
-            let new_capacity = this.capacity() * 4;
+        if new_length > self.capacity() {
+            let body = self.body();
+            let new_capacity = self.capacity() * 4;
             let new_body = @alloc(new_capacity) as Pointer<T>;
 
             for i in 0..current_length {
@@ -247,41 +247,41 @@ export type(i32) Array<T> {
         current_length
     }
 
-    push(value: T) -> This {
-        let length = this._add_length(1);
+    push(value: T) -> Self {
+        let length = self._add_length(1);
 
-        this.body()[length] = value;
+        self.body()[length] = value;
 
-        this
+        self
     }
 
-    pop() -> This {
-        let header = this as ptr;
+    pop() -> Self {
+        let header = self as ptr;
         let length = header[1];
 
         if length > 0 {
             header[1] = length - 1;
         }
 
-        this
+        self
     }
 
-    extend(other: This) {
-        let length = this._add_length(other.len());
-        let body = this.body();
+    extend(other: Self) {
+        let length = self._add_length(other.len());
+        let body = self.body();
 
         for (i, item) in other {
             body[length + i] = item;
         }
     }
 
-    extend_at(index: int, other: This) {
+    extend_at(index: int, other: Self) {
         if other.is_empty() {
             return;
         }
 
-        this.insert_none(index, other.len());
-        let body = this.body();
+        self.insert_none(index, other.len());
+        let body = self.body();
         
         for (i, item) in other {
             body[index + i] = item;
@@ -289,13 +289,13 @@ export type(i32) Array<T> {
     }
 
     insert_at(index: int, item: Item) {
-        this.insert_none(index, 1);
-        this[index] = item;
+        self.insert_none(index, 1);
+        self[index] = item;
     }
 
     insert_none(index: int, count: int) {
-        let length = this._add_length(count);
-        let body = this.body();
+        let length = self._add_length(count);
+        let body = self.body();
 
         for i in 0..count {
             let i2 = count - i - 1;
@@ -307,13 +307,13 @@ export type(i32) Array<T> {
         }
     }
 
-    concat(other: This) -> This {
-        let new_array = This::__create(this.len() + other.len());
+    concat(other: Self) -> Self {
+        let new_array = Self::__create(self.len() + other.len());
         let new_body = new_array.body();
 
         let offset = 0;
 
-        for item in this {
+        for item in self {
             new_body[offset] = item;
             offset += 1;
         }
@@ -328,13 +328,13 @@ export type(i32) Array<T> {
 
     join(separator: string) -> string {
         let str = "";
-        let length = this.len();
+        let length = self.len();
 
         if length > 0 {
             let last_index = length - 1;
             let i = 0;
 
-            for item in this {
+            for item in self {
                 str += item.to_string();
 
                 if i != last_index {
@@ -351,7 +351,7 @@ export type(i32) Array<T> {
     filter(callback: fn(T)(bool)) -> T[] {
         let result : T[] = [];
 
-        for item in this {
+        for item in self {
             if callback(item) {
                 result.push(item);
             }
@@ -363,7 +363,7 @@ export type(i32) Array<T> {
     map<U>(callback: fn(T)(U)) -> U[] {
         let result : U[] = [];
 
-        for item in this {
+        for item in self {
             result.push(callback(item));
         }
 
@@ -373,17 +373,17 @@ export type(i32) Array<T> {
     reduce<U>(init: U, callback: fn(U, T)(U)) -> U {
         let result = init;
 
-        for item in this {
+        for item in self {
             result = callback(result, item);
         }
         
         result
     }
 
-    sort(compare: fn(T, T)(int)) -> This {
-        quick_sort(this.body(), 0, this.len() - 1, compare);
+    sort(compare: fn(T, T)(int)) -> Self {
+        quick_sort(self.body(), 0, self.len() - 1, compare);
 
-        this
+        self
     }
 }
 

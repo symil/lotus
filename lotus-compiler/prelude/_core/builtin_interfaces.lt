@@ -1,69 +1,69 @@
 export interface Add {
-    add(This) -> This;
+    add(Self) -> Self;
 }
 
 export interface Sub {
-    sub(This) -> This;
+    sub(Self) -> Self;
 }
 
 export interface Mul {
-    mul(This) -> This;
+    mul(Self) -> Self;
 }
 
 export interface Div {
-    div(This) -> This;
+    div(Self) -> Self;
 }
 
 export interface Mod {
-    mod(This) -> This;
+    mod(Self) -> Self;
 }
 
 export interface Shl {
-    shl(int) -> This;
+    shl(int) -> Self;
 }
 
 export interface Shr {
-    shr(int) -> This;
+    shr(int) -> Self;
 }
 
 export interface And {
-    and(This) -> This;
+    and(Self) -> Self;
 }
 
 export interface Or {
-    or(This) -> This;
+    or(Self) -> Self;
 }
 
 export interface Xor {
-    xor(This) -> This;
+    xor(Self) -> Self;
 }
 
 export interface Ge {
-    ge(This) -> bool;
+    ge(Self) -> bool;
 }
 
 export interface Gt {
-    gt(This) -> bool;
+    gt(Self) -> bool;
 }
 
 export interface Le {
-    le(This) -> bool;
+    le(Self) -> bool;
 }
 
 export interface Lt {
-    lt(This) -> bool;
+    lt(Self) -> bool;
 }
 
 export interface Plus {
-    plus() -> This;
+    plus() -> Self;
 }
 
 export interface Minus {
-    minus() -> This;
+    minus() -> Self;
 }
 
 export interface Not {
-    not() -> This;
+    not() -> Self;
 }
 
 export interface ToBool {
@@ -112,17 +112,17 @@ export interface Object {
 }
 
 sys interface Builtin {
-    static default() -> This;
+    static default() -> Self;
     static type_name() -> string;
-    static __none() -> This;
+    static __none() -> Self;
     __is_none() -> bool;
     __hash() -> int;
 
     to_string() -> string;
     to_debug_string(set: Set<ptr>) -> string;
-    eq(This) -> bool;
-    ne(This) -> bool;
-    static __retain(value: This);
+    eq(Self) -> bool;
+    ne(Self) -> bool;
+    static __retain(value: Self);
     __serialize(buffer: Buffer);
-    static __deserialize(buffer: Buffer) -> This?;
+    static __deserialize(buffer: Buffer) -> Self?;
 }

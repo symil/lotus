@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, THIS_VAR_NAME, TypeIndex, VI, VariableInfo, VariableKind}, utils::Link, vasm};
+use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, SELF_VAR_NAME, TypeIndex, VI, VariableInfo, VariableKind}, utils::Link, vasm};
 use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat};
 
 #[derive(Debug)]

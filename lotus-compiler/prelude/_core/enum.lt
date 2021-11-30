@@ -1,28 +1,28 @@
 sys type(i32) Enum {
-    eq(other: This) -> bool {{
+    eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: This) -> bool {{
+    ne(other: Self) -> bool {{
         i32.ne
     }}
 
     to_int() -> int {
-        this as int
+        self as int
     }
 
-    static from_int(value: int) -> This {
+    static from_int(value: int) -> Self {
         match value < 0 || value >= #VARIANT_COUNT {
             true => none,
-            false => value as This
+            false => value as Self
         }
     }
 
-    autogen static __default() -> This {{
+    autogen static __default() -> Self {{
         (i32.const -2147483648)
     }}
 
-    autogen static __none() -> This {{
+    autogen static __none() -> Self {{
         (i32.const -2147483648)
     }}
 
@@ -36,7 +36,7 @@ sys type(i32) Enum {
     }
 
     autogen to_string() -> string {
-        let int_value = this as int;
+        let int_value = self as int;
 
         // Really ugly & inefficient but it will do for now
         iter_variants {
@@ -49,23 +49,23 @@ sys type(i32) Enum {
     }
 
     autogen to_debug_string(set: Set<ptr>) -> string {
-        this.to_string()
+        self.to_string()
     }
 
-    autogen static __retain(This) {{
+    autogen static __retain(Self) {{
 
     }}
 
     autogen __serialize(buffer: Buffer) {
-        buffer.push(this as int);
+        buffer.push(self as int);
     }
 
-    autogen static __deserialize(buffer: Buffer) -> This? {
+    autogen static __deserialize(buffer: Buffer) -> Self? {
         let int_value = buffer.read();
         let ok = int_value >= 0 && int_value < #VARIANT_COUNT;
 
         match ok {
-            true => int_value as This,
+            true => int_value as Self,
             false => none
         }
     }

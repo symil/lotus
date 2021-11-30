@@ -10,24 +10,24 @@ export class DisplaySize {
     kind: DisplaySizeKind,
     value: float,
 
-    static new(kind: DisplaySizeKind, value: float) -> This {
-        This { kind, value }
+    static new(kind: DisplaySizeKind, value: float) -> Self {
+        Self { kind, value }
     }
 
-    scale<F : ToFloat>(ratio: F) -> This {
-        This {
-            kind: this.kind,
-            value: this.value * ratio.to_float()
+    scale<F : ToFloat>(ratio: F) -> Self {
+        Self {
+            kind: self.kind,
+            value: self.value * ratio.to_float()
         }
     }
 
     compute_final_value(virtual_width: float, virtual_height: float, virtual_to_real_ratio: float) -> float {
-        match this.kind {
-            Real => this.value,
-            Virtual => this.value * virtual_to_real_ratio,
-            ScaledFromContainerWidth => this.value * virtual_width * virtual_to_real_ratio,
-            ScaledFromContainerHeight => this.value * virtual_height * virtual_to_real_ratio,
-            ScaledFromContainerMin => this.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
+        match self.kind {
+            Real => self.value,
+            Virtual => self.value * virtual_to_real_ratio,
+            ScaledFromContainerWidth => self.value * virtual_width * virtual_to_real_ratio,
+            ScaledFromContainerHeight => self.value * virtual_height * virtual_to_real_ratio,
+            ScaledFromContainerMin => self.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
         }
     }
 }

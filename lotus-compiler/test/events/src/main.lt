@@ -4,8 +4,8 @@ event DealDamages {
     amount: int,
 
     trigger() {
-        @log("trigger: " + this.source.name + " deals " + this.amount.to_string() + " damages to " + this.target.name);
-        this.target.health -= this.amount;
+        @log("trigger: " + self.source.name + " deals " + self.amount.to_string() + " damages to " + self.target.name);
+        self.target.health -= self.amount;
     }
 }
 
@@ -15,24 +15,24 @@ class Character {
     total_damages_received: int = 0
 
     @DealDamages {
-        check evt.target == this;
+        check evt.target == self;
 
-        @log(this.name + ": received " + evt.amount.to_string() + " damages");
-        this.total_damages_received += evt.amount;
+        @log(self.name + ": received " + evt.amount.to_string() + " damages");
+        self.total_damages_received += evt.amount;
     }
 }
 
 class Attacker extends Character {
     ^DealDamages {
-        check evt.source == this;
+        check evt.source == self;
 
         evt.amount *= 2;
     }
 
     @DealDamages {
-        check evt.source == this;
+        check evt.source == self;
 
-        @log(this.name + ": \"Ha!\"");
+        @log(self.name + ": \"Ha!\"");
     }
 }
 
