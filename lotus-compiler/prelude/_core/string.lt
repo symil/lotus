@@ -245,7 +245,7 @@ export type(i32) string {
     }
 
     static __retain(value: Self) {
-        mem_retain(value as ptr);
+        retain_memory(value as ptr);
     }
 
     __serialize(buffer: Buffer) {

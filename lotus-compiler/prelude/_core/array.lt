@@ -147,8 +147,8 @@ export type(i32) Array<T> {
     }
 
     static __retain(value: Self) {
-        if mem_retain(value.as_ptr()) {
-            mem_retain(value.body() as ptr);
+        if retain_memory(value.as_ptr()) {
+            retain_memory(value.body() as ptr);
 
             for item in value {
                 Item::__retain(item);

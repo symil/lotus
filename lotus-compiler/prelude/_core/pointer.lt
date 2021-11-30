@@ -60,7 +60,7 @@ export type(i32) Pointer<T> {
     }}
 
     copy_to(target: Self, data_size: int) {
-        mem_copy(target as ptr, self as ptr, data_size);
+        copy_memory_range(target as ptr, self as ptr, data_size);
     }
 
     to_string() -> string {
@@ -80,7 +80,7 @@ export type(i32) Pointer<T> {
     }
 
     static __retain(value: Self) {
-        mem_retain(value as ptr);
+        retain_memory(value as ptr);
     }
 
     __serialize(buffer: Buffer) {
@@ -98,3 +98,22 @@ export type(i32) Pointer<T> {
     }
 }
 
+fn copy_memory_range(dest: ptr, src: ptr, count: int) {
+    let dest_arg = (dest as int) * 4;
+    let src_arg = (src as int) * 4;
+    let count_arg = count * 4;
+
+    wasm_memory_copy(dest_arg, src_arg, count_arg);
+}
+
+fn wasm_memory_copy(int, int, int) {{
+    memory.copy
+}}
+
+fn wasm_store<T>(int, T) {{
+    <T>.store
+}}
+
+fn wasm_load<T>(int) -> T {{
+    <T>.load
+}}

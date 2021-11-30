@@ -50,7 +50,7 @@ pub const DESERIALIZE_METHOD_NAME : &'static str = "__deserialize";
 pub const DESERIALIZE_DYN_METHOD_NAME : &'static str = "__deserialize_dyn";
 pub const RETAIN_METHOD_NAME : &'static str = "__retain";
 pub const TO_STRING_METHOD_NAME : &'static str = "to_string";
-pub const MEM_ALLOC_FUNC_NAME : &'static str = "mem_alloc";
+pub const MEM_ALLOC_FUNC_NAME : &'static str = "alloc_memory";
 
 pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
 pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";

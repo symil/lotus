@@ -12,10 +12,10 @@ export fn main() {
 
     let c2 = @get_memory_usage();
     @retain(array);
-    @collect_garbage();
+    @trigger_garbage_collection();
     let c3 = @get_memory_usage();
     @retain(array);
-    @collect_garbage();
+    @trigger_garbage_collection();
     let c4 = @get_memory_usage();
 
     @assert(#LINE, p[-1] == 1);

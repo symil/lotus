@@ -103,6 +103,10 @@ function getWasmImportsObject(env) {
                 let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
 
                 renderer.drawFrameFromBuffer(buffer);
+            },
+
+            clear_renderer_cache() {
+                renderer.clearCache();
             }
         }
     };

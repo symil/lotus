@@ -65,7 +65,7 @@ sys fn update_client() {
     CLIENT._update();
     // @log(`memory used: ${get_memory_usage() / 1024} KB`);
     @retain(CLIENT);
-    @collect_garbage();
+    @trigger_garbage_collection();
 }
 
 fn wasm_init_window(float) {{
@@ -90,4 +90,8 @@ fn wasm_get_window_height() -> float {{
 
 fn wasm_draw_frame(ptr, int) {{
     (call $draw_frame)
+}}
+
+fn wasm_clear_renderer_cache() {{
+    (call $clear_renderer_cache)
 }}

@@ -34,35 +34,11 @@ const MEMORY = (0 as ptr);
 // Triggerring the GC changes the metadata of all pointer from 2 to 1
 // "Retaining" a pointer changes its metadata from 1 to 2
 
-pub fn mem_init() {
-    mem_trigger_garbage_collection();
+pub fn init_memory() {
+    trigger_garbage_collection();
 }
 
-pub fn wasm_store<T>(int, T) {{
-    <T>.store
-}}
-
-pub fn wasm_load<T>(int) -> T {{
-    <T>.load
-}}
-
-fn wasm_memory_copy(int, int, int) {{
-    memory.copy
-}}
-
-fn wasm_memory_grow(int) -> int {{
-    memory.grow
-}}
-
-fn retain_globals() {{
-    (call $retain_globals)
-}}
-
-fn alloc_page() -> ptr {
-    (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr
-}
-
-sys fn mem_alloc(block_size: int) -> ptr {
+sys fn alloc_memory(block_size: int) -> ptr {
     if block_size >= MAX_BLOCK_SIZE {
         for i in 0..BIG_BLOCK_COUNT {
             let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
@@ -130,8 +106,8 @@ sys fn mem_alloc(block_size: int) -> ptr {
     result
 }
 
-sys fn mem_trigger_garbage_collection() {
-    retain_globals();
+sys fn trigger_garbage_collection() {
+    wasm_retain_globals();
 
     for i in 0..BLOCK_SIZE_COUNT {
         for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
@@ -175,6 +151,17 @@ sys fn mem_trigger_garbage_collection() {
     }
 }
 
+sys fn retain_memory(addr: ptr) -> bool {
+    let success = false;
+
+    if (addr as int) > 0 && addr[-1] == 1 {
+        addr[-1] = 2;
+        success = true;
+    }
+
+    success
+}
+
 // Returns the allocated memory in bytes
 sys fn get_memory_usage() -> int {
     let count = 0;
@@ -216,21 +203,14 @@ sys fn get_memory_usage() -> int {
     count * MEMORY_CELL_BYTE_SIZE
 }
 
-sys fn mem_retain(addr: ptr) -> bool {
-    let success = false;
-
-    if (addr as int) > 0 && addr[-1] == 1 {
-        addr[-1] = 2;
-        success = true;
-    }
-
-    success
+fn alloc_page() -> ptr {
+    (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr
 }
 
-pub fn mem_copy(dest: ptr, src: ptr, count: int) {
-    let dest_arg = (dest as int) * 4;
-    let src_arg = (src as int) * 4;
-    let count_arg = count * 4;
+fn wasm_memory_grow(int) -> int {{
+    memory.grow
+}}
 
-    wasm_memory_copy(dest_arg, src_arg, count_arg);
-}
+fn wasm_retain_globals() {{
+    (call $retain_globals)
+}}

@@ -44,7 +44,7 @@ export type Function {
         if ((f as int) & 0x80000000).eqz() {
             let p = f as ptr;
 
-            if mem_retain(p) {
+            if retain_memory(p) {
                 Map<int, ptr>::__retain(p[0] as Map<int, ptr>);
                 retain_closure_args(p[0], p[2]);
             }

@@ -120,7 +120,7 @@ export class Object {
     }
 
     static __retain(value: Self) {
-        if mem_retain(value.as_ptr()) {
+        if retain_memory(value.as_ptr()) {
             value.__retain_dyn();
         }
     }

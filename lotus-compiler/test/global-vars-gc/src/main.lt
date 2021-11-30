@@ -3,7 +3,7 @@ const TEST = @alloc(2000);
 export fn main() {
     let addr1 = TEST as int;
     @log(TEST[-1]);
-    @collect_garbage();
+    @trigger_garbage_collection();
     let addr2 = @alloc(2000) as int;
 
     @log(TEST[-1]);
