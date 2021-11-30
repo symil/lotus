@@ -1,7 +1,7 @@
 import { initializeWasm } from './wasm-initialization';
 
 async function main() {
-    let env = { log, createWebSocket };
+    let env = { log, getWindow, createWebSocket };
     let instance = await initializeWasm(fetch('./module.wasm'), env);
     let update = () => {
         instance.exports.update_client();
@@ -10,6 +10,10 @@ async function main() {
 
     instance.exports.start_client();
     update();
+}
+
+function getWindow() {
+    return window;
 }
 
 function createWebSocket(url) {

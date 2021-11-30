@@ -146,11 +146,37 @@ impl Type {
         }
     }
 
-    pub fn get_common_type<'a>(&'a self, other: &'a Type) -> Option<&'a Type> {
+    pub fn get_common_type(&self, other: &Type) -> Option<Type> {
         if self.is_assignable_to(other) {
-            Some(other)
+            Some(other.clone())
         } else if other.is_assignable_to(self) {
-            Some(self)
+            Some(self.clone())
+        } else if let (Type::Actual(self_info), Type::Actual(other_info)) = (self, other) {
+            match self_info.parameters.is_empty() && other_info.parameters.is_empty() {
+                true => {
+                    let self_unwrapped = self_info.type_blueprint.borrow();
+                    let other_unwrapped = other_info.type_blueprint.borrow();
+
+                    for self_ancestor in &self_unwrapped.ancestors {
+                        let self_ancestor_wrapped = self_ancestor.get_type_blueprint();
+
+                        for other_ancestor in &other_unwrapped.ancestors {
+                            let other_ancestor_wrapped = other_ancestor.get_type_blueprint();
+
+                            if self_ancestor_wrapped == other_ancestor_wrapped {
+                                return Some(Type::Actual(ActualTypeContent {
+                                    type_blueprint: self_ancestor_wrapped.clone(),
+                                    parameters: vec![],
+                                    location: DataLocation::default(),
+                                }));
+                            }
+                        }
+                    }
+
+                    None
+                },
+                false => None,
+            }
         } else {
             None
         }

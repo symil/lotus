@@ -1,7 +1,12 @@
+import { writeWindowEventToBuffer } from './js-to-wasm';
+import { MemoryBuffer } from './memory-buffer';
+import { Renderer } from './renderer';
+import { WindowManager } from './window-manager';
+
 export async function initializeWasm(wasm, { log, getWindow, createWebSocket, createWebSocketServer }) {
     let instance = null;
-    let getMemory = () => new Uint32Array(instance.exports.memory.buffer);
-    let env = { log, getMemory, getWindow, createWebSocket, createWebSocketServer };
+    let getMemory = () => instance.exports.memory.buffer;
+    let env = { getMemory, log, getWindow, createWebSocket, createWebSocketServer };
     let imports = getWasmImportsObject(env);
 
     if (WebAssembly.instantiateStreaming) {
@@ -18,16 +23,21 @@ export async function initializeWasm(wasm, { log, getWindow, createWebSocket, cr
 /*
     `env` must have the following methods:
     - `log(string)`: log the string in the console
-    - `getMemory()`: returns the WASM instance memory as an Uint32Array
+    - `getMemory()`: returns the WASM instance memory as an ArrayBuffer
     - `getWindow()`
     - `createWebSocket()`
     - `createWebSocketServer()`
 */
 function getWasmImportsObject(env) {
+    let windowManager = null;
+    let renderer = null;
+    let webSocket = null;
+    let webSocketServer = null;
+
     return {
         env: {
             log(stringAddr) {
-                let memory = env.getMemory();
+                let memory = new Uint32Array(env.getMemory());
                 let length = memory[stringAddr];
                 let codes = new Array(length);
 
@@ -55,7 +65,7 @@ function getWasmImportsObject(env) {
                 }
             },
             float_to_string(value, resultAddr) {
-                let memory = env.getMemory();
+                let memory = new Uint32Array(env.getMemory());
                 let str = '' + value;
 
                 memory[resultAddr] = str.length;
@@ -63,6 +73,29 @@ function getWasmImportsObject(env) {
                 for (let i = 0; i < str.length; ++i) {
                     memory[resultAddr + i + 2] = str.charCodeAt(i);
                 }
+            }
+        },
+        client: {
+            init_window() {
+                windowManager = new WindowManager(env.getWindow());
+                renderer = new Renderer(windowManager);
+
+                windowManager.start();
+            },
+
+            poll_events(bufferLength, bufferAddr) {
+                let events = windowManager.pollEvents();
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr);
+
+                for (let event of events) {
+                    writeWindowEventToBuffer(event, buffer);
+
+                    if (buffer.getLength() > bufferLength) {
+                        throw new Error(`event buffer overflow`);
+                    }
+                }
+
+                return buffer.getLength();
             }
         }
     };

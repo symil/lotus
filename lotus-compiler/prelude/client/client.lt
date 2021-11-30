@@ -1,9 +1,34 @@
+const BUFFER_SIZE = 4.pow(10);
+const CLIENT : Client = none;
+
+const VIRTUAL_WIDTH = 1600f;
+const VIRTUAL_HEIGHT = 900f;
+
 export class Client {
+    buffer: SimpleBuffer,
     virtual_width: float,
     virtual_height: float,
     virtual_to_real_ratio: float,
     cursor_x: float,
     cursor_y: float,
+
+    static new() -> Self {
+        let buffer = SimpleBuffer::new(BUFFER_SIZE);
+
+        Self { buffer }
+    }
+
+    _update() {
+        let written_count = wasm_poll_events(self.buffer.size, self.buffer.pointer);
+
+        self.buffer.reset_index();
+
+        while self.buffer.index < written_count {
+            let window_event = decode_window_event_from_buffer(self.buffer);
+
+            @dbg(window_event);
+        }
+    }
 
     send_request(request: Object) {
 
@@ -12,8 +37,25 @@ export class Client {
 
 sys fn start_client() {
     @log("CLIENT START");
+    wasm_init_window();
+    CLIENT = Client::new();
 }
 
 sys fn update_client() {
-    
+    CLIENT._update();
+    // @log(`memory used: ${get_memory_usage() / 1024} KB`);
+    @retain(CLIENT);
+    @collect_garbage();
 }
+
+fn wasm_init_window() {{
+    (call $init_window)
+}}
+
+fn wasm_get_current_time() -> int {{
+    (call $get_current_time)
+}}
+
+fn wasm_poll_events(int, ptr) -> int {{
+    (call $poll_events)
+}}

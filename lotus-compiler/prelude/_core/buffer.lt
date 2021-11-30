@@ -7,12 +7,25 @@ export class Buffer {
     set: Set<ptr>,
     map: Map<int, ptr>
 
+    static from_pointer(size: int, pointer: ptr) -> Buffer {
+        Buffer {
+            buffer: pointer,
+            size: size,
+            capacity: size
+        }
+    }
+
     static from_array(array: int[]) -> Buffer {
         Buffer {
             buffer: array.body(),
             size: array.len(),
             capacity: array.capacity()
         }
+    }
+
+    reset() {
+        self.read_index = 0;
+        self.read_overflow = false;
     }
 
     save_addr<T>(value: T) -> bool {

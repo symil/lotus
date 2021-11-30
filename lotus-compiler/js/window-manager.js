@@ -3,7 +3,8 @@ const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
 const CLICK_DISTANCE_THRESHOLD = 5;
 
 export class WindowManager {
-    constructor() {
+    constructor(window) {
+        this._window = window;
         this._aspectRatio = 16 / 9;
         this._zIndexToCanvas = new Map();
         this._canvaxX = 0;
@@ -26,6 +27,9 @@ export class WindowManager {
             return;
         }
 
+        let window = this._window;
+        let document = window.document;
+
         window.addEventListener('resize', () => this._onResize());
         document.addEventListener('mousemove', evt => this._onMouseMove(evt));
         // document.addEventListener('mouseleave', evt => this._onMouseMove(evt));
@@ -45,8 +49,12 @@ export class WindowManager {
         this._init();
     }
 
-    pollEvent() {
-        return this._pendingEvents.shift();
+    pollEvents() {
+        let result = this._pendingEvents;
+
+        this._pendingEvents = [];
+
+        return result;
     }
 
     getCanvasContext(zIndex) {
@@ -97,13 +105,13 @@ export class WindowManager {
     }
 
     setTitle(title) {
-        window.document.title = title;
+        this._window.document.title = title;
     }
     
     _updateCanvasRect() {
         let aspectRatio = this._aspectRatio;
-        let width = window.innerWidth;
-        let height = window.innerHeight;
+        let width = this._window.innerWidth;
+        let height = this._window.innerHeight;
 
         if (height * aspectRatio > width) {
             height = width / aspectRatio;
@@ -111,8 +119,8 @@ export class WindowManager {
             width = height * aspectRatio;
         }
 
-        let x = (window.innerWidth - width) / 2;
-        let y = (window.innerHeight - height) / 2;
+        let x = (this._window.innerWidth - width) / 2;
+        let y = (this._window.innerHeight - height) / 2;
 
         this._canvasX = Math.round(x);
         this._canvasY = Math.round(y);
@@ -170,7 +178,7 @@ export class WindowManager {
         this._pendingEvents.push({ type, payload });
     }
 
-    _parseEvent(action, evt) {
+    _parseMouseEvent(action, evt) {
         let button = BUTTON_TO_STRING[evt.button] || 'left';
         let x = evt.clientX - this._canvasX;
         let y = evt.clientY - this._canvasY;
@@ -179,20 +187,20 @@ export class WindowManager {
     }
 
     _onMouseMove(evt) {
-        let { action, button, x, y } = this._parseEvent('move', evt);
+        let { action, button, x, y } = this._parseMouseEvent('move', evt);
 
         this._emit('mouse', { action, button, x, y });
     }
 
     _onMouseDown(evt) {
-        let { action, button, x, y } = this._parseEvent('down', evt);
+        let { action, button, x, y } = this._parseMouseEvent('down', evt);
 
         this._pressLocation[button] = { x, y };
         this._emit('mouse', { action, button, x, y });
     }
 
     _onMouseUp(evt) {
-        let { action, button, x, y } = this._parseEvent('up', evt);
+        let { action, button, x, y } = this._parseMouseEvent('up', evt);
 
         if (this._pressLocation[button]) {
             if (distance(this._pressLocation[button], { x, y }) < CLICK_DISTANCE_THRESHOLD) {
@@ -210,9 +218,9 @@ export class WindowManager {
             action: 'down',
             code: evt.code,
             text: getText(evt),
-            ctrl_key: evt.ctrlKey,
-            shift_key: evt.shiftKey,
-            alt_key: evt.altKey
+            ctrlKey: evt.ctrlKey,
+            shiftKey: evt.shiftKey,
+            altKey: evt.altKey
         });
     }
 
@@ -221,18 +229,18 @@ export class WindowManager {
             action: 'up',
             code: evt.code,
             text: getText(evt),
-            ctrl_key: evt.ctrlKey,
-            shift_key: evt.shiftKey,
-            alt_key: evt.altKey
+            ctrlKey: evt.ctrlKey,
+            shiftKey: evt.shiftKey,
+            altKey: evt.altKey
         });
     }
 
     _onWheel(evt) {
         this._emit('wheel', {
-            delta_x: evt.deltaX,
-            delta_y: evt.deltaY,
-            delta_z: evt.deltaZ,
-            delta_mode: DELTA_MODE_TO_STRING[evt.deltaMode]
+            deltaX: evt.deltaX,
+            deltaY: evt.deltaY,
+            deltaZ: evt.deltaZ,
+            deltaMode: DELTA_MODE_TO_STRING[evt.deltaMode]
         });
     }
 }

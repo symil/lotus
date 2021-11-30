@@ -1,0 +1,36 @@
+pub event WindowEvent {
+
+}
+
+enum WindowEventType {
+    Keyboard,
+    Mouse,
+    Wheel
+}
+
+pub fn decode_window_event_from_buffer(buffer: SimpleBuffer) -> WindowEvent {
+    let event_type : WindowEventType = buffer.read();
+
+    match event_type {
+        Mouse => MouseEvent {
+            action: buffer.read(),
+            button: buffer.read(),
+            x: buffer.read(),
+            y: buffer.read(),
+        },
+        Keyboard => KeyboardEvent {
+            action: buffer.read(),
+            code: buffer.read(),
+            text: buffer.read(),
+            ctrl_key: buffer.read(),
+            shift_key: buffer.read(),
+            alt_key: buffer.read(),
+        },
+        Wheel => WheelEvent {
+            delta_x: buffer.read(),
+            delta_y: buffer.read(),
+            delta_z: buffer.read(),
+            delta_mode: buffer.read(),
+        }
+    }
+}

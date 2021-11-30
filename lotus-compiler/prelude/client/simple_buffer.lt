@@ -1,0 +1,25 @@
+pub class SimpleBuffer {
+    size: int,
+    pointer: ptr,
+    index: int
+
+    static new(size: int) -> Self {
+        Self {
+            size,
+            pointer: @alloc(size),
+            index: 0
+        }
+    }
+
+    reset_index() {
+        self.index = 0;
+    }
+
+    read<T>() -> T {
+        let result = (self.pointer as Pointer<T>)[self.index];
+
+        self.index += 1;
+
+        result
+    }
+}

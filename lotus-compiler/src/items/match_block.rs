@@ -105,7 +105,7 @@ impl MatchBlock {
 
                                 if let Some(branch_vasm) = branch.expr.process(type_hint, context) {
                                     let new_expected_type = match &returned_type {
-                                        Some(ty) => ty.get_common_type(&branch_vasm.ty).cloned(),
+                                        Some(ty) => ty.get_common_type(&branch_vasm.ty),
                                         None => Some(branch_vasm.ty.clone()),
                                     };
 
