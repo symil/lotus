@@ -28,7 +28,7 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("env", "log", "log", &["i32"], None),
     ("env", "log_int", "log_int", &["i32"], None),
     ("env", "get_current_time", "get_current_time", &[], Some("i32")),
-    ("client", "init_window", "init_window", &[], None),
+    ("client", "init_window", "init_window", &["f32"], None),
     ("client", "poll_events", "poll_events", &["i32", "i32"], Some("i32")),
     // ("client", "get_window_width", "get_window_width", &[], Some("i32")),
     // ("client", "get_window_height", "get_window_height", &[], Some("i32")),

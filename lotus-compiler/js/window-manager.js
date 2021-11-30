@@ -3,9 +3,9 @@ const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
 const CLICK_DISTANCE_THRESHOLD = 5;
 
 export class WindowManager {
-    constructor(window) {
+    constructor(window, aspectRatio) {
         this._window = window;
-        this._aspectRatio = 16 / 9;
+        this._aspectRatio = aspectRatio;
         this._zIndexToCanvas = new Map();
         this._canvaxX = 0;
         this._canvasY = 0;

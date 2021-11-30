@@ -76,8 +76,8 @@ function getWasmImportsObject(env) {
             }
         },
         client: {
-            init_window() {
-                windowManager = new WindowManager(env.getWindow());
+            init_window(aspectRatio) {
+                windowManager = new WindowManager(env.getWindow(), aspectRatio);
                 renderer = new Renderer(windowManager);
 
                 windowManager.start();
