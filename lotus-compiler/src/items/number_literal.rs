@@ -1,8 +1,7 @@
 use std::ops::Neg;
-
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{ProgramContext, VI, Vasm}};
+use crate::{program::{ProgramContext, VI, Vasm, Type, BuiltinType}};
 
 #[parsable(name="number")]
 pub struct NumberLiteral {
@@ -11,7 +10,7 @@ pub struct NumberLiteral {
 }
 
 impl NumberLiteral {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut s = self.value.as_str();
         let mut is_negative = false;
 
@@ -24,9 +23,19 @@ impl NumberLiteral {
             true => Number::Int(i32::from_be_bytes(u32::from_str_radix(&s[2..], 16).unwrap().to_be_bytes())),
             false => {
                 let (number, suffix) = split_number_suffix(s);
+                let mut prefer_float = false;
+
+                if let Some(ty) = type_hint {
+                    if ty.is_builtin_type(BuiltinType::Float) {
+                        prefer_float = true;
+                    }
+                }
 
                 if suffix.is_empty() && !number.contains(".") {
-                    Number::Int(i32::from_str_radix(s, 10).unwrap())
+                    match prefer_float {
+                        true => Number::Float(number.parse().unwrap()),
+                        false => Number::Int(i32::from_str_radix(s, 10).unwrap())
+                    }
                 } else {
                     let value : f32 = number.parse().unwrap();
 

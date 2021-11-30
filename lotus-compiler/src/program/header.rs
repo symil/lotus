@@ -32,6 +32,7 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("client", "poll_events", "poll_events", &["i32", "i32"], Some("i32")),
     ("client", "get_window_width", "get_window_width", &[], Some("f32")),
     ("client", "get_window_height", "get_window_height", &[], Some("f32")),
+    ("client", "draw_frame", "draw_frame", &["i32", "i32"], None),
     // ("client", "connect", "connect", &["i32"], Some("i32")),
     // ("client", "is_connected", "is_connected", &[], Some("i32")),
     // ("client", "read_message", "read_message", &["i32"], Some("i32")),

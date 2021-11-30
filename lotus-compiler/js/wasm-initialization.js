@@ -84,9 +84,9 @@ function getWasmImportsObject(env) {
                 return windowManager.getHeight();
             },
 
-            poll_events(bufferLength, bufferAddr) {
+            poll_events(bufferAddr, bufferLength) {
                 let events = windowManager.pollEvents();
-                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr);
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
 
                 for (let event of events) {
                     writeWindowEventToBuffer(event, buffer);
@@ -97,6 +97,12 @@ function getWasmImportsObject(env) {
                 }
 
                 return buffer.getLength();
+            },
+
+            draw_frame(bufferAddr, bufferLength) {
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
+
+                renderer.drawFrameFromBuffer(buffer);
             }
         }
     };

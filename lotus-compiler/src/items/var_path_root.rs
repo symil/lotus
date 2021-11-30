@@ -67,7 +67,7 @@ impl VarPathRoot {
             VarPathRoot::Macro(mac) => mac.process_as_value(context),
             VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
-            VarPathRoot::NumberLiteral(number_literal) => number_literal.process(context),
+            VarPathRoot::NumberLiteral(number_literal) => number_literal.process(type_hint, context),
             VarPathRoot::CharLiteral(char_literal) => char_literal.process(context),
             VarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
             VarPathRoot::TemplateString(template_string) => template_string.process(context),

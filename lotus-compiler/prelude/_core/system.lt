@@ -1,6 +1,6 @@
 export type(void) system {
     static __end_init() {
-        mem_trigger_garbage_collection();
+        mem_init();
     }
 
     assert(line: int, value: bool) {
@@ -11,10 +11,6 @@ export type(void) system {
         mem_alloc(block_size)
     }
 
-    free(pointer: ptr) {
-        mem_free(pointer);
-    }
-
     retain<T>(value: T) {
         T::__retain(value);
     }
@@ -23,8 +19,8 @@ export type(void) system {
         mem_trigger_garbage_collection();
     }
 
-    allocated_addr_count() -> int {
-        get_allocated_memory_block_count()
+    get_memory_usage() -> int {
+        get_memory_usage()
     }
 
     log<T>(value: T) {

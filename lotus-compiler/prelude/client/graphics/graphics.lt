@@ -31,8 +31,8 @@ export class Graphics {
     text_max_height: DisplaySize?,
     text_background_color: Color,
     text_border_color: Color,
-    text_horizontal_align: TextHorizontalAlign,
-    text_vertical_align: TextVerticalAlign,
+    text_horizontal_align: HorizontalAlign,
+    text_vertical_align: VerticalAlign,
     text_bold: bool,
     text_italic: bool,
     text_cursor_index: int?,
@@ -42,6 +42,6 @@ export class Graphics {
 
 export enum Shape { Rectangle, Circle, Line }
 export enum Font { Arial }
-export enum TextHorizontalAlign { Center, Left, Right }
-export enum TextVerticalAlign { Middle, Top, Bottom }
+export enum HorizontalAlign { Left, Center, Right }
+export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }

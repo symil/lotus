@@ -1,5 +1,5 @@
 export fn main() {
-    let c1 = @allocated_addr_count();
+    let c1 = @get_memory_usage();
 
     let a = "hello";
     let b = " world"
@@ -10,13 +10,13 @@ export fn main() {
     let m = p[0] as Map<int, Pointer<string>>;
     let array = [f];
 
-    let c2 = @allocated_addr_count();
+    let c2 = @get_memory_usage();
     @retain(array);
     @collect_garbage();
-    let c3 = @allocated_addr_count();
+    let c3 = @get_memory_usage();
     @retain(array);
     @collect_garbage();
-    let c4 = @allocated_addr_count();
+    let c4 = @get_memory_usage();
 
     @assert(#LINE, p[-1] == 1);
     @assert(#LINE, (m as ptr)[-1] == 1);

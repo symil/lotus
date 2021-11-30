@@ -1,10 +1,16 @@
+export const CURSORS = ['default', 'pointer', 'text'];
+export const SHAPES = ['rectangle', 'circle', 'line'];
+export const FONTS = ['arial'];
+export const HORIZONTAL_ALIGNS = ['left', 'center', 'right'];
+export const VERTICAL_ALIGNS = ['top', 'middle', 'bottom'];
+
 export const HORIZONTAL_ALIGN_TO_OFFSET_X = { left: 0, center: 0.5, right: 1 };
 export const VERTICAL_ALIGN_TO_OFFSET_Y = { top: 0, middle: 0.5, bottom: 1 };
 export const VERTICAL_ALIGN_TO_TEXT_BASELINE = {
     top: 'top',
     middle: 'middle',
     bottom: 'alphabetic'
-}
+};
 
 const HEXAGON_WIDTH_TO_HEIGHT_RATIO = 0.8660254037844386;
 

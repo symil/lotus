@@ -1,0 +1,39 @@
+pub class DrawPrimitive {
+    x: float = 0,
+    y: float = 0,
+    z: float = 0,
+    width: float = 0,
+    height: float = 0,
+    angle: float = 0,
+    shape: Shape = Shape::Rectangle,
+    border_color: Color = TRANSPARENT,
+    border_width: float = 0,
+    border_radius: float = 0,
+    border_dash_length: float = 0,
+    border_gap_length: float = 0,
+    background_color: Color = TRANSPARENT,
+    overlay_color: Color = TRANSPARENT,
+    image_url: string = none,
+    image_width: float = 0,
+    image_height: float = 0,
+    text: string = none,
+    text_font: Font = Font::Arial,
+    text_size: float = 0,
+    text_color: Color = TRANSPARENT,
+    text_margin: float = 0,
+    text_max_width: float = 0,
+    text_max_height: float = 0,
+    text_background_color: Color = TRANSPARENT,
+    text_border_color: Color = TRANSPARENT,
+    text_horizontal_align: HorizontalAlign = HorizontalAlign::Center,
+    text_vertical_align: VerticalAlign = VerticalAlign::Middle,
+    text_bold: bool = false,
+    text_italic: bool = false,
+    text_cursor_index: int = -1,
+
+    write_to_buffer(buffer: SimpleBuffer) {
+        iter_fields {
+            buffer.write(self.#FIELD_NAME);
+        }
+    }
+}

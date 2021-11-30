@@ -14,15 +14,17 @@ const VIRTUAL_PAGE_METADATA_SIZE = 4;
 const POINTER_METADATA_SIZE = 1;
 const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE = 64;
 const BLOCK_SIZE_COUNT = 8;
+const MAX_BLOCK_SIZE = 4.pow(BLOCK_SIZE_COUNT);
 const MEMORY_METADATA_ADDR_START = NULL_ZONE_SIZE;
 const MEMORY_METADATA_SIZE = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE * BLOCK_SIZE_COUNT;
+
+const BIG_BLOCK_COUNT = 0; // Actually not a constant
+const BIG_BLOCKS_METADATA_START = MEMORY_METADATA_ADDR_START + MEMORY_METADATA_SIZE;
 
 const HEADER_WASM_PAGE_COUNT = 1;
 const HEADER_SIZE = HEADER_WASM_PAGE_COUNT * WASM_PAGE_SIZE;
 
 const MEMORY = (0 as ptr);
-
-const ALLOCATED_POINTER_METADATA = 1;
 
 // Each allocated pointer has a single value of metadata that can be one of the following:
 // 0: the pointer has been garbage collected and can be returned by a future call of `@alloc`
@@ -31,6 +33,10 @@ const ALLOCATED_POINTER_METADATA = 1;
 
 // Triggerring the GC changes the metadata of all pointer from 2 to 1
 // "Retaining" a pointer changes its metadata from 1 to 2
+
+pub fn mem_init() {
+    mem_trigger_garbage_collection();
+}
 
 pub fn wasm_store<T>(int, T) {{
     <T>.store
@@ -57,6 +63,29 @@ fn alloc_page() -> ptr {
 }
 
 sys fn mem_alloc(block_size: int) -> ptr {
+    if block_size >= MAX_BLOCK_SIZE {
+        for i in 0..BIG_BLOCK_COUNT {
+            let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
+            
+            if block_ptr[0] >= block_size && block_ptr[1] == 0 {
+                block_ptr[1] = 1;
+
+                return block_ptr.add(2);
+            }
+        }
+
+        let rounded_block_size = ((block_size - 1) / WASM_PAGE_SIZE + 1) * WASM_PAGE_SIZE;
+        let block_ptr = (wasm_memory_grow(rounded_block_size / WASM_PAGE_SIZE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
+
+        block_ptr[0] = rounded_block_size;
+        block_ptr[1] = 1;
+
+        MEMORY[BIG_BLOCKS_METADATA_START + BIG_BLOCK_COUNT] = block_ptr as int;
+        BIG_BLOCK_COUNT += 1;
+
+        return block_ptr.add(2);
+    }
+
     let result = 0 as ptr;
     let block_size_index = block_size.log4() - 1;
     let list_start_addr = MEMORY_METADATA_ADDR_START + block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
@@ -92,23 +121,13 @@ sys fn mem_alloc(block_size: int) -> ptr {
         if offset != 0 {
             offset -= 1;
             result = page_ptr[offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
-            result[-1] = ALLOCATED_POINTER_METADATA;
+            result[-1] = 1;
             page_ptr[0] = offset;
             break;
         }
     }
 
     result
-}
-
-sys fn mem_free(pointer: ptr) {
-    let addr = pointer as int;
-    let page_ptr = (((addr - HEADER_SIZE) >> VIRTUAL_PAGE_SIZE_POWER_OF_TWO) << VIRTUAL_PAGE_SIZE_POWER_OF_TWO) + HEADER_SIZE as ptr;
-    let avilable_block_count = page_ptr[0];
-
-    pointer[-1] = 0;
-    page_ptr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = addr;
-    page_ptr[0] = avilable_block_count + 1;
 }
 
 sys fn mem_trigger_garbage_collection() {
@@ -132,43 +151,28 @@ sys fn mem_trigger_garbage_collection() {
                 let metadata_value = metadata_ptr[0];
 
                 if metadata_value == 1 {
-                    mem_free(metadata_ptr.add(1));
+                    let avilable_block_count = page_ptr[0];
+
+                    metadata_ptr[0] = 0;
+                    page_ptr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = (metadata_ptr as int) + 1;
+                    page_ptr[0] = avilable_block_count + 1;
                 } else if metadata_value == 2 {
                     metadata_ptr[0] = 1;
                 }
             }
         }
     }
-}
 
-sys fn get_allocated_memory_block_count() -> int {
-    let count = 0;
+    for i in 0..BIG_BLOCK_COUNT {
+        let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
+        let metadata_value = block_ptr[1];
 
-    for i in 0..BLOCK_SIZE_COUNT {
-        for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
-            let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
-
-            if page_addr == 0 {
-                break;
-            }
-
-            let page_ptr = page_addr as ptr;
-            let block_list_start_addr = page_ptr[1];
-            let full_block_size = page_ptr[2];
-            let block_count = page_ptr[3];
-
-            for k in 0..block_count {
-                let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
-                let metadata_value = metadata_ptr[0];
-
-                if metadata_value != 0 {
-                    count += 1;
-                }
-            }
+        if metadata_value == 1 {
+            block_ptr[1] = 0;
+        } else if metadata_value == 2 {
+            block_ptr[1] = 1;
         }
     }
-
-    count
 }
 
 // Returns the allocated memory in bytes
@@ -196,6 +200,16 @@ sys fn get_memory_usage() -> int {
                     count += full_block_size;
                 }
             }
+        }
+    }
+
+    for i in 0..BIG_BLOCK_COUNT {
+        let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
+        let block_size = block_ptr[0];
+        let allocated = block_ptr[1] != 0;
+
+        if allocated {
+            count += block_size;
         }
     }
 

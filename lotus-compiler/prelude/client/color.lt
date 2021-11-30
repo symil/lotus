@@ -1,25 +1,24 @@
 export class Color {
-    r: float,
-    g: float,
-    b: float,
-    a: float,
+    r: int,
+    g: int,
+    b: int,
+    a: int,
 
     static from(components: int[]) -> Self {
         Color {
-            r: (components[0] || 0).to_float() / 255f,
-            g: (components[1] || 0).to_float() / 255f,
-            b: (components[2] || 0).to_float() / 255f,
-            a: (components[3] || 255).to_float() / 255f,
+            r: (components[0] || 0),
+            g: (components[1] || 0),
+            b: (components[2] || 0),
+            a: (components[3] || 255),
         }
     }
 
     get_components() -> int[] {
-        [
-            (self.r * 255f).round().to_int(),
-            (self.g * 255f).round().to_int(),
-            (self.b * 255f).round().to_int(),
-            (self.a * 255f).round().to_int(),
-        ]
+        [ self.r, self.g, self.b, self.a ]
+    }
+
+    to_int() -> int {
+        (self.r << 24) + (self.g << 16) + (self.b << 8) + self.a
     }
 }
 

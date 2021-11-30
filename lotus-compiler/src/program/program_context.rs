@@ -547,10 +547,6 @@ impl ProgramContext {
             function_declaration.process_signature(self);
         }
 
-        for type_declaration in &types {
-            type_declaration.process_fields_default_values(self);
-        }
-
         // TYPE PARAMS CHECK START
         for type_blueprint in self.types.get_all() {
             type_blueprint.borrow().check_types_parameters(self);
@@ -567,6 +563,10 @@ impl ProgramContext {
 
         for global_var_declaration in &global_vars {
             global_var_declaration.process(self);
+        }
+
+        for type_declaration in &types {
+            type_declaration.process_fields_default_values(self);
         }
 
         for type_declaration in &types {

@@ -1,14 +1,14 @@
 import { ImageLoader } from './image-loader';
-import { HORIZONTALAlign_TO_OFFSET_X, VERTICALAlign_TO_OFFSET_Y, VERTICALAlign_TO_textBASELINE, TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS } from './renderer-constants';
+import { TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS, SHAPES, HORIZONTAL_ALIGNS, VERTICAL_ALIGNS, CURSORS, FONTS } from './renderer-constants';
 import { formatText } from './text-formatting';
-import { colorToString, colorToU32, hashNumberList, hashString, stringToArray } from './utils';
+import { colorToString, colorToU32, hashNumberList, hashString } from './utils';
 
 export class Renderer {
     constructor(windowManager) {
         this._window = windowManager;
         this._ctx = null;
         this._imageLoader = new ImageLoader();
-        this._strings = new Map();
+        this._stringHashes = new Map();
         this._cachedTexts = new Map();
         this._cachedImages = new Map();
     }
@@ -17,65 +17,58 @@ export class Renderer {
         this._imageLoader.register(url, image);
     }
 
-    getStringId(string) {
-        let hash = hashString(string);
-
-        this._strings.set(hash, string);
-
-        return hash;
-    }
-
     clearCache() {
-        this._strings.clear();
+        this._stringHashes.clear();
         this._cachedTexts.clear();
         this._cachedImages.clear();
     }
 
-    clear() {
+    drawFrameFromBuffer(buffer) {
+        let cursor = buffer.readEnum(CURSORS);
+
         this._window.clear();
-        this.setCursor(null);
+        this._window.setCursor(cursor);
 
-        // TODO: implement a mechanism to clear cache if needed
+        while (!buffer.isFinished()) {
+            this._drawPrimitiveFromBuffer(buffer);
+        }
     }
 
-    setCursor(cursor) {
-        this._window.setCursor(cursor || 'default');
-    }
+    _drawPrimitiveFromBuffer(buffer) {
+        let x = buffer.readFloat();
+        let y = buffer.readFloat();
+        let z = buffer.readFloat();
+        let width = buffer.readFloat();
+        let height = buffer.readFloat();
+        let angle = buffer.readFloat();
+        let shape = buffer.readEnum(SHAPES);
+        let borderColor = buffer.readColor();
+        let borderWidth = buffer.readFloat();
+        let borderRadius = buffer.readFloat();
+        let borderDashLength = buffer.readFloat();
+        let borderGapLength = buffer.readFloat();
+        let backgroundColor = buffer.readColor();
+        let overlayColor = buffer.readColor();
+        let imageUrl = buffer.readString();
+        let imageWidth = buffer.readFloat();
+        let imageHeight = buffer.readFloat();
+        let text = buffer.readString();
+        let textFont = buffer.readEnum(FONTS);
+        let textSize = buffer.readFloat();
+        let textColor = buffer.readColor();
+        let textMargin = buffer.readFloat();
+        let textMaxWidth = buffer.readFloat();
+        let textMaxHeight = buffer.readFloat();
+        let textBackgroundColor = buffer.readColor();
+        let textBorderColor = buffer.readColor();
+        let textHorizontalAlign = buffer.readEnum(HORIZONTAL_ALIGNS);
+        let textVerticalAlign = buffer.readEnum(VERTICAL_ALIGNS);
+        let textBold = buffer.read();
+        let textItalic = buffer.read();
+        let textCursorIndex = buffer.read();
 
-    draw(primitive) {
-        let {
-            x,
-            y,
-            z,
-            shape,
-            width,
-            height,
-            angle,
-            borderColor,
-            borderWidth,
-            borderRadius,
-            borderDashLength,
-            borderGapLength,
-            backgroundColor,
-            overlayColor,
-            imageUrl,
-            imageWidth,
-            imageHeight,
-            text,
-            textFont,
-            textSize,
-            textColor,
-            textMargin,
-            textMaxWidth,
-            textMaxHeight,
-            textBackgroundColor,
-            textBorderColor,
-            textHorizontalAlign,
-            textVerticalAlign,
-            textBold,
-            textItalic,
-            textCursorIndex,
-        } = primitive;
+        // let primitive = { x, y, z, shape, width, height, angle, borderColor, borderWidth, borderRadius, borderDashLength, borderGapLength, backgroundColor, overlayColor, imageUrl, imageWidth, imageHeight, text, textFont, textSize, textColor, textMargin, textMaxWidth, textMaxHeight, textBackgroundColor, textBorderColor, textHorizontalAlign, textVerticalAlign, textBold, textItalic, textCursorIndex };
+        // console.log(primitive);
 
         let x1 = x - width / 2;
         let y1 = y - height / 2;
@@ -163,9 +156,21 @@ export class Renderer {
         this._ctx.restore();
     }
 
-    _getTextImageFromCache(textId, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor) {
-        let text = this._strings.get(textId);
-        let hash = hashNumberList([textId, maxWidth, padding, textSize, colorToU32(textColor), ...stringToArray(textFont), textCursorIndex, colorToU32(backgroundColor), colorToU32(borderColor)]);
+    _getStringHash(string) {
+        let hash = this._stringHashes.get(string);
+
+        if (!hash) {
+            hash = hashString(string);
+            this._stringHashes.set(string, hash);
+        }
+
+        return hash;
+    }
+
+    _getTextImageFromCache(text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor) {
+        let textHash = this._getStringHash(text);
+        let textFontHash = this._getStringHash(textFont);
+        let hash = hashNumberList([textHash, maxWidth, padding, textSize, colorToU32(textColor), textFontHash, textCursorIndex, colorToU32(backgroundColor), colorToU32(borderColor)]);
         let image = this._cachedTexts.get(hash);
 
         if (!image) {
@@ -176,13 +181,12 @@ export class Renderer {
         return image;
     }
 
-    _getImageFromCache(urlId, width, height) {
-        let id = hashNumberList([urlId, width, height]);
+    _getImageFromCache(url, width, height) {
+        let urlHash = this._getStringHash(url);
+        let id = hashNumberList([urlHash, width, height]);
         let image = this._cachedImages.get(id);
 
         if (!image) {
-            let url = this._strings.get(urlId);
-
             image = this._imageLoader.get(url);
             image = resizeImage(image, width, height);
 

@@ -1,14 +1,13 @@
 pub class SimpleBuffer {
-    size: int,
     pointer: ptr,
+    size: int,
     index: int
 
     static new(size: int) -> Self {
-        Self {
-            size,
-            pointer: @alloc(size),
-            index: 0
-        }
+        let pointer = @alloc(size);
+        let index = 0;
+
+        Self { size, pointer, index }
     }
 
     reset_index() {
@@ -21,5 +20,10 @@ pub class SimpleBuffer {
         self.index += 1;
 
         result
+    }
+
+    write<T>(value: T) {
+        (self.pointer as Pointer<T>)[self.index] = value;
+        self.index += 1;
     }
 }

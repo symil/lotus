@@ -18,6 +18,6 @@ world
 13 30 false Color {
   r: 0,
   g: 0,
-  b: 1,
-  a: 1,
+  b: 255,
+  a: 255,
 }

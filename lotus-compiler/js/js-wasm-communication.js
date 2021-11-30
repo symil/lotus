@@ -11,16 +11,16 @@ export function writeWindowEventToBuffer(event, buffer) {
 
     if (type == 'keyboard') {
         buffer.write(eventTypeId);
-        buffer.write(KEYBOARD_ACTIONS.indexOf(payload.action));
-        buffer.write(KEYBOARD_CODES.indexOf(payload.code));
+        buffer.writeEnum(payload.action, KEYBOARD_ACTIONS);
+        buffer.writeEnum(payload.code, KEYBOARD_CODES);
         buffer.write(payload.text ? payload.text.charCodeAt(0) : -2147483648);
         buffer.write(payload.ctrlKey);
         buffer.write(payload.shiftKey);
         buffer.write(payload.altKey);
     } else if (type == 'mouse') {
         buffer.write(eventTypeId);
-        buffer.write(MOUSE_ACTIONS.indexOf(payload.action));
-        buffer.write(MOUSE_BUTTONS.indexOf(payload.button));
+        buffer.writeEnum(payload.action, MOUSE_ACTIONS);
+        buffer.writeEnum(payload.button, MOUSE_BUTTONS);
         buffer.writeFloat(payload.x);
         buffer.writeFloat(payload.y);
     } else if (type == 'wheel') {
@@ -28,7 +28,7 @@ export function writeWindowEventToBuffer(event, buffer) {
         buffer.writeFloat(payload.deltaX);
         buffer.writeFloat(payload.deltaY);
         buffer.writeFloat(payload.deltaZ);
-        buffer.write(WHEEL_DELTA_MODES.indexOf(payload.deltaMode));
+        buffer.writeEnum(payload.deltaMode, WHEEL_DELTA_MODES);
     }
 }
 
