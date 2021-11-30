@@ -1,5 +1,5 @@
 import { ImageLoader } from './image-loader';
-import { HORIZONTAL_ALIGN_TO_OFFSET_X, VERTICAL_ALIGN_TO_OFFSET_Y, VERTICAL_ALIGN_TO_TEXT_BASELINE, TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS } from './renderer-constants';
+import { HORIZONTALAlign_TO_OFFSET_X, VERTICALAlign_TO_OFFSET_Y, VERTICALAlign_TO_textBASELINE, TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS } from './renderer-constants';
 import { formatText } from './text-formatting';
 import { colorToString, colorToU32, hashNumberList, hashString, stringToArray } from './utils';
 
@@ -51,30 +51,30 @@ export class Renderer {
             width,
             height,
             angle,
-            border_color,
-            border_width,
-            border_radius,
-            border_dash_length,
-            border_gap_length,
-            background_color,
-            overlay_color,
-            image_url,
-            image_width,
-            image_height,
+            borderColor,
+            borderWidth,
+            borderRadius,
+            borderDashLength,
+            borderGapLength,
+            backgroundColor,
+            overlayColor,
+            imageUrl,
+            imageWidth,
+            imageHeight,
             text,
-            text_font,
-            text_size,
-            text_color,
-            text_margin,
-            text_max_width,
-            text_max_height,
-            text_background_color,
-            text_border_color,
-            text_horizontal_align,
-            text_vertical_align,
-            text_bold,
-            text_italic,
-            text_cursor_index,
+            textFont,
+            textSize,
+            textColor,
+            textMargin,
+            textMaxWidth,
+            textMaxHeight,
+            textBackgroundColor,
+            textBorderColor,
+            textHorizontalAlign,
+            textVerticalAlign,
+            textBold,
+            textItalic,
+            textCursorIndex,
         } = primitive;
 
         let x1 = x - width / 2;
@@ -95,20 +95,20 @@ export class Renderer {
             this._ctx.translate(-x, -y);
         }
 
-        if (background_color.a || borderColor.a || overlayColor.a) {
-            this._drawShape(shape, x, y, width, height, border_radius);
+        if (backgroundColor.a || borderColor.a || overlayColor.a) {
+            this._drawShape(shape, x, y, width, height, borderRadius);
             if (shape !== 'line') {
                 this._ctx.clip();
             }
         }
 
-        if (background_color.a) {
-            this._ctx.fillStyle = colorToString(background_color);
+        if (backgroundColor.a) {
+            this._ctx.fillStyle = colorToString(backgroundColor);
             this._ctx.fill();
         }
 
-        if (image_url) {
-            let image = this._getImageFromCache(image_url, Math.round(image_width), Math.round(image_height));
+        if (imageUrl) {
+            let image = this._getImageFromCache(imageUrl, Math.round(imageWidth), Math.round(imageHeight));
 
             if (image) {
                 let imageX = Math.floor(x - image.width / 2);
@@ -119,44 +119,44 @@ export class Renderer {
         }
 
         if (text) {
-            let textPadding = Math.max(border_radius, text_margin);
-            let textImage = this._getTextImageFromCache(text, text_max_width, textPadding, text_size, text_color, text_font, text_bold, text_italic, text_cursor_index, text_background_color, text_border_color);
+            let textPadding = Math.max(borderRadius, textMargin);
+            let textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, textBackgroundColor, textBorderColor);
             let textX = x - textImage.width / 2;
             let textY = y - textImage.height / 2;
             let dx = (width - textImage.width) / 2;
             let dy = (height - textImage.height) / 2;
 
-            if (text_horizontal_align === 'left') {
+            if (textHorizontalAlign === 'left') {
                 textX -= dx;
-            } else if (text_horizontal_align === 'right') {
+            } else if (textHorizontalAlign === 'right') {
                 textX += dy;
             }
 
-            if (text_vertical_align === 'top') {
+            if (textVerticalAlign === 'top') {
                 textY -= dy;
-            } else if (text_horizontal_align === 'bottom') {
+            } else if (textHorizontalAlign === 'bottom') {
                 textY += dy;
             }
 
             this._ctx.drawImage(textImage, Math.floor(textX), Math.floor(textY));
         }
 
-        if (overlay_color.a) {
-            this._ctx.fillStyle = colorToString(overlay_color);
+        if (overlayColor.a) {
+            this._ctx.fillStyle = colorToString(overlayColor);
             this._ctx.fill();
         }
 
-        if (border_color.a && border_width) {
-            if (border_dash_length && border_gap_length) {
-                this._ctx.setLineDash([border_dash_length, border_gap_length]);
+        if (borderColor.a && borderWidth) {
+            if (borderDashLength && borderGapLength) {
+                this._ctx.setLineDash([borderDashLength, borderGapLength]);
             } else {
                 this._ctx.setLineDash([]);
             }
 
             let m = shape === 'line' ? 1 : 2;
 
-            this._ctx.lineWidth = border_width * m;
-            this._ctx.strokeStyle = colorToString(border_color);
+            this._ctx.lineWidth = borderWidth * m;
+            this._ctx.strokeStyle = colorToString(borderColor);
             this._ctx.stroke();
         }
 

@@ -31,3 +31,19 @@ export function writeWindowEventToBuffer(event, buffer) {
         buffer.write(WHEEL_DELTA_MODES.indexOf(payload.deltaMode));
     }
 }
+
+export function readStringFromBuffer(buffer) {
+    let length = buffer.read();
+    let hash = buffer.read(); // not needed here
+    let codes = new Array(length);
+
+    for (let i = 0; i < length; ++i) {
+        codes[i] = buffer.read();
+    }
+
+    return String.fromCodePoint(...codes);
+}
+
+export function readGraphicsFromBuffer() {
+
+}

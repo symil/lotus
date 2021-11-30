@@ -1,4 +1,4 @@
-import { writeWindowEventToBuffer } from './js-to-wasm';
+import { readStringFromBuffer, writeWindowEventToBuffer } from './js-wasm-communication';
 import { MemoryBuffer } from './memory-buffer';
 import { Renderer } from './renderer';
 import { WindowManager } from './window-manager';
@@ -37,15 +37,8 @@ function getWasmImportsObject(env) {
     return {
         env: {
             log(stringAddr) {
-                let memory = new Uint32Array(env.getMemory());
-                let length = memory[stringAddr];
-                let codes = new Array(length);
-
-                for (let i = 0; i < length; ++i) {
-                    codes[i] = memory[stringAddr + 2 + i];
-                }
-
-                let string = String.fromCodePoint(...codes);
+                let buffer = new MemoryBuffer(env.getMemory(), stringAddr);
+                let string = readStringFromBuffer(buffer);
 
                 env.log(string);
             },
@@ -81,6 +74,14 @@ function getWasmImportsObject(env) {
                 renderer = new Renderer(windowManager);
 
                 windowManager.start();
+            },
+
+            get_window_width() {
+                return windowManager.getWidth();
+            },
+
+            get_window_height() {
+                return windowManager.getHeight();
             },
 
             poll_events(bufferLength, bufferAddr) {

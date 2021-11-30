@@ -10,17 +10,21 @@ export class MemoryBuffer {
         return this._currentIndex - this._startIndex;
     }
 
+    read() {
+        return this._memoryAsInt[this._currentIndex++];
+    }
+
+    readFloat() {
+        return this._memoryAsFloat[this._currentIndex++];
+    }
+
     write(value) {
         this._memoryAsInt[this._currentIndex] = value;
         this._currentIndex += 1;
-
-        return this;
     }
 
     writeFloat(value) {
         this._memoryAsFloat[this._currentIndex] = value;
         this._currentIndex += 1;
-
-        return this;
     }
 }

@@ -30,15 +30,12 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("env", "get_current_time", "get_current_time", &[], Some("i32")),
     ("client", "init_window", "init_window", &["f32"], None),
     ("client", "poll_events", "poll_events", &["i32", "i32"], Some("i32")),
-    // ("client", "get_window_width", "get_window_width", &[], Some("i32")),
-    // ("client", "get_window_height", "get_window_height", &[], Some("i32")),
+    ("client", "get_window_width", "get_window_width", &[], Some("f32")),
+    ("client", "get_window_height", "get_window_height", &[], Some("f32")),
     // ("client", "connect", "connect", &["i32"], Some("i32")),
     // ("client", "is_connected", "is_connected", &[], Some("i32")),
     // ("client", "read_message", "read_message", &["i32"], Some("i32")),
     // ("client", "send_message", "send_message", &["i32", "i32"], None),
-    // ("client", "get_mouse_x", "get_mouse_x", &[], Some("i32")),
-    // ("client", "get_mouse_y", "get_mouse_y", &[], Some("i32")),
-    // ("client", "get_mouse_wheel", "get_mouse_wheel", &[], Some("i32")),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[
