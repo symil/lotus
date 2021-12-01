@@ -16,8 +16,8 @@ function log(string) {
     console.log(string);
 }
 
-function createWebSocketServer(port) {
-    return new ws.WebSocketServer({ port });
+function createWebSocketServer(options) {
+    return new ws.WebSocketServer(options);
 }
 
 main();

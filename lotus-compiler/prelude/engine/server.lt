@@ -1,0 +1,53 @@
+const SERVER : Server = none;
+
+class Server {
+    buffer: SimpleBuffer,
+    websocket_server_id: int,
+
+    static new() -> Self {
+        Self {
+            buffer: SimpleBuffer::new(BIG_BUFFER_SIZE),
+        }
+    }
+
+    _start() {
+        @log("SERVER START");
+
+        self.websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
+    }
+
+    _update() {
+        self._process_network_events();
+    }
+
+    _process_network_events() {
+        let written_count = wasm_poll_network_events(self.buffer.pointer, self.buffer.size);
+
+        self.buffer.reset_index();
+
+        while self.buffer.index < written_count {
+            let network_event = decode_network_event_from_buffer(self.buffer);
+
+            @dbg(network_event);
+
+            if network_event.type == NetworkEventType::ConnectionOpen {
+                self.send(network_event.websocket_id, [1, 2, 3]);
+            }
+        }
+    }
+
+    send<T>(websocket_id: int, value: T) {
+        let buffer = @serialize(value);
+
+        wasm_send_message(websocket_id, buffer.body(), buffer.len());
+    }
+}
+
+sys fn start_server() {
+    SERVER = Server::new();
+    SERVER._start();
+}
+
+sys fn update_server() {
+    SERVER._update();
+}

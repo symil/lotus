@@ -1,4 +1,3 @@
-const BUFFER_SIZE = 4.pow(10);
 const CLIENT : Client = none;
 
 const VIRTUAL_WIDTH = 1600f;
@@ -13,19 +12,32 @@ export class Client {
     virtual_to_real_ratio: float,
     cursor_x: float,
     cursor_y: float,
+    websocket_id: int,
 
     static new() -> Self {
         Self {
-            buffer: SimpleBuffer::new(BUFFER_SIZE),
+            buffer: SimpleBuffer::new(BIG_BUFFER_SIZE),
             virtual_width: VIRTUAL_WIDTH,
             virtual_height: VIRTUAL_HEIGHT
         }
     }
 
-    _update() {
-        self.buffer.reset_index();
+    _start() {
+        @log("CLIENT START");
 
-        let written_count = wasm_poll_events(self.buffer.pointer, self.buffer.size);
+        wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
+        self.websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
+    }
+
+    _update() {
+        self._process_network_events();
+        self._process_window_events();
+    }
+
+    _process_window_events() {
+        let written_count = wasm_poll_window_events(self.buffer.pointer, self.buffer.size);
+
+        self.buffer.reset_index();
 
         while self.buffer.index < written_count {
             let window_event = decode_window_event_from_buffer(self.buffer);
@@ -50,15 +62,32 @@ export class Client {
         wasm_draw_frame(self.buffer.pointer, self.buffer.index);
     }
 
-    send_request(request: Object) {
+    _process_network_events() {
+        let written_count = wasm_poll_network_events(self.buffer.pointer, self.buffer.size);
 
+        self.buffer.reset_index();
+
+        while self.buffer.index < written_count {
+            let network_event = decode_network_event_from_buffer(self.buffer);
+
+            @dbg(network_event);
+
+            if network_event.type == NetworkEventType::ConnectionOpen {
+                self.send([1, 2, 3]);
+            }
+        }
+    }
+
+    send<T>(value: T) {
+        let buffer = @serialize(value);
+
+        wasm_send_message(self.websocket_id, buffer.body(), buffer.len());
     }
 }
 
 sys fn start_client() {
-    @log("CLIENT START");
-    wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
     CLIENT = Client::new();
+    CLIENT._start();
 }
 
 sys fn update_client() {
@@ -67,31 +96,3 @@ sys fn update_client() {
     @retain(CLIENT);
     @trigger_garbage_collection();
 }
-
-fn wasm_init_window(float) {{
-    (call $init_window)
-}}
-
-fn wasm_get_current_time() -> int {{
-    (call $get_current_time)
-}}
-
-fn wasm_poll_events(ptr, int) -> int {{
-    (call $poll_events)
-}}
-
-fn wasm_get_window_width() -> float {{
-    (call $get_window_width)
-}}
-
-fn wasm_get_window_height() -> float {{
-    (call $get_window_height)
-}}
-
-fn wasm_draw_frame(ptr, int) {{
-    (call $draw_frame)
-}}
-
-fn wasm_clear_renderer_cache() {{
-    (call $clear_renderer_cache)
-}}

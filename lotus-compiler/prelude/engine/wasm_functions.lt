@@ -1,0 +1,43 @@
+pub fn wasm_init_window(float) {{
+    (call $init_window)
+}}
+
+pub fn wasm_get_current_time() -> int {{
+    (call $get_current_time)
+}}
+
+pub fn wasm_poll_window_events(ptr, int) -> int {{
+    (call $poll_window_events)
+}}
+
+pub fn wasm_get_window_width() -> float {{
+    (call $get_window_width)
+}}
+
+pub fn wasm_get_window_height() -> float {{
+    (call $get_window_height)
+}}
+
+pub fn wasm_draw_frame(ptr, int) {{
+    (call $draw_frame)
+}}
+
+pub fn wasm_clear_renderer_cache() {{
+    (call $clear_renderer_cache)
+}}
+
+pub fn wasm_create_websocket(string) -> int {{
+    (call $create_websocket)
+}}
+
+pub fn wasm_send_message(int, ptr, int) {{
+    (call $send_message)
+}}
+
+pub fn wasm_create_websocket_server(int) -> int {{
+    (call $create_websocket_server)
+}}
+
+pub fn wasm_poll_network_events(ptr, int) -> int {{
+    (call $poll_network_events)
+}}

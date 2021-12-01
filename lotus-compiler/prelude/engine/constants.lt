@@ -1,0 +1,2 @@
+pub const WEBSOCKET_PORT = 8081;
+pub const BIG_BUFFER_SIZE = 4.pow(10);

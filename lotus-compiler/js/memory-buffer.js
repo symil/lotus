@@ -1,17 +1,14 @@
-import { readStringFromBuffer } from './js-wasm-communication';
-
 export class MemoryBuffer {
-    constructor(memory, index, length) {
-        this._memory = memory;
-        this._memoryAsInt = new Int32Array(memory);
-        this._memoryAsFloat = new Float32Array(memory);
+    constructor(memory, index, capacity) {
+        this._memoryAsInt = memory;
+        this._memoryAsFloat = new Float32Array(memory.buffer);
         this._startIndex = index;
         this._currentIndex = index;
-        this._length = length ?? Infinity;
+        this._capacity = capacity ?? Infinity;
     }
 
     isFinished() {
-        return this._startIndex === 0 || this.getLength() >= this._length;
+        return this._startIndex === 0 || this.getLength() >= this._capacity;
     }
 
     getLength() {
@@ -30,7 +27,7 @@ export class MemoryBuffer {
         let addr = this.read();
 
         if (addr) {
-            return readStringFromBuffer(new MemoryBuffer(this._memory, addr));
+            return readStringFromMemory(this._memoryAsInt, addr);
         } else {
             return '';
         }
@@ -62,5 +59,13 @@ export class MemoryBuffer {
 
     writeEnum(value, valueList) {
         this.write(valueList.indexOf(value));
+    }
+
+    writeBuffer(arrayBuffer) {
+        let buffer = new Int32Array(arrayBuffer);
+
+        this.write(buffer.length);
+        this._memoryAsInt.set(buffer, this._currentIndex);
+        this._currentIndex += buffer.length;
     }
 }

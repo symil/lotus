@@ -26,4 +26,14 @@ pub class SimpleBuffer {
         (self.pointer as Pointer<T>)[self.index] = value;
         self.index += 1;
     }
+
+    readBuffer() -> int[] {
+        let length : int = self.read();
+        let pointer = @alloc(length);
+
+        self.pointer.add(self.index).copy_to(pointer, length);
+        self.index += length;
+
+        Array<int>::from_raw_parts(pointer, length, length)
+    }
 }
