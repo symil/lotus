@@ -1,0 +1,229 @@
+class LayoutItem {
+    object: Object,
+    rect: Rect,
+    transform: Transform2D
+}
+
+pub class Layout {
+    start_rect: Rect,
+    target: Rect,
+    transform: Transform2D,
+    last: Rect?,
+    outer_margin: float,
+    inner_margin: float,
+    dx: float,
+    dy: float,
+    dynamic: bool,
+    fixed_items: LayoutItem[],
+    dynamic_items: LayoutItem[],
+
+    reset(rect: Rect, transform: Transform2D) -> Self {
+        self.start_rect = rect.clone();
+        self.target = rect.clone();
+        self.transform = transform.clone();
+        self.last = none;
+        self.outer_margin = 0;
+        self.inner_margin = 0;
+        self.dx = 0;
+        self.dy = 1;
+        self.dynamic = false;
+        self.fixed_items.clear();
+        self.dynamic_items.clear();
+        self
+    }
+
+    dynamic() -> Self {
+        self.dynamic = true;
+        self
+    }
+
+    fixed() -> Self {
+        self.dynamic = false;
+        self
+    }
+
+    scale(ratio: float) -> Self {
+        self.target.scale(ratio);
+        self
+    }
+
+    scale_x(ratio: float) -> Self {
+        self.target.width *= ratio;
+        self
+    }
+
+    scale_y(ratio: float) -> Self {
+        self.target.height *= ratio;
+        self
+    }
+
+    pad_to_match_aspect_ratio(aspect_ratio: float) -> Self {
+        self.target.pad_to_match_aspect_ratio(aspect_ratio);
+        self
+    }
+
+    strip_to_match_aspect_ratio(aspect_ratio: float) -> Self {
+        self.target.strip_to_match_aspect_ratio(aspect_ratio);
+        self
+    }
+
+    outer_margin(value: float) -> Self {
+        self.outer_margin = value;
+        self
+    }
+
+    inner_margin(value: float) -> Self {
+        self.inner_margin = value;
+        self
+    }
+
+    margin(value: float) -> Self {
+        self.outer_margin = value;
+        self.inner_margin = value;
+        self
+    }
+
+    move_to(x: float, y: float) -> Self {
+        self.flush();
+        self.last = none;
+        self.target.x = self.start_rect.width * x;
+        self.target.y = self.start_rect.height * y;
+        self
+    }
+
+    resize_from_width(width: float, aspect_ratio: float) -> Self {
+        self.target.width = self.start_rect.width * width;
+        self.target.height = self.target.width / aspect_ratio;
+        self
+    }
+
+    resize_from_height(height: float, aspect_ratio: float) -> Self {
+        self.target.height = self.start_rect.height * height;
+        self.target.width = self.target.height * aspect_ratio;
+        self
+    }
+
+    transform(transform: Transform2D) -> Self {
+        self.transform.multiply(transform);
+        self
+    }
+
+    push(object: Object) -> Self {
+        let (dx, dy) = self.snap_target_against_last_item();
+
+        self.target.x += dx;
+        self.target.y += dy;
+
+        if self.dynamic && self.dynamic_items.len() > 0 {
+            for item in self.dynamic_items {
+                item.rect.x -= dx / 2.;
+                item.rect.y -= dy / 2.;
+            }
+
+            self.target.x -= dx / 2.;
+            self.target.y -= dy / 2.;
+        }
+
+        let (dx, dy) = self.snap_target_against_edges();
+
+        if self.dynamic {
+            let (dx2, dy2) = self.snap_first_against_edges();
+
+            dx += dx2;
+            dy += dy2;
+
+            for item in self.dynamic_items {
+                item.rect.x += dx;
+                item.rect.y += dy;
+            }
+        }
+
+        self.target.x += dx;
+        self.target.y += dy;
+        self.last = self.target.clone();
+
+        self.dynamic_items.push(LayoutItem {
+            object,
+            rect: self.target.clone(),
+            transform: self.transform.clone()
+        });
+
+        self
+    }
+
+    _snap_target_against_last_item() -> (float, float) {
+        if !self.last {
+            return (0, 0);
+        }
+
+        let dx = self.last.width / 2. + self.inner_margin + self.target.width / 2.;
+        let dy = self.last.height / 2. + self.inner_margin + self.target.height / 2.;
+
+        let mx = dx / self.dx.abs();
+        let my = dy / self.dy.abs();
+        let m = mx.min(my);
+
+        (self.dx * m, self.dy * m)
+    }
+
+    _snap_against_edges(rect: Rect) -> (float, float) {
+        let dx = 0f;
+        let dy = 0f;
+
+        dx = dx.max(self.outer_margin - rect.x1());
+        dx = dx.min(self.start_rect.width - self.outer_margin - rect.x2());
+
+        dy = dy.max(self.outer_margin - rect.y1());
+        dy = dy.min(self.start_rect.height - self.outer_margin - rect.y2());
+
+        (dx, dy)
+    }
+
+    _snap_target_against_edges() -> (float, float) {
+        self._snap_against_edges(self.target)
+    }
+
+    _snap_first_against_edges(&self) -> (float, float) {
+        if !self.dynamic_items.first() {
+            return (0, 0);
+        }
+
+        self._snap_against_edges(self.dynamic_items[0])
+    }
+
+    towards(dx: float, dy: float) -> Self {
+        self.flush();
+        self.dx = dx;
+        self.dy = dy;
+        self
+    }
+
+    _flush() {
+        self.fixed_items.append(self.dynamic_items);
+    }
+
+    release() -> Self {
+        self.flush();
+        self
+    }
+
+    consume() -> LayoutItem[] {
+        self.flush();
+        self.fixed_items
+    }
+
+    towards_top(self) -> Self    { self.towards(0., -1.) }
+    towards_bottom(self) -> Self { self.towards(0., 1.) }
+    towards_left(self) -> Self   { self.towards(-1., 0.) }
+    towards_right(self) -> Self  { self.towards(1., 0.) }
+
+    move_top_left(self) -> Self      { self.move_to(0. , 0. ) }
+    move_top(self) -> Self           { self.move_to(0.5, 0. ) }
+    move_top_right(self) -> Self     { self.move_to(1. , 0. ) }
+    move_left(self) -> Self          { self.move_to(0. , 0.5) }
+    move_center(self) -> Self        { self.move_to(0.5, 0.5) }
+    move_right(self) -> Self         { self.move_to(1. , 0.5) }
+    move_bottom_left(self) -> Self   { self.move_to(0. , 1. ) }
+    move_bottom(self) -> Self        { self.move_to(0.5, 1. ) }
+    move_bottom_right(self) -> Self  { self.move_to(1. , 1. ) }
+}

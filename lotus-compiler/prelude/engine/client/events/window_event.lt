@@ -1,5 +1,5 @@
 pub event WindowEvent {
-
+    client: Client,
 }
 
 enum WindowEventType {
@@ -8,17 +8,19 @@ enum WindowEventType {
     Wheel
 }
 
-pub fn decode_window_event_from_buffer(buffer: SimpleBuffer) -> WindowEvent {
+pub fn decode_window_event_from_buffer(buffer: SimpleBuffer, client: Client) -> WindowEvent {
     let event_type : WindowEventType = buffer.read();
 
     match event_type {
         Mouse => MouseEvent {
+            client,
             action: buffer.read(),
             button: buffer.read(),
             x: buffer.read(),
             y: buffer.read(),
         },
         Keyboard => KeyboardEvent {
+            client,
             action: buffer.read(),
             code: buffer.read(),
             text: buffer.read(),
@@ -27,6 +29,7 @@ pub fn decode_window_event_from_buffer(buffer: SimpleBuffer) -> WindowEvent {
             alt_key: buffer.read(),
         },
         Wheel => WheelEvent {
+            client,
             delta_x: buffer.read(),
             delta_y: buffer.read(),
             delta_z: buffer.read(),

@@ -6,6 +6,10 @@ export class Rect {
     width: float,
     height: float,
 
+    static empty() -> Self {
+        Self { x:0, y: 0, width: 0, height: 0 }
+    }
+
     static new(x: float, y: float, width: float, height: float) -> Self {
         Self { x, y, width, height }
     }
@@ -49,49 +53,75 @@ export class Rect {
         self.y + self.height / 2f
     }
 
+    contains(x: float, y: float) -> bool {
+        x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
+    }
+
     clone() -> Self {
         Self::new(self.x, self.y, self.width, self.height)
     }
 
     round() -> Self {
-        Self::from_corners(self.x1().round(), self.y1().round(), self.x2().round(), self.y2().round())
+        let x1 = self.x1().round();
+        let x2 = self.x2().round();
+        let y1 = self.y1().round();
+        let y2 = self.y2().round();
+
+        self.x = (x1 + x2) / 2f;
+        self.y = (y1 + y2) / 2f;
+        self.width = x2 - x1;
+        self.height = y2 - y1;
+
+        self
     }
 
-    contains(x: float, y: float) -> bool {
-        x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
+    set_center(x: float, y: float) -> Self {
+        self.x = x;
+        self.y = y;
+        self
     }
 
-    with_center(x: float, y: float) -> Self {
-        Self::new(x, y, self.width, self.height)
-    }
-
-    with_size(width: float, height: float) -> Self {
-        Self::new(self.x, self.y, width, height)
+    set_size(width: float, height: float) -> Self {
+        self.width = width;
+        self.height= height;
+        self
     }
 
     translate(tx: float, ty: float) -> Self {
-        Self::new(self.x + tx, self.y + ty, self.width, self.height)
+        self.x += tx;
+        self.y += ty;
+        self
     }
 
     scale(ratio: float) -> Self {
-        Self::new(self.x, self.y, self.width * ratio, self.height * ratio)
+        self.width *= ratio;
+        self.height *= ratio;
+        self
     }
 
     multiply(ratio: float) -> Self {
-        Self::new(self.x * ratio, self.y * ratio, self.width * ratio, self.height * ratio)
+        self.x *= ratio;
+        self.y *= ratio;
+        self.width *= ratio;
+        self.height *= ratio;
+        self
     }
 
     pad(width: float, height: float) -> Self {
-        Self::new(self.x, self.y, self.width + width, self.height + height)
+        self.width += width;
+        self.height += height;
+        self
     }
 
     strip(width: float, height: float) -> Self {
-        Self::new(self.x, self.y, self.width - width, self.height - height)
+        self.width -= width;
+        self.height -= height;
+        self
     }
 
     pad_to_match_aspect_ratio(aspect_ratio: float?) -> Self {
         if !aspect_ratio {
-            return self.clone();
+            return self;
         }
 
         let width_from_height = self.height * aspect_ratio;
@@ -110,7 +140,7 @@ export class Rect {
 
     strip_to_match_aspect_ratio(aspect_ratio: float?) -> Self {
         if !aspect_ratio {
-            return self.clone();
+            return self;
         }
 
         let width_from_height = self.height * aspect_ratio;
@@ -125,6 +155,19 @@ export class Rect {
         }
 
         self.strip(width_to_strip, height_to_strip)
+    }
+
+    mirror(cx: float, cy: float) -> Self {
+        self.x = 2f * cx - self.x;
+        self.y = 2f * cy - self.y;
+        self
+    }
+
+    transform(transform: Transform2D) -> Self {
+        let (x, y) = transform.apply(self.x, self.y);
+        let (width, height) = transform.scale(self.width, self.height);
+
+        Self::new(x, y, width, height)
     }
 
     split_horizontally(left_width: float) -> (Self, Self) {
@@ -143,19 +186,5 @@ export class Rect {
             Self::from_top_left(self.x1(), self.y1(), self.width, top_height),
             Self::from_top_left(self.x1(), self.y2() - bottom_height, self.width, bottom_height),
         )
-    }
-
-    symmetry(cx: float, cy: float) -> Self {
-        let x = 2f * cx - self.x;
-        let y = 2f * cy - self.y;
-
-        Self::new(x, y, self.width, self.height)
-    }
-
-    transform(transform: Transform2D) -> Self {
-        let (x, y) = transform.apply(self.x, self.y);
-        let (width, height) = transform.scale(self.width, self.height);
-
-        Self::new(x, y, width, height)
     }
 }

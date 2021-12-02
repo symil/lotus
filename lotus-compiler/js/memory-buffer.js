@@ -26,15 +26,20 @@ export class MemoryBuffer {
     readString() {
         let addr = this.read();
 
-        if (addr) {
-            return readStringFromMemory(this._memoryAsInt, addr);
-        } else {
+        if (!addr) {
             return '';
         }
+
+        return readStringFromMemory(this._memoryAsInt, addr);
     }
 
     readColor() {
         let addr = this.read();
+
+        if (!addr) {
+            return { r: 0, g: 0, b: 0, a: 0 };
+        }
+
         let r = this._memoryAsInt[addr + 1];
         let g = this._memoryAsInt[addr + 2];
         let b = this._memoryAsInt[addr + 3];

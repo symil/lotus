@@ -179,16 +179,16 @@ impl TypeDeclaration {
                         ty: base_object.borrow().self_type.clone(),
                     });
                 }
-            } else if self.qualifier == TypeQualifier::View {
-                result = Some(ParentInfo {
-                    location: DataLocation::default(),
-                    ty: context.get_builtin_type(BuiltinType::View, vec![])
-                });
-            } else if self.qualifier == TypeQualifier::Event {
-                result = Some(ParentInfo {
-                    location: DataLocation::default(),
-                    ty: context.get_builtin_type(BuiltinType::Event, vec![])
-                });
+            // } else if self.qualifier == TypeQualifier::View {
+            //     result = Some(ParentInfo {
+            //         location: DataLocation::default(),
+            //         ty: context.get_builtin_type(BuiltinType::View, vec![])
+            //     });
+            // } else if self.qualifier == TypeQualifier::Event {
+            //     result = Some(ParentInfo {
+            //         location: DataLocation::default(),
+            //         ty: context.get_builtin_type(BuiltinType::Event, vec![])
+            //     });
             } else if self.qualifier == TypeQualifier::Enum {
                 let base_enum = context.types.get_by_name(ENUM_TYPE_NAME).unwrap();
 

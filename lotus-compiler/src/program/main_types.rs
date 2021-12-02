@@ -20,9 +20,9 @@ impl MainType {
 
     pub fn get_default_name(&self) -> &'static str {
         match self {
-            MainType::World => "BaseWorld",
-            MainType::User => "BaseUser",
-            MainType::Window => "View",
+            MainType::World => "Object",
+            MainType::User => "Object",
+            MainType::Window => "Object",
             MainType::LocalData => "Object",
         }
     }

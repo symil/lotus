@@ -1,8 +1,8 @@
 export class Transform2D {
-    tx: float = 0f,
-    ty: float = 0f,
-    sx: float = 1f,
-    sy: float = 1f,
+    tx: float = 0,
+    ty: float = 0,
+    sx: float = 1,
+    sy: float = 1,
 
     static new(scale: float, x: float, y: float) -> Self {
         let sx = scale;
@@ -14,7 +14,15 @@ export class Transform2D {
     }
 
     static identity() -> Self {
-        Self::new(0f, 1f, 1f)
+        Self::new(1, 0, 0)
+    }
+
+    reset() -> Self {
+        self.tx = 0;
+        self.ty = 0;
+        self.sx = 1;
+        self.sy = 1;
+        self
     }
 
     apply(x: float, y: float) -> (float, float) {
@@ -46,20 +54,18 @@ export class Transform2D {
     }
 
     multiply(other: Self) -> Self {
-        Self {
-            tx: other.tx + other.sx * self.tx,
-            ty: other.ty + other.sy * self.ty,
-            sx: other.sx * self.sx,
-            sy: other.sx * self.sy,
-        }
+        self.tx = self.tx * other.sx + other.tx;
+        self.ty = self.ty * other.sy + other.ty;
+        self.sx = self.sx * other.sx;
+        self.sy = self.sy * other.sy;
+        self
     }
 
     divide(other: Self) -> Self {
-        Self {
-            tx: (self.tx - other.tx) / other.sx,
-            ty: (self.ty - other.ty) / other.sy,
-            sx: self.sx / other.sx,
-            sy: self.sy / other.sy,
-        }
+        self.tx = (self.tx - other.tx) / other.sx;
+        self.ty = (self.ty - other.ty) / other.sy;
+        self.sx = self.sx / other.sx;
+        self.sy = self.sy / other.sy;
+        self
     }
 }

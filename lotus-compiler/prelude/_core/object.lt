@@ -191,4 +191,24 @@ export class Object {
             self.#FIELD_NAME = #FIELD_TYPE::__deserialize(buffer) as #FIELD_TYPE;
         }
     }
+
+    emit(targets: Object[]) {
+        emit_event(self, targets);
+    }
+
+    dyn trigger() {
+
+    }
+
+    dyn yield(object: Object) {
+        
+    }
+
+    dyn get_hitbox() -> Rect? {
+        none
+    }
+
+    dyn to_draw_primitive(rect: Rect, transform: Transform2D) -> DrawPrimitive? {
+        none
+    }
 }

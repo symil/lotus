@@ -7,8 +7,6 @@ pub enum TypeQualifier {
     Type = "type",
     Enum = "enum",
     Class = "class",
-    View = "view",
-    Event = "event"
 }
 
 impl TypeQualifier {
@@ -16,7 +14,7 @@ impl TypeQualifier {
         match self {
             TypeQualifier::Type => TypeCategory::Type,
             TypeQualifier::Enum => TypeCategory::Enum,
-            TypeQualifier::Class | TypeQualifier::View | TypeQualifier::Event => TypeCategory::Class,
+            TypeQualifier::Class => TypeCategory::Class,
         }
     }
 }

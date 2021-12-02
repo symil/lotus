@@ -21,7 +21,11 @@ export class DisplaySize {
         }
     }
 
-    compute_final_value(virtual_width: float, virtual_height: float, virtual_to_real_ratio: float) -> float {
+    resolve(virtual_width: float, virtual_height: float, virtual_to_real_ratio: float) -> float {
+        if self.__is_none() {
+            return 0;
+        }
+
         match self.kind {
             Real => self.value,
             Virtual => self.value * virtual_to_real_ratio,

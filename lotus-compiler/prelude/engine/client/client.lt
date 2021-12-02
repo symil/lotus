@@ -4,7 +4,14 @@ const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
 export class Client {
-    buffer: SimpleBuffer,
+    _buffer: SimpleBuffer,
+    _websocket_id: int,
+    _layout: Layout,
+
+    user: #USER_TYPE?,
+    local_data: #LOCAL_DATA_TYPE,
+    hover_stack: View[],
+    views: View[],
     real_width: float,
     real_height: float,
     virtual_width: float,
@@ -12,7 +19,6 @@ export class Client {
     virtual_to_real_ratio: float,
     cursor_x: float,
     cursor_y: float,
-    websocket_id: int,
 
     static new() -> Self {
         Self {
@@ -26,7 +32,7 @@ export class Client {
         @log("CLIENT START");
 
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
-        self.websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
+        self._websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
     }
 
     _update() {
@@ -34,13 +40,46 @@ export class Client {
         self._process_window_events();
     }
 
+    _create_views() {
+        self.hover_stack.clear();
+        self.all_views.clear();
+
+        let root_view = #WINDOW_TYPE;
+        let root_rect = Rect::from_size(self.virtual_width, self.virtual_height);
+        let root_transform = Transform2D::identity();
+
+        self._render_view(root_view, root_rect, root_transform);
+    }
+
+    _render_view(view: View, rect: Rect, transform: Transform2D) {
+        let render_event = Render {
+            client: self,
+            layout: self._layout.reset(rect, transform)
+        };
+
+        render_event.emit([view]);
+
+        for item in self._layout.consume() {
+            
+        }
+
+        let graphics = view.graphics.first();
+
+        if graphics && graphics.detectable {
+            let hitbox = self.graphics_to_hitbox(graphics, view.transform);
+
+            // view._hitbox = hitbox;
+            // view._hitbox_z = graphics.z;
+        }
+    }
+
     _process_window_events() {
-        let written_count = wasm_poll_window_events(self.buffer.pointer, self.buffer.size);
+        let written_count = wasm_poll_window_events(self._buffer.pointer, self._buffer.size);
 
-        self.buffer.reset_index();
+        self._buffer.reset_index();
 
-        while self.buffer.index < written_count {
-            let window_event = decode_window_event_from_buffer(self.buffer);
+        while self._buffer.index < written_count {
+            let window_event = decode_window_event_from_buffer(self._buffer, self);
         }
 
         self.real_width = wasm_get_window_width();
@@ -55,33 +94,34 @@ export class Client {
             background_color: ORANGE
         };
 
-        self.buffer.reset_index();
-        self.buffer.write(Cursor::Pointer);
-        primitive.write_to_buffer(self.buffer);
+        self._buffer.reset_index();
+        self._buffer.write(Cursor::Pointer);
+        primitive.write_to_buffer(self._buffer);
 
-        wasm_draw_frame(self.buffer.pointer, self.buffer.index);
+        wasm_draw_frame(self._buffer.pointer, self._buffer.index);
     }
 
     _process_network_events() {
-        let written_count = wasm_poll_network_events(self.buffer.pointer, self.buffer.size);
+        let written_count = wasm_poll_network_events(self._buffer.pointer, self._buffer.size);
+        let network_events : NetworkEvent[] = [];
 
-        self.buffer.reset_index();
+        self._buffer.reset_index();
 
-        while self.buffer.index < written_count {
-            let network_event = decode_network_event_from_buffer(self.buffer);
+        while self._buffer.index < written_count {
+            network_events.push(decode_network_event_from_buffer(self._buffer));
+        }
 
-            @dbg(network_event);
+        let last_event = network_events.last();
 
-            if network_event.type == NetworkEventType::ConnectionOpen {
-                self.send([1, 2, 3]);
-            }
+        if last_event && last_event.type == NetworkEventType::Message {
+            self.user = @deserialize(last_event.payload);
         }
     }
 
     send<T>(value: T) {
         let buffer = @serialize(value);
 
-        wasm_send_message(self.websocket_id, buffer.body(), buffer.len());
+        wasm_send_message(self._websocket_id, buffer.body(), buffer.len());
     }
 }
 

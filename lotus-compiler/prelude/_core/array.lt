@@ -187,6 +187,22 @@ export type(i32) Array<T> {
         self.body().set_at(index, value);
     }
 
+    first() -> T? {
+        if self.is_empty() {
+            return none;
+        }
+
+        self.get_at(0)
+    }
+
+    last() -> T ?{
+        if self.is_empty() {
+            return none;
+        }
+
+        self.get_at(self.len() - 1)
+    }
+
     as_ptr() -> ptr {
         self as ptr
     }
