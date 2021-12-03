@@ -396,19 +396,19 @@ export type(i32) Array<T> {
         result
     }
 
-    sort(compare: fn(T, T)(int)) -> Self {
+    sort(compare: fn(T, T)(bool)) -> Self {
         quick_sort(self.body(), 0, self.len() - 1, compare);
 
         self
     }
 }
 
-fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) -> int {
+fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(bool)) -> int {
     let pivot = array[end_index];
     let i = start_index - 1;
 
     for j in start_index..end_index {
-        if compare(array[j], pivot) < 0 {
+        if compare(array[j], pivot) {
             i += 1;
             array.swap(i, j);
         }
@@ -419,7 +419,7 @@ fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn
     i + 1
 }
 
-fn quick_sort<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) {
+fn quick_sort<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(bool)) {
     if start_index < end_index {
         let mid = partition(array, start_index, end_index, compare);
 

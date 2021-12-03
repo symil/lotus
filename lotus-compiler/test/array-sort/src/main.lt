@@ -1,5 +1,5 @@
-fn compare(a: int, b: int) -> int {
-    a - b
+fn compare(a: int, b: int) -> bool {
+    a < b
 }
 
 export fn main() {

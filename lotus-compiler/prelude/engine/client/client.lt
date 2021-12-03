@@ -91,6 +91,7 @@ export class Client {
         let root_transform = Transform2D::identity();
 
         self._render_view(root_view, root_rect, root_transform);
+        self._compute_hover_stack();
     }
 
     _render_view(view: Object, rect: Rect, transform: Transform2D) {
@@ -118,6 +119,16 @@ export class Client {
                 }
             }
         }
+    }
+
+    _compute_hover_stack() {
+        for wrapper in self.all_views {
+            if wrapper.hitbox && wrapper.hitbox.contains(self.cursor_x, self.cursor_y) {
+                self.hover_stack.push(wrapper);
+            }
+        }
+
+        self.hover_stack.reverse().sort((w1, w2) => w1.hitbox.z > w2.hitbox.z);
     }
 
     _process_window_events() {
