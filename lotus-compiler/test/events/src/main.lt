@@ -1,4 +1,4 @@
-event DealDamages {
+class DealDamages {
     source: Character,
     target: Character,
     amount: int,

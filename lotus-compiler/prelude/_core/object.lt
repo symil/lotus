@@ -1,5 +1,6 @@
-export const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>::new();
-const TYPE_ID_TO_FIELD_COUNT = Map<int, int>::new();
+const TYPE_CAPACITY = 1024; // TODO: use a macro
+const TYPE_ID_TO_FIELD_COUNT = Map<int, int>::with_capacity(TYPE_CAPACITY);
+export const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>::with_capacity(TYPE_CAPACITY);
 
 export class Object {
     autogen static __init() {

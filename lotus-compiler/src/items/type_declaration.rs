@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
 use crate::{program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, ActualTypeContent, AssociatedTypeInfo, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_HOOKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
@@ -106,7 +106,7 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn compute_type_dependencies(&self, context: &mut ProgramContext) -> Vec<Link<TypeBlueprint>> {
+    pub fn compute_type_dependencies(&self, context: &mut ProgramContext) -> IndexSet<Link<TypeBlueprint>> {
         let mut list = vec![];
 
         match &self.parent {
@@ -130,11 +130,11 @@ impl TypeDeclaration {
             }
         }
 
-        let mut dependancies = vec![];
+        let mut dependancies = IndexSet::new();
 
         for identifier in list {
             if let Some(type_blueprint) = context.types.get_by_identifier(&identifier) {
-                dependancies.push(type_blueprint);
+                dependancies.insert(type_blueprint);
             }
         }
 
@@ -499,8 +499,8 @@ impl TypeDeclaration {
                                     context.errors.add_generic(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
                                 }
                             }
-                        // } else if field.ty.as_ref().unwrap().is_option() {
-                            // default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
+                        } else if field.ty.as_ref().unwrap().is_option() {
+                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
                         } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
                             default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
                         } else {
@@ -540,6 +540,13 @@ impl TypeDeclaration {
                 result
             });
 
+            // if self.name.is("Object") || self.name.is("Foo") {
+            //     println!("=> {}", &self.name);
+            //     for func_ref in dynamic_methods.iter() {
+            //         println!("{}", func_ref.function.borrow().name);
+            //     }
+            // }
+
             for (i, func_ref) in dynamic_methods.iter().enumerate() {
                 func_ref.function.with_mut(|mut function_unwrapped| {
                     let mut method_details = function_unwrapped.method_details.as_mut().unwrap();
@@ -548,7 +555,7 @@ impl TypeDeclaration {
                     if dynamic_index == -1 {
                         method_details.dynamic_index = Some(i as i32);
                     } else if dynamic_index != i as i32 {
-                        panic!("attempt to assign dynamic index {} to method {}, but it already has dynamic index {}", i, function_unwrapped.name.as_str(), dynamic_index);
+                        panic!("attempt to assign dynamic index {} to method `{}`, but it already has dynamic index {}", i, function_unwrapped.name.as_str().bold(), dynamic_index);
                     }
                 });
             }

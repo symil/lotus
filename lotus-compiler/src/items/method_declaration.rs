@@ -47,8 +47,16 @@ impl MethodDeclaration {
 
                     if let Some(prev) = index_map.get(name.as_str()) {
                         method_details.first_declared_by = prev.function.borrow().method_details.as_ref().unwrap().first_declared_by.clone();
+
+                        if self.is_autogen() {
+                            prev.function.with_mut(|mut prev_unwrapped| {
+                                prev_unwrapped.method_details.as_mut().unwrap().first_declared_by = context.autogen_type.clone();
+                            });
+                        }
                     } else if let Some(autogen_type_blueprint) = &context.autogen_type {
                         method_details.first_declared_by = Some(autogen_type_blueprint.clone());
+                    } else {
+                        method_details.first_declared_by = Some(type_wrapped.clone());
                     }
 
                     let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();

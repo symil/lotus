@@ -89,6 +89,10 @@ fn read_path_recursively(input_path: &str, is_first: bool) -> Result<Vec<(PathBu
     let mut result = vec![];
     let path = Path::new(input_path);
 
+    if path.to_str().unwrap().contains(".ignore") {
+        return Ok(vec![]);
+    }
+
     if path.is_file() {
         if let Some(extension) = path.extension() {
             if extension == SOURCE_FILE_EXTENSION {

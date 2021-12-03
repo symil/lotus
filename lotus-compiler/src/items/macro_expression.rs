@@ -10,6 +10,7 @@ pub struct MacroExpression {
 
 #[parsable]
 pub enum MacroExpressionValue {
+    Line = "LINE",
     TypeId = "TYPE_ID",
     TypeName = "TYPE_NAME",
     TypeShortName = "TYPE_SHORT_NAME",
@@ -28,6 +29,9 @@ impl MacroExpression {
         let mut m = MacroContext::new(self, context);
 
         match &self.value {
+            MacroExpressionValue::Line => {
+                Some(Vasm::new(context.int_type(), vec![], vec![VI::int(self.location.line)]))
+            }
             MacroExpressionValue::TypeId => m.access_current_type(|type_unwrapped, context| {
                 Vasm::new(context.int_type(), vec![], vec![VI::type_id(&type_unwrapped.self_type)])
             }),

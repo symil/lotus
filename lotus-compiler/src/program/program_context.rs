@@ -56,14 +56,18 @@ impl ProgramContext {
 
         for builtin_type in BuiltinType::into_enum_iter() {
             let type_name = builtin_type.get_name();
-            let type_wrapped = self.types.get_by_name(type_name).unwrap_or_else(|| panic!("undefined builtin type `{}`", type_name));
-            let ty = Type::Actual(ActualTypeContent {
-                type_blueprint: type_wrapped,
-                parameters: vec![],
-                location: DataLocation::default(),
-            });
 
-            self.builtin_types.insert(builtin_type, ty);
+            if let Some(type_wrapped) = self.types.get_by_name(type_name) {
+                let ty = Type::Actual(ActualTypeContent {
+                    type_blueprint: type_wrapped,
+                    parameters: vec![],
+                    location: DataLocation::default(),
+                });
+
+                self.builtin_types.insert(builtin_type, ty);
+            } else {
+                // panic!("undefined builtin type `{}`", type_name);
+            }
         }
 
         for main_type in MainType::into_enum_iter() {
@@ -477,6 +481,10 @@ impl ProgramContext {
                 for index in result {
                     types.push(take(&mut wrapped[index]).unwrap())
                 }
+
+                // for ty in &types {
+                    // println!("{}", &ty.name);
+                // }
             },
             Err(cycles) => {
                 for cycle in cycles {
