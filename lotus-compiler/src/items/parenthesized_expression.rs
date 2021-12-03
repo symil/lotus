@@ -9,9 +9,9 @@ pub struct ParenthesizedExpression {
 }
 
 impl ParenthesizedExpression {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         for expr in &self.expr_list {
-            expr.collected_instancied_type_names(list);
+            expr.collected_instancied_type_names(list, context);
         }
     }
 

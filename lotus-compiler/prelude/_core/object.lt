@@ -203,12 +203,4 @@ export class Object {
     dyn yield(object: Object) {
         
     }
-
-    dyn get_hitbox() -> Rect? {
-        none
-    }
-
-    dyn to_draw_primitive(rect: Rect, transform: Transform2D) -> DrawPrimitive? {
-        none
-    }
 }

@@ -41,7 +41,7 @@ export class Graphics {
     text_border_color: Color = none,
     text_border_alpha: float = 1,
     text_horizontal_align: HorizontalAlign = HorizontalAlign::Center,
-    text_vertical_align: VerticalAlign = HorizontalAlign::Middle,
+    text_vertical_align: VerticalAlign = VerticalAlign::Middle,
     text_bold: bool = false,
     text_italic: bool = false,
     text_cursor_index: int = none,
@@ -54,6 +54,7 @@ export class Graphics {
             .scale(self.scale)
             .strip_to_match_aspect_ratio(self.aspect_ratio)
             .transform(transform)
+            .set_z(self.z)
     }
 
     to_draw_primitive(rect: Rect, transform: Transform2D, virtual_to_real_ratio: float) -> DrawPrimitive? {
@@ -75,7 +76,7 @@ export class Graphics {
             border_dash_length: self.border_dash_length.resolve(width, height, virtual_to_real_ratio),
             border_gap_length: self.border_gap_length.resolve(width, height, virtual_to_real_ratio),
             background_color: self.background_color.mult_alpha(self.background_alpha),
-            overlay_color: self.overlay_color.mult_alpha(self._alpha),
+            overlay_color: self.overlay_color.mult_alpha(self.overlay_alpha),
             image_url: self.image_url,
             image_width: width * self.image_scale,
             image_height: height * self.image_scale,
@@ -84,7 +85,7 @@ export class Graphics {
             text_size: self.text_size.resolve(width, height, virtual_to_real_ratio),
             text_color: self.text_color.mult_alpha(self.text_alpha),
             text_margin: self.text_margin.resolve(width, height, virtual_to_real_ratio),
-            text_max_width: self.text_text_max_widthsize.resolve(width, height, virtual_to_real_ratio),
+            text_max_width: self.text_max_width.resolve(width, height, virtual_to_real_ratio),
             text_max_height: self.text_max_height.resolve(width, height, virtual_to_real_ratio),
             text_background_color: self.text_background_color.mult_alpha(self.text_background_alpha),
             text_border_color: self.text_border_color.mult_alpha(self.text_border_alpha),

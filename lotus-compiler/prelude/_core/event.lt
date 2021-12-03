@@ -1,4 +1,4 @@
-type EventCallback = fn(Object, Event, EventOutput);
+type EventCallback = fn(Object, Object, EventOutput);
 type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 
 export const EVENT_HOOKS = EventCallbackMap::new();

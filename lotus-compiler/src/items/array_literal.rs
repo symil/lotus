@@ -10,9 +10,9 @@ pub struct ArrayLiteral {
 }
 
 impl ArrayLiteral {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         for item in &self.items {
-            item.collected_instancied_type_names(list);
+            item.collected_instancied_type_names(list, context);
         }
     }
 

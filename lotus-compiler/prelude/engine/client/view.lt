@@ -1,4 +1,6 @@
 pub class ViewState {
+    view: Object,
+    transform: Transform2D,
+    graphics: Graphics[],
     hitbox: Rect = none,
-    hitbox_z: float = none,
 }

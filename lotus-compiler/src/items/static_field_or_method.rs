@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::{program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
-use super::{ArgumentList, Identifier, ParsedType, ParsedTypeWrapper, process_method_call, process_field_access};
+use super::{ArgumentList, Identifier, ParsedType, process_method_call, process_field_access};
 
 #[parsable]
 pub struct StaticFieldOrMethod {
-    pub ty: ParsedTypeWrapper,
+    pub ty: ParsedType,
     #[parsable(prefix="::")]
     pub name: Identifier,
     pub args: Option<ArgumentList>

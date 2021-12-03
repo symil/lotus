@@ -17,6 +17,10 @@ export class Transform2D {
         Self::new(1, 0, 0)
     }
 
+    clone() -> Self {
+        Self { ..self }
+    }
+
     reset() -> Self {
         self.tx = 0;
         self.ty = 0;

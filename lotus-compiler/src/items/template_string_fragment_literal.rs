@@ -10,6 +10,6 @@ pub struct TemplateStringFragmentLiteral {
 
 impl TemplateStringFragmentLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        make_string_value_from_literal(Some(self), &self.content, context)
+        make_string_value_from_literal(self, &self.content, context)
     }
 }

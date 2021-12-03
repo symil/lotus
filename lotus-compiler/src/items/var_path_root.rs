@@ -1,9 +1,10 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, Macro, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, TemplateString, VarDeclaration, VarRef, WhileBlock};
+use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, TemplateString, VarDeclaration, VarRef, WhileBlock, MacroExpression};
 
 #[parsable]
 pub enum VarPathRoot {
+    Macro(MacroExpression),
     VarDeclaration(VarDeclaration),
     Action(Action),
     MatchBlock(MatchBlock),
@@ -27,7 +28,6 @@ pub enum VarPathRoot {
     FunctionLiteral(FunctionLiteral),
     #[parsable(unset_marker="no-object")]
     Parenthesized(ParenthesizedExpression),
-    Macro(Macro),
     VarRef(VarRef),
 }
 
@@ -39,7 +39,7 @@ impl VarPathRoot {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         match self {
             VarPathRoot::Macro(_) => {},
             VarPathRoot::NoneLiteral(_) => {},
@@ -47,10 +47,10 @@ impl VarPathRoot {
             VarPathRoot::NumberLiteral(_) => {},
             VarPathRoot::CharLiteral(_) => {},
             VarPathRoot::StringLiteral(_) => {},
-            VarPathRoot::ArrayLiteral(array_literal) => array_literal.collected_instancied_type_names(list),
-            VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list),
+            VarPathRoot::ArrayLiteral(array_literal) => array_literal.collected_instancied_type_names(list, context),
+            VarPathRoot::ObjectLiteral(object_literal) => object_literal.collected_instancied_type_names(list, context),
             VarPathRoot::StaticFieldOrMethod(_) => {},
-            VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list),
+            VarPathRoot::Parenthesized(expr) => expr.collected_instancied_type_names(list, context),
             VarPathRoot::VarRef(var_ref) => var_ref.collected_instancied_type_names(list),
             _ => todo!()
         }
@@ -64,7 +64,7 @@ impl VarPathRoot {
         }
 
         match self {
-            VarPathRoot::Macro(mac) => mac.process_as_value(context),
+            VarPathRoot::Macro(mac) => mac.process(context),
             VarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context),
             VarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
             VarPathRoot::NumberLiteral(number_literal) => number_literal.process(type_hint, context),

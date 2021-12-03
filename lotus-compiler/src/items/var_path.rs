@@ -9,8 +9,8 @@ pub struct VarPath {
 }
 
 impl VarPath {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-        self.root.collected_instancied_type_names(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+        self.root.collected_instancied_type_names(list, context);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

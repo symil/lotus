@@ -5,6 +5,8 @@ export class Rect {
     // Dimensions of the rectangle
     width: float,
     height: float,
+    // Used to determine which rectangle is on top of the other
+    z: float
 
     static empty() -> Self {
         Self { x:0, y: 0, width: 0, height: 0 }
@@ -58,7 +60,18 @@ export class Rect {
     }
 
     clone() -> Self {
-        Self::new(self.x, self.y, self.width, self.height)
+        Self {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+            width: self.width,
+            height: self.height,
+        }
+    }
+
+    set_z(z: float) -> Self {
+        self.z = z;
+        self
     }
 
     round() -> Self {

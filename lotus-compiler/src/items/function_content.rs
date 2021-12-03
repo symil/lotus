@@ -144,7 +144,7 @@ impl FunctionContent {
                 }
 
                 if let Some(event_type_wrapped) = context.types.get_by_identifier(&self.name) {
-                    if event_type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
+                    // if event_type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
                         if let Some(type_wrapped) = context.get_current_type() {
                             function_wrapped.with_mut(|mut function_unwrapped| {
                                 function_unwrapped.argument_names = vec![
@@ -163,9 +163,9 @@ impl FunctionContent {
                                 function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert((qualifier.clone(), event_type_wrapped.clone()));
                             });
                         }
-                    } else {
-                        context.errors.add_generic(&self.name, format!("type `{}` is not an event", &self.name));
-                    }
+                    // } else {
+                        // context.errors.add_generic(&self.name, format!("type `{}` is not an event", &self.name));
+                    // }
                 } else {
                     context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
                 }

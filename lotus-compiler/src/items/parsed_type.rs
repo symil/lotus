@@ -24,10 +24,10 @@ impl ParsedType {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         match self.suffix.last() {
             Some(type_suffix) => type_suffix.collected_instancied_type_names(list),
-            None => self.parsed_type.collected_instancied_type_names(list),
+            None => self.parsed_type.collected_instancied_type_names(list, context),
         }
     }
 

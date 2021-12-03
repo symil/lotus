@@ -7,7 +7,7 @@ use super::{Expression, Identifier, ParsedType, TypeQualifier, type_qualifier};
 pub struct MatchBlock {
     #[parsable(prefix="match")]
     pub value_to_match: Box<Expression>,
-    #[parsable(separator=",",brackets="{}")]
+    #[parsable(separator=",", brackets="{}")]
     pub branches: Vec<MatchBranch>
 }
 

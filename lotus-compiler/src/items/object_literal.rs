@@ -15,8 +15,8 @@ pub struct ObjectLiteral {
 }
 
 impl ObjectLiteral {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-        self.object_type.collected_instancied_type_names(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+        self.object_type.collected_instancied_type_names(list, context);
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {

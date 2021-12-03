@@ -44,6 +44,7 @@ mod function_call;
 mod type_or_interface;
 mod main_types;
 mod compilation_error;
+mod macro_context;
 
 pub use program::*;
 pub use program_context::*;
@@ -90,3 +91,4 @@ pub use function_call::*;
 pub use type_or_interface::*;
 pub use main_types::*;
 pub use compilation_error::*;
+pub use macro_context::*;

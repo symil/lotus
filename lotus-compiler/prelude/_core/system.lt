@@ -62,10 +62,6 @@ export type(void) system {
     int<T>(value: T) {
         @log(value as int);
     }
-
-    type<T>(value: T) {
-        @log(#FIRST_ARG_TYPE);
-    }
 }
 
 fn wasm_log(string) {{

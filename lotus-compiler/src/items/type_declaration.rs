@@ -106,11 +106,11 @@ impl TypeDeclaration {
         });
     }
 
-    pub fn compute_type_dependencies(&self, context: &ProgramContext) -> Vec<Link<TypeBlueprint>> {
+    pub fn compute_type_dependencies(&self, context: &mut ProgramContext) -> Vec<Link<TypeBlueprint>> {
         let mut list = vec![];
 
         match &self.parent {
-            Some(parent) => parent.collected_instancied_type_names(&mut list),
+            Some(parent) => parent.collected_instancied_type_names(&mut list, context),
             None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier.to_type_category() != TypeCategory::Class {
                 true => {},
                 false => {
@@ -121,10 +121,10 @@ impl TypeDeclaration {
 
         for field_declaration in self.get_fields() {
             match &field_declaration.default_value {
-                Some(default_value) => default_value.collected_instancied_type_names(&mut list),
+                Some(default_value) => default_value.collected_instancied_type_names(&mut list, context),
                 None => {
                     if let Some(ty) = &field_declaration.ty {
-                        ty.collected_instancied_type_names(&mut list);
+                        ty.collected_instancied_type_names(&mut list, context);
                     }
                 }
             }
@@ -474,7 +474,7 @@ impl TypeDeclaration {
                                 if vasm.ty.is_assignable_to(&field_info.ty) {
                                     let function_blueprint = FunctionBlueprint {
                                         function_id: field_info.name.location.get_hash(),
-                                        name: Identifier::unique(format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
+                                        name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
                                         visibility: Visibility::None,
                                         parameters: IndexMap::new(),
                                         argument_names: vec![],
@@ -499,8 +499,8 @@ impl TypeDeclaration {
                                     context.errors.add_generic(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
                                 }
                             }
-                        } else if field.ty.as_ref().unwrap().is_option() {
-                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
+                        // } else if field.ty.as_ref().unwrap().is_option() {
+                            // default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
                         } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
                             default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
                         } else {

@@ -9,11 +9,11 @@ pub struct BinaryOperation {
 }
 
 impl BinaryOperation {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-        self.first.collected_instancied_type_names(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+        self.first.collected_instancied_type_names(list, context);
         
         for (_, operand) in &self.others {
-            operand.collected_instancied_type_names(list);
+            operand.collected_instancied_type_names(list, context);
         }
     }
 

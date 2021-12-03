@@ -10,10 +10,10 @@ pub struct Assignment {
 }
 
 impl Assignment {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         match &self.rvalue {
             Some(rvalue) => {},
-            None => self.lvalue.collected_instancied_type_names(list),
+            None => self.lvalue.collected_instancied_type_names(list, context),
         }
     }
 

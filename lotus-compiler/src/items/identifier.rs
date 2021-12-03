@@ -11,16 +11,16 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub fn new<S : Deref<Target=str>, L : Deref<Target=DataLocation>>(name: S, location: &L) -> Self {
+    pub fn new(name: &str, location: &DataLocation) -> Self {
         let mut identifier = Identifier::default();
 
         identifier.value = name.to_string();
-        identifier.location = location.deref().clone();
+        identifier.location = location.clone();
 
         identifier
     }
 
-    pub fn unique<S : Deref<Target=str>>(name: S) -> Self {
+    pub fn unique(name: &str) -> Self {
         let mut identifier = Identifier::default();
         let id = unsafe {
             COUNTER += 1;

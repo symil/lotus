@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::{program::{BuiltinType, FunctionCall, NamedFunctionCallDetails, ProgramContext, VI, Vasm}, vasm};
-use super::{TemplateStringFragment, make_string_value_from_literal};
+use super::{TemplateStringFragment, make_string_value_from_literal_unchecked};
 
 #[parsable]
 pub struct TemplateString {
@@ -11,7 +11,7 @@ pub struct TemplateString {
 impl TemplateString {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match self.fragments.len() {
-            0 => make_string_value_from_literal(None, "", context),
+            0 => Some(make_string_value_from_literal_unchecked("", context)),
             1 => self.fragments.first().unwrap().process(context),
             _ => {
                 let string_type = context.get_builtin_type(BuiltinType::String, vec![]);

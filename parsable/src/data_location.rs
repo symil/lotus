@@ -49,6 +49,10 @@ impl DataLocation {
     pub fn is_empty(&self) -> bool {
         self.file_content == ""
     }
+
+    pub fn as_str(&self) -> &'static str {
+        &self.file_content[self.start..self.end]
+    }
 }
 
 impl PartialEq for DataLocation {

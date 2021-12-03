@@ -1,7 +1,7 @@
-class LayoutItem {
+pub class LayoutItem {
     object: Object,
     rect: Rect,
-    transform: Transform2D
+    transform: Transform2D,
 }
 
 pub class Layout {
@@ -84,7 +84,7 @@ pub class Layout {
     }
 
     move_to(x: float, y: float) -> Self {
-        self.flush();
+        self._flush();
         self.last = none;
         self.target.x = self.start_rect.width * x;
         self.target.y = self.start_rect.height * y;
@@ -109,25 +109,25 @@ pub class Layout {
     }
 
     push(object: Object) -> Self {
-        let (dx, dy) = self.snap_target_against_last_item();
+        let (dx, dy) = self._snap_target_against_last_item();
 
         self.target.x += dx;
         self.target.y += dy;
 
         if self.dynamic && self.dynamic_items.len() > 0 {
             for item in self.dynamic_items {
-                item.rect.x -= dx / 2.;
-                item.rect.y -= dy / 2.;
+                item.rect.x -= dx / 2f;
+                item.rect.y -= dy / 2f;
             }
 
-            self.target.x -= dx / 2.;
-            self.target.y -= dy / 2.;
+            self.target.x -= dx / 2f;
+            self.target.y -= dy / 2f;
         }
 
-        let (dx, dy) = self.snap_target_against_edges();
+        let (dx, dy) = self._snap_target_against_edges();
 
         if self.dynamic {
-            let (dx2, dy2) = self.snap_first_against_edges();
+            let (dx2, dy2) = self._snap_first_against_edges();
 
             dx += dx2;
             dy += dy2;
@@ -156,8 +156,8 @@ pub class Layout {
             return (0, 0);
         }
 
-        let dx = self.last.width / 2. + self.inner_margin + self.target.width / 2.;
-        let dy = self.last.height / 2. + self.inner_margin + self.target.height / 2.;
+        let dx = self.last.width / 2f + self.inner_margin + self.target.width / 2f;
+        let dy = self.last.height / 2f + self.inner_margin + self.target.height / 2f;
 
         let mx = dx / self.dx.abs();
         let my = dy / self.dy.abs();
@@ -183,47 +183,48 @@ pub class Layout {
         self._snap_against_edges(self.target)
     }
 
-    _snap_first_against_edges(&self) -> (float, float) {
+    _snap_first_against_edges() -> (float, float) {
         if !self.dynamic_items.first() {
             return (0, 0);
         }
 
-        self._snap_against_edges(self.dynamic_items[0])
+        self._snap_against_edges(self.dynamic_items[0].rect)
     }
 
     towards(dx: float, dy: float) -> Self {
-        self.flush();
+        self._flush();
         self.dx = dx;
         self.dy = dy;
         self
     }
 
     _flush() {
-        self.fixed_items.append(self.dynamic_items);
+        self.fixed_items.extend(self.dynamic_items);
+        self.dynamic_items.clear();
     }
 
     release() -> Self {
-        self.flush();
+        self._flush();
         self
     }
 
     consume() -> LayoutItem[] {
-        self.flush();
-        self.fixed_items
+        self._flush();
+        self.fixed_items.clone()
     }
 
-    towards_top(self) -> Self    { self.towards(0., -1.) }
-    towards_bottom(self) -> Self { self.towards(0., 1.) }
-    towards_left(self) -> Self   { self.towards(-1., 0.) }
-    towards_right(self) -> Self  { self.towards(1., 0.) }
+    towards_top() -> Self    { self.towards(0, -1) }
+    towards_bottom() -> Self { self.towards(0,  1) }
+    towards_left() -> Self   { self.towards(-1, 0) }
+    towards_right() -> Self  { self.towards(1,  0) }
 
-    move_top_left(self) -> Self      { self.move_to(0. , 0. ) }
-    move_top(self) -> Self           { self.move_to(0.5, 0. ) }
-    move_top_right(self) -> Self     { self.move_to(1. , 0. ) }
-    move_left(self) -> Self          { self.move_to(0. , 0.5) }
-    move_center(self) -> Self        { self.move_to(0.5, 0.5) }
-    move_right(self) -> Self         { self.move_to(1. , 0.5) }
-    move_bottom_left(self) -> Self   { self.move_to(0. , 1. ) }
-    move_bottom(self) -> Self        { self.move_to(0.5, 1. ) }
-    move_bottom_right(self) -> Self  { self.move_to(1. , 1. ) }
+    move_top_left() -> Self      { self.move_to(0  , 0  ) }
+    move_top() -> Self           { self.move_to(0.5, 0  ) }
+    move_top_right() -> Self     { self.move_to(1  , 0  ) }
+    move_left() -> Self          { self.move_to(0  , 0.5) }
+    move_center() -> Self        { self.move_to(0.5, 0.5) }
+    move_right() -> Self         { self.move_to(1  , 0.5) }
+    move_bottom_left() -> Self   { self.move_to(0  , 1  ) }
+    move_bottom() -> Self        { self.move_to(0.5, 1  ) }
+    move_bottom_right() -> Self  { self.move_to(1  , 1  ) }
 }

@@ -2,7 +2,7 @@ use std::{fmt::format, rc::Rc};
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
 use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
-use super::{BinaryOperation, Identifier, Macro, ParsedType, ParsedTypeWrapper};
+use super::{BinaryOperation, Identifier, ParsedType};
 
 #[parsable]
 pub struct Expression {
@@ -10,19 +10,19 @@ pub struct Expression {
     #[parsable(prefix="is")]
     pub is_details: Option<IsKeywordDetails>,
     #[parsable(prefix="as")]
-    pub as_type: Option<ParsedTypeWrapper>
+    pub as_type: Option<ParsedType>
 }
 
 #[parsable]
 pub struct IsKeywordDetails {
-    pub ty: ParsedTypeWrapper,
+    pub ty: ParsedType,
     #[parsable(brackets="()")]
     pub var_name: Identifier
 }
 
 impl Expression {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-        self.operation.collected_instancied_type_names(list);
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+        self.operation.collected_instancied_type_names(list, context);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
@@ -43,7 +43,7 @@ impl Expression {
                             ]);
                         },
                         false => {
-                            context.errors.add_generic(is_details.ty.get_location(), format!("expected class type, got `{}`", &target_type));
+                            context.errors.add_generic(&is_details.ty, format!("expected class type, got `{}`", &target_type));
                         }
                     }
                 }

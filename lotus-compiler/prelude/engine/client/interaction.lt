@@ -1,37 +1,37 @@
 export class Interaction {
-    dyn is_active(client: Client) -> bool {
-        true
-    }
+    // dyn is_active(client: Client) -> bool {
+    //     true
+    // }
 
-    dyn is_exclusive(client: Client) -> bool {
-        false
-    }
+    // dyn is_exclusive(client: Client) -> bool {
+    //     false
+    // }
 
-    dyn is_valid_target(client: Client, target: View) -> bool {
-        false
-    }
+    // dyn is_valid_target(client: Client, target: View) -> bool {
+    //     false
+    // }
 
-    dyn highlight_target(client: Client, target: View) {
+    // dyn highlight_target(client: Client, target: View) {
 
-    }
+    // }
 
-    dyn highlight_target_on_hover(client: Client, target: View) {
+    // dyn highlight_target_on_hover(client: Client, target: View) {
 
-    }
+    // }
 
-    dyn on_mouse_event(client: Client, event: MouseEvent) -> bool {
-        false
-    }
+    // dyn on_mouse_event(client: Client, event: MouseEvent) -> bool {
+    //     false
+    // }
 
-    dyn on_wheel_event(client: Client, event: WheelEvent) -> bool  {
-        false
-    }
+    // dyn on_wheel_event(client: Client, event: WheelEvent) -> bool  {
+    //     false
+    // }
 
-    dyn on_keyboard_event(client: Client, event: KeyboardEvent) -> bool  {
-        false
-    }
+    // dyn on_keyboard_event(client: Client, event: KeyboardEvent) -> bool  {
+    //     false
+    // }
 
-    dyn on_game_event(client: Client, event: Object) -> bool  {
-        false
-    }
+    // dyn on_game_event(client: Client, event: Object) -> bool  {
+    //     false
+    // }
 }
