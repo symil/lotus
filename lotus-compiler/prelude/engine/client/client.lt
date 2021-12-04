@@ -166,14 +166,14 @@ export class Client {
     }
 }
 
-// sys fn start_client() {
-//     CLIENT = Client::new();
-//     CLIENT._start();
-// }
+sys fn start_client() {
+    CLIENT = Client::new();
+    CLIENT._start();
+}
 
 sys fn update_client() {
     CLIENT._update();
     // @log(`memory used: ${get_memory_usage() / 1024} KB`);
-    // @retain(CLIENT);
-    // @trigger_garbage_collection();
+    @retain(CLIENT);
+    @trigger_garbage_collection();
 }

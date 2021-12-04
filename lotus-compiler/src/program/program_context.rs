@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable};
 use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, AssociatedTypeContent, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_HOOKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, Timer, ProgramStep};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -426,7 +426,9 @@ impl ProgramContext {
         self.type_instances.values().map(|(header, _)| header.clone()).collect()
     }
 
-    pub fn process_files(&mut self, files: Vec<LotusFile>) {
+    pub fn process_files(&mut self, files: Vec<LotusFile>, timer: &mut Timer) {
+        timer.start(ProgramStep::Process);
+
         let mut interfaces = vec![];
         let mut types = vec![];
         let mut typedefs = vec![];
@@ -592,9 +594,13 @@ impl ProgramContext {
         if self.functions.get_by_name("main").is_none() {
             self.errors.add_generic_unlocated(format!("missing required function `main`"));
         }
+
+        timer.stop(ProgramStep::Process);
     }
 
-    pub fn generate_wat(mut self) -> Result<String, Vec<CompilationError>> {
+    pub fn generate_wat(mut self, timer: &mut Timer) -> Result<String, Vec<CompilationError>> {
+        timer.start(ProgramStep::Resolve);
+        
         if !self.errors.is_empty() {
             return Err(self.errors.consume());
         }
@@ -801,7 +807,13 @@ impl ProgramContext {
         }
 
         content.extend(exports);
+
+        timer.stop(ProgramStep::Resolve);
+
+        timer.start(ProgramStep::Stringify);
+        let string = content.to_string(0);
+        timer.stop(ProgramStep::Stringify);
         
-        Ok(content.to_string(0))
+        Ok(string)
     }
 }

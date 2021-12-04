@@ -3,7 +3,7 @@
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
-use program::LotusProgram;
+use program::{LotusProgram, Timer, ProgramStep};
 
 mod utils;
 mod program;
@@ -17,14 +17,33 @@ fn main() {
     let input_path = args.get(1).or_else(|| display_usage_and_exit()).unwrap();
     let output_path = args.get(2).or_else(|| display_usage_and_exit()).unwrap();
     let silent = args.iter().any(|s| s == "--silent");
+    let details = args.iter().any(|s| s == "--details");
     let prelude_path = get_prelude_path();
+    let mut timer = Timer::new();
 
-    match LotusProgram::from_path(input_path, Some(&prelude_path)) {
+    timer.start(ProgramStep::Total);
+
+    match LotusProgram::from_path(input_path, Some(&prelude_path), &mut timer) {
         Ok(program) => {
+            timer.start(ProgramStep::Write);
             program.write_to(output_path);
+            timer.stop(ProgramStep::Write);
+
+            let total_time = timer.stop(ProgramStep::Total);
 
             if !silent {
-                println!("{} {} ({}s)", "ok:".blue().bold(), output_path.bold(), program.process_time);
+                match details {
+                    true => {
+                        for (step, duration) in timer.consume() {
+                            if !step.is_negligible() {
+                                println!("{}: {}s", step.get_name().bold(), duration);
+                            }
+                        }
+                    },
+                    false => {
+                        println!("{} {} ({}s)", "ok:".blue().bold(), output_path.bold(), total_time);
+                    },
+                }
             }
 
             process::exit(0);

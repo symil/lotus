@@ -2,6 +2,8 @@ use std::{fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf}, time::
 use parsable::*;
 use crate::{items::LotusFile, program::{CompilationError, ProgramContext}};
 
+use super::{Timer, ProgramStep};
+
 const SOURCE_FILE_EXTENSION : &'static str = "lt";
 const COMMENT_START_TOKEN : &'static str = "//";
 const PRELUDE_NAMESPACE : &'static str = "std";
@@ -9,11 +11,12 @@ const SELF_NAMESPACE : &'static str = "self";
 
 pub struct LotusProgram {
     pub wat: String,
-    pub process_time: f64
 }
 
 impl LotusProgram {
-    pub fn from_path(path: &str, prelude_directory_path: Option<&str>) -> Result<Self, Vec<CompilationError>> {
+    pub fn from_path(path: &str, prelude_directory_path: Option<&str>, timer: &mut Timer) -> Result<Self, Vec<CompilationError>> {
+        timer.start(ProgramStep::Read);
+
         let mut parsed_files = vec![];
         let mut errors = vec![];
 
@@ -34,29 +37,40 @@ impl LotusProgram {
 
         source_list.push((SELF_NAMESPACE, path, prefix));
 
-        let now = Instant::now();
+        let mut source_files = vec![];
 
-        for (file_namespace, path, prefix) in source_list {
+        for (file_namespace, path, prefix) in &source_list {
             let mut files_to_process = read_path_recursively(path, true)?;
 
             files_to_process.sort_by_cached_key(|(path, content)| path.to_str().unwrap().to_string());
 
             for (file_path, file_content) in files_to_process {
                 let file_name = file_path.strip_prefix(prefix).unwrap().to_str().unwrap().to_string();
-                let parse_options = ParseOptions {
-                    file_name: Some(&file_name),
-                    file_namespace: Some(file_namespace),
-                    comment_start: Some(COMMENT_START_TOKEN),
-                };
 
-                if !file_content.starts_with("// ignore") {
-                    match LotusFile::parse(file_content, parse_options) {
-                        Ok(lotus_file) => parsed_files.push(lotus_file),
-                        Err(parse_error) => errors.push(CompilationError::parse_error(parse_error))
-                    };
-                }
+                source_files.push((*file_namespace, file_name, file_content));
             }
         }
+
+        timer.stop(ProgramStep::Read);
+
+        timer.start(ProgramStep::Parse);
+
+        for (file_namespace, file_name, file_content) in source_files {
+            let parse_options = ParseOptions {
+                file_name: Some(&file_name),
+                file_namespace: Some(file_namespace),
+                comment_start: Some(COMMENT_START_TOKEN),
+            };
+
+            if !file_content.starts_with("// ignore") {
+                match LotusFile::parse(file_content, parse_options) {
+                    Ok(lotus_file) => parsed_files.push(lotus_file),
+                    Err(parse_error) => errors.push(CompilationError::parse_error(parse_error))
+                };
+            }
+        }
+
+        timer.stop(ProgramStep::Parse);
 
         if !errors.is_empty() {
             return Err(errors);
@@ -64,12 +78,11 @@ impl LotusProgram {
 
         let mut context = ProgramContext::new();
 
-        context.process_files(parsed_files);
+        context.process_files(parsed_files, timer);
 
-        let process_time = now.elapsed().as_secs_f64();
-        let wat = context.generate_wat()?;
+        let wat = context.generate_wat(timer)?;
 
-        Ok(Self { wat, process_time })
+        Ok(Self { wat })
     }
 
     pub fn write_to(&self, output_file_path: &str) {
