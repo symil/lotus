@@ -1,5 +1,14 @@
-fn compare(a: int, b: int) -> bool {
-    a < b
+fn compare(a: int, b: int) -> int {
+    a - b
+}
+
+class Foo {
+    key: int,
+    value: int,
+}
+
+fn foo(key: int, value: int) -> Foo {
+    Foo { key, value }
 }
 
 export fn main() {
@@ -10,4 +19,23 @@ export fn main() {
     @dbg([5, 4, 3, 2, 1].sort(compare));
     @dbg([1, 2, 3, 4, 5].sort(compare));
     @dbg([0, 7, 9, 2, 6, 2, 5, 8, 1, 10, 5].sort(compare));
+
+    @log("---");
+
+    let f1 = foo(1, 1);
+    let f2 = foo(2, 1);
+    let f3 = foo(3, 1);
+    let f4 = foo(4, 1);
+    let f5 = foo(5, 1);
+    let f6 = foo(6, 2);
+    let f7 = foo(7, 3);
+
+    sort_foo_list([f6, f1, f2, f3, f7, f4, f5]);
+    sort_foo_list([f1, f2, f6, f7, f5, f4, f3]);
+}
+
+fn sort_foo_list(array: Foo[]) {
+    array.sort((foo, bar) => foo.value - bar.value);
+
+    @dbg(array.map(foo => foo.key));
 }

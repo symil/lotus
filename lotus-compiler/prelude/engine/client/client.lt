@@ -128,7 +128,7 @@ export class Client {
             }
         }
 
-        self.hover_stack.reverse().sort((w1, w2) => w1.hitbox.z > w2.hitbox.z);
+        self.hover_stack.reverse().sort((w1, w2) => w2.hitbox.z.compare(w1.hitbox.z));
     }
 
     _process_window_events() {
