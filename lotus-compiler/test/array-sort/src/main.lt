@@ -32,6 +32,28 @@ export fn main() {
 
     sort_foo_list([f6, f1, f2, f3, f7, f4, f5]);
     sort_foo_list([f1, f2, f6, f7, f5, f4, f3]);
+
+    @log("---");
+
+    let values = [
+      3, 2, 2, 2, 1, 1, 1, 3, 2, 3, 3, 3,
+      2, 1, 1, 3, 1, 3, 1, 3, 3, 1, 3, 3,
+      3, 2, 2, 2, 1, 2, 3, 3, 2, 3, 2, 2,
+      3, 1, 1, 3, 3, 3, 1, 3, 3, 1, 2, 1,
+      2, 3, 2, 1, 1, 2, 1, 1, 2, 2, 1, 1,
+      2, 3, 2, 3, 3, 3, 3, 1, 1, 2, 2, 1,
+      1, 2, 2, 2, 2, 2, 3, 3, 2, 1, 1, 3,
+      1, 1, 1, 2, 3, 1, 3, 1, 2, 3, 2, 1,
+      1, 2, 3, 2
+    ];
+    let foos : Foo[] = [];
+
+    for (i, value) in values {
+        foos.push(foo(i, value));
+    }
+
+    foos.sort((foo, bar) => foo.value - bar.value);
+    @dbg(foos.map(foo => foo.key));
 }
 
 fn sort_foo_list(array: Foo[]) {

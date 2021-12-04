@@ -397,13 +397,19 @@ export type(i32) Array<T> {
     }
 
     sort(compare: fn(T, T)(int)) -> Self {
-        quick_sort(self.body(), 0, self.len() - 1, compare);
+        let secondary_keys = @alloc(self.len());
+
+        for i in 0..self.len() {
+            secondary_keys[i] = i;
+        }
+
+        quick_sort(self.body(), 0, self.len() - 1, compare, secondary_keys);
 
         self
     }
 }
 
-fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) -> int {
+fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int), secondary_keys: ptr) -> int {
     let pivot = array[end_index];
     let i = start_index - 1;
 
@@ -411,25 +417,27 @@ fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn
         let compare_value = compare(array[j], pivot);
 
         if compare_value == 0 {
-            compare_value = j - end_index;
+            compare_value = secondary_keys[j] - secondary_keys[end_index];
         }
 
-        if compare_value < 0 {
+        if compare_value <= 0 {
             i += 1;
             array.swap(i, j);
+            secondary_keys.swap(i, j);
         }
     }
 
     array.swap(i + 1, end_index);
+    secondary_keys.swap(i + 1, end_index);
 
     i + 1
 }
 
-fn quick_sort<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int)) {
+fn quick_sort<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn(T, T)(int), secondary_keys: ptr) {
     if start_index < end_index {
-        let middle_index = partition(array, start_index, end_index, compare);
+        let middle_index = partition(array, start_index, end_index, compare, secondary_keys);
 
-        quick_sort(array, start_index, middle_index - 1, compare);
-        quick_sort(array, middle_index + 1, end_index, compare);
+        quick_sort(array, start_index, middle_index - 1, compare, secondary_keys);
+        quick_sort(array, middle_index + 1, end_index, compare, secondary_keys);
     }
 }
