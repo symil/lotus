@@ -27,9 +27,8 @@ impl MethodDeclaration {
             let name = function_unwrapped.name.clone();
             let mut method_details = function_unwrapped.method_details.as_mut().unwrap();
             let prev_opt = type_wrapped.with_mut(|mut type_unwrapped| {
-                if let Some((qualifier, event_type_wrapped)) = &method_details.event_callback_details {
-                    let event_map = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || HashMap::new());
-                    let callback_list = hashmap_get_or_insert_with(event_map, qualifier, || vec![]);
+                if let Some(details) = &method_details.event_callback_details {
+                    let callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, &details.event_type, || vec![]);
 
                     callback_list.push(function_wrapped.clone());
 
@@ -79,11 +78,11 @@ impl MethodDeclaration {
                         let is_prev_dynamic = prev_unwrapped.is_dynamic();
                         let prev_method_details = prev_unwrapped.method_details.as_ref().unwrap();
 
-                        if prev_method_details.owner_type.as_ref().unwrap() == &type_wrapped {
+                        if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
                             // The type declares the same method twice
                             context.errors.add_generic(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
                         } else {
-                            let parent_class_name = prev_method_details.owner_type.as_ref().unwrap().borrow().name.to_string();
+                            let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();
 
                             if is_prev_dynamic {
                                 let prev_signature = &prev_unwrapped.signature;

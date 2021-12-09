@@ -3,43 +3,49 @@ class DealDamages {
     target: Character,
     amount: int,
 
+    has_target(object: Object) -> bool {
+        self.target == object
+    }
+
     trigger() {
-        @log("trigger: " + self.source.name + " deals " + self.amount.to_string() + " damages to " + self.target.name);
         self.target.health -= self.amount;
+    }
+}
+
+class Log {
+    @DealDamages[100] {
+        @log(`${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
+    }
+
+    @DealDamages[-100] {
+        @log(`${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
     }
 }
 
 class Character {
     name: string,
     health: int = 100,
-    total_damages_received: int = 0
+    total_damages_received: int = 0,
+    total_damages_dealt: int = 0
 
-    @DealDamages {
-        check evt.target == self;
-
-        @log(self.name + ": received " + evt.amount.to_string() + " damages");
+    $DealDamages {
         self.total_damages_received += evt.amount;
+    }
+
+    @DealDamages[50] {
+        check evt.source == self;
+
+        self.total_damages_dealt += evt.amount;
     }
 }
 
 class Attacker extends Character {
-    ^DealDamages {
+    @DealDamages[-1] {
         check evt.source == self;
 
         evt.amount *= 2;
     }
-
-    @DealDamages {
-        check evt.source == self;
-
-        @log(self.name + ": \"Ha!\"");
-    }
 }
-
-class Battlefield {
-    units: Object[],
-}
-
 
 export fn main() {
     let attacker = Attacker { name: "attacker" };
@@ -54,15 +60,11 @@ export fn main() {
         target: attacker,
         amount: 5
     };
-    let battlefield = Battlefield {
-        units: [attacker, defender]
-    }
+    let entities = [Log, attacker, defender];
 
-    evt1.emit(battlefield.units);
-    @log(defender.health);
-    @log(defender.total_damages_received);
+    evt1.emit(entities);
+    evt2.emit(entities);
 
-    evt2.emit(battlefield.units);
-    @log(attacker.health);
-    @log(attacker.total_damages_received);
+    @dbg(attacker);
+    @dbg(defender);
 }

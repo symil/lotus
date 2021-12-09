@@ -13,6 +13,8 @@ pub struct FunctionBlueprint {
     pub argument_names: Vec<Identifier>,
     pub signature: Signature,
     pub argument_variables: Vec<VariableInfo>,
+    pub owner_type: Option<Link<TypeBlueprint>>,
+    pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub closure_details: Option<ClosureDetails>,
     pub method_details: Option<MethodDetails>,
     pub is_raw_wasm: bool,
@@ -28,11 +30,16 @@ pub struct ClosureDetails {
 
 #[derive(Debug)]
 pub struct MethodDetails {
-    pub event_callback_details: Option<(EventCallbackQualifier, Link<TypeBlueprint>)>,
-    pub owner_type: Option<Link<TypeBlueprint>>,
-    pub owner_interface: Option<Link<InterfaceBlueprint>>,
+    pub event_callback_details: Option<EventCallbackDetails>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub dynamic_index: Option<i32>,
+}
+
+#[derive(Debug)]
+pub struct EventCallbackDetails {
+    pub event_type: Link<TypeBlueprint>,
+    pub qualifier: EventCallbackQualifier,
+    pub priority: Vasm,
 }
 
 impl FunctionBlueprint {
@@ -45,6 +52,8 @@ impl FunctionBlueprint {
             argument_names: vec!{},
             signature: Signature::default(),
             argument_variables: vec![],
+            owner_type: None,
+            owner_interface: None,
             closure_details: None,
             method_details: None,
             is_raw_wasm: false,
@@ -90,6 +99,16 @@ impl FunctionBlueprint {
 
     pub fn check_type_parameters(&self, context: &mut ProgramContext) {
         self.signature.check_type_parameters(context);
+    }
+
+    pub fn get_event_callback_details(&self) -> Option<&EventCallbackDetails> {
+        match &self.method_details {
+            Some(method_details) => match &method_details.event_callback_details {
+                Some(details) => Some(details),
+                None => None,
+            },
+            None => None,
+        }
     }
 }
 

@@ -630,7 +630,7 @@ impl Type {
                 }
             }),
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
-                type_unwrapped.associated_types.get(name).and_then(|t| Some(t.ty.replace_parameters(Some(self), &[])))
+                type_unwrapped.associated_types.get(name).map(|t| t.ty.replace_parameters(Some(self), &[]))
             }),
             Type::TypeParameter(info) | Type::FunctionParameter(info) => {
                 match info.required_interfaces.get_associated_type_info(name) {

@@ -420,7 +420,7 @@ fn partition<T>(array: Pointer<T>, start_index: int, end_index: int, compare: fn
             compare_value = secondary_keys[j] - secondary_keys[end_index];
         }
 
-        if compare_value <= 0 {
+        if compare_value < 0 {
             i += 1;
             array.swap(i, j);
             secondary_keys.swap(i, j);

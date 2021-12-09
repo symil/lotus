@@ -57,11 +57,13 @@ pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
 
+pub const EVENT_VAR_NAME : &'static str = "evt";
+pub const EVENT_OUTPUT_VAR_NAME : &'static str = "__output";
+pub const HAS_TARGET_METHOD_NAME : &'static str = "has_target";
 pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";
-pub const EVENT_HOOKS_GLOBAL_NAME : &'static str = "EVENT_HOOKS";
-pub const BEFORE_EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "BEFORE_EVENT_CALLBACKS";
-pub const AFTER_EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "AFTER_EVENT_CALLBACKS";
+pub const EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "EVENT_CALLBACKS";
 pub const INSERT_EVENT_CALLBACK_FUNC_NAME : &'static str = "insert_event_callback";
+pub const SORT_EVENT_CALLBACK_FUNC_NAME : &'static str = "sort_event_callbacks";
 
 pub const NAN_WASM : &'static str = "nan:0x200000";
 

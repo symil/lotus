@@ -1,0 +1,15 @@
+export fn main() {
+    let map = Map<int, int>::new();
+
+    map.set(4, 1);
+    map.set(3, 2);
+    map.set(6, 3);
+    map.set(1, 4);
+    map.set(6, 5);
+
+    map.sort((a, b) => a - b);
+
+    for value in map.values() {
+        @log(value);
+    }
+}

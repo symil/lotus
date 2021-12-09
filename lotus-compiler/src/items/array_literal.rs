@@ -45,10 +45,8 @@ impl ArrayLiteral {
                 if final_item_type == Type::Any {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;
-                } else if item_vasm.ty.is_assignable_to(&final_item_type) {
-                    item_ok = true;
-                } else if type_hint.is_none() && final_item_type.is_assignable_to(&item_vasm.ty) {
-                    final_item_type = item_vasm.ty.clone();
+                } else if let Some(common_type) = item_vasm.ty.get_common_type(&final_item_type) {
+                    final_item_type = common_type;
                     item_ok = true;
                 }
 

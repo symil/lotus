@@ -58,6 +58,8 @@ impl FunctionLiteral {
             argument_names,
             signature: hint_signature.clone(),
             argument_variables: vec![],
+            owner_type: context.get_current_type(),
+            owner_interface: context.get_current_interface(),
             is_raw_wasm: false,
             closure_details: None,
             method_details: None,

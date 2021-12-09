@@ -556,14 +556,11 @@ impl VirtualInstruction {
                         let this_type = details.caller_type.as_ref().map(|ty| ty.resolve(type_index, context));
                         let function_parameters = details.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect();
                         let function_blueprint = details.function.with_ref(|function_unwrapped| {
-                            match &function_unwrapped.method_details {
-                                Some(method_details) => match method_details.owner_interface.is_some() {
-                                    true => this_type.as_ref().unwrap()
-                                        .get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str())
-                                        .unwrap(),
-                                    false => details.function.clone(),
-                                },
-                                None => details.function.clone(),
+                            match &function_unwrapped.owner_interface.is_some() {
+                                true => this_type.as_ref().unwrap()
+                                    .get_method(function_unwrapped.get_method_kind(), function_unwrapped.name.as_str())
+                                    .unwrap(),
+                                false => details.function.clone(),
                             }
                         });
 
@@ -664,7 +661,7 @@ impl VirtualInstruction {
             VirtualInstruction::FunctionIndex(info) => {
                 let parameters = FunctionInstanceParameters {
                     function_blueprint: info.function.clone(),
-                    this_type: None,
+                    this_type: info.function.borrow().owner_type.as_ref().map(|type_wrapped| type_wrapped.borrow().self_type.resolve(type_index, context)),
                     function_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
                 let function_instance = context.get_function_instance(parameters);

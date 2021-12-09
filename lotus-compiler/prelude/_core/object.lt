@@ -204,4 +204,8 @@ export class Object {
     dyn yield(object: Object) {
         
     }
+
+    dyn has_target(object: Object) -> bool {
+        false
+    }
 }

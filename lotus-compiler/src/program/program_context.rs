@@ -3,8 +3,8 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable};
-use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, AssociatedTypeContent, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_HOOKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, Timer, ProgramStep};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, Timer, ProgramStep, SORT_EVENT_CALLBACK_FUNC_NAME};
 
 #[derive(Default, Debug)]
 pub struct ProgramContext {
@@ -652,6 +652,8 @@ impl ProgramContext {
             let new_type_instances = &type_instances[prev_type_instance_count..];
 
             prev_type_instance_count = current_type_instance_count;
+
+            let event_callbacks_var_info = self.global_vars.get_by_name(EVENT_CALLBACKS_GLOBAL_NAME).unwrap().borrow().var_info.clone();
             
             for type_instance in new_type_instances {
                 let insert_function_call = FunctionCall::Named(NamedFunctionCallDetails {
@@ -662,6 +664,10 @@ impl ProgramContext {
                 let type_id = type_instance.get_type_id();
 
                 type_instance.type_blueprint.with_ref(|type_unwrapped| {
+                    // if !type_unwrapped.event_callbacks.is_empty() {
+                    //     dbg!(type_instance.name.as_str());
+                    // }
+
                     for (event_type_wrapped, event_callbacks) in type_unwrapped.event_callbacks.iter() {
                         let event_type_instance = self.get_type_instance(TypeInstanceParameters {
                             type_blueprint: event_type_wrapped.clone(),
@@ -669,36 +675,40 @@ impl ProgramContext {
                         });
                         let event_type_id = event_type_instance.get_type_id();
 
-                        for (qualifier, callback_list) in event_callbacks.iter() {
-                            let global_map_var_name = match qualifier {
-                                EventCallbackQualifier::Hook => EVENT_HOOKS_GLOBAL_NAME,
-                                EventCallbackQualifier::Before => BEFORE_EVENT_CALLBACKS_GLOBAL_NAME,
-                                EventCallbackQualifier::After => AFTER_EVENT_CALLBACKS_GLOBAL_NAME,
+                        // if !event_callbacks.is_empty() {
+                        //     dbg!(event_type_instance.name.as_str());
+                        //     dbg!(event_callbacks.len());
+                        // }
+
+                        for callback in event_callbacks.iter() {
+                            let vasm = vasm![
+                                VI::call_function(insert_function_call.clone(), vasm![
+                                    VI::int(event_type_id),
+                                    callback.borrow().get_event_callback_details().unwrap().priority.clone(),
+                                    VI::int(type_id),
+                                    VI::function_index(callback, &[])
+                                ])
+                            ];
+
+                            let type_index = TypeIndex {
+                                current_type_instance: Some(type_instance.clone()),
+                                current_function_parameters: vec![],
                             };
-                            let global_map_var_info = self.global_vars.get_by_name(global_map_var_name).unwrap().borrow().var_info.clone();
 
-                            for callback in callback_list {
-                                let vasm = vasm![
-                                    VI::call_function(insert_function_call.clone(), vec![
-                                        VI::get_var(&global_map_var_info, None),
-                                        VI::int(event_type_id),
-                                        VI::int(type_id),
-                                        VI::function_index(callback, &[])
-                                    ])
-                                ];
-
-                                let type_index = TypeIndex {
-                                    current_type_instance: Some(type_instance.clone()),
-                                    current_function_parameters: vec![],
-                                };
-
-                                events_initialization.extend(vasm.resolve(&type_index, &mut self));
-                            }
+                            events_initialization.extend(vasm.resolve(&type_index, &mut self));
                         }
                     }
                 });
             }
         }
+
+        events_initialization.extend(vasm![
+            VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
+                caller_type: None,
+                function: self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
+                parameters: vec![]
+            }), vec![])
+        ].resolve(&TypeIndex::empty(), &mut self));
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));

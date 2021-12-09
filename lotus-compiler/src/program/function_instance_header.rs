@@ -42,9 +42,9 @@ impl FunctionInstanceHeader {
                         }
                     }
                 });
-            } else {
-                function_index = Some(context.reserve_next_function_index());
             }
+            
+            function_index = Some(context.reserve_next_function_index());
 
             for parameter in function_unwrapped.parameters.values() {
                 let p = &parameters.function_parameters[parameter.index];

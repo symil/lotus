@@ -92,13 +92,13 @@ impl InterfaceDeclaration {
                         return_type: return_type.unwrap_or(context.void_type()),
                     },
                     argument_variables: vec![],
+                    owner_type: None,
+                    owner_interface: Some(interface_wrapped.clone()),
                     is_raw_wasm: false,
                     body: Vasm::void(),
                     closure_details: None,
                     method_details: Some(MethodDetails {
                         event_callback_details: None,
-                        owner_type: None,
-                        owner_interface: Some(interface_wrapped.clone()),
                         first_declared_by: None,
                         dynamic_index: None,
                     })

@@ -9,6 +9,7 @@ export class Client {
     _layout: Layout,
     _network_events: NetworkEvent[],
     _window_events: WindowEvent[],
+    _interactions: Interaction[],
 
     user: #USER_TYPE?,
     local_data: #LOCAL_DATA_TYPE,
@@ -64,12 +65,19 @@ export class Client {
 
         while self._buffer.index < written_count {
             let window_event = decode_window_event_from_buffer(self._buffer, self);
-
-            self._window_events.push(window_event);
+            let push = true;
 
             if window_event is MouseEvent(mouse_event) {
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
+
+                if mouse_event.action == MouseAction::Move {
+                    push = false;
+                }
+            }
+
+            if push {
+                self._window_events.push(window_event);
             }
         }
     }
@@ -128,7 +136,11 @@ export class Client {
             }
         }
 
-        self.hover_stack.reverse().sort((w1, w2) => w2.hitbox.z.compare(w1.hitbox.z));
+        self.hover_stack.reverse().sort((w1, w2) => (w2.hitbox.z - w1.hitbox.z).sign());
+    }
+
+    _process_interactions() {
+
     }
 
     _process_window_events() {

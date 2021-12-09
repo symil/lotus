@@ -23,7 +23,7 @@ pub struct TypeBlueprint {
     pub regular_methods: IndexMap<String, FuncRef>,
     pub static_methods: IndexMap<String, FuncRef>,
     pub dynamic_methods: Vec<FuncRef>,
-    pub event_callbacks: HashMap<Link<TypeBlueprint>, HashMap<EventCallbackQualifier, Vec<Link<FunctionBlueprint>>>>,
+    pub event_callbacks: HashMap<Link<TypeBlueprint>, Vec<Link<FunctionBlueprint>>>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

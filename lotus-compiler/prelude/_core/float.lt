@@ -24,13 +24,13 @@ export type(f32) float {
     min(float) -> float {{ f32.min }}
     max(float) -> float {{ f32.max }}
 
-    compare(other: float) -> int {
-        if self == other {
-            0
-        } else if self < other {
+    sign() -> int {
+        if self < 0f {
             -1
-        } else {
+        } else if self > 0f {
             1
+        } else {
+            0
         }
     }
 

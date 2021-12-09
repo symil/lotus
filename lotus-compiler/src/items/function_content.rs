@@ -2,8 +2,8 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
-use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, vasm};
+use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility, Expression};
 
 #[parsable]
 pub struct FunctionContent {
@@ -12,6 +12,8 @@ pub struct FunctionContent {
     pub event_callback_qualifier: Option<EventCallbackQualifier>,
     pub name: Identifier,
     pub parameters: TypeParameters,
+    #[parsable(brackets="[]")]
+    pub priority: Option<Expression>,
     pub signature: Option<FunctionSignature>,
     pub body: FunctionBody,
 }
@@ -32,14 +34,14 @@ impl FunctionContent {
             argument_names: vec![],
             signature: Signature::default(),
             argument_variables: vec![],
+            owner_type: None,
+            owner_interface: None,
             closure_details: None,
             method_details: None,
         };
 
         let mut method_details = MethodDetails {
             event_callback_details: None,
-            owner_type: None,
-            owner_interface: None,
             first_declared_by: None,
             dynamic_index: None,
         };
@@ -69,7 +71,7 @@ impl FunctionContent {
                 method_details.dynamic_index = Some(-1);
             }
 
-            method_details.owner_type = Some(type_wrapped.clone());
+            function_blueprint.owner_type = Some(type_wrapped.clone());
             method_details.first_declared_by = Some(type_wrapped.clone());
 
             if !is_static {
@@ -148,8 +150,8 @@ impl FunctionContent {
                         if let Some(type_wrapped) = context.get_current_type() {
                             function_wrapped.with_mut(|mut function_unwrapped| {
                                 function_unwrapped.argument_names = vec![
-                                    Identifier::new("evt", self),
-                                    Identifier::new("__output", self),
+                                    Identifier::new(EVENT_VAR_NAME, self),
+                                    Identifier::new(EVENT_OUTPUT_VAR_NAME, self),
                                 ];
                                 function_unwrapped.signature = Signature {
                                     this_type: Some(type_wrapped.borrow().self_type.clone()),
@@ -160,7 +162,11 @@ impl FunctionContent {
                                     return_type: Type::Void,
                                 };
 
-                                function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert((qualifier.clone(), event_type_wrapped.clone()));
+                                function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert(EventCallbackDetails {
+                                    event_type: event_type_wrapped.clone(),
+                                    qualifier: qualifier.clone(),
+                                    priority: vasm![],
+                                });
                             });
                         }
                     // } else {
@@ -188,14 +194,54 @@ impl FunctionContent {
         let function_wrapped = context.functions.get_by_location(&self.name, type_id);
         let is_raw_wasm = self.body.is_raw_wasm();
         let return_type = function_wrapped.borrow().signature.return_type.clone();
+
+        let priority_vasm = match &self.priority {
+            Some(expression) => match expression.process(Some(&context.int_type()), context) {
+                Some(vasm) => {
+                    if !vasm.ty.is_int() {
+                        context.errors.add(CompilationError::type_mismatch(expression, &context.int_type(), &vasm.ty));
+                    }
+
+                    vasm
+                },
+                None => vasm![],
+            },
+            None => match &self.event_callback_qualifier {
+                Some(qualifier) => vasm![VI::int(qualifier.get_default_priority())],
+                None => vasm![],
+            },
+        };
+
+        function_wrapped.with_mut(|mut function_unwrapped| {
+            if let Some(method_details) = &mut function_unwrapped.method_details {
+                if let Some(event_callback_details) = &mut method_details.event_callback_details {
+                    event_callback_details.priority = priority_vasm;
+                }
+            }
+        });
         
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
-        if let Some(vasm) = self.body.process(Some(&return_type), context) {
+        if let Some(mut vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
                     if !vasm.ty.is_assignable_to(&return_type) {
                         context.errors.add_generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
+                    }
+                }
+
+                if let Some(method_details) = &function_unwrapped.method_details {
+                    if let Some(event_callback_details) = &method_details.event_callback_details {
+                        if event_callback_details.qualifier == EventCallbackQualifier::TargetSelf {
+                            vasm.instructions.insert(0, VI::if_then_else(None, vasm![
+                                VI::get_tmp_var(function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(EVENT_VAR_NAME)).unwrap()),
+                                VI::call_regular_method(&event_callback_details.event_type.borrow().self_type.clone(), HAS_TARGET_METHOD_NAME, &[], vasm![
+                                    VI::get_tmp_var(function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(SELF_VAR_NAME)).unwrap())
+                                ], context)
+                            ], vasm![], vasm![
+                                VI::return_value(vasm![VI::none(&return_type, context)])
+                            ]));
+                        }
                     }
                 }
 

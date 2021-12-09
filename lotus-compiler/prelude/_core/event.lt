@@ -1,57 +1,71 @@
+type EventTypeId = int;
+type TargetTypeId = int;
+type EventCallbackPriority = int;
 type EventCallback = fn(Object, Object, EventOutput);
 type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 
-export const EVENT_HOOKS = EventCallbackMap::new();
-export const BEFORE_EVENT_CALLBACKS = EventCallbackMap::new();
-export const AFTER_EVENT_CALLBACKS = EventCallbackMap::new();
+export const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>>::new();
 
 export class EventOutput {
     intercepted: bool,
     yielded: Object[],
 }
 
-sys fn insert_event_callback(event_map: EventCallbackMap, event_type_id: int, target_type_id: int, callback: EventCallback) {
-    let callback_map = event_map.get_or_insert_with(event_type_id, () => Map<int, EventCallback[]>::new());
-    let callback_list = callback_map.get_or_insert_with(target_type_id, () => []);
+sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_type_id: int, callback: EventCallback) {
+    let callback_priorities = EVENT_CALLBACKS.get_or_insert_with(event_type_id, () => Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>::new());
+    let target_callbacks = callback_priorities.get_or_insert_with(callback_priority, () => Map<TargetTypeId, EventCallback[]>::new());
+    let callback_list = target_callbacks.get_or_insert_with(target_type_id, () => []);
 
     callback_list.push(callback);
+}
+
+sys fn sort_event_callbacks() {
+    for entry in EVENT_CALLBACKS {
+        entry.value.sort((a, b) => a - b);
+    }
 }
 
 pub fn emit_event(event: Object, targets: Object[]) {
     let output = EventOutput;
     let event_type_id = event.get_type_id();
+    let event_map = EVENT_CALLBACKS.get(event_type_id);
+    let trigger_done = false;
 
-    for event_map in [EVENT_HOOKS, BEFORE_EVENT_CALLBACKS, AFTER_EVENT_CALLBACKS] {
-        if event_map == AFTER_EVENT_CALLBACKS {
-            event.trigger();
-        }
+    if event_map {
+        for event_entry in event_map {
+            let priority = event_entry.key;
+            let callback_map = event_entry.value;
 
-        let callback_map = event_map.get(event_type_id);
-
-        if !callback_map {
-            continue;
-        }
-
-        for target in targets {
-            let callback_list = callback_map.get(target.get_type_id());
-
-            if !callback_list {
-                continue;
+            if !trigger_done && priority >= 0 {
+                event.trigger();
+                trigger_done = true;
             }
 
-            for callback in callback_list {
-                output.yielded.clear();
+            for target in targets {
+                let callback_list = callback_map.get(target.get_type_id());
 
-                callback(target, event, output);
-
-                for object in output.yielded {
-                    event.yield(object);
+                if !callback_list {
+                    continue;
                 }
 
-                if output.intercepted {
-                    return;
+                for callback in callback_list {
+                    output.yielded.clear();
+
+                    callback(target, event, output);
+
+                    for object in output.yielded {
+                        event.yield(object);
+                    }
+
+                    if output.intercepted {
+                        return;
+                    }
                 }
             }
         }
+    }
+
+    if !trigger_done {
+        event.trigger();
     }
 }

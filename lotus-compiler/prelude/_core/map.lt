@@ -41,10 +41,14 @@ export class Map<K, V> {
             }
         }
 
-        self.capacity = new_map.capacity;
-        self.size = new_map.size;
-        self.hash_table = new_map.hash_table;
-        self.data_table = new_map.data_table;
+        self._set(new_map);
+    }
+
+    _set(other: Self) {
+        self.capacity = other.capacity;
+        self.size = other.size;
+        self.hash_table = other.hash_table;
+        self.data_table = other.data_table;
     }
 
     _get_index(key: K) -> int {
@@ -63,6 +67,14 @@ export class Map<K, V> {
         }
 
         entry
+    }
+
+    get_iterable_len() -> int {
+        self.data_table.len()
+    }
+
+    get_iterable_ptr() -> Pointer<MapEntry<K, V>> {
+        self.data_table.body()
     }
 
     capacity() -> int {
@@ -207,6 +219,21 @@ export class Map<K, V> {
         }
 
         none
+    }
+
+    sort(compare: fn(K, K)(int)) -> Self {
+        let new_map = Self::with_capacity(self.capacity);
+        let entries = self.entries();
+
+        entries.sort((e1, e2) => compare(e1.key, e2.key));
+
+        for entry in entries {
+            new_map.set(entry.key, entry.value);
+        }
+
+        self._set(new_map);
+        
+        self
     }
 }
 

@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slic
 use colored::Colorize;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
-use crate::{program::{AFTER_EVENT_CALLBACKS_GLOBAL_NAME, ActualTypeContent, AssociatedTypeInfo, BEFORE_EVENT_CALLBACKS_GLOBAL_NAME, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_HOOKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -410,14 +410,11 @@ impl TypeDeclaration {
             type_wrapped.with_mut(|mut type_unwrapped| {
                 if let Some(parent) = &type_unwrapped.parent {
                     parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
-                        for (event_type_wrapped, callback_map) in parent_unwrapped.event_callbacks.iter() {
-                            for (qualifier, callback_list) in callback_map.iter() {
-                                let self_callback_map = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || HashMap::new());
-                                let self_callback_list = hashmap_get_or_insert_with(self_callback_map, qualifier, || vec![]);
+                        for (event_type_wrapped, callback_list) in parent_unwrapped.event_callbacks.iter() {
+                            let self_callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || vec![]);
 
-                                for callback in callback_list {
-                                    self_callback_list.push(callback.clone());
-                                }
+                            for callback in callback_list {
+                                self_callback_list.push(callback.clone());
                             }
                         }
                     });
@@ -484,6 +481,8 @@ impl TypeDeclaration {
                                             return_type: field_info.ty.clone(),
                                         },
                                         argument_variables: vec![],
+                                        owner_type: Some(type_wrapped.clone()),
+                                        owner_interface: None,
                                         closure_details: None,
                                         method_details: None,
                                         is_raw_wasm: false,
