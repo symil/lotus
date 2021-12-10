@@ -13,8 +13,8 @@ export class Client {
 
     user: #USER_TYPE?,
     local_data: #LOCAL_DATA_TYPE,
-    hover_stack: ViewState[],
-    all_views: ViewState[],
+    hover_stack: ViewWrapper[],
+    all_views: ViewWrapper[],
     real_width: float,
     real_height: float,
     virtual_width: float,
@@ -103,30 +103,30 @@ export class Client {
     }
 
     _render_view(view: Object, rect: Rect, transform: Transform2D) {
-        let render_event = Render {
-            client: self,
-            layout: self._layout.reset(rect, transform)
-        };
+        // let render_event = OnRender {
+        //     client: self,
+        //     layout: self._layout.reset(rect, transform)
+        // };
 
-        let view_state = ViewState { view, transform };
+        // let view_wrapper = ViewWrapper { view, transform };
 
-        self.all_views.push(view_state);
-        render_event.emit([view]);
+        // self.all_views.push(view_wrapper);
+        // render_event.emit([view]);
 
-        for item in self._layout.consume() {
-            match item.object {
-                Graphics(graphics) => {
-                    if !view_state.hitbox {
-                        view_state.hitbox = graphics.get_hitbox(item.rect, item.transform);
-                    }
+        // for item in self._layout.consume() {
+        //     match item.object {
+        //         Graphics(graphics) => {
+        //             if !view_wrapper.hitbox {
+        //                 view_wrapper.hitbox = graphics.get_hitbox(item.rect, item.transform);
+        //             }
 
-                    view_state.graphics.push(graphics);
-                },
-                Object(view) => {
-                    self._render_view(view, item.rect, item.transform);
-                }
-            }
-        }
+        //             view_wrapper.graphics.push(graphics);
+        //         },
+        //         Object(view) => {
+        //             self._render_view(view, item.rect, item.transform);
+        //         }
+        //     }
+        // }
     }
 
     _compute_hover_stack() {

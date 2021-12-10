@@ -4,14 +4,11 @@ export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }
 
-export class Graphics {
-    x: float = 0,
-    y: float = 0,
-    z: float = 0,
+export type MouseHandlerCallback = fn();
+
+export class Graphics extends Rect {
     offset_x: float = 0,
     offset_y: float = 0,
-    width: float = 0,
-    height: float = 0,
     shape: Shape = Shape::Rectangle,
     aspect_ratio: float = none,
     scale: float = 1,
@@ -47,18 +44,22 @@ export class Graphics {
     text_cursor_index: int = none,
     detectable: bool = true,
     cursor: Cursor = Cursor::Default,
+    children: Graphics[] = [],
+    on_click: MouseHandlerCallback[] = [],
+    on_down: MouseHandlerCallback[] = [],
+    on_up: MouseHandlerCallback[] = [],
+    on_drag: MouseHandlerCallback[] = [],
 
-    get_hitbox(rect: Rect, transform: Transform2D) -> Rect? {
-        rect.clone()
+    get_hitbox() -> Rect {
+        self.clone()
             .translate(self.offset_x, self.offset_y)
             .scale(self.scale)
             .strip_to_match_aspect_ratio(self.aspect_ratio)
-            .transform(transform)
-            .set_z(self.z)
+            // .transform(transform)
     }
 
-    to_draw_primitive(rect: Rect, transform: Transform2D, virtual_to_real_ratio: float) -> DrawPrimitive? {
-        let real_hitbox = self.get_hitbox(rect, transform).multiply(virtual_to_real_ratio);
+    to_draw_primitive(virtual_to_real_ratio: float) -> DrawPrimitive? {
+        let real_hitbox = self.get_hitbox().multiply(virtual_to_real_ratio);
         let width = real_hitbox.width;
         let height = real_hitbox.height;
 

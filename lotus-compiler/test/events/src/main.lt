@@ -1,23 +1,19 @@
-class DealDamages {
+class OnDealDamages {
     source: Character,
     target: Character,
     amount: int,
 
-    has_target(object: Object) -> bool {
-        self.target == object
-    }
-
-    trigger() {
+    @OnDealDamages {
         self.target.health -= self.amount;
     }
 }
 
 class Log {
-    @DealDamages[100] {
+    @OnDealDamages[100] {
         @log(`${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
     }
 
-    @DealDamages[-100] {
+    @OnDealDamages[-100] {
         @log(`${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
     }
 }
@@ -28,11 +24,11 @@ class Character {
     total_damages_received: int = 0,
     total_damages_dealt: int = 0
 
-    $DealDamages {
+    $OnDealDamages {
         self.total_damages_received += evt.amount;
     }
 
-    @DealDamages[50] {
+    @OnDealDamages[50] {
         check evt.source == self;
 
         self.total_damages_dealt += evt.amount;
@@ -40,7 +36,7 @@ class Character {
 }
 
 class Attacker extends Character {
-    @DealDamages[-1] {
+    @OnDealDamages[-1] {
         check evt.source == self;
 
         evt.amount *= 2;
@@ -50,12 +46,12 @@ class Attacker extends Character {
 export fn main() {
     let attacker = Attacker { name: "attacker" };
     let defender = Character { name: "defender" };
-    let evt1 = DealDamages {
+    let evt1 = OnDealDamages {
         source: attacker,
         target: defender,
         amount: 10
     };
-    let evt2 = DealDamages {
+    let evt2 = OnDealDamages {
         source: defender,
         target: attacker,
         amount: 5

@@ -29,43 +29,42 @@ pub fn emit_event(event: Object, targets: Object[]) {
     let output = EventOutput;
     let event_type_id = event.get_type_id();
     let event_map = EVENT_CALLBACKS.get(event_type_id);
-    let trigger_done = false;
 
-    if event_map {
-        for event_entry in event_map {
-            let priority = event_entry.key;
-            let callback_map = event_entry.value;
+    if !event_map {
+        return;
+    }
 
-            if !trigger_done && priority >= 0 {
-                event.trigger();
-                trigger_done = true;
-            }
+    for event_entry in event_map {
+        let callback_map = event_entry.value;
 
-            for target in targets {
-                let callback_list = callback_map.get(target.get_type_id());
+        for target in targets {
+            check trigger_event_callbacks(callback_map, event, target, output);
+        }
 
-                if !callback_list {
-                    continue;
-                }
+        check trigger_event_callbacks(callback_map, event, event, output);
+    }
+}
 
-                for callback in callback_list {
-                    output.yielded.clear();
+pub fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Object, target: Object, output: EventOutput) -> bool {
+    let callback_list = callback_map.get(target.get_type_id());
 
-                    callback(target, event, output);
+    if !callback_list {
+        return true;
+    }
 
-                    for object in output.yielded {
-                        event.yield(object);
-                    }
+    for callback in callback_list {
+        output.yielded.clear();
 
-                    if output.intercepted {
-                        return;
-                    }
-                }
-            }
+        callback(target, event, output);
+
+        for object in output.yielded {
+            event.yield(object);
+        }
+
+        if output.intercepted {
+            return false;
         }
     }
 
-    if !trigger_done {
-        event.trigger();
-    }
+    true
 }

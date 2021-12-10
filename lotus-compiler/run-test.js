@@ -32,8 +32,9 @@ async function main() {
     let commandLineNames = ARGV.filter(str => !str.startsWith('-'));
     let overwrite = hasOption('--overwrite', '-o');
     let showDetails = hasOption('--details', '-d');
+    let runAll = hasOption('--all', '-a');
     let createTest = overwrite || hasOption('--write', '-w');
-    let mode = ((commandLineNames[0] === 'all' || commandLineNames.length > 1) && !createTest) ? 'release' : 'debug';
+    let mode = ((runAll || commandLineNames.length > 0) && !createTest) ? 'release' : 'debug';
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
@@ -114,10 +115,10 @@ async function main() {
         setTimeout(() => {
             console.log(`${chalk.bold('generated:')} ${formattedDirPath}`);
         });
-    } else if (commandLineNames.length > 0) {
+    } else if (runAll || commandLineNames.length > 0) {
         let testDirectoryList = fse.readdirSync(TEST_DIR).filter(dirName => fse.statSync(path.join(TEST_DIR, dirName)).isDirectory());
         let commandLineTests = testDirectoryList.filter(dirPath => commandLineNames.includes(path.basename(dirPath)));
-        let testsToRun = commandLineNames.includes('all') ? testDirectoryList : commandLineTests;
+        let testsToRun = runAll ? testDirectoryList : commandLineTests;
 
         process.env.LOTUS_TESTS = testsToRun.join(' ');
         if (validate) {

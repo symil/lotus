@@ -1,4 +1,4 @@
-pub class ViewState {
+pub class ViewWrapper {
     view: Object,
     transform: Transform2D,
     graphics: Graphics[],

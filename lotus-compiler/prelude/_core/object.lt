@@ -197,15 +197,7 @@ export class Object {
         emit_event(self, targets);
     }
 
-    dyn trigger() {
-
-    }
-
     dyn yield(object: Object) {
         
-    }
-
-    dyn has_target(object: Object) -> bool {
-        false
     }
 }

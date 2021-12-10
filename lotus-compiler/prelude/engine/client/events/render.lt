@@ -1,4 +1,5 @@
-pub class Render {
+pub class OnRender {
     client: Client,
-    layout: Layout
+    target: Object,
+    graphics: Graphics
 }

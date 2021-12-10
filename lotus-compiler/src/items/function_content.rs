@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, vasm};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, vasm, wat};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility, Expression};
 
 #[parsable]
@@ -232,15 +232,34 @@ impl FunctionContent {
 
                 if let Some(method_details) = &function_unwrapped.method_details {
                     if let Some(event_callback_details) = &method_details.event_callback_details {
-                        if event_callback_details.qualifier == EventCallbackQualifier::TargetSelf {
-                            vasm.instructions.insert(0, VI::if_then_else(None, vasm![
-                                VI::get_tmp_var(function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(EVENT_VAR_NAME)).unwrap()),
-                                VI::call_regular_method(&event_callback_details.event_type.borrow().self_type.clone(), HAS_TARGET_METHOD_NAME, &[], vasm![
-                                    VI::get_tmp_var(function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(SELF_VAR_NAME)).unwrap())
-                                ], context)
-                            ], vasm![], vasm![
-                                VI::return_value(vasm![VI::none(&return_type, context)])
-                            ]));
+                        if let Some(event_field_name) = event_callback_details.qualifier.get_event_field_name() {
+                            let event_var_info = function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(EVENT_VAR_NAME)).unwrap();
+                            let self_var_info = function_unwrapped.argument_variables.iter().find(|var_info| var_info.name().is(SELF_VAR_NAME)).unwrap();
+
+                            match event_var_info.ty().get_field(event_field_name) {
+                                Some(field_info) => {
+                                    match field_info.ty.is_object() {
+                                        true => {
+                                            let current_function_level = Some(context.get_function_level());
+
+                                            vasm.instructions.insert(0, VI::if_then_else(None, vasm![
+                                                VI::get_var(&event_var_info, current_function_level),
+                                                VI::get_field(&field_info.ty, field_info.offset),
+                                                VI::get_var(&self_var_info, current_function_level),
+                                                VI::raw(wat!["i32.eq"])
+                                            ], vasm![], vasm![
+                                                VI::return_value(vasm![VI::none(&return_type, context)])
+                                            ]));
+                                        },
+                                        false => {
+                                            context.errors.add_generic(&event_callback_details.qualifier, format!("field `{}` of type `{}` is not an object", event_field_name.bold(), event_var_info.ty()));
+                                        },
+                                    }
+                                },
+                                None => {
+                                    context.errors.add_generic(&event_callback_details.qualifier, format!("type `{}` has no field `{}`", event_var_info.ty(), event_field_name.bold()));
+                                },
+                            }
                         }
                     }
                 }

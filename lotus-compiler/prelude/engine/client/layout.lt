@@ -1,3 +1,9 @@
+pub class OnLayout {
+    client: Client,
+    target: Object,
+    layout: Layout
+}
+
 pub class LayoutItem {
     object: Object,
     rect: Rect,
