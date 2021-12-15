@@ -170,32 +170,15 @@ impl TypeDeclaration {
                         }
                     }
                 }
-            } else if self.qualifier == TypeQualifier::Class {
-                let base_object = context.types.get_by_name(OBJECT_TYPE_NAME).unwrap();
+            } else if let Some(inherited_type) = self.qualifier.get_inherited_type() {
+                let parent_type_wrapped = context.types.get_by_name(inherited_type.get_name()).unwrap();
 
-                if type_wrapped != base_object {
+                if parent_type_wrapped != type_wrapped {
                     result = Some(ParentInfo {
                         location: DataLocation::default(),
-                        ty: base_object.borrow().self_type.clone(),
+                        ty: parent_type_wrapped.borrow().self_type.clone(),
                     });
                 }
-            // } else if self.qualifier == TypeQualifier::View {
-            //     result = Some(ParentInfo {
-            //         location: DataLocation::default(),
-            //         ty: context.get_builtin_type(BuiltinType::View, vec![])
-            //     });
-            // } else if self.qualifier == TypeQualifier::Event {
-            //     result = Some(ParentInfo {
-            //         location: DataLocation::default(),
-            //         ty: context.get_builtin_type(BuiltinType::Event, vec![])
-            //     });
-            } else if self.qualifier == TypeQualifier::Enum {
-                let base_enum = context.types.get_by_name(ENUM_TYPE_NAME).unwrap();
-
-                result = Some(ParentInfo {
-                    location: DataLocation::default(),
-                    ty: base_enum.borrow().self_type.clone(),
-                });
             }
 
             type_wrapped.with_mut(|mut type_unwrapped| {

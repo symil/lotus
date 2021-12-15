@@ -4,15 +4,8 @@ export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }
 
-export type MouseHandlerCallback = fn();
-
-export class Graphics extends Rect {
-    offset_x: float = 0,
-    offset_y: float = 0,
+export class Graphics {
     shape: Shape = Shape::Rectangle,
-    aspect_ratio: float = none,
-    scale: float = 1,
-    angle: float = 0,
     border_radius: DisplaySize = none,
     border_width: DisplaySize = none,
     border_dash_length: DisplaySize = none,
@@ -44,32 +37,37 @@ export class Graphics extends Rect {
     text_cursor_index: int = none,
     detectable: bool = true,
     cursor: Cursor = Cursor::Default,
-    children: Graphics[] = [],
-    on_click: MouseHandlerCallback[] = [],
-    on_down: MouseHandlerCallback[] = [],
-    on_up: MouseHandlerCallback[] = [],
-    on_drag: MouseHandlerCallback[] = [],
 
-    get_hitbox() -> Rect {
-        self.clone()
-            .translate(self.offset_x, self.offset_y)
-            .scale(self.scale)
-            .strip_to_match_aspect_ratio(self.aspect_ratio)
-            // .transform(transform)
+    static empty() -> Self {
+        let graphics = Self::__create();
+
+        iter_fields {
+            graphics.#FIELD_NAME = none;
+        }
+
+        graphics
     }
 
-    to_draw_primitive(virtual_to_real_ratio: float) -> DrawPrimitive? {
-        let real_hitbox = self.get_hitbox().multiply(virtual_to_real_ratio);
-        let width = real_hitbox.width;
-        let height = real_hitbox.height;
+    set(other: Self) {
+        iter_fields {
+            if other.#FIELD_NAME {
+                self.#FIELD_NAME = other.#FIELD_NAME;
+            }
+        }
+    }
+
+    to_draw_primitive(rect: Rect, virtual_to_real_ratio: float) -> DrawPrimitive {
+        let real_rect = rect.multiply(virtual_to_real_ratio);
+        let width = real_rect.width;
+        let height = real_rect.height;
 
         DrawPrimitive {
-            x: real_hitbox.x,
-            y: real_hitbox.y,
-            z: self.z,
+            x: real_rect.x,
+            y: real_rect.y,
+            z: real_rect.z,
             width: width,
             height: height,
-            angle: self.angle,
+            angle: real_rect.angle,
             shape: self.shape,
             border_color: self.border_color.mult_alpha(self.border_alpha),
             border_width: self.border_width.resolve(width, height, virtual_to_real_ratio),

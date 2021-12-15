@@ -1,5 +1,7 @@
 pub class OnRender {
     client: Client,
-    target: Object,
-    graphics: Graphics
+}
+
+pub class OnPostRender {
+    client: Client,
 }

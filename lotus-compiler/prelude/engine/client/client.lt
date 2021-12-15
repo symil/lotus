@@ -7,14 +7,14 @@ export class Client {
     _buffer: SimpleBuffer,
     _websocket_id: int,
     _layout: Layout,
+    _draw_primitives: DrawPrimitive[],
     _network_events: NetworkEvent[],
     _window_events: WindowEvent[],
-    _interactions: Interaction[],
 
     user: #USER_TYPE?,
     local_data: #LOCAL_DATA_TYPE,
-    hover_stack: ViewWrapper[],
-    all_views: ViewWrapper[],
+    hovered: View?,
+    views: View[],
     real_width: float,
     real_height: float,
     virtual_width: float,
@@ -43,6 +43,7 @@ export class Client {
         self._collect_window_events();
         self._process_network_events();
         self._create_views();
+        self._draw_frame();
         self._process_window_events();
     }
 
@@ -58,6 +59,10 @@ export class Client {
     }
 
     _collect_window_events() {
+        self.real_width = wasm_get_window_width();
+        self.real_height = wasm_get_window_height();
+        self.virtual_to_real_ratio = self.real_width / self.virtual_width;
+
         let written_count = wasm_poll_window_events(self._buffer.pointer, self._buffer.size);
 
         self._window_events.clear();
@@ -68,6 +73,9 @@ export class Client {
             let push = true;
 
             if window_event is MouseEvent(mouse_event) {
+                mouse_event.x /= self.virtual_to_real_ratio;
+                mouse_event.y /= self.virtual_to_real_ratio;
+
                 self.cursor_x = mouse_event.x;
                 self.cursor_y = mouse_event.y;
 
@@ -91,84 +99,105 @@ export class Client {
     }
 
     _create_views() {
-        self.hover_stack.clear();
-        self.all_views.clear();
+        let root_view = #WINDOW_TYPE {
+            rect: Rect::from_size(self.virtual_width, self.virtual_height)
+        };
 
-        let root_view = #WINDOW_TYPE;
-        let root_rect = Rect::from_size(self.virtual_width, self.virtual_height);
-        let root_transform = Transform2D::identity();
-
-        self._render_view(root_view, root_rect, root_transform);
-        self._compute_hover_stack();
+        self.views.clear();
+        self._render_view(root_view);
+        self.hovered = self._detect_view_at(self.cursor_x, self.cursor_y);
+        self._post_render();
     }
 
-    _render_view(view: Object, rect: Rect, transform: Transform2D) {
-        // let render_event = OnRender {
-        //     client: self,
-        //     layout: self._layout.reset(rect, transform)
-        // };
+    _render_view(view: View) {
+        let event = OnRender {
+            client: self,
+        };
 
-        // let view_wrapper = ViewWrapper { view, transform };
+        event.emit([view]);
+        self.views.push(view);
 
-        // self.all_views.push(view_wrapper);
-        // render_event.emit([view]);
-
-        // for item in self._layout.consume() {
-        //     match item.object {
-        //         Graphics(graphics) => {
-        //             if !view_wrapper.hitbox {
-        //                 view_wrapper.hitbox = graphics.get_hitbox(item.rect, item.transform);
-        //             }
-
-        //             view_wrapper.graphics.push(graphics);
-        //         },
-        //         Object(view) => {
-        //             self._render_view(view, item.rect, item.transform);
-        //         }
-        //     }
-        // }
+        for child in view.children {
+            self._render_view(child);
+        }
     }
 
-    _compute_hover_stack() {
-        for wrapper in self.all_views {
-            if wrapper.hitbox && wrapper.hitbox.contains(self.cursor_x, self.cursor_y) {
-                self.hover_stack.push(wrapper);
+    _detect_view_at(x: float, y: float) -> View? {
+        let current : View = none;
+
+        for view in self.views {
+            if view.graphics.detectable && view.rect.contains(x, y) {
+                if !current || view.rect.z >= current.rect.z {
+                    current = view;
+                }
             }
         }
 
-        self.hover_stack.reverse().sort((w1, w2) => (w2.hitbox.z - w1.hitbox.z).sign());
+        current
     }
 
-    _process_interactions() {
+    _post_render() {
+        let event = OnPostRender {
+            client: self
+        };
+        let views = self.views.clone().reverse();
 
+        event.emit(views);
+    }
+
+    _draw_frame() {
+        self._draw_primitives.clear();
+
+        let cursor = Cursor::Default;
+
+        for view in self.views {
+            if self.hovered == view {
+                view.graphics.set(view.hover);
+                cursor = view.graphics.cursor;
+            }
+
+            self._draw_primitives.push(view.graphics.to_draw_primitive(view.rect, self.virtual_to_real_ratio));
+        }
+
+        self._buffer.reset_index();
+        self._buffer.write(cursor);
+
+        for primitive in self._draw_primitives {
+            primitive.write_to_buffer(self._buffer);
+        }
+
+        wasm_draw_frame(self._buffer.pointer, self._buffer.index);
     }
 
     _process_window_events() {
-        let written_count = wasm_poll_window_events(self._buffer.pointer, self._buffer.size);
+        let views = self.views.clone().reverse();
 
-        self._buffer.reset_index();
+        for event in self._window_events {
+            match event {
+                MouseEvent(e) => {
+                    let view = self._detect_view_at(e.x, e.y);
 
-        while self._buffer.index < written_count {
-            let window_event = decode_window_event_from_buffer(self._buffer, self);
+                    if view {
+                        let callback_list = match e.action {
+                            Down => view.on_down,
+                            Click => view.on_click,
+                            Up => view.on_up,
+                            Drag => view.on_drag
+                        };
+
+                        for callback in callback_list {
+                            callback();
+                        }
+                    }
+                },
+                KeyboardEvent(event) => {
+                    event.emit(views);
+                },
+                WheelEvent(event) => {
+                    event.emit(views);
+                }
+            }
         }
-
-        self.real_width = wasm_get_window_width();
-        self.real_height = wasm_get_window_height();
-        self.virtual_to_real_ratio = self.real_width / self.virtual_width;
-
-        let primitive = DrawPrimitive {
-            x: 500,
-            y: 300,
-            width: 200,
-            height: 100,
-            background_color: ORANGE
-        };
-
-        self._buffer.reset_index();
-        self._buffer.write(Cursor::Pointer);
-        primitive.write_to_buffer(self._buffer);
-
-        wasm_draw_frame(self._buffer.pointer, self._buffer.index);
     }
 
     send<T>(value: T) {

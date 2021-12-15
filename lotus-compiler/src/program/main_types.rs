@@ -1,5 +1,7 @@
 use enum_iterator::IntoEnumIterator;
 
+use super::BuiltinType;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
 pub enum MainType {
     World,
@@ -18,12 +20,12 @@ impl MainType {
         }
     }
 
-    pub fn get_default_name(&self) -> &'static str {
+    pub fn get_default_type(&self) -> BuiltinType {
         match self {
-            MainType::World => "Object",
-            MainType::User => "Object",
-            MainType::Window => "Object",
-            MainType::LocalData => "Object",
+            MainType::World => BuiltinType::Object,
+            MainType::User => BuiltinType::Object,
+            MainType::Window => BuiltinType::View,
+            MainType::LocalData => BuiltinType::Object,
         }
     }
 }

@@ -21,7 +21,7 @@ sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_
 
 sys fn sort_event_callbacks() {
     for entry in EVENT_CALLBACKS {
-        entry.value.sort((a, b) => a - b);
+        entry.value.sort((a, b) => b - a);
     }
 }
 

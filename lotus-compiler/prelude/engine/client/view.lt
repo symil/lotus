@@ -1,6 +1,16 @@
-pub class ViewWrapper {
-    view: Object,
-    transform: Transform2D,
-    graphics: Graphics[],
-    hitbox: Rect = none,
+export type MouseHandlerCallback = fn();
+
+export class View {
+    rect: Rect,
+    graphics: Graphics,
+    hover: Graphics = Graphics::empty(),
+    children: View[],
+    on_click: MouseHandlerCallback[],
+    on_down: MouseHandlerCallback[],
+    on_up: MouseHandlerCallback[],
+    on_drag: MouseHandlerCallback[],
+
+    layout() -> Layout {
+        Layout::new(self)
+    }
 }

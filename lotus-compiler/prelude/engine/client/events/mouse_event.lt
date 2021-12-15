@@ -9,7 +9,8 @@ export enum MouseAction {
     Move,
     Down,
     Click,
-    Up
+    Up,
+    Drag
 }
 
 export enum MouseButton {
