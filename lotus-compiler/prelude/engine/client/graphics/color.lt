@@ -18,7 +18,7 @@ export class Color {
             return none;
         }
 
-        let a = (((self.a.to_float() / 255f) * alpha) / 255f).to_int();
+        let a = (self.a.to_float() * alpha).to_int();
 
         Color { ..self, a }
     }

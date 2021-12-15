@@ -179,10 +179,10 @@ export class Client {
 
                     if view {
                         let callback_list = match e.action {
-                            Down => view.on_down,
-                            Click => view.on_click,
-                            Up => view.on_up,
-                            Drag => view.on_drag
+                            Down => view.on_down_callbacks,
+                            Click => view.on_click_callbacks,
+                            Up => view.on_up_callbacks,
+                            Drag => view.on_drag_callbacks
                         };
 
                         for callback in callback_list {

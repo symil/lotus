@@ -225,7 +225,9 @@ impl FunctionContent {
         if let Some(mut vasm) = self.body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
-                    if !vasm.ty.is_assignable_to(&return_type) {
+                    if self.event_callback_qualifier.is_some() {
+                        vasm.instructions.push(VI::drop(&vasm.ty));
+                    } else if !vasm.ty.is_assignable_to(&return_type) {
                         context.errors.add_generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
                     }
                 }

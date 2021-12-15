@@ -1,7 +1,7 @@
-pub class OnRender {
+export class OnRender {
     client: Client,
 }
 
-pub class OnPostRender {
+export class OnPostRender {
     client: Client,
 }

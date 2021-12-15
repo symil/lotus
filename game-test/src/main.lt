@@ -1,3 +1,14 @@
-export fn main() {
-    @log("hello");
+export view Window {
+    @OnRender {
+        self
+            .background_color(WHITE)
+            .scale(0.5)
+    }
+
+    @OnPostRender {
+        self
+            .hover_background_color(ORANGE)
+            .hover_cursor(Cursor::Pointer)
+            .on_click(() => @log("CLICK"))
+    }
 }

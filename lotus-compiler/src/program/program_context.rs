@@ -591,9 +591,9 @@ impl ProgramContext {
             function_declaration.process_body(self);
         }
 
-        if self.functions.get_by_name("main").is_none() {
-            self.errors.add_generic_unlocated(format!("missing required function `main`"));
-        }
+        // if self.functions.get_by_name("main").is_none() {
+        //     self.errors.add_generic_unlocated(format!("missing required function `main`"));
+        // }
 
         timer.stop(ProgramStep::Process);
     }

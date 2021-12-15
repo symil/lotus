@@ -61,6 +61,8 @@ export class Graphics {
         let width = real_rect.width;
         let height = real_rect.height;
 
+        // @dbg(self);
+
         DrawPrimitive {
             x: real_rect.x,
             y: real_rect.y,
