@@ -24,8 +24,6 @@ export class Client {
     cursor_y: float,
 
     _start() {
-        @log("CLIENT START");
-
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
         self._websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
     }
@@ -191,9 +189,10 @@ export class Client {
     }
 
     request<T>(value: T) {
-        let buffer = @serialize(value);
+        self._buffer.clear();
+        T::__serialize(self._buffer, value);
 
-        wasm_send_message(self._websocket_id, buffer.body(), buffer.len());
+        wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
     }
 }
 

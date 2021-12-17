@@ -42,9 +42,9 @@ export type(void) system {
     }
 
     serialize<T>(value: T) -> int[] {
-        let buffer = Buffer {};
+        let buffer = Buffer;
 
-        value.__serialize(buffer);
+        T::__serialize(buffer, value);
 
         buffer.consume()
     }

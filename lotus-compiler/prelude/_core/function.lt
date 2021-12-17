@@ -51,7 +51,7 @@ export type Function {
         }
     }
 
-    __serialize(buffer: Buffer) {{
+    static __serialize(buffer: Buffer, value: Self) {{
 
     }}
 

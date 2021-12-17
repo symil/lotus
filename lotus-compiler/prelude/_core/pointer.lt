@@ -83,8 +83,8 @@ export type(i32) Pointer<T> {
         retain_memory(value as ptr);
     }
 
-    __serialize(buffer: Buffer) {
-        buffer.write(self as int);
+    static __serialize(buffer: Buffer, value: Self) {
+        buffer.write(value as int);
     }
 
     static __deserialize(buffer: Buffer) -> Self? {

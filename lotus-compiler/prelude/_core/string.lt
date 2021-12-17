@@ -248,11 +248,11 @@ export type(i32) string {
         retain_memory(value as ptr);
     }
 
-    __serialize(buffer: Buffer) {
-        if buffer.save_addr(self) {
-            buffer.write(self.len());
+    static __serialize(buffer: Buffer, value: Self) {
+        if buffer.save_addr(value) {
+            buffer.write(value.len());
             
-            for c in self {
+            for c in value {
                 buffer.write(c.to_int());
             }
         }

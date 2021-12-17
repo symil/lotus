@@ -16,3 +16,4 @@ export const PROJECT_BUILD_DIR_NAME = 'build';
 export const OUTPUT_WASM_FILE_NAME = 'module.wasm';
 export const OUTPUT_CLIENT_FILE_NAME = 'client.js';
 export const OUTPUT_SERVER_FILE_NAME = 'server.js';
+export const FILES_DIR_NAME = 'files';

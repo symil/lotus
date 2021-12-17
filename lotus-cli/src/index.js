@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import express from 'express';
 import esbuild from 'esbuild';
 import { wasmLoader } from 'esbuild-plugin-wasm';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, FILES_DIR_NAME, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
 import { computeLocations } from './locations';
 import { runCommand } from './utils';
 import { Command } from './command';
@@ -34,6 +34,11 @@ async function startHttpServer(locations, port) {
             .catch(e => serveError(res, e));
     });
 
+    app.all(`/${FILES_DIR_NAME}/*`, (req, res, next) => {
+       res.status(403).send({
+          message: 'Access Forbidden'
+       });
+    });
     app.use(express.static(locations.buildDirPath));
     app.use(express.static(locations.rootDirPath));
     app.listen(port, 'localhost');

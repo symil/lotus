@@ -74,8 +74,8 @@ export type(i32) char {
 
     }}
 
-    __serialize(buffer: Buffer) {
-        buffer.write(self.to_int());
+    static __serialize(buffer: Buffer, value: Self) {
+        buffer.write(value.to_int());
     }
 
     static __deserialize(buffer: Buffer) -> char? {

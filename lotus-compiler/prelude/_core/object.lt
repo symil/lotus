@@ -132,11 +132,11 @@ export class Object {
         }
     }
 
-    __serialize(buffer: Buffer) {
-        if self.__is_none() || (buffer.context && !self.allow_network_serialization(buffer.context as #USER_TYPE)) {
+    static __serialize(buffer: Buffer, value: Self) {
+        if !value || (buffer.context && !value.allow_network_serialization(buffer.context as #USER_TYPE)) {
             buffer.write(0);
         } else {
-            self.__serialize_dyn(buffer);
+            value.__serialize_dyn(buffer);
         }
     }
 
@@ -145,7 +145,7 @@ export class Object {
             buffer.write(#TYPE_ID);
 
             iter_fields {
-                self.#FIELD_NAME.__serialize(buffer);
+                #FIELD_TYPE::__serialize(buffer, self.#FIELD_NAME);
             }
         }
     }

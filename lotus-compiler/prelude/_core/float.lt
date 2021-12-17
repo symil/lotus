@@ -85,8 +85,8 @@ export type(f32) float {
 
     }}
 
-    __serialize(buffer: Buffer) {
-        buffer.write(self.as_int());
+    static __serialize(buffer: Buffer, value: Self) {
+        buffer.write(value.as_int());
     }
 
     static __deserialize(buffer: Buffer) -> float? {

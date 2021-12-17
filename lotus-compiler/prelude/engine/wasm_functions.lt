@@ -41,3 +41,11 @@ pub fn wasm_create_websocket_server(int) -> int {{
 pub fn wasm_poll_network_events(ptr, int) -> int {{
     (call $poll_network_events)
 }}
+
+pub fn wasm_write_file(string, ptr, int) {{
+    (call $write_file)
+}}
+
+pub fn wasm_read_file(string, ptr, int) -> int {{
+    (call $read_file)
+}}

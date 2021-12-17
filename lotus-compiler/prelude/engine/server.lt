@@ -9,8 +9,6 @@ export class Server {
     _websocket_id_counter: Counter,
 
     _start() {
-        @log("SERVER START");
-
         self._websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
         self._world = #WORLD_TYPE;
 
@@ -72,9 +70,28 @@ export class Server {
                 self._buffer.clear();
                 self._buffer.context = user;
 
-                user.__serialize(self._buffer);
+                #USER_TYPE::__serialize(self._buffer, user);
                 wasm_send_message(websocket_id, self._buffer.data, self._buffer.size);
             }
+        }
+    }
+
+    store<T>(path: string, content: T) {
+        self._buffer.clear();
+        T::__serialize(self._buffer, content);
+        wasm_write_file(path, self._buffer.data, self._buffer.size);
+    }
+
+    load<T>(path: string) -> T {
+        self._buffer.clear();
+        self._buffer.size = wasm_read_file(path, self._buffer.data, self._buffer.capacity);
+        self._buffer.read();
+
+        let value = T::__deserialize(self._buffer);
+
+        match self._buffer.has_read_overflow() {
+            true => none,
+            false => value
         }
     }
 }

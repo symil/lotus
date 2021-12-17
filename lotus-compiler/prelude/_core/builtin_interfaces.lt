@@ -120,7 +120,7 @@ sys interface Builtin {
     __is_none() -> bool;
     __hash() -> int;
     static __retain(value: Self);
-    __serialize(buffer: Buffer);
+    static __serialize(buffer: Buffer, value: Self);
     static __deserialize(buffer: Buffer) -> Self?;
     to_string() -> string;
     to_debug_string(set: Set<ptr>) -> string;

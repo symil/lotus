@@ -153,8 +153,8 @@ export type(i32) int {
 
     }}
 
-    __serialize(buffer: Buffer) {
-        buffer.write(self);
+    static __serialize(buffer: Buffer, value: Self) {
+        buffer.write(value);
     }
 
     static __deserialize(buffer: Buffer) -> int? {

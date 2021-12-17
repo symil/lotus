@@ -5,10 +5,10 @@ import { NetworkManager } from './network-manager';
 import { Renderer } from './renderer';
 import { WindowManager } from './window-manager';
 
-export async function initializeWasm(wasm, { log, getWindow, createWebSocket, createWebSocketServer }) {
+export async function initializeWasm(wasm, userEnv) {
     let instance = null;
     let getMemory = () => new Int32Array(instance.exports.memory.buffer);
-    let env = { getMemory, log, getWindow, createWebSocket, createWebSocketServer };
+    let env = { ...userEnv, getMemory };
     let imports = getWasmImportsObject(env);
 
     if (WebAssembly.instantiateStreaming) {

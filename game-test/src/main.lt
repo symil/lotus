@@ -19,7 +19,12 @@ view Window {
 
 class World {
     @OnWorldInit {
-        @log("WORLD INIT");
+        let value : string = evt.server.load("hello");
+        @dbg(value);
+        value = "This is a test";
+        evt.server.store("hello", value);
+        value = evt.server.load("hello");
+        @dbg(value);
     }
 
     @OnUserConnect {
@@ -31,5 +36,6 @@ class World {
     }
 
     @OnUserRequest {
+
     }
 }

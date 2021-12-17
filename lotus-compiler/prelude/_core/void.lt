@@ -11,6 +11,6 @@ export type(void) void {
     eq(Self) -> bool {{ (i32.const 1) }}
     ne(Self) -> bool {{ (i32.const 0) }}
     static __retain(Self) {{ }}
-    __serialize(buffer: Buffer) {{ }}
+    static __serialize(buffer: Buffer, value: Self) {{ }}
     static __deserialize(buffer: Buffer) -> Self? {{ }}
 }
