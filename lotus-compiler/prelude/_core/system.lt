@@ -53,7 +53,7 @@ export type(void) system {
         let buffer = Buffer::from_array(array);
         let value = T::__deserialize(buffer);
 
-        match buffer.read_overflow {
+        match buffer.has_read_overflow() {
             true => none,
             false => value
         }
@@ -61,6 +61,10 @@ export type(void) system {
 
     int<T>(value: T) {
         @log(value as int);
+    }
+
+    emit(event: Object, targets: Object[]) {
+        emit_event(event, targets);
     }
 }
 

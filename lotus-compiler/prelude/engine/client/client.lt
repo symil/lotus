@@ -4,7 +4,7 @@ const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
 export class Client {
-    _buffer: SimpleBuffer,
+    _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
     _websocket_id: int,
     _layout: Layout,
     _draw_primitives: DrawPrimitive[],
@@ -17,19 +17,11 @@ export class Client {
     views: View[],
     real_width: float,
     real_height: float,
-    virtual_width: float,
-    virtual_height: float,
+    virtual_width: float = VIRTUAL_WIDTH,
+    virtual_height: float = VIRTUAL_HEIGHT,
     virtual_to_real_ratio: float,
     cursor_x: float,
     cursor_y: float,
-
-    static new() -> Self {
-        Self {
-            _buffer: SimpleBuffer::new(BIG_BUFFER_SIZE),
-            virtual_width: VIRTUAL_WIDTH,
-            virtual_height: VIRTUAL_HEIGHT
-        }
-    }
 
     _start() {
         @log("CLIENT START");
@@ -48,12 +40,11 @@ export class Client {
     }
 
     _collect_network_events() {
-        let written_count = wasm_poll_network_events(self._buffer.pointer, self._buffer.size);
-
         self._network_events.clear();
-        self._buffer.reset_index();
+        self._buffer.clear();
+        self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
-        while self._buffer.index < written_count {
+        while !self._buffer.is_finished() {
             self._network_events.push(decode_network_event_from_buffer(self._buffer));
         }
     }
@@ -63,12 +54,11 @@ export class Client {
         self.real_height = wasm_get_window_height();
         self.virtual_to_real_ratio = self.real_width / self.virtual_width;
 
-        let written_count = wasm_poll_window_events(self._buffer.pointer, self._buffer.size);
-
         self._window_events.clear();
-        self._buffer.reset_index();
+        self._buffer.clear();
+        self._buffer.size = wasm_poll_window_events(self._buffer.data, self._buffer.capacity);
 
-        while self._buffer.index < written_count {
+        while !self._buffer.is_finished() {
             let window_event = decode_window_event_from_buffer(self._buffer, self);
             let push = true;
 
@@ -93,7 +83,7 @@ export class Client {
     _process_network_events() {
         let last_event = self._network_events.last();
 
-        if last_event && last_event.type == NetworkEventType::Message {
+        if last_event && last_event.kind == NetworkEventKind::Message {
             self.user = @deserialize(last_event.payload);
         }
     }
@@ -159,14 +149,14 @@ export class Client {
             self._draw_primitives.push(view.graphics.to_draw_primitive(view.rect, self.virtual_to_real_ratio));
         }
 
-        self._buffer.reset_index();
-        self._buffer.write(cursor);
+        self._buffer.clear();
+        self._buffer.write_unchecked(cursor);
 
         for primitive in self._draw_primitives {
             primitive.write_to_buffer(self._buffer);
         }
 
-        wasm_draw_frame(self._buffer.pointer, self._buffer.index);
+        wasm_draw_frame(self._buffer.data, self._buffer.size);
     }
 
     _process_window_events() {
@@ -200,7 +190,7 @@ export class Client {
         }
     }
 
-    send<T>(value: T) {
+    request<T>(value: T) {
         let buffer = @serialize(value);
 
         wasm_send_message(self._websocket_id, buffer.body(), buffer.len());
@@ -208,7 +198,7 @@ export class Client {
 }
 
 sys fn start_client() {
-    CLIENT = Client::new();
+    CLIENT = Client;
     CLIENT._start();
 }
 

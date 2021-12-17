@@ -1,8 +1,9 @@
 use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slice::Iter};
 use colored::Colorize;
+use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with, MainType}, utils::Link, vasm};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -50,7 +51,7 @@ impl TypeDeclaration {
 
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
-        let type_unwrapped = TypeBlueprint {
+        let mut type_unwrapped = TypeBlueprint {
             declaration_index: index,
             type_id,
             name: self.name.clone(),
@@ -70,6 +71,12 @@ impl TypeDeclaration {
             dynamic_methods: vec![],
             event_callbacks: HashMap::new(),
         };
+
+        for main_type in MainType::into_enum_iter() {
+            if self.name.as_str() == main_type.get_name() {
+                type_unwrapped.visibility = Visibility::Export;
+            }
+        }
         
         if context.types.get_by_identifier(&self.name).is_some() {
             context.errors.add_generic(&self.name, format!("duplicate type declaration: `{}`", &self.name));

@@ -31,9 +31,9 @@ pub class DrawPrimitive {
     text_italic: bool,
     text_cursor_index: int,
 
-    write_to_buffer(buffer: SimpleBuffer) {
+    write_to_buffer(buffer: Buffer) {
         iter_fields {
-            buffer.write(self.#FIELD_NAME);
+            buffer.write_unchecked(self.#FIELD_NAME);
         }
     }
 }

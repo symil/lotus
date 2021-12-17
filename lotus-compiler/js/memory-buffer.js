@@ -7,11 +7,15 @@ export class MemoryBuffer {
         this._capacity = capacity ?? Infinity;
     }
 
-    isFinished() {
-        return this._startIndex === 0 || this.getLength() >= this._capacity;
+    toRegularBuffer() {
+        return Buffer.from(this._memoryAsInt.buffer, this._startIndex * 4, this._capacity * 4);
     }
 
-    getLength() {
+    isFinished() {
+        return this._startIndex === 0 || this.getSize() >= this._capacity;
+    }
+
+    getSize() {
         return this._currentIndex - this._startIndex;
     }
 
@@ -66,11 +70,20 @@ export class MemoryBuffer {
         this.write(valueList.indexOf(value));
     }
 
-    writeBuffer(arrayBuffer) {
-        let buffer = new Int32Array(arrayBuffer);
+    /**
+     * 
+     * @param {Buffer|Uint8Array} buffer 
+     */
+    writeBuffer(buffer) {
+        if (!buffer) {
+            this.write(0);
+            return;
+        }
+        
+        let int32Array = new Int32Array(buffer.buffer, buffer.byteOffset, buffer.length / Int32Array.BYTES_PER_ELEMENT);
 
-        this.write(buffer.length);
-        this._memoryAsInt.set(buffer, this._currentIndex);
-        this._currentIndex += buffer.length;
+        this.write(int32Array.length);
+        this._memoryAsInt.set(int32Array, this._currentIndex);
+        this._currentIndex += int32Array.length;
     }
 }

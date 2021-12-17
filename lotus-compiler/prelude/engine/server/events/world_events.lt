@@ -1,0 +1,30 @@
+export class OnUserConnect {
+    server: Server,
+    user: #USER_TYPE
+}
+
+export class OnUserDisconnect {
+    server: Server,
+    user: #USER_TYPE
+}
+
+export class OnUserRequest {
+    server: Server,
+    user: #USER_TYPE,
+    request: Object
+}
+
+export class OnWorldInit {
+    server: Server,
+    world: #WORLD_TYPE,
+}
+
+export class OnWorldUpdate {
+    server: Server,
+    world: #WORLD_TYPE,
+}
+
+export class OnWorldClose {
+    server: Server,
+    world: #WORLD_TYPE,
+}

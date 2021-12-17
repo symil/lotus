@@ -77,9 +77,9 @@ export class NetworkManager {
             this._webSockets.delete(id);
         });
         webSocket.addEventListener('message', (event) => {
-            let arrayBuffer = new Uint8Array(event.data).buffer;
+            let buffer = new Uint8Array(event.data);
 
-            this._registerEvent(id, 'message', arrayBuffer);
+            this._registerEvent(id, 'message', buffer);
         });
 
         return id;

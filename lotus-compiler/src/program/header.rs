@@ -39,6 +39,8 @@ pub const HEADER_IMPORTS : &'static[Import] = &[
     ("env", "get_websocket_state", "get_websocket_state", &["i32"], Some("i32")),
     ("env", "poll_network_events", "poll_network_events", &["i32", "i32"], Some("i32")),
     ("env", "send_message", "send_message", &["i32", "i32", "i32"], None),
+    ("env", "write_file", "write_file", &["i32", "i32", "i32"], None),
+    ("env", "read_file", "read_file", &["i32", "i32"], Some("i32")),
 ];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[

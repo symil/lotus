@@ -1,53 +1,92 @@
 const SERVER : Server = none;
 
-class Server {
-    buffer: SimpleBuffer,
-    websocket_server_id: int,
-
-    static new() -> Self {
-        Self {
-            buffer: SimpleBuffer::new(BIG_BUFFER_SIZE),
-        }
-    }
+export class Server {
+    _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
+    _world: #WORLD_TYPE = none,
+    _websocket_server_id: int,
+    _user_to_websocket_id: Map<#USER_TYPE, int>,
+    _websocket_id_to_user: Map<int, #USER_TYPE>,
+    _websocket_id_counter: Counter,
 
     _start() {
         @log("SERVER START");
 
-        self.websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
+        self._websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
+        self._world = #WORLD_TYPE;
+
+        @emit(OnWorldInit { server: self, world: self._world }, [self._world]);
     }
 
     _update() {
         self._process_network_events();
+        self._update_world();
+        self._update_users();
+    }
+
+    _update_world() {
+        @emit(OnWorldUpdate { server: self, world: self._world }, [self._world]);
     }
 
     _process_network_events() {
-        let written_count = wasm_poll_network_events(self.buffer.pointer, self.buffer.size);
+        self._buffer.clear();
+        self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
-        self.buffer.reset_index();
+        while !self._buffer.is_finished() {
+            let event = decode_network_event_from_buffer(self._buffer);
 
-        while self.buffer.index < written_count {
-            let network_event = decode_network_event_from_buffer(self.buffer);
+            match event.kind {
+                ConnectionOpen => {
+                    let user = #USER_TYPE;
 
-            @dbg(network_event);
+                    self._websocket_id_to_user.set(event.websocket_id, user);
+                    self._user_to_websocket_id.set(user, event.websocket_id);
 
-            if network_event.type == NetworkEventType::ConnectionOpen {
-                self.send(network_event.websocket_id, [1, 2, 3]);
+                    @emit(OnUserConnect { server: self, user }, [self._world]);
+                },
+                ConnectionClosed => {
+                    let user = self._websocket_id_to_user.get(event.websocket_id);
+
+                    @emit(OnUserDisconnect { server: self, user }, [self._world]);
+
+                    self._websocket_id_to_user.delete(event.websocket_id);
+                    self._user_to_websocket_id.delete(user);
+                },
+                Message => {
+                    let user = self._websocket_id_to_user.get(event.websocket_id);
+                    let request : Object = @deserialize(event.payload);
+
+                    if request {
+                        @emit(OnUserRequest { server: self, user, request }, [self._world]);
+                    }
+                }
             }
         }
     }
 
-    send<T>(websocket_id: int, value: T) {
-        let buffer = @serialize(value);
+    _update_users() {
+        for entry in self._websocket_id_to_user {
+            let websocket_id = entry.key;
+            let user = entry.value;
 
-        wasm_send_message(websocket_id, buffer.body(), buffer.len());
+            if user {
+                self._buffer.clear();
+                self._buffer.context = user;
+
+                user.__serialize(self._buffer);
+                wasm_send_message(websocket_id, self._buffer.data, self._buffer.size);
+            }
+        }
     }
 }
 
 sys fn start_server() {
-    SERVER = Server::new();
+    SERVER = Server;
     SERVER._start();
 }
 
 sys fn update_server() {
     SERVER._update();
+    // @log(`memory used: ${get_memory_usage() / 1024} KB`);
+    @retain(SERVER);
+    @trigger_garbage_collection();
 }

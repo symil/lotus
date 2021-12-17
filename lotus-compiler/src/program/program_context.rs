@@ -73,7 +73,7 @@ impl ProgramContext {
         for main_type in MainType::into_enum_iter() {
             let type_name = main_type.get_name();
             let default_name = main_type.get_default_type().get_name();
-            let type_wrapped = self.types.get_by_name(type_name).unwrap_or_else(|| self.types.get_by_name(default_name).unwrap());
+            let type_wrapped = self.types.get_by_name_private(type_name).unwrap_or_else(|| self.types.get_by_name(default_name).unwrap());
             let ty = Type::Actual(ActualTypeContent {
                 type_blueprint: type_wrapped,
                 parameters: vec![],

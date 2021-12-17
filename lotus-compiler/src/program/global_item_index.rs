@@ -96,6 +96,30 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         None
     }
 
+    pub fn get_by_name_private(&self, name: &str) -> Option<Link<V>> {
+        let candidates = self.items_by_name.get(name)?;
+
+        for item_wrapped in candidates.iter() {
+            let ok = item_wrapped.with_ref(|item| {
+                let item_name = item.get_name();
+                let item_location = &item_name.location;
+                match item.get_visibility() {
+                    Visibility::Private => true,
+                    Visibility::Public => true,
+                    Visibility::Export => true,
+                    Visibility::System => true,
+                    Visibility::None => false,
+                }
+            });
+
+            if ok {
+                return Some(item_wrapped.clone());
+            }
+        }
+
+        None
+    }
+
     pub fn get_by_location(&self, value_name: &Identifier, marker: Option<u64>) -> Link<V> {
         let id = get_id_from_location(&value_name, marker);
 

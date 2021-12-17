@@ -57,7 +57,7 @@ sys type(i32) Enum {
     }}
 
     autogen __serialize(buffer: Buffer) {
-        buffer.push(self as int);
+        buffer.write(self as int);
     }
 
     autogen static __deserialize(buffer: Buffer) -> Self? {

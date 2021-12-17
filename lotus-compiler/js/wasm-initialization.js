@@ -1,3 +1,4 @@
+import { FileSystemManager } from './file-system-manager';
 import { readStringFromMemory, writeNetworkEventToBuffer, writeWindowEventToBuffer } from './js-wasm-communication';
 import { MemoryBuffer } from './memory-buffer';
 import { NetworkManager } from './network-manager';
@@ -24,15 +25,19 @@ export async function initializeWasm(wasm, { log, getWindow, createWebSocket, cr
 /*
     `env` must have the following methods:
     - `log(string)`: log the string in the console
-    - `getMemory()`: returns the WASM instance memory as an ArrayBuffer
-    - `getWindow()`
-    - `createWebSocket()`
-    - `createWebSocketServer()`
+    - `getMemory()`: returns the WASM instance memory as an Int32Array
+    - `getWindow()`: returns the `window` main object of the browser
+    - `createWebSocket(url)`: create a WebSocket connecting to the specified url
+    - `createWebSocketServer(port)`: create a WebSocket server listening on the specified port
+    - `getPathModule()`: returns the `path` module of Node.js
+    - `getFileSystemModule()`: returns the `fs` module of Node.js
+    - `getFileSystemRootPath()`: returns the path of the root directory where files should be stored
 */
 function getWasmImportsObject(env) {
     let windowManager = null;
     let renderer = null;
     let networkManager = new NetworkManager(env);
+    let fileSystemManager = new FileSystemManager(env);
 
     return {
         utils: {
@@ -82,23 +87,23 @@ function getWasmImportsObject(env) {
                 return windowManager.getHeight();
             },
 
-            poll_window_events(bufferAddr, bufferLength) {
-                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
+            poll_window_events(bufferAddr, bufferCapacity) {
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
                 let events = windowManager.pollEvents();
 
                 for (let event of events) {
                     writeWindowEventToBuffer(event, buffer);
 
-                    if (buffer.getLength() > bufferLength) {
+                    if (buffer.getSize() > bufferCapacity) {
                         throw new Error(`event buffer overflow`);
                     }
                 }
 
-                return buffer.getLength();
+                return buffer.getSize();
             },
 
-            draw_frame(bufferAddr, bufferLength) {
-                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
+            draw_frame(bufferAddr, bufferSize) {
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferSize);
 
                 renderer.drawFrameFromBuffer(buffer);
             },
@@ -121,25 +126,42 @@ function getWasmImportsObject(env) {
                 return networkManager.createWebSocketServer(port);
             },
 
-            send_message(webSocketId, messageAddr, messageLength) {
-                let message = new Uint32Array(env.getMemory().buffer, messageAddr * 4, messageLength);
+            send_message(webSocketId, messageAddr, messageSize) {
+                let message = new Uint32Array(env.getMemory().buffer, messageAddr * 4, messageSize);
 
                 networkManager.sendMessage(webSocketId, message);
             },
 
-            poll_network_events(bufferAddr, bufferLength) {
-                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferLength);
+            poll_network_events(bufferAddr, bufferCapacity) {
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
                 let events = networkManager.pollEvents();
 
                 for (let event of events) {
                     writeNetworkEventToBuffer(event, buffer);
 
-                    if (buffer.getLength() > bufferLength) {
+                    if (buffer.getSize() > bufferCapacity) {
                         throw new Error(`network buffer overflow`);
                     }
                 }
 
-                return buffer.getLength();
+                return buffer.getSize();
+            },
+
+            write_file(pathAddr, bufferAddr, bufferSize) {
+                let path = readStringFromMemory(env.getMemory(), pathAddr);
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferSize);
+
+                fileSystemManager.writeFile(path, buffer.toRegularBuffer());
+            },
+
+            read_file(pathAddr, bufferAddr, bufferCapacity) {
+                let path = readStringFromMemory(env.getMemory(), pathAddr);
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
+                let bytes = fileSystemManager.readFile(path);
+
+                buffer.writeBuffer(bytes);
+
+                return buffer.getSize();
             }
         }
     };

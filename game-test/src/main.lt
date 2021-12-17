@@ -1,4 +1,8 @@
-export view Window {
+class MyRequest {
+    value: string
+}
+
+view Window {
     @OnRender {
         self
             .background_color(WHITE)
@@ -9,6 +13,23 @@ export view Window {
         self
             .hover_background_color(ORANGE)
             .hover_cursor(Cursor::Pointer)
-            .on_click(() => @log("CLICK"))
+            .on_click(() => evt.client.request(MyRequest { value: "foo" }))
+    }
+}
+
+class World {
+    @OnWorldInit {
+        @log("WORLD INIT");
+    }
+
+    @OnUserConnect {
+        @log(`CONNECT: ${evt.user}`);
+    }
+
+    @OnUserDisconnect {
+        @log(`DISCONNECT: ${evt.user}`);
+    }
+
+    @OnUserRequest {
     }
 }

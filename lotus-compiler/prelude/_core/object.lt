@@ -133,8 +133,8 @@ export class Object {
     }
 
     __serialize(buffer: Buffer) {
-        if self.__is_none() {
-            buffer.push(0);
+        if self.__is_none() || (buffer.context && !self.allow_network_serialization(buffer.context as #USER_TYPE)) {
+            buffer.write(0);
         } else {
             self.__serialize_dyn(buffer);
         }
@@ -142,7 +142,7 @@ export class Object {
 
     autogen dyn __serialize_dyn(buffer: Buffer) {
         if buffer.save_addr(self) {
-            buffer.push(#TYPE_ID);
+            buffer.write(#TYPE_ID);
 
             iter_fields {
                 self.#FIELD_NAME.__serialize(buffer);
@@ -195,6 +195,10 @@ export class Object {
 
     emit(targets: Object[]) {
         emit_event(self, targets);
+    }
+
+    dyn allow_network_serialization(user: #USER_TYPE) -> bool {
+        true
     }
 
     dyn yield(object: Object) {

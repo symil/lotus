@@ -84,7 +84,7 @@ export type(i32) Pointer<T> {
     }
 
     __serialize(buffer: Buffer) {
-        buffer.push(self as int);
+        buffer.write(self as int);
     }
 
     static __deserialize(buffer: Buffer) -> Self? {

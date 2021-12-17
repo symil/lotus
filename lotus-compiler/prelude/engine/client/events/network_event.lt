@@ -1,19 +1,19 @@
 pub class NetworkEvent {
     websocket_id: int,
-    type: NetworkEventType,
+    kind: NetworkEventKind,
     payload: int[]
 }
 
-pub enum NetworkEventType {
+pub enum NetworkEventKind {
     ConnectionOpen,
     ConnectionClosed,
     Message
 }
 
-pub fn decode_network_event_from_buffer(buffer: SimpleBuffer) -> NetworkEvent {
+pub fn decode_network_event_from_buffer(buffer: Buffer) -> NetworkEvent {
     NetworkEvent {
-        websocket_id: buffer.read(),
-        type: buffer.read(),
-        payload: buffer.readBuffer()
+        websocket_id: buffer.read_unchecked(),
+        kind: buffer.read_unchecked(),
+        payload: buffer.read_buffer_unchecked()
     }
 }

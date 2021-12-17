@@ -42,7 +42,7 @@ export type(i32) bool {
     }}
 
     __serialize(buffer: Buffer) {
-        buffer.push(self.to_int());
+        buffer.write(self.to_int());
     }
 
     static __deserialize(buffer: Buffer) -> bool? {

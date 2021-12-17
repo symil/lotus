@@ -52,10 +52,20 @@ async function buildProject(locations) {
 
     process.stdout.write(chalk.bold.blue('> build bundle...'));
 
-    await compileLotus({
+
+    let ok = await compileLotus({
         inputPath: locations.srcDirPath,
         outputPath: locations.outputWasmFilePath
     });
+
+    if (!ok) {
+        if (fs.existsSync(locations.outputIndexHtmlFilePath)) {
+            fs.unlinkSync(locations.outputIndexHtmlFilePath);
+        }
+
+        return;
+    }
+    
     await compileJs({
         inputPath: CLIENT_ENTRY_PATH,
         outputPath: locations.outputClientFilePath,

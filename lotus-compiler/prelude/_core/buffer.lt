@@ -1,35 +1,36 @@
 export class Buffer {
-    buffer: ptr,
+    data: ptr,
     size: int,
     capacity: int,
     read_index: int,
-    read_overflow: bool,
     set: Set<ptr>,
-    map: Map<int, ptr>
+    map: Map<int, ptr>,
+    context: Object?
 
-    static from_pointer(size: int, pointer: ptr) -> Buffer {
-        Buffer {
-            buffer: pointer,
-            size: size,
-            capacity: size
-        }
+    static new(capacity: int) -> Buffer {
+        let data = @alloc(capacity);
+
+        Self { data, capacity }
     }
 
     static from_array(array: int[]) -> Buffer {
         Buffer {
-            buffer: array.body(),
+            data: array.body(),
             size: array.len(),
             capacity: array.capacity()
         }
     }
 
-    reset() {
+    clear() {
+        self.size = 0;
         self.read_index = 0;
-        self.read_overflow = false;
+        self.set.clear();
+        self.map.clear();
+        self.context = none;
     }
 
     save_addr<T>(value: T) -> bool {
-        self.push(value as int);
+        self.write(value as int);
 
         self.set.add(value as ptr)
     }
@@ -42,38 +43,61 @@ export class Buffer {
         self.map.set(key, value as ptr);
     }
 
-    push(value: int) {
+    write(value: int) {
         if self.size == self.capacity {
             let new_capacity = (self.capacity + 1).next_power_of_4();
             let new_buffer = @alloc(new_capacity);
 
-            if !self.buffer.is_null() {
-                self.buffer.copy_to(new_buffer, self.size);
+            if !self.data.is_null() {
+                self.data.copy_to(new_buffer, self.size);
             }
 
             self.capacity = new_capacity;
-            self.buffer = new_buffer;
+            self.data = new_buffer;
         }
 
-        self.buffer[self.size] = value;
+        self.write_unchecked(value)
+    }
+
+    write_unchecked<T>(value: T) {
+        (self.data as Pointer<T>)[self.size] = value;
         self.size += 1;
     }
 
     read() -> int? {
         if self.read_index >= self.size {
-            self.read_overflow = true;
-
+            self.read_index = self.size + 1;
             none
         } else {
-            let value = self.buffer[self.read_index];
-
-            self.read_index += 1;
-
-            value
+            self.read_unchecked()
         }
     }
 
+    read_unchecked<T>() -> T {
+        let result = (self.data as Pointer<T>)[self.read_index];
+        self.read_index += 1;
+        result
+    }
+
+    read_buffer_unchecked() -> int[] {
+        let length : int = self.read_unchecked();
+        let pointer = @alloc(length);
+
+        self.data.add(self.read_index).copy_to(pointer, length);
+        self.read_index += length;
+
+        Array<int>::from_raw_parts(pointer, length, length)
+    }
+
+    has_read_overflow() -> bool {
+        self.read_index > self.size
+    }
+
+    is_finished() -> bool {
+        self.read_index >= self.size
+    }
+
     consume() -> int[] {
-        int[]::from_raw_parts(self.buffer, self.size, self.capacity)
+        Array<int>::from_raw_parts(self.data, self.size, self.capacity)
     }
 }

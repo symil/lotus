@@ -250,10 +250,10 @@ export type(i32) string {
 
     __serialize(buffer: Buffer) {
         if buffer.save_addr(self) {
-            buffer.push(self.len());
+            buffer.write(self.len());
             
             for c in self {
-                buffer.push(c.to_int());
+                buffer.write(c.to_int());
             }
         }
     }
