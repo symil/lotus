@@ -50,24 +50,32 @@ fn main() {
                             LogLevel::Detailed => {
                                 for (step, duration) in timer.get_all_durations() {
                                     if !step.is_negligible() {
-                                        println!("{}: {}s", step.get_name().bold(), duration);
+                                        print_step(step.get_name(), duration);
                                     }
                                 }
 
-                                println!("{}: {}s", "total".bold(), timer.get_total_duration());
+                                print_step("total", timer.get_total_duration());
                             },
                         }
                     },
                 },
                 CompilerMode::Validate => {
                     for error in context.errors.consume() {
-
+                        if let Some(string) = error.to_detailed_string() {
+                            println!("{}", string);
+                        }
                     }
                 },
             }
         },
         None => display_usage_and_exit(),
     }
+}
+
+fn print_step(name: &str, time: f64) {
+    let name_string = format!("{}:", name);
+
+    println!("{: <10} {}s", name_string.bold(), time);
 }
 
 fn display_usage_and_exit() -> ! {

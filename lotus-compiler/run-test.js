@@ -34,7 +34,8 @@ async function main() {
     let showDetails = hasOption('--details', '-d');
     let runAll = hasOption('--all', '-a');
     let createTest = overwrite || hasOption('--write', '-w');
-    let mode = ((runAll || commandLineNames.length > 1) && !createTest) ? 'release' : 'debug';
+    let forceRelease = hasOption('--release', '-r');
+    let mode = ((forceRelease || runAll || commandLineNames.length > 1) && !createTest) ? 'release' : 'debug';
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');

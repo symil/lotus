@@ -148,6 +148,15 @@ impl CompilationError {
         }
     }
 
+    pub fn to_detailed_string(&self) -> Option<String> {
+        match (&self.location, self.get_first_line()) {
+            (Some(location), Some(error)) => {
+                Some(format!("{}:{}:{}:{}", location.file_path, location.start, location.end, error))
+            },
+            _ => None
+        }
+    }
+
     pub fn to_string(&self) -> Option<String> {
         match self.get_first_line() {
             Some(first_line) => {

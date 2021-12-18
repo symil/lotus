@@ -871,8 +871,8 @@ impl ProgramContext {
         self.output_file = self.output_wat.to_string(0);
     }
 
-    pub fn write_output_file(&self, path: &str) {
-        let path = Path::new(path);
+    pub fn write_output_file(&self, output_file_path: &str) {
+        let path = Path::new(output_file_path);
 
         if let Some(parent_dir) = path.to_path_buf().parent() {
             DirBuilder::new().recursive(true).create(parent_dir).unwrap();

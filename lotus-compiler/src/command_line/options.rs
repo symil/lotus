@@ -20,7 +20,7 @@ impl CommandLineOptions {
             mode: CompilerMode::Compile
         };
 
-        for arg in &args {
+        for arg in &args[1..] {
             match is_option(arg) {
                 true => {
                     if let Some(mode) = CompilerMode::from_command_line_arg(arg) {
