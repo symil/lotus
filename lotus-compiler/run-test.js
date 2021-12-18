@@ -36,12 +36,13 @@ async function main() {
     let createTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
     let mode = ((forceRelease || runAll || commandLineNames.length > 1) && !createTest) ? 'release' : 'debug';
+    let overwriteExpectedOutput = hasOption('--overwrite-output', '-ov');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
     let clean = hasOption('--clean');
     let onlyCompileWat = false;
-    let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode };
+    let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode, validate };
 
     if (!isMocha && !compileCompiler({ mode })) {
         process.exit(1);
@@ -122,7 +123,7 @@ async function main() {
         let testsToRun = runAll ? testDirectoryList : commandLineTests;
 
         process.env.LOTUS_TESTS = testsToRun.join(' ');
-        if (validate) {
+        if (overwriteExpectedOutput) {
             process.env.LOTUS_VALIDATE_TESTS = 'true';
         }
 
@@ -160,11 +161,12 @@ function compileCompiler({ mode = 'debug' } = {}) {
     return runCommand(`cd ${ROOT_DIR} && cargo build --${option}`, true).success;
 }
 
-function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode }) {
+function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, validate }) {
     let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
     let silentOption = inheritStdio ? '' : '--silent';
-    let detailsOptions = showDetails ? '--details' : '';
-    let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption} ${detailsOptions}`;
+    let detailsOption = showDetails ? '--details' : '';
+    let validateOption = validate ? '--validate' : '';
+    let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption} ${detailsOption} ${validateOption}`;
 
     return runCommand(command, inheritStdio);
 }
@@ -194,16 +196,19 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     return { result, success };
 }
 
-async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false, showDetails = false, mode = 'debug' } = {}) {
+async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false, showDetails = false, mode = 'debug', validate = false } = {}) {
     let watPath = path.join(buildDirectory, WAT_FILE_NAME);
     let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
-        () => compileLotus({ inputPath: sourceDirPath, outputPath: watPath, inheritStdio, mode, showDetails }),
+        () => compileLotus({ inputPath: sourceDirPath, outputPath: watPath, inheritStdio, mode, showDetails, validate }),
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];
 
-    if (onlyCompileWat) {
+    if (validate) {
+        commandChain.pop();
+        commandChain.pop();
+    } else if (onlyCompileWat) {
         commandChain.pop();
     }
 

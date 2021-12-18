@@ -43,8 +43,6 @@ mod type_or_interface;
 mod main_types;
 mod compilation_error;
 mod macro_context;
-mod timer;
-mod program_step;
 mod source_directory_details;
 mod source_file_details;
 
@@ -92,7 +90,5 @@ pub use type_or_interface::*;
 pub use main_types::*;
 pub use compilation_error::*;
 pub use macro_context::*;
-pub use timer::*;
-pub use program_step::*;
 pub use source_directory_details::*;
 pub use source_file_details::*;

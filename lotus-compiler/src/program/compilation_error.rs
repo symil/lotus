@@ -164,8 +164,12 @@ impl CompilationError {
                 let location_string = match &self.location {
                     Some(location) => {
                         let (line, col) = location.get_line_col();
+                        let file_name = match location.file_path.starts_with(location.package_root_path) {
+                            true => &location.file_path[(location.package_root_path.len() + 1)..],
+                            false => location.file_path,
+                        };
 
-                        format!("{}:{}:{}: ", location.file_path, line, col)
+                        format!("{}:{}:{}: ", file_name, line, col)
                     },
                     None => String::new(),
                 };

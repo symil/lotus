@@ -3,8 +3,8 @@
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
-use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, CompilerMode};
-use program::{Timer, ProgramStep, ProgramContext};
+use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, CompilerMode, Timer, ProgramStep};
+use program::{ProgramContext};
 
 mod utils;
 mod program;
@@ -79,6 +79,6 @@ fn print_step(name: &str, time: f64) {
 }
 
 fn display_usage_and_exit() -> ! {
-    println!("{} {} <input_dir_or_file> <output_file>", "usage:".magenta().bold(), PROGRAM_NAME.bold());
+    println!("{} {} <input_directory> <output_file>", "usage:".magenta().bold(), PROGRAM_NAME.bold());
     process::exit(1)
 }
