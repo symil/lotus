@@ -1,15 +1,15 @@
 use std::{collections::{HashMap, HashSet}};
 use regex::Regex;
-use crate::{DataLocation, line_col_lookup::LineColLookup};
+use crate::{DataLocation};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
     comment_token: &'static str,
-    file_name: &'static str,
-    file_namespace: &'static str,
+
+    package_root_path: &'static str,
+    file_path: &'static str,
     file_content: &'static str,
 
-    line_col: LineColLookup,
     index: usize,
     error_index: usize,
     expected: Vec<String>,
@@ -17,8 +17,8 @@ pub struct StringReader {
 }
 
 pub struct ParseOptions<'a, 'b, 'c> {
-    pub file_name: Option<&'a str>,
-    pub file_namespace: Option<&'b str>,
+    pub file_path: Option<&'a str>,
+    pub package_root_path: Option<&'b str>,
     pub comment_start: Option<&'c str>
 }
 
@@ -56,14 +56,11 @@ impl StringReader {
     pub fn new(content: String, options: ParseOptions) -> Self {
         Self::init();
 
-        let line_col = LineColLookup::new(&content);
-
         Self {
             comment_token: get_str(options.comment_start.unwrap_or("").to_string()),
-            file_name: get_str(options.file_name.unwrap_or("").to_string()),
-            file_namespace: get_str(options.file_namespace.unwrap_or("").to_string()),
+            package_root_path: get_str(options.package_root_path.unwrap_or("").to_string()),
+            file_path: get_str(options.file_path.unwrap_or("").to_string()),
             file_content: get_str(content),
-            line_col,
             index: 0,
             error_index: 0,
             expected: vec![],
@@ -71,12 +68,8 @@ impl StringReader {
         }
     }
 
-    pub fn get_file_namespace(&self) -> &'static str {
-        self.file_namespace
-    }
-
-    pub fn get_file_name(&self) -> &'static str {
-        self.file_name
+    pub fn get_file_path(&self) -> &'static str {
+        self.file_path
     }
 
     pub fn set_expected_token(&mut self, expected: Option<String>) {
@@ -105,13 +98,13 @@ impl StringReader {
             }
         }
 
-        let (line, column) = self.line_col.get(error_index);
-        let expected = self.expected.clone();
-        let file_name = self.file_name;
-        let file_namespace = self.file_namespace;
-        let file_content = self.file_content;
-
-        ParseError { file_name, file_namespace, file_content, line, column, expected }
+        ParseError {
+            package_root_path: self.package_root_path,
+            file_path: self.file_path,
+            file_content: self.file_content,
+            index: error_index,
+            expected: self.expected.clone(),
+        }
     }
 
     pub fn is_finished(&self) -> bool {
@@ -223,13 +216,13 @@ impl StringReader {
     }
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
-        let end = self.get_index_backtracked();
-        let file_namespace = self.file_namespace;
-        let file_name = self.file_name;
-        let file_content = self.file_content;
-        let (line, column) = self.line_col.get(start);
-
-        DataLocation { start, end, file_name, file_namespace, file_content, line, column }
+        DataLocation {
+            package_root_path: self.package_root_path,
+            file_path: self.file_path,
+            file_content: self.file_content,
+            start,
+            end: self.get_index_backtracked(),
+        }
     }
 
     pub fn get_marker_value(&self, name: &'static str) -> bool {

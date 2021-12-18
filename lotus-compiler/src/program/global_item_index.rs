@@ -56,10 +56,10 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
                 let item_name = item.get_name();
                 let item_location = &item_name.location;
                 match item.get_visibility() {
-                    Visibility::Private => item_location.file_namespace == getter_location.file_namespace && item_location.file_name == getter_location.file_name,
-                    Visibility::Public => item_location.file_namespace == getter_location.file_namespace,
+                    Visibility::Private => item_location.file_path == getter_location.file_path,
+                    Visibility::Public => item_location.package_root_path == getter_location.package_root_path,
                     Visibility::Export => true,
-                    Visibility::System => item_location.file_namespace == getter_location.file_namespace,
+                    Visibility::System => item_location.package_root_path == getter_location.package_root_path,
                     Visibility::None => false,
                 }
             });

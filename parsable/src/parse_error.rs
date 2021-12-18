@@ -1,9 +1,8 @@
 #[derive(Debug, Clone)]
 pub struct ParseError {
-    pub file_name: &'static str,
-    pub file_namespace: &'static str,
+    pub package_root_path: &'static str,
+    pub file_path: &'static str,
     pub file_content: &'static str,
-    pub line: usize,
-    pub column: usize,
+    pub index: usize,
     pub expected: Vec<String>
 }

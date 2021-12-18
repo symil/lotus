@@ -1,13 +1,15 @@
-use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}};
+use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}, fs::{self, DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
-use parsable::{DataLocation, Parsable};
-use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, Timer, ProgramStep, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem};
+use parsable::{DataLocation, Parsable, ParseOptions};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively}, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, Timer, ProgramStep, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN};
 
-#[derive(Default, Debug)]
+#[derive(Debug, Default)]
 pub struct ProgramContext {
+    source_file_list: Vec<SourceFileDetails>,
+    parsed_source_files: Vec<LotusFile>,
     pub errors: CompilationErrorList,
 
     pub default_interfaces: InterfaceList,
@@ -40,6 +42,9 @@ pub struct ProgramContext {
     update_client_function: Option<Rc<FunctionInstanceHeader>>,
     start_server_function: Option<Rc<FunctionInstanceHeader>>,
     update_server_function: Option<Rc<FunctionInstanceHeader>>,
+
+    output_wat: Wat,
+    output_file: String
 }
 
 impl ProgramContext {
@@ -47,7 +52,18 @@ impl ProgramContext {
         Self::default()
     }
 
-    pub fn index_builtin_entities(&mut self) {
+    pub fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
+    }
+
+    pub fn take_errors(&mut self) -> Option<Vec<CompilationError>> {
+        match self.errors.is_empty() {
+            true => None,
+            false => Some(self.errors.consume()),
+        }
+    }
+
+    fn index_builtin_entities(&mut self) {
         for builtin_interface in DEFAULT_INTERFACES {
             let interface = self.interfaces.get_by_name(builtin_interface.get_name()).unwrap();
 
@@ -426,16 +442,54 @@ impl ProgramContext {
         self.type_instances.values().map(|(header, _)| header.clone()).collect()
     }
 
-    pub fn process_files(&mut self, files: Vec<LotusFile>, timer: &mut Timer) {
-        timer.start(ProgramStep::Process);
+    pub fn read_source_files(&mut self, directories: &[SourceDirectoryDetails]) {
+        for details in directories {
+            let mut files = vec![];
 
+            for file_path in read_directory_recursively(&details.path) {
+                if let Some(extension) = file_path.extension() {
+                    if extension == SOURCE_FILE_EXTENSION {
+                        if let Ok(content) = fs::read_to_string(&file_path) {
+                            files.push(SourceFileDetails {
+                                path: file_path,
+                                root_directory_path: details.path.to_string(),
+                                content
+                            });
+                        }
+                    }
+                }
+            }
+
+            files.sort_by_cached_key(|file_details| file_details.path.to_str().unwrap().to_string());
+
+            self.source_file_list.append(&mut files);
+        }
+    }
+
+    pub fn parse_source_files(&mut self) {
+        for source_file in &mut self.source_file_list {
+            let file_name = source_file.path.strip_prefix(&source_file.root_directory_path).unwrap().to_str().unwrap().to_string();
+            let parse_options = ParseOptions {
+                file_path: Some(&file_name),
+                package_root_path: Some(&source_file.root_directory_path),
+                comment_start: Some(COMMENT_START_TOKEN),
+            };
+
+            match LotusFile::parse(take(&mut source_file.content), parse_options) {
+                Ok(lotus_file) => self.parsed_source_files.push(lotus_file),
+                Err(parse_error) => self.errors.add(CompilationError::parse_error(parse_error))
+            };
+        }
+    }
+
+    pub fn process_source_files(&mut self) {
         let mut interfaces = vec![];
         let mut types = vec![];
         let mut typedefs = vec![];
         let mut functions = vec![];
         let mut global_vars = vec![];
 
-        for file in files {
+        for file in take(&mut self.parsed_source_files) {
             for block in file.blocks {
                 match block {
                     TopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
@@ -594,17 +648,9 @@ impl ProgramContext {
         // if self.functions.get_by_name("main").is_none() {
         //     self.errors.add_generic_unlocated(format!("missing required function `main`"));
         // }
-
-        timer.stop(ProgramStep::Process);
     }
 
-    pub fn generate_wat(mut self, timer: &mut Timer) -> Result<String, Vec<CompilationError>> {
-        timer.start(ProgramStep::Resolve);
-        
-        if !self.errors.is_empty() {
-            return Err(self.errors.consume());
-        }
-
+    pub fn resolve_wat(&mut self) {
         let mut content = wat!["module"];
         let mut globals_declaration = vec![];
         let mut globals_initialization = vec![];
@@ -615,7 +661,7 @@ impl ProgramContext {
 
         for global_var in self.global_vars.get_all() {
             let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
-                global_var_unwrapped.generate_instance(&mut self)
+                global_var_unwrapped.generate_instance(self)
             });
 
             self.global_var_instances.push(global_var_instance);
@@ -695,7 +741,7 @@ impl ProgramContext {
                                 current_function_parameters: vec![],
                             };
 
-                            events_initialization.extend(vasm.resolve(&type_index, &mut self));
+                            events_initialization.extend(vasm.resolve(&type_index, self));
                         }
                     }
                 });
@@ -708,7 +754,7 @@ impl ProgramContext {
                 function: self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
                 parameters: vec![]
             }), vec![])
-        ].resolve(&TypeIndex::empty(), &mut self));
+        ].resolve(&TypeIndex::empty(), self));
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
@@ -784,7 +830,7 @@ impl ProgramContext {
 
         let mut wasm_locals = vec![];
 
-        for global_var in self.global_var_instances {
+        for global_var in take(&mut self.global_var_instances) {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
             globals_initialization.extend(global_var.init_wat);
             globals_retaining.extend(global_var.retain_wat);
@@ -810,7 +856,7 @@ impl ProgramContext {
         content.push(Wat::declare_function::<&str>(INIT_EVENTS_FUNC_NAME, None, vec![], vec![], vec![], events_initialization));
         content.push(Wat::declare_function::<&str>("initialize", Some("initialize"), vec![], vec![], vec![], initialize_function_body));
 
-        for (function_instance_header, function_instance_content) in self.function_instances.into_values() {
+        for (function_instance_header, function_instance_content) in take(&mut self.function_instances).into_values() {
             if let Some(mut wasm_declaration) = function_instance_content.unwrap().wasm_declaration {
                 content.push(wasm_declaration);
             }
@@ -818,12 +864,22 @@ impl ProgramContext {
 
         content.extend(exports);
 
-        timer.stop(ProgramStep::Resolve);
+        self.output_wat = content;
+    }
 
-        timer.start(ProgramStep::Stringify);
-        let string = content.to_string(0);
-        timer.stop(ProgramStep::Stringify);
-        
-        Ok(string)
+    pub fn generate_output_file(&mut self) {
+        self.output_file = self.output_wat.to_string(0);
+    }
+
+    pub fn write_output_file(&self, path: &str) {
+        let path = Path::new(path);
+
+        if let Some(parent_dir) = path.to_path_buf().parent() {
+            DirBuilder::new().recursive(true).create(parent_dir).unwrap();
+        }
+
+        let mut file = File::create(path).unwrap();
+
+        file.write_all(self.output_file.as_bytes()).unwrap();
     }
 }

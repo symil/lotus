@@ -30,7 +30,7 @@ impl MacroExpression {
 
         match &self.value {
             MacroExpressionValue::Line => {
-                Some(Vasm::new(context.int_type(), vec![], vec![VI::int(self.location.line)]))
+                Some(Vasm::new(context.int_type(), vec![], vec![VI::int(self.location.get_line_col().0)]))
             }
             MacroExpressionValue::TypeId => m.access_current_type(|type_unwrapped, context| {
                 Vasm::new(context.int_type(), vec![], vec![VI::type_id(&type_unwrapped.self_type)])

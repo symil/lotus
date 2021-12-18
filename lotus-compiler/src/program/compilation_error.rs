@@ -77,13 +77,11 @@ impl CompilationError {
     pub fn parse_error(parse_error: ParseError) -> Self {
         Self {
             location: Some(DataLocation {
-                start: 0,
-                end: 0,
-                file_name: parse_error.file_name,
-                file_namespace: parse_error.file_namespace,
+                package_root_path: parse_error.package_root_path,
+                file_path: parse_error.file_path,
                 file_content: parse_error.file_content,
-                line: parse_error.line,
-                column: parse_error.column
+                start: parse_error.index,
+                end: parse_error.index,
             }),
             details: CompilationErrorDetails::ParseError(ParseErrorDetails {
                 expected_tokens: parse_error.expected
@@ -155,7 +153,11 @@ impl CompilationError {
             Some(first_line) => {
                 let error_string = format!("{} {}", "error:".red().bold(), first_line);
                 let location_string = match &self.location {
-                    Some(location) => format!("{}:{}:{}: ", location.file_name, location.line, location.column),
+                    Some(location) => {
+                        let (line, col) = location.get_line_col();
+
+                        format!("{}:{}:{}: ", location.file_path, line, col)
+                    },
                     None => String::new(),
                 };
 

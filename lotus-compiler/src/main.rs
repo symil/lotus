@@ -3,69 +3,71 @@
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
-use program::{LotusProgram, Timer, ProgramStep};
+use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, CompilerMode};
+use program::{Timer, ProgramStep, ProgramContext};
 
 mod utils;
 mod program;
 mod items;
-
-const PROGRAM_NAME : &'static str = "lotus-compiler";
-const PRELUDE_DIR_NAME : &'static str = "prelude";
+mod command_line;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let input_path = args.get(1).or_else(|| display_usage_and_exit()).unwrap();
-    let output_path = args.get(2).or_else(|| display_usage_and_exit()).unwrap();
-    let silent = args.iter().any(|s| s == "--silent");
-    let details = args.iter().any(|s| s == "--details");
-    let prelude_path = get_prelude_path();
-    let mut timer = Timer::new();
 
-    timer.start(ProgramStep::Total);
+    match CommandLineOptions::parse_from_args(args) {
+        Some(options) => {
+            let directories = options.get_source_directories();
+            let mut timer = Timer::new();
+            let mut context = ProgramContext::new();
 
-    match LotusProgram::from_path(input_path, Some(&prelude_path), &mut timer) {
-        Ok(program) => {
-            timer.start(ProgramStep::Write);
-            program.write_to(output_path);
-            timer.stop(ProgramStep::Write);
+            timer.time(ProgramStep::Write, || context.read_source_files(&directories));
+            timer.time(ProgramStep::Parse, || context.parse_source_files());
 
-            let total_time = timer.stop(ProgramStep::Total);
+            if !context.has_errors() {
+                timer.time(ProgramStep::Process, || context.process_source_files());
+            }
 
-            if !silent {
-                match details {
-                    true => {
-                        for (step, duration) in timer.consume() {
-                            if !step.is_negligible() {
-                                println!("{}: {}s", step.get_name().bold(), duration);
+            match options.mode {
+                CompilerMode::Compile => match context.take_errors() {
+                    Some(errors) => {
+                        for error in errors {
+                            if let Some(string) = error.to_string() {
+                                println!("{}", string);
                             }
                         }
+                        process::exit(1);
                     },
-                    false => {
-                        println!("{} {} ({}s)", "ok:".blue().bold(), output_path.bold(), total_time);
-                    },
-                }
-            }
+                    None => {
+                        timer.time(ProgramStep::Resolve, || context.resolve_wat());
+                        timer.time(ProgramStep::Stringify, || context.generate_output_file());
+                        timer.time(ProgramStep::Write, || context.write_output_file(&options.output_path));
 
-            process::exit(0);
+                        match options.log_level {
+                            LogLevel::Silent => {},
+                            LogLevel::Short => {
+                                println!("{} {} ({}s)", "ok:".blue().bold(), options.output_path.bold(), timer.get_total_duration());
+                            },
+                            LogLevel::Detailed => {
+                                for (step, duration) in timer.get_all_durations() {
+                                    if !step.is_negligible() {
+                                        println!("{}: {}s", step.get_name().bold(), duration);
+                                    }
+                                }
+
+                                println!("{}: {}s", "total".bold(), timer.get_total_duration());
+                            },
+                        }
+                    },
+                },
+                CompilerMode::Validate => {
+                    for error in context.errors.consume() {
+
+                    }
+                },
+            }
         },
-        Err(errors) => {
-            for error in errors {
-                if let Some(string) = error.to_string() {
-                    println!("{}", string);
-                }
-            }
-            process::exit(1);
-        }
-    };
-}
-
-fn get_prelude_path() -> String {
-    let mut path_buf = PathBuf::new();
-
-    path_buf.push(env!("CARGO_MANIFEST_DIR"));
-    path_buf.push(PRELUDE_DIR_NAME);
-
-    path_buf.into_os_string().into_string().unwrap()
+        None => display_usage_and_exit(),
+    }
 }
 
 fn display_usage_and_exit() -> ! {

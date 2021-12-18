@@ -2,6 +2,7 @@ use std::time::Instant;
 use indexmap::IndexMap;
 use super::ProgramStep;
 
+#[derive(Debug, Default)]
 pub struct Timer {
     durations: IndexMap<ProgramStep, f64>,
     start_timestamps: IndexMap<ProgramStep, Instant>,
@@ -13,6 +14,12 @@ impl Timer {
             durations: IndexMap::new(),
             start_timestamps: IndexMap::new(),
         }
+    }
+
+    pub fn time<F : FnOnce()>(&mut self, step: ProgramStep, callback: F) {
+        self.start(step);
+        callback();
+        self.stop(step);
     }
 
     pub fn start(&mut self, step: ProgramStep) {
@@ -27,7 +34,17 @@ impl Timer {
         elapsed
     }
 
-    pub fn consume(self) -> Vec<(ProgramStep, f64)> {
+    pub fn get_total_duration(&self) -> f64 {
+        let mut total = 0f64;
+
+        for duration in self.durations.values() {
+            total += *duration;
+        }
+
+        total
+    }
+
+    pub fn get_all_durations(&self) -> Vec<(ProgramStep, f64)> {
         let mut result = vec![];
         let mut total_duration = 0;
 

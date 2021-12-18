@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, mem::take};
 use parsable::DataLocation;
 use super::CompilationError;
 
@@ -48,8 +48,8 @@ impl CompilationErrorList {
         self.errors.is_empty()
     }
 
-    pub fn consume(self) -> Vec<CompilationError> {
-        self.errors
+    pub fn consume(&mut self) -> Vec<CompilationError> {
+        take(&mut self.errors)
     }
 }
 

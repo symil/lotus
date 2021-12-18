@@ -1,5 +1,10 @@
 use super::{BuiltinInterface, BuiltinType};
 
+pub const SOURCE_FILE_EXTENSION : &'static str = "lt";
+pub const COMMENT_START_TOKEN : &'static str = "//";
+pub const PRELUDE_NAMESPACE : &'static str = "std";
+pub const SELF_NAMESPACE : &'static str = "self";
+
 pub const WASM_PAGE_BYTE_SIZE : usize = 2usize.pow(16); // 64 KiB
 pub const MEMORY_CELL_BYTE_SIZE : usize = 4;
 
@@ -9,8 +14,7 @@ pub const MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE : usize = 64;
 pub const VIRTUAL_PAGE_SIZE_COUNT : usize = 8;
 pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE * VIRTUAL_PAGE_SIZE_COUNT * MEMORY_CELL_BYTE_SIZE;
 
-pub const GENERATED_METHODS_TABLE_START : usize = MEMORY_METADATA_SIZE;
-pub const GENERATED_METHOD_COUNT_PER_TYPE : usize = 4; // log, retain, serialize, deserialize
+pub const OBJECT_HEADER_SIZE : usize = 1;
 
 pub const INT_NONE_VALUE : i32 = i32::MIN;
 pub const NONE_LITERAL : &'static str = "none";
