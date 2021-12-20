@@ -26,6 +26,8 @@ const HEADER_SIZE = HEADER_WASM_PAGE_COUNT * WASM_PAGE_SIZE;
 
 const MEMORY = (0 as ptr);
 
+const A = 9;
+
 // Each allocated pointer has a single value of metadata that can be one of the following:
 // 0: the pointer has been garbage collected and can be returned by a future call of `@alloc`
 // 1: the pointer is in use but will be garbage collected the next time GC is triggered
