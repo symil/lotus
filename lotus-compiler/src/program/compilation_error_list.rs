@@ -32,10 +32,6 @@ impl CompilationErrorList {
         self.add(CompilationError::generic(location, error))
     }
 
-    pub fn add_generic_unlocated(&mut self, error: String) {
-        self.add(CompilationError::generic_unlocated(error))
-    }
-
     pub fn add_generic_and_none<T>(&mut self, location: &DataLocation, error: String) -> Option<T> {
         self.add_and_none(CompilationError::generic(location, error))
     }

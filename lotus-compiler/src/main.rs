@@ -3,13 +3,14 @@
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
-use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, CompilerMode, Timer, ProgramStep};
+use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep};
 use program::{ProgramContext};
 
 mod utils;
 mod program;
 mod items;
 mod command_line;
+mod language_server;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,8 +28,18 @@ fn main() {
                 timer.time(ProgramStep::Process, || context.process_source_files());
             }
 
-            match options.mode {
-                CompilerMode::Compile => match context.take_errors() {
+            match options.language_server_action {
+                Some(action) => {
+                    let callback = action.get_associated_callback();
+                    let log_items = callback(&mut context, &options);
+
+                    for item in log_items {
+                        if let Some(string) = item.to_string() {
+                            println!("{}", string);
+                        }
+                    }
+                },
+                None => match context.take_errors() {
                     Some(errors) => {
                         for error in errors {
                             if let Some(string) = error.to_string() {
@@ -58,14 +69,7 @@ fn main() {
                             },
                         }
                     },
-                },
-                CompilerMode::Validate => {
-                    for error in context.errors.consume() {
-                        if let Some(string) = error.to_detailed_string() {
-                            println!("{}", string);
-                        }
-                    }
-                },
+                }
             }
         },
         None => display_usage_and_exit(),

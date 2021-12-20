@@ -6,12 +6,12 @@ use super::{InterfaceBlueprint, Type};
 
 #[derive(Debug)]
 pub struct CompilationError {
-    location: Option<DataLocation>,
-    details: CompilationErrorDetails,
+    pub location: DataLocation,
+    pub details: CompilationErrorDetails,
 }
 
 #[derive(Debug)]
-enum CompilationErrorDetails {
+pub enum CompilationErrorDetails {
     Generic(GenericErrorDetails),
     ParseError(ParseErrorDetails),
     TypeMismatch(TypeMismatchDetails),
@@ -24,50 +24,41 @@ enum CompilationErrorDetails {
 }
 
 #[derive(Debug)]
-struct GenericErrorDetails {
+pub struct GenericErrorDetails {
     error: String
 }
 
 #[derive(Debug)]
-struct ParseErrorDetails {
+pub struct ParseErrorDetails {
     expected_tokens: Vec<String>
 }
 
 #[derive(Debug)]
-struct TypeMismatchDetails {
+pub struct TypeMismatchDetails {
     expected_type: Type,
     actual_type: Type
 }
 
 #[derive(Debug)]
-struct InterfaceMismatchDetails {
+pub struct InterfaceMismatchDetails {
     expected_interface: Link<InterfaceBlueprint>,
     actual_type: Type
 }
 
 #[derive(Debug)]
-struct UnexpectedKeywordDetails {
+pub struct UnexpectedKeywordDetails {
     keyword: String
 }
 
 #[derive(Debug)]
-struct InvalidCharacterDetails {
+pub struct InvalidCharacterDetails {
     character: String
 }
 
 impl CompilationError {
     pub fn generic(location: &DataLocation, error: String) -> Self {
         Self {
-            location: Some(location.clone()),
-            details: CompilationErrorDetails::Generic(GenericErrorDetails {
-                error,
-            }),
-        }
-    }
-
-    pub fn generic_unlocated(error: String) -> Self {
-        Self {
-            location: None,
+            location: location.clone(),
             details: CompilationErrorDetails::Generic(GenericErrorDetails {
                 error,
             }),
@@ -76,13 +67,13 @@ impl CompilationError {
 
     pub fn parse_error(parse_error: ParseError) -> Self {
         Self {
-            location: Some(DataLocation {
+            location: DataLocation {
                 package_root_path: parse_error.package_root_path,
                 file_path: parse_error.file_path,
                 file_content: parse_error.file_content,
                 start: parse_error.index,
                 end: parse_error.index,
-            }),
+            },
             details: CompilationErrorDetails::ParseError(ParseErrorDetails {
                 expected_tokens: parse_error.expected
             }),
@@ -91,7 +82,7 @@ impl CompilationError {
 
     pub fn type_mismatch(location: &DataLocation, expected_type: &Type, actual_type: &Type) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::TypeMismatch(TypeMismatchDetails {
                 expected_type: expected_type.clone(),
                 actual_type: actual_type.clone(),
@@ -101,7 +92,7 @@ impl CompilationError {
 
     pub fn interface_mismatch(location: &DataLocation, expected_interface: &Link<InterfaceBlueprint>, actual_type: &Type) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::InterfaceMismatch(InterfaceMismatchDetails {
                 expected_interface: expected_interface.clone(),
                 actual_type: actual_type.clone(),
@@ -111,28 +102,28 @@ impl CompilationError {
 
     pub fn expected_expression(location: &DataLocation) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::ExpectedExpression,
         }
     }
 
     pub fn unexpected_expression(location: &DataLocation) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::UnexpectedExpression,
         }
     }
 
     pub fn unexpected_void_expression(location: &DataLocation) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::UnexpectedVoidExpression,
         }
     }
 
     pub fn unexpected_keyword(location: &DataLocation, keyword: &str) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::UnexpectedKeyword(UnexpectedKeywordDetails {
                 keyword: keyword.to_string(),
             }),
@@ -141,39 +132,24 @@ impl CompilationError {
 
     pub fn invalid_character(location: &DataLocation, character: &str) -> Self {
         Self {
-            location: Some(location.clone()),
+            location: location.clone(),
             details: CompilationErrorDetails::InvalidCharacter(InvalidCharacterDetails {
                 character: character.to_string(),
             }),
         }
     }
 
-    pub fn to_detailed_string(&self) -> Option<String> {
-        match (&self.location, self.get_first_line()) {
-            (Some(location), Some(error)) => {
-                Some(format!("{}:{}:{}:{}", location.file_path, location.start, location.end, error))
-            },
-            _ => None
-        }
-    }
-
     pub fn to_string(&self) -> Option<String> {
-        match self.get_first_line() {
+        match self.get_message() {
             Some(first_line) => {
                 let error_string = format!("{} {}", "error:".red().bold(), first_line);
-                let location_string = match &self.location {
-                    Some(location) => {
-                        let (line, col) = location.get_line_col();
-                        let file_name = match location.file_path.starts_with(location.package_root_path) {
-                            true => &location.file_path[(location.package_root_path.len() + 1)..],
-                            false => location.file_path,
-                        };
-
-                        format!("{}:{}:{}: ", file_name, line, col)
-                    },
-                    None => String::new(),
+                let (line, col) = self.location.get_line_col();
+                let file_name = match self.location.file_path.starts_with(self.location.package_root_path) {
+                    true => &self.location.file_path[(self.location.package_root_path.len() + 1)..],
+                    false => self.location.file_path,
                 };
 
+                let location_string = format!("{}:{}:{}: ", file_name, line, col);
                 let mut result = format!("{}{}", location_string.bold(), error_string);
 
                 // for detail in self.get_details() {
@@ -186,7 +162,7 @@ impl CompilationError {
         }
     }
 
-    fn get_first_line(&self) -> Option<String> {
+    pub fn get_message(&self) -> Option<String> {
         match &self.details {
             CompilationErrorDetails::Generic(details) => {
                 Some(details.error.clone())

@@ -1,0 +1,5 @@
+// Temporary file to let the VS code extension that this is the root of the prelude
+
+fn test() {
+    let a = 8;
+}

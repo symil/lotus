@@ -8,8 +8,8 @@ use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, Co
 
 #[derive(Debug, Default)]
 pub struct ProgramContext {
-    source_file_list: Vec<SourceFileDetails>,
-    parsed_source_files: Vec<LotusFile>,
+    pub source_file_list: Vec<SourceFileDetails>,
+    pub parsed_source_files: Vec<LotusFile>,
     pub errors: CompilationErrorList,
 
     pub default_interfaces: InterfaceList,
