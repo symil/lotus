@@ -1,6 +1,6 @@
 use std::{cell::Ref, rc::Rc};
-use crate::{items::Identifier, utils::Link};
-use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat};
+use crate::{items::{Identifier, Visibility}, utils::Link};
+use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat, GlobalItem};
 
 pub type VariableInfo = Link<VariableInfoContent>;
 
@@ -132,5 +132,15 @@ impl Default for VariableInfo {
             wasm_name: String::new(),
             is_closure_arg: false
         })
+    }
+}
+
+impl GlobalItem for VariableInfoContent {
+    fn get_name(&self) -> &Identifier {
+        &self.name
+    }
+
+    fn get_visibility(&self) -> Visibility {
+        Visibility::Private
     }
 }

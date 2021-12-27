@@ -100,6 +100,12 @@ impl TypeDeclaration {
             None => WasmStackType::Fixed(StackType::Int),
         };
 
+        context.declare_shared_identifier(&self.name);
+
+        for details in parameters.values() {
+            context.declare_shared_identifier(&details.name);
+        }
+
         type_wrapped.with_mut(|mut type_unwrapped| {
             type_unwrapped.self_type = Type::Actual(ActualTypeContent {
                 type_blueprint: type_wrapped.clone(),
@@ -266,6 +272,8 @@ impl TypeDeclaration {
                         wasm_pattern,
                     });
 
+                    context.declare_shared_identifier(&name);
+
                     if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
                         context.errors.add_generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
                     }
@@ -307,6 +315,8 @@ impl TypeDeclaration {
                 }
 
                 for field in self.get_fields() {
+                    context.declare_shared_identifier(&field.name);
+
                     match &field.ty {
                         Some(ty) => {
                             // Regular field

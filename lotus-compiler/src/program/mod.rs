@@ -45,6 +45,7 @@ mod compilation_error;
 mod macro_context;
 mod source_directory_details;
 mod source_file_details;
+mod shared_identifier;
 
 pub use program_context::*;
 pub use utils::*;
@@ -92,3 +93,4 @@ pub use compilation_error::*;
 pub use macro_context::*;
 pub use source_directory_details::*;
 pub use source_file_details::*;
+pub use shared_identifier::*;

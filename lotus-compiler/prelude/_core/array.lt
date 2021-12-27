@@ -38,7 +38,7 @@ export type(i32) Array<T> {
             retain_memory(value.body() as ptr);
 
             for item in value {
-                Item::__retain(item);
+                T::__retain(item);
             }
         }
     }
@@ -48,7 +48,7 @@ export type(i32) Array<T> {
             buffer.write(value.len());
 
             for item in value {
-                Item::__serialize(buffer, item);
+                T::__serialize(buffer, item);
             }
         }
     }
@@ -304,7 +304,7 @@ export type(i32) Array<T> {
         }
     }
 
-    insert_at(index: int, item: Item) {
+    insert_at(index: int, item: T) {
         self.insert_none(index, 1);
         self[index] = item;
     }

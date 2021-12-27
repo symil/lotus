@@ -35,6 +35,8 @@ impl InterfaceDeclaration {
             context.errors.add_generic(self, format!("interface `{}` already exists", &self.name));
         }
 
+        context.declare_shared_identifier(&self.name);
+
         context.interfaces.insert(interface_blueprint, None);
     }
 
@@ -56,6 +58,8 @@ impl InterfaceDeclaration {
                     name: name.clone(),
                     required_interfaces: InterfaceList::new(vec![]),
                 });
+
+                context.declare_shared_identifier(&name);
 
                 if associated_types.insert(name.to_string(), item).is_some() {
                     context.errors.add_generic(&associated_type.name, format!("duplicate associated type declaration `{}`", &name));
@@ -119,6 +123,10 @@ impl InterfaceDeclaration {
                     function: Link::new(function_blueprint),
                     this_type: this_type,
                 };
+
+                context.declare_shared_identifier(&method.name);
+                context.push_scope(ScopeKind::Function(func_ref.function.clone()));
+                context.pop_scope();
 
                 if index_map.insert(name.to_string(), func_ref).is_some() {
                     context.errors.add_generic(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));

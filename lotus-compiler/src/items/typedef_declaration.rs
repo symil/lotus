@@ -23,6 +23,7 @@ impl TypedefDeclaration {
             };
 
             context.typedefs.insert(typedef_blueprint, None);
+            context.declare_shared_identifier(&self.name);
         }
     }
 }

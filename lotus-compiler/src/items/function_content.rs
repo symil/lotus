@@ -56,6 +56,14 @@ impl FunctionContent {
         let has_parameters = !parameters.is_empty();
         let is_raw_wasm = self.body.is_raw_wasm();
 
+        if self.event_callback_qualifier.is_none() {
+            context.declare_shared_identifier(&self.name);
+
+            for details in parameters.values() {
+                context.declare_shared_identifier(&details.name);
+            }
+        }
+
         function_blueprint.parameters = parameters;
 
         if let Some(type_wrapped) = &current_type {
@@ -146,12 +154,14 @@ impl FunctionContent {
                 }
 
                 if let Some(event_type_wrapped) = context.types.get_by_identifier(&self.name) {
+                    context.access_wrapped_shared_identifier(&event_type_wrapped, &self.name);
+
                     // if event_type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
                         if let Some(type_wrapped) = context.get_current_type() {
                             function_wrapped.with_mut(|mut function_unwrapped| {
                                 function_unwrapped.argument_names = vec![
-                                    Identifier::new(EVENT_VAR_NAME, self),
-                                    Identifier::new(EVENT_OUTPUT_VAR_NAME, self),
+                                    Identifier::unlocated(EVENT_VAR_NAME),
+                                    Identifier::unlocated(EVENT_OUTPUT_VAR_NAME),
                                 ];
                                 function_unwrapped.signature = Signature {
                                     this_type: Some(type_wrapped.borrow().self_type.clone()),

@@ -58,7 +58,7 @@ export class Map<K, V> {
         index
     }
 
-    _get_entry(key: K) -> Item? {
+    _get_entry(key: K) -> MapEntry<K, V>? {
         let index = self._get_index(key);
         let entry = self.hash_table[index];
 

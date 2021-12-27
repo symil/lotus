@@ -1,8 +1,7 @@
 use indexmap::IndexMap;
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::LanguegeServerLogItem;
 
-pub fn validate_program(context: &mut ProgramContext, options: &CommandLineOptions) -> Vec<LanguegeServerLogItem> {
+pub fn validate(context: &mut ProgramContext, options: &CommandLineOptions) -> Vec<String> {
     let mut result = vec![];
     let mut file_errors = IndexMap::new();
 
@@ -17,10 +16,12 @@ pub fn validate_program(context: &mut ProgramContext, options: &CommandLineOptio
     }
 
     for (file_path, errors) in file_errors {
-        result.push(LanguegeServerLogItem::File(file_path.to_string()));
+        result.push(format!("file;{}", file_path.to_string()));
         
         for error in errors {
-            result.push(LanguegeServerLogItem::Error(error));
+            if let Some(message) = error.get_message() {
+                result.push(format!("error;{};{};{}", error.location.start, error.location.end, message));
+            }
         }
     }
 

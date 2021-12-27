@@ -39,6 +39,8 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                     AccessType::Set(location) => VI::set_field(&field_type, field_info.offset, vasm![VI::placeholder(location)]),
                 };
 
+                context.access_shared_identifier(&field_info.name, field_name);
+
                 result = Some(Vasm::new(field_type, vec![], vec![instruction]));
             } else if !parent_type.is_undefined() {
                 context.errors.add_generic(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
@@ -52,6 +54,8 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                 false => match parent_type {
                     Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                         if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
+                            context.access_shared_identifier(&variant_info.name, field_name);
+
                             match access_type {
                                 AccessType::Get => {
                                     result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
@@ -103,6 +107,10 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
 }
 
 pub fn process_function_call(function_name: &Identifier, mut function_call: FunctionCall, arguments: &ArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    if let FunctionCall::Named(details) = &function_call {
+        context.access_wrapped_shared_identifier(&details.function, function_name);
+    }
+
     if let AccessType::Set(set_location) = access_type  {
         context.errors.add_generic(set_location, format!("cannot set result of a function call"));
         return None;

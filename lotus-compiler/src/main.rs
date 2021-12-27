@@ -33,10 +33,8 @@ fn main() {
                     let callback = action.get_associated_callback();
                     let log_items = callback(&mut context, &options);
 
-                    for item in log_items {
-                        if let Some(string) = item.to_string() {
-                            println!("{}", string);
-                        }
+                    for string in log_items {
+                        println!("{}", string);
                     }
                 },
                 None => match context.take_errors() {

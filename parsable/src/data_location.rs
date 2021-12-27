@@ -37,6 +37,10 @@ impl DataLocation {
         }
     }
 
+    pub fn contains_cursor(&self, file_path: &str, index: usize) -> bool {
+        self.file_path == file_path && self.start <= index && self.end >= index
+    }
+
     pub fn is_empty(&self) -> bool {
         self.file_content == ""
     }
@@ -48,6 +52,10 @@ impl DataLocation {
     pub fn get_line_col(&self) -> (usize, usize) {
         lookup_line_col(self.file_path, self.file_content, self.start)
     }
+
+    pub fn length(&self) -> usize {
+        self.end - self.start
+    }
 }
 
 impl PartialEq for DataLocation {
@@ -56,4 +64,8 @@ impl PartialEq for DataLocation {
         self.end == other.end &&
         self.file_path == other.file_path
     }
+}
+
+impl Eq for DataLocation {
+
 }

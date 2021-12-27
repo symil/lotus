@@ -1,5 +1,19 @@
 // Temporary file to let the VS code extension that this is the root of the prelude
 
+class Bar {
+    value: int
+}
+
 fn test() {
-    let a = 8;
+    let left = 8;
+    let right = 14;
+    let result = this_is_a_test(left, right);
+    let foo = Bar { value: 8 };
+    foo.value = 4;
+}
+
+fn this_is_a_test(foo: int, bar: int) -> int {
+    let result = foo + bar;
+
+    result
 }

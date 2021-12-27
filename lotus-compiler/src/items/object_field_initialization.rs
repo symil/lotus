@@ -16,6 +16,8 @@ impl ObjectFieldInitialization {
             Some(field_info) => {
                 let field_type = field_info.ty.replace_parameters(Some(&object_type), &[]);
 
+                context.access_shared_identifier(&field_info.name, &self.name);
+
                 match &self.value {
                     Some(expr) => match expr.process(Some(&field_type), context) {
                         Some(vasm) => match vasm.ty.is_assignable_to(&field_type) {

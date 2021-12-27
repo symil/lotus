@@ -41,11 +41,19 @@ impl ParsedValueType {
             if let Some(typedef_blueprint) = context.typedefs.get_by_identifier(&self.name) {
                 must_not_take_parameters = true;
                 result = typedef_blueprint.borrow().target.clone();
+                context.access_wrapped_shared_identifier(&typedef_blueprint, &self.name);
             }
         }
 
         if result.is_undefined() {
             if let Some(ty) = context.get_type_parameter(self.name.as_str()) {
+                match &ty {
+                    Type::TypeParameter(details) => context.access_shared_identifier(&details.name, &self.name),
+                    Type::FunctionParameter(details) => context.access_shared_identifier(&details.name, &self.name),
+                    Type::Associated(details) => context.access_shared_identifier(&details.associated.name, &self.name),
+                    _ => unreachable!()
+                };
+
                 must_not_take_parameters = true;
                 result = ty;
             };
@@ -56,6 +64,8 @@ impl ParsedValueType {
 
             if let Some(type_blueprint) = context.types.get_by_identifier(&self.name) {
                 let parameters = &type_blueprint.borrow().parameters;
+
+                context.access_wrapped_shared_identifier(&type_blueprint, &self.name);
 
                 if parameter_list.len() != parameters.len() {
                     context.errors.add_generic(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name.as_str().bold(), parameters.len(), parameter_list.len()));

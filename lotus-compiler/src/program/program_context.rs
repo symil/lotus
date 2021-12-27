@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions};
 use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier};
 
 #[derive(Debug, Default)]
 pub struct ProgramContext {
@@ -19,6 +19,7 @@ pub struct ProgramContext {
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
+    pub shared_identifiers: HashMap<DataLocation, SharedIdentifier>,
 
     builtin_types: HashMap<BuiltinType, Type>,
     main_types: HashMap<MainType, Type>,
@@ -192,10 +193,7 @@ impl ProgramContext {
             match &scope.kind {
                 ScopeKind::Type(type_wrapped) => match type_wrapped.borrow().parameters.get(name) {
                     Some(info) => return Some(Type::TypeParameter(info.clone())),
-                    None => match type_wrapped.borrow().associated_types.get(name) {
-                        Some(info) => return Some(info.ty.clone()),
-                        None => {},
-                    },
+                    None => {}
                 },
                 ScopeKind::Interface(interface_wrapped) => match interface_wrapped.borrow().associated_types.get(name) {
                     Some(info) => return Some(Type::Associated(AssociatedTypeContent {
@@ -231,8 +229,19 @@ impl ProgramContext {
         
         self.scopes.push(Scope::new(kind.clone()));
 
-        if let ScopeKind::Function(function_wrapped) = kind {
-            self.declare_function_arguments(&function_wrapped);
+        match kind {
+            ScopeKind::Type(type_wrapped) => {
+                // self.declare_wrapped_shared_identifier(&type_wrapped);
+            },
+            ScopeKind::Interface(interface_wrapped) => {
+                // self.declare_wrapped_shared_identifier(&interface_wrapped);
+            },
+            ScopeKind::Function(function_wrapped) => {
+                // self.declare_wrapped_shared_identifier(&function_wrapped);
+                self.declare_function_arguments(&function_wrapped);
+
+            },
+            _ => {}
         }
     }
 
@@ -271,6 +280,42 @@ impl ProgramContext {
         if let Some(current_scope) = self.scopes.iter_mut().last() {
             current_scope.insert_var_info(&var_info);
         }
+
+        self.declare_wrapped_shared_identifier(&var_info);
+    }
+
+    pub fn declare_shared_identifier(&mut self, definition: &Identifier) {
+        self.shared_identifiers.insert(definition.location.clone(), SharedIdentifier::new(&definition.location));
+    }
+
+    pub fn access_shared_identifier(&mut self, definition: &Identifier, identifier: &Identifier) {
+        // dbg!(identifier.as_str());
+        // dbg!(identifier.location.file_path);
+        let mut shared_identifier = self.shared_identifiers.get_mut(definition).unwrap();
+
+        shared_identifier.usages.push(identifier.location.clone());
+    }
+
+    pub fn declare_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>) {
+        item.with_ref(|item_unwrapped| {
+            self.declare_shared_identifier(item_unwrapped.get_name());
+        });
+    }
+
+    pub fn access_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>, identifier: &Identifier) {
+        item.with_ref(|item_unwrapped| {
+            self.access_shared_identifier(&item_unwrapped.get_name(), identifier);
+        });
+    }
+
+    pub fn get_identifier_under_cursor(&self, cursor_file_path: &str, cursor_index: usize) -> Option<(&SharedIdentifier, &DataLocation)> {
+        for shared_identifier in self.shared_identifiers.values() {
+            if let Some(location) = shared_identifier.match_cursor(cursor_file_path, cursor_index) {
+                return Some((shared_identifier, location));
+            }
+        }
+
+        None
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {
@@ -307,8 +352,9 @@ impl ProgramContext {
         });
     }
 
-    pub fn access_var(&self, name: &Identifier) -> Option<VariableInfo> {
+    pub fn access_var(&mut self, name: &Identifier) -> Option<VariableInfo> {
         let mut closure_access = false;
+        let mut result = None;
 
         for scope in self.scopes.iter().rev() {
             if let Some(var_info) = scope.get_var_info(name.as_str()) {
@@ -328,7 +374,8 @@ impl ProgramContext {
                     }
                 }
 
-                return Some(var_info.clone());
+                result = Some(var_info.clone());
+                break;
             }
 
             if scope.kind.is_function() {
@@ -336,10 +383,17 @@ impl ProgramContext {
             }
         }
 
-        match self.global_vars.get_by_identifier(name) {
-            Some(global) => Some(global.borrow().var_info.clone()),
-            None => None,
+        if result.is_none() {
+            if let Some(global) = self.global_vars.get_by_identifier(name) {
+                result = Some(global.borrow().var_info.clone());
+            }
         }
+
+        if let Some(var_info) = &result {
+            self.access_wrapped_shared_identifier(var_info, name);
+        }
+
+        result
     }
 
     pub fn get_type_instance(&mut self, parameters: TypeInstanceParameters) -> Rc<TypeInstanceHeader> {
