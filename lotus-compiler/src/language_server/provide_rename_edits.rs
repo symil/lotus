@@ -1,19 +1,16 @@
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
+use super::LanguageServerCommandParameters;
 
-pub fn provide_rename_edits(context: &mut ProgramContext, options: &CommandLineOptions) -> Vec<String> {
-    let mut result = vec![];
-
-    if let (Some(cursor), Some(new_name)) = (options.cursor, &options.new_name) {
+pub fn provide_rename_edits(parameters: &LanguageServerCommandParameters, context: &ProgramContext, lines: &mut Vec<String>) {
+    if let (Some(file_path), Some(cursor_index), Some(new_name)) = (&parameters.file_path, parameters.cursor_index, &parameters.new_name) {
         if is_valid_name(new_name) {
-            if let Some((shared_identifier, _)) = context.get_identifier_under_cursor(&options.input_path, cursor) {
+            if let Some((shared_identifier, _)) = context.get_identifier_under_cursor(file_path, cursor_index) {
                 for occurence in shared_identifier.get_all_occurences() {
-                    result.push(format!("replace;{};{};{};{}", occurence.file_path, occurence.start, occurence.end, new_name));
+                    lines.push(format!("replace;{};{};{};{}", occurence.file_path, occurence.start, occurence.end, new_name));
                 }
             }
         }
     }
-
-    result
 }
 
 fn is_valid_name(name: &str) -> bool {

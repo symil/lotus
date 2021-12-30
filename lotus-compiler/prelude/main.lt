@@ -1,15 +1,26 @@
 // Temporary file to let the VS code extension that this is the root of the prelude
 
+enum TheEnum {
+    Foo,
+    Bar,
+    TheBla
+}
+
 class Bar {
-    value: int
+    hello: int
 }
 
 fn test() {
     let left = 8;
     let right = 14;
     let result = this_is_a_test(left, right);
-    let foo = Bar { value: 8 };
-    foo.value = 4;
+    let foo = Bar { hello: 8 };
+    foo.hello = 4;
+    foo.hello = 6;
+    foo.hello = 6;
+    foo.hello = 6;
+
+    let d = TheEnum::TheBla;
 }
 
 fn this_is_a_test(foo: int, bar: int) -> int {

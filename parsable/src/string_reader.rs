@@ -53,6 +53,12 @@ impl StringReader {
         }
     }
 
+    pub fn clear_all_static_strings() {
+        unsafe {
+            STRINGS = Some(HashSet::new());
+        }
+    }
+
     pub fn new(content: String, options: ParseOptions) -> Self {
         Self::init();
 

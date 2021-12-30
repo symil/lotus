@@ -89,8 +89,8 @@ impl VarRef {
                                 true => {
                                     let type_arguments = TypeArguments::default();
                                     let mut parsed_type_value = ParsedValueType::default();
-                                    parsed_type_value.name = var_name.clone();
-                                    parsed_type_value.location = var_name.location.clone();
+                                    parsed_type_value.name = var_name.into_owned();
+                                    parsed_type_value.location = parsed_type_value.name.location.clone();
                                     let mut parsed_type = ParsedType::default();
                                     parsed_type.parsed_type = ParsedTypeWithoutSuffix::Single(ParsedTypeSingle::Value(parsed_type_value));
                                     let mut object_literal = ObjectLiteral::default();

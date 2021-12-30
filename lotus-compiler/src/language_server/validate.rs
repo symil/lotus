@@ -1,8 +1,9 @@
 use indexmap::IndexMap;
+use parsable::StringReader;
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
+use super::LanguageServerCommandParameters;
 
-pub fn validate(context: &mut ProgramContext, options: &CommandLineOptions) -> Vec<String> {
-    let mut result = vec![];
+pub fn validate(parameters: &LanguageServerCommandParameters, context: &ProgramContext, lines: &mut Vec<String>) {
     let mut file_errors = IndexMap::new();
 
     for source_file in &context.source_file_list {
@@ -11,19 +12,17 @@ pub fn validate(context: &mut ProgramContext, options: &CommandLineOptions) -> V
         file_errors.insert(source_file_path, vec![]);
     }
 
-    for error in context.errors.consume() {
+    for error in context.errors.get_all() {
         file_errors.get_mut(&error.location.file_path).unwrap().push(error);
     }
 
     for (file_path, errors) in file_errors {
-        result.push(format!("file;{}", file_path.to_string()));
+        lines.push(format!("file;{}", file_path.to_string()));
         
         for error in errors {
             if let Some(message) = error.get_message() {
-                result.push(format!("error;{};{};{}", error.location.start, error.location.end, message));
+                lines.push(format!("error;{};{};{}", error.location.start, error.location.end, message));
             }
         }
     }
-
-    result
 }

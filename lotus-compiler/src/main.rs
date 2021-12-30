@@ -3,7 +3,8 @@
 #![allow(unused)]
 use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
-use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep};
+use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
+use language_server::start_language_server;
 use program::{ProgramContext};
 
 mod utils;
@@ -14,63 +15,58 @@ mod language_server;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let options = CommandLineOptions::parse_from_args(args);
 
-    match CommandLineOptions::parse_from_args(args) {
-        Some(options) => {
-            let directories = options.get_source_directories();
+    if options.run_as_server {
+        start_language_server();
+    } else {
+        if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {
+            let root_directory = infer_root_directory(input_path).unwrap();
+            let source_directories = bundle_with_prelude(&root_directory);
             let mut timer = Timer::new();
             let mut context = ProgramContext::new();
 
-            timer.time(ProgramStep::Write, || context.read_source_files(&directories));
+            timer.time(ProgramStep::Read, || context.read_source_files(&source_directories));
             timer.time(ProgramStep::Parse, || context.parse_source_files());
 
             if !context.has_errors() {
                 timer.time(ProgramStep::Process, || context.process_source_files());
             }
 
-            match options.language_server_action {
-                Some(action) => {
-                    let callback = action.get_associated_callback();
-                    let log_items = callback(&mut context, &options);
+            match context.take_errors() {
+                Some(errors) => {
+                    for error in errors {
+                        if let Some(string) = error.to_string() {
+                            println!("{}", string);
+                        }
+                    }
+                    process::exit(1);
+                },
+                None => {
+                    timer.time(ProgramStep::Resolve, || context.resolve_wat());
+                    timer.time(ProgramStep::Stringify, || context.generate_output_file());
+                    timer.time(ProgramStep::Write, || context.write_output_file(output_path));
 
-                    for string in log_items {
-                        println!("{}", string);
+                    match options.log_level {
+                        LogLevel::Silent => {},
+                        LogLevel::Short => {
+                            println!("{} {} ({}s)", "ok:".blue().bold(), output_path.bold(), timer.get_total_duration());
+                        },
+                        LogLevel::Detailed => {
+                            for (step, duration) in timer.get_all_durations() {
+                                if !step.is_negligible() {
+                                    print_step(step.get_name(), duration);
+                                }
+                            }
+
+                            print_step("total", timer.get_total_duration());
+                        },
                     }
                 },
-                None => match context.take_errors() {
-                    Some(errors) => {
-                        for error in errors {
-                            if let Some(string) = error.to_string() {
-                                println!("{}", string);
-                            }
-                        }
-                        process::exit(1);
-                    },
-                    None => {
-                        timer.time(ProgramStep::Resolve, || context.resolve_wat());
-                        timer.time(ProgramStep::Stringify, || context.generate_output_file());
-                        timer.time(ProgramStep::Write, || context.write_output_file(&options.output_path));
-
-                        match options.log_level {
-                            LogLevel::Silent => {},
-                            LogLevel::Short => {
-                                println!("{} {} ({}s)", "ok:".blue().bold(), options.output_path.bold(), timer.get_total_duration());
-                            },
-                            LogLevel::Detailed => {
-                                for (step, duration) in timer.get_all_durations() {
-                                    if !step.is_negligible() {
-                                        print_step(step.get_name(), duration);
-                                    }
-                                }
-
-                                print_step("total", timer.get_total_duration());
-                            },
-                        }
-                    },
-                }
             }
-        },
-        None => display_usage_and_exit(),
+        } else {
+            display_usage_and_exit()
+        }
     }
 }
 

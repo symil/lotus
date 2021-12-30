@@ -53,14 +53,18 @@ impl ProgramContext {
         Self::default()
     }
 
+    pub fn is_new(&self) -> bool {
+        self.source_file_list.is_empty()
+    }
+
     pub fn has_errors(&self) -> bool {
         !self.errors.is_empty()
     }
 
-    pub fn take_errors(&mut self) -> Option<Vec<CompilationError>> {
+    pub fn take_errors(&mut self) -> Option<&[CompilationError]> {
         match self.errors.is_empty() {
             true => None,
-            false => Some(self.errors.consume()),
+            false => Some(self.errors.get_all()),
         }
     }
 
@@ -291,6 +295,11 @@ impl ProgramContext {
     pub fn access_shared_identifier(&mut self, definition: &Identifier, identifier: &Identifier) {
         // dbg!(identifier.as_str());
         // dbg!(identifier.location.file_path);
+
+        if identifier.location.as_str().as_bytes()[0] == b'#' {
+            return;
+        }
+
         let mut shared_identifier = self.shared_identifiers.get_mut(definition).unwrap();
 
         shared_identifier.usages.push(identifier.location.clone());
@@ -494,6 +503,10 @@ impl ProgramContext {
 
     fn get_all_type_instances(&self) -> Vec<Rc<TypeInstanceHeader>> {
         self.type_instances.values().map(|(header, _)| header.clone()).collect()
+    }
+
+    pub fn reset(&mut self) {
+        take(self);
     }
 
     pub fn read_source_files(&mut self, directories: &[SourceDirectoryDetails]) {

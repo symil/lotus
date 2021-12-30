@@ -44,8 +44,8 @@ impl CompilationErrorList {
         self.errors.is_empty()
     }
 
-    pub fn consume(&mut self) -> Vec<CompilationError> {
-        take(&mut self.errors)
+    pub fn get_all(&self) -> &[CompilationError] {
+        &self.errors
     }
 }
 

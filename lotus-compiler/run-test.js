@@ -236,6 +236,8 @@ function runCommand(command, inheritStdio) {
         options.stdio = 'inherit';
     }
 
+    // console.log(command);
+
     try {
         result = execSync(command, options)?.toString('utf8');
         success = true;

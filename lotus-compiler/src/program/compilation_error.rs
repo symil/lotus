@@ -183,8 +183,8 @@ impl CompilationError {
                 })
             },
             CompilationErrorDetails::TypeMismatch(details) => {
-                let expected_str = details.expected_type.to_string().bold();
-                let actual_str = details.actual_type.to_string().bold();
+                let expected_str = details.expected_type.to_string();
+                let actual_str = details.actual_type.to_string();
 
                 match details.actual_type.is_undefined() {
                     true => None,
@@ -192,8 +192,8 @@ impl CompilationError {
                 }
             }
             CompilationErrorDetails::InterfaceMismatch(details) => {
-                let expected_str = details.expected_interface.borrow().name.as_str().bold();
-                let actual_str = details.actual_type.to_string().bold();
+                let expected_str = details.expected_interface.borrow().name.as_str().to_string();
+                let actual_str = details.actual_type.to_string();
 
                 match details.actual_type.is_undefined() {
                     true => None,
@@ -204,13 +204,13 @@ impl CompilationError {
                 Some(format!("unexpected expression"))
             },
             CompilationErrorDetails::UnexpectedKeyword(details) => {
-                Some(format!("unexpected keyword `{}`", details.keyword.bold()))
+                Some(format!("unexpected keyword `{}`", details.keyword))
             },
             CompilationErrorDetails::UnexpectedVoidExpression => {
                 Some(format!("expected non-void expression"))
             },
             CompilationErrorDetails::InvalidCharacter(details) => {
-                Some(format!("invalid character '{}'", details.character.bold()))
+                Some(format!("invalid character '{}'", details.character))
             },
             CompilationErrorDetails::ExpectedExpression => {
                 Some(format!("expected expression"))

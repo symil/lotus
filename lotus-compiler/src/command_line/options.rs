@@ -1,95 +1,46 @@
 use std::{path::{PathBuf, Path}, fs};
-use crate::{program::{SourceDirectoryDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerAction};
+use crate::{program::{SourceDirectoryDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerCommand};
 use super::{LogLevel, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME, infer_root_directory};
 
 #[derive(Debug)]
 pub struct CommandLineOptions {
-    pub prelude_path: String,
-    pub input_path: String,
-    pub output_path: String,
+    pub input_path: Option<String>,
+    pub output_path: Option<String>,
     pub log_level: LogLevel,
-    pub infer_root: bool,
-    pub language_server_action: Option<LanguageServerAction>,
-    pub cursor: Option<usize>,
-    pub new_name: Option<String>
+    pub run_as_server: bool
 }
 
 impl CommandLineOptions {
-    pub fn parse_from_args(args: Vec<String>) -> Option<Self> {
+    pub fn parse_from_args(args: Vec<String>) -> Self {
         let mut options = Self {
-            prelude_path: get_default_prelude_path(),
-            input_path: String::new(),
-            output_path: String::new(),
+            input_path: None,
+            output_path: None,
             log_level: LogLevel::Short,
-            infer_root: false,
-            language_server_action: None,
-            cursor: None,
-            new_name: None,
+            run_as_server: false
         };
 
         for arg in &args[1..] {
             match is_option(arg) {
                 true => {
-                    if let Some(mode) = LanguageServerAction::from_command_line_arg(arg) {
-                        options.language_server_action = Some(mode);
-                    } else if let Some(log_level) = LogLevel::from_command_line_arg(arg) {
+                    if let Some(log_level) = LogLevel::from_command_line_arg(arg) {
                         options.log_level = log_level;
-                    } else if arg == "--infer-root" {
-                        options.infer_root = true;
-                    } else if let Some(cursor) = get_option_value(arg, "--cursor") {
-                        if let Ok(value) = cursor.parse::<usize>() {
-                            options.cursor = Some(value);
-                        }
-                    } else if let Some(new_name) = get_option_value(arg, "--new-name") {
-                        options.new_name = Some(new_name);
+                    } else if arg == "--server" {
+                        options.run_as_server = true;
                     } else {
                         eprintln!("invalid option `{}`", arg);
                     }
                 },
                 false => {
-                    if options.input_path.is_empty() {
-                        options.input_path = string_to_absolute_path(&arg).unwrap_or_default();
-                    } else if options.output_path.is_empty() {
-                        options.output_path = string_to_absolute_path(&arg).unwrap_or_default();
+                    if options.input_path.is_none() {
+                        options.input_path = Some(string_to_absolute_path(&arg).unwrap_or_default());
+                    } else if options.output_path.is_none() {
+                        options.output_path = Some(string_to_absolute_path(&arg).unwrap_or_default());
                     }
                 },
             }
         }
 
-        match options.is_valid() {
-            true => Some(options),
-            false => None,
-        }
-    }
-
-    fn is_valid(&self) -> bool {
-        // TODO: check that the path is actually valid?
-        !self.input_path.is_empty()
-    }
-
-    pub fn get_root_directory_path(&self) -> String {
-        match self.infer_root {
-            true => infer_root_directory(&self.input_path).unwrap_or_default(),
-            false => self.input_path.to_string(),
-        }
-    }
-
-    pub fn get_source_directories(&self) -> Vec<SourceDirectoryDetails> {
-        let mut result = vec![];
-
-        result.push(SourceDirectoryDetails {
-            path: self.prelude_path.clone()
-        });
-
-        let input_path = self.get_root_directory_path();
-
-        if !input_path.is_empty() && input_path != self.prelude_path {
-            result.push(SourceDirectoryDetails {
-                path: input_path
-            });
-        }
-
-        result
+        options
     }
 }
 
