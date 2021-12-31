@@ -543,7 +543,7 @@ impl ProgramContext {
 
             match LotusFile::parse(take(&mut source_file.content), parse_options) {
                 Ok(lotus_file) => self.parsed_source_files.push(lotus_file),
-                Err(parse_error) => self.errors.add(CompilationError::parse_error(parse_error))
+                Err(parse_error) => self.errors.parse_error(parse_error)
             };
         }
     }
@@ -617,7 +617,7 @@ impl ProgramContext {
                         s.push_str(&format!(" -> {}", types[*index].name.as_str().bold()));
                     }
 
-                    self.errors.add_generic(&first.name, format!("type dependancy cycle: {}", s));
+                    self.errors.generic(&first.name, format!("type dependancy cycle: {}", s));
                 }
 
                 return;
@@ -712,7 +712,7 @@ impl ProgramContext {
         }
 
         // if self.functions.get_by_name("main").is_none() {
-        //     self.errors.add_generic_unlocated(format!("missing required function `main`"));
+        //     self.errors.generic_unlocated(format!("missing required function `main`"));
         // }
     }
 

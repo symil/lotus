@@ -26,7 +26,8 @@ impl CharLiteral {
                 Some(Vasm::new(context.get_builtin_type(BuiltinType::Char, vec![]), vec![], vec![VI::int(c as u32)]))
             },
             None => {
-                context.errors.add_and_none(CompilationError::invalid_character(self, &content.iter().collect::<String>()))
+                context.errors.invalid_character(self, &content.iter().collect::<String>());
+                None
             },
         }
     }

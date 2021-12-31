@@ -80,7 +80,7 @@ impl MethodDeclaration {
 
                         if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
                             // The type declares the same method twice
-                            context.errors.add_generic(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
+                            context.errors.generic(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
                         } else {
                             let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();
 
@@ -89,14 +89,14 @@ impl MethodDeclaration {
                                 let current_signature = &function_unwrapped.signature;
 
                                 if current_signature != prev_signature {
-                                    context.errors.add_generic(self, format!("dynamic method signature mismatch: expected `{}`, got `{}`", prev_signature, current_signature));
+                                    context.errors.generic(self, format!("dynamic method signature mismatch: expected `{}`, got `{}`", prev_signature, current_signature));
                                 }
 
                                 function_unwrapped.method_details.as_mut().unwrap().dynamic_index = Some(-1);
                             } else if is_dynamic {
-                                context.errors.add_generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
+                                context.errors.generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
                             } else {
-                                context.errors.add_generic(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
+                                context.errors.generic(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
                             }
                         }
                     });

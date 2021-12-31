@@ -44,11 +44,11 @@ impl ForBlock {
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {
                 if !range_start_vasm.ty.is_int() {
-                    context.errors.add_generic(&self.range_start, format!("expected `{}`, got `{}`", context.int_type(), &range_start_vasm.ty));
+                    context.errors.generic(&self.range_start, format!("expected `{}`, got `{}`", context.int_type(), &range_start_vasm.ty));
                 }
 
                 if !range_end_vasm.ty.is_int() {
-                    context.errors.add_generic(range_end, format!("expected `{}`, got `{}`", context.int_type(), &range_end_vasm.ty));
+                    context.errors.generic(range_end, format!("expected `{}`, got `{}`", context.int_type(), &range_end_vasm.ty));
                 }
 
                 let declared_index_var = context.declare_local_variable(index_var_name.clone(), context.int_type());
@@ -61,7 +61,7 @@ impl ForBlock {
 
                 if let Some(block_vasm) = self.body.process(None, context) {
                     if !block_vasm.ty.is_void() {
-                        context.errors.add_generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                        context.errors.generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
                     }
 
                     let index_var_wasm_name = index_var.get_wasm_name();
@@ -115,7 +115,7 @@ impl ForBlock {
             if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
                 if let Some(block_vasm) = self.body.process(None, context) {
                     if !block_vasm.ty.is_void() {
-                        context.errors.add_generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                        context.errors.generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
                     }
 
                     let iterable_type = iterable_vasm.ty.clone();

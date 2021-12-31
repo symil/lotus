@@ -20,125 +20,48 @@ pub enum CompilationErrorDetails {
     ExpectedExpression,
     UnexpectedExpression,
     UnexpectedVoidExpression,
-    InvalidCharacter(InvalidCharacterDetails)
+    InvalidCharacter(InvalidCharacterDetails),
+    ExpectedClassType(ExpectedClassTypeDetails)
+}
+
+#[derive(Debug)]
+pub struct ExpectedClassTypeDetails {
+    pub actual_type: Type
 }
 
 #[derive(Debug)]
 pub struct GenericErrorDetails {
-    error: String
+    pub error: String
 }
 
 #[derive(Debug)]
 pub struct ParseErrorDetails {
-    expected_tokens: Vec<String>
+    pub expected_tokens: Vec<String>
 }
 
 #[derive(Debug)]
 pub struct TypeMismatchDetails {
-    expected_type: Type,
-    actual_type: Type
+    pub expected_type: Type,
+    pub actual_type: Type
 }
 
 #[derive(Debug)]
 pub struct InterfaceMismatchDetails {
-    expected_interface: Link<InterfaceBlueprint>,
-    actual_type: Type
+    pub expected_interface: Link<InterfaceBlueprint>,
+    pub actual_type: Type
 }
 
 #[derive(Debug)]
 pub struct UnexpectedKeywordDetails {
-    keyword: String
+    pub keyword: String
 }
 
 #[derive(Debug)]
 pub struct InvalidCharacterDetails {
-    character: String
+    pub character: String
 }
 
 impl CompilationError {
-    pub fn generic(location: &DataLocation, error: String) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::Generic(GenericErrorDetails {
-                error,
-            }),
-        }
-    }
-
-    pub fn parse_error(parse_error: ParseError) -> Self {
-        Self {
-            location: DataLocation {
-                package_root_path: parse_error.package_root_path,
-                file_path: parse_error.file_path,
-                file_content: parse_error.file_content,
-                start: parse_error.index,
-                end: parse_error.index,
-            },
-            details: CompilationErrorDetails::ParseError(ParseErrorDetails {
-                expected_tokens: parse_error.expected
-            }),
-        }
-    }
-
-    pub fn type_mismatch(location: &DataLocation, expected_type: &Type, actual_type: &Type) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::TypeMismatch(TypeMismatchDetails {
-                expected_type: expected_type.clone(),
-                actual_type: actual_type.clone(),
-            }),
-        }
-    }
-
-    pub fn interface_mismatch(location: &DataLocation, expected_interface: &Link<InterfaceBlueprint>, actual_type: &Type) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::InterfaceMismatch(InterfaceMismatchDetails {
-                expected_interface: expected_interface.clone(),
-                actual_type: actual_type.clone(),
-            }),
-        }
-    }
-
-    pub fn expected_expression(location: &DataLocation) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::ExpectedExpression,
-        }
-    }
-
-    pub fn unexpected_expression(location: &DataLocation) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::UnexpectedExpression,
-        }
-    }
-
-    pub fn unexpected_void_expression(location: &DataLocation) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::UnexpectedVoidExpression,
-        }
-    }
-
-    pub fn unexpected_keyword(location: &DataLocation, keyword: &str) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::UnexpectedKeyword(UnexpectedKeywordDetails {
-                keyword: keyword.to_string(),
-            }),
-        }
-    }
-
-    pub fn invalid_character(location: &DataLocation, character: &str) -> Self {
-        Self {
-            location: location.clone(),
-            details: CompilationErrorDetails::InvalidCharacter(InvalidCharacterDetails {
-                character: character.to_string(),
-            }),
-        }
-    }
-
     pub fn to_string(&self) -> Option<String> {
         match self.get_message() {
             Some(first_line) => {
@@ -214,6 +137,9 @@ impl CompilationError {
             },
             CompilationErrorDetails::ExpectedExpression => {
                 Some(format!("expected expression"))
+            },
+            CompilationErrorDetails::ExpectedClassType(details) => {
+                Some(format!("expected class type, got `{}`", &details.actual_type))
             },
         }
     }

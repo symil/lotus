@@ -22,20 +22,31 @@ impl ObjectFieldInitialization {
                         
                         match expr.process(Some(&field_type), context) {
                             Some(vasm) => match vasm.ty.is_assignable_to(&field_type) {
-                                true => Some(vasm),
-                                false => context.errors.add_and_none(CompilationError::type_mismatch(expr, &field_type, &vasm.ty)),
+                                true => {
+                                    Some(vasm)
+                                },
+                                false => {
+                                    context.errors.type_mismatch(expr, &field_type, &vasm.ty);
+                                    None
+                                }
                             },
                             None => None,
                         }
                     },
                     None => match context.access_var(&self.name) {
-                        Some(var_info) => Some(Vasm::new(field_type, vec![], vec![VI::get_var(&var_info, Some(context.get_function_level()))])),
-                        None => context.errors.add_generic_and_none(&self.name, format!("undefined variable `{}`", &self.name.as_str().bold())),
+                        Some(var_info) => {
+                            Some(Vasm::new(field_type, vec![], vec![VI::get_var(&var_info, Some(context.get_function_level()))]))
+                        },
+                        None => {
+                            context.errors.generic(&self.name, format!("undefined variable `{}`", &self.name.as_str().bold()));
+                            None
+                        },
                     }
                 }
             },
             None => {
-                context.errors.add_generic_and_none(&self.name, format!("type `{}` has no field `{}`", &object_type, self.name.as_str().bold()))
+                context.errors.generic(&self.name, format!("type `{}` has no field `{}`", &object_type, self.name.as_str().bold()));
+                None
             },
         };
 

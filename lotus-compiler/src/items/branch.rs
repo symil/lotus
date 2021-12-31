@@ -25,7 +25,8 @@ impl Branch {
 
 pub fn convert_to_bool(location: &DataLocation, vasm: Vasm, context: &mut ProgramContext) -> Option<Vasm> {
     if vasm.ty.is_void() {
-        context.errors.add_and_none(CompilationError::unexpected_void_expression(location))
+        context.errors.unexpected_void_expression(location);
+        None
     } else if vasm.ty.is_bool() {
         Some(vasm)
     } else if !vasm.ty.is_undefined() {

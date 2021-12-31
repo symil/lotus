@@ -69,11 +69,11 @@ impl FunctionContent {
         if let Some(type_wrapped) = &current_type {
             if is_dynamic {
                 if has_parameters {
-                    context.errors.add_generic(self, format!("dynamic methods cannot have parameters"));
+                    context.errors.generic(self, format!("dynamic methods cannot have parameters"));
                 }
 
                 if is_raw_wasm {
-                    context.errors.add_generic(self, format!("dynamic methods cannot be raw wasm"));
+                    context.errors.generic(self, format!("dynamic methods cannot be raw wasm"));
                 }
 
                 method_details.dynamic_index = Some(-1);
@@ -89,15 +89,15 @@ impl FunctionContent {
             function_blueprint.method_details = Some(method_details);
         } else {
             if is_static {
-                context.errors.add_generic(self, format!("regular functions cannot be static"));
+                context.errors.generic(self, format!("regular functions cannot be static"));
             }
 
             if is_dynamic {
-                context.errors.add_generic(self, format!("regular functions cannot be dynamic"));
+                context.errors.generic(self, format!("regular functions cannot be dynamic"));
             }
 
             if is_autogen {
-                context.errors.add_generic(self, format!("regular functions cannot be autogen"));
+                context.errors.generic(self, format!("regular functions cannot be autogen"));
             }
         }
 
@@ -142,15 +142,15 @@ impl FunctionContent {
         if let Some(qualifier) = &self.event_callback_qualifier {
             if let Some(type_wrapped) = context.get_current_type() {
                 if let Some(signature) = &self.signature {
-                    context.errors.add_generic(signature, format!("unexpected function signature"));
+                    context.errors.generic(signature, format!("unexpected function signature"));
                 }
 
                 if is_static {
-                    context.errors.add_generic(self, format!("event callbacks cannot be static"));
+                    context.errors.generic(self, format!("event callbacks cannot be static"));
                 }
 
                 if !self.parameters.list.is_empty() {
-                    context.errors.add_generic(self, format!("event callbacks cannot have parameters"));
+                    context.errors.generic(self, format!("event callbacks cannot have parameters"));
                 }
 
                 if let Some(event_type_wrapped) = context.types.get_by_identifier(&self.name) {
@@ -180,17 +180,17 @@ impl FunctionContent {
                             });
                         }
                     // } else {
-                        // context.errors.add_generic(&self.name, format!("type `{}` is not an event", &self.name));
+                        // context.errors.generic(&self.name, format!("type `{}` is not an event", &self.name));
                     // }
                 } else {
-                    context.errors.add_generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
+                    context.errors.generic(&self.name, format!("undefined type `{}`", &self.name.as_str().bold()));
                 }
             } else {
-                context.errors.add_generic(self, format!("regular functions cannot be event callbacks"));
+                context.errors.generic(self, format!("regular functions cannot be event callbacks"));
             }
         } else {
             if self.signature.is_none() {
-                context.errors.add_generic(&self.name, format!("missing function signature"));
+                context.errors.generic(&self.name, format!("missing function signature"));
             }
         }
 
@@ -209,7 +209,7 @@ impl FunctionContent {
             Some(expression) => match expression.process(Some(&context.int_type()), context) {
                 Some(vasm) => {
                     if !vasm.ty.is_int() {
-                        context.errors.add(CompilationError::type_mismatch(expression, &context.int_type(), &vasm.ty));
+                        context.errors.type_mismatch(expression, &context.int_type(), &vasm.ty);
                     }
 
                     vasm
@@ -238,7 +238,7 @@ impl FunctionContent {
                     if self.event_callback_qualifier.is_some() {
                         vasm.instructions.push(VI::drop(&vasm.ty));
                     } else if !vasm.ty.is_assignable_to(&return_type) {
-                        context.errors.add_generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
+                        context.errors.generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
                     }
                 }
 
@@ -264,12 +264,12 @@ impl FunctionContent {
                                             ]));
                                         },
                                         false => {
-                                            context.errors.add_generic(&event_callback_details.qualifier, format!("field `{}` of type `{}` is not an object", event_field_name.bold(), event_var_info.ty()));
+                                            context.errors.generic(&event_callback_details.qualifier, format!("field `{}` of type `{}` is not an object", event_field_name.bold(), event_var_info.ty()));
                                         },
                                     }
                                 },
                                 None => {
-                                    context.errors.add_generic(&event_callback_details.qualifier, format!("type `{}` has no field `{}`", event_var_info.ty(), event_field_name.bold()));
+                                    context.errors.generic(&event_callback_details.qualifier, format!("type `{}` has no field `{}`", event_var_info.ty(), event_field_name.bold()));
                                 },
                             }
                         }

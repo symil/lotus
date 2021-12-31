@@ -43,7 +43,7 @@ impl Expression {
                             ]);
                         },
                         false => {
-                            context.errors.add_generic(&is_details.ty, format!("expected class type, got `{}`", &target_type));
+                            context.errors.expected_class_type(&is_details.ty, &target_type);
                         }
                     }
                 }

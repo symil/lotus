@@ -35,7 +35,7 @@ async function main() {
     let runAll = hasOption('--all', '-a');
     let createTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
-    let mode = ((forceRelease || runAll || commandLineNames.length > 1) && !createTest) ? 'release' : 'debug';
+    let mode = ((forceRelease || runAll || (!isMocha && commandLineNames.length > 1)) && !createTest) ? 'release' : 'debug';
     let overwriteExpectedOutput = hasOption('--overwrite-output', '-ov');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
@@ -51,6 +51,10 @@ async function main() {
     if (isMocha) {
         let testsToRun = process.env.LOTUS_TESTS.split(' ');
         let validateOutput = !!process.env.LOTUS_VALIDATE_TESTS;
+
+        if (testsToRun.length > 1) {
+            mode = 'release';
+        }
 
         describe('Lotus', () => {
             for (let dirName of testsToRun) {

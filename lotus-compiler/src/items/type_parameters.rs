@@ -29,7 +29,7 @@ impl TypeParameters {
                 if let Some(interface) = context.interfaces.get_by_identifier(interface_name) {
                     required_interfaces.push(interface.clone());
                 } else {
-                    context.errors.add_generic(&parameter.name, format!("undefined interface `{}`", interface_name));
+                    context.errors.generic(&parameter.name, format!("undefined interface `{}`", interface_name));
                 }
             }
 
@@ -43,7 +43,7 @@ impl TypeParameters {
             });
 
             if result.insert(parameter.name.to_string(), item).is_some() {
-                context.errors.add_generic(&parameter.name, format!("duplicate type parameter `{}`", &parameter.name));
+                context.errors.generic(&parameter.name, format!("duplicate type parameter `{}`", &parameter.name));
             }
         }
 

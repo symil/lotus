@@ -17,8 +17,13 @@ impl ParenthesizedExpression {
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self.expr_list.len() {
-            0 => context.errors.add_generic_and_none(self, format!("invalid empty expression")),
-            1 => self.expr_list.first().unwrap().process(type_hint, context),
+            0 => {
+                context.errors.generic(self, format!("invalid empty expression"));
+                None
+            },
+            1 => {
+                self.expr_list.first().unwrap().process(type_hint, context)
+            },
             2 => {
                 let mut vasm_list = vec![];
                 let mut type_hints = [None, None];
@@ -49,7 +54,10 @@ impl ParenthesizedExpression {
                     _ => None
                 }
             },
-            _ => context.errors.add_generic_and_none(self, format!("tuples can only contain 2 values for now")),
+            _ => {
+                context.errors.generic(self, format!("tuples can only contain 2 values for now"));
+                None
+            },
         }
     }
 }

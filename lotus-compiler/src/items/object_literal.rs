@@ -62,10 +62,10 @@ impl ObjectLiteral {
 
                     result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get_tmp_var(&object_var)]));
                 } else {
-                    context.errors.add_generic(&self.object_type, format!("type `{}` is not a class", &object_type));
+                    context.errors.generic(&self.object_type, format!("type `{}` is not a class", &object_type));
                 }
             } else {
-                context.errors.add_generic(&self.object_type, format!("cannot manually instanciate type `{}`", &object_type));
+                context.errors.generic(&self.object_type, format!("cannot manually instanciate type `{}`", &object_type));
             }
         }
 

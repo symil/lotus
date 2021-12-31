@@ -16,7 +16,7 @@ impl WhileBlock {
 
         if let (Some(condition_vasm), Some(block_vasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(None, context)) {
             if !block_vasm.ty.is_void() {
-                context.errors.add_generic(&self, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                context.errors.generic(&self, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
             }
             
             result.extend(VI::block(

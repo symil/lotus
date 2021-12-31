@@ -79,7 +79,7 @@ impl TypeDeclaration {
         }
         
         if context.types.get_by_identifier(&self.name).is_some() {
-            context.errors.add_generic(&self.name, format!("duplicate type declaration: `{}`", &self.name));
+            context.errors.generic(&self.name, format!("duplicate type declaration: `{}`", &self.name));
         }
 
         let type_wrapped = context.types.insert(type_unwrapped, None);
@@ -92,7 +92,7 @@ impl TypeDeclaration {
                 other => match parameters.get_index_of(other) {
                     Some(index) => WasmStackType::TypeParameter(index),
                     None => {
-                        context.errors.add_generic(name, format!("undefined type parameter `{}`", other.bold()));
+                        context.errors.generic(name, format!("undefined type parameter `{}`", other.bold()));
                         WasmStackType::Fixed(StackType::Int)
                     },
                 }
@@ -161,11 +161,11 @@ impl TypeDeclaration {
             if let Some(parsed_parent_type) = &self.parent {
                 if let Some(parent_type) = parsed_parent_type.process(false, context) {
                     if !type_wrapped.borrow().is_class() {
-                        context.errors.add_generic(parsed_parent_type, format!("only class types can inherit"));
+                        context.errors.generic(parsed_parent_type, format!("only class types can inherit"));
                     } else {
                         match &parent_type {
                             Type::TypeParameter(_) => {
-                                context.errors.add_generic(parsed_parent_type, format!("cannot inherit from type parameter"));
+                                context.errors.generic(parsed_parent_type, format!("cannot inherit from type parameter"));
                             },
                             Type::Actual(info) => {
                                 let parent_unwrapped = info.type_blueprint.borrow();
@@ -176,7 +176,7 @@ impl TypeDeclaration {
                                         ty: parent_type.clone(),
                                     });
                                 } else {
-                                    context.errors.add_generic(parsed_parent_type, format!("cannot inherit from non-class types"));
+                                    context.errors.generic(parsed_parent_type, format!("cannot inherit from non-class types"));
                                 }
                             },
                             _ => unreachable!()
@@ -275,11 +275,11 @@ impl TypeDeclaration {
                     context.declare_shared_identifier(&name);
 
                     if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
-                        context.errors.add_generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
+                        context.errors.generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
                     }
 
                     if name.as_str() == SELF_TYPE_NAME {
-                        context.errors.add_generic(&associated_type.name, format!("forbidden associated type name `{}`", SELF_TYPE_NAME));
+                        context.errors.generic(&associated_type.name, format!("forbidden associated type name `{}`", SELF_TYPE_NAME));
                     }
                 }
             });
@@ -322,12 +322,12 @@ impl TypeDeclaration {
                             // Regular field
 
                             if !type_unwrapped.is_class() {
-                                context.errors.add_generic(&field.name, format!("only classes can have fields"));
+                                context.errors.generic(&field.name, format!("only classes can have fields"));
                                 continue;
                             }
 
                             if fields.contains_key(field.name.as_str()) {
-                                context.errors.add_generic(&field.name, format!("duplicate field `{}`", self.name.as_str().bold()));
+                                context.errors.generic(&field.name, format!("duplicate field `{}`", self.name.as_str().bold()));
                             }
 
                             if let Some(field_type) = ty.process(false, context) {
@@ -347,12 +347,12 @@ impl TypeDeclaration {
                             // Enum variant
 
                             if !type_unwrapped.is_enum() {
-                                context.errors.add_generic(&field.name, format!("only enums can have variants"));
+                                context.errors.generic(&field.name, format!("only enums can have variants"));
                                 continue;
                             }
 
                             if variants.contains_key(field.name.as_str()) {
-                                context.errors.add_generic(&field.name, format!("duplicate variant `{}`", self.name.as_str().bold()));
+                                context.errors.generic(&field.name, format!("duplicate variant `{}`", self.name.as_str().bold()));
                             }
 
                             let variant_details = Rc::new(EnumVariantInfo {
@@ -495,7 +495,7 @@ impl TypeDeclaration {
                                         parameters: vec![]
                                     }), vec![])];
                                 } else {
-                                    context.errors.add_generic(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
+                                    context.errors.generic(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
                                 }
                             }
                         } else if field.ty.as_ref().unwrap().is_option() {

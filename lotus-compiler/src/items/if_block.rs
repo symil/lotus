@@ -38,7 +38,7 @@ impl IfBlock {
             if let (Some(condition_vasm), Some(block_vasm)) = (else_if_branch.process_condition(context), else_if_branch.process_body(Some(&required_branch_type), context)) {
                 match block_vasm.ty.get_common_type(&required_branch_type) {
                     Some(ty) => required_branch_type = ty.clone(),
-                    None => context.errors.add_generic(&else_if_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
+                    None => context.errors.generic(&else_if_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
                 }
 
                 result.extend(VI::block(vasm![
@@ -58,7 +58,7 @@ impl IfBlock {
             if let Some(block_vasm) = else_branch.process(Some(&required_branch_type), context) {
                 match block_vasm.ty.get_common_type(&required_branch_type) {
                     Some(ty) => {},
-                    None => context.errors.add_generic(&else_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
+                    None => context.errors.generic(&else_branch, format!("expected `{}`, got `{}`", &required_branch_type, &block_vasm.ty)),
                 }
 
                 result.extend(VI::block(vasm![
@@ -70,7 +70,7 @@ impl IfBlock {
 
             context.pop_scope();
         } else if !required_branch_type.is_void() {
-            context.errors.add_generic(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
+            context.errors.generic(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
         }
 
         result_var.set_type(required_branch_type.clone());

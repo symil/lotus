@@ -53,7 +53,7 @@ impl VarRef {
                         },
                         _ => {
                             if !var_info.ty().is_undefined() {
-                                context.errors.add_generic(&var_name, format!("expected function, got `{}`", var_info.ty()));
+                                context.errors.generic(&var_name, format!("expected function, got `{}`", var_info.ty()));
                             }
 
                             None
@@ -69,7 +69,10 @@ impl VarRef {
 
                             process_function_call(&var_name, function_call, args, type_hint, access_type, context)
                         },
-                        None => context.errors.add_generic_and_none(&var_name, format!("undefined function `{}`", &var_name)),
+                        None => {
+                            context.errors.generic(&var_name, format!("undefined function `{}`", &var_name));
+                            None
+                        },
                     },
                 },
                 None => match context.access_var(&var_name) {
@@ -80,8 +83,13 @@ impl VarRef {
                     None => match context.functions.get_by_identifier(&var_name) {
                         Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {
                             match function_unwrapped.parameters.is_empty() {
-                                true => Some(Vasm::new(Type::Function(Box::new(function_unwrapped.signature.clone())), vec![], vec![VI::function_index(&function_wrapped, &[])])),
-                                false => context.errors.add_generic_and_none(&var_name, format!("cannot use functions with parameters as variables for now")),
+                                true => {
+                                    Some(Vasm::new(Type::Function(Box::new(function_unwrapped.signature.clone())), vec![], vec![VI::function_index(&function_wrapped, &[])]))
+                                },
+                                false => {
+                                    context.errors.generic(&var_name, format!("cannot use functions with parameters as variables for now"));
+                                    None
+                                },
                             }
                         }),
                         None => match context.types.get_by_identifier(&var_name) {
@@ -98,11 +106,20 @@ impl VarRef {
 
                                     object_literal.process(context)
                                 },
-                                false => context.errors.add_generic_and_none(&var_name, format!("undefined variable `{}`", var_name.as_str().bold())),
+                                false => {
+                                    context.errors.generic(&var_name, format!("undefined variable `{}`", var_name.as_str().bold()));
+                                    None
+                                },
                             },
                             None => match var_name.as_str() {
-                                SELF_VAR_NAME => context.errors.add_generic_and_none(&var_name, format!("no `{}` value can be referenced in this context", SELF_VAR_NAME.bold())),
-                                _ => context.errors.add_generic_and_none(&var_name, format!("undefined variable `{}`", var_name.as_str().bold()))
+                                SELF_VAR_NAME => {
+                                    context.errors.generic(&var_name, format!("no `{}` value can be referenced in this context", SELF_VAR_NAME.bold()));
+                                    None
+                                },
+                                _ => {
+                                    context.errors.generic(&var_name, format!("undefined variable `{}`", var_name.as_str().bold()));
+                                    None
+                                }
                             },
                         }
                     }

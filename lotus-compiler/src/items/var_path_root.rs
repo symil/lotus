@@ -59,7 +59,7 @@ impl VarPathRoot {
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         if let AccessType::Set(location) = access_type {
             if !self.is_var_ref() {
-                context.errors.add_generic(location, format!("invalid assignment"));
+                context.errors.generic(location, format!("invalid assignment"));
             }
         }
 

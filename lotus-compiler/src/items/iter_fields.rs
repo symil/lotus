@@ -17,7 +17,7 @@ impl IterFields {
             Some(type_wrapped) => {
                 match context.iter_fields_counter {
                     Some(_) => {
-                        context.errors.add_generic(self, format!("an `{}` cannot be nested inside another one ", "iter_fields".bold()));
+                        context.errors.generic(self, format!("an `{}` cannot be nested inside another one ", "iter_fields".bold()));
                     },
                     None => {
                         let mut block_vasm = vasm![];
@@ -28,7 +28,7 @@ impl IterFields {
 
                             if let Some(vasm) = self.block.process(None, context) {
                                 if !vasm.ty.is_void() {
-                                    context.errors.add_generic(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                    context.errors.generic(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
                                 }
                                 
                                 block_vasm.extend(vasm);
@@ -42,7 +42,7 @@ impl IterFields {
                 }
             },
             None => {
-                context.errors.add_generic(self, format!("`{}` can only be used from inside a method", "iter_fields".bold()));
+                context.errors.generic(self, format!("`{}` can only be used from inside a method", "iter_fields".bold()));
             },
         };
 

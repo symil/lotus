@@ -33,8 +33,13 @@ impl VarDeclaration {
             Some(parsed_type) => match parsed_type.process(true, context) {
                 Some(var_type) => match self.init_value.process(Some(&var_type), context) {
                     Some(vasm) => match vasm.ty.is_assignable_to(&var_type) {
-                        true => Some((var_type, vasm)),
-                        false => context.errors.add_generic_and_none(&self.init_value, format!("expected `{}`, got `{}`", &var_type, &vasm.ty))
+                        true => {
+                            Some((var_type, vasm))
+                        },
+                        false => {
+                            context.errors.generic(&self.init_value, format!("expected `{}`, got `{}`", &var_type, &vasm.ty));
+                            None
+                        }
                     },
                     None => None
                 },
@@ -42,8 +47,13 @@ impl VarDeclaration {
             },
             None => match self.init_value.process(None, context) {
                 Some(vasm) => match vasm.ty.is_ambiguous() {
-                    true => context.errors.add_generic_and_none(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &vasm.ty)),
-                    false => Some((vasm.ty.clone(), vasm))
+                    true => {
+                        context.errors.generic(&self.init_value, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &vasm.ty));
+                        None
+                    },
+                    false => {
+                        Some((vasm.ty.clone(), vasm))
+                    }
                 },
                 None => None
             }
@@ -69,7 +79,8 @@ impl VarDeclaration {
             },
             VariableNames::Multiple(names) => {
                 if names.len() != 2 {
-                    context.errors.add_generic_and_none(&self.init_value, format!("tuples can only be declared as pairs"))
+                    context.errors.generic(&self.init_value, format!("tuples can only be declared as pairs"));
+                    None
                 } else {
                     match (final_var_type.get_associated_type(TUPLE_FIRST_ASSOCIATED_TYPE_NAME), final_var_type.get_associated_type(TUPLE_SECOND_ASSOCIATED_TYPE_NAME)) {
                         (Some(first_type), Some(second_type)) => {
@@ -97,7 +108,7 @@ impl VarDeclaration {
                         },
                         _ => {
                             if !final_var_type.is_undefined() {
-                                context.errors.add_generic(&self.init_value, format!("cannot destructure type `{}` into 2 values", &final_var_type));
+                                context.errors.generic(&self.init_value, format!("cannot destructure type `{}` into 2 values", &final_var_type));
                             }
 
                             None

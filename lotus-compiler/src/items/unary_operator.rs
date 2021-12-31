@@ -18,7 +18,7 @@ impl UnaryOperatorWrapper {
         match &self.value {
             UnaryOperator::BooleanNot => {
                 if operand_type.is_void() {
-                    context.errors.add_generic(self, format!("cannot apply `{}` operator to untyped expression", "!".bold()));
+                    context.errors.generic(self, format!("cannot apply `{}` operator to untyped expression", "!".bold()));
                     None
                 } else if !operand_type.is_undefined() {
                     Some(Vasm::new(context.bool_type(), vec![], vec![VI::call_regular_method(operand_type, IS_NONE_METHOD_NAME, &[], vec![], context)]))

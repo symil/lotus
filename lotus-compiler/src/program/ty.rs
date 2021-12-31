@@ -475,7 +475,7 @@ impl Type {
         };
 
         if !ok {
-            context.errors.add(CompilationError::interface_mismatch(location, interface, self));
+            context.errors.interface_mismatch(location, interface, self);
         }
 
         ok
@@ -504,7 +504,7 @@ impl Type {
                             let expected_type = expected_arg_type.replace_parameters(Some(self), &[]);
 
                             if !actual_type.is_assignable_to(&expected_type) && !actual_type.is_undefined() {
-                                context.errors.add(CompilationError::type_mismatch(arg_location, &expected_type, actual_type));
+                                context.errors.type_mismatch(arg_location, &expected_type, actual_type);
                             }
                         }
 

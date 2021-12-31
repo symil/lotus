@@ -51,7 +51,7 @@ impl ArrayLiteral {
                 }
 
                 if !item_ok {
-                    context.errors.add(CompilationError::type_mismatch(item, &final_item_type, &item_vasm.ty));
+                    context.errors.type_mismatch(item, &final_item_type, &item_vasm.ty);
                     all_items_ok = false;
                 } else {
                     item_vasm_list.push(item_vasm);

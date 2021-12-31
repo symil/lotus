@@ -121,7 +121,8 @@ impl BinaryOperatorWrapper {
                         Some(vasm)
                     },
                     false => {
-                        context.errors.add_and_none(CompilationError::type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty))
+                        context.errors.type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty);
+                        None
                     },
                 }
             },
@@ -162,7 +163,8 @@ impl BinaryOperatorWrapper {
                             Some(vasm)
                         },
                         None => {
-                            context.errors.add_and_none(CompilationError::type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty))
+                            context.errors.type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty);
+                            None
                         },
                     },
                 }

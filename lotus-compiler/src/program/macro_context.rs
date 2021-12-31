@@ -50,36 +50,61 @@ impl<'a, 'b> MacroContext<'a, 'b> {
 
     pub fn access_current_type<T, F : Fn(Ref<TypeBlueprint>, &ProgramContext) -> T>(&mut self, callback: F) -> Option<T> {
         match &self.current_type {
-            Some(type_wrapped) => Some(type_wrapped.with_ref(|ty| callback(ty, &self.context))),
-            None => self.context.errors.add_generic_and_none(&self.location, format!("macro `{}` can only be accessed from inside type a declaration", self)),
+            Some(type_wrapped) => {
+                Some(type_wrapped.with_ref(|ty| callback(ty, &self.context)))
+            },
+            None => {
+                self.context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside type a declaration", self));
+                None
+            },
         }
     }
 
     pub fn access_current_function<T, F : Fn(Ref<FunctionBlueprint>, &ProgramContext) -> T>(&mut self, callback: F) -> Option<T> {
         match &self.current_function {
-            Some(function_wrapped) => Some(function_wrapped.with_ref(|function| callback(function, &self.context))),
-            None => self.context.errors.add_generic_and_none(&self.location, format!("macro `{}` can only be accessed from inside a function", self)),
+            Some(function_wrapped) => {
+                Some(function_wrapped.with_ref(|function| callback(function, &self.context)))
+            },
+            None => {
+                self.context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside a function", self));
+                None
+            },
         }
     }
 
     pub fn access_current_field<T, F : Fn(&FieldInfo, &ProgramContext) -> T>(&mut self, callback: F) -> Option<T> {
         match &self.field_info {
-            Some(field_info) => Some(callback(field_info, &self.context)),
-            None => self.context.errors.add_generic_and_none(&self.location, format!("macro `{}` can only be accessed from inside an `iter_fields` block", self)),
+            Some(field_info) => {
+                Some(callback(field_info, &self.context))
+            },
+            None => {
+                self.context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_fields` block", self));
+                None
+            },
         }
     }
 
     pub fn access_current_variant<T, F : Fn(&EnumVariantInfo, &ProgramContext) -> T>(&mut self, callback: F) -> Option<T> {
         match &self.variant_info {
-            Some(variant_info) => Some(callback(variant_info, &self.context)),
-            None => self.context.errors.add_generic_and_none(&self.location, format!("macro `{}` can only be accessed from inside an `iter_variants` block", self)),
+            Some(variant_info) => {
+                Some(callback(variant_info, &self.context))
+            },
+            None => {
+                self.context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_variants` block", self));
+                None
+            },
         }
     }
 
     pub fn access_current_ancestor<T, F : Fn(&Type, &ProgramContext) -> T>(&mut self, callback: F) -> Option<T> {
         match &self.ancestor_type {
-            Some(ancestor_type) => Some(callback(ancestor_type, &self.context)),
-            None => self.context.errors.add_generic_and_none(&self.location, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", self)),
+            Some(ancestor_type) => {
+                Some(callback(ancestor_type, &self.context))
+            },
+            None => {
+                self.context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", self));
+                None
+            },
         }
     }
 }

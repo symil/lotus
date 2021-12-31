@@ -24,7 +24,10 @@ impl Action {
                                         match expr.process(None, context) {
                                             Some(vasm) => match vasm.ty.is_void() {
                                                 true => Some(vasm),
-                                                false => context.errors.add_and_none(CompilationError::type_mismatch(expr, &context.void_type(), &vasm.ty)),
+                                                false => {
+                                                    context.errors.type_mismatch(expr, &context.void_type(), &vasm.ty);
+                                                    None
+                                                }
                                             },
                                             None => None,
                                         }
@@ -38,18 +41,27 @@ impl Action {
                                 match &self.expression {
                                     Some(expr) => match expr.process(Some(&return_type), context) {
                                         Some(vasm) => match vasm.ty.is_assignable_to(&return_type) {
-                                            true => Some(vasm![ VI::return_value(vasm) ]),
-                                            false => context.errors.add_and_none(CompilationError::type_mismatch(expr, &return_type, &vasm.ty)),
+                                            true => {
+                                                Some(vasm![ VI::return_value(vasm) ])
+                                            },
+                                            false => {
+                                                context.errors.type_mismatch(expr, &return_type, &vasm.ty);
+                                                None
+                                            },
                                         },
                                         None => None,
                                     },
-                                    None => context.errors.add_and_none(CompilationError::type_mismatch(self, &return_type, &context.void_type()))
+                                    None => {
+                                        context.errors.type_mismatch(self, &return_type, &context.void_type());
+                                        None
+                                    }
                                 }
                             },
                         }
                     },
                     None => {
-                        context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                        context.errors.unexpected_keyword(&self.keyword, &keyword);
+                        None
                     }
                 }
             },
@@ -71,7 +83,8 @@ impl Action {
                                 }
                             },
                             None => {
-                                context.errors.add_and_none(CompilationError::expected_expression(&self.keyword.location.get_end()))
+                                context.errors.expected_expression(&self.keyword.location.get_end());
+                                None
                             },
                         }
                     },
@@ -82,7 +95,8 @@ impl Action {
                 match &self.expression {
                     Some(expr) => {
                         expr.process(None, context);
-                        context.errors.add_and_none(CompilationError::unexpected_expression(expr))
+                        context.errors.unexpected_expression(expr);
+                        None
                     },
                     None => {
                         match context.get_scope_depth(ScopeKind::Loop) {
@@ -94,7 +108,8 @@ impl Action {
                                 }
                             },
                             None => {
-                                context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                                context.errors.unexpected_keyword(&self.keyword, &keyword);
+                                None
                             }
                         }
                     }
@@ -110,7 +125,8 @@ impl Action {
                             match &self.keyword.value {
                                 ActionKeyword::Intercept => match &self.expression {
                                     Some(expr) => {
-                                        context.errors.add_and_none(CompilationError::unexpected_expression(expr))
+                                        context.errors.unexpected_expression(expr);
+                                        None
                                     },
                                     None => {
                                         let intercepted_field_info = event_output_type.get_field("intercepted").unwrap();
@@ -137,18 +153,21 @@ impl Action {
                                         None => None,
                                     },
                                     None => {
-                                        context.errors.add_and_none(CompilationError::expected_expression(&self.keyword.location.get_end()))
+                                        context.errors.expected_expression(&self.keyword.location.get_end());
+                                        None
                                     },
                                 },
                                 _ => unreachable!()
                             }
                         },
                         false => {
-                            context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                            context.errors.unexpected_keyword(&self.keyword, &keyword);
+                            None
                         },
                     },
                     None => {
-                        context.errors.add_and_none(CompilationError::unexpected_keyword(&self.keyword, &keyword))
+                        context.errors.unexpected_keyword(&self.keyword, &keyword);
+                        None
                     },
                 }
             }

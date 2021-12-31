@@ -17,7 +17,7 @@ impl NoneLiteral {
                 result = Some(Vasm::new(ty.clone(), vec![], vec![VI::call_static_method(ty, NONE_METHOD_NAME, &[], vasm![], context)]));
             },
             None => {
-                context.errors.add_generic(&self.location, format!("cannot infer `{}` type", "none".bold()));
+                context.errors.generic(&self.location, format!("cannot infer `{}` type", "none".bold()));
             },
         }
 

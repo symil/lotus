@@ -59,7 +59,7 @@ impl Assignment {
                         
                         result = Some(left_vasm);
                     } else {
-                        context.errors.add(CompilationError::type_mismatch(rvalue, &left_vasm.ty, &right_vasm.ty));
+                        context.errors.type_mismatch(rvalue, &left_vasm.ty, &right_vasm.ty);
                     }
                 }
             }
