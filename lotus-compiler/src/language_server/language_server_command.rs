@@ -1,11 +1,12 @@
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters};
+use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition};
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum LanguageServerCommand {
     Validate,
     PrepareRename,
-    ProvideRenameEdits
+    ProvideRenameEdits,
+    ProvideDefinition
 }
 
 pub struct LanguageServerCommandContent {
@@ -19,6 +20,7 @@ impl LanguageServerCommand {
             "validate" => Some(Self::Validate),
             "prepare-rename" => Some(Self::PrepareRename),
             "provide-rename-edits" => Some(Self::ProvideRenameEdits),
+            "provide-definition" => Some(Self::ProvideDefinition),
             _ => None
         }
     }
@@ -36,6 +38,10 @@ impl LanguageServerCommand {
             LanguageServerCommand::ProvideRenameEdits => LanguageServerCommandContent {
                 force_init: false,
                 callback: provide_rename_edits,
+            },
+            LanguageServerCommand::ProvideDefinition => LanguageServerCommandContent {
+                force_init: false,
+                callback: provide_definition,
             },
         }
     }

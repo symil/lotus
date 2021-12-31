@@ -22,6 +22,8 @@ impl Scope {
     pub fn new(kind: ScopeKind) -> Self {
         let variables = HashMap::new();
 
+        let a = 6;
+
         Self { kind, variables }
     }
 

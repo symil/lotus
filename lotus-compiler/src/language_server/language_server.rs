@@ -1,4 +1,4 @@
-use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap};
+use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::Duration};
 use colored::Colorize;
 use parsable::StringReader;
 use crate::{program::ProgramContext, command_line::{infer_root_directory, bundle_with_prelude}};
@@ -86,5 +86,7 @@ pub fn start_language_server() {
                 },
             }
         }
+
+        sleep(Duration::from_millis(5));
     }
 }
