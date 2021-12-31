@@ -140,7 +140,7 @@ impl MatchBlock {
                                             returned_type = Some(ty);
                                         },
                                         None => {
-                                            context.errors.generic(&branch.expr, format!("expected `{}`, got `{}`", returned_type.as_ref().unwrap() , &branch_vasm.ty))
+                                            context.errors.type_mismatch(&branch.expr, returned_type.as_ref().unwrap() , &branch_vasm.ty);
                                         },
                                     }
                                 }

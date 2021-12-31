@@ -30,7 +30,7 @@ impl IterVariants {
 
                             if let Some(vasm) = self.block.process(None, context) {
                                 if !vasm.ty.is_void() {
-                                    context.errors.generic(&self.block, format!("expected `{}`, got `{}`", Type::Void, &vasm.ty));
+                                    context.errors.type_mismatch(&self.block, &Type::Void, &vasm.ty);
                                 }
 
                                 block_vasm.extend(vasm);

@@ -495,7 +495,7 @@ impl TypeDeclaration {
                                         parameters: vec![]
                                     }), vec![])];
                                 } else {
-                                    context.errors.generic(default_value, format!("expected `{}`, got `{}`", &field_info.ty, &vasm.ty));
+                                    context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);
                                 }
                             }
                         } else if field.ty.as_ref().unwrap().is_option() {

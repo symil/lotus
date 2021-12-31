@@ -238,7 +238,7 @@ impl FunctionContent {
                     if self.event_callback_qualifier.is_some() {
                         vasm.instructions.push(VI::drop(&vasm.ty));
                     } else if !vasm.ty.is_assignable_to(&return_type) {
-                        context.errors.generic(&block, format!("expected `{}`, got `{}`", &return_type, &vasm.ty));
+                        context.errors.type_mismatch(&block, &return_type, &vasm.ty);
                     }
                 }
 

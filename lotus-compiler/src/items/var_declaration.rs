@@ -37,7 +37,7 @@ impl VarDeclaration {
                             Some((var_type, vasm))
                         },
                         false => {
-                            context.errors.generic(&self.init_value, format!("expected `{}`, got `{}`", &var_type, &vasm.ty));
+                            context.errors.type_mismatch(&self.init_value, &var_type, &vasm.ty);
                             None
                         }
                     },
