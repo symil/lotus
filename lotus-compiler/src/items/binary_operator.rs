@@ -29,6 +29,7 @@ pub enum BinaryOperator {
     Gt = ">",
     Le = "<=",
     Lt = "<",
+    // Range = "..",
 }
 
 impl BinaryOperatorWrapper {
@@ -59,6 +60,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Eq | BinaryOperator::Ne | BinaryOperator::Ge | BinaryOperator::Gt | BinaryOperator::Le | BinaryOperator::Lt => 7,
             BinaryOperator::DoubleAnd => 8,
             BinaryOperator::DoubleOr => 9,
+            // BinaryOperator::Range => 10
         }
     }
 
@@ -103,6 +105,7 @@ impl BinaryOperatorWrapper {
             BinaryOperator::Gt => OperatorKind::BuiltinInterface(BuiltinInterface::Gt),
             BinaryOperator::Le => OperatorKind::BuiltinInterface(BuiltinInterface::Le),
             BinaryOperator::Lt => OperatorKind::BuiltinInterface(BuiltinInterface::Lt),
+            // BinaryOperator::Range => OperatorKind::BuiltinInterface(BuiltinInterface::Range),
         };
 
         match operator_kind {

@@ -164,7 +164,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     }).collect();
 
     for i in remaining_param_indexes_to_infer.into_iter() {
-        context.errors.generic(function_name, format!("`{}`: cannot infer type parameter `{}`", function_name.as_str().bold(), function_parameters[i]));
+        context.errors.generic(function_name, format!("cannot infer type parameter `{}`", function_parameters[i]));
     }
 
     if let FunctionCall::Named(details) = &mut function_call {

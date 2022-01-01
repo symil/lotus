@@ -33,6 +33,14 @@ impl VirtualAssembly {
         }
     }
 
+    pub fn undefined() -> Self {
+        Self {
+            ty: Type::Undefined,
+            variables: vec![],
+            instructions: vec![],
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.instructions.is_empty()
     }

@@ -70,6 +70,10 @@ export interface ToBool {
     to_bool() -> bool;
 }
 
+export interface Range {
+    range(Self) -> Self[];
+}
+
 export interface GetAtIndex {
     type Item;
 

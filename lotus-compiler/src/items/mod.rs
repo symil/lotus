@@ -91,6 +91,7 @@ mod template_string_fragment_literal;
 mod macro_expression;
 mod macro_identifier;
 mod macro_type;
+mod var_declaration_names;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -186,3 +187,4 @@ pub use template_string_fragment_literal::*;
 pub use macro_expression::*;
 pub use macro_identifier::*;
 pub use macro_type::*;
+pub use var_declaration_names::*;

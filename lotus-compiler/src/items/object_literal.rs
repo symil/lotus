@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
 use super::{Expression, Identifier, ObjectFieldInitialization, ObjectInitializationItem, ParsedType};
 
 #[parsable]
@@ -31,7 +31,7 @@ impl ObjectLiteral {
                     let mut fields_init = HashMap::new();
 
                     result.extend(Vasm::new(Type::Void, vec![object_var.clone()], vec![
-                        VI::call_static_method(&object_type, CREATE_METHOD_NAME, &[], vec![], context),
+                        VI::call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context),
                         VI::set_tmp_var(&object_var)
                     ]));
 

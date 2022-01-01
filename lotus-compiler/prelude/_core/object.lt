@@ -42,7 +42,7 @@ export class Object {
     autogen static __default() -> Self {
         let obj = Self::__create();
 
- tatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatatahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahaha       iter_fields {
+        iter_fields {
             obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
         }
 

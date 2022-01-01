@@ -29,20 +29,20 @@ none
 [ 0, 1, 2, 4 ]
 [ "0", "1", "foo", "4" ]
 [
-  Entry {
-    key: 0,
-    value: "0",
+  Pair {
+    first: 0,
+    second: "0",
   },
-  Entry {
-    key: 1,
-    value: "1",
+  Pair {
+    first: 1,
+    second: "1",
   },
-  Entry {
-    key: 2,
-    value: "foo",
+  Pair {
+    first: 2,
+    second: "foo",
   },
-  Entry {
-    key: 4,
-    value: "4",
+  Pair {
+    first: 4,
+    second: "4",
   }
 ]

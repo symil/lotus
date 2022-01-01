@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{items::escape_char, program::{BuiltinType, CREATE_METHOD_NAME, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm, CompilationError}, wat, utils::FlexRef};
+use crate::{items::escape_char, program::{BuiltinType, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm, CompilationError, STRING_CREATE_METHOD_NAME}, wat, utils::FlexRef};
 
 #[parsable(name="string")]
 pub struct StringLiteral {
@@ -50,7 +50,7 @@ fn get_string_vasm_from_literal(location: Option<&DataLocation>, literal: &str, 
     let context = context_ref.as_ref();
     let string_type = context.get_builtin_type(BuiltinType::String, vec![]);
     let mut content = vec![
-        VI::call_static_method(&string_type, CREATE_METHOD_NAME, &[], vec![VI::int(unescaped_chars.len())], context)
+        VI::call_static_method(&string_type, STRING_CREATE_METHOD_NAME, &[], vec![VI::int(unescaped_chars.len())], context)
     ];
 
     for (i, code) in unescaped_chars.into_iter().enumerate() {

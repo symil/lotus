@@ -82,14 +82,11 @@ export class Map<K, V> {
     }
 
     keys() -> K[] {
-        let array = Array<K>::__create(self.size);
-        let body = array.body();
-        let i = 0;
+        let array = Array<K>::with_capacity(self.size);
 
         for entry in self.data_table {
             if entry.key {
-                body[i] = entry.key;
-                i += 1;
+                array.push_unchecked(entry.key);
             }
         }
 
@@ -97,32 +94,23 @@ export class Map<K, V> {
     }
 
     values() -> V[] {
-        let array = Array<V>::__create(self.size);
-        let body = array.body();
-        let i = 0;
+        let array = Array<V>::with_capacity(self.size);
 
         for entry in self.data_table {
             if entry.key {
-                body[i] = entry.value;
-                i += 1;
+                array.push_unchecked(entry.value);
             }
         }
 
         array
     }
 
-    entries() -> Entry<K, V>[] {
-        let array = Array<Entry<K, V>>::__create(self.size);
-        let body = array.body();
-        let i = 0;
+    entries() -> (K, V)[] {
+        let array = Array<(K, V)>::with_capacity(self.size);
 
         for entry in self.data_table {
             if entry.key {
-                body[i] = Entry<K, V> {
-                    key: entry.key,
-                    value: entry.value
-                };
-                i += 1;
+                array.push_unchecked((entry.key, entry.value));
             }
         }
 
@@ -225,10 +213,10 @@ export class Map<K, V> {
         let new_map = Self::with_capacity(self.capacity);
         let entries = self.entries();
 
-        entries.sort((e1, e2) => compare(e1.key, e2.key));
+        entries.sort((e1, e2) => compare(e1.first, e2.first));
 
         for entry in entries {
-            new_map.set(entry.key, entry.value);
+            new_map.set(entry.first, entry.second);
         }
 
         self._set(new_map);
@@ -241,9 +229,4 @@ class MapEntry<K, V> {
     key: K?,
     value: V?,
     next: MapEntry<K, V>?
-}
-
-class Entry<K, V> {
-    key: K,
-    value: V
 }

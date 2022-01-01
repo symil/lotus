@@ -26,10 +26,10 @@ impl GlobalVarDeclaration {
                 init_vasm,
             };
 
-            let var_name = self.var_declaration.get_first_var_name();
+            let var_name = var_list[0].name().clone();
 
-            if context.global_vars.get_by_identifier(var_name).is_some() {
-                context.errors.generic(var_name, format!("duplicate global variable declaration: `{}`", var_name));
+            if context.global_vars.get_by_identifier(&var_name).is_some() {
+                context.errors.generic(&var_name, format!("duplicate global variable declaration: `{}`", var_name));
             }
 
             context.global_vars.insert(global_var_blueprint, None);

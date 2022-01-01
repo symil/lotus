@@ -40,7 +40,10 @@ pub const TUPLE_FIRST_METHOD_NAME : &'static str = "first";
 pub const TUPLE_SECOND_METHOD_NAME : &'static str = "second";
 
 pub const NEW_METHOD_NAME : &'static str = "new";
-pub const CREATE_METHOD_NAME : &'static str = "__create";
+pub const OBJECT_CREATE_METHOD_NAME : &'static str = "__create";
+pub const ARRAY_CREATE_METHOD_NAME : &'static str = "with_capacity";
+pub const STRING_CREATE_METHOD_NAME : &'static str = "__create";
+pub const PUSH_UNCHECKED_METHOD_NAME : &'static str = "push_unchecked";
 pub const STORE_FUNC_NAME : &'static str = "__store";
 pub const LOAD_FUNC_NAME : &'static str = "__load";
 pub const DEFAULT_METHOD_NAME : &'static str = "default";
