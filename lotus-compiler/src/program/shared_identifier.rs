@@ -4,32 +4,36 @@ use super::Type;
 
 #[derive(Debug)]
 pub struct SharedIdentifier {
-    pub definition: DataLocation,
+    pub definition: Option<DataLocation>,
+    pub type_info: Option<Type>,
     pub usages: Vec<DataLocation>,
-    pub type_info: Option<Type>
 }
 
 impl SharedIdentifier {
-    pub fn new(definition: &DataLocation, type_info: Option<&Type>) -> Self {
+    pub fn new(definition: Option<&DataLocation>, type_info: Option<&Type>) -> Self {
         Self {
-            definition: definition.clone(),
+            definition: definition.cloned(),
+            type_info: type_info.cloned(),
             usages: vec![],
-            type_info: type_info.cloned()
         }
     }
 
     pub fn get_all_occurences(&self) -> Vec<DataLocation> {
         let mut result = vec![];
 
-        result.push(self.definition.clone());
+        if let Some(location) = &self.definition {
+            result.push(location.clone());
+        }
         result.extend_from_slice(&self.usages);
 
         result
     }
 
     pub fn match_cursor(&self, cursor_file_path: &str, cursor_index: usize) -> Option<&DataLocation> {
-        if self.definition.contains_cursor(cursor_file_path, cursor_index) {
-            return Some(&self.definition);
+        if let Some(definition) = &self.definition {
+            if definition.contains_cursor(cursor_file_path, cursor_index) {
+                return Some(definition);
+            }
         }
 
         for usage in &self.usages {

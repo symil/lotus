@@ -1,4 +1,4 @@
-use crate::{program::ProgramContext, command_line::CommandLineOptions};
+use crate::{program::{ProgramContext}, command_line::CommandLineOptions};
 use super::LanguageServerCommandParameters;
 
 pub fn provide_rename_edits(parameters: &LanguageServerCommandParameters, context: &ProgramContext, lines: &mut Vec<String>) {

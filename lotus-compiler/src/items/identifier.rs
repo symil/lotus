@@ -75,12 +75,13 @@ impl Identifier {
 impl Hash for Identifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);
+        self.location.hash(state);
     }
 }
 
 impl PartialEq for Identifier {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
+        self.value == other.value && self.location == other.location
     }
 }
 

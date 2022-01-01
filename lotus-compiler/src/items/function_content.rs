@@ -57,7 +57,7 @@ impl FunctionContent {
         let is_raw_wasm = self.body.is_raw_wasm();
 
         for details in parameters.values() {
-            context.declare_shared_identifier(&details.name, None);
+            context.declare_shared_identifier(&details.name, Some(&details.name), None);
         }
 
         function_blueprint.parameters = parameters;
@@ -112,7 +112,7 @@ impl FunctionContent {
 
             if self.event_callback_qualifier.is_none() {
                 function_wrapped.with_ref(|function_unwrapped| {
-                    context.declare_shared_identifier(&self.name, Some(&Type::Function(Box::new(function_unwrapped.signature.clone()))));
+                    context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::Function(Box::new(function_unwrapped.signature.clone()))));
                 });
             }
         }
@@ -162,8 +162,8 @@ impl FunctionContent {
                         if let Some(type_wrapped) = context.get_current_type() {
                             function_wrapped.with_mut(|mut function_unwrapped| {
                                 function_unwrapped.argument_names = vec![
-                                    Identifier::unlocated(EVENT_VAR_NAME),
-                                    Identifier::unlocated(EVENT_OUTPUT_VAR_NAME),
+                                    Identifier::new(EVENT_VAR_NAME, &event_type_wrapped.borrow().name),
+                                    Identifier::new(EVENT_OUTPUT_VAR_NAME, &self.name),
                                 ];
                                 function_unwrapped.signature = Signature {
                                     this_type: Some(type_wrapped.borrow().self_type.clone()),

@@ -19,6 +19,10 @@ impl Hash for DataLocation {
 }
 
 impl DataLocation {
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
     pub fn get_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
 

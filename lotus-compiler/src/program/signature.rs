@@ -35,11 +35,12 @@ impl Signature {
     }
 
     pub fn to_string(&self) -> String {
-        let this_str = match &self.this_type {
-            Some(ty) => format!("[{}]", ty.to_string()),
-            None => format!(""),
-        };
-        let mut s = format!("fn{}({})", this_str, display_join(&self.argument_types, ", "));
+        // let this_str = match &self.this_type {
+        //     Some(ty) => format!("[{}]", ty.to_string()),
+        //     None => format!(""),
+        // };
+        // let mut s = format!("fn{}({})", this_str, display_join(&self.argument_types, ", "));
+        let mut s = format!("fn({})", display_join(&self.argument_types, ", "));
 
         if !self.return_type.is_void() {
             s.push_str(&format!("({})", &self.return_type));

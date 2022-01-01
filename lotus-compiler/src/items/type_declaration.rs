@@ -100,10 +100,10 @@ impl TypeDeclaration {
             None => WasmStackType::Fixed(StackType::Int),
         };
 
-        context.declare_shared_identifier(&self.name, None);
+        context.declare_shared_identifier(&self.name, Some(&self.name), None);
 
         for details in parameters.values() {
-            context.declare_shared_identifier(&details.name, None);
+            context.declare_shared_identifier(&details.name, Some(&details.name), None);
         }
 
         type_wrapped.with_mut(|mut type_unwrapped| {
@@ -272,7 +272,7 @@ impl TypeDeclaration {
                         wasm_pattern,
                     });
 
-                    context.declare_shared_identifier(&name, Some(&associatd_type_info.ty));
+                    context.declare_shared_identifier(&name, Some(&name), Some(&associatd_type_info.ty));
 
                     if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
                         context.errors.generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
@@ -329,7 +329,7 @@ impl TypeDeclaration {
                             }
 
                             if let Some(field_type) = ty.process(false, context) {
-                                context.declare_shared_identifier(&field.name, Some(&field_type));
+                                context.declare_shared_identifier(&field.name, Some(&field.name), Some(&field_type));
 
                                 let field_details = Rc::new(FieldInfo {
                                     owner: type_wrapped.clone(),
@@ -346,7 +346,7 @@ impl TypeDeclaration {
                         None => {
                             // Enum variant
 
-                            context.declare_shared_identifier(&field.name, None);
+                            context.declare_shared_identifier(&field.name, Some(&field.name), None);
 
                             if !type_unwrapped.is_enum() {
                                 context.errors.generic(&field.name, format!("only enums can have variants"));

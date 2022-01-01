@@ -1,10 +1,10 @@
-use std::{cell::UnsafeCell, collections::{HashMap, HashSet}, hash::Hash, mem::{self, take}, ops::Deref, rc::{Rc, Weak}, fs::{self, DirBuilder, File}, path::Path, io::Write};
+use std::{cell::UnsafeCell, collections::{HashMap, HashSet, hash_map::DefaultHasher}, hash::{Hash, Hasher}, mem::{self, take}, ops::Deref, rc::{Rc, Weak}, fs::{self, DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions};
-use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively}, vasm, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash}, vasm, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME};
 
 #[derive(Debug, Default)]
 pub struct ProgramContext {
@@ -19,7 +19,7 @@ pub struct ProgramContext {
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
-    pub shared_identifiers: HashMap<DataLocation, SharedIdentifier>,
+    pub shared_identifiers: HashMap<u64, SharedIdentifier>,
 
     builtin_types: HashMap<BuiltinType, Type>,
     main_types: HashMap<MainType, Type>,
@@ -288,11 +288,22 @@ impl ProgramContext {
         self.declare_wrapped_shared_identifier(&var_info, Some(&var_info.ty()));
     }
 
-    pub fn declare_shared_identifier(&mut self, definition: &Identifier, type_info: Option<&Type>) {
-        self.shared_identifiers.insert(definition.location.clone(), SharedIdentifier::new(&definition.location, type_info));
+    pub fn declare_shared_identifier<K : Hash>(&mut self, key: &K, definition: Option<&DataLocation>, type_info: Option<&Type>) {
+        let id = compute_hash(key);
+
+        match self.shared_identifiers.get_mut(&id) {
+            Some(shared_identifier) => {
+                if let Some(location) = definition {
+                    shared_identifier.usages.push(location.clone());
+                }
+            },
+            None => {
+                self.shared_identifiers.insert(id, SharedIdentifier::new(definition, type_info));
+            },
+        }
     }
 
-    pub fn access_shared_identifier(&mut self, definition: &Identifier, identifier: &Identifier) {
+    pub fn access_shared_identifier<K : Hash>(&mut self, key: &K, identifier: &Identifier) {
         // dbg!(identifier.as_str());
         // dbg!(identifier.location.file_path);
 
@@ -300,14 +311,23 @@ impl ProgramContext {
             return;
         }
 
-        let mut shared_identifier = self.shared_identifiers.get_mut(definition).unwrap();
+        let id = compute_hash(key);
+        let mut shared_identifier = self.shared_identifiers.get_mut(&id).unwrap();
 
         shared_identifier.usages.push(identifier.location.clone());
     }
 
     pub fn declare_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>, type_info: Option<&Type>) {
         item.with_ref(|item_unwrapped| {
-            self.declare_shared_identifier(item_unwrapped.get_name(), type_info);
+            let identifier = item_unwrapped.get_name();
+            let definition = match identifier.as_str() {
+                // SELF_VAR_NAME => None,
+                // EVENT_VAR_NAME => None,
+                EVENT_OUTPUT_VAR_NAME => None,
+                _ => Some(&identifier.location)
+            };
+
+            self.declare_shared_identifier(identifier, definition, type_info);
         });
     }
 
@@ -344,7 +364,13 @@ impl ProgramContext {
             let mut variables = vec![];
 
             if let Some(this_type) = &function_unwrapped.signature.this_type {
-                let var_info = VariableInfo::create(Identifier::unlocated(SELF_VAR_NAME), this_type.clone(), VariableKind::Argument, self.get_function_level());
+                let location = match &this_type {
+                    Type::This(interface_blueprint) => interface_blueprint.borrow().name.location.clone(),
+                    Type::Actual(content) => content.type_blueprint.borrow().name.location.clone(),
+                    _ => function_unwrapped.name.location.clone()
+                };
+
+                let var_info = VariableInfo::create(Identifier::new(SELF_VAR_NAME, &location), this_type.clone(), VariableKind::Argument, self.get_function_level());
 
                 self.push_var(&var_info);
                 variables.push(var_info);

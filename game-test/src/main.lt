@@ -3,6 +3,10 @@ class MyRequest {
 }
 
 view Window {
+    test() {
+        let a = self;
+    }
+
     @OnRender {
         self
             .background_color(WHITE)
