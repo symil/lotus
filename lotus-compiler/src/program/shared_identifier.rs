@@ -1,16 +1,20 @@
 use parsable::DataLocation;
 
+use super::Type;
+
 #[derive(Debug)]
 pub struct SharedIdentifier {
     pub definition: DataLocation,
-    pub usages: Vec<DataLocation>
+    pub usages: Vec<DataLocation>,
+    pub type_info: Option<Type>
 }
 
 impl SharedIdentifier {
-    pub fn new(definition: &DataLocation) -> Self {
+    pub fn new(definition: &DataLocation, type_info: Option<&Type>) -> Self {
         Self {
             definition: definition.clone(),
             usages: vec![],
+            type_info: type_info.cloned()
         }
     }
 

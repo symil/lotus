@@ -15,6 +15,8 @@ pub struct TypedefDeclaration {
 impl TypedefDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
         if let Some(ty) = self.target.process(true, context) {
+            context.declare_shared_identifier(&self.name, Some(&ty));
+
             let typedef_blueprint = TypedefBlueprint {
                 type_id: self.location.get_hash(),
                 name: self.name.clone(),
@@ -23,7 +25,6 @@ impl TypedefDeclaration {
             };
 
             context.typedefs.insert(typedef_blueprint, None);
-            context.declare_shared_identifier(&self.name);
         }
     }
 }

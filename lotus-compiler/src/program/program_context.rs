@@ -285,11 +285,11 @@ impl ProgramContext {
             current_scope.insert_var_info(&var_info);
         }
 
-        self.declare_wrapped_shared_identifier(&var_info);
+        self.declare_wrapped_shared_identifier(&var_info, Some(&var_info.ty()));
     }
 
-    pub fn declare_shared_identifier(&mut self, definition: &Identifier) {
-        self.shared_identifiers.insert(definition.location.clone(), SharedIdentifier::new(&definition.location));
+    pub fn declare_shared_identifier(&mut self, definition: &Identifier, type_info: Option<&Type>) {
+        self.shared_identifiers.insert(definition.location.clone(), SharedIdentifier::new(&definition.location, type_info));
     }
 
     pub fn access_shared_identifier(&mut self, definition: &Identifier, identifier: &Identifier) {
@@ -305,9 +305,9 @@ impl ProgramContext {
         shared_identifier.usages.push(identifier.location.clone());
     }
 
-    pub fn declare_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>) {
+    pub fn declare_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>, type_info: Option<&Type>) {
         item.with_ref(|item_unwrapped| {
-            self.declare_shared_identifier(item_unwrapped.get_name());
+            self.declare_shared_identifier(item_unwrapped.get_name(), type_info);
         });
     }
 

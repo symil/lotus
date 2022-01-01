@@ -5,6 +5,7 @@ mod validate;
 mod prepare_rename;
 mod provide_rename_edits;
 mod provide_definition;
+mod provide_hover;
 
 pub use language_server::*;
 pub use language_server_command::*;
@@ -13,3 +14,4 @@ pub use validate::*;
 pub use prepare_rename::*;
 pub use provide_rename_edits::*;
 pub use provide_definition::*;
+pub use provide_hover::*;

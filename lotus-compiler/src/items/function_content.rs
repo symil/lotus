@@ -56,12 +56,8 @@ impl FunctionContent {
         let has_parameters = !parameters.is_empty();
         let is_raw_wasm = self.body.is_raw_wasm();
 
-        if self.event_callback_qualifier.is_none() {
-            context.declare_shared_identifier(&self.name);
-
-            for details in parameters.values() {
-                context.declare_shared_identifier(&details.name);
-            }
+        for details in parameters.values() {
+            context.declare_shared_identifier(&details.name, None);
         }
 
         function_blueprint.parameters = parameters;
@@ -113,6 +109,12 @@ impl FunctionContent {
                 function_unwrapped.signature.argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
                 function_unwrapped.signature.return_type = return_type.unwrap_or(context.void_type());
             });
+
+            if self.event_callback_qualifier.is_none() {
+                function_wrapped.with_ref(|function_unwrapped| {
+                    context.declare_shared_identifier(&self.name, Some(&Type::Function(Box::new(function_unwrapped.signature.clone()))));
+                });
+            }
         }
         // else if is_dynamic {
         //     if let Some(type_wrapped) = context.get_current_type() {
