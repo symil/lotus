@@ -92,13 +92,15 @@ impl FunctionLiteral {
                     let map_type = context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]);
                     let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![arg.ty().clone()]);
 
-                    function.body.extend(vasm![
-                        VI::call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vasm![
-                            VI::get_tmp_var(&closure_args_var),
-                            VI::call_regular_method(&map_type, "get", &[], vasm![ VI::int(arg.get_name_hash()) ], context),
-                            VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0) ], context)
-                        ], context)
-                    ])
+                    if !arg.ty().is_undefined() {
+                        function.body.extend(vasm![
+                            VI::call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vasm![
+                                VI::get_tmp_var(&closure_args_var),
+                                VI::call_regular_method(&map_type, "get", &[], vasm![ VI::int(arg.get_name_hash()) ], context),
+                                VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0) ], context)
+                            ], context)
+                        ])
+                    }
                 }
 
                 closure_details.retain_function = Some(Link::new(function));

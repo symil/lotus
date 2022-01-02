@@ -1,8 +1,30 @@
 export fn main() {
-    let a = [];
-    let b = [1, false, "foo"];
-    let c : int[] = ["hello"];
-    let d = [[]];
-    let e = [[1, 2, 3], ["foo"], []];
-    let f = [[[]], 1];
+    let a : int[] = [];
+    let array = [2, 3, 5, 8];
+
+    for i in 0..array.len() {
+        @log(array[i]);
+    }
+
+    array[1] = 7;
+    @log(array[1]);
+
+    for item in array {
+        @log(item);
+    }
+
+    for [i, item] in array {
+        @log(i);
+        @log(item);
+    }
+
+    @log("---");
+
+    let float_array = [1.1f, 2.5f, -8.3f, 0f, 5f];
+
+    float_array[2] = 13.6f;
+
+    for value in float_array {
+        @log(value);
+    }
 }

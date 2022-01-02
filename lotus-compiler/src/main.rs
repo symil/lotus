@@ -20,6 +20,7 @@ fn main() {
     if options.run_as_server {
         start_language_server();
     } else {
+        // dbg!(&options);
         if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {
             let root_directory = infer_root_directory(input_path).unwrap();
             let source_directories = bundle_with_prelude(&root_directory);

@@ -13,7 +13,7 @@ export fn main() {
         @log(item);
     }
 
-    for (i, item) in array {
+    for [i, item] in array {
         @log(i);
         @log(item);
     }

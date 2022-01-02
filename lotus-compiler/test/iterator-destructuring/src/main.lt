@@ -1,0 +1,29 @@
+export fn main() {
+    let m = Map<int, string>::new();
+
+    m.set(0, "zero");
+    m.set(1, "one");
+    m.set(2, "two");
+
+    for (key, value) in m.entries() {
+        @log(`${key}: ${value}`);
+    }
+
+    for [i, (key, value)] in m.entries() {
+        @log(`(${i}) ${key}: ${value}`);
+    }
+
+    for entry in m.entries() {
+        @dbg(entry);
+    }
+
+    let functions : fn()(string)[] = [];
+
+    for (key, value) in m.entries() {
+        functions.push(() => `=> ${key}: ${value}`);
+    }
+
+    for f in functions {
+        @log(f());
+    }
+}

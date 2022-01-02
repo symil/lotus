@@ -1,5 +1,5 @@
 export fn main() {
-    for (index, value) in -2..2 {
+    for [index, value] in -2..2 {
         @log(index);
         @log(value);
     }

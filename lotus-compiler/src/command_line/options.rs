@@ -32,9 +32,9 @@ impl CommandLineOptions {
                 },
                 false => {
                     if options.input_path.is_none() {
-                        options.input_path = Some(string_to_absolute_path(&arg).unwrap_or_default());
+                        options.input_path = string_to_absolute_path(&arg);
                     } else if options.output_path.is_none() {
-                        options.output_path = Some(string_to_absolute_path(&arg).unwrap_or_default());
+                        options.output_path = Some(arg.clone());
                     }
                 },
             }
@@ -49,7 +49,7 @@ fn string_to_absolute_path(string: &str) -> Option<String> {
 
     match path.canonicalize() {
         Ok(path_buf) => path_buf.as_os_str().to_str().map(|s| s.to_string()),
-        Err(_) => None,
+        Err(error) => None,
     }
 }
 

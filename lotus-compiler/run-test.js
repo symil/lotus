@@ -172,6 +172,8 @@ function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, 
     let validateOption = validate ? '--validate' : '';
     let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption} ${detailsOption} ${validateOption}`;
 
+    // console.log(command);
+
     return runCommand(command, inheritStdio);
 }
 

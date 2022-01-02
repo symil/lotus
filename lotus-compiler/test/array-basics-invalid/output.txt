@@ -1,7 +1,23 @@
-main.lt:2:13: error: insufficient infered type `Array<any>` (consider declaring the variable type explicitly)
-main.lt:3:17: error: expected `int`, got `bool`
-main.lt:3:24: error: expected `int`, got `string`
-main.lt:4:22: error: expected `int`, got `string`
-main.lt:5:13: error: insufficient infered type `Array<Array<any>>` (consider declaring the variable type explicitly)
-main.lt:6:26: error: expected `int`, got `string`
-main.lt:7:20: error: expected `Array<Array<any>>`, got `int`
+2
+3
+5
+8
+7
+2
+7
+5
+8
+0
+2
+1
+7
+2
+5
+3
+8
+---
+1.100000023841858
+2.5
+13.600000381469727
+0
+5

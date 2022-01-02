@@ -69,6 +69,10 @@ impl VariableInfo {
         Ref::map(self.borrow(), |var_info| &var_info.name)
     }
 
+    pub fn wasm_name(&self) -> Ref<String> {
+        Ref::map(self.borrow(), |var_info| &var_info.wasm_name)
+    }
+
     pub fn get_wasm_name(&self) -> String {
         self.borrow().wasm_name.clone()
     }

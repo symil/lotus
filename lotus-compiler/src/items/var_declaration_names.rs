@@ -27,7 +27,7 @@ impl VarDeclarationNames {
             },
             None => {
                 if assigned_vasm.ty.is_ambiguous() {
-                    context.errors.generic(location, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &assigned_vasm.ty));
+                    context.errors.generic(self, format!("insufficient infered type `{}` (consider declaring the variable type explicitly)", &assigned_vasm.ty));
                 }
                 
                 assigned_vasm.ty.clone()
@@ -51,6 +51,10 @@ impl VarDeclarationNames {
                     context.errors.generic(self, format!("tuples can only be declared as pairs"));
                     None
                 } else {
+                    // if names[0].as_str() == "a" && names[0].as_str() == "b" {
+                    //     assigned_vasm.ty.print();
+                    // }
+
                     let mut result_vasm = vasm![];
                     let tmp_var_info = VariableInfo::tmp("tmp", variable_type.clone());
                     let var_1 = context.declare_local_variable(names[0].clone(), Type::Undefined);
@@ -80,7 +84,7 @@ impl VarDeclarationNames {
                             ])
                         ])
                     } else if !variable_type.is_undefined() {
-                        context.errors.generic(location, format!("cannot destructure type `{}` into 2 values", &variable_type));
+                        context.errors.generic(self, format!("cannot destructure type `{}` into 2 values", &variable_type));
                     }
                     
                     Some((vec![var_1.clone(), var_2.clone()], result_vasm))

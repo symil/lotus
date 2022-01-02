@@ -1,0 +1,21 @@
+0: zero
+1: one
+2: two
+(0) 0: zero
+(1) 1: one
+(2) 2: two
+Pair {
+  first: 0,
+  second: "zero",
+}
+Pair {
+  first: 1,
+  second: "one",
+}
+Pair {
+  first: 2,
+  second: "two",
+}
+=> 0: zero
+=> 1: one
+=> 2: two

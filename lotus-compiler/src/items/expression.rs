@@ -4,7 +4,7 @@ use parsable::{DataLocation, parsable};
 use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
 use super::{BinaryOperation, Identifier, ParsedType};
 
-#[parsable]
+#[parsable(name="expression")]
 pub struct Expression {
     pub operation: Box<BinaryOperation>,
     #[parsable(prefix="is")]

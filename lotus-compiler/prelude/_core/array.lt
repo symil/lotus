@@ -155,7 +155,7 @@ export class Array<T> {
         let length = self._add_length(other.len());
         let body = self.body;
 
-        for (i, item) in other {
+        for [i, item] in other {
             body[length + i] = item;
         }
     }
@@ -168,7 +168,7 @@ export class Array<T> {
         self.insert_none(index, other.len());
         let body = self.body;
         
-        for (i, item) in other {
+        for [i, item] in other {
             body[index + i] = item;
         }
     }
