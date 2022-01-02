@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, ops::Deref, borrow::Borrow};
 use parsable::DataLocation;
 use crate::utils::Link;
 use super::{ProgramContext, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat, VirtualInitVariableInfo, ToInt, PlaceholderDetails, VariableAccessKind, VirtualVariableAccessInfo, FunctionBlueprint, VirtualFunctionIndexInfo, VirtualAccessFieldInfo, FieldAccessKind, IfThenElseInfo, VirtualJumpIfInfo, VirtualBlockInfo, VirtualJumpInfo, VirtualLoopInfo, FunctionCall, NamedFunctionCallDetails, VirtualFunctionCallInfo, NONE_METHOD_NAME, AnonymousFunctionCallDetails, Signature};
@@ -25,36 +25,24 @@ impl VirtualAssembly {
         Self::new(Type::Undefined)
     }
 
-    pub fn append(&mut self, other: Self) {
+    pub fn append(self, other: Self) -> Self {
         self.ty = other.ty;
         self.variables.extend(other.variables);
         self.instructions.extend(other.instructions);
-    }
-
-    pub fn merge(source: Vec<Self>) -> Self {
-        let mut result = Self::new(Type::Undefined);
-
-        for vasm in source {
-            result.append(vasm);
-        }
-
-        result
-    }
-
-    pub fn merge_with_type(ty: Type, source: Vec<Self>) -> Self {
-        let mut result = Self::merge(source);
-        result.ty = ty;
-
-        result
-    }
-
-    pub fn set_type(self, ty: &Type) -> Self {
-        self.ty = ty.clone();
         self
     }
 
-    pub fn declare_variable(self, var_info: &VariableInfo) -> Self {
-        self.variables.push(var_info.clone());
+    pub fn chain<F : FnOnce(Self) -> Self>(self, callback: F) -> Self {
+        callback(self)
+    }
+
+    pub fn set_type<T : Borrow<Type>>(self, ty: T) -> Self {
+        self.ty = ty.borrow().clone();
+        self
+    }
+
+    pub fn declare_variable<T : Borrow<VariableInfo>>(self, var_info: T) -> Self {
+        self.variables.push(var_info.borrow().clone());
         self
     }
 
@@ -63,14 +51,18 @@ impl VirtualAssembly {
         self
     }
 
-    pub fn drop(self, ty: &Type) -> Self {
-        self.instruction(|| VirtualInstruction::Drop(ty.clone()))
+    pub fn eqz(self) -> Self {
+        self.instruction(|| VirtualInstruction::Eqz)
     }
 
     pub fn raw(self, value: Wat) -> Self {
         self.instruction(|| VirtualInstruction::Raw(value))
     }
-
+    
+    pub fn drop(self, ty: &Type) -> Self {
+        self.instruction(|| VirtualInstruction::Drop(ty.clone()))
+    }
+    
     pub fn placeholder(self, location: &DataLocation) -> Self {
         self.instruction(|| VirtualInstruction::Placeholder(PlaceholderDetails {
             location: location.clone(),
@@ -173,21 +165,23 @@ impl VirtualAssembly {
     pub fn call_regular_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
         // println!("{}: {}", caller_type, method_name);
 
-        self.call_function(FunctionCall::Named(NamedFunctionCallDetails {
-            caller_type: Some(caller_type.clone()),
-            function: caller_type.get_regular_method(method_name, context).unwrap().function.clone(),
-            parameters: parameters.to_vec(),
-        }), arguments, context)
+        self.call_function_named(
+            Some(caller_type),
+            &caller_type.get_regular_method(method_name, context).unwrap().function,
+            parameters,
+            arguments
+        )
     }
 
     pub fn call_static_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
         // println!("{}: {}", caller_type, method_name);
 
-        self.call_function(FunctionCall::Named(NamedFunctionCallDetails {
-            caller_type: Some(caller_type.clone()),
-            function: caller_type.get_static_method(method_name, context).unwrap().function.clone(),
-            parameters: parameters.to_vec(),
-        }), arguments, context)
+        self.call_function_named(
+            Some(caller_type),
+            &caller_type.get_static_method(method_name, context).unwrap().function,
+            parameters,
+            arguments
+        )
     }
 
     pub fn none(self, ty: &Type, context: &ProgramContext) -> Self {

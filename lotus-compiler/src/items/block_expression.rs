@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}, vasm};
+use crate::{program::{ProgramContext, ScopeKind, Type, VI, Vasm}};
 use super::Expression;
 
 #[parsable]
@@ -17,7 +17,7 @@ pub struct BlockItem {
 
 impl BlockExpression {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut vasm = vasm![];
+        let mut result = context.vasm();
         let mut ok = true;
 
         context.push_scope(ScopeKind::Block);
@@ -29,16 +29,18 @@ impl BlockExpression {
                 false => None,
             };
 
-            if let Some(mut item_vasm) = item.expression.process(hint, context) {
+            if let Some(item_vasm) = item.expression.process(hint, context) {
+                result = result.append(item_vasm);
+
                 if !is_last || item.semicolon.is_some() {
-                    item_vasm.extend(vasm![VI::Drop(item_vasm.ty.clone())]);
+                    result = result
+                        .drop(&result.ty)
+                        .set_type(context.void_type());
                 }
 
                 // if !is_last && item.semicolon.is_none() {
                 //     context.errors.add(&item.location.get_end(), format!("missing `;`"));
                 // }
-
-                vasm.extend(item_vasm);
             } else if is_last {
                 ok = false
             }
@@ -47,7 +49,7 @@ impl BlockExpression {
         context.pop_scope();
 
         match ok {
-            true => Some(vasm),
+            true => Some(result),
             false => None,
         }
     }

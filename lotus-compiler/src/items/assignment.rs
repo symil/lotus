@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, VI, Vasm}, vasm, wat};
+use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, VI, Vasm}, wat};
 use super::{AssignmentOperatorWrapper, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]
@@ -47,9 +47,9 @@ impl Assignment {
                                 match self.lvalue.process(None, AccessType::Get, context) {
                                     Some(left_rvalue_vasm) => match wrapper.process(left_rvalue_vasm, right_vasm, rvalue, context) {
                                         Some(vasm) => vasm,
-                                        None => vasm![]
+                                        None => context.vasm()
                                     },
-                                    None => vasm![]
+                                    None => context.vasm()
                                 }
                             }
                         };

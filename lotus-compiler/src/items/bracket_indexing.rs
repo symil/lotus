@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VI, VariableInfo, Vasm}, vasm, wat};
+use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VI, VariableInfo, Vasm}, wat};
 use super::Expression;
 
 #[parsable]
@@ -22,15 +22,17 @@ impl BracketIndexing {
                 bracket_vasm.ty = parent_type.get_associated_type(ITERABLE_ASSOCIATED_TYPE_NAME).unwrap();
 
                 result = Some(match access_type {
-                    AccessType::Get => vasm![
-                        index_vasm,
-                        bracket_vasm
-                    ],
-                    AccessType::Set(location) => vasm![
-                        index_vasm,
-                        VI::placeholder(location),
-                        bracket_vasm
-                    ],
+                    AccessType::Get => {
+                        context.vasm()
+                            .append(index_vasm)
+                            .append(bracket_vasm)
+                    },
+                    AccessType::Set(location) => {
+                        context.vasm()
+                            .append(index_vasm)
+                            .placeholder(location)
+                            .append(bracket_vasm)
+                    }
                 });
             }
         }

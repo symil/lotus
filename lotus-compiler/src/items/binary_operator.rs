@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::Identifier, program::{BuiltinInterface, CompilationError, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinInterface, CompilationError, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
 #[derive(Default, Clone)]
@@ -68,18 +68,20 @@ impl BinaryOperatorWrapper {
         match &self.value {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
                 let tmp_var = VariableInfo::tmp("tmp", context.bool_type());
-                let mut content = vec![
-                    VI::tee_tmp_var(&tmp_var),
-                    VI::get_tmp_var(&tmp_var),
-                ];
+                let mut result = context.vasm()
+                    .set_type(context.bool_type())
+                    .declare_variable(&tmp_var)
+                    .tee_tmp_var(&tmp_var)
+                    .get_tmp_var(&tmp_var)
+                    .chain(|vasm| {
+                        match &self.value {
+                            BinaryOperator::DoubleAnd => vasm.eqz(),
+                            _ => vasm
+                        }
+                    })
+                    .jump_if_from_stack(0);
 
-                if &self.value == &BinaryOperator::DoubleAnd {
-                    content.push(VI::Raw(wat!["i32.eqz"]));
-                }
-
-                content.push(VI::jump_if_from_stack(0));
-
-                Some(Vasm::new(context.bool_type(), vec![tmp_var], content))
+                Some(result)
             }
             _ => None
         }
@@ -117,11 +119,16 @@ impl BinaryOperatorWrapper {
 
                 match right_vasm.ty.is_assignable_to(&left_vasm.ty) || left_vasm.ty.is_assignable_to(&right_vasm.ty) {
                     true => {
-                        let operator_vasm = VI::call_regular_method(&left_vasm.ty, method_name, &[], vec![], context);
-                        let mut vasm = vasm![left_vasm, right_vasm, operator_vasm];
-                        vasm.ty = context.bool_type();
+                        let operator_vasm = context.vasm()
+                            .set_type(context.bool_type())
+                            .call_regular_method(&left_vasm.ty, method_name, &[], vec![], context);
 
-                        Some(vasm)
+                        let result = context.vasm()
+                            .append(left_vasm)
+                            .append(right_vasm)
+                            .append(operator_vasm);
+
+                        Some(result)
                     },
                     false => {
                         context.errors.type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty);
@@ -133,15 +140,13 @@ impl BinaryOperatorWrapper {
                 match kind {
                     SelectiveOperator::And => {
                         let return_type = right_vasm.ty.clone();
-                        let condition = vasm![VI::call_regular_method(&left_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context)];
-                        let then_branch = vasm![VI::call_static_method(&right_vasm.ty, NONE_METHOD_NAME, &[], vec![], context)];
+                        let condition = context.vasm().call_regular_method(&left_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context);
+                        let then_branch = context.vasm().call_static_method(&right_vasm.ty, NONE_METHOD_NAME, &[], vec![], context);
                         let else_branch = right_vasm;
-                        let mut result = vasm![
-                            left_vasm,
-                            VI::if_then_else(Some(&return_type), condition, then_branch, else_branch)
-                        ];
-
-                        result.ty = return_type;
+                        let mut result = context.vasm()
+                            .append(left_vasm)
+                            .if_then_else(Some(&return_type), condition, then_branch, else_branch)
+                            .set_type(return_type);
 
                         Some(result)
                     },
@@ -149,21 +154,20 @@ impl BinaryOperatorWrapper {
                         Some(return_type) => {
                             let return_type = return_type.clone();
                             let tmp_var = VariableInfo::tmp("tmp", return_type.clone());
-                            let mut vasm = Vasm::new(Type::Undefined, vec![tmp_var.clone()], vec![]);
-
-                            let mut condition = vasm![
-                                VI::tee_tmp_var(&tmp_var),
-                                VI::call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context)
-                            ];
+                            let condition = context.vasm()
+                                .tee_tmp_var(&tmp_var)
+                                .call_regular_method(&return_type, IS_NONE_METHOD_NAME, &[], vec![], context);
                             let then_branch = right_vasm;
-                            let else_branch = vasm![VI::get_tmp_var(&tmp_var)];
+                            let else_branch = context.vasm()
+                                .get_tmp_var(&tmp_var);
 
-                            vasm.extend(left_vasm);
-                            vasm.extend(VI::if_then_else(Some(&return_type), condition, then_branch, else_branch));
+                            let result = context.vasm()
+                                .declare_variable(tmp_var)
+                                .append(left_vasm)
+                                .if_then_else(Some(&return_type), condition, then_branch, else_branch)
+                                .set_type(return_type);
 
-                            vasm.ty = return_type;
-
-                            Some(vasm)
+                            Some(result)
                         },
                         None => {
                             context.errors.type_mismatch(right_location, &left_vasm.ty, &right_vasm.ty);
@@ -173,7 +177,12 @@ impl BinaryOperatorWrapper {
                 }
             },
             OperatorKind::BuiltinInterface(required_interface) => match left_vasm.ty.call_builtin_interface(self, required_interface, &[(&right_vasm.ty, right_location)], context, || format!("")) {
-                Some(operator_vasm) => Some(vasm![left_vasm, right_vasm, operator_vasm]),
+                Some(operator_vasm) => Some(
+                    context.vasm()
+                        .append(left_vasm)
+                        .append(right_vasm)
+                        .append(operator_vasm)
+                ),
                 None => None,
             },
         }
