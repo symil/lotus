@@ -1,5 +1,5 @@
 use parsable::{parsable, DataLocation};
-use crate::{program::{ProgramContext, Vasm, Type, VI, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}, vasm};
+use crate::{program::{ProgramContext, Vasm, Type, VI, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}};
 use super::Identifier;
 
 #[parsable]
@@ -40,10 +40,11 @@ impl VarDeclarationNames {
 
                 Some((
                     vec![var_info.clone()],
-                    Vasm::new(context.void_type(), vec![var_info.clone()], vec![
-                        VI::init_var(&var_info),
-                        VI::set_var(&var_info, current_function_level, assigned_vasm)
-                    ])
+                    context.vasm()
+                        .declare_variable(&var_info)
+                        .init_var(&var_info)
+                        .set_var(&var_info, current_function_level, assigned_vasm)
+                        .set_type(context.void_type())
                 ))
             },
             VarDeclarationNamesContent::Multiple(names) => {
@@ -55,7 +56,7 @@ impl VarDeclarationNames {
                     //     assigned_vasm.ty.print();
                     // }
 
-                    let mut result_vasm = vasm![];
+                    let mut result_vasm = context.vasm();
                     let tmp_var_info = VariableInfo::tmp("tmp", variable_type.clone());
                     let var_1 = context.declare_local_variable(names[0].clone(), Type::Undefined);
                     let var_2 = context.declare_local_variable(names[1].clone(), Type::Undefined);
@@ -69,20 +70,23 @@ impl VarDeclarationNames {
                     }
 
                     if !var_1.ty().is_undefined() && !var_2.ty().is_undefined() {
-                        result_vasm = Vasm::new(context.void_type(), vec![tmp_var_info.clone(), var_1.clone(), var_2.clone()], vasm![
-                            assigned_vasm,
-                            VI::set_tmp_var(&tmp_var_info),
-                            VI::init_var(&var_1),
-                            VI::init_var(&var_2),
-                            VI::set_var(&var_1, current_function_level, vec![
-                                VI::get_tmp_var(&tmp_var_info),
-                                VI::call_regular_method(&variable_type, TUPLE_FIRST_METHOD_NAME, &[], vec![], context)
-                            ]),
-                            VI::set_var(&var_2, current_function_level, vec![
-                                VI::get_tmp_var(&tmp_var_info),
-                                VI::call_regular_method(&variable_type, TUPLE_SECOND_METHOD_NAME, &[], vec![], context)
-                            ])
-                        ])
+                        result_vasm = context.vasm()
+                            .declare_variable(&tmp_var_info)
+                            .declare_variable(&var_1)
+                            .declare_variable(&var_2)
+                            .append(assigned_vasm)
+                            .set_tmp_var(&tmp_var_info)
+                            .init_var(&var_1)
+                            .init_var(&var_2)
+                            .set_var(&var_1, current_function_level, context.vasm()
+                                .get_tmp_var(&tmp_var_info)
+                                .call_regular_method(&variable_type, TUPLE_FIRST_METHOD_NAME, &[], vec![], context)
+                            )
+                            .set_var(&var_2, current_function_level, context.vasm()
+                                .get_tmp_var(&tmp_var_info)
+                                .call_regular_method(&variable_type, TUPLE_SECOND_METHOD_NAME, &[], vec![], context)
+                            )
+                            .set_type(context.void_type());
                     } else if !variable_type.is_undefined() {
                         context.errors.generic(self, format!("cannot destructure type `{}` into 2 values", &variable_type));
                     }

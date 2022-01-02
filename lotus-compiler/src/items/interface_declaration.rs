@@ -99,7 +99,7 @@ impl InterfaceDeclaration {
                     owner_type: None,
                     owner_interface: Some(interface_wrapped.clone()),
                     is_raw_wasm: false,
-                    body: Vasm::void(),
+                    body: context.vasm(),
                     closure_details: None,
                     method_details: Some(MethodDetails {
                         event_callback_details: None,

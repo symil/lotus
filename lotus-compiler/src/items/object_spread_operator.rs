@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VI, VariableInfo, Vasm}, vasm};
+use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VI, VariableInfo, Vasm}};
 use super::Expression;
 
 #[parsable]
@@ -16,10 +16,11 @@ impl SpreadOperator {
             let var_info = VariableInfo::tmp("spread_tmp", vasm.ty.clone());
             let expr_type = vasm.ty.clone();
 
-            object_init_result.init = Some(Vasm::new(context.void_type(), vec![var_info.clone()], vasm![
-                vasm,
-                VI::set_tmp_var(&var_info)
-            ]));
+            object_init_result.init = Some(context.vasm()
+                .declare_variable(&var_info)
+                .append(vasm)
+                .set_tmp_var(&var_info)
+            );
 
             for field in expr_type.get_all_fields() {
                 if let Some(object_field) = object_type.get_field(field.name.as_str()) {
@@ -29,10 +30,9 @@ impl SpreadOperator {
                     if actual_type.is_assignable_to(&expected_type) {
                         object_init_result.fields.push((
                             field.name.to_string(),
-                            vasm![
-                                VI::get_tmp_var(&var_info),
-                                VI::get_field(&actual_type, field.offset)
-                            ]
+                            context.vasm()
+                                .get_tmp_var(&var_info)
+                                .get_field(&actual_type, field.offset)
                         ));
                     }
                 }

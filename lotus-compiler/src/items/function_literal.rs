@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link, vasm};
+use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VI, VariableInfo, VariableKind, Vasm}, utils::Link};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -23,9 +23,10 @@ impl FunctionLiteral {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
         let arg_names = self.arguments.process(type_hint, context);
+        let void_type = context.void_type();
         let (arg_types, return_type) = match type_hint {
             Some(Type::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
-            _ => (EMPTY_TYPE_LIST.as_slice(), &context.void_type())
+            _ => (EMPTY_TYPE_LIST.as_slice(), &void_type)
         };
 
         let mut argument_names = vec![];
@@ -63,7 +64,7 @@ impl FunctionLiteral {
             is_raw_wasm: false,
             closure_details: None,
             method_details: None,
-            body: vasm![],
+            body: context.vasm(),
         }, None);
 
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
@@ -76,14 +77,17 @@ impl FunctionLiteral {
                 function_unwrapped.signature.clone()
             });
 
-            result = Some(Vasm::new(Type::Function(Box::new(signature)), vec![], vec![VI::function_index(&function_wrapped, &[])]));
+            result = Some(context.vasm()
+                .function_index(&function_wrapped, &[])
+                .set_type(Type::Function(Box::new(signature)))
+            );
         }
 
         context.pop_scope();
 
         function_wrapped.with_mut(|mut function_unwrapped| {
             if let Some(closure_details) = &mut function_unwrapped.closure_details {
-                let mut function = FunctionBlueprint::new(Identifier::new("retain_function", self));
+                let mut function = FunctionBlueprint::new(Identifier::new("retain_function", self), context);
                 let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0);
 
                 function.argument_variables = vec![closure_args_var.clone()];
@@ -93,14 +97,13 @@ impl FunctionLiteral {
                     let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![arg.ty().clone()]);
 
                     if !arg.ty().is_undefined() {
-                        function.body.extend(vasm![
-                            VI::call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vasm![
-                                VI::get_tmp_var(&closure_args_var),
-                                VI::call_regular_method(&map_type, "get", &[], vasm![ VI::int(arg.get_name_hash()) ], context),
-                                VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0i32) ], context)
-                            ], context)
-                        ])
-                    }
+                        function.body = function.body
+                            .call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vec![context.vasm()
+                                .get_tmp_var(&closure_args_var)
+                                .call_regular_method(&map_type, "get", &[], vec![context.vasm().int(arg.get_name_hash())], context)
+                                .call_regular_method(&pointer_type, "get_at", &[], vec![ context.vasm().int(0i32) ], context)
+                                ], context);
+                            }
                 }
 
                 closure_details.retain_function = Some(Link::new(function));

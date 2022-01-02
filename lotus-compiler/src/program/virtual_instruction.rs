@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parsable::DataLocation;
-use crate::{items::{Identifier, make_string_value_from_literal, make_string_value_from_literal_unchecked}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, SELF_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
+use crate::{items::{Identifier, make_string_value_from_literal, make_string_value_from_literal_unchecked}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, SELF_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
@@ -171,7 +171,7 @@ impl VirtualInstruction {
             VirtualInstruction::InitVariable(_) => {},
             VirtualInstruction::VariableAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
             VirtualInstruction::FieldAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
-            VirtualInstruction::FunctionCall(info) => info.arguments.iter().for_each(|arg| arg.replace_placeholder(location, replacement)),
+            VirtualInstruction::FunctionCall(info) => info.arguments.iter_mut().for_each(|arg| arg.replace_placeholder(location, replacement)),
             VirtualInstruction::FunctionIndex(_) => {},
             VirtualInstruction::Loop(info) => info.content.replace_placeholder(location, replacement),
             VirtualInstruction::Block(info) => info.content.replace_placeholder(location, replacement),
@@ -304,11 +304,14 @@ impl VirtualInstruction {
                                         Wat::get_local(CLOSURE_VARIABLES_VAR_NAME),
                                     ]);
 
-                                    content.extend(vasm![
-                                        VirtualInstruction::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]), "get", &[], vasm![
-                                            VirtualInstruction::int(var_info.name.get_u32_hash())
-                                        ], context)
-                                    ].resolve(type_index, context));
+                                    content.extend(context.vasm()
+                                        .call_regular_method(
+                                            &context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]), "get",
+                                            &[],
+                                            vec![ context.vasm().int(var_info.name.get_u32_hash()) ],
+                                            context
+                                        ).resolve(type_index, context)
+                                    );
 
                                     content.extend(value_wat);
                                     content.push(Wat::call_from_stack(access_func_name));
@@ -396,7 +399,10 @@ impl VirtualInstruction {
 
                         let function_instance = context.get_function_instance(parameters);
 
-                        content.extend(info.args.resolve(type_index, context));
+                        for arg in &info.arguments {
+                            content.extend(arg.resolve(type_index, context));
+                        }
+
                         content.extend_from_slice(&function_instance.wasm_call);
                     },
                     FunctionCall::Anonymous(details) => {
@@ -414,7 +420,9 @@ impl VirtualInstruction {
                                     wat!["i32.load"],
                                     function_index_var.set_from_stack()
                                 ]);
-                                content.extend(info.args.resolve(type_index, context));
+                                for arg in &info.arguments {
+                                    content.extend(arg.resolve(type_index, context));
+                                }
                                 content.extend(vec![
                                     function_index_var.get_to_stack(),
                                     Wat::const_i32(details.function_offset),
@@ -489,28 +497,27 @@ impl VirtualInstruction {
 
                             let ptr_type = context.pointer_type();
 
-                            let mut vasm = vasm![
-                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), NEW_METHOD_NAME, &[], vec![], context),
-                                VI::raw(Wat::set_global_from_stack(CLOSURE_VARIABLES_TMP_VAR_NAME))
-                            ];
+                            let mut vasm = context.vasm()
+                                .call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), NEW_METHOD_NAME, &[], vec![], context)
+                                .raw(Wat::set_global_from_stack(CLOSURE_VARIABLES_TMP_VAR_NAME));
 
                             for var_info in &details.variables {
                                 if let Some(wasm_type) = var_info.ty().resolve(type_index, context).wasm_type {
-                                    let convert_instruction = match wasm_type {
-                                        "i32" => VI::None,
-                                        "f32" => VI::raw(wat!["i32.reinterpret_f32"]),
+                                    let convert_vasm = match wasm_type {
+                                        "i32" => context.vasm(),
+                                        "f32" => context.vasm().raw(wat!["i32.reinterpret_f32"]),
                                         _ => unreachable!()
                                     };
 
-                                    vasm.extend(vasm![
-                                        VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
-                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), "set", &[], vasm![
-                                            VI::int(var_info.get_name_hash()),
-                                            VI::get_var(var_info, None),
-                                            convert_instruction
-                                        ], context),
-                                        VI::drop(&context.int_type())
-                                    ]);
+                                    vasm = vasm
+                                        .raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME))
+                                        .call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), "set", &[], vec![
+                                            context.vasm()
+                                                .int(var_info.get_name_hash())
+                                                .get_var(var_info, None)
+                                                .append(convert_vasm)
+                                        ], context)
+                                        .drop(&context.int_type());
                                 }
                             }
 

@@ -13,19 +13,19 @@ pub struct VirtualAssembly {
 }
 
 impl VirtualAssembly {
-    pub fn new(ty: Type) -> Self {
+    pub fn new() -> Self {
         Self {
-            ty,
+            ty: Type::Undefined,
             variables: vec![],
             instructions: vec![],
         }
     }
 
-    pub fn undefined() -> Self {
-        Self::new(Type::Undefined)
+    pub fn is_empty(&self) -> bool {
+        self.instructions.is_empty()
     }
 
-    pub fn append(self, other: Self) -> Self {
+    pub fn append(mut self, other: Self) -> Self {
         self.ty = other.ty;
         self.variables.extend(other.variables);
         self.instructions.extend(other.instructions);
@@ -36,17 +36,21 @@ impl VirtualAssembly {
         callback(self)
     }
 
-    pub fn set_type<T : Borrow<Type>>(self, ty: T) -> Self {
+    pub fn set_type<T : Borrow<Type>>(mut self, ty: T) -> Self {
         self.ty = ty.borrow().clone();
         self
     }
 
-    pub fn declare_variable<T : Borrow<VariableInfo>>(self, var_info: T) -> Self {
+    pub fn void(self, context: &ProgramContext) -> Self {
+        self.set_type(context.void_type())
+    }
+
+    pub fn declare_variable<T : Borrow<VariableInfo>>(mut self, var_info: T) -> Self {
         self.variables.push(var_info.borrow().clone());
         self
     }
 
-    fn instruction<F : FnOnce() -> VirtualInstruction>(self, callback: F) -> Self {
+    fn instruction<F : FnOnce() -> VirtualInstruction>(mut self, callback: F) -> Self {
         self.instructions.push(callback());
         self
     }
@@ -299,6 +303,6 @@ impl VirtualAssembly {
 
 impl Default for Vasm {
     fn default() -> Self {
-        Self::undefined()
+        Self::new()
     }
 }

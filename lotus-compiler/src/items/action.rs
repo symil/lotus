@@ -35,7 +35,8 @@ impl Action {
                                     None => {
                                         Some(
                                             context.vasm()
-                                                .return_value(Vasm::new(context.void_type()))
+                                                .return_value(context.vasm().void(context))
+                                                .set_type(context.void_type())
                                         )
                                     },
                                 }
@@ -48,6 +49,7 @@ impl Action {
                                                 Some(
                                                     context.vasm()
                                                         .return_value(vasm)
+                                                        .set_type(context.void_type())
                                                 )
                                             },
                                             false => {
@@ -82,6 +84,7 @@ impl Action {
                                             .if_then_else(None, bool_vasm, context.vasm(), context.vasm()
                                                 .return_value(context.vasm().none(&return_type, context))
                                             )
+                                            .set_type(context.void_type())
                                         ),
                                         None => None,
                                     },
@@ -108,8 +111,14 @@ impl Action {
                         match context.get_scope_depth(ScopeKind::Loop) {
                             Some(depth) => {
                                 match &self.keyword.value {
-                                    ActionKeyword::Break => Some(context.vasm().jump(depth + 1)),
-                                    ActionKeyword::Continue => Some(context.vasm().jump(depth)),
+                                    ActionKeyword::Break => Some(context.vasm()
+                                        .jump(depth + 1)
+                                        .set_type(context.void_type())
+                                    ),
+                                    ActionKeyword::Continue => Some(context.vasm()
+                                        .jump(depth)
+                                        .set_type(context.void_type())
+                                    ),
                                     _ => unreachable!()
                                 }
                             },
@@ -141,6 +150,7 @@ impl Action {
                                             .get_var(&output_var, None)
                                             .set_field(&intercepted_field_info.ty, intercepted_field_info.offset, context.vasm().int(1i32))
                                             .return_value(context.vasm())
+                                            .set_type(context.void_type())
                                         )
                                     },
                                 },
@@ -154,6 +164,7 @@ impl Action {
                                                 .get_field(&yielded_field_info.ty, yielded_field_info.offset)
                                                 .call_regular_method(&yielded_field_info.ty, "push", &[], vec![vasm], context)
                                                 .drop(&yielded_field_info.ty)
+                                                .set_type(context.void_type())
                                             )
                                         },
                                         None => None,

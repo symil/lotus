@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, NEW_METHOD_NAME, ProgramContext, Type, VI, Vasm}, vasm};
+use crate::{program::{BuiltinType, NEW_METHOD_NAME, ProgramContext, Type, VI, Vasm}};
 use super::{Expression, Identifier};
 
 #[parsable]
@@ -47,9 +47,11 @@ impl ParenthesizedExpression {
                 match vasm_list.len() {
                     2 => {
                         let final_type = context.get_builtin_type(BuiltinType::Pair, vec![vasm_list[0].ty.clone(), vasm_list[1].ty.clone()]);
-                        let instruction = VI::call_static_method(&final_type, NEW_METHOD_NAME, &[], Vasm::merge(vasm_list), context);
+                        let result = context.vasm()
+                            .call_static_method(&final_type, NEW_METHOD_NAME, &[], vasm_list, context)
+                            .set_type(&final_type);
 
-                        Some(Vasm::new(final_type, vec![], vec![instruction]))
+                        Some(result)
                     },
                     _ => None
                 }

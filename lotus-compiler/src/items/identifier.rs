@@ -70,6 +70,11 @@ impl Identifier {
     pub fn to_string(&self) -> String {
         self.value.clone()
     }
+
+    pub fn debug(&self) {
+        let (line, col) = self.location.get_line_col();
+        println!("{:?}:{}:{}:{}", &self.value, self.location.file_path, line, col);
+    }
 }
 
 impl Hash for Identifier {

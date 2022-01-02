@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}, vasm};
+use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
 use super::{Expression, Identifier, ObjectFieldInitialization, ObjectInitializationItem, ParsedType};
 
 #[parsable]
@@ -20,9 +20,11 @@ impl ObjectLiteral {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = Vasm::void();
+        let mut result = context.vasm();
 
         if let Some(object_type) = self.object_type.process(true, context) {
+            result = result.set_type(&object_type);
+
             if let Type::Actual(info) = &object_type {
                 let object_var = VariableInfo::tmp("object", context.int_type());
                 let type_unwrapped = info.type_blueprint.borrow();
@@ -30,10 +32,10 @@ impl ObjectLiteral {
                 if type_unwrapped.is_class() {
                     let mut fields_init = HashMap::new();
 
-                    result.extend(Vasm::new(context.void_type(), vec![object_var.clone()], vec![
-                        VI::call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context),
-                        VI::set_tmp_var(&object_var)
-                    ]));
+                    result = result
+                        .declare_variable(&object_var)
+                        .call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context)
+                        .set_tmp_var(&object_var);
 
                     for item in &self.items {
                         let init_info = item.process(&object_type, context);
@@ -43,7 +45,7 @@ impl ObjectLiteral {
                         }
 
                         if let Some(vasm) = init_info.init {
-                            result.extend(vasm);
+                            result = result.append(vasm);
                         }
                     }
 
@@ -54,13 +56,14 @@ impl ObjectLiteral {
                             None => field_info.default_value.clone(),
                         };
 
-                        result.extend(vasm![
-                            VI::get_tmp_var(&object_var),
-                            VI::set_field(&field_type, field_info.offset, init_vasm)
-                        ]);
+                        result = result
+                            .get_tmp_var(&object_var)
+                            .set_field(&field_type, field_info.offset, init_vasm);
                     }
 
-                    result.extend(Vasm::new(object_type.clone(), vec![], vec![VI::get_tmp_var(&object_var)]));
+                    result = result
+                        .get_tmp_var(&object_var)
+                        .set_type(&object_type);
                 } else {
                     context.errors.generic(&self.object_type, format!("type `{}` is not a class", &object_type));
                 }
@@ -69,9 +72,6 @@ impl ObjectLiteral {
             }
         }
 
-        match result.is_empty() {
-            true => None,
-            false => Some(result)
-        }
+        Some(result)
     }
 }

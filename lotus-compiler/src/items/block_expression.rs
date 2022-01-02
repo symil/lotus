@@ -17,8 +17,7 @@ pub struct BlockItem {
 
 impl BlockExpression {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = context.vasm();
-        let mut ok = true;
+        let mut result = context.vasm().void(context);
 
         context.push_scope(ScopeKind::Block);
 
@@ -33,24 +32,21 @@ impl BlockExpression {
                 result = result.append(item_vasm);
 
                 if !is_last || item.semicolon.is_some() {
+                    let ty = result.ty.clone();
+
                     result = result
-                        .drop(&result.ty)
+                        .drop(&ty)
                         .set_type(context.void_type());
                 }
 
                 // if !is_last && item.semicolon.is_none() {
                 //     context.errors.add(&item.location.get_end(), format!("missing `;`"));
                 // }
-            } else if is_last {
-                ok = false
             }
         }
 
         context.pop_scope();
 
-        match ok {
-            true => Some(result),
-            false => None,
-        }
+        Some(result)
     }
 }

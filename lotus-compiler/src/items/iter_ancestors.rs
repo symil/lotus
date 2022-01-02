@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{program::{ProgramContext, Type, Vasm}, vasm};
+use crate::{program::{ProgramContext, Type, Vasm}};
 use super::BlockExpression;
 
 #[parsable]
@@ -22,7 +22,7 @@ impl IterAncestors {
                         context.errors.generic(self, format!("an `{}` cannot be nested inside another one ", BLOCK_NAME.bold()));
                     },
                     None => {
-                        let mut block_vasm = vasm![];
+                        let mut block_vasm = context.vasm().void(context);
                         let ancestor_count = type_wrapped.borrow().ancestors.len();
 
                         for i in 0..ancestor_count {
@@ -33,7 +33,7 @@ impl IterAncestors {
                                     context.errors.type_mismatch(&self.block, &context.void_type(), &vasm.ty);
                                 }
                                 
-                                block_vasm.extend(vasm);
+                                block_vasm = block_vasm.append(vasm);
                             }
                         }
 

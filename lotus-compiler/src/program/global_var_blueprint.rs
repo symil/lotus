@@ -31,12 +31,11 @@ impl GlobalVarBlueprint {
         }
 
         let init_wat = self.init_vasm.resolve(&type_index, context);
-        let retain_wat = vasm![
-            VI::call_static_method(&self.var_info.ty(), RETAIN_METHOD_NAME, &[], vasm![
-                VI::get_var(&self.var_info, None)
+        let retain_wat = context.vasm()
+            .call_static_method(&self.var_info.ty(), RETAIN_METHOD_NAME, &[], vec![
+                context.vasm().get_var(&self.var_info, None)
             ], context)
-        ].resolve(&type_index, context);
-
+            .resolve(&type_index, context);
 
         GlobalVarInstance {
             wasm_name,

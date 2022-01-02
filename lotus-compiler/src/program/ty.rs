@@ -494,10 +494,10 @@ impl Type {
                             }
                         }
 
-                        let result = Vasm::new(return_type)
-                            .call_function_named(Some(self), &method_wrapped, &[], vec![]);
-
-                        Some(result)
+                        Some(context.vasm()
+                            .call_function_named(Some(self), &method_wrapped, &[], vec![])
+                            .set_type(return_type)
+                        )
                     },
                     false => None,
                 }

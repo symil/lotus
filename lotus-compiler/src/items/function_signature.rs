@@ -20,8 +20,6 @@ impl FunctionSignature {
         for argument in &self.arguments {
             if let Some((arg_name, arg_type)) = argument.process(context) {
                 if !arg_names.insert(arg_name.clone()) {
-                    dbg!(arg_name.as_str());
-                    println!("{}", &arg_type);
                     context.errors.generic(&argument, format!("duplicate argument: {}", &arg_name));
                 }
 

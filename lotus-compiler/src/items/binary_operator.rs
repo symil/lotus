@@ -69,7 +69,6 @@ impl BinaryOperatorWrapper {
             BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
                 let tmp_var = VariableInfo::tmp("tmp", context.bool_type());
                 let mut result = context.vasm()
-                    .set_type(context.bool_type())
                     .declare_variable(&tmp_var)
                     .tee_tmp_var(&tmp_var)
                     .get_tmp_var(&tmp_var)
@@ -79,7 +78,8 @@ impl BinaryOperatorWrapper {
                             _ => vasm
                         }
                     })
-                    .jump_if_from_stack(0);
+                    .jump_if_from_stack(0)
+                    .set_type(context.bool_type());
 
                 Some(result)
             }
@@ -120,8 +120,8 @@ impl BinaryOperatorWrapper {
                 match right_vasm.ty.is_assignable_to(&left_vasm.ty) || left_vasm.ty.is_assignable_to(&right_vasm.ty) {
                     true => {
                         let operator_vasm = context.vasm()
-                            .set_type(context.bool_type())
-                            .call_regular_method(&left_vasm.ty, method_name, &[], vec![], context);
+                            .call_regular_method(&left_vasm.ty, method_name, &[], vec![], context)
+                            .set_type(context.bool_type());
 
                         let result = context.vasm()
                             .append(left_vasm)

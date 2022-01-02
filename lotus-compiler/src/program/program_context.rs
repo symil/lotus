@@ -532,7 +532,7 @@ impl ProgramContext {
     }
 
     pub fn vasm(&self) -> Vasm {
-        Vasm::new(self.void_type())
+        Vasm::new()
     }
 
     pub fn reset(&mut self) {
@@ -798,11 +798,7 @@ impl ProgramContext {
             let event_callbacks_var_info = self.global_vars.get_by_name(EVENT_CALLBACKS_GLOBAL_NAME).unwrap().borrow().var_info.clone();
             
             for type_instance in new_type_instances {
-                let insert_function_call = FunctionCall::Named(NamedFunctionCallDetails {
-                    caller_type: None,
-                    function: self.functions.get_by_name(INSERT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
-                    parameters: vec![]
-                });
+                let insert_function = self.functions.get_by_name(INSERT_EVENT_CALLBACK_FUNC_NAME).unwrap();
                 let type_id = type_instance.get_type_id();
 
                 type_instance.type_blueprint.with_ref(|type_unwrapped| {
@@ -823,14 +819,13 @@ impl ProgramContext {
                         // }
 
                         for callback in event_callbacks.iter() {
-                            let vasm = vasm![
-                                VI::call_function(insert_function_call.clone(), vasm![
-                                    VI::int(event_type_id),
+                            let vasm = self.vasm()
+                                .call_function_named(None, &insert_function, &[], vec![
+                                    self.vasm().int(event_type_id),
                                     callback.borrow().get_event_callback_details().unwrap().priority.clone(),
-                                    VI::int(type_id),
-                                    VI::function_index(callback, &[])
-                                ], self)
-                            ];
+                                    self.vasm().int(type_id),
+                                    self.vasm().function_index(callback, &[])
+                                ]);
 
                             let type_index = TypeIndex {
                                 current_type_instance: Some(type_instance.clone()),
@@ -844,13 +839,11 @@ impl ProgramContext {
             }
         }
 
-        events_initialization.extend(vasm![
-            VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-                caller_type: None,
-                function: self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
-                parameters: vec![]
-            }), vec![], self)
-        ].resolve(&TypeIndex::empty(), self));
+        let sort_function = self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap();
+
+        events_initialization.extend(self.vasm()
+            .call_function_named(None, &sort_function, &[], vec![])
+            .resolve(&TypeIndex::empty(), self));
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));

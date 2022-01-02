@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, FunctionCall, NamedFunctionCallDetails, ProgramContext, VI, Vasm}, vasm};
+use crate::{program::{BuiltinType, FunctionCall, NamedFunctionCallDetails, ProgramContext, VI, Vasm}};
 use super::{TemplateStringFragment, make_string_value_from_literal_unchecked};
 
 #[parsable]
@@ -16,25 +16,20 @@ impl TemplateString {
             _ => {
                 let string_type = context.get_builtin_type(BuiltinType::String, vec![]);
                 let string_array_type = context.get_builtin_type(BuiltinType::Array, vec![string_type.clone()]);
-                let mut result = vasm![
-                    VI::call_static_method(&string_array_type, "with_capacity", &[], VI::int(self.fragments.len()), context)
-                ];
+                let mut result = context.vasm()
+                    .call_static_method(&string_array_type, "with_capacity", &[], vec![context.vasm().int(self.fragments.len())], context);
 
                 for fragment in &self.fragments {
                     if let Some(vasm) = fragment.process(context) {
-                        result.extend(
-                            VI::call_regular_method(&string_array_type, "push", &[], vasm, context)
-                        );
+                        result = result
+                            .call_regular_method(&string_array_type, "push", &[], vec![vasm], context);
                     }
                 }
 
-                Some(Vasm::new(string_type, vec![], vec![
-                    VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-                        caller_type: None,
-                        function: context.functions.get_by_name("join_strings").unwrap(),
-                        parameters: vec![]
-                    }), result, context)
-                ]))
+                Some(context.vasm()
+                    .call_function_named(None, &context.functions.get_by_name("join_strings").unwrap(), &[], vec![result])
+                    .set_type(string_type)
+                )
             }
         }
     }

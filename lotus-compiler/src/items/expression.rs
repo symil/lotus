@@ -35,12 +35,11 @@ impl Expression {
                         true => {
                             let var_info = context.declare_local_variable(is_details.var_name.clone(), target_type.clone());
 
-                            vasm.ty = context.bool_type();
-                            vasm.variables.push(var_info.clone());
-                            vasm.instructions.extend(vec![
-                                VI::tee_tmp_var(&var_info),
-                                VI::call_static_method(&target_type, IS_METHOD_NAME, &[], vec![], context)
-                            ]);
+                            vasm = vasm
+                                .declare_variable(&var_info)
+                                .tee_tmp_var(&var_info)
+                                .call_static_method(&target_type, IS_METHOD_NAME, &[], vec![], context)
+                                .set_type(context.bool_type());
                         },
                         false => {
                             context.errors.expected_class_type(&is_details.ty, &target_type);
@@ -51,7 +50,7 @@ impl Expression {
 
             if let Some(as_type) = &self.as_type {
                 if let Some(target_type) = as_type.process(true, context) {
-                    vasm.ty = target_type;
+                    vasm = vasm.set_type(target_type);
                 }
             }
 

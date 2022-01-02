@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::{HashMap, HashSet}, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list}, utils::Link, vasm, wat};
+use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list}, utils::Link, wat};
 use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
@@ -44,14 +44,21 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
         FieldKind::Regular => {
             if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
                 let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
-                let instruction = match access_type {
-                    AccessType::Get => VI::get_field(&field_type, field_info.offset),
-                    AccessType::Set(location) => VI::set_field(&field_type, field_info.offset, vasm![VI::placeholder(location)]),
+                let mut vasm = context.vasm()
+                    .set_type(&field_type);
+
+                match access_type {
+                    AccessType::Get => {
+                        vasm = vasm.get_field(&field_type, field_info.offset);
+                    },
+                    AccessType::Set(location) => {
+                        vasm = vasm.set_field(&field_type, field_info.offset, context.vasm().placeholder(location));
+                    },
                 };
 
                 context.access_shared_identifier(&field_info.name, field_name);
 
-                result = Some(Vasm::new(field_type, vec![], vec![instruction]));
+                result = Some(vasm);
             } else if !parent_type.is_undefined() {
                 context.errors.generic(field_name, format!("type `{}` has no field `{}`", parent_type, field_name.as_str().bold()));
             }
@@ -59,7 +66,10 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
         FieldKind::Static => {
             match field_name.as_str() == NONE_LITERAL {
                 true => {
-                    result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::call_static_method(parent_type, NONE_METHOD_NAME, &[], vec![], context)]));
+                    result = Some(context.vasm()
+                        .call_static_method(parent_type, NONE_METHOD_NAME, &[], vec![], context)
+                        .set_type(parent_type)
+                    );
                 },
                 false => match parent_type {
                     Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
@@ -68,7 +78,10 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
 
                             match access_type {
                                 AccessType::Get => {
-                                    result = Some(Vasm::new(parent_type.clone(), vec![], vec![VI::int(variant_info.value)]));
+                                    result = Some(context.vasm()
+                                        .int(variant_info.value)
+                                        .set_type(parent_type)
+                                    );
                                 },
                                 AccessType::Set(location) => {
                                     context.errors.generic(location, format!("cannot set value of enum variant"));
@@ -168,7 +181,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
                 vasm
             },
             None => {
-                Vasm::new(Type::Undefined, vec![], vec![])
+                context.vasm()
             }
         }
     }).collect();
@@ -214,13 +227,20 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         false => signature.return_type.replace_parameters(caller_type.as_ref(), &function_parameters),
     };
 
-    if let FunctionCall::Named(details) = &mut function_call {
-        details.parameters = function_parameters;
-    }
+    let result = match function_call {
+        FunctionCall::Named(details) => {
+            context.vasm()
+                .call_function_named(details.caller_type.as_ref(), &details.function, &function_parameters, arg_vasms)
+                .set_type(return_type)
+        },
+        FunctionCall::Anonymous(details) => {
+            context.vasm()
+                .call_function_anonymous(&details.signature, details.function_offset, arg_vasms, context)
+                .set_type(return_type)
+        },
+    };
 
-    Some(Vasm::new(return_type, vec![], vec![
-        VI::call_function(function_call, Vasm::merge(arg_vasms), context)
-    ]))
+    Some(result)
 }
 
 fn infer_function_parameters(function_parameters: &[Type], remaining_type_indexes_to_infer: &mut HashSet<usize>, actual_type: &Type, expected_type: &Type) -> Vec<Type> {

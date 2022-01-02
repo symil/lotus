@@ -30,19 +30,28 @@ impl MacroExpression {
 
         match &self.value {
             MacroExpressionValue::Line => {
-                Some(Vasm::new(context.int_type(), vec![], vec![VI::int(self.location.get_line_col().0)]))
+                Some(context.vasm()
+                    .int(self.location.get_line_col().0)
+                    .set_type(context.int_type())
+                )
             }
             MacroExpressionValue::TypeId => m.access_current_type(|type_unwrapped, context| {
-                Vasm::new(context.int_type(), vec![], vec![VI::type_id(&type_unwrapped.self_type)])
+                context.vasm()
+                    .type_id(&type_unwrapped.self_type)
+                    .set_type(context.int_type())
             }),
             MacroExpressionValue::TypeName => m.access_current_type(|type_unwrapped, context| {
-                Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![VI::type_name(&type_unwrapped.self_type)])
+                context.vasm()
+                    .type_name(&type_unwrapped.self_type)
+                    .set_type(context.get_builtin_type(BuiltinType::String, vec![]))
             }),
             MacroExpressionValue::TypeShortName => m.access_current_type(|type_unwrapped, context| {
                 make_string_value_from_literal_unchecked(type_unwrapped.name.as_str(), context)
             }),
             MacroExpressionValue::FieldCount => m.access_current_type(|type_unwrapped, context| {
-                Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.fields.len())])
+                context.vasm()
+                    .int(type_unwrapped.fields.len())
+                    .set_type(context.int_type())
             }),
             MacroExpressionValue::FieldName => m.access_current_field(|field_info, context| {
                 make_string_value_from_literal_unchecked(field_info.name.as_str(), context)
@@ -51,16 +60,22 @@ impl MacroExpression {
                 field_info.default_value.clone()
             }),
             MacroExpressionValue::VariantCount => m.access_current_type(|type_unwrapped, context| {
-                Vasm::new(context.int_type(), vec![], vec![VI::int(type_unwrapped.enum_variants.len())])
+                context.vasm()
+                    .int(type_unwrapped.enum_variants.len())
+                    .set_type(context.int_type())
             }),
             MacroExpressionValue::VariantName => m.access_current_variant(|variant_info, context| {
                 make_string_value_from_literal_unchecked(variant_info.name.as_str(), context)
             }),
             MacroExpressionValue::VariantValue => m.access_current_variant(|variant_info, context| {
-                Vasm::new(context.int_type(), vec![], vec![VI::int(variant_info.value)])
+                context.vasm()
+                    .int(variant_info.value)
+                    .set_type(context.int_type())
             }),
             MacroExpressionValue::AncestorId => m.access_current_ancestor(|ancestor_type, context| {
-                Vasm::new(context.int_type(), vec![], vec![VI::type_id(ancestor_type)])
+                context.vasm()
+                    .type_id(ancestor_type)
+                    .set_type(context.int_type())
             }),
             MacroExpressionValue::AncestorName => m.access_current_ancestor(|ancestor_type, context| {
                 make_string_value_from_literal_unchecked(&ancestor_type.to_string(), context)

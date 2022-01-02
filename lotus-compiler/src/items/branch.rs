@@ -30,12 +30,15 @@ pub fn convert_to_bool(location: &DataLocation, vasm: Vasm, context: &mut Progra
     } else if vasm.ty.is_bool() {
         Some(vasm)
     } else if !vasm.ty.is_undefined() {
-        let convert_vasm = Vasm::new(context.bool_type(), vec![], vec![
-            VI::call_regular_method(&vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context),
-            VI::raw(wat!["i32.eqz"])
-        ]);
+        let ty = vasm.ty.clone();
 
-        Some(vasm![vasm, convert_vasm])
+        let result = context.vasm()
+            .append(vasm)
+            .call_regular_method(&ty, IS_NONE_METHOD_NAME, &[], vec![], context)
+            .eqz()
+            .set_type(context.bool_type());
+
+        Some(result)
     } else {
         None
     }

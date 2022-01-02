@@ -61,10 +61,10 @@ impl ArrayLiteral {
 
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let mut result = context.vasm()
-            .set_type(&final_array_type)
             .declare_variable(&array_var)
             .call_static_method(&final_array_type, ARRAY_CREATE_METHOD_NAME, &[], vec![context.vasm().int(self.items.len())], context)
-            .set_tmp_var(&array_var);
+            .set_tmp_var(&array_var)
+            .set_type(&final_array_type);
 
         for item_vasm in item_vasm_list {
             result = result

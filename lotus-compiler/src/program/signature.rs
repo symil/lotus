@@ -18,6 +18,14 @@ pub struct ResolvedSignature {
 }
 
 impl Signature {
+    pub fn void(context: &ProgramContext) -> Self {
+        Self {
+            this_type: None,
+            argument_types: vec![],
+            return_type: context.void_type(),
+        }
+    }
+
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Self {
         Self {
             this_type: self.this_type.as_ref().map(|ty| ty.replace_parameters(this_type, function_parameters)),
@@ -83,16 +91,6 @@ impl Signature {
         }
 
         true
-    }
-}
-
-impl Default for Signature {
-    fn default() -> Self {
-        Self {
-            this_type: None,
-            argument_types: vec![],
-            return_type: Type::Undefined
-        }
     }
 }
 

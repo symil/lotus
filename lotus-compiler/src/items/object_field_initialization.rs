@@ -35,7 +35,10 @@ impl ObjectFieldInitialization {
                     },
                     None => match context.access_var(&self.name) {
                         Some(var_info) => {
-                            Some(Vasm::new(field_type, vec![], vec![VI::get_var(&var_info, Some(context.get_function_level()))]))
+                            Some(context.vasm()
+                                .get_var(&var_info, Some(context.get_function_level()))
+                                .set_type(field_type)
+                            )
                         },
                         None => {
                             context.errors.generic(&self.name, format!("undefined variable `{}`", &self.name.as_str().bold()));

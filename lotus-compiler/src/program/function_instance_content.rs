@@ -31,7 +31,7 @@ impl FunctionInstanceContent {
                 if !function_unwrapped.is_raw_wasm {
                     for arg_var in &function_unwrapped.argument_variables {
                         variables.push(arg_var.clone());
-                        wat_body.extend(Vasm::undefined().init_var(arg_var).resolve(&type_index, context));
+                        wat_body.extend(context.vasm().init_var(arg_var).resolve(&type_index, context));
                     }
 
                     if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
@@ -56,8 +56,6 @@ impl FunctionInstanceContent {
                         wat_args.push((CLOSURE_VARIABLES_VAR_NAME.to_string(), "i32"));
                     }
                 }
-
-
 
                 wat_body.extend(function_unwrapped.body.resolve(&type_index, context));
 

@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, vasm, wat};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VI, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, wat};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility, Expression};
 
 #[parsable]
@@ -30,9 +30,9 @@ impl FunctionContent {
             visibility: Visibility::Private,
             parameters: IndexMap::new(),
             is_raw_wasm: false,
-            body: Vasm::void(),
+            body: Vasm::new(),
             argument_names: vec![],
-            signature: Signature::default(),
+            signature: Signature::void(context),
             argument_variables: vec![],
             owner_type: None,
             owner_interface: None,
@@ -177,7 +177,7 @@ impl FunctionContent {
                                 function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert(EventCallbackDetails {
                                     event_type: event_type_wrapped.clone(),
                                     qualifier: qualifier.clone(),
-                                    priority: vasm![],
+                                    priority: context.vasm(),
                                 });
                             });
                         }
@@ -216,11 +216,11 @@ impl FunctionContent {
 
                     vasm
                 },
-                None => vasm![],
+                None => context.vasm(),
             },
             None => match &self.event_callback_qualifier {
-                Some(qualifier) => vasm![VI::int(qualifier.get_default_priority())],
-                None => vasm![],
+                Some(qualifier) => context.vasm().int(qualifier.get_default_priority()),
+                None => context.vasm(),
             },
         };
 
@@ -238,7 +238,9 @@ impl FunctionContent {
             function_wrapped.with_mut(|mut function_unwrapped| {
                 if let FunctionBody::Block(block) = &self.body {
                     if self.event_callback_qualifier.is_some() {
-                        vasm.instructions.push(VI::drop(&vasm.ty));
+                        let ty = vasm.ty.clone();
+
+                        vasm = vasm.drop(&ty);
                     } else if !vasm.ty.is_assignable_to(&return_type) {
                         context.errors.type_mismatch(&block, &return_type, &vasm.ty);
                     }
@@ -256,14 +258,17 @@ impl FunctionContent {
                                         true => {
                                             let current_function_level = Some(context.get_function_level());
 
-                                            vasm.instructions.insert(0, VI::if_then_else(None, vasm![
-                                                VI::get_var(&event_var_info, current_function_level),
-                                                VI::get_field(&field_info.ty, field_info.offset),
-                                                VI::get_var(&self_var_info, current_function_level),
-                                                VI::raw(wat!["i32.eq"])
-                                            ], vasm![], vasm![
-                                                VI::return_value(vasm![VI::none(&return_type, context)])
-                                            ]));
+                                            vasm = context.vasm()
+                                                .if_then_else(None,
+                                                    context.vasm()
+                                                        .get_var(&event_var_info, current_function_level)
+                                                        .get_field(&field_info.ty, field_info.offset)
+                                                        .get_var(&self_var_info, current_function_level)
+                                                        .raw(wat!["i32.eq"]),
+                                                    context.vasm(),
+                                                    context.vasm()
+                                                        .return_value(context.vasm().none(&return_type, context)))
+                                                .append(vasm);
                                         },
                                         false => {
                                             context.errors.generic(&event_callback_details.qualifier, format!("field `{}` of type `{}` is not an object", event_field_name.bold(), event_var_info.ty()));

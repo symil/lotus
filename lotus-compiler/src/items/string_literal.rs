@@ -11,7 +11,9 @@ impl StringLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         match make_string_value_from_literal(&self.location, &self.value[1..self.value.len()-1], context) {
             Some(vasm) => Some(vasm),
-            None => Some(Vasm::new(context.get_builtin_type(BuiltinType::String, vec![]), vec![], vec![])),
+            None => Some(context.vasm()
+                .set_type(context.get_builtin_type(BuiltinType::String, vec![]))
+            )
         }
     }
 }
@@ -49,15 +51,14 @@ fn get_string_vasm_from_literal(location: Option<&DataLocation>, literal: &str, 
 
     let context = context_ref.as_ref();
     let string_type = context.get_builtin_type(BuiltinType::String, vec![]);
-    let mut content = vec![
-        VI::call_static_method(&string_type, STRING_CREATE_METHOD_NAME, &[], vec![VI::int(unescaped_chars.len())], context)
-    ];
+    let mut result = context.vasm()
+        .call_static_method(&string_type, STRING_CREATE_METHOD_NAME, &[], vec![context.vasm().int(unescaped_chars.len())], context)
+        .set_type(&string_type);
 
     for (i, code) in unescaped_chars.into_iter().enumerate() {
-        content.push(
-            VI::call_regular_method(&string_type, SET_CHAR_FUNC_NAME, &[], vec![VI::int(i), VI::int(code)], context),
-        );
+        result = result
+            .call_regular_method(&string_type, SET_CHAR_FUNC_NAME, &[], vec![context.vasm().int(i), context.vasm().int(code)], context);
     }
 
-    Vasm::new(string_type, vec![], content)
+    result
 }

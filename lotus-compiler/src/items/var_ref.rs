@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VI, VariableKind, Vasm}, vasm};
+use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VI, VariableKind, Vasm}};
 use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper, IdentifierWrapper};
 
 #[parsable]
@@ -27,11 +27,11 @@ impl VarRef {
             Some(prefix) => match prefix.process(context) {
                 Some(prefix_vasm) => match &self.args {
                     Some(args) => match process_method_call(&prefix_vasm.ty, FieldKind::Regular, &var_name, &[], args, type_hint, access_type, context) {
-                        Some(method_vasm) => Some(Vasm::merge(vec![prefix_vasm, method_vasm])),
+                        Some(method_vasm) => Some(context.vasm().append(prefix_vasm).append(method_vasm)),
                         None => None,
                     },
                     None => match process_field_access(&prefix_vasm.ty, FieldKind::Regular, &var_name, access_type, context) {
-                        Some(field_vasm) => Some(Vasm::merge(vec![prefix_vasm, field_vasm])),
+                        Some(field_vasm) => Some(context.vasm().append(prefix_vasm).append(field_vasm)),
                         None => None,
                     },
                 },
@@ -47,7 +47,10 @@ impl VarRef {
                             });
 
                             match process_function_call(&var_name, function_call, args, type_hint, access_type, context) {
-                                Some(function_vasm) => Some(Vasm::merge(vec![vasm![VI::get_var(&var_info, current_function_level)], function_vasm])),
+                                Some(function_vasm) => Some(context.vasm()
+                                    .get_var(&var_info, current_function_level)
+                                    .append(function_vasm)
+                                ),
                                 None => None,
                             }
                         },
@@ -77,15 +80,22 @@ impl VarRef {
                 },
                 None => match context.access_var(&var_name) {
                     Some(var_info) => match access_type {
-                        AccessType::Get => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::get_var(&var_info, current_function_level)])),
-                        AccessType::Set(location) => Some(Vasm::new(var_info.ty().clone(), vec![], vec![VI::set_var(&var_info, current_function_level, vasm![VI::placeholder(location)])])),
+                        AccessType::Get => Some(context.vasm()
+                            .get_var(&var_info, current_function_level)
+                            .set_type(var_info.ty().clone())
+                        ),
+                        AccessType::Set(location) => Some(context.vasm()
+                            .set_var(&var_info, current_function_level, context.vasm().placeholder(location))
+                            .set_type(var_info.ty().clone())
+                        ),
                     },
                     None => match context.functions.get_by_identifier(&var_name) {
                         Some(function_wrapped) => function_wrapped.with_ref(|function_unwrapped| {
                             match function_unwrapped.parameters.is_empty() {
-                                true => {
-                                    Some(Vasm::new(Type::Function(Box::new(function_unwrapped.signature.clone())), vec![], vec![VI::function_index(&function_wrapped, &[])]))
-                                },
+                                true => Some(context.vasm()
+                                    .function_index(&function_wrapped, &[])
+                                    .set_type(Type::Function(Box::new(function_unwrapped.signature.clone())))
+                                ),
                                 false => {
                                     context.errors.generic(&var_name, format!("cannot use functions with parameters as variables for now"));
                                     None

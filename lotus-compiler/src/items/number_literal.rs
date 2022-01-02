@@ -60,8 +60,8 @@ impl NumberLiteral {
         }
         
         let vasm = match value {
-            Number::Int(value) => Vasm::new(context.int_type(), vec![], vec![VI::int(value)]),
-            Number::Float(value) => Vasm::new(context.float_type(), vec![], vec![VI::float(value)]),
+            Number::Int(value) => context.vasm().int(value).set_type(context.int_type()),
+            Number::Float(value) => context.vasm().float(value).set_type(context.float_type()),
             Number::RealSize(value) => create_display_size(REAL_SIZE_VARIANT_VALUE, value, context),
             Number::VirtualSize(value) => create_display_size(VIRTUAL_SIZE_VARIANT_VALUE, value, context),
             Number::ScaledFromContainerWidthSize(value) => create_display_size(SCALED_FROM_WIDTH_SIZE_VARIANT_VALUE, value, context),
@@ -124,7 +124,8 @@ fn split_number_suffix(s: &str) -> (&str, &str) {
 
 fn create_display_size(kind: i32, value: f32, context: &ProgramContext) -> Vasm {
     let ty = context.display_size_type();
-    let instruction = VI::call_static_method(&ty, "new", &[], vec![VI::int(kind), VI::float(value)], context);
 
-    Vasm::new(ty, vec![], vec![instruction])
+    context.vasm()
+        .call_static_method(&ty, "new", &[], vec![context.vasm().int(kind), context.vasm().float(value)], context)
+        .set_type(&ty)
 }

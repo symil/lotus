@@ -16,8 +16,8 @@ impl BooleanLiteral {
         };
 
         let result = context.vasm()
-            .set_type(context.bool_type())
-            .int(i32_value);
+            .int(i32_value)
+            .set_type(context.bool_type());
 
         Some(result)
     }

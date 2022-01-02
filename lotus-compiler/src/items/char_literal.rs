@@ -23,7 +23,11 @@ impl CharLiteral {
 
         match char_opt {
             Some(c) => {
-                Some(Vasm::new(context.get_builtin_type(BuiltinType::Char, vec![]), vec![], vec![VI::int(c as u32)]))
+                let result = context.vasm()
+                    .int(c as u32)
+                    .set_type(context.get_builtin_type(BuiltinType::Char, vec![]));
+
+                Some(result)
             },
             None => {
                 context.errors.invalid_character(self, &content.iter().collect::<String>());

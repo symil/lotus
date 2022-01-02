@@ -16,9 +16,12 @@ impl UnaryOperation {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
-        if let Some(operand_wasm) = self.operand.process(type_hint, context) {
-            if let Some(operator_wasm) = self.operator.process(&operand_wasm.ty, context) {
-                result = Some(Vasm::merge(vec![operand_wasm, operator_wasm]));
+        if let Some(operand_vasm) = self.operand.process(type_hint, context) {
+            if let Some(operator_vasm) = self.operator.process(&operand_vasm.ty, context) {
+                result = Some(context.vasm()
+                    .append(operand_vasm)
+                    .append(operator_vasm)
+                );
             }
         }
 

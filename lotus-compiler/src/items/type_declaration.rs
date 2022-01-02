@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with, MainType}, utils::Link, vasm};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, VI, WasmStackType, hashmap_get_or_insert_with, MainType}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -305,7 +305,7 @@ impl TypeDeclaration {
                                 ty: field_info.ty.replace_parameters(Some(&parent.ty), &[]),
                                 name: field_info.name.clone(),
                                 offset,
-                                default_value: vasm![]
+                                default_value: context.vasm()
                             });
 
                             offset += 1;
@@ -336,7 +336,7 @@ impl TypeDeclaration {
                                     ty: field_type,
                                     name: field.name.clone(),
                                     offset,
-                                    default_value: vasm![]
+                                    default_value: context.vasm()
                                 });
 
                                 offset += 1;
@@ -466,7 +466,7 @@ impl TypeDeclaration {
                     }
 
                     if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
-                        let mut default_value_vasm = vasm![];
+                        let mut default_value_vasm = context.vasm();
 
                         if let Some(default_value) = &field.default_value {
                             if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
@@ -491,21 +491,19 @@ impl TypeDeclaration {
                                         body: vasm,
                                     };
 
-                                    default_value_vasm = vasm![VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-                                        caller_type: None,
-                                        function: Link::new(function_blueprint),
-                                        parameters: vec![]
-                                    }), vec![], context)];
+                                    default_value_vasm = context.vasm()
+                                        .call_function_named(None, &Link::new(function_blueprint), &[], vec![]);
+
                                 } else {
                                     context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);
                                 }
                             }
                         } else if field.ty.as_ref().unwrap().is_option() {
-                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context)];
+                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context);
                         } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
-                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context)];
+                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context);
                         } else {
-                            default_value_vasm = vasm![VI::call_static_method(&field_info.ty, BUILTIN_DEFAULT_METHOD_NAME, &[], vec![], context)];
+                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, BUILTIN_DEFAULT_METHOD_NAME, &[], vec![], context);
                         }
 
                         default_value_vasm.ty = field_info.ty.clone();

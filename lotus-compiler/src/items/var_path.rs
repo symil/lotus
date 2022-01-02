@@ -20,8 +20,7 @@ impl VarPath {
         };
 
         let mut parent_type = Type::Undefined;
-        let mut ok = true;
-        let mut source = vec![];
+        let mut result = context.vasm();
         let mut current_type_hint = match self.path.is_empty() {
             true => type_hint,
             false => None,
@@ -29,7 +28,7 @@ impl VarPath {
 
         if let Some(root_vasm) = self.root.process(current_type_hint, current_access_type, context) {
             parent_type = root_vasm.ty.clone();
-            source.push(root_vasm);
+            result = result.append(root_vasm);
 
             for (i, segment) in self.path.iter().enumerate() {
                 if i == self.path.len() - 1 {
@@ -37,21 +36,15 @@ impl VarPath {
                     current_type_hint = type_hint;
                 }
 
-                if let Some(segment_wasm) = segment.process(&parent_type, current_type_hint, current_access_type, context) {
-                    parent_type = segment_wasm.ty.clone();
-                    source.push(segment_wasm);
+                if let Some(segment_vasm) = segment.process(&parent_type, current_type_hint, current_access_type, context) {
+                    parent_type = segment_vasm.ty.clone();
+                    result = result.append(segment_vasm);
                 } else {
-                    ok = false;
                     break;
                 }
             }
-        } else {
-            ok = false;
         }
 
-        match ok {
-            true => Some(Vasm::merge(source)),
-            false => None
-        }
+        Some(result)
     }
 }

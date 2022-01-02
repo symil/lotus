@@ -39,7 +39,9 @@ impl VarPrefixWrapper {
             //     None => context.errors.add(self, "no `payload` value can be referenced in this context")
             // },
             VarPrefix::System => {
-                result = Some(Vasm::new(context.get_builtin_type(BuiltinType::System, vec![]), vec![], vec![]))
+                result = Some(context.vasm()
+                    .set_type(context.get_builtin_type(BuiltinType::System, vec![]))
+                )
             },
         };
 

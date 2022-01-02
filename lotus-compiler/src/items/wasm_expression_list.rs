@@ -11,12 +11,12 @@ pub struct WasmExpressionList {
 
 impl WasmExpressionList {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut content = vec![];
+        let mut result = context.vasm();
 
         for item in &self.list {
-            content.push(VI::Raw(item.process(context)));
+            result = result.raw(item.process(context));
         }
 
-        Some(Vasm::new(Type::Undefined, vec![], content))
+        Some(result)
     }
 }

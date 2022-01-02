@@ -43,21 +43,21 @@ pub struct EventCallbackDetails {
 }
 
 impl FunctionBlueprint {
-    pub fn new(name: Identifier) -> Self {
+    pub fn new(name: Identifier, context: &ProgramContext) -> Self {
         Self {
             function_id: name.location.get_hash(),
             name: name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
-            argument_names: vec!{},
-            signature: Signature::default(),
+            argument_names: vec![],
+            signature: Signature::void(context),
             argument_variables: vec![],
             owner_type: None,
             owner_interface: None,
             closure_details: None,
             method_details: None,
             is_raw_wasm: false,
-            body: Vasm::undefined(),
+            body: context.vasm(),
         }
     }
     
