@@ -171,7 +171,7 @@ impl FunctionContent {
                                         event_type_wrapped.borrow().self_type.clone(),
                                         context.get_builtin_type(BuiltinType::EventOutput, vec![])
                                     ],
-                                    return_type: Type::Void,
+                                    return_type: context.void_type(),
                                 };
 
                                 function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert(EventCallbackDetails {

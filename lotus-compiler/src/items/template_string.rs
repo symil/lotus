@@ -33,7 +33,7 @@ impl TemplateString {
                         caller_type: None,
                         function: context.functions.get_by_name("join_strings").unwrap(),
                         parameters: vec![]
-                    }), result)
+                    }), result, context)
                 ]))
             }
         }

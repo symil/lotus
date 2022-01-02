@@ -219,7 +219,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     }
 
     Some(Vasm::new(return_type, vec![], vec![
-        VI::call_function(function_call, Vasm::merge(arg_vasms))
+        VI::call_function(function_call, Vasm::merge(arg_vasms), context)
     ]))
 }
 

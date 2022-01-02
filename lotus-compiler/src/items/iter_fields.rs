@@ -28,7 +28,7 @@ impl IterFields {
 
                             if let Some(vasm) = self.block.process(None, context) {
                                 if !vasm.ty.is_void() {
-                                    context.errors.type_mismatch(&self.block, &Type::Void, &vasm.ty);
+                                    context.errors.type_mismatch(&self.block, &context.void_type(), &vasm.ty);
                                 }
                                 
                                 block_vasm.extend(vasm);

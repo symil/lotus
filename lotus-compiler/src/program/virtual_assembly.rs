@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use parsable::DataLocation;
-use super::{ProgramContext, ToVasm, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat};
+use crate::utils::Link;
+use super::{ProgramContext, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat, VirtualInitVariableInfo, ToInt, PlaceholderDetails, VariableAccessKind, VirtualVariableAccessInfo, FunctionBlueprint, VirtualFunctionIndexInfo, VirtualAccessFieldInfo, FieldAccessKind, IfThenElseInfo, VirtualJumpIfInfo, VirtualBlockInfo, VirtualJumpInfo, VirtualLoopInfo, FunctionCall, NamedFunctionCallDetails, VirtualFunctionCallInfo, NONE_METHOD_NAME, AnonymousFunctionCallDetails, Signature};
 
 pub type Vasm = VirtualAssembly;
 
@@ -12,59 +13,32 @@ pub struct VirtualAssembly {
 }
 
 impl VirtualAssembly {
-    pub fn new<T : ToVasm>(ty: Type, mut variables: Vec<VariableInfo>, instructions: T) -> Self {
-        let mut base_vasm = instructions.to_vasm();
-        let instructions = base_vasm.instructions;
-
-        variables.extend(base_vasm.variables);
-
+    pub fn new(ty: Type) -> Self {
         Self {
             ty,
-            variables,
-            instructions,
-        }
-    }
-
-    pub fn void() -> Self {
-        Self {
-            ty: Type::Void,
             variables: vec![],
             instructions: vec![],
         }
     }
 
     pub fn undefined() -> Self {
-        Self {
-            ty: Type::Undefined,
-            variables: vec![],
-            instructions: vec![],
-        }
+        Self::new(Type::Undefined)
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.instructions.is_empty()
-    }
-
-    pub fn extend<T : ToVasm>(&mut self, value: T) {
-        let other = value.to_vasm();
-
+    pub fn append(&mut self, other: Self) {
         self.ty = other.ty;
         self.variables.extend(other.variables);
         self.instructions.extend(other.instructions);
     }
 
     pub fn merge(source: Vec<Self>) -> Self {
-        let mut ty = Type::Void;
-        let mut variables = vec![];
-        let mut instructions = vec![];
+        let mut result = Self::new(Type::Undefined);
 
-        for virtual_block in source {
-            ty = virtual_block.ty;
-            variables.extend(virtual_block.variables);
-            instructions.extend(virtual_block.instructions);
+        for vasm in source {
+            result.append(vasm);
         }
 
-        Self::new(ty, variables, instructions)
+        result
     }
 
     pub fn merge_with_type(ty: Type, source: Vec<Self>) -> Self {
@@ -74,7 +48,225 @@ impl VirtualAssembly {
         result
     }
 
+    pub fn set_type(self, ty: &Type) -> Self {
+        self.ty = ty.clone();
+        self
+    }
 
+    pub fn declare_variable(self, var_info: &VariableInfo) -> Self {
+        self.variables.push(var_info.clone());
+        self
+    }
+
+    fn instruction<F : FnOnce() -> VirtualInstruction>(self, callback: F) -> Self {
+        self.instructions.push(callback());
+        self
+    }
+
+    pub fn drop(self, ty: &Type) -> Self {
+        self.instruction(|| VirtualInstruction::Drop(ty.clone()))
+    }
+
+    pub fn raw(self, value: Wat) -> Self {
+        self.instruction(|| VirtualInstruction::Raw(value))
+    }
+
+    pub fn placeholder(self, location: &DataLocation) -> Self {
+        self.instruction(|| VirtualInstruction::Placeholder(PlaceholderDetails {
+            location: location.clone(),
+            vasm: None,
+        }))
+    }
+
+    pub fn return_value(self, value: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::Return(value))
+    }
+
+    pub fn int<T : ToInt>(self, value: T) -> Self {
+        self.instruction(|| VirtualInstruction::IntConstant(value.to_i32()))
+    }
+
+    pub fn float(self, value: f32) -> Self {
+        self.instruction(|| VirtualInstruction::FloatConstant(value))
+    }
+
+    pub fn type_id(self, ty: &Type) -> Self {
+        self.instruction(|| VirtualInstruction::TypeId(ty.clone()))
+    }
+
+    pub fn type_name(self, ty: &Type) -> Self {
+        self.instruction(|| VirtualInstruction::TypeName(ty.clone()))
+    }
+
+    pub fn init_var(self, var_info: &VariableInfo) -> Self {
+        self.instruction(|| VirtualInstruction::InitVariable(VirtualInitVariableInfo {
+            var_info: var_info.clone(),
+        }))
+    }
+
+    pub fn get_var(self, var_info: &VariableInfo, access_level: Option<u32>) -> Self {
+        self.instruction(|| VirtualInstruction::VariableAccess(VirtualVariableAccessInfo{
+            var_info: var_info.clone(),
+            access_kind: VariableAccessKind::Get,
+            access_level,
+            value: None
+        }))
+    }
+
+    pub fn get_tmp_var(self, var_info: &VariableInfo) -> Self {
+        self.get_var(var_info, None)
+    }
+
+    pub fn set_var(self, var_info: &VariableInfo, access_level: Option<u32>, value: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::VariableAccess(VirtualVariableAccessInfo {
+            var_info: var_info.clone(),
+            access_kind: VariableAccessKind::Set,
+            access_level,
+            value: Some(value),
+        }))
+    }
+
+    pub fn set_tmp_var(self, var_info: &VariableInfo) -> Self {
+        self.set_var(var_info, None, Vasm::default())
+    }
+
+    pub fn tee_var(self, var_info: &VariableInfo, access_level: Option<u32>, value: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::VariableAccess(VirtualVariableAccessInfo {
+            var_info: var_info.clone(),
+            access_kind: VariableAccessKind::Tee,
+            access_level,
+            value: Some(value),
+        }))
+    }
+
+    pub fn tee_tmp_var(self, var_info: &VariableInfo) -> Self {
+        self.tee_var(var_info, None, Vasm::default())
+    }
+
+    pub fn call_function_named(self, caller_type: Option<&Type>, function: &Link<FunctionBlueprint>, parameters: &[Type], arguments: Vec<Vasm>) -> Self {
+        self.instruction(|| {
+            VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
+                call: FunctionCall::Named(NamedFunctionCallDetails {
+                    caller_type: caller_type.cloned(),
+                    function: function.clone(),
+                    parameters: parameters.to_vec(),
+                }),
+                function_index_var: None,
+                arguments,
+            })
+        })
+    }
+
+    pub fn call_function_anonymous(self, signature: &Signature, function_offset: usize, arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
+        self.instruction(|| {
+            VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
+                call: FunctionCall::Anonymous(AnonymousFunctionCallDetails {
+                    signature: signature.clone(),
+                    function_offset,
+                }),
+                function_index_var: Some(VariableInfo::tmp("function_index", context.int_type())),
+                arguments,
+            })
+        })
+    }
+
+    pub fn call_regular_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
+        // println!("{}: {}", caller_type, method_name);
+
+        self.call_function(FunctionCall::Named(NamedFunctionCallDetails {
+            caller_type: Some(caller_type.clone()),
+            function: caller_type.get_regular_method(method_name, context).unwrap().function.clone(),
+            parameters: parameters.to_vec(),
+        }), arguments, context)
+    }
+
+    pub fn call_static_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
+        // println!("{}: {}", caller_type, method_name);
+
+        self.call_function(FunctionCall::Named(NamedFunctionCallDetails {
+            caller_type: Some(caller_type.clone()),
+            function: caller_type.get_static_method(method_name, context).unwrap().function.clone(),
+            parameters: parameters.to_vec(),
+        }), arguments, context)
+    }
+
+    pub fn none(self, ty: &Type, context: &ProgramContext) -> Self {
+        self.call_static_method(ty, NONE_METHOD_NAME, &[], vec![], context)
+    }
+
+    pub fn function_index(self, function: &Link<FunctionBlueprint>, parameters: &[Type]) -> Self {
+        self.instruction(|| VirtualInstruction::FunctionIndex(VirtualFunctionIndexInfo {
+            function: function.clone(),
+            parameters: parameters.to_vec(),
+        }))
+    }
+
+    pub fn get_field(self, field_type: &Type, field_offset: usize) -> Self {
+        self.instruction(|| VirtualInstruction::FieldAccess(VirtualAccessFieldInfo {
+            acess_kind: FieldAccessKind::Get,
+            field_type: field_type.clone(),
+            field_offset,
+            value: None,
+        }))
+    }
+
+    pub fn set_field(self, field_type: &Type, field_offset: usize, value: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::FieldAccess(VirtualAccessFieldInfo {
+            acess_kind: FieldAccessKind::Set,
+            field_type: field_type.clone(),
+            field_offset,
+            value: Some(value),
+        }))
+    }
+
+    pub fn loop_(self, content: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::Loop(VirtualLoopInfo {
+            content: content,
+        }))
+    }
+
+    pub fn block(self, content: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::Block(VirtualBlockInfo {
+            result: vec![],
+            content: content,
+        }))
+    }
+
+    pub fn typed_block(self, result: Vec<Type>, content: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::Block(VirtualBlockInfo {
+            result,
+            content,
+        }))
+    }
+
+    pub fn jump(self, depth: u32) -> Self {
+        self.instruction(|| VirtualInstruction::Jump(VirtualJumpInfo {
+            depth
+        }))
+    }
+
+    pub fn jump_if(self, depth: u32, condition: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::JumpIf(VirtualJumpIfInfo {
+            depth,
+            condition: Some(condition),
+        }))
+    }
+
+    pub fn jump_if_from_stack(self, depth: u32) -> Self {
+        self.instruction(|| VirtualInstruction::JumpIf(VirtualJumpIfInfo {
+            depth,
+            condition: None
+        }))
+    }
+
+    pub fn if_then_else(self, return_type: Option<&Type>, condition: Vasm, then_branch: Vasm, else_branch: Vasm) -> Self {
+        self.instruction(|| VirtualInstruction::IfThenElse(IfThenElseInfo {
+            return_type: return_type.cloned(),
+            condition,
+            then_branch,
+            else_branch,
+        }))
+    }
 
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         list.extend(self.variables.clone());
@@ -113,6 +305,6 @@ impl VirtualAssembly {
 
 impl Default for Vasm {
     fn default() -> Self {
-        Self::void()
+        Self::undefined()
     }
 }

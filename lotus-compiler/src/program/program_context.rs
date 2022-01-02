@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions};
-use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash}, vasm, wat};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, VI, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash}, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME};
 
 #[derive(Debug, Default)]
@@ -113,20 +113,6 @@ impl ProgramContext {
         ty
     }
 
-    pub fn get_main_type(&self, main_type: MainType) -> Type {
-        self.main_types.get(&main_type).unwrap().clone()
-    }
-
-    pub fn get_this_type(&self) -> Type {
-        if let Some(type_wrapped) = self.get_current_type() {
-            type_wrapped.borrow().self_type.clone()
-        } else if let Some(interface_wrapped) = self.get_current_interface() {
-            Type::This(interface_wrapped.clone())
-        } else {
-            Type::Undefined
-        }
-    }
-
     pub fn void_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::Void, vec![])
     }
@@ -153,6 +139,20 @@ impl ProgramContext {
 
     pub fn display_size_type(&self) -> Type {
         self.get_builtin_type(BuiltinType::DisplaySize, vec![])
+    }
+
+    pub fn get_main_type(&self, main_type: MainType) -> Type {
+        self.main_types.get(&main_type).unwrap().clone()
+    }
+
+    pub fn get_this_type(&self) -> Type {
+        if let Some(type_wrapped) = self.get_current_type() {
+            type_wrapped.borrow().self_type.clone()
+        } else if let Some(interface_wrapped) = self.get_current_interface() {
+            Type::This(interface_wrapped.clone())
+        } else {
+            Type::Undefined
+        }
     }
 
     pub fn get_builtin_interface(&self, interface: BuiltinInterface) -> Link<InterfaceBlueprint> {
@@ -531,6 +531,10 @@ impl ProgramContext {
         self.type_instances.values().map(|(header, _)| header.clone()).collect()
     }
 
+    pub fn vasm(&self) -> Vasm {
+        Vasm::new(self.void_type())
+    }
+
     pub fn reset(&mut self) {
         take(self);
     }
@@ -825,7 +829,7 @@ impl ProgramContext {
                                     callback.borrow().get_event_callback_details().unwrap().priority.clone(),
                                     VI::int(type_id),
                                     VI::function_index(callback, &[])
-                                ])
+                                ], self)
                             ];
 
                             let type_index = TypeIndex {
@@ -845,7 +849,7 @@ impl ProgramContext {
                 caller_type: None,
                 function: self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap(),
                 parameters: vec![]
-            }), vec![])
+            }), vec![], self)
         ].resolve(&TypeIndex::empty(), self));
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {

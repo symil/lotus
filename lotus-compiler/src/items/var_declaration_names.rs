@@ -40,7 +40,7 @@ impl VarDeclarationNames {
 
                 Some((
                     vec![var_info.clone()],
-                    Vasm::new(Type::Void, vec![var_info.clone()], vec![
+                    Vasm::new(context.void_type(), vec![var_info.clone()], vec![
                         VI::init_var(&var_info),
                         VI::set_var(&var_info, current_function_level, assigned_vasm)
                     ])
@@ -69,7 +69,7 @@ impl VarDeclarationNames {
                     }
 
                     if !var_1.ty().is_undefined() && !var_2.ty().is_undefined() {
-                        result_vasm = Vasm::new(Type::Void, vec![tmp_var_info.clone(), var_1.clone(), var_2.clone()], vasm![
+                        result_vasm = Vasm::new(context.void_type(), vec![tmp_var_info.clone(), var_1.clone(), var_2.clone()], vasm![
                             assigned_vasm,
                             VI::set_tmp_var(&tmp_var_info),
                             VI::init_var(&var_1),

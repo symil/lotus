@@ -8,9 +8,9 @@ pub trait ToWat {
     fn to_wat(self) -> Wat;
 }
 
-pub trait ToVasm {
-    fn to_vasm(self) -> Vasm;
-}
+// pub trait ToVasm {
+//     fn to_vasm(self) -> Vasm;
+// }
 
 pub trait ToWatVec {
     fn to_wat_vec(self) -> Vec<Wat>;
@@ -107,28 +107,28 @@ impl<T : ToWat> ToWatVec for T {
     }
 }
 
-impl ToVasm for Vasm {
-    fn to_vasm(self) -> Vasm {
-        self
-    }
-}
+// impl ToVasm for Vasm {
+//     fn to_vasm(self) -> Vasm {
+//         self
+//     }
+// }
 
-impl ToVasm for VirtualInstruction {
-    fn to_vasm(self) -> Vasm {
-        let mut vasm = Vasm::void();
+// impl ToVasm for VirtualInstruction {
+//     fn to_vasm(self) -> Vasm {
+//         let mut vasm = Vasm::void();
 
-        vasm.instructions.push(self);
+//         vasm.instructions.push(self);
 
-        vasm
-    }
-}
+//         vasm
+//     }
+// }
 
-impl ToVasm for Vec<VirtualInstruction> {
-    fn to_vasm(self) -> Vasm {
-        let mut vasm = Vasm::void();
+// impl ToVasm for Vec<VirtualInstruction> {
+//     fn to_vasm(self) -> Vasm {
+//         let mut vasm = Vasm::void();
 
-        vasm.instructions.extend(self);
+//         vasm.instructions.extend(self);
 
-        vasm
-    }
-}
+//         vasm
+//     }
+// }

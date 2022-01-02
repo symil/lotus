@@ -25,7 +25,7 @@ impl FunctionLiteral {
         let arg_names = self.arguments.process(type_hint, context);
         let (arg_types, return_type) = match type_hint {
             Some(Type::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
-            _ => (EMPTY_TYPE_LIST.as_slice(), &Type::Void)
+            _ => (EMPTY_TYPE_LIST.as_slice(), &context.void_type())
         };
 
         let mut argument_names = vec![];
@@ -84,7 +84,7 @@ impl FunctionLiteral {
         function_wrapped.with_mut(|mut function_unwrapped| {
             if let Some(closure_details) = &mut function_unwrapped.closure_details {
                 let mut function = FunctionBlueprint::new(Identifier::new("retain_function", self));
-                let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), Type::Int, VariableKind::Argument, 0);
+                let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0);
 
                 function.argument_variables = vec![closure_args_var.clone()];
 
@@ -97,7 +97,7 @@ impl FunctionLiteral {
                             VI::call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vasm![
                                 VI::get_tmp_var(&closure_args_var),
                                 VI::call_regular_method(&map_type, "get", &[], vasm![ VI::int(arg.get_name_hash()) ], context),
-                                VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0) ], context)
+                                VI::call_regular_method(&pointer_type, "get_at", &[], vasm![ VI::int(0i32) ], context)
                             ], context)
                         ])
                     }

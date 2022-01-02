@@ -57,7 +57,7 @@ impl FunctionBlueprint {
             closure_details: None,
             method_details: None,
             is_raw_wasm: false,
-            body: Vasm::void(),
+            body: Vasm::undefined(),
         }
     }
     

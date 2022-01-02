@@ -91,7 +91,7 @@ impl Default for Signature {
         Self {
             this_type: None,
             argument_types: vec![],
-            return_type: Type::Void
+            return_type: Type::Undefined
         }
     }
 }

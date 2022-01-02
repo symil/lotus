@@ -66,14 +66,14 @@ impl ForBlock {
 
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
                         }
 
                         let index_var_wasm_name = index_var.get_wasm_name();
                         let item_var_wasm_name = item_var.get_wasm_name();
                         let range_end_var_wasm_name = range_end_var.get_wasm_name();
 
-                        result = Some(Vasm::new(Type::Void, variables, vasm![
+                        result = Some(Vasm::new(context.void_type(), variables, vasm![
                             range_end_vasm,
                             VI::set_tmp_var(&range_end_var),
                             range_start_vasm,
@@ -121,7 +121,7 @@ impl ForBlock {
                 if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", Type::Void, &block_vasm.ty));
+                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
                         }
 
                         let iterable_type = iterable_vasm.ty.clone();
@@ -129,7 +129,7 @@ impl ForBlock {
                         let item_var_wasm_name = item_var.get_wasm_name();
                         let iterable_len_var_wasm_name = iterable_len_var.get_wasm_name();
 
-                        result = Some(Vasm::new(Type::Void, variables, vasm![
+                        result = Some(Vasm::new(context.void_type(), variables, vasm![
                             iterable_vasm,
                             VI::set_tmp_var(&iterable_var),
                             VI::int(-1i32),

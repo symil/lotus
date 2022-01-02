@@ -495,7 +495,7 @@ impl TypeDeclaration {
                                         caller_type: None,
                                         function: Link::new(function_blueprint),
                                         parameters: vec![]
-                                    }), vec![])];
+                                    }), vec![], context)];
                                 } else {
                                     context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);
                                 }

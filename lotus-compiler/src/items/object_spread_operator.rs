@@ -16,7 +16,7 @@ impl SpreadOperator {
             let var_info = VariableInfo::tmp("spread_tmp", vasm.ty.clone());
             let expr_type = vasm.ty.clone();
 
-            object_init_result.init = Some(Vasm::new(Type::Void, vec![var_info.clone()], vasm![
+            object_init_result.init = Some(Vasm::new(context.void_type(), vec![var_info.clone()], vasm![
                 vasm,
                 VI::set_tmp_var(&var_info)
             ]));

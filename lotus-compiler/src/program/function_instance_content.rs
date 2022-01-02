@@ -1,6 +1,6 @@
 use std::rc::Rc;
-use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, SELF_VAR_NAME, TypeIndex, VI, VariableInfo, VariableKind}, utils::Link, vasm};
-use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat};
+use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, SELF_VAR_NAME, TypeIndex, VI, VariableInfo, VariableKind}, utils::Link};
+use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat, Vasm};
 
 #[derive(Debug)]
 pub struct FunctionInstanceContent {
@@ -31,9 +31,7 @@ impl FunctionInstanceContent {
                 if !function_unwrapped.is_raw_wasm {
                     for arg_var in &function_unwrapped.argument_variables {
                         variables.push(arg_var.clone());
-                        wat_body.extend(vasm![
-                            VI::init_var(arg_var)
-                        ].resolve(&type_index, context));
+                        wat_body.extend(Vasm::undefined().init_var(arg_var).resolve(&type_index, context));
                     }
 
                     if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {

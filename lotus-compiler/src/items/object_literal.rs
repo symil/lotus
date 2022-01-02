@@ -30,7 +30,7 @@ impl ObjectLiteral {
                 if type_unwrapped.is_class() {
                     let mut fields_init = HashMap::new();
 
-                    result.extend(Vasm::new(Type::Void, vec![object_var.clone()], vec![
+                    result.extend(Vasm::new(context.void_type(), vec![object_var.clone()], vec![
                         VI::call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context),
                         VI::set_tmp_var(&object_var)
                     ]));

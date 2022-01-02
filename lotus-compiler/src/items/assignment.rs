@@ -55,7 +55,7 @@ impl Assignment {
                         };
 
                         left_vasm.replace_placeholder(&equal_token, &Rc::new(assigned_vasm));
-                        left_vasm.ty = Type::Void;
+                        left_vasm.ty = context.void_type();
                         
                         result = Some(left_vasm);
                     } else {

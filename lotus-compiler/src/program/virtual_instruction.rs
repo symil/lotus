@@ -2,16 +2,16 @@ use std::rc::Rc;
 
 use parsable::DataLocation;
 use crate::{items::{Identifier, make_string_value_from_literal, make_string_value_from_literal_unchecked}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, SELF_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, vasm, wat};
-use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, ToVasm, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
+use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
 pub type VI = VirtualInstruction;
 
 #[derive(Debug, Clone)]
 pub enum VirtualInstruction {
     None,
-    Drop(Type),
     Eqz,
     Raw(Wat),
+    Drop(Type),
     Placeholder(PlaceholderDetails),
     Return(Vasm),
     IntConstant(i32),
@@ -80,7 +80,7 @@ pub struct VirtualAccessFieldInfo {
 pub struct VirtualFunctionCallInfo {
     pub call: FunctionCall,
     pub function_index_var: Option<VariableInfo>,
-    pub args: Vasm,
+    pub arguments: Vec<Vasm>,
 }
 
 #[derive(Debug, Clone)]
@@ -120,197 +120,6 @@ pub struct IfThenElseInfo {
 }
 
 impl VirtualInstruction {
-    pub fn drop(ty: &Type) -> Self {
-        Self::Drop(ty.clone())
-    }
-
-    pub fn raw(value: Wat) -> Self {
-        Self::Raw(value)
-    }
-
-    pub fn placeholder(location: &DataLocation) -> Self {
-        Self::Placeholder(PlaceholderDetails {
-            location: location.clone(),
-            vasm: None,
-        })
-    }
-
-    pub fn return_value(value: Vasm) -> Self {
-        Self::Return(value)
-    }
-
-    pub fn int<T : ToInt>(value: T) -> Self {
-        Self::IntConstant(value.to_i32())
-    }
-
-    pub fn float(value: f32) -> Self {
-        Self::FloatConstant(value)
-    }
-
-    pub fn type_id(ty: &Type) -> Self {
-        Self::TypeId(ty.clone())
-    }
-
-    pub fn type_name(ty: &Type) -> Self {
-        Self::TypeName(ty.clone())
-    }
-
-    pub fn init_var(var_info: &VariableInfo) -> Self {
-        Self::InitVariable(VirtualInitVariableInfo {
-            var_info: var_info.clone(),
-        })
-    }
-
-    pub fn get_var(var_info: &VariableInfo, access_level: Option<u32>) -> Self {
-        Self::VariableAccess(VirtualVariableAccessInfo{
-            var_info: var_info.clone(),
-            access_kind: VariableAccessKind::Get,
-            access_level,
-            value: None
-        })
-    }
-
-    pub fn get_tmp_var(var_info: &VariableInfo) -> Self {
-        Self::get_var(var_info, None)
-    }
-
-    pub fn set_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
-        Self::VariableAccess(VirtualVariableAccessInfo {
-            var_info: var_info.clone(),
-            access_kind: VariableAccessKind::Set,
-            access_level,
-            value: Some(value.to_vasm()),
-        })
-    }
-
-    pub fn set_tmp_var(var_info: &VariableInfo) -> Self {
-        Self::set_var(var_info, None, vec![])
-    }
-
-    pub fn tee_var<T : ToVasm>(var_info: &VariableInfo, access_level: Option<u32>, value: T) -> Self {
-        Self::VariableAccess(VirtualVariableAccessInfo {
-            var_info: var_info.clone(),
-            access_kind: VariableAccessKind::Tee,
-            access_level,
-            value: Some(value.to_vasm()),
-        })
-    }
-
-    pub fn tee_tmp_var(var_info: &VariableInfo) -> Self {
-        Self::tee_var(var_info, None, vec![])
-    }
-
-    pub fn call_function<T : ToVasm>(call: FunctionCall, args: T) -> Self {
-        let function_index_var = match &call {
-            FunctionCall::Named(_) => None,
-            FunctionCall::Anonymous(_) => Some(VariableInfo::tmp("function_index", Type::Int)),
-        };
-
-        Self::FunctionCall(VirtualFunctionCallInfo {
-            call,
-            function_index_var,
-            args: args.to_vasm(),
-        })
-    }
-
-    pub fn call_regular_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
-        // println!("{}: {}", caller_type, method_name);
-
-        Self::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-            caller_type: Some(caller_type.clone()),
-            function: caller_type.get_regular_method(method_name, context).unwrap().function.clone(),
-            parameters: parameters.to_vec(),
-        }), args)
-    }
-    
-    pub fn call_static_method<T : ToVasm>(caller_type: &Type, method_name: &str, parameters: &[Type], args: T, context: &ProgramContext) -> Self {
-        // println!("{}: {}", caller_type, method_name);
-
-        Self::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-            caller_type: Some(caller_type.clone()),
-            function: caller_type.get_static_method(method_name, context).unwrap().function.clone(),
-            parameters: parameters.to_vec(),
-        }), args)
-    }
-
-    pub fn none(ty: &Type, context: &ProgramContext) -> Self {
-        Self::call_static_method(ty, NONE_METHOD_NAME, &[], vec![], context)
-    }
-
-    pub fn function_index(function: &Link<FunctionBlueprint>, parameters: &[Type]) -> Self {
-        Self::FunctionIndex(VirtualFunctionIndexInfo {
-            function: function.clone(),
-            parameters: parameters.to_vec(),
-        })
-    }
-
-    pub fn get_field(field_type: &Type, field_offset: usize) -> Self {
-        Self::FieldAccess(VirtualAccessFieldInfo {
-            acess_kind: FieldAccessKind::Get,
-            field_type: field_type.clone(),
-            field_offset,
-            value: None,
-        })
-    }
-
-    pub fn set_field(field_type: &Type, field_offset: usize, value: Vasm) -> Self {
-        Self::FieldAccess(VirtualAccessFieldInfo {
-            acess_kind: FieldAccessKind::Set,
-            field_type: field_type.clone(),
-            field_offset,
-            value: Some(value),
-        })
-    }
-
-    pub fn loop_<T : ToVasm>(content: T) -> Self {
-        Self::Loop(VirtualLoopInfo {
-            content: content.to_vasm(),
-        })
-    }
-
-    pub fn block<T : ToVasm>(content: T) -> Self {
-        Self::Block(VirtualBlockInfo {
-            result: vec![],
-            content: content.to_vasm(),
-        })
-    }
-
-    pub fn typed_block<T : ToVasm>(result: Vec<Type>, content: T) -> Self {
-        Self::Block(VirtualBlockInfo {
-            result,
-            content: content.to_vasm(),
-        })
-    }
-
-    pub fn jump(depth: u32) -> Self {
-        Self::Jump(VirtualJumpInfo {
-            depth
-        })
-    }
-
-    pub fn jump_if<T : ToVasm>(depth: u32, condition: T) -> Self {
-        Self::JumpIf(VirtualJumpIfInfo {
-            depth,
-            condition: Some(condition.to_vasm()),
-        })
-    }
-
-    pub fn jump_if_from_stack(depth: u32) -> Self {
-        Self::JumpIf(VirtualJumpIfInfo {
-            depth,
-            condition: None
-        })
-    }
-
-    pub fn if_then_else(return_type: Option<&Type>, condition: Vasm, then_branch: Vasm, else_branch: Vasm) -> Self {
-        Self::IfThenElse(IfThenElseInfo {
-            return_type: return_type.cloned(),
-            condition,
-            then_branch,
-            else_branch,
-        })
-    }
-
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
         match self {
             VirtualInstruction::None => {},
@@ -328,7 +137,7 @@ impl VirtualInstruction {
             VirtualInstruction::FieldAccess(info) => info.value.iter().for_each(|vasm| vasm.collect_variables(list)),
             VirtualInstruction::FunctionCall(info) => {
                 info.function_index_var.iter().for_each(|var_info| list.push(var_info.clone()));
-                info.args.collect_variables(list);
+                info.arguments.iter().for_each(|arg| arg.collect_variables(list));
             },
             VirtualInstruction::FunctionIndex(info) => {},
             VirtualInstruction::Loop(info) => info.content.collect_variables(list),
@@ -362,7 +171,7 @@ impl VirtualInstruction {
             VirtualInstruction::InitVariable(_) => {},
             VirtualInstruction::VariableAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
             VirtualInstruction::FieldAccess(info) => info.value.iter_mut().for_each(|vasm| vasm.replace_placeholder(location, replacement)),
-            VirtualInstruction::FunctionCall(info) => info.args.replace_placeholder(location, replacement),
+            VirtualInstruction::FunctionCall(info) => info.arguments.iter().for_each(|arg| arg.replace_placeholder(location, replacement)),
             VirtualInstruction::FunctionIndex(_) => {},
             VirtualInstruction::Loop(info) => info.content.replace_placeholder(location, replacement),
             VirtualInstruction::Block(info) => info.content.replace_placeholder(location, replacement),
@@ -626,13 +435,15 @@ impl VirtualInstruction {
                                     wasm_signature.push(wat!["result", wasm_type]);
                                 }
 
-                                signature_resolved.argument_types.push(Type::Int.resolve(type_index, context));
+                                signature_resolved.argument_types.push(context.int_type().resolve(type_index, context));
                                 let closure_wasm_type_name = context.get_function_instance_wasm_type_name(&signature_resolved);
 
                                 content.extend(vec![
                                     Wat::set_local_from_stack(&function_index_var.get_wasm_name())
                                 ]);
-                                content.extend(info.args.resolve(type_index, context));
+                                for arg in &info.arguments {
+                                    content.extend(arg.resolve(type_index, context));
+                                }
                                 content.extend(vec![
                                     function_index_var.get_to_stack(),
                                     wat!["i32.ge_u", Wat::const_i32(0x80000000u32)],
@@ -679,7 +490,7 @@ impl VirtualInstruction {
                             let ptr_type = context.pointer_type();
 
                             let mut vasm = vasm![
-                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, ptr_type.clone()]), NEW_METHOD_NAME, &[], vec![], context),
+                                VI::call_static_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), NEW_METHOD_NAME, &[], vec![], context),
                                 VI::raw(Wat::set_global_from_stack(CLOSURE_VARIABLES_TMP_VAR_NAME))
                             ];
 
@@ -693,12 +504,12 @@ impl VirtualInstruction {
 
                                     vasm.extend(vasm![
                                         VI::raw(Wat::get_global(CLOSURE_VARIABLES_TMP_VAR_NAME)),
-                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![Type::Int, ptr_type.clone()]), "set", &[], vasm![
+                                        VI::call_regular_method(&context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), ptr_type.clone()]), "set", &[], vasm![
                                             VI::int(var_info.get_name_hash()),
                                             VI::get_var(var_info, None),
                                             convert_instruction
                                         ], context),
-                                        VI::drop(&Type::Int)
+                                        VI::drop(&context.int_type())
                                     ]);
                                 }
                             }

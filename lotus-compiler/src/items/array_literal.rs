@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use parsable::parsable;
-use crate::{items::Identifier, program::{BuiltinType, CompilationError, GET_BODY_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm, ARRAY_CREATE_METHOD_NAME, PUSH_UNCHECKED_METHOD_NAME}, vasm, wat};
+use crate::{items::Identifier, program::{BuiltinType, CompilationError, GET_BODY_FUNC_NAME, ProgramContext, SET_AT_INDEX_FUNC_NAME, Type, VI, VariableInfo, VariableKind, Vasm, ARRAY_CREATE_METHOD_NAME, PUSH_UNCHECKED_METHOD_NAME}, wat};
 use super::Expression;
 
 #[parsable]
@@ -17,7 +17,7 @@ impl ArrayLiteral {
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let array_var = VariableInfo::tmp("array", Type::Int);
+        let array_var = VariableInfo::tmp("array", context.int_type());
         let variables = vec![ array_var.clone() ];
 
         let mut all_items_ok = true;
@@ -60,20 +60,21 @@ impl ArrayLiteral {
         }
 
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
-        let mut instructions = vec![
-            VI::call_static_method(&final_array_type, ARRAY_CREATE_METHOD_NAME, &[], vec![VI::int(self.items.len())], context),
-            VI::set_tmp_var(&array_var),
-        ];
+        let mut result = context.vasm()
+            .set_type(&final_array_type)
+            .declare_variable(&array_var)
+            .call_static_method(&final_array_type, ARRAY_CREATE_METHOD_NAME, &[], vec![context.vasm().int(self.items.len())], context)
+            .set_tmp_var(&array_var);
 
         for item_vasm in item_vasm_list {
-            instructions.extend(vec![
-                VI::get_tmp_var(&array_var),
-                VI::call_regular_method(&final_array_type, PUSH_UNCHECKED_METHOD_NAME, &[], vasm![item_vasm], context)
-            ]);
+            result = result
+                .get_tmp_var(&array_var)
+                .call_regular_method(&final_array_type, PUSH_UNCHECKED_METHOD_NAME, &[], vec![item_vasm], context);
         }
 
-        instructions.push(VI::get_tmp_var(&array_var));
+        result = result
+            .get_tmp_var(&array_var);
 
-        Some(Vasm::new(final_array_type, variables, instructions))
+        Some(result)
     }
 }

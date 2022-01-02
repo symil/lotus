@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, VI, Vasm}, vasm, wat};
+use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, VI, Vasm}, wat};
 use super::{ActionKeywordWrapper, ActionKeyword, Expression};
 
 #[parsable]
@@ -33,7 +33,10 @@ impl Action {
                                         }
                                     },
                                     None => {
-                                        Some(vasm![VI::return_value(vasm![])])
+                                        Some(
+                                            context.vasm()
+                                                .return_value(Vasm::new(context.void_type()))
+                                        )
                                     },
                                 }
                             },
@@ -42,7 +45,10 @@ impl Action {
                                     Some(expr) => match expr.process(Some(&return_type), context) {
                                         Some(vasm) => match vasm.ty.is_assignable_to(&return_type) {
                                             true => {
-                                                Some(vasm![ VI::return_value(vasm) ])
+                                                Some(
+                                                    context.vasm()
+                                                        .return_value(vasm)
+                                                )
                                             },
                                             false => {
                                                 context.errors.type_mismatch(expr, &return_type, &vasm.ty);
@@ -72,11 +78,11 @@ impl Action {
                             Some(value) => {
                                 match value.process(None, context) {
                                     Some(vasm) => match convert_to_bool(value, vasm, context) {
-                                        Some(bool_vasm) => Some(vasm![
-                                            VI::if_then_else(None, bool_vasm, vasm![], vasm![
-                                                VI::return_value(vasm![VI::none(&return_type, context)])
-                                            ])
-                                        ]),
+                                        Some(bool_vasm) => Some(context.vasm()
+                                            .if_then_else(None, bool_vasm, context.vasm(), context.vasm()
+                                                .return_value(context.vasm().none(&return_type, context))
+                                            )
+                                        ),
                                         None => None,
                                     },
                                     None => None,
@@ -102,8 +108,8 @@ impl Action {
                         match context.get_scope_depth(ScopeKind::Loop) {
                             Some(depth) => {
                                 match &self.keyword.value {
-                                    ActionKeyword::Break => Some(vasm![VI::jump(depth + 1)]),
-                                    ActionKeyword::Continue => Some(vasm![VI::jump(depth)]),
+                                    ActionKeyword::Break => Some(context.vasm().jump(depth + 1)),
+                                    ActionKeyword::Continue => Some(context.vasm().jump(depth)),
                                     _ => unreachable!()
                                 }
                             },
@@ -131,11 +137,11 @@ impl Action {
                                     None => {
                                         let intercepted_field_info = event_output_type.get_field("intercepted").unwrap();
 
-                                        Some(vasm![
-                                            VI::get_var(&output_var, None),
-                                            VI::set_field(&intercepted_field_info.ty, intercepted_field_info.offset, vasm![ VI::int(1i32) ]),
-                                            VI::return_value(vasm![])
-                                        ])
+                                        Some(context.vasm()
+                                            .get_var(&output_var, None)
+                                            .set_field(&intercepted_field_info.ty, intercepted_field_info.offset, context.vasm().int(1i32))
+                                            .return_value(context.vasm())
+                                        )
                                     },
                                 },
                                 ActionKeyword::Yield => match &self.expression {
@@ -143,12 +149,12 @@ impl Action {
                                         Some(vasm) => {
                                             let yielded_field_info = event_output_type.get_field("yielded").unwrap();
 
-                                            Some(vasm![
-                                                VI::get_var(&output_var, None),
-                                                VI::get_field(&yielded_field_info.ty, yielded_field_info.offset),
-                                                VI::call_regular_method(&yielded_field_info.ty, "push", &[], vasm, context),
-                                                VI::drop(&yielded_field_info.ty)
-                                            ])
+                                            Some(context.vasm()
+                                                .get_var(&output_var, None)
+                                                .get_field(&yielded_field_info.ty, yielded_field_info.offset)
+                                                .call_regular_method(&yielded_field_info.ty, "push", &[], vec![vasm], context)
+                                                .drop(&yielded_field_info.ty)
+                                            )
                                         },
                                         None => None,
                                     },

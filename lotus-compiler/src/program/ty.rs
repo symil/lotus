@@ -2,21 +2,25 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, b
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, VI, Vasm, display_join}, utils::Link, vasm, wat};
+use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, VI, Vasm, display_join}, utils::Link, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
 #[derive(Debug, Clone)]
 pub enum Type {
     Undefined,
     Any,
-    Void,
-    Int,
     This(Link<InterfaceBlueprint>),
     Actual(ActualTypeContent),
     TypeParameter(Rc<ParameterTypeInfo>),
     FunctionParameter(Rc<ParameterTypeInfo>),
     Associated(AssociatedTypeContent),
     Function(Box<Signature>)
+}
+
+#[derive(Debug, Clone)]
+pub struct BuiltinTypeContent {
+    pub builtin_type: BuiltinType,
+    pub parameters: Vec<Type>
 }
 
 #[derive(Debug, Clone)]
@@ -40,37 +44,6 @@ impl Type {
         }
     }
 
-    pub fn is_enum(&self) -> bool {
-        match self {
-            Type::Actual(info) => info.type_blueprint.borrow().is_enum(),
-            _ => false
-        }
-    }
-
-    pub fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
-        let name = builtin_type.get_name();
-
-        if let Type::Actual(info) = self {
-            if info.type_blueprint.borrow().name.as_str() == name {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    pub fn is_void(&self) -> bool {
-        self == &Type::Void || self.is_builtin_type(BuiltinType::Void)
-    }
-
-    pub fn is_int(&self) -> bool {
-        self == &Type::Int || self.is_builtin_type(BuiltinType::Int)
-    }
-
-    pub fn is_bool(&self) -> bool {
-        self.is_builtin_type(BuiltinType::Bool)
-    }
-
     pub fn is_object(&self) -> bool {
         match self {
             Type::Actual(info) => info.type_blueprint.borrow().is_class(),
@@ -83,6 +56,32 @@ impl Type {
             Type::Function(_) => true,
             _ => false
         }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        match self {
+            Type::Actual(info) => info.type_blueprint.borrow().is_enum(),
+            _ => false
+        }
+    }
+
+    pub fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
+        match self {
+            Type::Actual(info) => info.type_blueprint.borrow().name.as_str() == builtin_type.get_name(),
+            _ => false
+        }
+    }
+
+    pub fn is_void(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Void)
+    }
+
+    pub fn is_int(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Int)
+    }
+
+    pub fn is_bool(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Bool)
     }
 
     pub fn push_parameters(&mut self, parameter_types: Vec<Type>) {
@@ -107,16 +106,22 @@ impl Type {
         }
     }
 
+    pub fn get_parameters(&self) -> &[Type] {
+        match self {
+            Type::Undefined => &[],
+            Type::Any => &[],
+            Type::This(_) => &[],
+            Type::Actual(info) => &info.parameters,
+            Type::TypeParameter(_) => &[],
+            Type::FunctionParameter(_) => &[],
+            Type::Associated(_) => &[],
+            Type::Function(_) => &[],
+        }
+    }
+
     pub fn get_builtin_type_parameter(&self, builtin_type: BuiltinType) -> Option<&Type> {
         match self.is_builtin_type(builtin_type) {
-            true => {
-                let info = self.get_actual_type_content();
-
-                match info.parameters.first() {
-                    Some(item_type) => Some(item_type),
-                    None => None,
-                }
-            },
+            true => self.get_parameters().first(),
             false => None
         }
     }
@@ -128,13 +133,6 @@ impl Type {
     pub fn get_type_blueprint(&self) -> Link<TypeBlueprint> {
         match self {
             Type::Actual(info) => info.type_blueprint.clone(),
-            _ => unreachable!()
-        }
-    }
-
-    pub fn get_actual_type_content(&self) -> &ActualTypeContent {
-        match self {
-            Type::Actual(info) => info,
             _ => unreachable!()
         }
     }
@@ -186,8 +184,6 @@ impl Type {
         match self {
             Type::Undefined => Type::Undefined,
             Type::Any => Type::Any,
-            Type::Void => Type::Void,
-            Type::Int => Type::Int,
             Type::This(_) => this_type.unwrap().clone(),
             Type::Actual(info) => {
                 let type_blueprint = info.type_blueprint.clone();
@@ -231,8 +227,6 @@ impl Type {
         match self {
             Type::Undefined => unreachable!(),
             Type::Any => unreachable!(),
-            Type::Void => unreachable!(),
-            Type::Int => unreachable!(),
             Type::This(_) => unreachable!(),
             Type::Actual(info) => info.parameters[index].clone(),
             Type::TypeParameter(_) => unreachable!(),
@@ -245,8 +239,6 @@ impl Type {
     pub fn is_assignable_to(&self, target: &Type) -> bool {
         match (self, target) {
             (_, Type::Any) => true,
-            (Type::Void, other) | (other, Type::Void) => other.is_void(),
-            (Type::Int, other) | (other, Type::Int) => other.is_int(),
             (Type::This(_), Type::This(_)) => true,
             (Type::Actual(self_info), Type::Actual(target_info)) => match self_info.type_blueprint == target_info.type_blueprint {
                 true => {
@@ -300,8 +292,6 @@ impl Type {
         match self {
             Type::Undefined => false,
             Type::Any => false,
-            Type::Void => false,
-            Type::Int => false,
             Type::This(_) => false,
             Type::Actual(info) => info.parameters.iter().any(|param| param.contains_function_parameter()),
             Type::TypeParameter(_) => false,
@@ -315,16 +305,14 @@ impl Type {
         match self {
             Type::Undefined => None,
             Type::Any => None,
-            Type::Void => None,
-            Type::Int => None,
             Type::This(_) => None,
             Type::Actual(info) => match actual_type.get_as(&info.type_blueprint) {
                 Some(actual_type) => {
-                    let actual_info = actual_type.get_actual_type_content();
-
-                    for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
-                        if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
-                            return Some(inferred_type);
+                    if let Type::Actual(actual_info) = actual_type {
+                        for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
+                            if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
+                                return Some(inferred_type);
+                            }
                         }
                     }
 
@@ -411,8 +399,6 @@ impl Type {
         let ok = match self {
             Type::Undefined => false,
             Type::Any => false,
-            Type::Void => false,
-            Type::Int => false,
             Type::This(interface_wrapped) => interface_wrapped == interface,
             Type::Actual(info) => {
                 let interface_blueprint = interface.borrow();
@@ -508,12 +494,8 @@ impl Type {
                             }
                         }
 
-                        let method_instruction = VI::call_function(FunctionCall::Named(NamedFunctionCallDetails {
-                            caller_type: Some(self.clone()),
-                            function: method_wrapped.clone(),
-                            parameters: vec![],
-                        }), vasm![]);
-                        let result = Vasm::new(return_type, vec![], vec![method_instruction]);
+                        let result = Vasm::new(return_type)
+                            .call_function_named(Some(self), &method_wrapped, &[], vec![]);
 
                         Some(result)
                     },
@@ -534,8 +516,6 @@ impl Type {
         match self {
             Type::Undefined => false,
             Type::Any => true,
-            Type::Void => false,
-            Type::Int => false,
             Type::This(_) => false,
             Type::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
             Type::TypeParameter(_) => false,
@@ -549,8 +529,6 @@ impl Type {
         match self {
             Type::Undefined => None,
             Type::Any => None,
-            Type::Void => None,
-            Type::Int => None,
             Type::This(_) => None,
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.get(name).cloned()
@@ -566,8 +544,6 @@ impl Type {
         match self {
             Type::Undefined => vec![],
             Type::Any => vec![],
-            Type::Void => vec![],
-            Type::Int => vec![],
             Type::This(_) => vec![],
             Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.values().map(|field_info| field_info.clone()).collect()
@@ -588,8 +564,6 @@ impl Type {
         match self {
             Type::Undefined => None,
             Type::Any => None,
-            Type::Void => context.void_type().get_method(kind, name, context),
-            Type::Int => context.int_type().get_method(kind, name, context),
             Type::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
             Type::Actual(info) => {
                 info.type_blueprint.with_ref(|type_unwrapped| {
@@ -618,8 +592,6 @@ impl Type {
         match self {
             Type::Undefined => None,
             Type::Any => None,
-            Type::Void => None,
-            Type::Int => None,
             Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
                 match interface_unwrapped.associated_types.get(name) {
                     Some(info) => Some(Type::Associated(AssociatedTypeContent {
@@ -664,8 +636,6 @@ impl Type {
         match self {
             Type::Undefined => unreachable!(),
             Type::Any => unreachable!(),
-            Type::Void => context.void_type().resolve(type_index, context),
-            Type::Int => context.int_type().resolve(type_index, context),
             Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
             Type::Actual(info) => {
                 let parameters = TypeInstanceParameters {
@@ -698,8 +668,6 @@ impl Type {
         match self {
             Type::Undefined => format!("<undefined>"),
             Type::Any => format!("any"),
-            Type::Void => format!("void"),
-            Type::Int => format!("int"),
             Type::This(_) => format!("{}", SELF_TYPE_NAME),
             Type::Actual(info) => {
                 match info.parameters.is_empty() {
