@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{items::Identifier, program::{ProgramContext, ScopeKind, Type, VI, VariableInfo, VariableKind, Vasm}, wat};
+use crate::{items::Identifier, program::{ProgramContext, ScopeKind, Type, VariableInfo, VariableKind, Vasm}, wat};
 use super::{Branch, BlockExpression};
 
 #[parsable]

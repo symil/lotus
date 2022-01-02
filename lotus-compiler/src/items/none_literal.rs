@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinType, NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}};
+use crate::{program::{BuiltinType, NONE_METHOD_NAME, ProgramContext, Type, Vasm}};
 
 #[parsable(name="none")]
 pub struct NoneLiteral {

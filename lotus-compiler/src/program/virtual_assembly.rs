@@ -8,27 +8,44 @@ pub type Vasm = VirtualAssembly;
 #[derive(Debug, Clone)]
 pub struct VirtualAssembly {
     pub ty: Type,
-    pub variables: Vec<VariableInfo>,
-    pub instructions: Vec<VirtualInstruction>,
+    content: Option<VirtualAssemblyContent>
+}
+
+#[derive(Debug, Clone)]
+struct VirtualAssemblyContent {
+    variables: Vec<VariableInfo>,
+    instructions: Vec<VirtualInstruction>
 }
 
 impl VirtualAssembly {
-    pub fn new() -> Self {
-        Self {
-            ty: Type::Undefined,
-            variables: vec![],
-            instructions: vec![],
-        }
+    pub fn new(allow_populating: bool) -> Self {
+        let ty = Type::Undefined;
+        let content = match allow_populating {
+            true => Some(VirtualAssemblyContent {
+                variables: vec![],
+                instructions: vec![],
+            }),
+            false => None,
+        };
+
+        Self { ty, content }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.instructions.is_empty()
+        match &self.content {
+            Some(content) => content.instructions.is_empty(),
+            None => unreachable!(),
+        }
     }
 
     pub fn append(mut self, other: Self) -> Self {
         self.ty = other.ty;
-        self.variables.extend(other.variables);
-        self.instructions.extend(other.instructions);
+
+        if let (Some(self_content), Some(other_content)) = (&mut self.content.as_mut(), other.content) {
+            self_content.variables.extend(other_content.variables);
+            self_content.instructions.extend(other_content.instructions);
+        }
+
         self
     }
 
@@ -46,12 +63,16 @@ impl VirtualAssembly {
     }
 
     pub fn declare_variable<T : Borrow<VariableInfo>>(mut self, var_info: T) -> Self {
-        self.variables.push(var_info.borrow().clone());
+        if let Some(content) = self.content.as_mut() {
+            content.variables.push(var_info.borrow().clone());
+        }
         self
     }
 
     fn instruction<F : FnOnce() -> VirtualInstruction>(mut self, callback: F) -> Self {
-        self.instructions.push(callback());
+        if let Some(content) = self.content.as_mut() {
+            content.instructions.push(callback());
+        }
         self
     }
 
@@ -267,42 +288,50 @@ impl VirtualAssembly {
     }
 
     pub fn collect_variables(&self, list: &mut Vec<VariableInfo>) {
-        list.extend(self.variables.clone());
+        if let Some(content) = &self.content {
+            list.extend(content.variables.clone());
 
-        for instruction in &self.instructions {
-            instruction.collect_variables(list);
+            for instruction in &content.instructions {
+                instruction.collect_variables(list);
+            }
         }
     }
 
     pub fn replace_placeholder(&mut self, location: &DataLocation, replacement: &Rc<Vasm>) {
-        for instruction in &mut self.instructions {
-            instruction.replace_placeholder(location, replacement);
+        if let Some(content) = &mut self.content {
+            for instruction in &mut content.instructions {
+                instruction.replace_placeholder(location, replacement);
+            }
         }
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Vec<Wat> {
-        let mut content = vec![];
+        let mut result = vec![];
 
-        for inst in &self.instructions {
-            content.extend(inst.resolve(type_index, context));
+        if let Some(content) = &self.content {
+            for inst in &content.instructions {
+                result.extend(inst.resolve(type_index, context));
+            }
         }
 
-        content
+        result
     }
 
     pub fn resolve_without_context(&self) -> Vec<Wat> {
-        let mut content = vec![];
+        let mut result = vec![];
 
-        for inst in &self.instructions {
-            content.extend(inst.resolve_without_context());
+        if let Some(content) = &self.content {
+            for inst in &content.instructions {
+                result.extend(inst.resolve_without_context());
+            }
         }
 
-        content
+        result
     }
 }
 
 impl Default for Vasm {
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }

@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, VI, Vasm}, wat};
+use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, Vasm}, wat};
 use super::{ActionKeywordWrapper, ActionKeyword, Expression};
 
 #[parsable]

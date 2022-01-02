@@ -1,7 +1,7 @@
 use std::{fmt::format, rc::Rc};
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
-use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VI, VariableInfo, VariableKind, Vasm}};
+use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}};
 use super::{BinaryOperation, Identifier, ParsedType};
 
 #[parsable(name="expression")]

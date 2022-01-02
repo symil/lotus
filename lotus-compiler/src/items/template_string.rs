@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, FunctionCall, NamedFunctionCallDetails, ProgramContext, VI, Vasm}};
+use crate::{program::{BuiltinType, FunctionCall, NamedFunctionCallDetails, ProgramContext, Vasm}};
 use super::{TemplateStringFragment, make_string_value_from_literal_unchecked};
 
 #[parsable]

@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::program::{ProgramContext, Vasm, MacroContext, VI, BuiltinType};
+use crate::program::{ProgramContext, Vasm, MacroContext, BuiltinType};
 use super::{make_string_value_from_literal_unchecked};
 
 #[parsable]

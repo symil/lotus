@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, VI, Vasm}, wat};
+use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
 use super::{AssignmentOperatorWrapper, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]

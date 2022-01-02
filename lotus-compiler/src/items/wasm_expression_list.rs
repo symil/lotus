@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, Type, VI, Vasm}};
+use crate::{program::{ProgramContext, Type, Vasm}};
 
 use super::WasmExpression;
 

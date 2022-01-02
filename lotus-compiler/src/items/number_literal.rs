@@ -1,7 +1,7 @@
 use std::ops::Neg;
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{ProgramContext, VI, Vasm, Type, BuiltinType}};
+use crate::{program::{ProgramContext, Vasm, Type, BuiltinType}};
 
 #[parsable(name="number")]
 pub struct NumberLiteral {

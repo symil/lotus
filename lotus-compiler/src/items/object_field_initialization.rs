@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{items::ObjectInitResult, program::{CompilationError, ProgramContext, Type, VI, Vasm}};
+use crate::{items::ObjectInitResult, program::{CompilationError, ProgramContext, Type, Vasm}};
 use super::{Expression, Identifier};
 
 #[parsable]

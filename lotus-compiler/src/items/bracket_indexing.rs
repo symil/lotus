@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VI, VariableInfo, Vasm}, wat};
+use crate::{program::{AccessType, BuiltinInterface, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, Type, VariableInfo, Vasm}, wat};
 use super::Expression;
 
 #[parsable]

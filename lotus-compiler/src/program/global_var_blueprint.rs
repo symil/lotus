@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use parsable::DataLocation;
-use crate::{items::{Identifier, Visibility}, program::{RETAIN_METHOD_NAME, VI, VariableKind}};
+use crate::{items::{Identifier, Visibility}, program::{RETAIN_METHOD_NAME, VariableKind}};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm};
 
 #[derive(Debug)]

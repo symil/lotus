@@ -1,5 +1,5 @@
 use parsable::{parsable, DataLocation};
-use crate::{program::{ProgramContext, Vasm, Type, VI, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}};
+use crate::{program::{ProgramContext, Vasm, Type, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}};
 use super::Identifier;
 
 #[parsable]

@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, VI, Vasm}, wat};
+use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, Vasm}, wat};
 use super::{BinaryOperatorWrapper, ParsedType, Identifier, Operand};
 
 #[parsable]

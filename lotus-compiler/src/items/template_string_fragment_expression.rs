@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{BuiltinType, ProgramContext, TO_STRING_METHOD_NAME, VI, Vasm}};
+use crate::{program::{BuiltinType, ProgramContext, TO_STRING_METHOD_NAME, Vasm}};
 use super::Expression;
 
 #[parsable]

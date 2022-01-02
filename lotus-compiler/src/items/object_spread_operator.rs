@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VI, VariableInfo, Vasm}};
+use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm}};
 use super::Expression;
 
 #[parsable]

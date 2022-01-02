@@ -1,5 +1,5 @@
 use parsable::{DataLocation, parsable};
-use crate::{items::escape_char, program::{BuiltinType, ProgramContext, SET_CHAR_FUNC_NAME, VI, Vasm, CompilationError, STRING_CREATE_METHOD_NAME}, wat, utils::FlexRef};
+use crate::{items::escape_char, program::{BuiltinType, ProgramContext, SET_CHAR_FUNC_NAME, Vasm, CompilationError, STRING_CREATE_METHOD_NAME}, wat, utils::FlexRef};
 
 #[parsable(name="string")]
 pub struct StringLiteral {

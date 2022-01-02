@@ -1,6 +1,6 @@
 use parsable::parsable;
 use colored::*;
-use crate::{program::{BuiltinType, CompilationError, ProgramContext, VI, Vasm}};
+use crate::{program::{BuiltinType, CompilationError, ProgramContext, Vasm}};
 
 #[parsable(name="char")]
 pub struct CharLiteral {

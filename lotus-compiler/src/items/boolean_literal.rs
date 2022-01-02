@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{ProgramContext, VI, Vasm}};
+use crate::{program::{ProgramContext, Vasm}};
 
 #[parsable(name="boolean")]
 pub struct BooleanLiteral {
