@@ -7,7 +7,9 @@ use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
 pub struct FieldOrMethodAccess {
-    pub name: IdentifierWrapper,
+    #[parsable(value=".", followed_by="[^.]")]
+    pub dot: String,
+    pub name: Option<IdentifierWrapper>,
     pub arguments: Option<ArgumentList>
 }
 
@@ -17,12 +19,20 @@ impl FieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        match self.name.process(context) {
-            Some(name) => match &self.arguments {
-                Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
-                None => process_field_access(parent_type, field_kind, &name, access_type, context)
+        match &self.name {
+            Some(identifier) => {
+                match identifier.process(context) {
+                    Some(name) => match &self.arguments {
+                        Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
+                        None => process_field_access(parent_type, field_kind, &name, access_type, context)
+                    },
+                    None => None,
+                }
             },
-            None => None,
+            None => {
+                context.errors.generic(self, format!("expected field or method name"));
+                None
+            },
         }
     }
 }

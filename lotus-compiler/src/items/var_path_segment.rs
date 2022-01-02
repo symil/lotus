@@ -5,7 +5,6 @@ use super::{ArgumentList, BracketIndexing, Expression, FieldOrMethodAccess, Iden
 
 #[parsable]
 pub enum VarPathSegment {
-    #[parsable(prefix=".")]
     FieldOrMethodAccess(FieldOrMethodAccess),
     BracketIndexing(BracketIndexing),
     // Unwrap(UnwrapToken)
