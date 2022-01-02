@@ -42,7 +42,7 @@ impl VarRef {
                     Some(var_info) => match &var_info.ty().clone() {
                         Type::Function(signature) => {
                             let function_call = FunctionCall::Anonymous(AnonymousFunctionCallDetails {
-                                signature: Box::as_ref(signature).clone(),
+                                signature: signature.clone(),
                                 function_offset: 0,
                             });
 
@@ -94,7 +94,7 @@ impl VarRef {
                             match function_unwrapped.parameters.is_empty() {
                                 true => Some(context.vasm()
                                     .function_index(&function_wrapped, &[])
-                                    .set_type(Type::Function(Box::new(function_unwrapped.signature.clone())))
+                                    .set_type(Type::Function(function_unwrapped.signature.clone()))
                                 ),
                                 false => {
                                     context.errors.generic(&var_name, format!("cannot use functions with parameters as variables for now"));

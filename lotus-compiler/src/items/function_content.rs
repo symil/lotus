@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError}, utils::Link, wat};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError, SignatureContent}, utils::Link, wat};
 use super::{EventCallbackQualifier, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifier, MethodQualifier, BlockExpression, TypeParameters, Visibility, Expression};
 
 #[parsable]
@@ -24,28 +24,6 @@ impl FunctionContent {
     }
 
     pub fn process_signature(&self, context: &mut ProgramContext) -> Link<FunctionBlueprint> {
-        let mut function_blueprint = FunctionBlueprint {
-            function_id: self.location.get_hash(),
-            name: self.name.clone(),
-            visibility: Visibility::Private,
-            parameters: IndexMap::new(),
-            is_raw_wasm: false,
-            body: context.vasm(),
-            argument_names: vec![],
-            signature: Signature::void(context),
-            argument_variables: vec![],
-            owner_type: None,
-            owner_interface: None,
-            closure_details: None,
-            method_details: None,
-        };
-
-        let mut method_details = MethodDetails {
-            event_callback_details: None,
-            first_declared_by: None,
-            dynamic_index: None,
-        };
-
         let current_type = context.get_current_type();
         let type_id = current_type.as_ref().map(|t| t.borrow().type_id);
         let is_method = type_id.is_some();
@@ -55,14 +33,20 @@ impl FunctionContent {
         let parameters = self.parameters.process(context);
         let has_parameters = !parameters.is_empty();
         let is_raw_wasm = self.body.is_raw_wasm();
+        let mut owner_type = None;
+        let mut argument_names = vec![];
+        let mut signature_this_type = None;
+        let mut signature_argument_types = vec![];
+        let mut signature_return_type = Type::Undefined;
+        let mut method_details = None;
 
         for details in parameters.values() {
             context.declare_shared_identifier(&details.name, Some(&details.name), None);
         }
 
-        function_blueprint.parameters = parameters;
-
         if let Some(type_wrapped) = &current_type {
+            let mut dynamic_index = None;
+
             if is_dynamic {
                 if has_parameters {
                     context.errors.generic(self, format!("dynamic methods cannot have parameters"));
@@ -72,17 +56,19 @@ impl FunctionContent {
                     context.errors.generic(self, format!("dynamic methods cannot be raw wasm"));
                 }
 
-                method_details.dynamic_index = Some(-1);
+                dynamic_index = Some(-1);
             }
 
-            function_blueprint.owner_type = Some(type_wrapped.clone());
-            method_details.first_declared_by = Some(type_wrapped.clone());
+            owner_type = Some(type_wrapped.clone());
+            method_details = Some(MethodDetails {
+                event_callback_details: None,
+                first_declared_by: Some(type_wrapped.clone()),
+                dynamic_index,
+            });
 
             if !is_static {
-                function_blueprint.signature.this_type = Some(type_wrapped.borrow().self_type.clone());
+                signature_this_type = Some(type_wrapped.borrow().self_type.clone());
             }
-
-            function_blueprint.method_details = Some(method_details);
         } else {
             if is_static {
                 context.errors.generic(self, format!("regular functions cannot be static"));
@@ -97,6 +83,22 @@ impl FunctionContent {
             }
         }
 
+        let function_blueprint = FunctionBlueprint {
+            function_id: self.location.get_hash(),
+            name: self.name.clone(),
+            visibility: Visibility::Private,
+            parameters,
+            is_raw_wasm,
+            body: Vasm::undefined(),
+            argument_names: vec![],
+            signature: Signature::undefined(),
+            argument_variables: vec![],
+            owner_type: owner_type,
+            owner_interface: None,
+            closure_details: None,
+            method_details: None,
+        };
+
         let function_wrapped = context.functions.insert(function_blueprint, type_id);
 
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
@@ -104,42 +106,10 @@ impl FunctionContent {
         if let Some(signature) = &self.signature {
             let (arguments, return_type) = signature.process(context);
 
-            function_wrapped.with_mut(|mut function_unwrapped| {
-                function_unwrapped.argument_names = arguments.iter().map(|(name, ty)| name.clone()).collect();
-                function_unwrapped.signature.argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
-                function_unwrapped.signature.return_type = return_type.unwrap_or(context.void_type());
-            });
-
-            if self.event_callback_qualifier.is_none() {
-                function_wrapped.with_ref(|function_unwrapped| {
-                    context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::Function(Box::new(function_unwrapped.signature.clone()))));
-                });
-            }
+            argument_names = arguments.iter().map(|(name, ty)| name.clone()).collect();
+            signature_argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
+            signature_return_type = return_type.unwrap_or(context.void_type());
         }
-        // else if is_dynamic {
-        //     if let Some(type_wrapped) = context.get_current_type() {
-        //         type_wrapped.with_ref(|type_unwrapped| {
-        //             if let Some(parent) = &type_unwrapped.parent {
-        //                 parent.ty.get_type_blueprint().with_ref(|parent_type_unwrapped| {
-        //                     if let Some(prev_method) = parent_type_unwrapped.regular_methods.get(self.name.as_str()) {
-        //                         prev_method.function.with_ref(|prev_method_unwrapped| {
-        //                             let hash = self.location.get_hash();
-        //                             let arguments = prev_method_unwrapped.arguments.iter().map(|var_info| var_info.replace_type_parameters(&parent.ty, hash)).collect();
-        //                             let return_type = prev_method_unwrapped.return_type.replace_parameters(Some(&parent.ty), &[]);
-
-        //                             signature_inferred = true;
-
-        //                             function_blueprint.with_mut(|mut function_unwrapped| {
-        //                                 function_unwrapped.arguments = arguments;
-        //                                 function_unwrapped.return_type = return_type;
-        //                             });
-        //                         });
-        //                     }
-        //                 });
-        //             }
-        //         });
-        //     }
-        // }
 
         if let Some(qualifier) = &self.event_callback_qualifier {
             if let Some(type_wrapped) = context.get_current_type() {
@@ -160,25 +130,21 @@ impl FunctionContent {
 
                     // if event_type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
                         if let Some(type_wrapped) = context.get_current_type() {
-                            function_wrapped.with_mut(|mut function_unwrapped| {
-                                function_unwrapped.argument_names = vec![
-                                    Identifier::new(EVENT_VAR_NAME, &event_type_wrapped.borrow().name),
-                                    Identifier::new(EVENT_OUTPUT_VAR_NAME, &self.name),
-                                ];
-                                function_unwrapped.signature = Signature {
-                                    this_type: Some(type_wrapped.borrow().self_type.clone()),
-                                    argument_types: vec![
-                                        event_type_wrapped.borrow().self_type.clone(),
-                                        context.get_builtin_type(BuiltinType::EventOutput, vec![])
-                                    ],
-                                    return_type: context.void_type(),
-                                };
+                            argument_names = vec![
+                                Identifier::new(EVENT_VAR_NAME, &event_type_wrapped.borrow().name),
+                                Identifier::new(EVENT_OUTPUT_VAR_NAME, &self.name),
+                            ];
 
-                                function_unwrapped.method_details.as_mut().unwrap().event_callback_details.insert(EventCallbackDetails {
-                                    event_type: event_type_wrapped.clone(),
-                                    qualifier: qualifier.clone(),
-                                    priority: context.vasm(),
-                                });
+                            signature_this_type = Some(type_wrapped.borrow().self_type.clone());
+                            signature_argument_types = vec![
+                                event_type_wrapped.borrow().self_type.clone(),
+                                context.get_builtin_type(BuiltinType::EventOutput, vec![])
+                            ];
+                            signature_return_type = context.void_type();
+                            method_details.as_mut().unwrap().event_callback_details.insert(EventCallbackDetails {
+                                event_type: event_type_wrapped.clone(),
+                                qualifier: qualifier.clone(),
+                                priority: context.vasm(),
                             });
                         }
                     // } else {
@@ -195,6 +161,16 @@ impl FunctionContent {
                 context.errors.generic(&self.name, format!("missing function signature"));
             }
         }
+
+        function_wrapped.with_mut(|mut function_unwrapped| {
+            function_unwrapped.argument_names = argument_names;
+            function_unwrapped.signature = Signature::create(signature_this_type, signature_argument_types, signature_return_type);
+            function_unwrapped.method_details = method_details;
+
+            if self.event_callback_qualifier.is_none() {
+                context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::Function(function_unwrapped.signature.clone())));
+            }
+        });
 
         context.pop_scope();
 

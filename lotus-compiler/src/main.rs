@@ -5,7 +5,7 @@ use std::{env, fs, path::{Path, PathBuf}, process};
 use colored::*;
 use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
 use language_server::start_language_server;
-use program::{ProgramContext};
+use program::{ProgramContext, ProgramContextOptions};
 
 mod utils;
 mod program;
@@ -17,7 +17,26 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let options = CommandLineOptions::parse_from_args(args);
 
-    if options.run_as_server {
+    if options.run_benchmark {
+        let root_directory = infer_root_directory(options.input_path.as_ref().unwrap()).unwrap();
+        let source_directories = bundle_with_prelude(&root_directory);
+        let mut context = ProgramContext::new(ProgramContextOptions {
+            validate_only: true,
+        });
+        let mut timer = Timer::new();
+
+        for i in 0..3 {
+            let duration = timer.time(ProgramStep::Total, || {
+                context.reset();
+                context.read_source_files(&source_directories);
+                context.parse_source_files();
+                context.process_source_files();
+            });
+
+            println!("validation #{}: {} ms", i + 1, (duration * 1000.0).round());
+        }
+
+    } else if options.run_as_server {
         start_language_server();
     } else {
         // dbg!(&options);
@@ -25,7 +44,7 @@ fn main() {
             let root_directory = infer_root_directory(input_path).unwrap();
             let source_directories = bundle_with_prelude(&root_directory);
             let mut timer = Timer::new();
-            let mut context = ProgramContext::new();
+            let mut context = ProgramContext::new(ProgramContextOptions::default());
 
             timer.time(ProgramStep::Read, || context.read_source_files(&source_directories));
             timer.time(ProgramStep::Parse, || context.parse_source_files());

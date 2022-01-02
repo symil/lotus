@@ -2,7 +2,7 @@
 
 set -e
 
-if [ "$1" == "--backtrace" ] || [ "$1" == "-b" ] ; then
+if [ "$1" == "--backtrace" ] || [ "$1" == "-bt" ] ; then
     export RUST_BACKTRACE=1
 fi
 

@@ -1,11 +1,21 @@
 use core::{fmt};
-use std::rc::Rc;
+use std::{rc::Rc, borrow::Borrow};
 use colored::Colorize;
-use crate::program::BuiltinType;
+use crate::{program::BuiltinType, utils::Wrapper};
 use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, display_join};
 
-#[derive(Debug, Clone)]
-pub struct Signature {
+pub type Signature = Wrapper<SignatureContent>;
+
+thread_local! {
+    static DEFAULT_SIGNATURE : Signature = Wrapper::new(SignatureContent {
+        this_type: None,
+        argument_types: vec![],
+        return_type: Type::Undefined,
+    });
+}
+
+#[derive(Debug)]
+pub struct SignatureContent {
     pub this_type: Option<Type>,
     pub argument_types: Vec<Type>,
     pub return_type: Type
@@ -18,20 +28,32 @@ pub struct ResolvedSignature {
 }
 
 impl Signature {
+    pub fn create(this_type: Option<Type>, argument_types: Vec<Type>, return_type: Type) -> Self {
+        Wrapper::new(SignatureContent {
+            this_type,
+            argument_types,
+            return_type,
+        })
+    }
+
+    pub fn undefined() -> Self {
+        unsafe { DEFAULT_SIGNATURE.with(|wrapper| wrapper.clone()) }
+    }
+
     pub fn void(context: &ProgramContext) -> Self {
-        Self {
+        Wrapper::new(SignatureContent {
             this_type: None,
             argument_types: vec![],
             return_type: context.void_type(),
-        }
+        })
     }
 
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Self {
-        Self {
+        Wrapper::new(SignatureContent {
             this_type: self.this_type.as_ref().map(|ty| ty.replace_parameters(this_type, function_parameters)),
             argument_types: self.argument_types.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
             return_type: self.return_type.replace_parameters(this_type, function_parameters)
-        }
+        })
     }
 
     pub fn check_type_parameters(&self, context: &mut ProgramContext) {

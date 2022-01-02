@@ -477,11 +477,7 @@ impl TypeDeclaration {
                                         visibility: Visibility::None,
                                         parameters: IndexMap::new(),
                                         argument_names: vec![],
-                                        signature: Signature {
-                                            this_type: None,
-                                            argument_types: vec![],
-                                            return_type: field_info.ty.clone(),
-                                        },
+                                        signature: Signature::create(None, vec![], field_info.ty.clone()),
                                         argument_variables: vec![],
                                         owner_type: Some(type_wrapped.clone()),
                                         owner_interface: None,

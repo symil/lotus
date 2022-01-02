@@ -30,19 +30,20 @@ const ARGV = process.argv.slice(2);
 async function main() {
     let isMocha = process.argv.some(str => str.includes('mocha'));
     let commandLineNames = ARGV.filter(str => !str.startsWith('-'));
+    let benchmark = hasOption('--benchmark', '-b');
     let overwrite = hasOption('--overwrite', '-o');
     let showDetails = hasOption('--details', '-d');
     let runAll = hasOption('--all', '-a');
     let createTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
-    let mode = ((forceRelease || runAll || (!isMocha && commandLineNames.length > 1)) && !createTest) ? 'release' : 'debug';
+    let mode = ((forceRelease || benchmark || runAll || (!isMocha && commandLineNames.length > 1)) && !createTest) ? 'release' : 'debug';
     let overwriteExpectedOutput = hasOption('--overwrite-output', '-ov');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
     let clean = hasOption('--clean');
     let onlyCompileWat = false;
-    let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode, validate };
+    let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode, validate, benchmark };
 
     if (!isMocha && !compileCompiler({ mode })) {
         process.exit(1);
@@ -165,12 +166,13 @@ function compileCompiler({ mode = 'debug' } = {}) {
     return runCommand(`cd ${ROOT_DIR} && cargo build --${option}`, true).success;
 }
 
-function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, validate }) {
+function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, validate, benchmark }) {
     let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
     let silentOption = inheritStdio ? '' : '--silent';
     let detailsOption = showDetails ? '--details' : '';
     let validateOption = validate ? '--validate' : '';
-    let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption} ${detailsOption} ${validateOption}`;
+    let benchmarkOption = benchmark ? '--benchmark' : '';
+    let command = `${compilerPath} ${inputPath} ${outputPath} ${silentOption} ${detailsOption} ${validateOption} ${benchmarkOption}`;
 
     // console.log(command);
 
@@ -202,16 +204,16 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     return { result, success };
 }
 
-async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false, showDetails = false, mode = 'debug', validate = false } = {}) {
+async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, displayMemory = false, onlyCompileWat = false, showDetails = false, mode = 'debug', validate = false, benchmark = false } = {}) {
     let watPath = path.join(buildDirectory, WAT_FILE_NAME);
     let wasmPath = path.join(buildDirectory, WASM_FILE_NAME);
     let commandChain = [
-        () => compileLotus({ inputPath: sourceDirPath, outputPath: watPath, inheritStdio, mode, showDetails, validate }),
+        () => compileLotus({ inputPath: sourceDirPath, outputPath: watPath, inheritStdio, mode, showDetails, validate, benchmark }),
         () => compileWat(watPath, wasmPath, inheritStdio),
         () => runWasm(wasmPath, inheritStdio, displayMemory)
     ];
 
-    if (validate) {
+    if (validate || benchmark) {
         commandChain.pop();
         commandChain.pop();
     } else if (onlyCompileWat) {

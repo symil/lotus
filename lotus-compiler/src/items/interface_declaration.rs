@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, SignatureContent}, utils::Link};
 use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -90,16 +90,12 @@ impl InterfaceDeclaration {
                     visibility: Visibility::None,
                     parameters: IndexMap::new(),
                     argument_names: arguments.iter().map(|(name, ty)| name.clone()).collect(),
-                    signature: Signature {
-                        this_type: None,
-                        argument_types: arguments.iter().map(|(name, ty)| ty.clone()).collect(),
-                        return_type: return_type.unwrap_or(context.void_type()),
-                    },
+                    signature: Signature::undefined(),
                     argument_variables: vec![],
                     owner_type: None,
                     owner_interface: Some(interface_wrapped.clone()),
                     is_raw_wasm: false,
-                    body: context.vasm(),
+                    body: Vasm::undefined(),
                     closure_details: None,
                     method_details: Some(MethodDetails {
                         event_callback_details: None,
@@ -114,11 +110,16 @@ impl InterfaceDeclaration {
                 };
 
                 let this_type = Type::This(interface_wrapped.clone());
-                let function_type = Type::Function(Box::new(function_blueprint.signature.clone()));
+                let argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
+                let return_type = return_type.unwrap_or(context.void_type());
+                let method_this_type = match method_kind.is_static() {
+                    true => None,
+                    false => Some(this_type.clone()),
+                };
+                let signature = Signature::create(method_this_type, argument_types, return_type);
+                let function_type = Type::Function(signature.clone());
 
-                if !method_kind.is_static() {
-                    function_blueprint.signature.this_type = Some(this_type.clone());
-                }
+                function_blueprint.signature = signature;
 
                 let func_ref = FuncRef {
                     function: Link::new(function_blueprint),

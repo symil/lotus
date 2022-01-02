@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm}, utils::Link};
+use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent}, utils::Link};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -45,19 +45,14 @@ impl FunctionLiteral {
             argument_types.push(arg_type);
         }
 
-        let hint_signature = Signature {
-            this_type: None,
-            argument_types,
-            return_type: return_type.clone(),
-        };
-
+        let mut signature = Signature::create(None, argument_types, return_type.clone());
         let function_wrapped = context.functions.insert(FunctionBlueprint {
             function_id: self.location.get_hash(),
             name: Identifier::new("anonymous_function", self),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
             argument_names,
-            signature: hint_signature.clone(),
+            signature: signature.clone(),
             argument_variables: vec![],
             owner_type: context.get_current_type(),
             owner_interface: context.get_current_interface(),
@@ -70,18 +65,18 @@ impl FunctionLiteral {
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
         if let Some(vasm) = self.body.process(Some(return_type), context) {
-            let signature = function_wrapped.with_mut(|mut function_unwrapped| {
-                function_unwrapped.signature.return_type = vasm.ty.clone();
+            signature = Signature::create(None, signature.argument_types.clone(), vasm.ty.clone());
+
+            function_wrapped.with_mut(|mut function_unwrapped| {
+                function_unwrapped.signature = signature.clone();
                 function_unwrapped.body = vasm;
-
-                function_unwrapped.signature.clone()
             });
-
-            result = Some(context.vasm()
-                .function_index(&function_wrapped, &[])
-                .set_type(Type::Function(Box::new(signature)))
-            );
         }
+
+        result = Some(context.vasm()
+            .function_index(&function_wrapped, &[])
+            .set_type(Type::Function(signature))
+        );
 
         context.pop_scope();
 

@@ -7,7 +7,8 @@ pub struct CommandLineOptions {
     pub input_path: Option<String>,
     pub output_path: Option<String>,
     pub log_level: LogLevel,
-    pub run_as_server: bool
+    pub run_as_server: bool,
+    pub run_benchmark: bool
 }
 
 impl CommandLineOptions {
@@ -16,7 +17,8 @@ impl CommandLineOptions {
             input_path: None,
             output_path: None,
             log_level: LogLevel::Short,
-            run_as_server: false
+            run_as_server: false,
+            run_benchmark: false,
         };
 
         for arg in &args[1..] {
@@ -24,6 +26,8 @@ impl CommandLineOptions {
                 true => {
                     if let Some(log_level) = LogLevel::from_command_line_arg(arg) {
                         options.log_level = log_level;
+                    } else if arg == "--benchmark" {
+                        options.run_benchmark = true;
                     } else if arg == "--server" {
                         options.run_as_server = true;
                     } else {

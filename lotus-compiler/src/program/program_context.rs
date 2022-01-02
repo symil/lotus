@@ -6,8 +6,14 @@ use parsable::{DataLocation, Parsable, ParseOptions};
 use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash}, wat};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME};
 
+#[derive(Debug, Default, Clone)]
+pub struct ProgramContextOptions {
+    pub validate_only: bool
+}
+
 #[derive(Debug, Default)]
 pub struct ProgramContext {
+    pub options: ProgramContextOptions,
     pub source_file_list: Vec<SourceFileDetails>,
     pub parsed_source_files: Vec<LotusFile>,
     pub errors: CompilationErrorList,
@@ -49,8 +55,10 @@ pub struct ProgramContext {
 }
 
 impl ProgramContext {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(options: ProgramContextOptions) -> Self {
+        let mut context = Self::default();
+        context.options = options;
+        context
     }
 
     pub fn is_new(&self) -> bool {
@@ -532,11 +540,13 @@ impl ProgramContext {
     }
 
     pub fn vasm(&self) -> Vasm {
-        Vasm::new(true)
+        Vasm::new(!self.options.validate_only)
     }
 
     pub fn reset(&mut self) {
+        let options = self.options.clone();
         take(self);
+        self.options = options;
     }
 
     pub fn read_source_files(&mut self, directories: &[SourceDirectoryDetails]) {

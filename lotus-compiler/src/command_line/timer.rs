@@ -16,10 +16,12 @@ impl Timer {
         }
     }
 
-    pub fn time<F : FnOnce()>(&mut self, step: ProgramStep, callback: F) {
+    pub fn time<F : FnOnce()>(&mut self, step: ProgramStep, callback: F) -> f64 {
         self.start(step);
         callback();
         self.stop(step);
+        
+        *self.durations.get(&step).unwrap()
     }
 
     pub fn start(&mut self, step: ProgramStep) {

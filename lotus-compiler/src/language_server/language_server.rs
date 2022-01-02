@@ -1,7 +1,7 @@
 use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::Duration};
 use colored::Colorize;
 use parsable::StringReader;
-use crate::{program::ProgramContext, command_line::{infer_root_directory, bundle_with_prelude}};
+use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}};
 use super::{LanguageServerCommand, LanguageServerCommandParameters};
 
 const PORT : u16 = 9609;
@@ -12,7 +12,9 @@ pub fn start_language_server() {
     let mut buffer = [0 as u8; BUFFER_SIZE];
     let mut current_root_directory = String::new();
     let mut connections = vec![];
-    let mut program_contexts :HashMap<String, ProgramContext> = HashMap::new();
+    let mut context = ProgramContext::new(ProgramContextOptions {
+        validate_only: true,
+    });
 
     let addr = format!("127.0.0.1:{}", PORT);
     let listener = TcpListener::bind(addr).unwrap();
@@ -54,7 +56,6 @@ pub fn start_language_server() {
                         let command_content = command.get_content();
                         
                         if let Some(root_directory) = &parameters.root_directory_path {
-                            let mut context = program_contexts.entry(root_directory.clone()).or_default();
                             let mut lines = vec![id.to_string()];
 
                             if command_content.force_init || context.is_new() || root_directory != &current_root_directory {
@@ -70,7 +71,7 @@ pub fn start_language_server() {
                                 }
                             }
 
-                            (command_content.callback)(&parameters, context, &mut lines);
+                            (command_content.callback)(&parameters, &context, &mut lines);
 
                             let content = lines.join("\n");
 

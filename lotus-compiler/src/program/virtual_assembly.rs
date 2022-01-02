@@ -31,6 +31,10 @@ impl VirtualAssembly {
         Self { ty, content }
     }
 
+    pub fn undefined() -> Self {
+        Self::new(false)
+    }
+
     pub fn is_empty(&self) -> bool {
         match &self.content {
             Some(content) => content.instructions.is_empty(),
@@ -144,7 +148,7 @@ impl VirtualAssembly {
     }
 
     pub fn set_tmp_var(self, var_info: &VariableInfo) -> Self {
-        self.set_var(var_info, None, Vasm::default())
+        self.set_var(var_info, None, Vasm::undefined())
     }
 
     pub fn tee_var(self, var_info: &VariableInfo, access_level: Option<u32>, value: Vasm) -> Self {
@@ -157,7 +161,7 @@ impl VirtualAssembly {
     }
 
     pub fn tee_tmp_var(self, var_info: &VariableInfo) -> Self {
-        self.tee_var(var_info, None, Vasm::default())
+        self.tee_var(var_info, None, Vasm::undefined())
     }
 
     pub fn call_function_named(self, caller_type: Option<&Type>, function: &Link<FunctionBlueprint>, parameters: &[Type], arguments: Vec<Vasm>) -> Self {
@@ -327,11 +331,5 @@ impl VirtualAssembly {
         }
 
         result
-    }
-}
-
-impl Default for Vasm {
-    fn default() -> Self {
-        Self::new(false)
     }
 }

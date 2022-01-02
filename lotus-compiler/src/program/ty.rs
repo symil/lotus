@@ -14,7 +14,7 @@ pub enum Type {
     TypeParameter(Rc<ParameterTypeInfo>),
     FunctionParameter(Rc<ParameterTypeInfo>),
     Associated(AssociatedTypeContent),
-    Function(Box<Signature>)
+    Function(Signature)
 }
 
 #[derive(Debug, Clone)]
@@ -219,7 +219,7 @@ impl Type {
                     })
                 }
             },
-            Type::Function(info) => Type::Function(Box::new(info.replace_parameters(this_type, function_parameters))),
+            Type::Function(info) => Type::Function(info.replace_parameters(this_type, function_parameters)),
         }
     }
 

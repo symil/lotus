@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Signature, Type};
+use crate::program::{ProgramContext, Signature, Type, SignatureContent};
 use super::ParsedType;
 
 #[parsable]
@@ -35,7 +35,7 @@ impl ParsedFunctionType {
         }
 
         match ok {
-            true => Some(Type::Function(Box::new(Signature {
+            true => Some(Type::Function(Signature::new(SignatureContent {
                 this_type: None,
                 argument_types,
                 return_type,
