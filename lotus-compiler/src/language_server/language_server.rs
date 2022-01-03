@@ -62,7 +62,6 @@ pub fn start_language_server() {
                             if command_content.force_init || context.is_new() || root_directory != &current_root_directory {
                                 current_root_directory = root_directory.clone();
                                 
-                                StringReader::clear_all_static_strings();
                                 context.reset();
                                 context.parse_source_files(&bundle_with_prelude(&root_directory), Some(&mut cache));
 

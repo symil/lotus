@@ -564,8 +564,8 @@ impl ProgramContext {
             let file_path = &source_file_details.file_path;
             let parse_function = |file_content : String| {
                 let parse_options = ParseOptions {
-                    file_path: Some(file_path),
-                    package_root_path: Some(root_directory_path),
+                    file_path: Some(file_path.clone()),
+                    package_root_path: Some(root_directory_path.clone()),
                     comment_start: Some(COMMENT_START_TOKEN),
                 };
 

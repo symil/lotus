@@ -11,7 +11,7 @@ pub fn validate(parameters: &LanguageServerCommandParameters, context: &ProgramC
     }
 
     for error in context.errors.get_all() {
-        file_errors.get_mut(&error.location.file_path).unwrap().push(error);
+        file_errors.get_mut(error.location.file_path.as_str()).unwrap().push(error);
     }
 
     for (file_path, errors) in file_errors {

@@ -6,7 +6,7 @@ pub fn prepare_rename(parameters: &LanguageServerCommandParameters, context: &Pr
         if let Some((shared_identifier, location)) = context.get_identifier_under_cursor(file_path, cursor_index) {
             if !is_special_identifier(location.as_str()) {
                 if let Some(definition) = &shared_identifier.definition {
-                    if definition.package_root_path == root_directory_path {
+                    if definition.package_root_path.as_str() == root_directory_path {
                         lines.push(format!("placeholder;{};{}", location.start, location.end));
                     }
                 }

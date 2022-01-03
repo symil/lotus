@@ -21,7 +21,7 @@ impl VarDeclaration {
                 init_value.process(required_type.as_ref(), context).unwrap_or(context.vasm()),
                 &init_value.location
             ),
-            None => (context.vasm(), DataLocation::empty_ref()),
+            None => (context.vasm(), &self.location),
         };
 
         self.var_names.process(required_type.as_ref(), init_value, location, context)

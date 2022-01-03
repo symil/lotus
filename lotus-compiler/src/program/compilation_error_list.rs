@@ -50,9 +50,9 @@ impl CompilationErrorList {
     pub fn parse_error(&mut self, parse_error: &ParseError) -> CompilationErrorChain {
         self.add(CompilationError {
             location: DataLocation {
-                package_root_path: parse_error.package_root_path,
-                file_path: parse_error.file_path,
-                file_content: parse_error.file_content,
+                package_root_path: parse_error.package_root_path.clone(),
+                file_path: parse_error.file_path.clone(),
+                file_content: parse_error.file_content.clone(),
                 start: parse_error.index,
                 end: parse_error.index,
             },

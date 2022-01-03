@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}};
+use std::{collections::{HashMap}, rc::Rc};
 use regex::Regex;
 use crate::{DataLocation};
 use super::parse_error::ParseError;
@@ -6,9 +6,9 @@ use super::parse_error::ParseError;
 pub struct StringReader {
     comment_token: &'static str,
 
-    package_root_path: &'static str,
-    file_path: &'static str,
-    file_content: &'static str,
+    package_root_path: Rc<String>,
+    file_path: Rc<String>,
+    file_content: Rc<String>,
 
     index: usize,
     error_index: usize,
@@ -16,24 +16,17 @@ pub struct StringReader {
     markers: HashMap<&'static str, Vec<bool>>
 }
 
-pub struct ParseOptions<'a, 'b, 'c> {
-    pub file_path: Option<&'a str>,
-    pub package_root_path: Option<&'b str>,
-    pub comment_start: Option<&'c str>
+pub struct ParseOptions {
+    pub file_path: Option<String>,
+    pub package_root_path: Option<String>,
+    pub comment_start: Option<&'static str>
 }
 
-static mut INITIALIZED : bool = false;
 static mut REGEXES : Option<HashMap<&'static str, Regex>> = None;
-static mut STRINGS : Option<HashSet<String>> = None;
-
-fn get_str(string: String) -> &'static str {
-    unsafe {
-        STRINGS.as_mut().unwrap().get_or_insert(string).as_str()
-    }
-}
 
 fn get_regex(pattern: &'static str) -> &'static Regex {
-    let regexes = unsafe { REGEXES.as_mut().unwrap() };
+    let regexes_opt = unsafe { &mut REGEXES };
+    let regexes = regexes_opt.get_or_insert(HashMap::new());
 
     if !regexes.contains_key(pattern) {
         regexes.insert(pattern, Regex::new(&format!("^({})", pattern)).unwrap());
@@ -43,39 +36,17 @@ fn get_regex(pattern: &'static str) -> &'static Regex {
 }
 
 impl StringReader {
-    fn init() {
-        unsafe {
-            if !INITIALIZED {
-                REGEXES = Some(HashMap::new());
-                STRINGS = Some(HashSet::new());
-                INITIALIZED = true;
-            }
-        }
-    }
-
-    pub fn clear_all_static_strings() {
-        unsafe {
-            STRINGS = Some(HashSet::new());
-        }
-    }
-
     pub fn new(content: String, options: ParseOptions) -> Self {
-        Self::init();
-
         Self {
-            comment_token: get_str(options.comment_start.unwrap_or("").to_string()),
-            package_root_path: get_str(options.package_root_path.unwrap_or("").to_string()),
-            file_path: get_str(options.file_path.unwrap_or("").to_string()),
-            file_content: get_str(content),
+            comment_token: options.comment_start.unwrap_or(""),
+            package_root_path: Rc::new(options.package_root_path.unwrap_or_default()),
+            file_path: Rc::new(options.file_path.unwrap_or_default()),
+            file_content: Rc::new(content),
             index: 0,
             error_index: 0,
             expected: vec![],
             markers: HashMap::new()
         }
-    }
-
-    pub fn get_file_path(&self) -> &'static str {
-        self.file_path
     }
 
     pub fn set_expected_token(&mut self, expected: Option<String>) {
@@ -105,9 +76,9 @@ impl StringReader {
         }
 
         ParseError {
-            package_root_path: self.package_root_path,
-            file_path: self.file_path,
-            file_content: self.file_content,
+            package_root_path: self.package_root_path.clone(),
+            file_path: self.file_path.clone(),
+            file_content: self.file_content.clone(),
             index: error_index,
             expected: self.expected.clone(),
         }
@@ -223,9 +194,9 @@ impl StringReader {
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         DataLocation {
-            package_root_path: self.package_root_path,
-            file_path: self.file_path,
-            file_content: self.file_content,
+            package_root_path: self.package_root_path.clone(),
+            file_path: self.file_path.clone(),
+            file_content: self.file_content.clone(),
             start,
             end: self.get_index_backtracked(),
         }

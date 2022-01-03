@@ -50,6 +50,8 @@ mod item_kind;
 mod token_kind;
 mod compilation_error_chain;
 mod qualifiers;
+mod autocomplete_zone;
+mod autocomplete_index;
 
 pub use program_context::*;
 pub use utils::*;
@@ -102,3 +104,5 @@ pub use item_kind::*;
 pub use token_kind::*;
 pub use compilation_error_chain::*;
 pub use qualifiers::*;
+pub use autocomplete_zone::*;
+pub use autocomplete_index::*;
