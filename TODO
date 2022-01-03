@@ -1,0 +1,113 @@
+[X] Merge to master
+[X] Dynamic methods
+[X] #TYPE_ID macro
+[X] Null values
+[X] Field default values
+[X] Stack type of `Option`
+[X] Fix default values of non-option fields
+[X] Fix dynamic methods/generic types interaction (best thing is likely to pass `this` last)
+[X] Add `to_string()`/`to_debug_string()` everywhere
+[X] `Set`/`Map`
+[X] Prevent cycles in `to_debug_string()`
+[X] Add `retain`
+[X] Add `serialize`
+[X] Add `#ANCESTOR_ID`
+[X] Keyword to try to convert variable to another type (e.g `object` -> `Foo`)
+[X] Add `deserialize`
+[X] Single variable field initialization (e.g `Foo { value }` instead of `Foo { value: value }`)
+[X] Allow dynamic user methods to override dynamic autogen methods
+[X] Allow user to override the `default` method
+[X] Allow `||` and `&&` to return other types than `bool`
+[X] `Color` type
+[X] Enum types
+[X] `match` keyword
+[X] Add `retain`, `serialize`, `deserialize`, `to_string`, `to_debug_string` methods for enums
+[X] `Size` type
+[X] Rework number literal
+[X] Use `::` to access static methods/fields instead of `.`
+[X] Add `Pair`
+[X] `Rect` type
+[X] Retain global variables during garbage collection
+[X] Make so `match` can be used on objects
+[X] `void` builtin type
+[X] Specify type in `drop` instruction
+[X] Create 2 binaries when relevant
+[X] Optional signature in `dyn` methods
+[X] `view` type qualifier
+[X] Functions as types
+[X] Blocks as expressions
+[X] `match` with booleans
+[X] Make so variables are modifiable after their declaration in the compiler
+[X] Anonymous functions
+[X] Closures
+[X] Add garbage collection for closures
+[X] `fn() -> int` => `fn()(int)`
+[X] Fix interaction between `for` loops and closures
+[X] `check` keyword
+[X] Event system
+[X] `sort` method for arrays
+[X] Allow creating objects without the brackets when no field is specified (`Foo` instead of `Foo {}`)
+[X] Spread operator in object initialization
+[X] Remove the `dyn` keyword (automatically infer whether a method is dynamic or not)
+[X] Add variable name when using `is` keyword
+[X] Make `this.a.__retain()` a no-op if `a` if not on the heap, instead of loading `a` on the stack and doing nothing with it
+[X] Infer `Window`, `User`, `World` and `LocalData` types
+[X] Add template strings (e.g: `value: ${object.value}`)
+[X] `intercept` keyword
+[X] `yield` keyword
+[X] Make `Array<A>` assignable to `Array<Object>`
+[X] `this` -> `self`
+[X] Window events
+[X] Draw primitives
+[X] Rework macros
+[X] Client update loop
+[X] Networking
+[X] File system
+[X] Server update loop
+[X] Refactor to allow specifying a mode to the compiler
+[X] Integrate compilation errors to VS code extension
+[X] Add variable/function/field/method/type renaming
+[X] Add variable type on hover
+[X] Add goto variable/function/field/method/type definition
+[X] Make so the language server runs in the background during code edition
+[X] Add proper variable destructuring (e.g allow `for (key, value) in map.entries()`)
+[X] Wrap `Type` and `Signature` in `Rc` to reduce cloning cost
+[X] Change how `Vasm` are specified, use chaining instead of list of instructions
+[X] Make so `Vasm` are not populated when unnecessary
+[X] Cache parsed files that didn't change since last parsing
+[ ] Add variable/function/field/method/type autocompletion suggestions
+[ ] Function argument info when typing
+[ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
+
+-- LATER --
+[ ] Allow manually specifying function parameters
+[ ] One-liner methods
+[ ] Avoid recomputing the full path when using operation-assigment operators (e.g `a.b.c.d += 4` should not compute `a.b.c` twice)
+[ ] Replace references to constants with their actual value when possible
+[ ] Make `self` be available in field default values
+[ ] Add type parameter inference
+[ ] Improve variable type inference according to their first use
+[ ] Change the `?` suffix operator to return `none` if the expression it is applied to is `none`
+[ ] Optimize `&&` and `||` when applied to boolean operands
+[ ] Think of a way to loosen the restrictions on basic operators (e.g `3f * 2` sould work) (operator overloading?)
+[ ] Encode errors in enum instead of hard-writting them
+[ ] Reduce size of generated wat by merging functions that have exactly the same body
+[ ] Unify function & value types (probably by introducing function overloading + `()` operator?)
+[ ] Allow `@alloc` to return exactly 1 `i32`
+[ ] Allow chaining function calls (e.g `a()()()`)
+[ ] Improve `Link::borrow()`
+[ ] Add `assert` macro or equivalent to do tests (and ensure everything is fine in prod)
+[ ] Add stack trace somehow
+[ ] Re-use temporary variables when possible
+[ ] Detect unreachable path and adapt the return type of a block
+[ ] Add a way to specify a `_init` method for objects, that will be run after an object is constructed
+[ ] `if let` expression
+[ ] Merge the way fields and methods are processed
+[ ] Possibility to specify fields in interface
+[ ] Solve the `none` issue when accessing fields/methods (should every field/method accessed be checked?)
+[ ] Implement proper iterators
+[ ] Improve interface system (basically copy the one from rust)
+[ ] Generalize tuples
+
+-- COMMON ITERATOR METHODS --
+enumerate, zip, rev
