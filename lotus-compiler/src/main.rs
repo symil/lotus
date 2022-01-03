@@ -6,6 +6,7 @@ use colored::*;
 use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
 use language_server::start_language_server;
 use program::{ProgramContext, ProgramContextOptions};
+use utils::FileSystemCache;
 
 mod utils;
 mod program;
@@ -20,6 +21,7 @@ fn main() {
     if options.run_benchmark {
         let root_directory = infer_root_directory(options.input_path.as_ref().unwrap()).unwrap();
         let source_directories = bundle_with_prelude(&root_directory);
+        let mut cache = FileSystemCache::new();
         let mut context = ProgramContext::new(ProgramContextOptions {
             validate_only: true,
         });
@@ -28,8 +30,7 @@ fn main() {
         for i in 0..3 {
             let duration = timer.time(ProgramStep::Total, || {
                 context.reset();
-                context.read_source_files(&source_directories);
-                context.parse_source_files();
+                context.parse_source_files(&source_directories, Some(&mut cache));
                 context.process_source_files();
             });
 
@@ -46,8 +47,7 @@ fn main() {
             let mut timer = Timer::new();
             let mut context = ProgramContext::new(ProgramContextOptions::default());
 
-            timer.time(ProgramStep::Read, || context.read_source_files(&source_directories));
-            timer.time(ProgramStep::Parse, || context.parse_source_files());
+            timer.time(ProgramStep::Parse, || context.parse_source_files(&source_directories, None));
 
             if !context.has_errors() {
                 timer.time(ProgramStep::Process, || context.process_source_files());

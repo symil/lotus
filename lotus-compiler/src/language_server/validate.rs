@@ -7,9 +7,7 @@ pub fn validate(parameters: &LanguageServerCommandParameters, context: &ProgramC
     let mut file_errors = IndexMap::new();
 
     for source_file in &context.source_file_list {
-        let source_file_path = source_file.path.to_str().unwrap();
-
-        file_errors.insert(source_file_path, vec![]);
+        file_errors.insert(source_file.file_path.as_str(), vec![]);
     }
 
     for error in context.errors.get_all() {

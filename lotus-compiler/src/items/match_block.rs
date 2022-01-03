@@ -1,6 +1,6 @@
 use colored::Colorize;
 use parsable::parsable;
-use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm}, wat};
+use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent}, wat};
 use super::{Expression, Identifier, ParsedType, TypeQualifier, type_qualifier};
 
 #[parsable]
@@ -25,14 +25,14 @@ impl MatchBlock {
         let mut result = None;
 
         if let Some(matched_vasm) = self.value_to_match.process(None, context) {
-            match &matched_vasm.ty {
-                Type::Undefined => {},
-                Type::Actual(info) => info.type_blueprint.clone().with_ref(|type_unwrapped| {
+            match &matched_vasm.ty.content() {
+                TypeContent::Undefined => {},
+                TypeContent::Actual(info) => info.type_blueprint.clone().with_ref(|type_unwrapped| {
                     if !type_unwrapped.is_enum() && !type_unwrapped.is_class() && !matched_vasm.ty.is_bool() {
                         context.errors.generic(&self.value_to_match, format!("expected enum or class type, got `{}`", &matched_vasm.ty));
                     } else {
                         let tmp_var = VariableInfo::tmp("tmp", context.int_type());
-                        let result_var = VariableInfo::tmp("result", Type::Undefined);
+                        let result_var = VariableInfo::tmp("result", Type::undefined());
                         let mut returned_type : Option<Type> = None;
                         let mut content = context.vasm();
 

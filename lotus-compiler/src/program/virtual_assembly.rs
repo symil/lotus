@@ -19,7 +19,7 @@ struct VirtualAssemblyContent {
 
 impl VirtualAssembly {
     pub fn new(allow_populating: bool) -> Self {
-        let ty = Type::Undefined;
+        let ty = Type::undefined();
         let content = match allow_populating {
             true => Some(VirtualAssemblyContent {
                 variables: vec![],

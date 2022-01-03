@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use colored::*;
-use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VariableKind, Vasm}};
+use crate::{items::{ObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, TypeArguments, process_field_access, process_function_call, process_method_call, type_arguments}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VariableKind, Vasm, TypeContent}};
 use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix, VarPrefixWrapper, IdentifierWrapper};
 
 #[parsable]
@@ -39,8 +39,8 @@ impl VarRef {
             },
             None => match &self.args {
                 Some(args) => match context.access_var(&var_name) {
-                    Some(var_info) => match &var_info.ty().clone() {
-                        Type::Function(signature) => {
+                    Some(var_info) => match &var_info.ty().clone().content() {
+                        TypeContent::Function(signature) => {
                             let function_call = FunctionCall::Anonymous(AnonymousFunctionCallDetails {
                                 signature: signature.clone(),
                                 function_offset: 0,
@@ -94,7 +94,7 @@ impl VarRef {
                             match function_unwrapped.parameters.is_empty() {
                                 true => Some(context.vasm()
                                     .function_index(&function_wrapped, &[])
-                                    .set_type(Type::Function(function_unwrapped.signature.clone()))
+                                    .set_type(Type::function(&function_unwrapped.signature))
                                 ),
                                 false => {
                                     context.errors.generic(&var_name, format!("cannot use functions with parameters as variables for now"));

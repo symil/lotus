@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent}, utils::Link};
 use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
 
 #[parsable]
@@ -62,7 +62,7 @@ impl TypeDeclaration {
             ancestors: vec![],
             parameters: IndexMap::new(),
             associated_types: IndexMap::new(),
-            self_type: Type::Undefined,
+            self_type: Type::undefined(),
             parent: None,
             enum_variants: IndexMap::new(),
             fields: IndexMap::new(),
@@ -107,13 +107,7 @@ impl TypeDeclaration {
         }
 
         type_wrapped.with_mut(|mut type_unwrapped| {
-            type_unwrapped.self_type = Type::Actual(ActualTypeContent {
-                type_blueprint: type_wrapped.clone(),
-                parameters: parameters.values().map(|param| {
-                    Type::TypeParameter(param.clone())
-                }).collect(),
-                location: self.name.location.clone()
-            });
+            type_unwrapped.self_type = Type::actual(&type_wrapped, parameters.values().map(|param| Type::type_parameter(param)).collect(), &self.name.location);
             type_unwrapped.parameters = parameters;
             type_unwrapped.stack_type = stack_type;
         });
@@ -163,11 +157,11 @@ impl TypeDeclaration {
                     if !type_wrapped.borrow().is_class() {
                         context.errors.generic(parsed_parent_type, format!("only class types can inherit"));
                     } else {
-                        match &parent_type {
-                            Type::TypeParameter(_) => {
+                        match &parent_type.content() {
+                            TypeContent::TypeParameter(_) => {
                                 context.errors.generic(parsed_parent_type, format!("cannot inherit from type parameter"));
                             },
-                            Type::Actual(info) => {
+                            TypeContent::Actual(info) => {
                                 let parent_unwrapped = info.type_blueprint.borrow();
 
                                 if parent_unwrapped.is_class() {

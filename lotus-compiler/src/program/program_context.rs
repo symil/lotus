@@ -2,9 +2,9 @@ use std::{cell::UnsafeCell, collections::{HashMap, HashSet, hash_map::DefaultHas
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
-use parsable::{DataLocation, Parsable, ParseOptions};
-use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash}, wat};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME};
+use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
+use crate::{items::{EventCallbackQualifier, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent};
 
 #[derive(Debug, Default, Clone)]
 pub struct ProgramContextOptions {
@@ -15,7 +15,7 @@ pub struct ProgramContextOptions {
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
     pub source_file_list: Vec<SourceFileDetails>,
-    pub parsed_source_files: Vec<LotusFile>,
+    pub parsed_source_files: Vec<Rc<LotusFile>>,
     pub errors: CompilationErrorList,
 
     pub default_interfaces: InterfaceList,
@@ -27,7 +27,7 @@ pub struct ProgramContext {
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
     pub shared_identifiers: HashMap<u64, SharedIdentifier>,
 
-    builtin_types: HashMap<BuiltinType, Type>,
+    builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     main_types: HashMap<MainType, Type>,
 
     pub autogen_type: Option<Link<TypeBlueprint>>,
@@ -87,13 +87,7 @@ impl ProgramContext {
             let type_name = builtin_type.get_name();
 
             if let Some(type_wrapped) = self.types.get_by_name(type_name) {
-                let ty = Type::Actual(ActualTypeContent {
-                    type_blueprint: type_wrapped,
-                    parameters: vec![],
-                    location: DataLocation::default(),
-                });
-
-                self.builtin_types.insert(builtin_type, ty);
+                self.builtin_types.insert(builtin_type, type_wrapped);
             } else {
                 // panic!("undefined builtin type `{}`", type_name);
             }
@@ -103,22 +97,16 @@ impl ProgramContext {
             let type_name = main_type.get_name();
             let default_name = main_type.get_default_type().get_name();
             let type_wrapped = self.types.get_by_name_private(type_name).unwrap_or_else(|| self.types.get_by_name(default_name).unwrap());
-            let ty = Type::Actual(ActualTypeContent {
-                type_blueprint: type_wrapped,
-                parameters: vec![],
-                location: DataLocation::default(),
-            });
+            let ty = Type::actual(type_wrapped, vec![], &DataLocation::default());
 
             self.main_types.insert(main_type, ty);
         }
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
-        let mut ty = self.builtin_types.get(&builtin_type).unwrap().clone();
+        let type_blueprint = self.builtin_types.get(&builtin_type).unwrap();
 
-        ty.push_parameters(parameters);
-
-        ty
+        Type::actual(type_blueprint, parameters, &DataLocation::default())
     }
 
     pub fn void_type(&self) -> Type {
@@ -157,9 +145,9 @@ impl ProgramContext {
         if let Some(type_wrapped) = self.get_current_type() {
             type_wrapped.borrow().self_type.clone()
         } else if let Some(interface_wrapped) = self.get_current_interface() {
-            Type::This(interface_wrapped.clone())
+            Type::this(&interface_wrapped)
         } else {
-            Type::Undefined
+            Type::undefined()
         }
     }
 
@@ -204,18 +192,15 @@ impl ProgramContext {
         for scope in self.scopes.iter().rev() {
             match &scope.kind {
                 ScopeKind::Type(type_wrapped) => match type_wrapped.borrow().parameters.get(name) {
-                    Some(info) => return Some(Type::TypeParameter(info.clone())),
+                    Some(info) => return Some(Type::type_parameter(&info)),
                     None => {}
                 },
                 ScopeKind::Interface(interface_wrapped) => match interface_wrapped.borrow().associated_types.get(name) {
-                    Some(info) => return Some(Type::Associated(AssociatedTypeContent {
-                        root: Box::new(Type::This(interface_wrapped.clone())),
-                        associated: info.clone(),
-                    })),
+                    Some(info) => return Some(Type::associated(Type::this(interface_wrapped), &info)),
                     None => {},
                 },
                 ScopeKind::Function(function_wrapped) => match function_wrapped.borrow().parameters.get(name) {
-                    Some(info) => return Some(Type::FunctionParameter(info.clone())),
+                    Some(info) => return Some(Type::function_parameter(&info)),
                     None => {},
                 },
                 ScopeKind::Loop => {},
@@ -372,9 +357,9 @@ impl ProgramContext {
             let mut variables = vec![];
 
             if let Some(this_type) = &function_unwrapped.signature.this_type {
-                let location = match &this_type {
-                    Type::This(interface_blueprint) => interface_blueprint.borrow().name.location.clone(),
-                    Type::Actual(content) => content.type_blueprint.borrow().name.location.clone(),
+                let location = match this_type.content() {
+                    TypeContent::This(interface_blueprint) => interface_blueprint.borrow().name.location.clone(),
+                    TypeContent::Actual(content) => content.type_blueprint.borrow().name.location.clone(),
                     _ => function_unwrapped.name.location.clone()
                 };
 
@@ -549,42 +534,50 @@ impl ProgramContext {
         self.options = options;
     }
 
-    pub fn read_source_files(&mut self, directories: &[SourceDirectoryDetails]) {
+    pub fn parse_source_files(&mut self, directories: &[SourceDirectoryDetails], provided_cache: Option<&mut FileSystemCache<LotusFile, ParseError>>) {
         for details in directories {
-            let mut files = vec![];
+            let mut path_list = vec![];
 
             for file_path in read_directory_recursively(&details.path) {
                 if let Some(extension) = file_path.extension() {
                     if extension == SOURCE_FILE_EXTENSION {
-                        if let Ok(content) = fs::read_to_string(&file_path) {
-                            files.push(SourceFileDetails {
-                                path: file_path,
-                                root_directory_path: details.path.to_string(),
-                                content
-                            });
-                        }
+                        path_list.push(file_path.to_str().unwrap().to_string());
                     }
                 }
             }
 
-            files.sort_by_cached_key(|file_details| file_details.path.to_str().unwrap().to_string());
+            path_list.sort();
 
-            self.source_file_list.append(&mut files);
+            for file_path in path_list {
+                self.source_file_list.push(SourceFileDetails {
+                    file_path,
+                    root_directory_path: details.path.clone(),
+                });
+            }
         }
-    }
 
-    pub fn parse_source_files(&mut self) {
-        for source_file in &mut self.source_file_list {
-            let parse_options = ParseOptions {
-                file_path: Some(source_file.path.to_str().unwrap()),
-                package_root_path: Some(&source_file.root_directory_path),
-                comment_start: Some(COMMENT_START_TOKEN),
+        let mut empty_cache = FileSystemCache::new();
+        let cache = provided_cache.unwrap_or(&mut empty_cache);
+
+        for source_file_details in &self.source_file_list {
+            let root_directory_path = &source_file_details.root_directory_path;
+            let file_path = &source_file_details.file_path;
+            let parse_function = |file_content : String| {
+                let parse_options = ParseOptions {
+                    file_path: Some(file_path),
+                    package_root_path: Some(root_directory_path),
+                    comment_start: Some(COMMENT_START_TOKEN),
+                };
+
+                LotusFile::parse(file_content, parse_options)
             };
 
-            match LotusFile::parse(take(&mut source_file.content), parse_options) {
+            let result = cache.read_file(file_path, parse_function);
+
+            match result {
                 Ok(lotus_file) => self.parsed_source_files.push(lotus_file),
-                Err(parse_error) => self.errors.parse_error(parse_error)
-            };
+                Err(parse_error) => self.errors.parse_error(&parse_error),
+            }
         }
     }
 
@@ -595,14 +588,16 @@ impl ProgramContext {
         let mut functions = vec![];
         let mut global_vars = vec![];
 
-        for file in take(&mut self.parsed_source_files) {
-            for block in file.blocks {
+        let parsed_source_files = take(&mut self.parsed_source_files);
+
+        for file in &parsed_source_files {
+            for block in &file.blocks {
                 match block {
                     TopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
                     TopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
                     TopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
                     TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
-                    TopLevelBlock::GlobalDeclaration(mut global_declaration) => global_vars.push(global_declaration),
+                    TopLevelBlock::GlobalDeclaration(global_declaration) => global_vars.push(global_declaration),
                 }
             }
         }
@@ -637,7 +632,7 @@ impl ProgramContext {
 
         match sort_dependancy_graph(links) {
             Ok(result) => {
-                let mut wrapped : Vec<Option<TypeDeclaration>> = types.into_iter().map(|ty| Some(ty)).collect();
+                let mut wrapped : Vec<Option<&TypeDeclaration>> = types.into_iter().map(|ty| Some(ty)).collect();
                 types = vec![];
 
                 for index in result {
@@ -754,6 +749,8 @@ impl ProgramContext {
         // if self.functions.get_by_name("main").is_none() {
         //     self.errors.generic_unlocated(format!("missing required function `main`"));
         // }
+
+        self.parsed_source_files = parsed_source_files;
     }
 
     pub fn resolve_wat(&mut self) {

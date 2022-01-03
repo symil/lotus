@@ -130,7 +130,7 @@ impl Default for VariableInfo {
     fn default() -> Self {
         Link::new(VariableInfoContent {
             name: Identifier::default(),
-            ty: Type::Undefined,
+            ty: Type::undefined(),
             kind: VariableKind::Local,
             declaration_level: u32::MAX,
             wasm_name: String::new(),

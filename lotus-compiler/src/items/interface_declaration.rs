@@ -109,7 +109,7 @@ impl InterfaceDeclaration {
                     FieldKind::Regular => &mut regular_methods
                 };
 
-                let this_type = Type::This(interface_wrapped.clone());
+                let this_type = Type::this(&interface_wrapped);
                 let argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
                 let return_type = return_type.unwrap_or(context.void_type());
                 let method_this_type = match method_kind.is_static() {
@@ -117,7 +117,7 @@ impl InterfaceDeclaration {
                     false => Some(this_type.clone()),
                 };
                 let signature = Signature::create(method_this_type, argument_types, return_type);
-                let function_type = Type::Function(signature.clone());
+                let function_type = Type::function(&signature);
 
                 function_blueprint.signature = signature;
 

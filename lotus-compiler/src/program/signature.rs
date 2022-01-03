@@ -2,7 +2,7 @@ use core::{fmt};
 use std::{rc::Rc, borrow::Borrow};
 use colored::Colorize;
 use crate::{program::BuiltinType, utils::Wrapper};
-use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, display_join};
+use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, display_join, TypeContent};
 
 pub type Signature = Wrapper<SignatureContent>;
 
@@ -10,7 +10,7 @@ thread_local! {
     static DEFAULT_SIGNATURE : Signature = Wrapper::new(SignatureContent {
         this_type: None,
         argument_types: vec![],
-        return_type: Type::Undefined,
+        return_type: Type::new(TypeContent::Undefined),
     });
 }
 

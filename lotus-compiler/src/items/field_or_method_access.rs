@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::{HashMap, HashSet}, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list}, utils::Link, wat};
+use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat};
 use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
@@ -71,8 +71,8 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                         .set_type(parent_type)
                     );
                 },
-                false => match parent_type {
-                    Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                false => match parent_type.content() {
+                    TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                         if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
                             context.access_shared_identifier(&variant_info.name, field_name);
 
@@ -149,7 +149,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     };
 
     let mut function_parameters = match &function_call {
-        FunctionCall::Named(details) => details.function.borrow().parameters.values().map(|info| Type::FunctionParameter(info.clone())).collect(),
+        FunctionCall::Named(details) => details.function.borrow().parameters.values().map(|info| Type::function_parameter(&info)).collect(),
         FunctionCall::Anonymous(_) => vec![],
     };
 
@@ -247,7 +247,7 @@ fn infer_function_parameters(function_parameters: &[Type], remaining_type_indexe
     let mut result = vec![];
 
     for (i, function_parameter) in function_parameters.iter().enumerate() {
-        if let Type::FunctionParameter(info) = function_parameter {
+        if let TypeContent::FunctionParameter(info) = function_parameter.content() {
             if let Some(ty) = expected_type.infer_function_parameter(info, actual_type) {
                 result.push(ty);
                 remaining_type_indexes_to_infer.remove(&i);

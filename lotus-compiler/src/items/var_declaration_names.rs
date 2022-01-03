@@ -58,8 +58,8 @@ impl VarDeclarationNames {
 
                     let mut result_vasm = context.vasm();
                     let tmp_var_info = VariableInfo::tmp("tmp", variable_type.clone());
-                    let var_1 = context.declare_local_variable(names[0].clone(), Type::Undefined);
-                    let var_2 = context.declare_local_variable(names[1].clone(), Type::Undefined);
+                    let var_1 = context.declare_local_variable(names[0].clone(), Type::undefined());
+                    let var_2 = context.declare_local_variable(names[1].clone(), Type::undefined());
 
                     if let Some(first_type) = variable_type.get_associated_type(TUPLE_FIRST_ASSOCIATED_TYPE_NAME) {
                         var_1.set_type(first_type);

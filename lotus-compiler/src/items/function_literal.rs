@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent}, utils::Link};
+use crate::{items::{MethodQualifier, Visibility}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent}, utils::Link};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -24,8 +24,8 @@ impl FunctionLiteral {
         let mut result = None;
         let arg_names = self.arguments.process(type_hint, context);
         let void_type = context.void_type();
-        let (arg_types, return_type) = match type_hint {
-            Some(Type::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
+        let (arg_types, return_type) = match type_hint.map(|t| t.content()) {
+            Some(TypeContent::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
             _ => (EMPTY_TYPE_LIST.as_slice(), &void_type)
         };
 
@@ -37,7 +37,7 @@ impl FunctionLiteral {
                 Some(ty) => ty.clone(),
                 None => {
                     context.errors.generic(name, format!("cannot infer type of `{}`", name.as_str().bold()));
-                    Type::Undefined
+                    Type::undefined()
                 },
             };
 
@@ -75,7 +75,7 @@ impl FunctionLiteral {
 
         result = Some(context.vasm()
             .function_index(&function_wrapped, &[])
-            .set_type(Type::Function(signature))
+            .set_type(Type::function(signature))
         );
 
         context.pop_scope();

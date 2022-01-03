@@ -23,7 +23,7 @@ impl TypeArguments {
         for arg in &self.list {
             let arg_type = match arg.process(check_interfaces, context) {
                 Some(ty) => ty,
-                None => Type::Undefined,
+                None => Type::undefined(),
             };
 
             type_list.push(arg_type);

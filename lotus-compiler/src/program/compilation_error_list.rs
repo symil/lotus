@@ -45,7 +45,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn parse_error(&mut self, parse_error: ParseError) {
+    pub fn parse_error(&mut self, parse_error: &ParseError) {
         self.add(CompilationError {
             location: DataLocation {
                 package_root_path: parse_error.package_root_path,
@@ -55,7 +55,7 @@ impl CompilationErrorList {
                 end: parse_error.index,
             },
             details: CompilationErrorDetails::ParseError(ParseErrorDetails {
-                expected_tokens: parse_error.expected
+                expected_tokens: parse_error.expected.clone()
             }),
         })
     }

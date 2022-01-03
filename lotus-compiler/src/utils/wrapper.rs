@@ -11,6 +11,10 @@ impl<T> Wrapper<T> {
         }
     }
 
+    pub fn content(&self) -> &T {
+        &self.rc
+    }
+
     // pub fn get_mut(&mut self) -> &mut T {
     //     Rc::get_mut(&mut self.rc).unwrap()
     // }

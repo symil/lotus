@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct SourceFileDetails {
-    pub path: PathBuf,
+    pub file_path: String,
     pub root_directory_path: String,
-    pub content: String
 }

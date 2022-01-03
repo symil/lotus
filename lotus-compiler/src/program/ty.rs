@@ -2,11 +2,13 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, b
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::Link, wat};
+use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
 
+pub type Type = Wrapper<TypeContent>;
+
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum TypeContent {
     Undefined,
     Any,
     This(Link<InterfaceBlueprint>),
@@ -32,42 +34,93 @@ pub struct ActualTypeContent {
 
 #[derive(Debug, Clone)]
 pub struct AssociatedTypeContent {
-    pub root: Box<Type>,
+    pub root: Type,
     pub associated: Rc<InterfaceAssociatedTypeInfo>,
 }
 
+thread_local! {
+    static UNDEFINED_TYPE : Type = Wrapper::new(TypeContent::Undefined);
+    static ANY_TYPE : Type = Wrapper::new(TypeContent::Any);
+}
+
 impl Type {
+    pub fn undefined() -> Type {
+        unsafe { UNDEFINED_TYPE.with(|wrapper| wrapper.clone()) }
+    }
+
+    pub fn any() -> Type {
+        unsafe { ANY_TYPE.with(|wrapper| wrapper.clone()) }
+    }
+
+    pub fn this<T : Borrow<Link<InterfaceBlueprint>>>(interface: T) -> Type {
+        Self::new(TypeContent::This(interface.borrow().clone()))
+    }
+
+    pub fn actual<T : Borrow<Link<TypeBlueprint>>>(type_blueprint: T, parameters: Vec<Type>, location: &DataLocation) -> Type {
+        Self::new(TypeContent::Actual(ActualTypeContent {
+            type_blueprint: type_blueprint.borrow().clone(),
+            parameters,
+            location: location.clone(),
+        }))
+    }
+
+    pub fn type_parameter(parameter_info: &Rc<ParameterTypeInfo>) -> Type {
+        Self::new(TypeContent::TypeParameter(parameter_info.clone()))
+    }
+
+    pub fn function_parameter(parameter_info: &Rc<ParameterTypeInfo>) -> Type {
+        Self::new(TypeContent::FunctionParameter(parameter_info.clone()))
+    }
+
+    pub fn associated<T : Borrow<Type>>(root: T, associated: &Rc<InterfaceAssociatedTypeInfo>) -> Type {
+        Self::new(TypeContent::Associated(AssociatedTypeContent {
+            root: root.borrow().clone(),
+            associated: associated.clone(),
+        }))
+    }
+
+    pub fn function<S : Borrow<Signature>>(signature: S) -> Type {
+        Self::new(TypeContent::Function(signature.borrow().clone()))
+    }
+
     pub fn is_undefined(&self) -> bool {
-        match self {
-            Type::Undefined => true,
+        match self.content() {
+            TypeContent::Undefined => true,
+            _ => false
+        }
+    }
+
+    pub fn is_any(&self) -> bool {
+        match self.content() {
+            TypeContent::Any => true,
             _ => false
         }
     }
 
     pub fn is_object(&self) -> bool {
-        match self {
-            Type::Actual(info) => info.type_blueprint.borrow().is_class(),
+        match self.content() {
+            TypeContent::Actual(info) => info.type_blueprint.borrow().is_class(),
             _ => false
         }
     }
 
     pub fn is_function(&self) -> bool {
-        match self {
-            Type::Function(_) => true,
+        match self.content() {
+            TypeContent::Function(_) => true,
             _ => false
         }
     }
 
     pub fn is_enum(&self) -> bool {
-        match self {
-            Type::Actual(info) => info.type_blueprint.borrow().is_enum(),
+        match self.content() {
+            TypeContent::Actual(info) => info.type_blueprint.borrow().is_enum(),
             _ => false
         }
     }
 
     pub fn is_builtin_type(&self, builtin_type: BuiltinType) -> bool {
-        match self {
-            Type::Actual(info) => info.type_blueprint.borrow().name.as_str() == builtin_type.get_name(),
+        match self.content() {
+            TypeContent::Actual(info) => info.type_blueprint.borrow().name.as_str() == builtin_type.get_name(),
             _ => false
         }
     }
@@ -84,16 +137,9 @@ impl Type {
         self.is_builtin_type(BuiltinType::Bool)
     }
 
-    pub fn push_parameters(&mut self, parameter_types: Vec<Type>) {
-        match self {
-            Type::Actual(info) => info.parameters.extend(parameter_types),
-            _ => unreachable!()
-        }
-    }
-
     pub fn inherits_from(&self, parent_name: &str) -> bool {
-        match self {
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+        match self.content() {
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 match type_unwrapped.name.as_str() == parent_name {
                     true => true,
                     false => match &type_unwrapped.parent {
@@ -107,15 +153,15 @@ impl Type {
     }
 
     pub fn get_parameters(&self) -> &[Type] {
-        match self {
-            Type::Undefined => &[],
-            Type::Any => &[],
-            Type::This(_) => &[],
-            Type::Actual(info) => &info.parameters,
-            Type::TypeParameter(_) => &[],
-            Type::FunctionParameter(_) => &[],
-            Type::Associated(_) => &[],
-            Type::Function(_) => &[],
+        match self.content() {
+            TypeContent::Undefined => &[],
+            TypeContent::Any => &[],
+            TypeContent::This(_) => &[],
+            TypeContent::Actual(info) => &info.parameters,
+            TypeContent::TypeParameter(_) => &[],
+            TypeContent::FunctionParameter(_) => &[],
+            TypeContent::Associated(_) => &[],
+            TypeContent::Function(_) => &[],
         }
     }
 
@@ -131,15 +177,15 @@ impl Type {
     }
 
     pub fn get_type_blueprint(&self) -> Link<TypeBlueprint> {
-        match self {
-            Type::Actual(info) => info.type_blueprint.clone(),
+        match self.content() {
+            TypeContent::Actual(info) => info.type_blueprint.clone(),
             _ => unreachable!()
         }
     }
 
     pub fn get_function_signature(&self) -> &Signature {
-        match self {
-            Type::Function(info) => info,
+        match self.content() {
+            TypeContent::Function(info) => info,
             _ => unreachable!()
         }
     }
@@ -149,7 +195,7 @@ impl Type {
             Some(other.clone())
         } else if other.is_assignable_to(self) {
             Some(self.clone())
-        } else if let (Type::Actual(self_info), Type::Actual(other_info)) = (self, other) {
+        } else if let (TypeContent::Actual(self_info), TypeContent::Actual(other_info)) = (self.content(), other.content()) {
             match self_info.parameters.is_empty() && other_info.parameters.is_empty() {
                 true => {
                     let self_unwrapped = self_info.type_blueprint.borrow();
@@ -162,11 +208,7 @@ impl Type {
                             let other_ancestor_wrapped = other_ancestor.get_type_blueprint();
 
                             if self_ancestor_wrapped == other_ancestor_wrapped {
-                                return Some(Type::Actual(ActualTypeContent {
-                                    type_blueprint: self_ancestor_wrapped.clone(),
-                                    parameters: vec![],
-                                    location: DataLocation::default(),
-                                }));
+                                return Some(Type::actual(&self_ancestor_wrapped, vec![], &DataLocation::default()));
                             }
                         }
                     }
@@ -181,66 +223,59 @@ impl Type {
     }
 
     pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Type {
-        match self {
-            Type::Undefined => Type::Undefined,
-            Type::Any => Type::Any,
-            Type::This(_) => this_type.unwrap().clone(),
-            Type::Actual(info) => {
-                let type_blueprint = info.type_blueprint.clone();
+        match self.content() {
+            TypeContent::Undefined => Type::undefined(),
+            TypeContent::Any => Type::any(),
+            TypeContent::This(_) => this_type.unwrap().clone(),
+            TypeContent::Actual(info) => {
+                let type_blueprint = &info.type_blueprint;
                 let parameters = info.parameters.iter().map(|p| p.replace_parameters(this_type, function_parameters)).collect();
-                let location = info.location.clone();
+                let location = &info.location;
 
-                Type::Actual(ActualTypeContent {
-                    type_blueprint,
-                    parameters,
-                    location
-                })
+                Type::actual(type_blueprint, parameters, location)
             },
-            // Type::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
-            // Type::FunctionParameter(info) => function_parameters[info.index].clone(),
-            Type::TypeParameter(info) => match this_type {
+            // TypeContent::TypeParameter(info) => this_type.unwrap().get_parameter(info.index),
+            // TypeContent::FunctionParameter(info) => function_parameters[info.index].clone(),
+            TypeContent::TypeParameter(info) => match this_type {
                 Some(ty) => ty.get_parameter(info.index),
                 None => self.clone(),
             },
-            Type::FunctionParameter(info) => match function_parameters.get(info.index) {
+            TypeContent::FunctionParameter(info) => match function_parameters.get(info.index) {
                 Some(ty) => ty.clone(),
                 None => self.clone(),
             },
-            Type::Associated(info) => {
+            TypeContent::Associated(info) => {
                 let root = info.root.replace_parameters(this_type, function_parameters);
 
-                match root {
-                    Type::Actual(ref actual_type) => actual_type.type_blueprint.with_ref(|type_unwrapped| {
+                match root.content() {
+                    TypeContent::Actual(ref actual_type) => actual_type.type_blueprint.with_ref(|type_unwrapped| {
                         type_unwrapped.associated_types.get(info.associated.name.as_str()).unwrap().ty.replace_parameters(Some(&root), &[])
                     }),
-                    _ => Type::Associated(AssociatedTypeContent {
-                        root: Box::new(root),
-                        associated: info.associated.clone(),
-                    })
+                    _ => Type::associated(root, &info.associated)
                 }
             },
-            Type::Function(info) => Type::Function(info.replace_parameters(this_type, function_parameters)),
+            TypeContent::Function(info) => Type::function(info.replace_parameters(this_type, function_parameters)),
         }
     }
 
     pub fn get_parameter(&self, index: usize) -> Type {
-        match self {
-            Type::Undefined => unreachable!(),
-            Type::Any => unreachable!(),
-            Type::This(_) => unreachable!(),
-            Type::Actual(info) => info.parameters[index].clone(),
-            Type::TypeParameter(_) => unreachable!(),
-            Type::FunctionParameter(_) => unreachable!(),
-            Type::Associated(_) => unreachable!(),
-            Type::Function(_) => unreachable!(),
+        match self.content() {
+            TypeContent::Undefined => unreachable!(),
+            TypeContent::Any => unreachable!(),
+            TypeContent::This(_) => unreachable!(),
+            TypeContent::Actual(info) => info.parameters[index].clone(),
+            TypeContent::TypeParameter(_) => unreachable!(),
+            TypeContent::FunctionParameter(_) => unreachable!(),
+            TypeContent::Associated(_) => unreachable!(),
+            TypeContent::Function(_) => unreachable!(),
         }
     }
 
     pub fn is_assignable_to(&self, target: &Type) -> bool {
-        match (self, target) {
-            (_, Type::Any) => true,
-            (Type::This(_), Type::This(_)) => true,
-            (Type::Actual(self_info), Type::Actual(target_info)) => match self_info.type_blueprint == target_info.type_blueprint {
+        match (self.content(), target.content()) {
+            (_, TypeContent::Any) => true,
+            (TypeContent::This(_), TypeContent::This(_)) => true,
+            (TypeContent::Actual(self_info), TypeContent::Actual(target_info)) => match self_info.type_blueprint == target_info.type_blueprint {
                 true => {
                     if self_info.parameters.len() != target_info.parameters.len() {
                         return false;
@@ -259,17 +294,17 @@ impl Type {
                     None => false,
                 },
             },
-            (Type::TypeParameter(self_info), Type::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
-            (Type::FunctionParameter(self_info), Type::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
-            (Type::Associated(self_info), Type::Associated(target_info)) => self_info == target_info,
-            (Type::Function(self_signature), Type::Function(target_signature)) => self_signature.is_assignable_to(target_signature),
+            (TypeContent::TypeParameter(self_info), TypeContent::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
+            (TypeContent::FunctionParameter(self_info), TypeContent::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
+            (TypeContent::Associated(self_info), TypeContent::Associated(target_info)) => self_info == target_info,
+            (TypeContent::Function(self_signature), TypeContent::Function(target_signature)) => self_signature.is_assignable_to(target_signature),
             _ => false
         }
     }
 
     pub fn get_as(&self, target: &Link<TypeBlueprint>) -> Option<Type> {
-        match self {
-            Type::Actual(self_info) => {
+        match self.content() {
+            TypeContent::Actual(self_info) => {
                 self_info.type_blueprint.with_ref(|self_type_unwrapped| {
                     match self_type_unwrapped.ancestors.iter().find(|ty| &ty.get_type_blueprint() == target) {
                         Some(ancestor_type) => Some(ancestor_type.replace_parameters(Some(self), &[])),
@@ -282,33 +317,33 @@ impl Type {
     }
 
     pub fn is_function_parameter(&self, parameter: &Rc<ParameterTypeInfo>) -> bool {
-        match self {
-            Type::FunctionParameter(info) => Rc::ptr_eq(info, parameter),
+        match self.content() {
+            TypeContent::FunctionParameter(info) => Rc::ptr_eq(info, parameter),
             _ => false
         }
     }
 
     pub fn contains_function_parameter(&self) -> bool {
-        match self {
-            Type::Undefined => false,
-            Type::Any => false,
-            Type::This(_) => false,
-            Type::Actual(info) => info.parameters.iter().any(|param| param.contains_function_parameter()),
-            Type::TypeParameter(_) => false,
-            Type::FunctionParameter(_) => true,
-            Type::Associated(info) => info.root.contains_function_parameter(),
-            Type::Function(info) => info.argument_types.iter().any(|param| param.contains_function_parameter()) || info.return_type.contains_function_parameter(),
+        match self.content() {
+            TypeContent::Undefined => false,
+            TypeContent::Any => false,
+            TypeContent::This(_) => false,
+            TypeContent::Actual(info) => info.parameters.iter().any(|param| param.contains_function_parameter()),
+            TypeContent::TypeParameter(_) => false,
+            TypeContent::FunctionParameter(_) => true,
+            TypeContent::Associated(info) => info.root.contains_function_parameter(),
+            TypeContent::Function(info) => info.argument_types.iter().any(|param| param.contains_function_parameter()) || info.return_type.contains_function_parameter(),
         }
     }
 
     pub fn infer_function_parameter(&self, function_param_to_infer: &Rc<ParameterTypeInfo>, actual_type: &Type) -> Option<Type> {
-        match self {
-            Type::Undefined => None,
-            Type::Any => None,
-            Type::This(_) => None,
-            Type::Actual(info) => match actual_type.get_as(&info.type_blueprint) {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(_) => None,
+            TypeContent::Actual(info) => match actual_type.get_as(&info.type_blueprint) {
                 Some(actual_type) => {
-                    if let Type::Actual(actual_info) = actual_type {
+                    if let TypeContent::Actual(actual_info) = actual_type.content() {
                         for (self_param, actual_param) in info.parameters.iter().zip(actual_info.parameters.iter()) {
                             if let Some(inferred_type) = self_param.infer_function_parameter(function_param_to_infer, actual_param) {
                                 return Some(inferred_type);
@@ -320,14 +355,14 @@ impl Type {
                 },
                 None => None,
             },
-            Type::TypeParameter(_) => None,
-            Type::FunctionParameter(info) => match Rc::ptr_eq(info, function_param_to_infer) {
+            TypeContent::TypeParameter(_) => None,
+            TypeContent::FunctionParameter(info) => match Rc::ptr_eq(info, function_param_to_infer) {
                 true => Some(actual_type.clone()),
                 false => None
             },
-            Type::Associated(_) => todo!(),
-            Type::Function(info) => match actual_type {
-                Type::Function(actual_type_info) => {
+            TypeContent::Associated(_) => todo!(),
+            TypeContent::Function(info) => match actual_type.content() {
+                TypeContent::Function(actual_type_info) => {
                     if let Some(inferred_type) = info.return_type.infer_function_parameter(function_param_to_infer, &actual_type_info.return_type) {
                         return Some(inferred_type);
                     }
@@ -346,8 +381,8 @@ impl Type {
     }
 
     pub fn check_parameters(&self, context: &mut ProgramContext) -> bool {
-        match self {
-            Type::Actual(info) => {
+        match self.content() {
+            TypeContent::Actual(info) => {
                 info.type_blueprint.with_ref(|type_unwrapped| {
                     let mut ok = true;
 
@@ -396,11 +431,11 @@ impl Type {
     pub fn check_match_interface(&self, interface: &Link<InterfaceBlueprint>, location: &DataLocation, context: &mut ProgramContext) -> bool {
         let mut details = vec![];
 
-        let ok = match self {
-            Type::Undefined => false,
-            Type::Any => false,
-            Type::This(interface_wrapped) => interface_wrapped == interface,
-            Type::Actual(info) => {
+        let ok = match self.content() {
+            TypeContent::Undefined => false,
+            TypeContent::Any => false,
+            TypeContent::This(interface_wrapped) => interface_wrapped == interface,
+            TypeContent::Actual(info) => {
                 let interface_blueprint = interface.borrow();
 
                 for associated_type in interface_blueprint.associated_types.values() {
@@ -455,9 +490,9 @@ impl Type {
 
                 details.is_empty()
             },
-            Type::TypeParameter(info) | Type::FunctionParameter(info) => info.required_interfaces.contains(interface),
-            Type::Associated(info) => info.associated.required_interfaces.contains(interface),
-            Type::Function(_) => false,
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => info.required_interfaces.contains(interface),
+            TypeContent::Associated(info) => info.associated.required_interfaces.contains(interface),
+            TypeContent::Function(_) => false,
         };
 
         if !ok {
@@ -513,45 +548,45 @@ impl Type {
     }
 
     pub fn is_ambiguous(&self) -> bool {
-        match self {
-            Type::Undefined => false,
-            Type::Any => true,
-            Type::This(_) => false,
-            Type::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
-            Type::TypeParameter(_) => false,
-            Type::FunctionParameter(_) => false,
-            Type::Associated(info) => info.root.is_ambiguous(),
-            Type::Function(info) => info.argument_types.iter().any(|ty| ty.is_ambiguous()) || info.return_type.is_ambiguous(),
+        match self.content() {
+            TypeContent::Undefined => false,
+            TypeContent::Any => true,
+            TypeContent::This(_) => false,
+            TypeContent::Actual(info) => info.parameters.iter().any(|ty| ty.is_ambiguous()),
+            TypeContent::TypeParameter(_) => false,
+            TypeContent::FunctionParameter(_) => false,
+            TypeContent::Associated(info) => info.root.is_ambiguous(),
+            TypeContent::Function(info) => info.argument_types.iter().any(|ty| ty.is_ambiguous()) || info.return_type.is_ambiguous(),
         }
     }
 
     pub fn get_field(&self, name: &str) -> Option<Rc<FieldInfo>> {
-        match self {
-            Type::Undefined => None,
-            Type::Any => None,
-            Type::This(_) => None,
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(_) => None,
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.get(name).cloned()
             }),
-            Type::TypeParameter(info) => None,
-            Type::FunctionParameter(info) => None,
-            Type::Associated(info) => None,
-            Type::Function(_) => None,
+            TypeContent::TypeParameter(info) => None,
+            TypeContent::FunctionParameter(info) => None,
+            TypeContent::Associated(info) => None,
+            TypeContent::Function(_) => None,
         }
     }
 
     pub fn get_all_fields(&self) -> Vec<Rc<FieldInfo>> {
-        match self {
-            Type::Undefined => vec![],
-            Type::Any => vec![],
-            Type::This(_) => vec![],
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+        match self.content() {
+            TypeContent::Undefined => vec![],
+            TypeContent::Any => vec![],
+            TypeContent::This(_) => vec![],
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.values().map(|field_info| field_info.clone()).collect()
             }),
-            Type::TypeParameter(_) => vec![],
-            Type::FunctionParameter(_) => vec![],
-            Type::Associated(_) => vec![],
-            Type::Function(_) => vec![],
+            TypeContent::TypeParameter(_) => vec![],
+            TypeContent::FunctionParameter(_) => vec![],
+            TypeContent::Associated(_) => vec![],
+            TypeContent::Function(_) => vec![],
         }
     }
 
@@ -561,11 +596,11 @@ impl Type {
             FieldKind::Static => true,
         };
         
-        match self {
-            Type::Undefined => None,
-            Type::Any => None,
-            Type::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
-            Type::Actual(info) => {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(interface_wrapped) => interface_wrapped.get_method(is_static, name),
+            TypeContent::Actual(info) => {
                 info.type_blueprint.with_ref(|type_unwrapped| {
                     let index_map = match is_static {
                         true => &type_unwrapped.static_methods,
@@ -575,52 +610,43 @@ impl Type {
                     index_map.get(name).cloned()
                 })
             },
-            Type::TypeParameter(info) => {
+            TypeContent::TypeParameter(info) => {
                 info.required_interfaces.get_method(is_static, name)
                     .or_else(|| context.default_interfaces.get_method(is_static, name))
             },
-            Type::FunctionParameter(info) => {
+            TypeContent::FunctionParameter(info) => {
                 info.required_interfaces.get_method(is_static, name)
                     .or_else(|| context.default_interfaces.get_method(is_static, name))
             },
-            Type::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
-            Type::Function(_) => context.function_type().get_method(kind, name, context),
+            TypeContent::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
+            TypeContent::Function(_) => context.function_type().get_method(kind, name, context),
         }
     }
 
     pub fn get_associated_type(&self, name: &str) -> Option<Type> {
-        match self {
-            Type::Undefined => None,
-            Type::Any => None,
-            Type::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(interface_wrapped) => interface_wrapped.with_ref(|interface_unwrapped| {
                 match interface_unwrapped.associated_types.get(name) {
-                    Some(info) => Some(Type::Associated(AssociatedTypeContent {
-                        root: Box::new(self.clone()),
-                        associated: info.clone(),
-                    })),
+                    Some(info) => Some(Type::associated(self, info)),
                     None => None,
                 }
             }),
-            Type::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.associated_types.get(name).map(|t| t.ty.replace_parameters(Some(self), &[]))
             }),
-            Type::TypeParameter(info) | Type::FunctionParameter(info) => {
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
                 match info.required_interfaces.get_associated_type_info(name) {
-                    Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
-                        root: Box::new(self.clone()),
-                        associated: type_info.clone()
-                    })),
+                    Some(type_info) => Some(Type::associated(self, &type_info)),
                     None => None
                 }
             },
-            Type::Associated(info) => match info.associated.required_interfaces.get_associated_type_info(name) {
-                Some(type_info) => Some(Type::Associated(AssociatedTypeContent {
-                    root: Box::new(self.clone()),
-                    associated: type_info.clone()
-                })),
+            TypeContent::Associated(info) => match info.associated.required_interfaces.get_associated_type_info(name) {
+                Some(type_info) => Some(Type::associated(self, &type_info)),
                 None => None
             },
-            Type::Function(info) => None,
+            TypeContent::Function(info) => None,
         }
     }
 
@@ -633,11 +659,11 @@ impl Type {
     }
 
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
-        match self {
-            Type::Undefined => unreachable!(),
-            Type::Any => unreachable!(),
-            Type::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
-            Type::Actual(info) => {
+        match self.content() {
+            TypeContent::Undefined => unreachable!(),
+            TypeContent::Any => unreachable!(),
+            TypeContent::This(_) => type_index.current_type_instance.as_ref().unwrap().clone(),
+            TypeContent::Actual(info) => {
                 let parameters = TypeInstanceParameters {
                     type_blueprint: info.type_blueprint.clone(),
                     type_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
@@ -645,9 +671,9 @@ impl Type {
 
                 context.get_type_instance(parameters)
             },
-            Type::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
-            Type::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),
-            Type::Associated(info) => {
+            TypeContent::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
+            TypeContent::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),
+            TypeContent::Associated(info) => {
                 let result = info.root.resolve(type_index, context);
 
                 result.type_blueprint.with_ref(|type_unwrapped| {
@@ -660,16 +686,16 @@ impl Type {
                     associated.ty.resolve(&type_index, context)
                 })
             },
-            Type::Function(_) => context.function_type().resolve(type_index, context),
+            TypeContent::Function(_) => context.function_type().resolve(type_index, context),
         }
     }
 
     pub fn to_string(&self) -> String {
-        match self {
-            Type::Undefined => format!("<undefined>"),
-            Type::Any => format!("any"),
-            Type::This(_) => format!("{}", SELF_TYPE_NAME),
-            Type::Actual(info) => {
+        match self.content() {
+            TypeContent::Undefined => format!("{{undefined}}"),
+            TypeContent::Any => format!("any"),
+            TypeContent::This(_) => format!("{}", SELF_TYPE_NAME),
+            TypeContent::Actual(info) => {
                 match info.parameters.is_empty() {
                     true => format!("{}", &info.type_blueprint.borrow().name),
                     false => {
@@ -679,10 +705,10 @@ impl Type {
                     }
                 }
             },
-            Type::TypeParameter(info) => format!("{}", &info.name),
-            Type::FunctionParameter(info) => format!("{}", &info.name),
-            Type::Associated(info) => format!("{}", &info.associated.name),
-            Type::Function(info) => info.to_string()
+            TypeContent::TypeParameter(info) => format!("{}", &info.name),
+            TypeContent::FunctionParameter(info) => format!("{}", &info.name),
+            TypeContent::Associated(info) => format!("{}", &info.associated.name),
+            TypeContent::Function(info) => info.to_string()
         }
     }
 
@@ -705,21 +731,15 @@ impl PartialEq for AssociatedTypeContent {
 
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::This(l0), Self::This(r0)) => l0 == r0,
-            (Self::Actual(l0), Self::Actual(r0)) => l0 == r0,
-            (Self::TypeParameter(l0), Self::TypeParameter(r0)) => Rc::ptr_eq(l0, r0),
-            (Self::FunctionParameter(l0), Self::FunctionParameter(r0)) => Rc::ptr_eq(l0, r0),
-            (Self::Associated(l0), Self::Associated(r0)) => l0 == r0,
-            (Self::Function(l0), Self::Function(r0)) => l0 == r0,
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        match (self.content(), other.content()) {
+            (TypeContent::This(l0), TypeContent::This(r0)) => l0 == r0,
+            (TypeContent::Actual(l0), TypeContent::Actual(r0)) => l0 == r0,
+            (TypeContent::TypeParameter(l0), TypeContent::TypeParameter(r0)) => Rc::ptr_eq(l0, r0),
+            (TypeContent::FunctionParameter(l0), TypeContent::FunctionParameter(r0)) => Rc::ptr_eq(l0, r0),
+            (TypeContent::Associated(l0), TypeContent::Associated(r0)) => l0 == r0,
+            (TypeContent::Function(l0), TypeContent::Function(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self.content()) == core::mem::discriminant(other.content()),
         }
-    }
-}
-
-impl Default for Type {
-    fn default() -> Self {
-        Self::Undefined
     }
 }
 

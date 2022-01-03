@@ -19,7 +19,7 @@ impl VarPath {
             false => AccessType::Get
         };
 
-        let mut parent_type = Type::Undefined;
+        let mut parent_type = Type::undefined();
         let mut result = context.vasm();
         let mut current_type_hint = match self.path.is_empty() {
             true => type_hint,

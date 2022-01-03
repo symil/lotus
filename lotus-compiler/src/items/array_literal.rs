@@ -24,21 +24,21 @@ impl ArrayLiteral {
         let mut final_item_type = match type_hint {
             Some(ty) => match ty.get_array_item() {
                 Some(item_type) => item_type.clone(),
-                None => Type::Any
+                None => Type::any()
             },
-            None => Type::Any,
+            None => Type::any(),
         };
         let mut item_vasm_list = vec![];
 
         for item in self.items.iter() {
             let mut item_ok = false;
-            let item_type_hint = match &final_item_type {
-                Type::Any => None,
-                _ => Some(&final_item_type)
+            let item_type_hint = match &final_item_type.is_any() {
+                true => None,
+                false => Some(&final_item_type)
             };
 
             if let Some(item_vasm) = item.process(item_type_hint, context) {
-                if final_item_type == Type::Any {
+                if final_item_type.is_any() {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;
                 } else if let Some(common_type) = item_vasm.ty.get_common_type(&final_item_type) {

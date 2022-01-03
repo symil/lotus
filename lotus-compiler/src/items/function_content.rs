@@ -37,7 +37,7 @@ impl FunctionContent {
         let mut argument_names = vec![];
         let mut signature_this_type = None;
         let mut signature_argument_types = vec![];
-        let mut signature_return_type = Type::Undefined;
+        let mut signature_return_type = Type::undefined();
         let mut method_details = None;
 
         for details in parameters.values() {
@@ -168,7 +168,7 @@ impl FunctionContent {
             function_unwrapped.method_details = method_details;
 
             if self.event_callback_qualifier.is_none() {
-                context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::Function(function_unwrapped.signature.clone())));
+                context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::function(&function_unwrapped.signature)));
             }
         });
 

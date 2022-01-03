@@ -1,7 +1,7 @@
 use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::Duration};
 use colored::Colorize;
 use parsable::StringReader;
-use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}};
+use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache};
 use super::{LanguageServerCommand, LanguageServerCommandParameters};
 
 const PORT : u16 = 9609;
@@ -12,6 +12,7 @@ pub fn start_language_server() {
     let mut buffer = [0 as u8; BUFFER_SIZE];
     let mut current_root_directory = String::new();
     let mut connections = vec![];
+    let mut cache = FileSystemCache::new();
     let mut context = ProgramContext::new(ProgramContextOptions {
         validate_only: true,
     });
@@ -63,8 +64,7 @@ pub fn start_language_server() {
                                 
                                 StringReader::clear_all_static_strings();
                                 context.reset();
-                                context.read_source_files(&bundle_with_prelude(&root_directory));
-                                context.parse_source_files();
+                                context.parse_source_files(&bundle_with_prelude(&root_directory), Some(&mut cache));
 
                                 if !context.has_errors() {
                                     context.process_source_files();

@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}};
+use crate::{items::TypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
 use super::{Expression, Identifier, ObjectFieldInitialization, ObjectInitializationItem, ParsedType};
 
 #[parsable]
@@ -25,7 +25,7 @@ impl ObjectLiteral {
         if let Some(object_type) = self.object_type.process(true, context) {
             result = result.set_type(&object_type);
 
-            if let Type::Actual(info) = &object_type {
+            if let TypeContent::Actual(info) = object_type.content() {
                 let object_var = VariableInfo::tmp("object", context.int_type());
                 let type_unwrapped = info.type_blueprint.borrow();
 

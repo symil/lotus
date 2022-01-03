@@ -35,11 +35,7 @@ impl ParsedFunctionType {
         }
 
         match ok {
-            true => Some(Type::Function(Signature::new(SignatureContent {
-                this_type: None,
-                argument_types,
-                return_type,
-            }))),
+            true => Some(Type::function(Signature::create(None, argument_types, return_type))),
             false => None,
         }
     }

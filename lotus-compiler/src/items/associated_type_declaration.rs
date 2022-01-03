@@ -14,7 +14,7 @@ impl AssociatedTypeDeclaration {
     pub fn process(&self, context: &mut ProgramContext) -> (Identifier, Type) {
         (
             self.name.clone(),
-            self.value.process(false, context).unwrap_or(Type::Undefined)
+            self.value.process(false, context).unwrap_or(Type::undefined())
         )
     }
 }

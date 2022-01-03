@@ -36,23 +36,20 @@ impl TypeInstanceHeader {
             let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
             let dynamic_method_table_offset = context.reserve_next_function_index();
-            let mut type_content = ActualTypeContent {
-                type_blueprint: type_blueprint.clone(),
-                parameters: vec![],
-                location: DataLocation::default(),
-            };
+            let location = &DataLocation::default();
+            let mut type_parameters = vec![];
             let mut name = type_unwrapped.name.to_string();
 
             for parameter in &instance_parameters.type_parameters {
                 name.push_str(&format!("_{}", &parameter.name));
-                type_content.parameters.push(parameter.ty.clone());
+                type_parameters.push(parameter.ty.clone());
             }
 
             for _ in 1..dynamic_method_count {
                 context.reserve_next_function_index();
             }
 
-            let ty = Type::Actual(type_content);
+            let ty = Type::actual(&type_blueprint, type_parameters, location);
 
             Rc::new(TypeInstanceHeader {
                 id,

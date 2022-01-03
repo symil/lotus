@@ -1,7 +1,7 @@
 use std::{rc::Rc};
 use parsable::parsable;
 use colored::*;
-use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, SELF_TYPE_NAME, SELF_VAR_NAME, Type};
+use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, SELF_TYPE_NAME, SELF_VAR_NAME, Type, TypeContent};
 use super::{TypeArguments, Identifier, TypeSuffix};
 
 #[parsable]
@@ -27,7 +27,7 @@ impl ParsedValueType {
     }
 
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
-        let mut result = Type::Undefined;
+        let mut result = Type::undefined();
         let mut must_not_take_parameters = false;
         let mut param_count_error = false;
         let parameters = self.arguments.process(check_interfaces, context);
@@ -47,10 +47,10 @@ impl ParsedValueType {
 
         if result.is_undefined() {
             if let Some(ty) = context.get_type_parameter(self.name.as_str()) {
-                match &ty {
-                    Type::TypeParameter(details) => context.access_shared_identifier(&details.name, &self.name),
-                    Type::FunctionParameter(details) => context.access_shared_identifier(&details.name, &self.name),
-                    Type::Associated(details) => context.access_shared_identifier(&details.associated.name, &self.name),
+                match ty.content() {
+                    TypeContent::TypeParameter(details) => context.access_shared_identifier(&details.name, &self.name),
+                    TypeContent::FunctionParameter(details) => context.access_shared_identifier(&details.name, &self.name),
+                    TypeContent::Associated(details) => context.access_shared_identifier(&details.associated.name, &self.name),
                     _ => unreachable!()
                 };
 
@@ -79,11 +79,7 @@ impl ParsedValueType {
                         }
                     }
 
-                    result = Type::Actual(ActualTypeContent {
-                        parameters: parameter_list,
-                        type_blueprint: type_blueprint.clone(),
-                        location: self.location.clone()
-                    })
+                    result = Type::actual(&type_blueprint, parameter_list, &self.location);
                 }
             }
         }
@@ -103,7 +99,7 @@ impl ParsedValueType {
                 } else {
                     context.errors.generic(&self.name, format!("type `{}` has no associated type `{}`", &result, name));
 
-                    result = Type::Undefined;
+                    result = Type::undefined();
                     break;
                 }
             }
