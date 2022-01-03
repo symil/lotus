@@ -75,7 +75,11 @@
 [X] Change how `Vasm` are specified, use chaining instead of list of instructions
 [X] Make so `Vasm` are not populated when unnecessary
 [X] Cache parsed files that didn't change since last parsing
+[ ] Split regular methods and event callbacks during processing step
 [ ] Add variable/function/field/method/type autocompletion suggestions
+[ ] Add autocompletion when pressing `.`
+[ ] Add autocompletion when pressing `::`
+[ ] Add autocompletion when pressing `@`
 [ ] Function argument info when typing
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
 

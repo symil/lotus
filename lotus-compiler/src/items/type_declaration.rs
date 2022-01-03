@@ -16,8 +16,13 @@ pub struct TypeDeclaration {
     pub parameters: TypeParameters,
     #[parsable(prefix="extends")]
     pub parent: Option<ParsedType>,
+    pub body: Option<TypeDeclarationBody>
+}
+
+#[parsable]
+pub struct TypeDeclarationBody {
     #[parsable(brackets="{}")]
-    pub body: Vec<TypeItem>,
+    pub items: Vec<TypeItem>,
 }
 
 #[parsable]
@@ -28,22 +33,29 @@ pub enum TypeItem {
 }
 
 impl TypeDeclaration {
+    fn get_body_items(&self) -> &[TypeItem] {
+        match &self.body {
+            Some(body) => &body.items,
+            None => &[],
+        }
+    }
+
     fn get_associated_types(&self) -> Vec<&AssociatedTypeDeclaration> {
-        self.body.iter().filter_map(|item| match item {
+        self.get_body_items().iter().filter_map(|item| match item {
             TypeItem::AssociatedTypeDeclaration(value) => Some(value),
             _ => None,
         }).collect()
     }
 
     fn get_fields(&self) -> Vec<&FieldDeclaration> {
-        self.body.iter().filter_map(|item| match item {
+        self.get_body_items().iter().filter_map(|item| match item {
             TypeItem::FieldDeclaration(value) => Some(value),
             _ => None,
         }).collect()
     }
 
     fn get_methods(&self) -> Vec<&MethodDeclaration> {
-        self.body.iter().filter_map(|item| match item {
+        self.get_body_items().iter().filter_map(|item| match item {
             TypeItem::MethodDeclaration(value) => Some(value),
             _ => None,
         }).collect()

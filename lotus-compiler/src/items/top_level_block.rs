@@ -3,9 +3,9 @@ use super::{FunctionDeclaration, GlobalVarDeclaration, InterfaceDeclaration, Typ
 
 #[parsable]
 pub enum TopLevelBlock {
+    TypedefDeclaration(TypedefDeclaration),
     InterfaceDeclaration(InterfaceDeclaration),
     TypeDeclaration(TypeDeclaration),
-    TypedefDeclaration(TypedefDeclaration),
     FunctionDeclaration(FunctionDeclaration),
     GlobalDeclaration(GlobalVarDeclaration),
 }

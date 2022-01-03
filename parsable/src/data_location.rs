@@ -18,9 +18,21 @@ impl Hash for DataLocation {
     }
 }
 
+static DEFAULT_DATA_LOCATION : &'static DataLocation = &DataLocation {
+    package_root_path: "",
+    file_path: "",
+    file_content: "",
+    start: 0,
+    end: 0,
+};
+
 impl DataLocation {
     pub fn empty() -> Self {
         Self::default()
+    }
+
+    pub fn empty_ref() -> &'static Self {
+        DEFAULT_DATA_LOCATION
     }
 
     pub fn get_hash(&self) -> u64 {

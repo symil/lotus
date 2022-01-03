@@ -11,7 +11,7 @@ pub struct InterfaceDeclaration {
     pub qualifier: InterfaceQualifier,
     pub name: Identifier,
     #[parsable(brackets="{}")]
-    pub body: InterfaceDeclarationBody
+    pub body: Option<InterfaceDeclarationBody>
 }
 
 #[parsable]
@@ -21,6 +21,20 @@ pub struct InterfaceDeclarationBody {
 }
 
 impl InterfaceDeclaration {
+    fn get_associated_types(&self) -> &[InterfaceAssociatedTypeDeclaration] {
+        match &self.body {
+            Some(body) => &body.associated_types,
+            None => &[],
+        }
+    }
+
+    fn get_methods(&self) -> &[InterfaceMethodDeclaration] {
+        match &self.body {
+            Some(body) => &body.methods,
+            None => &[],
+        }
+    }
+    
     pub fn process_name(&self, context: &mut ProgramContext) {
         let mut interface_blueprint = InterfaceBlueprint {
             interface_id: self.location.get_hash(),
@@ -52,7 +66,7 @@ impl InterfaceDeclaration {
         self.process(context, |interface_wrapped, context| {
             let mut associated_types = IndexMap::new();
 
-            for associated_type in &self.body.associated_types {
+            for associated_type in self.get_associated_types() {
                 let name = associated_type.process(context);
                 let item = Rc::new(InterfaceAssociatedTypeInfo {
                     name: name.clone(),
@@ -81,7 +95,7 @@ impl InterfaceDeclaration {
             let mut regular_methods = IndexMap::new();
             let mut static_methods = IndexMap::new();
 
-            for method in &self.body.methods {
+            for method in self.get_methods() {
                 let (method_qualifier, name, arguments, return_type) = method.process(context);
                 let method_kind = method_qualifier.to_field_kind();
                 let mut function_blueprint = FunctionBlueprint {
