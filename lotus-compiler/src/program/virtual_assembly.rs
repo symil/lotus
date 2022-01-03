@@ -62,8 +62,14 @@ impl VirtualAssembly {
         self
     }
 
-    pub fn void(self, context: &ProgramContext) -> Self {
-        self.set_type(context.void_type())
+    pub fn set_void(self, context: &ProgramContext) -> Self {
+        let ty = self.ty.clone();
+        let mut result = match ty.is_undefined() {
+            true => self,
+            false => self.drop(&ty),
+        };
+
+        result.set_type(context.void_type())
     }
 
     pub fn declare_variable<T : Borrow<VariableInfo>>(mut self, var_info: T) -> Self {

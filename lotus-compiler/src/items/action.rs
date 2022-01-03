@@ -35,7 +35,7 @@ impl Action {
                                     None => {
                                         Some(
                                             context.vasm()
-                                                .return_value(context.vasm().void(context))
+                                                .return_value(context.vasm().set_void(context))
                                                 .set_type(context.void_type())
                                         )
                                     },

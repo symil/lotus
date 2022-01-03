@@ -2,12 +2,12 @@ use std::{collections::HashSet, rc::Rc};
 
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, SignatureContent}, utils::Link};
-use super::{EventCallbackQualifier, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, Visibility, VisibilityWrapper};
+use crate::{program::{AssociatedTypeContent, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, MethodDetails, ParameterTypeInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, SignatureContent, Visibility}, utils::Link};
+use super::{EventCallbackQualifierKeyword, Identifier, InterfaceAssociatedTypeDeclaration, InterfaceMethodDeclaration, InterfaceQualifier, VisibilityKeywordValue, VisibilityKeyword};
 
 #[parsable]
 pub struct InterfaceDeclaration {
-    pub visibility: VisibilityWrapper,
+    pub visibility: Option<VisibilityKeyword>,
     pub qualifier: InterfaceQualifier,
     pub name: Identifier,
     #[parsable(brackets="{}")]
@@ -39,7 +39,7 @@ impl InterfaceDeclaration {
         let mut interface_blueprint = InterfaceBlueprint {
             interface_id: self.location.get_hash(),
             name: self.name.clone(),
-            visibility: self.visibility.value.unwrap_or(Visibility::Private),
+            visibility: VisibilityKeyword::process_or(&self.visibility, Visibility::Private),
             associated_types: IndexMap::new(),
             regular_methods: IndexMap::new(),
             static_methods: IndexMap::new(),
@@ -96,48 +96,19 @@ impl InterfaceDeclaration {
             let mut static_methods = IndexMap::new();
 
             for method in self.get_methods() {
-                let (method_qualifier, name, arguments, return_type) = method.process(context);
-                let method_kind = method_qualifier.to_field_kind();
-                let mut function_blueprint = FunctionBlueprint {
-                    function_id: name.location.get_hash(),
-                    name: name.clone(),
-                    visibility: Visibility::None,
-                    parameters: IndexMap::new(),
-                    argument_names: arguments.iter().map(|(name, ty)| name.clone()).collect(),
-                    signature: Signature::undefined(),
-                    argument_variables: vec![],
-                    owner_type: None,
-                    owner_interface: Some(interface_wrapped.clone()),
-                    is_raw_wasm: false,
-                    body: Vasm::undefined(),
-                    closure_details: None,
-                    method_details: Some(MethodDetails {
-                        event_callback_details: None,
-                        first_declared_by: None,
-                        dynamic_index: None,
-                    })
-                };
-
+                let function_blueprint = method.process(context);
+                let name = function_blueprint.name.clone();
+                let method_kind = function_blueprint.method_details.as_ref().unwrap().qualifier.to_field_kind();
                 let index_map = match method_kind {
                     FieldKind::Static => &mut static_methods,
                     FieldKind::Regular => &mut regular_methods
                 };
 
-                let this_type = Type::this(&interface_wrapped);
-                let argument_types = arguments.iter().map(|(name, ty)| ty.clone()).collect();
-                let return_type = return_type.unwrap_or(context.void_type());
-                let method_this_type = match method_kind.is_static() {
-                    true => None,
-                    false => Some(this_type.clone()),
-                };
-                let signature = Signature::create(method_this_type, argument_types, return_type);
-                let function_type = Type::function(&signature);
-
-                function_blueprint.signature = signature;
+                let function_type = Type::function(&function_blueprint.signature);
 
                 let func_ref = FuncRef {
                     function: Link::new(function_blueprint),
-                    this_type: this_type,
+                    this_type: Type::this(interface_wrapped.clone()),
                 };
 
                 context.declare_shared_identifier(&method.name, Some(&method.name), Some(&function_type));

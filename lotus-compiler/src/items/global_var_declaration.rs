@@ -1,12 +1,10 @@
-use std::fs::Metadata;
-
 use parsable::parsable;
-use crate::program::{GlobalVarBlueprint, GlobalVarInstance, ProgramContext, VariableInfo, VariableKind};
-use super::{VarDeclaration, Visibility, VisibilityWrapper};
+use crate::program::{GlobalVarBlueprint, GlobalVarInstance, ProgramContext, VariableInfo, VariableKind, Visibility};
+use super::{VarDeclaration, VisibilityKeywordValue, VisibilityKeyword};
 
 #[parsable]
 pub struct GlobalVarDeclaration {
-    pub visibility: VisibilityWrapper,
+    pub visibility: Option<VisibilityKeyword>,
     #[parsable(suffix=";")]
     pub var_declaration: VarDeclaration,
 }
@@ -21,7 +19,7 @@ impl GlobalVarDeclaration {
             let global_var_blueprint = GlobalVarBlueprint {
                 var_id: self.location.get_hash(),
                 name: var_list.first().unwrap().name().clone(),
-                visibility: self.visibility.value.unwrap_or(Visibility::Private),
+                visibility: VisibilityKeyword::process_or(&self.visibility, Visibility::Private),
                 var_info: var_list.first().unwrap().clone(),
                 init_vasm,
             };

@@ -20,7 +20,7 @@ impl IterFields {
                         context.errors.generic(self, format!("an `{}` cannot be nested inside another one ", "iter_fields".bold()));
                     },
                     None => {
-                        let mut block_vasm = context.vasm().void(context);
+                        let mut block_vasm = context.vasm().set_void(context);
                         let field_count = type_wrapped.borrow().fields.len();
 
                         for i in 0..field_count {

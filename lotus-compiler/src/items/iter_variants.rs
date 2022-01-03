@@ -22,7 +22,7 @@ impl IterVariants {
                         context.errors.generic(self, format!("an `{}` cannot be nested inside another one ", BLOCK_NAME.bold()));
                     },
                     None => {
-                        let mut block_vasm = context.vasm().void(context);
+                        let mut block_vasm = context.vasm().set_void(context);
                         let variant_count = type_wrapped.borrow().enum_variants.len();
 
                         for i in 0..variant_count {

@@ -46,6 +46,10 @@ mod macro_context;
 mod source_directory_details;
 mod source_file_details;
 mod shared_identifier;
+mod item_kind;
+mod token_kind;
+mod compilation_error_chain;
+mod qualifiers;
 
 pub use program_context::*;
 pub use utils::*;
@@ -94,3 +98,7 @@ pub use macro_context::*;
 pub use source_directory_details::*;
 pub use source_file_details::*;
 pub use shared_identifier::*;
+pub use item_kind::*;
+pub use token_kind::*;
+pub use compilation_error_chain::*;
+pub use qualifiers::*;

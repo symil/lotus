@@ -1,11 +1,10 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, TypedefBlueprint};
-
-use super::{ParsedType, Identifier, Visibility, VisibilityWrapper};
+use crate::program::{ProgramContext, TypedefBlueprint, Visibility};
+use super::{ParsedType, Identifier, VisibilityKeywordValue, VisibilityKeyword};
 
 #[parsable]
 pub struct TypedefDeclaration {
-    pub visibility: VisibilityWrapper,
+    pub visibility: Option<VisibilityKeyword>,
     #[parsable(prefix="type")]
     pub name: Identifier,
     #[parsable(prefix="=", suffix=";")]
@@ -20,7 +19,7 @@ impl TypedefDeclaration {
             let typedef_blueprint = TypedefBlueprint {
                 type_id: self.location.get_hash(),
                 name: self.name.clone(),
-                visibility: self.visibility.value.unwrap_or(Visibility::Private),
+                visibility: VisibilityKeyword::process_or(&self.visibility, Visibility::Private),
                 target: ty,
             };
 

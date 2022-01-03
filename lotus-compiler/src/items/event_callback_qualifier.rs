@@ -1,30 +1,25 @@
 use parsable::parsable;
 
+use crate::program::EventCallbackQualifier;
+
 #[parsable]
 #[derive(Clone)]
-pub struct EventCallbackQualifier {
-    value: EventCallbackQualifierValue
+pub struct EventCallbackQualifierKeyword {
+    pub value: EventCallbackQualifierKeywordValue
 }
 
 #[parsable]
 #[derive(PartialEq, Hash, Eq, Clone, Copy)]
-pub enum EventCallbackQualifierValue {
+pub enum EventCallbackQualifierKeywordValue {
     Standard = "@",
     TargetSelf = "$",
 }
 
-impl EventCallbackQualifier {
-    pub fn get_default_priority(&self) -> i32 {
+impl EventCallbackQualifierKeyword {
+    pub fn process(&self) -> EventCallbackQualifier {
         match &self.value {
-            EventCallbackQualifierValue::Standard => 0,
-            EventCallbackQualifierValue::TargetSelf => 0,
-        }
-    }
-
-    pub fn get_event_field_name(&self) -> Option<&'static str> {
-        match &self.value {
-            EventCallbackQualifierValue::Standard => None,
-            EventCallbackQualifierValue::TargetSelf => Some("target"),
+            EventCallbackQualifierKeywordValue::Standard => EventCallbackQualifier::Standard,
+            EventCallbackQualifierKeywordValue::TargetSelf => EventCallbackQualifier::TargetSelf,
         }
     }
 }

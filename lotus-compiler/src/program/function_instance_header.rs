@@ -1,6 +1,6 @@
 use std::{hash::Hash, rc::Rc};
-use crate::{items::Visibility, program::FunctionInstanceWasmType, utils::Link};
-use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat};
+use crate::{items::VisibilityKeywordValue, program::FunctionInstanceWasmType, utils::Link};
+use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat, Visibility};
 
 #[derive(Debug)]
 pub struct FunctionInstanceHeader {

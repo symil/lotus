@@ -1,5 +1,5 @@
-use crate::items::{Identifier, Visibility};
-use super::{GlobalItem, ProgramContext, Type};
+use crate::items::{Identifier, VisibilityKeywordValue};
+use super::{GlobalItem, ProgramContext, Type, Visibility};
 
 #[derive(Debug)]
 pub struct TypedefBlueprint {

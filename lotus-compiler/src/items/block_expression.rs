@@ -17,7 +17,7 @@ pub struct BlockItem {
 
 impl BlockExpression {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = context.vasm().void(context);
+        let mut result = context.vasm().set_void(context);
 
         context.push_scope(ScopeKind::Block);
 

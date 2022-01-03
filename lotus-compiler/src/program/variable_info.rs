@@ -1,6 +1,6 @@
 use std::{cell::Ref, rc::Rc};
-use crate::{items::{Identifier, Visibility}, utils::Link};
-use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat, GlobalItem};
+use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};
+use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat, GlobalItem, Visibility};
 
 pub type VariableInfo = Link<VariableInfoContent>;
 
@@ -145,6 +145,6 @@ impl GlobalItem for VariableInfoContent {
     }
 
     fn get_visibility(&self) -> Visibility {
-        Visibility::Private
+        Visibility::None
     }
 }

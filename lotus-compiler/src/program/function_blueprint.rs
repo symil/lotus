@@ -1,8 +1,8 @@
 use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use crate::{items::{EventCallbackQualifier, MethodQualifier, Identifier, Visibility}, program::{VariableKind, Wat}, utils::Link};
-use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction};
+use crate::{items::{EventCallbackQualifierKeyword, MethodQualifierKeyword, Identifier, VisibilityKeywordValue}, program::{VariableKind, Wat}, utils::Link};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -30,6 +30,7 @@ pub struct ClosureDetails {
 
 #[derive(Debug)]
 pub struct MethodDetails {
+    pub qualifier: MethodQualifier,
     pub event_callback_details: Option<EventCallbackDetails>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub dynamic_index: Option<i32>,

@@ -22,7 +22,7 @@ impl IterAncestors {
                         context.errors.generic(self, format!("an `{}` cannot be nested inside another one ", BLOCK_NAME.bold()));
                     },
                     None => {
-                        let mut block_vasm = context.vasm().void(context);
+                        let mut block_vasm = context.vasm().set_void(context);
                         let ancestor_count = type_wrapped.borrow().ancestors.len();
 
                         for i in 0..ancestor_count {

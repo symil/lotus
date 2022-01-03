@@ -1,12 +1,12 @@
 use parsable::parsable;
-use crate::{items::Visibility, program::{ProgramContext, ScopeKind, VariableKind}};
-use super::{ParsedType, FunctionContent, FunctionSignature, Identifier, BlockExpression, VisibilityWrapper};
+use crate::{items::VisibilityKeywordValue, program::{ProgramContext, ScopeKind, VariableKind, Visibility}};
+use super::{ParsedType, FunctionOrMethodContent, FunctionSignature, Identifier, BlockExpression, VisibilityKeyword};
 
 #[parsable]
 pub struct FunctionDeclaration {
-    pub visibility: VisibilityWrapper,
+    pub visibility: Option<VisibilityKeyword>,
     #[parsable(prefix="fn")]
-    pub content: FunctionContent
+    pub content: FunctionOrMethodContent
 }
 
 impl FunctionDeclaration {
@@ -18,7 +18,7 @@ impl FunctionDeclaration {
         let mut function_wrapped = self.content.process_signature(context);
 
         let name = function_wrapped.with_mut(|mut function_unwrapped| {
-            function_unwrapped.visibility = self.visibility.value.unwrap_or(Visibility::Private);
+            function_unwrapped.visibility = VisibilityKeyword::process_or(&self.visibility, Visibility::Private);
 
             if function_unwrapped.name.as_str() == "main" {
                 if !function_unwrapped.signature.argument_types.is_empty() {

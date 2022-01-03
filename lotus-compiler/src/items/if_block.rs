@@ -14,7 +14,7 @@ pub struct IfBlock {
 
 impl IfBlock {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = context.vasm().void(context);
+        let mut result = context.vasm().set_void(context);
         let mut required_branch_type = context.void_type();
         let result_var = VariableInfo::tmp("tmp_result", context.void_type());
 
@@ -38,7 +38,7 @@ impl IfBlock {
             if let (Some(condition_vasm), Some(block_vasm)) = (else_if_branch.process_condition(context), else_if_branch.process_body(Some(&required_branch_type), context)) {
                 match block_vasm.ty.get_common_type(&required_branch_type) {
                     Some(ty) => required_branch_type = ty.clone(),
-                    None => context.errors.type_mismatch(&else_if_branch, &required_branch_type, &block_vasm.ty),
+                    None => context.errors.type_mismatch(&else_if_branch, &required_branch_type, &block_vasm.ty).void(),
                 }
 
                 result = result.block(context.vasm()
@@ -58,7 +58,7 @@ impl IfBlock {
             if let Some(block_vasm) = else_branch.process(Some(&required_branch_type), context) {
                 match block_vasm.ty.get_common_type(&required_branch_type) {
                     Some(ty) => {},
-                    None => context.errors.type_mismatch(&else_branch, &required_branch_type, &block_vasm.ty),
+                    None => context.errors.type_mismatch(&else_branch, &required_branch_type, &block_vasm.ty).void(),
                 }
 
                 result = result.block(context.vasm()

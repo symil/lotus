@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{items::{Identifier, Visibility}, utils::Link};
-use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type};
+use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};
+use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type, Visibility};
 
 #[derive(Debug)]
 pub struct InterfaceBlueprint {

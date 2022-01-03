@@ -1,7 +1,8 @@
 use std::{borrow::Borrow, cell::Ref, collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, mem::take};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{items::{Identifier, Visibility}, utils::Link};
+use crate::{items::{Identifier}, utils::Link};
+use super::Visibility;
 
 #[derive(Debug)]
 pub struct GlobalItemIndex<V> {

@@ -3,12 +3,12 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{DataLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent}, utils::Link};
-use super::{AssociatedTypeDeclaration, EventCallbackQualifier, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, Visibility, VisibilityWrapper};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility}, utils::Link};
+use super::{AssociatedTypeDeclaration, EventCallbackQualifierKeyword, FieldDeclaration, ParsedType, Identifier, MethodDeclaration, StackType, StackTypeWrapped, TypeParameters, TypeQualifier, VisibilityKeywordValue, VisibilityKeyword, EventCallbackDeclaration};
 
 #[parsable]
 pub struct TypeDeclaration {
-    pub visibility: VisibilityWrapper,
+    pub visibility: Option<VisibilityKeyword>,
     pub qualifier: TypeQualifier,
     #[parsable(brackets="()")]
     pub stack_type: Option<Identifier>,
@@ -27,9 +27,10 @@ pub struct TypeDeclarationBody {
 
 #[parsable]
 pub enum TypeItem {
+    EventCallbackDeclaration(EventCallbackDeclaration),
     AssociatedTypeDeclaration(AssociatedTypeDeclaration),
     MethodDeclaration(MethodDeclaration),
-    FieldDeclaration(FieldDeclaration)
+    FieldDeclaration(FieldDeclaration),
 }
 
 impl TypeDeclaration {
@@ -61,13 +62,20 @@ impl TypeDeclaration {
         }).collect()
     }
 
+    fn get_event_callbacks(&self) -> Vec<&EventCallbackDeclaration> {
+        self.get_body_items().iter().filter_map(|item| match item {
+            TypeItem::EventCallbackDeclaration(value) => Some(value),
+            _ => None,
+        }).collect()
+    }
+
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
         let mut type_unwrapped = TypeBlueprint {
             declaration_index: index,
             type_id,
             name: self.name.clone(),
-            visibility: self.visibility.value.unwrap_or(Visibility::Private),
+            visibility: VisibilityKeyword::process_or(&self.visibility, Visibility::Private),
             category: self.qualifier.to_type_category(),
             stack_type: WasmStackType::Fixed(StackType::Void),
             descendants: vec![],
@@ -414,20 +422,6 @@ impl TypeDeclaration {
             for method in self.get_methods().iter().filter(|method| !method.is_autogen()) {
                 method.process_signature(context);
             }
-
-            type_wrapped.with_mut(|mut type_unwrapped| {
-                if let Some(parent) = &type_unwrapped.parent {
-                    parent.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
-                        for (event_type_wrapped, callback_list) in parent_unwrapped.event_callbacks.iter() {
-                            let self_callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || vec![]);
-
-                            for callback in callback_list {
-                                self_callback_list.push(callback.clone());
-                            }
-                        }
-                    });
-                }
-            });
         });
     }
 
@@ -590,6 +584,37 @@ impl TypeDeclaration {
             }
 
             context.autogen_type = None;
+        });
+    }
+
+    pub fn process_event_callbacks(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let parent_opt = type_wrapped.borrow().parent.as_ref().map(|info| info.ty.get_type_blueprint());
+
+            for event_callback in self.get_event_callbacks() {
+                if let Some(function_wrapped) = event_callback.process(context) {
+                    type_wrapped.with_mut(|mut type_unwrapped| {
+                        let event_type = function_wrapped.borrow().get_event_callback_details().unwrap().event_type.clone();
+                        let callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, &event_type, || vec![]);
+
+                        callback_list.push(function_wrapped.clone());
+                    });
+                }
+            }
+
+            if let Some(parent_type) = parent_opt {
+                type_wrapped.with_mut(|mut type_unwrapped| {
+                    parent_type.with_ref(|parent_unwrapped| {
+                        for (event_type_wrapped, callback_list) in parent_unwrapped.event_callbacks.iter() {
+                            let self_callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || vec![]);
+
+                            for callback in callback_list {
+                                self_callback_list.push(callback.clone());
+                            }
+                        }
+                    });
+                });
+            }
         });
     }
 

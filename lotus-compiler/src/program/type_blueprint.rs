@@ -1,8 +1,8 @@
 use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use crate::{items::{EventCallbackQualifier, Identifier, StackType, TypeQualifier, Visibility}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm};
+use crate::{items::{EventCallbackQualifierKeyword, Identifier, StackType, TypeQualifier, VisibilityKeywordValue}, utils::Link};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {

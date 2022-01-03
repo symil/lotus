@@ -10,7 +10,7 @@ pub struct WhileBlock {
 
 impl WhileBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let mut result = context.vasm().void(context);
+        let mut result = context.vasm().set_void(context);
 
         context.push_scope(ScopeKind::Loop);
 

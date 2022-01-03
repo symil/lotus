@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use colored::Colorize;
 use parsable::{DataLocation, ParseError};
 use crate::utils::Link;
-use super::{InterfaceBlueprint, Type};
+use super::{InterfaceBlueprint, Type, ItemKind, TokenKind};
 
 #[derive(Debug)]
 pub struct CompilationError {
@@ -16,12 +16,29 @@ pub enum CompilationErrorDetails {
     ParseError(ParseErrorDetails),
     TypeMismatch(TypeMismatchDetails),
     InterfaceMismatch(InterfaceMismatchDetails),
-    UnexpectedKeyword(UnexpectedKeywordDetails),
-    ExpectedExpression,
-    UnexpectedExpression,
+    ExpectedToken(ExpectedTokenDetails),
+    UnexpectedToken(UnexpectedTokenDetails),
     UnexpectedVoidExpression,
     InvalidCharacter(InvalidCharacterDetails),
-    ExpectedClassType(ExpectedClassTypeDetails)
+    ExpectedClassType(ExpectedClassTypeDetails),
+    UndefinedItem(UndefinedItemDetails)
+}
+
+#[derive(Debug)]
+pub struct ExpectedTokenDetails {
+    pub kind: TokenKind,
+}
+
+#[derive(Debug)]
+pub struct UnexpectedTokenDetails {
+    pub kind: TokenKind,
+    pub value: Option<String>
+}
+
+#[derive(Debug)]
+pub struct UndefinedItemDetails {
+    pub kind: ItemKind,
+    pub name: String
 }
 
 #[derive(Debug)]
@@ -49,11 +66,6 @@ pub struct TypeMismatchDetails {
 pub struct InterfaceMismatchDetails {
     pub expected_interface: Link<InterfaceBlueprint>,
     pub actual_type: Type
-}
-
-#[derive(Debug)]
-pub struct UnexpectedKeywordDetails {
-    pub keyword: String
 }
 
 #[derive(Debug)]
@@ -123,11 +135,17 @@ impl CompilationError {
                     false => Some(format!("type `{}` does not match interface `{}`", actual_str, expected_str)),
                 }
             },
-            CompilationErrorDetails::UnexpectedExpression => {
-                Some(format!("unexpected expression"))
+            CompilationErrorDetails::ExpectedToken(details) => {
+                Some(format!("expected {}", details.kind.to_str()))
             },
-            CompilationErrorDetails::UnexpectedKeyword(details) => {
-                Some(format!("unexpected keyword `{}`", details.keyword))
+            CompilationErrorDetails::UnexpectedToken(details) => {
+                let mut result = format!("unexpected {}", details.kind.to_str());
+
+                if let Some(name) = &details.value {
+                    result.push_str(&format!(" `{}`", name));
+                }
+
+                Some(result)
             },
             CompilationErrorDetails::UnexpectedVoidExpression => {
                 Some(format!("expected non-void expression"))
@@ -135,11 +153,11 @@ impl CompilationError {
             CompilationErrorDetails::InvalidCharacter(details) => {
                 Some(format!("invalid character '{}'", details.character))
             },
-            CompilationErrorDetails::ExpectedExpression => {
-                Some(format!("expected expression"))
-            },
             CompilationErrorDetails::ExpectedClassType(details) => {
                 Some(format!("expected class type, got `{}`", &details.actual_type))
+            },
+            CompilationErrorDetails::UndefinedItem(details) => {
+                Some(format!("undefined {} `{}`", details.kind.to_str(), details.name.bold()))
             },
         }
     }

@@ -1,6 +1,6 @@
 use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::IndexMap;
-use crate::{items::Visibility, program::{TypeIndex, VariableKind, Wat}, utils::Link};
+use crate::{items::VisibilityKeywordValue, program::{TypeIndex, VariableKind, Wat}, utils::Link};
 use super::{FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, GeneratedItemIndex, ItemGenerator, ProgramContext, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader};
 
 #[derive(Debug, Clone)]
