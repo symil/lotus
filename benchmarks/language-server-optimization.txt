@@ -19,6 +19,11 @@ validation #2: 72 ms
 validation #3: 72 ms
 
 # CACHED FILES
-validation #1: 85 ms
-validation #2: 13 ms
-validation #3: 13 ms
+validation #1: 80 ms
+validation #2: 15 ms
+validation #3: 16 ms
+
+# SAMES OPTIMIZATIONS IN DEBUG INSTEAD OF RELEASE
+validation #1: 720 ms
+validation #2: 288 ms
+validation #3: 283 ms

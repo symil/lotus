@@ -1,6 +1,5 @@
 use parsable::DataLocation;
 use crate::program::Type;
-
 use super::{CompletionItem, CompletionItemKind};
 
 #[derive(Debug)]
@@ -20,13 +19,20 @@ impl CompletionArea {
     }
 
     pub fn provide_completion_items(&self) -> Vec<CompletionItem> {
+        let mut items = vec![];
+
         match &self.details {
             CompletionDetails::Field(parent_type) => {
-                parent_type.get_all_fields().into_iter().map(|field_info| CompletionItem{
-                    name: field_info.name.to_string(),
-                    kind: CompletionItemKind::Field
-                }).collect()
+                for field_info in parent_type.get_all_fields() {
+                    items.push(
+                        CompletionItem::new(field_info.name.as_str())
+                            .kind(CompletionItemKind::Field)
+                            .description(field_info.ty.to_string())
+                    )
+                }
             },
         }
+
+        items
     }
 }

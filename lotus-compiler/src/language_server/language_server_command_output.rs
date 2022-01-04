@@ -33,6 +33,16 @@ impl LanguageServerCommandOutput {
         self
     }
 
+    pub fn push_opt<T : ToString>(&mut self, value: Option<T>) -> &mut Self {
+        let content = match value {
+            Some(v) => v.to_string(),
+            None => String::new(),
+        };
+        self.current_line.push(content);
+
+        self
+    }
+
     pub fn consume(mut self) -> String {
         self.flush();
         self.lines.insert(0, self.id.to_string());

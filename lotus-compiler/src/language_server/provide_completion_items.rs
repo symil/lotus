@@ -7,8 +7,11 @@ pub fn provide_completion_items(parameters: &LanguageServerCommandParameters, co
             for item in completion_area.provide_completion_items() {
                 output
                     .line("item")
-                    .push(item.kind.to_str())
-                    .push(item.name);
+                    .push(item.label)
+                    .push_opt(item.kind.map(|kind| kind.to_str()))
+                    .push_opt(item.description.as_ref())
+                    .push_opt(item.detail.as_ref())
+                    .push_opt(item.documentation.as_ref());
             }
         }
     }

@@ -1,5 +1,5 @@
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover, provide_completion_items, LanguageServerCommandOutput};
+use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover, provide_completion_items, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum LanguageServerCommandKind {
@@ -12,7 +12,7 @@ pub enum LanguageServerCommandKind {
 }
 
 pub struct LanguageServerCommandCallbackDetails {
-    pub force_reset: bool,
+    pub reload: LanguageServerCommandReload,
     pub callback: fn(&LanguageServerCommandParameters, &ProgramContext, &mut LanguageServerCommandOutput),
 }
 
@@ -32,27 +32,27 @@ impl LanguageServerCommandKind {
     pub fn get_callback_details(&self) -> LanguageServerCommandCallbackDetails {
         match self {
             LanguageServerCommandKind::Validate => LanguageServerCommandCallbackDetails {
-                force_reset: true,
+                reload: LanguageServerCommandReload::Yes,
                 callback: validate,
             },
             LanguageServerCommandKind::PrepareRename => LanguageServerCommandCallbackDetails {
-                force_reset: false,
+                reload: LanguageServerCommandReload::No,
                 callback: prepare_rename,
             },
             LanguageServerCommandKind::ProvideRenameEdits => LanguageServerCommandCallbackDetails {
-                force_reset: false,
+                reload: LanguageServerCommandReload::No,
                 callback: provide_rename_edits,
             },
             LanguageServerCommandKind::ProvideDefinition => LanguageServerCommandCallbackDetails {
-                force_reset: false,
+                reload: LanguageServerCommandReload::No,
                 callback: provide_definition,
             },
             LanguageServerCommandKind::ProvideHover => LanguageServerCommandCallbackDetails {
-                force_reset: false,
+                reload: LanguageServerCommandReload::No,
                 callback: provide_hover,
             },
             LanguageServerCommandKind::ProvideCompletionItems => LanguageServerCommandCallbackDetails {
-                force_reset: true,
+                reload: LanguageServerCommandReload::WithHook,
                 callback: provide_completion_items,
             },
         }

@@ -1,7 +1,7 @@
 use parsable::ParseError;
 
 use crate::{command_line::{infer_root_directory, bundle_with_prelude}, program::ProgramContext, utils::FileSystemCache, items::LotusFile};
-use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput};
+use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_SEPARATOR : &'static str = "##";
 
@@ -18,9 +18,15 @@ impl LanguageServerCommand {
         let kind = arguments.next().and_then(|str| LanguageServerCommandKind::from_str(str))?;
         let file_path = arguments.next().and_then(|str| Some(str.to_string()))?;
         let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok());
-        let new_name = arguments.next().and_then(|str| Some(str.to_string()));
+        let payload = arguments.next().and_then(|str| Some(str.to_string()));
         let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
-        let parameters = LanguageServerCommandParameters { root_directory_path, file_path, cursor_index, new_name };
+
+        let parameters = LanguageServerCommandParameters {
+            root_directory_path,
+            file_path,
+            cursor_index,
+            payload
+        };
 
         Some(Self {
             id,
@@ -29,12 +35,22 @@ impl LanguageServerCommand {
         })
     }
 
-    pub fn run(&self, context: &mut ProgramContext, cache: Option<&mut FileSystemCache<LotusFile, ParseError>>, force_reset: bool) -> LanguageServerCommandOutput {
+    pub fn run(mut self, context: &mut ProgramContext, mut cache: Option<&mut FileSystemCache<LotusFile, ParseError>>, force_reset: bool) -> LanguageServerCommandOutput {
         let mut output = LanguageServerCommandOutput::new(self.id);
         let callback_details = self.kind.get_callback_details();
-        let reset = force_reset || callback_details.force_reset;
+        let reset = force_reset || callback_details.reload != LanguageServerCommandReload::No;
 
         if reset {
+            if let Some(cache) = &mut cache {
+                cache.delete_hook();
+
+                if callback_details.reload == LanguageServerCommandReload::WithHook {
+                    if let Some(payload) = self.parameters.payload.take() {
+                        cache.set_hook(&self.parameters.file_path, payload);
+                    }
+                }
+            }
+
             context.reset();
             context.parse_source_files(&bundle_with_prelude(&self.parameters.root_directory_path), cache);
 

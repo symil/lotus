@@ -1,12 +1,11 @@
 use parsable::DataLocation;
-
 use crate::program::{ProgramContext, SharedIdentifier};
 
 pub struct LanguageServerCommandParameters {
     pub root_directory_path: String,
     pub file_path: String,
     pub cursor_index: Option<usize>,
-    pub new_name: Option<String>
+    pub payload: Option<String>,
 }
 
 impl LanguageServerCommandParameters {

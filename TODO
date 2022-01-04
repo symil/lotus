@@ -83,6 +83,7 @@
 [ ] Function argument info when typing
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
 [ ] Avoid re-validating document if no file has changed
+[ ] Fix error highlighting when function doesn't return the right type
 
 -- LATER --
 [ ] Allow manually specifying function parameters

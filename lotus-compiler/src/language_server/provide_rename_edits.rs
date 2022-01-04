@@ -2,7 +2,7 @@ use crate::{program::{ProgramContext}, command_line::CommandLineOptions};
 use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
 
 pub fn provide_rename_edits(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
-    if let (Some(cursor_index), Some(new_name)) = (parameters.cursor_index, &parameters.new_name) {
+    if let (Some(cursor_index), Some(new_name)) = (parameters.cursor_index, &parameters.payload) {
         if is_valid_name(new_name) {
             if let Some((shared_identifier, _)) = context.get_identifier_under_cursor(&parameters.file_path, cursor_index) {
                 for occurence in shared_identifier.get_all_occurences() {

@@ -45,8 +45,8 @@ class World {
 }
 
 class Foo {
-    some_field: int,
-    some_other_field: string
+    int_field: int,
+    string_field: string
 }
 
 fn my_function() {
