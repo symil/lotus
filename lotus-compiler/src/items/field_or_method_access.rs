@@ -7,7 +7,7 @@ use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
 pub struct FieldOrMethodAccess {
-    #[parsable(value=".", followed_by="[^.]")]
+    #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
     pub dot: String,
     pub name: Option<IdentifierWrapper>,
     pub arguments: Option<ArgumentList>
@@ -26,10 +26,14 @@ impl FieldOrMethodAccess {
                         Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
                         None => process_field_access(parent_type, field_kind, &name, access_type, context)
                     },
-                    None => None,
+                    None => {
+                        
+                        None
+                    },
                 }
             },
             None => {
+                context.add_field_autocomple_area(self.location.at_offset(1), parent_type);
                 context.errors.generic(self, format!("expected field or method name"));
                 None
             },

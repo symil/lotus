@@ -13,6 +13,7 @@ mod program;
 mod items;
 mod command_line;
 mod language_server;
+mod completion;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -38,7 +39,7 @@ fn main() {
         }
 
     } else if options.run_as_server {
-        start_language_server();
+        start_language_server(&options.command);
     } else {
         // dbg!(&options);
         if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {

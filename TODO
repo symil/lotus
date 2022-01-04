@@ -82,6 +82,7 @@
 [ ] Add autocompletion when pressing `@`
 [ ] Function argument info when typing
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
+[ ] Avoid re-validating document if no file has changed
 
 -- LATER --
 [ ] Allow manually specifying function parameters

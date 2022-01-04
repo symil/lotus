@@ -34,22 +34,32 @@ impl DataLocation {
         hasher.finish()
     }
 
-    pub fn get_end(&self) -> DataLocation {
-        DataLocation {
-            package_root_path: self.package_root_path.clone(),
-            file_path: self.file_path.clone(),
-            file_content: self.file_content.clone(),
-            start: self.end,
-            end: self.end,
-        }
+    pub fn get_end(&self) -> Self {
+        self.clone().set_bounds(self.end)
+    }
+
+    pub fn at_offset(&self, offset: usize) -> Self {
+        self.clone().set_bounds(self.start + offset)
+    }
+
+    fn _set_start(mut self, start: usize) -> Self {
+        self.start = start;
+        self
+    }
+
+    fn _set_end(mut self, end: usize) -> Self {
+        self.end = end;
+        self
+    }
+
+    fn set_bounds(mut self, offset: usize) -> Self {
+        self.start = offset;
+        self.end = offset;
+        self
     }
 
     pub fn contains_cursor(&self, file_path: &str, index: usize) -> bool {
         self.file_path.as_str() == file_path && self.start <= index && self.end >= index
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.file_content.is_empty()
     }
 
     pub fn as_str(&self) -> &str {

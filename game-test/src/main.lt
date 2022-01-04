@@ -43,3 +43,14 @@ class World {
 
     }
 }
+
+class Foo {
+    some_field: int,
+    some_other_field: string
+}
+
+fn my_function() {
+    let foo = Foo {};
+
+    foo.
+}

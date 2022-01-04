@@ -1,14 +1,13 @@
 use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::Duration};
 use colored::Colorize;
 use parsable::StringReader;
-use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache};
-use super::{LanguageServerCommand, LanguageServerCommandParameters};
+use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache, language_server::LanguageServerCommand};
+use super::{LanguageServerCommandKind, LanguageServerCommandParameters};
 
 const PORT : u16 = 9609;
 const BUFFER_SIZE : usize = 65536;
-const COMMAND_SEPARATOR : char = ';';
 
-pub fn start_language_server() {
+pub fn start_language_server(test_command: &Option<String>) {
     let mut buffer = [0 as u8; BUFFER_SIZE];
     let mut current_root_directory = String::new();
     let mut connections = vec![];
@@ -16,6 +15,16 @@ pub fn start_language_server() {
     let mut context = ProgramContext::new(ProgramContextOptions {
         validate_only: true,
     });
+
+    if let Some(string) = test_command {
+        let command = LanguageServerCommand::from_str(string).unwrap();
+        let output = command.run(&mut context, None, true);
+        let string = output.consume();
+        
+        println!("{}", string);
+
+        return;
+    }
 
     let addr = format!("127.0.0.1:{}", PORT);
     let listener = TcpListener::bind(addr).unwrap();
@@ -43,43 +52,18 @@ pub fn start_language_server() {
                     }
 
                     let content = str::from_utf8(&buffer[0..size]).unwrap();
-                    // println!("{}", content);
-                    let mut arguments = content.split(COMMAND_SEPARATOR);
-                    let id = arguments.next().and_then(|str| str.parse::<u32>().ok()).unwrap_or(0);
-                    let command = arguments.next().and_then(|str| LanguageServerCommand::from_str(str));
-                    let file_path = arguments.next().and_then(|str| Some(str.to_string()));
-                    let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok());
-                    let new_name = arguments.next().and_then(|str| Some(str.to_string()));
-                    let root_directory_path = infer_root_directory(file_path.as_ref().map(|s| s.as_str()).unwrap_or_default());
-                    let parameters = LanguageServerCommandParameters { root_directory_path, file_path, cursor_index, new_name };
+                    
+                    if let Some(command) = LanguageServerCommand::from_str(content) {
+                        let force_reset = context.is_new() || &command.parameters.root_directory_path != &current_root_directory;
+                        let output = command.run(&mut context, Some(&mut cache), force_reset);
+                        let content = output.consume();
 
-                    if let Some(command) = command {
-                        let command_content = command.get_content();
-                        
-                        if let Some(root_directory) = &parameters.root_directory_path {
-                            let mut lines = vec![id.to_string()];
-
-                            if command_content.force_init || context.is_new() || root_directory != &current_root_directory {
-                                current_root_directory = root_directory.clone();
-                                
-                                context.reset();
-                                context.parse_source_files(&bundle_with_prelude(&root_directory), Some(&mut cache));
-
-                                if !context.has_errors() {
-                                    context.process_source_files();
-                                }
-                            }
-
-                            (command_content.callback)(&parameters, &context, &mut lines);
-
-                            let content = lines.join("\n");
-
-                            for (src, dest) in content.as_bytes().iter().zip(buffer.as_mut()) {
-                                *dest = *src;
-                            }
-
-                            stream.write(&buffer[0..content.as_bytes().len()]).unwrap();
+                        for (src, dest) in content.as_bytes().iter().zip(buffer.as_mut()) {
+                            *dest = *src;
                         }
+
+                        stream.write(&buffer[0..content.as_bytes().len()]).unwrap();
+
                     }
                 },
                 Err(error) => {

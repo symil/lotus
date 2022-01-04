@@ -1,5 +1,5 @@
 use std::{path::{PathBuf, Path}, fs};
-use crate::{program::{SourceDirectoryDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerCommand};
+use crate::{program::{SourceDirectoryDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerCommandKind};
 use super::{LogLevel, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME, infer_root_directory};
 
 #[derive(Debug)]
@@ -8,7 +8,8 @@ pub struct CommandLineOptions {
     pub output_path: Option<String>,
     pub log_level: LogLevel,
     pub run_as_server: bool,
-    pub run_benchmark: bool
+    pub run_benchmark: bool,
+    pub command: Option<String>,
 }
 
 impl CommandLineOptions {
@@ -19,6 +20,7 @@ impl CommandLineOptions {
             log_level: LogLevel::Short,
             run_as_server: false,
             run_benchmark: false,
+            command: None,
         };
 
         for arg in &args[1..] {
@@ -30,6 +32,8 @@ impl CommandLineOptions {
                         options.run_benchmark = true;
                     } else if arg == "--server" {
                         options.run_as_server = true;
+                    } else if let Some(command) = get_option_value(arg, "--command") {
+                        options.command = Some(command);
                     } else {
                         eprintln!("invalid option `{}`", arg);
                     }

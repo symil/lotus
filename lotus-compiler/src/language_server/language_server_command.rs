@@ -1,54 +1,50 @@
-use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover};
+use parsable::ParseError;
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub enum LanguageServerCommand {
-    Validate,
-    PrepareRename,
-    ProvideRenameEdits,
-    ProvideDefinition,
-    ProvideHover,
-}
+use crate::{command_line::{infer_root_directory, bundle_with_prelude}, program::ProgramContext, utils::FileSystemCache, items::LotusFile};
+use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput};
 
-pub struct LanguageServerCommandContent {
-    pub force_init: bool,
-    pub callback: fn(&LanguageServerCommandParameters, &ProgramContext, &mut Vec<String>),
+pub const COMMAND_SEPARATOR : &'static str = "##";
+
+pub struct LanguageServerCommand {
+    pub id: u32,
+    pub kind: LanguageServerCommandKind,
+    pub parameters: LanguageServerCommandParameters
 }
 
 impl LanguageServerCommand {
     pub fn from_str(string: &str) -> Option<Self> {
-        match string {
-            "validate" => Some(Self::Validate),
-            "prepare-rename" => Some(Self::PrepareRename),
-            "provide-rename-edits" => Some(Self::ProvideRenameEdits),
-            "provide-definition" => Some(Self::ProvideDefinition),
-            "provide-hover" => Some(Self::ProvideHover),
-            _ => None
-        }
+        let mut arguments = string.split(COMMAND_SEPARATOR);
+        let id = arguments.next().and_then(|str| str.parse::<u32>().ok()).unwrap_or(0);
+        let kind = arguments.next().and_then(|str| LanguageServerCommandKind::from_str(str))?;
+        let file_path = arguments.next().and_then(|str| Some(str.to_string()))?;
+        let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok());
+        let new_name = arguments.next().and_then(|str| Some(str.to_string()));
+        let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
+        let parameters = LanguageServerCommandParameters { root_directory_path, file_path, cursor_index, new_name };
+
+        Some(Self {
+            id,
+            kind,
+            parameters,
+        })
     }
 
-    pub fn get_content(&self) -> LanguageServerCommandContent {
-        match self {
-            LanguageServerCommand::Validate => LanguageServerCommandContent {
-                force_init: true,
-                callback: validate,
-            },
-            LanguageServerCommand::PrepareRename => LanguageServerCommandContent {
-                force_init: false,
-                callback: prepare_rename,
-            },
-            LanguageServerCommand::ProvideRenameEdits => LanguageServerCommandContent {
-                force_init: false,
-                callback: provide_rename_edits,
-            },
-            LanguageServerCommand::ProvideDefinition => LanguageServerCommandContent {
-                force_init: false,
-                callback: provide_definition,
-            },
-            LanguageServerCommand::ProvideHover => LanguageServerCommandContent {
-                force_init: false,
-                callback: provide_hover,
-            },
+    pub fn run(&self, context: &mut ProgramContext, cache: Option<&mut FileSystemCache<LotusFile, ParseError>>, force_reset: bool) -> LanguageServerCommandOutput {
+        let mut output = LanguageServerCommandOutput::new(self.id);
+        let callback_details = self.kind.get_callback_details();
+        let reset = force_reset || callback_details.force_reset;
+
+        if reset {
+            context.reset();
+            context.parse_source_files(&bundle_with_prelude(&self.parameters.root_directory_path), cache);
+
+            if !context.has_errors() {
+                context.process_source_files();
+            }
         }
+
+        (callback_details.callback)(&self.parameters, &context, &mut output);
+
+        output
     }
 }

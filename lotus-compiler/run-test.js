@@ -41,6 +41,7 @@ async function main() {
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !createTest;
     let displayMemory = hasOption('--memory', '-m');
+    let serverMode = hasOption('--server', '-s');
     let clean = hasOption('--clean');
     let onlyCompileWat = false;
     let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode, validate, benchmark };
@@ -77,6 +78,10 @@ async function main() {
                 });
             }
         });
+    } else if (serverMode) {
+        let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
+
+        runCommand(`${compilerPath} --server --command=${commandLineNames[0]}`, true);
     } else if (clean) {
         let fileList = readDirRecursive(TEST_DIR);
         let wasmFileList = fileList.filter(({ path }) => path.endsWith('.wat') || path.endsWith('.wasm'));

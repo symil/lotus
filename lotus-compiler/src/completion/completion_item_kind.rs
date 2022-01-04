@@ -1,0 +1,66 @@
+// https://code.visualstudio.com/api/references/vscode-api#CompletionItemKind
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CompletionItemKind {
+    Class,
+    Color,
+    Constant,
+    Constructor,
+    Enum,
+    EnumMember,
+    Event,
+    Field,
+    File,
+    Folder,
+    Function,
+    Interface,
+    Issue,
+    Keyword,
+    Method,
+    Module,
+    Operator,
+    Property,
+    Reference,
+    Snippet,
+    Struct,
+    Text,
+    TypeParameter,
+    Unit,
+    User,
+    Value,
+    Variable,
+}
+
+impl CompletionItemKind {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            CompletionItemKind::Class => "class",
+            CompletionItemKind::Color => "color",
+            CompletionItemKind::Constant => "constant",
+            CompletionItemKind::Constructor => "constructor",
+            CompletionItemKind::Enum => "enum",
+            CompletionItemKind::EnumMember => "enum-member",
+            CompletionItemKind::Event => "event",
+            CompletionItemKind::Field => "field",
+            CompletionItemKind::File => "file",
+            CompletionItemKind::Folder => "folder",
+            CompletionItemKind::Function => "function",
+            CompletionItemKind::Interface => "interface",
+            CompletionItemKind::Issue => "issue",
+            CompletionItemKind::Keyword => "keyword",
+            CompletionItemKind::Method => "method",
+            CompletionItemKind::Module => "module",
+            CompletionItemKind::Operator => "operator",
+            CompletionItemKind::Property => "property",
+            CompletionItemKind::Reference => "reference",
+            CompletionItemKind::Snippet => "snippet",
+            CompletionItemKind::Struct => "struct",
+            CompletionItemKind::Text => "text",
+            CompletionItemKind::TypeParameter => "type-parameter",
+            CompletionItemKind::Unit => "unit",
+            CompletionItemKind::User => "user",
+            CompletionItemKind::Value => "value",
+            CompletionItemKind::Variable => "variable",
+        }
+    }
+}

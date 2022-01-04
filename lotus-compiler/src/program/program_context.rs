@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat};
+use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat, completion::{CompletionDetails, CompletionArea, CompletionAreaIndex}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent};
 
 #[derive(Debug, Default, Clone)]
@@ -25,7 +25,9 @@ pub struct ProgramContext {
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
+
     pub shared_identifiers: HashMap<u64, SharedIdentifier>,
+    pub autocomplete_index: CompletionAreaIndex,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     main_types: HashMap<MainType, Type>,
@@ -330,14 +332,22 @@ impl ProgramContext {
         });
     }
 
-    pub fn get_identifier_under_cursor(&self, cursor_file_path: &str, cursor_index: usize) -> Option<(&SharedIdentifier, &DataLocation)> {
+    pub fn get_identifier_under_cursor(&self, file_path: &str, cursor_index: usize) -> Option<(&SharedIdentifier, &DataLocation)> {
         for shared_identifier in self.shared_identifiers.values() {
-            if let Some(location) = shared_identifier.match_cursor(cursor_file_path, cursor_index) {
+            if let Some(location) = shared_identifier.match_cursor(file_path, cursor_index) {
                 return Some((shared_identifier, location));
             }
         }
 
         None
+    }
+
+    pub fn add_field_autocomple_area(&mut self, location: DataLocation, ty: &Type) {
+        self.autocomplete_index.insert(location, CompletionDetails::Field(ty.clone()));
+    }
+
+    pub fn get_autocomplete_area(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
+        self.autocomplete_index.get(file_path, cursor_index)
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {

@@ -40,7 +40,7 @@ impl Identifier {
     }
 
     pub fn to_unique_string(&self) -> String {
-        match self.location.is_empty() {
+        match self.location.file_content.is_empty() {
             true => self.to_string(),
             false => format!("{}_{}", self.as_str(), self.location.get_hash()),
         }
