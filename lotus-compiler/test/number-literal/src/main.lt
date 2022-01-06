@@ -13,5 +13,5 @@ export fn main() {
 }
 
 fn log_type<T>(value: T) {
-    @log(T::type_name());
+    @log(T::__type_name());
 }

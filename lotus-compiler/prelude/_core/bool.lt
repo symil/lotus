@@ -1,16 +1,16 @@
 export type(i32) bool {
-    and(bool) -> bool {{ i32.and }}
-    or(bool) -> bool {{ i32.or }}
-    eq(bool) -> bool {{ i32.eq }}
-    ne(bool) -> bool {{ i32.ne }}
-    not() -> bool {{ i32.eqz }}
+    __and(bool) -> bool {{ i32.and }}
+    __or(bool) -> bool {{ i32.or }}
+    __eq(bool) -> bool {{ i32.eq }}
+    __ne(bool) -> bool {{ i32.ne }}
+    __not() -> bool {{ i32.eqz }}
     to_int() -> int {{ }}
 
-    static default() {{ 
+    static __default() {{ 
         (i32.const 0)
     }}
 
-    static type_name() -> string {
+    static __type_name() -> string {
         #TYPE_NAME
     }
 
@@ -33,7 +33,7 @@ export type(i32) bool {
         }
     }
 
-    to_debug_string(set: Set<ptr>) -> string {
+    __to_debug_string(set: Set<ptr>) -> string {
         self.to_string()
     }
 

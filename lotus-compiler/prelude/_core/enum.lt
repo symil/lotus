@@ -1,9 +1,9 @@
 sys type(i32) Enum {
-    eq(other: Self) -> bool {{
+    __eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: Self) -> bool {{
+    __ne(other: Self) -> bool {{
         i32.ne
     }}
 
@@ -31,7 +31,7 @@ sys type(i32) Enum {
         (i32.lt_s)
     }}
 
-    autogen static type_name() -> string {
+    autogen static __type_name() -> string {
         #TYPE_NAME
     }
 
@@ -48,7 +48,7 @@ sys type(i32) Enum {
         "none"
     }
 
-    autogen to_debug_string(set: Set<ptr>) -> string {
+    autogen __to_debug_string(set: Set<ptr>) -> string {
         self.to_string()
     }
 

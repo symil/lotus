@@ -113,8 +113,8 @@ impl BinaryOperatorWrapper {
         match operator_kind {
             OperatorKind::Equality(kind) => {
                 let method_name = match kind {
-                    EqualityOperator::Equal => "eq",
-                    EqualityOperator::NotEqual => "ne",
+                    EqualityOperator::Equal => "__eq",
+                    EqualityOperator::NotEqual => "__ne",
                 };
 
                 match right_vasm.ty.is_assignable_to(&left_vasm.ty) || left_vasm.ty.is_assignable_to(&right_vasm.ty) {

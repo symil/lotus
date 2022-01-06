@@ -1,9 +1,9 @@
 export type Function {
-    static default() -> Self {{
+    static __default() -> Self {{
         (i32.const -2147483648)
     }}
 
-    static type_name() -> string {
+    static __type_name() -> string {
         #TYPE_NAME
     }
     
@@ -28,15 +28,15 @@ export type Function {
         }
     }
 
-    to_debug_string(set: Set<ptr>) -> string {
+    __to_debug_string(set: Set<ptr>) -> string {
         self.to_string()
     }
 
-    eq(Self) -> bool {{
+    __eq(Self) -> bool {{
         i32.eq
     }}
 
-    ne(Self) -> bool {{
+    __ne(Self) -> bool {{
         i32.ne
     }}
 

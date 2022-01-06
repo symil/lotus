@@ -5,7 +5,7 @@ export class Array<T> {
     length: int,
     capacity: int,
 
-    add(other: Self) -> Self {
+    __add(other: Self) -> Self {
         self.concat(other)
     }
 
@@ -13,7 +13,7 @@ export class Array<T> {
         (i32.const 0)
     }}
 
-    static default() -> Self {
+    static __default() -> Self {
         Self::with_capacity(4)
     }
 
@@ -41,15 +41,15 @@ export class Array<T> {
         self.capacity
     }
 
-    get_iterable_len() -> int {
+    __get_iterable_len() -> int {
         self.length
     }
 
-    get_iterable_ptr() -> Pointer<T> {
+    __get_iterable_ptr() -> Pointer<T> {
         self.body
     }
 
-    get_at(index: int) -> T {
+    __get_at(index: int) -> T {
         let length = self.length;
 
         if index < 0 {
@@ -62,8 +62,8 @@ export class Array<T> {
         }
     }
 
-    set_at(index: int, value: T) {
-        self.body.set_at(index, value);
+    __set_at(index: int, value: T) {
+        self.body.__set_at(index, value);
     }
 
     first() -> T? {
@@ -71,7 +71,7 @@ export class Array<T> {
             return none;
         }
 
-        self.get_at(0)
+        self.__get_at(0)
     }
 
     last() -> T? {
@@ -79,7 +79,7 @@ export class Array<T> {
             return none;
         }
 
-        self.get_at(self.length - 1)
+        self.__get_at(self.length - 1)
     }
 
     is_empty() -> bool {
@@ -322,7 +322,7 @@ export class Array<T> {
         let has_line_breaks = false;
 
         for item in self {
-            let str = item.to_debug_string(set);
+            let str = item.__to_debug_string(set);
 
             if str.contains("\n") {
                 has_line_breaks = true;

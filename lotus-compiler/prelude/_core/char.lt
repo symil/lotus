@@ -1,9 +1,9 @@
 export type(i32) char {
-    eq(other: Self) -> bool {{
+    __eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    ne(other: Self) -> bool {{
+    __ne(other: Self) -> bool {{
         i32.ne
     }}
 
@@ -11,11 +11,11 @@ export type(i32) char {
 
     }}
 
-    static default() -> char {{
+    static __default() -> char {{
         (i32.const 0)
     }}
 
-    static type_name() -> string {
+    static __type_name() -> string {
         #TYPE_NAME
     }
 
@@ -44,7 +44,7 @@ export type(i32) char {
         str
     }
 
-    to_debug_string(set: Set<ptr>) -> string {
+    __to_debug_string(set: Set<ptr>) -> string {
         if self.__is_none() {
             return "none";
         }

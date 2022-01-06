@@ -34,7 +34,7 @@ export type(void) system {
     }}
 
     get_debug_string<T>(value: T) -> string {
-        value.to_debug_string(Set<ptr>::new())
+        value.__to_debug_string(Set<ptr>::new())
     }
 
     dbg<T>(value: T) {

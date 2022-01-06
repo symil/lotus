@@ -50,6 +50,7 @@ mod item_kind;
 mod token_kind;
 mod compilation_error_chain;
 mod qualifiers;
+mod cursor_info;
 
 pub use program_context::*;
 pub use utils::*;
@@ -102,3 +103,4 @@ pub use item_kind::*;
 pub use token_kind::*;
 pub use compilation_error_chain::*;
 pub use qualifiers::*;
+pub use cursor_info::*;

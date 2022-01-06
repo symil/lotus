@@ -111,6 +111,10 @@ impl FunctionBlueprint {
             None => None,
         }
     }
+
+    pub fn get_self_type(&self) -> Type {
+        Type::function(&self.signature)
+    }
 }
 
 impl GlobalItem for FunctionBlueprint {

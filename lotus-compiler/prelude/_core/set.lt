@@ -1,7 +1,7 @@
 export class Set<V> {
     _map: Map<V, int>,
 
-    static default() -> Self {
+    static __default() -> Self {
         Self::new()
     }
 

@@ -2,7 +2,7 @@ use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher},
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifierKeyword, Identifier, StackType, TypeQualifier, VisibilityKeywordValue}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -102,6 +102,13 @@ impl TypeBlueprint {
             if type_info.owner.borrow().type_id == self.type_id {
                 type_info.ty.check_parameters(context);
             }
+        }
+    }
+
+    pub fn methods(&self, kind: FieldKind) -> &IndexMap<String, FuncRef> {
+        match kind {
+            FieldKind::Regular => &self.regular_methods,
+            FieldKind::Static => &self.static_methods,
         }
     }
 }

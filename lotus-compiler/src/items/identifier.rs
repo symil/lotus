@@ -40,7 +40,7 @@ impl Identifier {
     }
 
     pub fn to_unique_string(&self) -> String {
-        match self.location.file_content.is_empty() {
+        match self.location.file.content.is_empty() {
             true => self.to_string(),
             false => format!("{}_{}", self.as_str(), self.location.get_hash()),
         }
@@ -73,7 +73,7 @@ impl Identifier {
 
     pub fn debug(&self) {
         let (line, col) = self.location.get_line_col();
-        println!("{:?}:{}:{}:{}", &self.value, self.location.file_path, line, col);
+        println!("{:?}:{}:{}:{}", &self.value, self.location.file.path, line, col);
     }
 }
 

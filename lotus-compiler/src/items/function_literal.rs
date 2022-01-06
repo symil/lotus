@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifierKeyword, VisibilityKeywordValue}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility}, utils::Link};
+use crate::{items::{MethodQualifierKeyword, VisibilityKeywordValue}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME}, utils::Link};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -96,7 +96,7 @@ impl FunctionLiteral {
                             .call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vec![context.vasm()
                                 .get_tmp_var(&closure_args_var)
                                 .call_regular_method(&map_type, "get", &[], vec![context.vasm().int(arg.get_name_hash())], context)
-                                .call_regular_method(&pointer_type, "get_at", &[], vec![ context.vasm().int(0i32) ], context)
+                                .call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![ context.vasm().int(0i32) ], context)
                                 ], context);
                             }
                 }

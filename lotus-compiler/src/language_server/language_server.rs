@@ -14,6 +14,7 @@ pub fn start_language_server(test_command: &Option<String>) {
     let mut cache = FileSystemCache::new();
     let mut context = ProgramContext::new(ProgramContextOptions {
         validate_only: true,
+        cursor: None,
     });
 
     if let Some(string) = test_command {

@@ -46,11 +46,11 @@ class World {
 
 class Foo {
     int_field: int,
-    string_field: string
+    string: string,
+    string_field: string,
+    string_field_other: string
 }
 
 fn my_function() {
     let foo = Foo {};
-
-    foo.
 }

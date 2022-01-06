@@ -1,15 +1,11 @@
 use std::{collections::{HashMap}, rc::Rc};
 use regex::Regex;
-use crate::{DataLocation};
+use crate::{DataLocation, file_info::FileInfo};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
     comment_token: &'static str,
-
-    package_root_path: Rc<String>,
-    file_path: Rc<String>,
-    file_content: Rc<String>,
-
+    file: Rc<FileInfo>,
     index: usize,
     error_index: usize,
     expected: Vec<String>,
@@ -39,14 +35,20 @@ impl StringReader {
     pub fn new(content: String, options: ParseOptions) -> Self {
         Self {
             comment_token: options.comment_start.unwrap_or(""),
-            package_root_path: Rc::new(options.package_root_path.unwrap_or_default()),
-            file_path: Rc::new(options.file_path.unwrap_or_default()),
-            file_content: Rc::new(content),
+            file: Rc::new(FileInfo {
+                path: options.file_path.unwrap_or_default(),
+                content,
+                package_root_path: options.package_root_path.unwrap_or_default(),
+            }),
             index: 0,
             error_index: 0,
             expected: vec![],
             markers: HashMap::new()
         }
+    }
+
+    fn content(&self) -> &str {
+        &self.file.content
     }
 
     pub fn set_expected_token(&mut self, expected: Option<String>) {
@@ -64,28 +66,26 @@ impl StringReader {
         let mut error_index = self.error_index;
         let mut backtracked = false;
 
-        while error_index > 0 && is_space(self.file_content.as_bytes()[error_index - 1] as char) {
+        while error_index > 0 && is_space(self.content().as_bytes()[error_index - 1] as char) {
             error_index -= 1;
             backtracked = true;
         }
 
         if backtracked {
-            while error_index < self.file_content.len() && is_inline_space(self.file_content.as_bytes()[error_index] as char) {
+            while error_index < self.content().len() && is_inline_space(self.content().as_bytes()[error_index] as char) {
                 error_index += 1;
             }
         }
 
         ParseError {
-            package_root_path: self.package_root_path.clone(),
-            file_path: self.file_path.clone(),
-            file_content: self.file_content.clone(),
+            file: self.file.clone(),
             index: error_index,
             expected: self.expected.clone(),
         }
     }
 
     pub fn is_finished(&self) -> bool {
-        self.index == self.file_content.len()
+        self.index == self.file.content.len()
     }
 
     pub fn get_index(&self) -> usize {
@@ -96,7 +96,7 @@ impl StringReader {
         let mut index = self.index;
 
         // TODO: handle comments
-        while index > 0 && is_space(self.file_content.as_bytes()[index - 1] as char) {
+        while index > 0 && is_space(self.content().as_bytes()[index - 1] as char) {
             index -= 1;
         }
 
@@ -115,13 +115,13 @@ impl StringReader {
                 let end = self.index + length;
 
                 self.index = end;
-                Some(&self.file_content[start..end])
+                Some(&self.content()[start..end])
             }
         }
     }
 
     pub fn as_str(&self) -> &str {
-        &self.file_content[self.index..]
+        &self.content()[self.index..]
     }
 
     pub fn as_char(&self) -> char {
@@ -132,7 +132,7 @@ impl StringReader {
     }
 
     pub fn at(&self, index: usize) -> char {
-        match self.file_content.as_bytes().get(self.index + index) {
+        match self.content().as_bytes().get(self.index + index) {
             Some(byte) => *byte as char,
             None => 0 as char,
         }
@@ -151,7 +151,7 @@ impl StringReader {
             if self.as_str().starts_with(self.comment_token) {
                 done = false;
 
-                while self.as_char() != '\n' && self.index < self.file_content.len() {
+                while self.as_char() != '\n' && self.index < self.content().len() {
                     self.index += 1;
                 }
             }
@@ -194,9 +194,7 @@ impl StringReader {
 
     pub fn get_data_location(&self, start: usize) -> DataLocation {
         DataLocation {
-            package_root_path: self.package_root_path.clone(),
-            file_path: self.file_path.clone(),
-            file_content: self.file_content.clone(),
+            file: self.file.clone(),
             start,
             end: self.get_index_backtracked(),
         }

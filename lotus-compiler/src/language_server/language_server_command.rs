@@ -1,6 +1,6 @@
 use parsable::ParseError;
 
-use crate::{command_line::{infer_root_directory, bundle_with_prelude}, program::ProgramContext, utils::FileSystemCache, items::LotusFile};
+use crate::{command_line::{infer_root_directory, bundle_with_prelude}, program::{ProgramContext, ProgramContextOptions, CursorInfo}, utils::FileSystemCache, items::LotusFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_SEPARATOR : &'static str = "##";
@@ -17,7 +17,7 @@ impl LanguageServerCommand {
         let id = arguments.next().and_then(|str| str.parse::<u32>().ok()).unwrap_or(0);
         let kind = arguments.next().and_then(|str| LanguageServerCommandKind::from_str(str))?;
         let file_path = arguments.next().and_then(|str| Some(str.to_string()))?;
-        let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok());
+        let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok()).unwrap_or(usize::MAX);
         let payload = arguments.next().and_then(|str| Some(str.to_string()));
         let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
 
@@ -51,7 +51,10 @@ impl LanguageServerCommand {
                 }
             }
 
-            context.reset();
+            *context = ProgramContext::new(ProgramContextOptions {
+                validate_only: true,
+                cursor: Some(CursorInfo::new(&self.parameters.file_path, self.parameters.cursor_index)),
+            });
             context.parse_source_files(&bundle_with_prelude(&self.parameters.root_directory_path), cache);
 
             if !context.has_errors() {

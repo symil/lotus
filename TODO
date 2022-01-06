@@ -84,6 +84,7 @@
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
 [ ] Avoid re-validating document if no file has changed
 [ ] Fix error highlighting when function doesn't return the right type
+[ ] Add class `Event`
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -114,6 +115,7 @@
 [ ] Implement proper iterators
 [ ] Improve interface system (basically copy the one from rust)
 [ ] Generalize tuples
+[ ] Change how interface are implemented to explicitely specify which interface is specified
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

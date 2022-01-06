@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::program::Type;
+use crate::program::{Type, FieldKind};
 use super::{CompletionItem, CompletionItemKind};
 
 #[derive(Debug)]
@@ -28,7 +28,17 @@ impl CompletionArea {
                         CompletionItem::new(field_info.name.as_str())
                             .kind(CompletionItemKind::Field)
                             .description(field_info.ty.to_string())
-                    )
+                    );
+                }
+
+                for method_info in parent_type.get_all_methods(FieldKind::Regular) {
+                    if !method_info.borrow().name.as_str().starts_with("__") {
+                        items.push(
+                            CompletionItem::new(method_info.borrow().name.as_str())
+                                .kind(CompletionItemKind::Method)
+                                .description(method_info.borrow().get_self_type().to_string())
+                        );
+                    }
                 }
             },
         }

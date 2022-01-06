@@ -4,14 +4,15 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat, completion::{CompletionDetails, CompletionArea, CompletionAreaIndex}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo};
 
 #[derive(Debug, Default, Clone)]
 pub struct ProgramContextOptions {
-    pub validate_only: bool
+    pub validate_only: bool,
+    pub cursor: Option<CursorInfo>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
     pub source_file_list: Vec<SourceFileDetails>,
@@ -27,7 +28,7 @@ pub struct ProgramContext {
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
     pub shared_identifiers: HashMap<u64, SharedIdentifier>,
-    pub autocomplete_index: CompletionAreaIndex,
+    pub completion_area_index: CompletionAreaIndex,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     main_types: HashMap<MainType, Type>,
@@ -58,9 +59,40 @@ pub struct ProgramContext {
 
 impl ProgramContext {
     pub fn new(options: ProgramContextOptions) -> Self {
-        let mut context = Self::default();
-        context.options = options;
-        context
+        Self {
+            options: options.clone(),
+            source_file_list: vec![],
+            parsed_source_files: vec![],
+            errors: Default::default(),
+            default_interfaces: Default::default(),
+            types: Default::default(),
+            typedefs: Default::default(),
+            interfaces: Default::default(),
+            functions: Default::default(),
+            global_vars: Default::default(),
+            shared_identifiers: Default::default(),
+            completion_area_index: CompletionAreaIndex::new(options.cursor.clone()),
+            builtin_types: Default::default(),
+            main_types: Default::default(),
+            autogen_type: Default::default(),
+            scopes: Default::default(),
+            function_level: Default::default(),
+            iter_fields_counter: Default::default(),
+            iter_variants_counter: Default::default(),
+            iter_ancestors_counter: Default::default(),
+            function_table: Default::default(),
+            function_wasm_types: Default::default(),
+            type_instances: Default::default(),
+            function_instances: Default::default(),
+            global_var_instances: Default::default(),
+            main_function: Default::default(),
+            start_client_function: Default::default(),
+            update_client_function: Default::default(),
+            start_server_function: Default::default(),
+            update_server_function: Default::default(),
+            output_wat: Default::default(),
+            output_file: Default::default(),
+        }
     }
 
     pub fn is_new(&self) -> bool {
@@ -342,12 +374,16 @@ impl ProgramContext {
         None
     }
 
-    pub fn add_field_autocomple_area(&mut self, location: DataLocation, ty: &Type) {
-        self.autocomplete_index.insert(location, CompletionDetails::Field(ty.clone()));
+    pub fn add_variable_autocomplete_area(&mut self) {
+
+    }
+
+    pub fn add_field_autocomple_area(&mut self, location: &DataLocation, ty: &Type) {
+        self.completion_area_index.insert(location, || CompletionDetails::Field(ty.clone()));
     }
 
     pub fn get_autocomplete_area(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
-        self.autocomplete_index.get(file_path, cursor_index)
+        self.completion_area_index.get(file_path, cursor_index)
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {
@@ -536,12 +572,6 @@ impl ProgramContext {
 
     pub fn vasm(&self) -> Vasm {
         Vasm::new(!self.options.validate_only)
-    }
-
-    pub fn reset(&mut self) {
-        let options = self.options.clone();
-        take(self);
-        self.options = options;
     }
 
     pub fn parse_source_files(&mut self, directories: &[SourceDirectoryDetails], provided_cache: Option<&mut FileSystemCache<LotusFile, ParseError>>) {

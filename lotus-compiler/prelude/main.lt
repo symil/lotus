@@ -21,6 +21,7 @@ fn test() {
     foo.hello = 6;
 
     let d = TheEnum::TheBla;
+
 }
 
 fn this_is_a_test(foo: int, bar: int) -> int {

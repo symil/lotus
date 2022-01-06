@@ -590,6 +590,34 @@ impl Type {
         }
     }
 
+    pub fn get_all_methods(&self, kind: FieldKind) -> Vec<Link<FunctionBlueprint>> {
+        match self.content() {
+            TypeContent::Undefined => vec![],
+            TypeContent::Any => vec![],
+            TypeContent::This(interface) => interface.with_ref(|interface_unwrapped| {
+                interface_unwrapped.methods(kind).values().map(|func_ref| func_ref.function.clone()).collect()
+            }),
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                type_unwrapped.methods(kind).values().map(|func_ref| func_ref.function.clone()).collect()
+            }),
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                let mut result = vec![];
+
+                for interface in &info.required_interfaces.list {
+                    interface.with_ref(|interface_unwrapped| {
+                        for method in interface_unwrapped.methods(kind).values() {
+                            result.push(method.function.clone());
+                        }
+                    });
+                }
+
+                result
+            },
+            TypeContent::Associated(_) => vec![],
+            TypeContent::Function(_) => vec![],
+        }
+    }
+
     pub fn get_method(&self, kind: FieldKind, name: &str, context: &ProgramContext) -> Option<FuncRef> {
         let is_static = match kind {
             FieldKind::Regular => false,

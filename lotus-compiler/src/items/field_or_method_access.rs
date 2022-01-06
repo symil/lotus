@@ -6,9 +6,14 @@ use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WA
 use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
 
 #[parsable]
-pub struct FieldOrMethodAccess {
+pub struct DotToken {
     #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
     pub dot: String,
+}
+
+#[parsable]
+pub struct FieldOrMethodAccess {
+    pub dot: DotToken,
     pub name: Option<IdentifierWrapper>,
     pub arguments: Option<ArgumentList>
 }
@@ -19,12 +24,18 @@ impl FieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+        context.add_field_autocomple_area(&self.dot, parent_type);
+
         match &self.name {
             Some(identifier) => {
                 match identifier.process(context) {
-                    Some(name) => match &self.arguments {
-                        Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
-                        None => process_field_access(parent_type, field_kind, &name, access_type, context)
+                    Some(name) => {
+                        context.add_field_autocomple_area(&name.location, parent_type);
+
+                        match &self.arguments {
+                            Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),
+                            None => process_field_access(parent_type, field_kind, &name, access_type, context)
+                        }
                     },
                     None => {
                         
@@ -33,7 +44,6 @@ impl FieldOrMethodAccess {
                 }
             },
             None => {
-                context.add_field_autocomple_area(self.location.at_offset(1), parent_type);
                 context.errors.generic(self, format!("expected field or method name"));
                 None
             },

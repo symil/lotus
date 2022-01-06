@@ -25,12 +25,16 @@ fn main() {
         let mut cache = FileSystemCache::new();
         let mut context = ProgramContext::new(ProgramContextOptions {
             validate_only: true,
+            cursor: None,
         });
         let mut timer = Timer::new();
 
         for i in 0..3 {
             let duration = timer.time(ProgramStep::Total, || {
-                context.reset();
+                context = ProgramContext::new(ProgramContextOptions {
+                    validate_only: true,
+                    cursor: None,
+                });
                 context.parse_source_files(&source_directories, Some(&mut cache));
                 context.process_source_files();
             });

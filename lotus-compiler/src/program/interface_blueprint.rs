@@ -2,7 +2,7 @@ use std::rc::Rc;
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};
-use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type, Visibility};
+use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type, Visibility, FieldKind};
 
 #[derive(Debug)]
 pub struct InterfaceBlueprint {
@@ -30,6 +30,15 @@ impl Link<InterfaceBlueprint> {
 
             index_map.get(name).cloned()
         })
+    }
+}
+
+impl InterfaceBlueprint {
+    pub fn methods(&self, kind: FieldKind) -> &IndexMap<String, FuncRef> {
+        match kind {
+            FieldKind::Regular => &self.regular_methods,
+            FieldKind::Static => &self.static_methods,
+        }
     }
 }
 

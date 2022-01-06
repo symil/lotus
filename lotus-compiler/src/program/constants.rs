@@ -59,10 +59,10 @@ pub const RETAIN_METHOD_NAME : &'static str = "__retain";
 pub const TO_STRING_METHOD_NAME : &'static str = "to_string";
 pub const MEM_ALLOC_FUNC_NAME : &'static str = "alloc_memory";
 
-pub const GET_AT_INDEX_FUNC_NAME : &'static str = "get_at";
-pub const SET_AT_INDEX_FUNC_NAME : &'static str = "set_at";
-pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "get_iterable_len";
-pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "get_iterable_ptr";
+pub const GET_AT_INDEX_FUNC_NAME : &'static str = "__get_at";
+pub const SET_AT_INDEX_FUNC_NAME : &'static str = "__set_at";
+pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "__get_iterable_len";
+pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "__get_iterable_ptr";
 
 pub const EVENT_VAR_NAME : &'static str = "evt";
 pub const EVENT_OUTPUT_VAR_NAME : &'static str = "__output";

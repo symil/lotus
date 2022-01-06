@@ -1,15 +1,15 @@
 export type(void) void {
     static __chosen() -> Self {{ }}
-    static default() -> Self {{ }}
-    static type_name() -> string { "void" }
+    static __default() -> Self {{ }}
+    static __type_name() -> string { "void" }
     static __none() -> Self {{ }}
     __is_none() -> bool  {{ (i32.const 1) }}
     __hash() -> int  {{ (i32.const 0) }}
 
     to_string() -> string { "void" }
-    to_debug_string(set: Set<ptr>) -> string { "void" }
-    eq(Self) -> bool {{ (i32.const 1) }}
-    ne(Self) -> bool {{ (i32.const 0) }}
+    __to_debug_string(set: Set<ptr>) -> string { "void" }
+    __eq(Self) -> bool {{ (i32.const 1) }}
+    __ne(Self) -> bool {{ (i32.const 0) }}
     static __retain(Self) {{ }}
     static __serialize(buffer: Buffer, value: Self) {{ }}
     static __deserialize(buffer: Buffer) -> Self? {{ }}

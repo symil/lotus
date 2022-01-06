@@ -1,69 +1,69 @@
 export interface Add {
-    add(Self) -> Self;
+    __add(Self) -> Self;
 }
 
 export interface Sub {
-    sub(Self) -> Self;
+    __sub(Self) -> Self;
 }
 
 export interface Mul {
-    mul(Self) -> Self;
+    __mul(Self) -> Self;
 }
 
 export interface Div {
-    div(Self) -> Self;
+    __div(Self) -> Self;
 }
 
 export interface Mod {
-    mod(Self) -> Self;
+    __mod(Self) -> Self;
 }
 
 export interface Shl {
-    shl(int) -> Self;
+    __shl(int) -> Self;
 }
 
 export interface Shr {
-    shr(int) -> Self;
+    __shr(int) -> Self;
 }
 
 export interface And {
-    and(Self) -> Self;
+    __and(Self) -> Self;
 }
 
 export interface Or {
-    or(Self) -> Self;
+    __or(Self) -> Self;
 }
 
 export interface Xor {
-    xor(Self) -> Self;
+    __xor(Self) -> Self;
 }
 
 export interface Ge {
-    ge(Self) -> bool;
+    __ge(Self) -> bool;
 }
 
 export interface Gt {
-    gt(Self) -> bool;
+    __gt(Self) -> bool;
 }
 
 export interface Le {
-    le(Self) -> bool;
+    __le(Self) -> bool;
 }
 
 export interface Lt {
-    lt(Self) -> bool;
+    __lt(Self) -> bool;
 }
 
 export interface Plus {
-    plus() -> Self;
+    __plus() -> Self;
 }
 
 export interface Minus {
-    minus() -> Self;
+    __minus() -> Self;
 }
 
 export interface Not {
-    not() -> Self;
+    __not() -> Self;
 }
 
 export interface ToBool {
@@ -71,26 +71,26 @@ export interface ToBool {
 }
 
 export interface Range {
-    range(Self) -> Self[];
+    __range(Self) -> Self[];
 }
 
 export interface GetAtIndex {
     type Item;
 
-    get_at(int) -> Item;
+    __get_at(int) -> Item;
 }
 
 export interface SetAtIndex {
     type Item;
 
-    set_at(int, Item);
+    __set_at(int, Item);
 }
 
 export interface Iterable {
     type Item;
     
-    get_iterable_len() -> int;
-    get_iterable_ptr() -> Pointer<Item>;
+    __get_iterable_len() -> int;
+    __get_iterable_ptr() -> Pointer<Item>;
 }
 
 export interface Unwrap {
@@ -116,10 +116,10 @@ export interface Object {
 }
 
 sys interface Builtin {
-    eq(Self) -> bool;
-    ne(Self) -> bool;
-    static type_name() -> string;
-    static default() -> Self;
+    __eq(Self) -> bool;
+    __ne(Self) -> bool;
+    static __type_name() -> string;
+    static __default() -> Self;
     static __none() -> Self;
     __is_none() -> bool;
     __hash() -> int;
@@ -127,5 +127,5 @@ sys interface Builtin {
     static __serialize(buffer: Buffer, value: Self);
     static __deserialize(buffer: Buffer) -> Self?;
     to_string() -> string;
-    to_debug_string(set: Set<ptr>) -> string;
+    __to_debug_string(set: Set<ptr>) -> string;
 }
