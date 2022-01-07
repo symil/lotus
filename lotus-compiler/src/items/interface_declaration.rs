@@ -49,7 +49,7 @@ impl InterfaceDeclaration {
             context.errors.generic(self, format!("interface `{}` already exists", &self.name));
         }
 
-        context.renaming.create(&self.name);
+        context.renaming.add_occurence(&self.name, &self.name);
 
         context.interfaces.insert(interface_blueprint, None);
     }
@@ -73,7 +73,7 @@ impl InterfaceDeclaration {
                     required_interfaces: InterfaceList::new(vec![]),
                 });
 
-                context.renaming.create(&name);
+                context.renaming.add_occurence(&name, &name);
 
 
                 if associated_types.insert(name.to_string(), item).is_some() {
@@ -112,7 +112,7 @@ impl InterfaceDeclaration {
                     this_type: Type::this(interface_wrapped.clone()),
                 };
 
-                context.renaming.create(&method.name);
+                context.renaming.add_occurence(&method.name, &method.name);
                 context.push_scope(ScopeKind::Function(func_ref.function.clone()));
                 context.pop_scope();
 

@@ -124,10 +124,10 @@ impl TypeDeclaration {
             None => WasmStackType::Fixed(StackType::Int),
         };
 
-        context.renaming.create(&self.name);
+        context.renaming.add_occurence(&self.name, &self.name);
 
         for details in parameters.values() {
-            context.renaming.create(&details.name);
+            context.renaming.add_occurence(&details.name, &details.name);
         }
 
         type_wrapped.with_mut(|mut type_unwrapped| {
@@ -290,7 +290,7 @@ impl TypeDeclaration {
                         wasm_pattern,
                     });
 
-                    context.renaming.create(&name);
+                    context.renaming.add_occurence(&name, &name);
 
                     if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
                         context.errors.generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
@@ -347,7 +347,7 @@ impl TypeDeclaration {
                             }
 
                             if let Some(field_type) = ty.process(false, context) {
-                                context.renaming.create(&field.name);
+                                context.renaming.add_occurence(&field.name, &field.name);
 
                                 let field_details = Rc::new(FieldInfo {
                                     owner: type_wrapped.clone(),
@@ -364,7 +364,7 @@ impl TypeDeclaration {
                         None => {
                             // Enum variant
 
-                            context.renaming.create(&field.name);
+                            context.renaming.add_occurence(&field.name, &field.name);
 
                             if !type_unwrapped.is_enum() {
                                 context.errors.generic(&field.name, format!("only enums can have variants"));

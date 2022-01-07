@@ -15,23 +15,14 @@ impl RenamingAreaIndex {
         }
     }
 
-    pub fn create(&mut self, definition: &DataLocation) {
-        if is_invalid_location(definition) || self.areas.get(definition).is_some() {
-            // panic!("duplicate renaming area creation");
-            return;
-        }
-
-        self.areas.insert(definition.clone(), RenamingArea::new(definition));
-    }
-
     pub fn add_occurence(&mut self, occurence: &DataLocation, definition: &DataLocation) {
         if is_invalid_location(definition) || is_invalid_location(occurence) {
             return;
         }
 
-        let area = self.areas.get_mut(definition).expect("undefined renaming area");
-
-        area.add_occurence(occurence);
+        self.areas.entry(definition.clone())
+            .or_insert(RenamingArea::new(definition))
+            .add_occurence(occurence);
     }
 
     pub fn get_occurence_under_cursor(&self, root_directory_path: &str, file_path: &str, cursor_index: usize) -> Option<DataLocation> {

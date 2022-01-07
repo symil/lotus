@@ -11,7 +11,7 @@ impl RenamingArea {
     pub fn new(definition: &DataLocation) -> Self {
         Self {
             definition: definition.clone(),
-            occurences: HashSet::from_iter(vec![definition.clone()]),
+            occurences: HashSet::new(),
         }
     }
 

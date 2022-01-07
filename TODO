@@ -134,6 +134,7 @@
 [ ] Make builtin interfaces internal by prefixing them with `__`
 [ ] Syntax highlighting: properly highlight types that starts with `_`
 [ ] Add autocompletion for macros
+[ ] Sort errors by location in the console
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

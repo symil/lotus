@@ -312,7 +312,7 @@ impl ProgramContext {
             current_scope.insert_var_info(&var_info);
         }
 
-        self.renaming.create(&var_info.name());
+        self.renaming.add_occurence(&var_info.name(), &var_info.name());
         self.hover.set_type(&var_info.name(), &var_info.ty());
     }
 
