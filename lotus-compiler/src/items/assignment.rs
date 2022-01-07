@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{items::{AssignmentOperatorValue, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
+use crate::{items::{AssignmentOperatorValue, BinaryOperatorValue, BinaryOperator}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
 use super::{AssignmentOperator, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]
@@ -29,20 +29,20 @@ impl Assignment {
                             _ => {
                                 let associated_binary_operator = match &equal_token.value {
                                     AssignmentOperatorValue::Equal => unreachable!(),
-                                    AssignmentOperatorValue::PlusEqual => BinaryOperator::Plus,
-                                    AssignmentOperatorValue::MinusEqual => BinaryOperator::Minus,
-                                    AssignmentOperatorValue::MultEqual => BinaryOperator::Mult,
-                                    AssignmentOperatorValue::DivEqual => BinaryOperator::Div,
-                                    AssignmentOperatorValue::ModEqual => BinaryOperator::Mod,
-                                    AssignmentOperatorValue::ShlEqual => BinaryOperator::Shl,
-                                    AssignmentOperatorValue::ShrEqual => BinaryOperator::Shr,
-                                    AssignmentOperatorValue::XorEqual => BinaryOperator::Xor,
-                                    AssignmentOperatorValue::DoubleAndEqual => BinaryOperator::DoubleAnd,
-                                    AssignmentOperatorValue::DoubleOrEqual => BinaryOperator::DoubleOr,
-                                    AssignmentOperatorValue::SingleAndEqual => BinaryOperator::SingleAnd,
-                                    AssignmentOperatorValue::SingleOrEqual => BinaryOperator::SingleOr,
+                                    AssignmentOperatorValue::PlusEqual => BinaryOperatorValue::Plus,
+                                    AssignmentOperatorValue::MinusEqual => BinaryOperatorValue::Minus,
+                                    AssignmentOperatorValue::MultEqual => BinaryOperatorValue::Mult,
+                                    AssignmentOperatorValue::DivEqual => BinaryOperatorValue::Div,
+                                    AssignmentOperatorValue::ModEqual => BinaryOperatorValue::Mod,
+                                    AssignmentOperatorValue::ShlEqual => BinaryOperatorValue::Shl,
+                                    AssignmentOperatorValue::ShrEqual => BinaryOperatorValue::Shr,
+                                    AssignmentOperatorValue::XorEqual => BinaryOperatorValue::Xor,
+                                    AssignmentOperatorValue::DoubleAndEqual => BinaryOperatorValue::DoubleAnd,
+                                    AssignmentOperatorValue::DoubleOrEqual => BinaryOperatorValue::DoubleOr,
+                                    AssignmentOperatorValue::SingleAndEqual => BinaryOperatorValue::SingleAnd,
+                                    AssignmentOperatorValue::SingleOrEqual => BinaryOperatorValue::SingleOr,
                                 };
-                                let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
+                                let wrapper = BinaryOperator::new(associated_binary_operator, &equal_token.location);
 
                                 match self.lvalue.process(None, AccessType::Get, context) {
                                     Some(left_rvalue_vasm) => match wrapper.process(left_rvalue_vasm, right_vasm, rvalue, context) {

@@ -34,12 +34,12 @@ async function main() {
     let overwrite = hasOption('--overwrite', '-o');
     let showDetails = hasOption('--details', '-d');
     let runAll = hasOption('--all', '-a');
-    let createTest = overwrite || hasOption('--write', '-w');
+    let writeTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
-    let mode = ((forceRelease || benchmark || runAll || (!isMocha && commandLineNames.length > 1)) && !createTest) ? 'release' : 'debug';
+    let mode = ((forceRelease || benchmark || runAll || (!isMocha && commandLineNames.length > 1)) && !writeTest) ? 'release' : 'debug';
     let overwriteExpectedOutput = hasOption('--overwrite-output', '-ov');
     let validate = hasOption('--validate', '-v');
-    let inheritStdio = !createTest;
+    let inheritStdio = !writeTest;
     let displayMemory = hasOption('--memory', '-m');
     let serverMode = hasOption('--server', '-s');
     let clean = hasOption('--clean');
@@ -96,7 +96,7 @@ async function main() {
         }
 
         console.log(chalk.bold(`${wasmFileList.length} files removed`));
-    } else if (createTest) {
+    } else if (writeTest) {
         let testName = commandLineNames[0];
 
         if (!testName) {

@@ -1,16 +1,18 @@
+use std::borrow::Cow;
+
 use parsable::{DataLocation, parsable};
 use colored::*;
 use crate::{items::Identifier, program::{BuiltinInterface, CompilationError, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}, wat};
 
 #[parsable]
 #[derive(Default, Clone)]
-pub struct BinaryOperatorWrapper {
-    pub value: BinaryOperator
+pub struct BinaryOperator {
+    pub value: BinaryOperatorValue
 }
 
 #[parsable(impl_display=true, name="binary operator")]
 #[derive(PartialEq, Clone, Copy)]
-pub enum BinaryOperator {
+pub enum BinaryOperatorValue {
     Plus = "+",
     Minus = "-",
     Mult = "*",
@@ -32,8 +34,8 @@ pub enum BinaryOperator {
     // Range = "..",
 }
 
-impl BinaryOperatorWrapper {
-    pub fn new(value: BinaryOperator, location: &DataLocation) -> Self {
+impl BinaryOperator {
+    pub fn new(value: BinaryOperatorValue, location: &DataLocation) -> Self {
         let mut result = Self::default();
 
         result.value = value;
@@ -44,29 +46,29 @@ impl BinaryOperatorWrapper {
 
     pub fn is_selective_operator(&self) -> bool {
         match &self.value {
-            BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => true,
+            BinaryOperatorValue::DoubleAnd | BinaryOperatorValue::DoubleOr => true,
             _ => false
         }
     }
 
     pub fn get_priority(&self) -> usize {
         match &self.value {
-            BinaryOperator::Mult | BinaryOperator::Div | BinaryOperator::Mod => 1,
-            BinaryOperator::Plus | BinaryOperator::Minus => 2,
-            BinaryOperator::Shl | BinaryOperator::Shr => 3,
-            BinaryOperator::SingleAnd => 4,
-            BinaryOperator::SingleOr => 5,
-            BinaryOperator::Xor => 6,
-            BinaryOperator::Eq | BinaryOperator::Ne | BinaryOperator::Ge | BinaryOperator::Gt | BinaryOperator::Le | BinaryOperator::Lt => 7,
-            BinaryOperator::DoubleAnd => 8,
-            BinaryOperator::DoubleOr => 9,
+            BinaryOperatorValue::Mult | BinaryOperatorValue::Div | BinaryOperatorValue::Mod => 1,
+            BinaryOperatorValue::Plus | BinaryOperatorValue::Minus => 2,
+            BinaryOperatorValue::Shl | BinaryOperatorValue::Shr => 3,
+            BinaryOperatorValue::SingleAnd => 4,
+            BinaryOperatorValue::SingleOr => 5,
+            BinaryOperatorValue::Xor => 6,
+            BinaryOperatorValue::Eq | BinaryOperatorValue::Ne | BinaryOperatorValue::Ge | BinaryOperatorValue::Gt | BinaryOperatorValue::Le | BinaryOperatorValue::Lt => 7,
+            BinaryOperatorValue::DoubleAnd => 8,
+            BinaryOperatorValue::DoubleOr => 9,
             // BinaryOperator::Range => 10
         }
     }
 
     pub fn get_short_circuit_vasm(&self, context: &ProgramContext) -> Option<Vasm> {
         match &self.value {
-            BinaryOperator::DoubleAnd | BinaryOperator::DoubleOr => {
+            BinaryOperatorValue::DoubleAnd | BinaryOperatorValue::DoubleOr => {
                 let tmp_var = VariableInfo::tmp("tmp", context.bool_type());
                 let mut result = context.vasm()
                     .declare_variable(&tmp_var)
@@ -74,7 +76,7 @@ impl BinaryOperatorWrapper {
                     .get_tmp_var(&tmp_var)
                     .chain(|vasm| {
                         match &self.value {
-                            BinaryOperator::DoubleAnd => vasm.eqz(),
+                            BinaryOperatorValue::DoubleAnd => vasm.eqz(),
                             _ => vasm
                         }
                     })
@@ -87,26 +89,49 @@ impl BinaryOperatorWrapper {
         }
     }
 
+    pub fn get_type_hint<'a>(&self, left_type: &'a Type, context: &ProgramContext) -> Option<Cow<'a, Type>> {
+        match &self.value {
+            BinaryOperatorValue::Plus => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Minus => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Mult => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Div => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Mod => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Shl => Some(Cow::Owned(context.int_type())),
+            BinaryOperatorValue::Shr => Some(Cow::Owned(context.int_type())),
+            BinaryOperatorValue::Xor => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::DoubleAnd => None,
+            BinaryOperatorValue::DoubleOr => None,
+            BinaryOperatorValue::SingleAnd => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::SingleOr => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Eq => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Ne => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Ge => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Gt => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Le => Some(Cow::Borrowed(left_type)),
+            BinaryOperatorValue::Lt => Some(Cow::Borrowed(left_type)),
+        }
+    }
+
     pub fn process(&self, left_vasm: Vasm, right_vasm: Vasm, right_location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
         let operator_kind = match &self.value {
-            BinaryOperator::Plus => OperatorKind::BuiltinInterface(BuiltinInterface::Add),
-            BinaryOperator::Minus => OperatorKind::BuiltinInterface(BuiltinInterface::Sub),
-            BinaryOperator::Mult => OperatorKind::BuiltinInterface(BuiltinInterface::Mul),
-            BinaryOperator::Div => OperatorKind::BuiltinInterface(BuiltinInterface::Div),
-            BinaryOperator::Mod => OperatorKind::BuiltinInterface(BuiltinInterface::Mod),
-            BinaryOperator::Shl => OperatorKind::BuiltinInterface(BuiltinInterface::Shl),
-            BinaryOperator::Shr => OperatorKind::BuiltinInterface(BuiltinInterface::Shr),
-            BinaryOperator::Xor => OperatorKind::BuiltinInterface(BuiltinInterface::Xor),
-            BinaryOperator::DoubleAnd => OperatorKind::Selective(SelectiveOperator::And),
-            BinaryOperator::DoubleOr => OperatorKind::Selective(SelectiveOperator::Or),
-            BinaryOperator::SingleAnd => OperatorKind::BuiltinInterface(BuiltinInterface::And),
-            BinaryOperator::SingleOr => OperatorKind::BuiltinInterface(BuiltinInterface::Or),
-            BinaryOperator::Eq => OperatorKind::Equality(EqualityOperator::Equal),
-            BinaryOperator::Ne => OperatorKind::Equality(EqualityOperator::NotEqual),
-            BinaryOperator::Ge => OperatorKind::BuiltinInterface(BuiltinInterface::Ge),
-            BinaryOperator::Gt => OperatorKind::BuiltinInterface(BuiltinInterface::Gt),
-            BinaryOperator::Le => OperatorKind::BuiltinInterface(BuiltinInterface::Le),
-            BinaryOperator::Lt => OperatorKind::BuiltinInterface(BuiltinInterface::Lt),
+            BinaryOperatorValue::Plus => OperatorKind::BuiltinInterface(BuiltinInterface::Add),
+            BinaryOperatorValue::Minus => OperatorKind::BuiltinInterface(BuiltinInterface::Sub),
+            BinaryOperatorValue::Mult => OperatorKind::BuiltinInterface(BuiltinInterface::Mul),
+            BinaryOperatorValue::Div => OperatorKind::BuiltinInterface(BuiltinInterface::Div),
+            BinaryOperatorValue::Mod => OperatorKind::BuiltinInterface(BuiltinInterface::Mod),
+            BinaryOperatorValue::Shl => OperatorKind::BuiltinInterface(BuiltinInterface::Shl),
+            BinaryOperatorValue::Shr => OperatorKind::BuiltinInterface(BuiltinInterface::Shr),
+            BinaryOperatorValue::Xor => OperatorKind::BuiltinInterface(BuiltinInterface::Xor),
+            BinaryOperatorValue::DoubleAnd => OperatorKind::Selective(SelectiveOperator::And),
+            BinaryOperatorValue::DoubleOr => OperatorKind::Selective(SelectiveOperator::Or),
+            BinaryOperatorValue::SingleAnd => OperatorKind::BuiltinInterface(BuiltinInterface::And),
+            BinaryOperatorValue::SingleOr => OperatorKind::BuiltinInterface(BuiltinInterface::Or),
+            BinaryOperatorValue::Eq => OperatorKind::Equality(EqualityOperator::Equal),
+            BinaryOperatorValue::Ne => OperatorKind::Equality(EqualityOperator::NotEqual),
+            BinaryOperatorValue::Ge => OperatorKind::BuiltinInterface(BuiltinInterface::Ge),
+            BinaryOperatorValue::Gt => OperatorKind::BuiltinInterface(BuiltinInterface::Gt),
+            BinaryOperatorValue::Le => OperatorKind::BuiltinInterface(BuiltinInterface::Le),
+            BinaryOperatorValue::Lt => OperatorKind::BuiltinInterface(BuiltinInterface::Lt),
             // BinaryOperator::Range => OperatorKind::BuiltinInterface(BuiltinInterface::Range),
         };
 
@@ -211,7 +236,7 @@ impl PartialEq for SelectiveOperator {
     }
 }
 
-impl Default for BinaryOperator {
+impl Default for BinaryOperatorValue {
     fn default() -> Self {
         Self::Plus
     }

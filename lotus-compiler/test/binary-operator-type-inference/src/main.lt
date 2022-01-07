@@ -1,0 +1,6 @@
+export fn main() {
+    let a = 2f;
+    let b = a + 4;
+
+    @log(b);
+}

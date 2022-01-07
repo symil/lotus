@@ -1,11 +1,11 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, Vasm}, wat};
-use super::{BinaryOperatorWrapper, ParsedType, Identifier, Operand};
+use super::{BinaryOperator, ParsedType, Identifier, Operand};
 
 #[parsable]
 pub struct BinaryOperation {
     pub first: Operand,
-    pub others: Vec<(BinaryOperatorWrapper, Operand)>
+    pub others: Vec<(BinaryOperator, Operand)>
 }
 
 impl BinaryOperation {
@@ -20,46 +20,47 @@ impl BinaryOperation {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self.others.is_empty() {
             true => self.first.process(type_hint, context),
-            false => OperationTree::from_operation(self).process(context),
+            false => OperationTree::from_operation(self).process(None, context),
         }
     }
 }
 
 #[derive(Debug)]
 enum OperationTree<'a> {
-    Operation(Box<OperationTree<'a>>, BinaryOperatorWrapper, Box<OperationTree<'a>>),
+    Operation(Box<OperationTree<'a>>, BinaryOperator, Box<OperationTree<'a>>),
     Value(&'a Operand)
 }
 
 impl<'a> OperationTree<'a> {
-    fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self {
             OperationTree::Operation(left, operator, right) => {
-                let left_vasm_result = left.process(context);
-                let right_vasm_result = right.process(context);
+                let left_vasm_result = left.process(None, context);
+                let right_type_hint = left_vasm_result.as_ref().and_then(|vasm| operator.get_type_hint(&vasm.ty, context));
+                let right_vasm_result = right.process(right_type_hint.as_ref().map(|ty| ty.as_ref()), context);
 
                 match (left_vasm_result, right_vasm_result) {
                     (Some(left_vasm), Some(right_vasm)) => operator.process(left_vasm, right_vasm, right.get_location(), context),
                     _ => None
                 }
             },
-            OperationTree::Value(operand) => operand.process(None, context),
+            OperationTree::Value(operand) => operand.process(type_hint, context),
         }
     }
 
     fn from_operation(operation: &'a BinaryOperation) -> Self {
-        let mut list : Vec<(BinaryOperatorWrapper, &'a Operand, usize)> = operation.others.iter().enumerate().map(|(i, (operator, operand))| {
+        let mut list : Vec<(BinaryOperator, &'a Operand, usize)> = operation.others.iter().enumerate().map(|(i, (operator, operand))| {
             let priority = operator.get_priority() * 256 + i;
 
             (operator.clone(), operand, priority)
         }).collect();
 
-        list.insert(0, (BinaryOperatorWrapper::default(), &operation.first, usize::MAX));
+        list.insert(0, (BinaryOperator::default(), &operation.first, usize::MAX));
 
         Self::from_list(&mut list)
     }
 
-    fn from_list(operands: &mut [(BinaryOperatorWrapper, &'a Operand, usize)]) -> Self {
+    fn from_list(operands: &mut [(BinaryOperator, &'a Operand, usize)]) -> Self {
         if operands.len() == 1 {
             Self::Value(&operands[0].1)
         } else {
