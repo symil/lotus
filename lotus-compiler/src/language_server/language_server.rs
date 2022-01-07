@@ -9,17 +9,12 @@ const BUFFER_SIZE : usize = 65536;
 
 pub fn start_language_server(test_command: &Option<String>) {
     let mut buffer = [0 as u8; BUFFER_SIZE];
-    let mut current_root_directory = String::new();
     let mut connections = vec![];
     let mut cache = FileSystemCache::new();
-    let mut context = ProgramContext::new(ProgramContextOptions {
-        validate_only: true,
-        cursor: None,
-    });
 
     if let Some(string) = test_command {
         let command = LanguageServerCommand::from_str(string).unwrap();
-        let output = command.run(&mut context, None, true);
+        let output = command.run(None);
         let string = output.consume();
         
         println!("{}", string);
@@ -55,8 +50,7 @@ pub fn start_language_server(test_command: &Option<String>) {
                     let content = str::from_utf8(&buffer[0..size]).unwrap();
                     
                     if let Some(command) = LanguageServerCommand::from_str(content) {
-                        let force_reset = context.is_new() || &command.parameters.root_directory_path != &current_root_directory;
-                        let output = command.run(&mut context, Some(&mut cache), force_reset);
+                        let output = command.run(Some(&mut cache));
                         let content = output.consume();
 
                         for (src, dest) in content.as_bytes().iter().zip(buffer.as_mut()) {

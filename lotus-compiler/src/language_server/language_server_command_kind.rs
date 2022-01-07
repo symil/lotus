@@ -12,10 +12,7 @@ pub enum LanguageServerCommandKind {
     ProvideSignatureHelp,
 }
 
-pub struct LanguageServerCommandCallbackDetails {
-    pub reload: LanguageServerCommandReload,
-    pub callback: fn(&LanguageServerCommandParameters, &ProgramContext, &mut LanguageServerCommandOutput),
-}
+pub type LanguageServerCommandCallback = fn(&LanguageServerCommandParameters, &ProgramContext, &mut LanguageServerCommandOutput);
 
 impl LanguageServerCommandKind {
     pub fn from_str(string: &str) -> Option<Self> {
@@ -31,36 +28,15 @@ impl LanguageServerCommandKind {
         }
     }
 
-    pub fn get_callback_details(&self) -> LanguageServerCommandCallbackDetails {
+    pub fn get_callback(&self) -> LanguageServerCommandCallback {
         match self {
-            LanguageServerCommandKind::Validate => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::Yes,
-                callback: validate,
-            },
-            LanguageServerCommandKind::PrepareRename => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::No,
-                callback: prepare_rename,
-            },
-            LanguageServerCommandKind::ProvideRenameEdits => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::No,
-                callback: provide_rename_edits,
-            },
-            LanguageServerCommandKind::ProvideDefinition => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::No,
-                callback: provide_definition,
-            },
-            LanguageServerCommandKind::ProvideHover => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::No,
-                callback: provide_hover,
-            },
-            LanguageServerCommandKind::ProvideCompletionItems => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::WithHook,
-                callback: provide_completion_items,
-            },
-            LanguageServerCommandKind::ProvideSignatureHelp => LanguageServerCommandCallbackDetails {
-                reload: LanguageServerCommandReload::WithHook,
-                callback: provide_signature_help,
-            },
+            LanguageServerCommandKind::Validate => validate,
+            LanguageServerCommandKind::PrepareRename => prepare_rename,
+            LanguageServerCommandKind::ProvideRenameEdits => provide_rename_edits,
+            LanguageServerCommandKind::ProvideDefinition => provide_definition,
+            LanguageServerCommandKind::ProvideHover => provide_hover,
+            LanguageServerCommandKind::ProvideCompletionItems => provide_completion_items,
+            LanguageServerCommandKind::ProvideSignatureHelp => provide_signature_help,
         }
     }
 }

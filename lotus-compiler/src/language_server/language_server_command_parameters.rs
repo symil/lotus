@@ -5,5 +5,6 @@ pub struct LanguageServerCommandParameters {
     pub root_directory_path: String,
     pub file_path: String,
     pub cursor_index: usize,
-    pub payload: Option<String>,
+    pub file_content: String,
+    pub new_name: String,
 }

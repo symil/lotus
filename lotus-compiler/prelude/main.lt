@@ -30,7 +30,7 @@ class TheBar {
 fn test() {
     let left = 8;
     let right = 14;
-    let result = this_is_a_test(left, right);
+    let result = hello_there(left, right);
     let bar = TheBar { test: 8 };
     bar.test = 4;
     bar.test = 6;
@@ -43,7 +43,7 @@ fn test() {
     let b = left as Array<int>;
 }
 
-fn this_is_a_test(foo: int, bar: int) -> int {
+fn hello_there(foo: int, bar: int) -> int {
     let result = foo + bar;
 
     result
