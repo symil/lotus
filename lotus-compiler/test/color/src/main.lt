@@ -5,5 +5,5 @@ export fn main() {
     @dbg(color.g);
     @dbg(color.b);
     @dbg(color.a);
-    @dbg(RED.get_components());
+    @dbg(Color::red().get_components());
 }

@@ -43,7 +43,7 @@ export fn main() {
     let n = 8;
     let x = 10f;
     let b = true;
-    let o = BLUE;
+    let o = Color::blue();
 
     let big : fn(int, float)(string) = (add, mult) => {
         n += add;

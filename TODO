@@ -90,7 +90,7 @@
 [X] Properly insert arguments of functions/methods during autocompletion
 [X] Fix closures that use variables created by the `is` keyword
 [X] Remove possibility to specify only the type of arguments in function signature
-[ ] Move color constants to static methods
+[X] Move color constants to static methods
 [ ] Type hints for binary operators
 [ ] Determine for each type of the prelude if it should be exported or not
 [ ] Show function argument info when typing
