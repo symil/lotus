@@ -10,7 +10,8 @@ pub fn provide_completion_items(parameters: &LanguageServerCommandParameters, co
                 .push_opt(item.kind.map(|kind| kind.to_str()))
                 .push_opt(item.description.as_ref())
                 .push_opt(item.detail.as_ref())
-                .push_opt(item.documentation.as_ref());
+                .push_opt(item.documentation.as_ref())
+                .push_opt(item.insert_text.as_ref());
         }
     }
 }

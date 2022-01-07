@@ -1,5 +1,6 @@
 use super::CompletionItemKind;
 
+// https://code.visualstudio.com/api/references/vscode-api#CompletionItem
 pub struct CompletionItem {
     // What will be inserted in the editor
     pub label: String,
@@ -10,7 +11,9 @@ pub struct CompletionItem {
     // Title of the right panel
     pub detail: Option<String>,
     // Content of the right panel
-    pub documentation: Option<String>
+    pub documentation: Option<String>,
+    // What will be inserted in the document
+    pub insert_text: Option<String>,
 }
 
 impl CompletionItem {
@@ -21,6 +24,7 @@ impl CompletionItem {
             description: None,
             detail: None,
             documentation: None,
+            insert_text: None,
         }
     }
 
@@ -41,6 +45,11 @@ impl CompletionItem {
 
     pub fn documentation(mut self, documentation: String) -> Self {
         self.documentation = Some(documentation);
+        self
+    }
+
+    pub fn insert_text(mut self, insert_text: String) -> Self {
+        self.insert_text = Some(insert_text);
         self
     }
 }

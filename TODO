@@ -86,11 +86,13 @@
 [X] Clean internal method names
 [X] Fix error highlighting when function doesn't return the right type
 [X] Add `<…>` in completion label of types with parameters
-[ ] Properly insert arguments of parameterized types during autocompletion
-[ ] Properly insert arguments of functions/methods during autocompletion
+[X] Properly insert arguments of parameterized types during autocompletion
+[X] Properly insert arguments of functions/methods during autocompletion
 [ ] Show function argument info when typing
-[ ] Fix closures that use variables created by the `is` keyword
+[X] Fix closures that use variables created by the `is` keyword
+[ ] Remove possibility to specify only the type of arguments in function signature
 [ ] Determine for each type of the prelude if it should be exported or not
+[ ] Move color constants to static methods
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -124,6 +126,7 @@
 [ ] Change how interface are implemented to explicitely specify which interface is specified
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
 [ ] Avoid re-validating document if no file has changed
+[ ] Merge `TypeBlueprint` and `InterfaceBlueprint`
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

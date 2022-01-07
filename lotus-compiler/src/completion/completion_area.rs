@@ -32,7 +32,7 @@ impl CompletionArea {
                 }
 
                 for method_info in parent_type.get_all_methods(FieldKind::Regular) {
-                    items.add_method(method_info, &self.location);
+                    items.add_method(method_info);
                 }
             },
             CompletionDetails::StaticField(parent_type) => {
@@ -41,7 +41,7 @@ impl CompletionArea {
                 }
 
                 for method_info in parent_type.get_all_methods(FieldKind::Static) {
-                    items.add_method(method_info, &self.location);
+                    items.add_method(method_info);
                 }
             },
             CompletionDetails::Type(types, current_type) => {

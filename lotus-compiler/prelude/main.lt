@@ -17,6 +17,10 @@ class Bar {
 
     }
 
+    do_some_operation(a: int, b: int) -> int {
+        a + b
+    }
+
     @OnRender {
         
     }
@@ -26,11 +30,14 @@ fn test() {
     let left = 8;
     let right = 14;
     let result = this_is_a_test(left, right);
-    let foo = Bar { hello: 8 };
-    foo.hello = 4;
-    foo.hello = 6;
-    foo.hello = 6;
-    foo.hello = 6;
+    let bar = Bar { hello: 8 };
+    bar.hello = 4;
+    bar.hello = 6;
+    bar.hello = 6;
+    bar.hello = 6;
+
+    bar.do_something();
+    let a = bar.do_some_operation(left, right);
 }
 
 fn this_is_a_test(foo: int, bar: int) -> int {

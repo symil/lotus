@@ -54,6 +54,10 @@ impl CompletionItemList {
         self.with_current(|item| item.documentation = Some(documentation))
     }
 
+    pub fn insert_text(&mut self, insert_text: String) -> &mut Self {
+        self.with_current(|item| item.insert_text = Some(insert_text))
+    }
+
     pub fn consume(mut self) -> Vec<CompletionItem> {
         self.store();
         
@@ -82,37 +86,53 @@ impl CompletionItemList {
     }
 
     pub fn add_function(&mut self, function: Link<FunctionBlueprint>) {
-        self
-            .add(format!("{}(…)", function.borrow().name.as_str()))
-            .kind(CompletionItemKind::Function)
-            .description(function.borrow().get_self_type().to_string());
+        function.with_ref(|function_unwrapped| {
+            let function_name = function_unwrapped.name.as_str();
+            let is_internal_method = function_name.starts_with(INTERNAL_METHOD_PREFIX);
+            let should_display_internal_methods = false;
+            // let should_display_internal_methods = location.as_str().starts_with(INTERNAL_METHOD_PREFIX);
+
+            if is_internal_method != should_display_internal_methods {
+                return;
+            }
+
+            let kind = match function_unwrapped.owner_type.is_some() || function_unwrapped.owner_interface.is_some() {
+                true => CompletionItemKind::Method,
+                false => CompletionItemKind::Function,
+            };
+
+            let mut insert_text = format!("{}(", function_name);
+
+            for (i, arg) in function_unwrapped.argument_names.iter().enumerate() {
+                insert_text.push_str(&format!("${{{}:{}}}", i + 1, arg.as_str()));
+
+                if i != function_unwrapped.argument_names.len() - 1 {
+                    insert_text.push_str(", ");
+                }
+            }
+
+            insert_text.push_str(")");
+
+            self
+                .add(format!("{}(…)", function_name))
+                .kind(kind)
+                .description(function_unwrapped.get_self_type().to_string())
+                .insert_text(insert_text);
+        });
     }
 
-    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, location: &DataLocation) {
-        // println!("{}", method.borrow().name.as_str());
-        let is_internal_method = method.borrow().name.as_str().starts_with(INTERNAL_METHOD_PREFIX);
-        // let should_display_internal_methods = location.as_str().starts_with(INTERNAL_METHOD_PREFIX);
-        let should_display_internal_methods = false;
-
-        if is_internal_method == should_display_internal_methods {
-            self
-                .add(format!("{}(…)", method.borrow().name.as_str()))
-                .kind(CompletionItemKind::Method)
-                .description(method.borrow().get_self_type().to_string());
-        }
+    pub fn add_method(&mut self, method: Link<FunctionBlueprint>) {
+        self.add_function(method);
     }
 
     pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>) {
-        let type_name = ty.to_string();
-        let params_start = type_name.find('<');
-        let params_end = type_name.rfind('>').map(|index| index + 1);
-        
-        let (mut label, description) = match (params_start, params_end) {
-            (Some(start), Some(end)) => (
-                replace_string(&type_name, start, end, "<…>"),
-                replace_string(&type_name, start, end, ""),
-            ),
-            _ => (type_name.clone(), type_name.clone())
+        let parameters = ty.get_parameters();
+        let has_parameters = !parameters.is_empty();
+        let type_name = replace_string(&ty.to_string(), '<', '>', "");
+
+        let mut label = match has_parameters {
+            true =>  format!("{}<…>", &type_name),
+            false => type_name.clone()
         };
 
         if let Some(name) = custom_type_name {
@@ -122,14 +142,34 @@ impl CompletionItemList {
         self
             .add(format!("{}", label))
             .kind(CompletionItemKind::Class)
-            .description(format!("(type) {}", description));
+            .description(format!("(type) {}", &type_name));
+        
+        if !parameters.is_empty() {
+            let mut insert_text = format!("{}<", &type_name);
+
+            for (i, param) in parameters.iter().enumerate() {
+                insert_text.push_str(&format!("${{{}:{}}}", i + 1, param.to_string()));
+
+                if i != parameters.len() - 1 {
+                    insert_text.push_str(", ");
+                }
+            }
+
+            insert_text.push_str(">");
+
+            self.insert_text(insert_text);
+        }
     }
 }
 
-fn replace_string(string: &str, start: usize, end: usize, replacement: &str) -> String {
+fn replace_string(string: &str, start_char: char, end_char: char, replacement: &str) -> String {
     let mut result = string.to_string();
+    let start = string.find('<');
+    let end = string.rfind('>').map(|index| index + 1);
 
-    result.replace_range(start..end, replacement);
+    if let (Some(i), Some(j)) = (start, end) {
+        result.replace_range(i..j, replacement);
+    }
 
     result
 }
