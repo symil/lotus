@@ -103,14 +103,33 @@ impl CompletionItemList {
     }
 
     pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>) {
-        let type_name = match custom_type_name {
-            Some(name) => name.to_string(),
-            None => ty.to_string(),
+        let type_name = ty.to_string();
+        let params_start = type_name.find('<');
+        let params_end = type_name.rfind('>').map(|index| index + 1);
+        
+        let (mut label, description) = match (params_start, params_end) {
+            (Some(start), Some(end)) => (
+                replace_string(&type_name, start, end, "<…>"),
+                replace_string(&type_name, start, end, ""),
+            ),
+            _ => (type_name.clone(), type_name.clone())
         };
 
+        if let Some(name) = custom_type_name {
+            label = name.to_string();
+        }
+
         self
-            .add(format!("{}", type_name))
+            .add(format!("{}", label))
             .kind(CompletionItemKind::Class)
-            .description(format!("(type) {}", ty.to_string()));
+            .description(format!("(type) {}", description));
     }
+}
+
+fn replace_string(string: &str, start: usize, end: usize, replacement: &str) -> String {
+    let mut result = string.to_string();
+
+    result.replace_range(start..end, replacement);
+
+    result
 }

@@ -85,7 +85,8 @@
 [X] Add class `Event`
 [X] Clean internal method names
 [X] Fix error highlighting when function doesn't return the right type
-[ ] Add `<…>` in completion label of types with parameters
+[X] Add `<…>` in completion label of types with parameters
+[ ] Properly insert arguments of parameterized types during autocompletion
 [ ] Properly insert arguments of functions/methods during autocompletion
 [ ] Show function argument info when typing
 [ ] Fix closures that use variables created by the `is` keyword
