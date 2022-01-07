@@ -183,7 +183,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, ty, &signature.return_type);
     }
 
-    let arg_vasms : Vec<Vasm> = arguments.as_vec().iter().enumerate().map(|(i, arg)| {
+    let arg_vasms : Vec<Vasm> = arguments.into_iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match is_var_call {
                 true => Some(ty.clone()),
@@ -191,19 +191,19 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
             },
             None => None,
         };
+        let mut arg_vasm = context.vasm();
 
-        match arg.process(hint.as_ref(), context) {
-            Some(vasm) => {
+        if let Some(arg_expression) = arg {
+            if let Some(vasm) = arg_expression.process(hint.as_ref(), context) {
                 if let Some(expected_type) = signature.argument_types.get(i) {
                     function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, &vasm.ty, expected_type);
                 }
 
-                vasm
-            },
-            None => {
-                context.vasm()
+                arg_vasm = vasm;
             }
         }
+
+        arg_vasm
     }).collect();
 
     for i in remaining_param_indexes_to_infer.into_iter() {
@@ -228,9 +228,9 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
 
                 if !arg_vasm.ty.is_undefined() {
                     if arg_vasm.ty.is_ambiguous() {
-                        context.errors.generic(&arguments.as_vec()[i], format!("cannot infer type"));
+                        context.errors.generic(&arguments.get_location(i).unwrap(), format!("cannot infer type"));
                     } else if !arg_vasm.ty.is_assignable_to(&expected_type) {
-                        context.errors.generic(&arguments.as_vec()[i], format!("expected `{}`, got `{}`", &expected_type, &arg_vasm.ty));
+                        context.errors.generic(&arguments.get_location(i).unwrap(), format!("expected `{}`, got `{}`", &expected_type, &arg_vasm.ty));
                     }
                 }
             }

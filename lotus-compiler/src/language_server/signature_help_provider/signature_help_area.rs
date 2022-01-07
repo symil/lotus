@@ -29,7 +29,7 @@ impl SignatureHelpArea {
     }
 
     pub fn get_active_argument_index(&self, file_path: &str, cursor_index: usize) -> Option<usize> {
-        for (i, location) in self.argument_locations.iter().enumerate() {
+        for (i, location) in self.argument_locations.iter().enumerate().rev() {
             if location.contains_cursor(file_path, cursor_index) {
                 return Some(i);
             }
