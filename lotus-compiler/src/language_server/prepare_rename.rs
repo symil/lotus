@@ -6,7 +6,7 @@ pub fn prepare_rename(parameters: &LanguageServerCommandParameters, context: &Pr
     let file_path = &parameters.file_path;
     let cursor_index = parameters.cursor_index;
 
-    if let Some(location) = context.renaming.get_occurence_under_cursor(root_directory_path, file_path, cursor_index) {
+    if let Some(location) = context.rename_provider.get_occurence_under_cursor(root_directory_path, file_path, cursor_index) {
         output
             .line("placeholder")
             .push(location.start)

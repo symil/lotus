@@ -59,7 +59,7 @@ impl FunctionOrMethodContent {
         };
 
         for details in function_blueprint.parameters.values() {
-            context.renaming.add_occurence(&details.name, &details.name);
+            context.rename_provider.add_occurence(&details.name, &details.name);
         }
 
         if let Some(type_wrapped) = &current_type {
@@ -115,7 +115,7 @@ impl FunctionOrMethodContent {
                 return_type.unwrap_or(context.void_type())
             );
 
-            context.renaming.add_occurence(&self.name, &self.name);
+            context.rename_provider.add_occurence(&self.name, &self.name);
         });
 
         context.pop_scope();

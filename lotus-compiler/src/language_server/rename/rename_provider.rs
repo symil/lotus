@@ -1,27 +1,29 @@
 use std::collections::HashMap;
 use parsable::DataLocation;
-use crate::language_server::is_invalid_location;
-use super::RenamingArea;
+use crate::{language_server::is_invalid_location, program::CursorInfo};
+use super::RenameArea;
 
 #[derive(Debug)]
-pub struct RenamingAreaIndex {
-    pub areas: HashMap<DataLocation, RenamingArea>
+pub struct RenameProvider {
+    pub cursor: Option<CursorInfo>,
+    pub areas: HashMap<DataLocation, RenameArea>
 }
 
-impl RenamingAreaIndex {
-    pub fn new() -> Self {
+impl RenameProvider {
+    pub fn new(cursor: &Option<CursorInfo>) -> Self {
         Self {
+            cursor: cursor.clone(),
             areas: HashMap::new(),
         }
     }
 
     pub fn add_occurence(&mut self, occurence: &DataLocation, definition: &DataLocation) {
-        if is_invalid_location(definition) || is_invalid_location(occurence) {
+        if self.cursor.is_none() || is_invalid_location(definition) || is_invalid_location(occurence) {
             return;
         }
 
         self.areas.entry(definition.clone())
-            .or_insert(RenamingArea::new(definition))
+            .or_insert(RenameArea::new(definition))
             .add_occurence(occurence);
     }
 

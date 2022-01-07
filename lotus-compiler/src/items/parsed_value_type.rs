@@ -44,9 +44,9 @@ impl ParsedValueType {
                 must_not_take_parameters = true;
                 result = typedef_blueprint.borrow().target.clone();
 
-                context.renaming.add_occurence(&self.name, &typedef_blueprint.borrow().name);
-                context.hover.set_definition(&self.name, &typedef_blueprint.borrow().name);
-                context.hover.set_type(&self.name, &result);
+                context.rename_provider.add_occurence(&self.name, &typedef_blueprint.borrow().name);
+                context.hover_provider.set_definition(&self.name, &typedef_blueprint.borrow().name);
+                context.hover_provider.set_type(&self.name, &result);
             }
         }
 
@@ -54,16 +54,16 @@ impl ParsedValueType {
             if let Some(ty) = context.get_type_parameter(self.name.as_str()) {
                 match ty.content() {
                     TypeContent::TypeParameter(details) => {
-                        context.renaming.add_occurence(&self.name, &details.name);
-                        context.hover.set_definition(&self.name, &details.name);
+                        context.rename_provider.add_occurence(&self.name, &details.name);
+                        context.hover_provider.set_definition(&self.name, &details.name);
                     },
                     TypeContent::FunctionParameter(details) => {
-                        context.renaming.add_occurence(&self.name, &details.name);
-                        context.hover.set_definition(&self.name, &details.name);
+                        context.rename_provider.add_occurence(&self.name, &details.name);
+                        context.hover_provider.set_definition(&self.name, &details.name);
                     },
                     TypeContent::Associated(details) => {
-                        context.renaming.add_occurence(&self.name, &details.associated.name);
-                        context.hover.set_definition(&self.name, &details.associated.name);
+                        context.rename_provider.add_occurence(&self.name, &details.associated.name);
+                        context.hover_provider.set_definition(&self.name, &details.associated.name);
                     },
                     _ => unreachable!()
                 };
@@ -94,8 +94,8 @@ impl ParsedValueType {
                     result = Type::actual(&type_blueprint, parameter_list, &self.location);
                 }
 
-                context.renaming.add_occurence(&self.name, &type_blueprint.borrow().name);
-                context.hover.set_definition(&self.name, &type_blueprint.borrow().name);
+                context.rename_provider.add_occurence(&self.name, &type_blueprint.borrow().name);
+                context.hover_provider.set_definition(&self.name, &type_blueprint.borrow().name);
             }
         }
 

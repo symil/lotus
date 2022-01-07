@@ -3,16 +3,16 @@ use parsable::DataLocation;
 use crate::{program::{CursorInfo, Type}, language_server::{is_invalid_location, location_contains_cursor}};
 use super::HoverArea;
 
-pub struct HoverAreaIndex {
+pub struct HoverProvider {
     // TODO: option to disable the index
     pub cursor: Option<CursorInfo>,
     pub areas: HashMap<DataLocation, HoverArea>
 }
 
-impl HoverAreaIndex {
-    pub fn new(cursor: Option<CursorInfo>) -> Self {
+impl HoverProvider {
+    pub fn new(cursor: &Option<CursorInfo>) -> Self {
         Self {
-            cursor,
+            cursor: cursor.clone(),
             areas: HashMap::new(),
         }
     }

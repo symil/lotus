@@ -1,6 +1,7 @@
 pub mod completion;
-pub mod renaming;
+pub mod rename;
 pub mod hover;
+pub mod signature_help_provider;
 
 mod utils;
 mod language_server;

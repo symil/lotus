@@ -14,7 +14,7 @@ pub struct TypedefDeclaration {
 impl TypedefDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
         if let Some(ty) = self.target.process(true, context) {
-            context.renaming.add_occurence(&self.name, &self.name);
+            context.rename_provider.add_occurence(&self.name, &self.name);
 
             let typedef_blueprint = TypedefBlueprint {
                 type_id: self.location.get_hash(),

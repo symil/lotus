@@ -39,8 +39,8 @@ impl EventCallbackDeclaration {
             None => return context.errors.expected_identifier(&self.event_callback_qualifier).none()
         };
 
-        context.renaming.add_occurence(name, &event_type.borrow().name);
-        context.hover.set_definition(name, &event_type.borrow().name);
+        context.rename_provider.add_occurence(name, &event_type.borrow().name);
+        context.hover_provider.set_definition(name, &event_type.borrow().name);
         context.add_event_completion_area(name);
 
         let priority_vasm = match &self.priority {

@@ -2,12 +2,12 @@ use std::{collections::HashSet, iter::FromIterator};
 use parsable::DataLocation;
 
 #[derive(Debug)]
-pub struct RenamingArea {
+pub struct RenameArea {
     pub definition: DataLocation,
     pub occurences: HashSet<DataLocation>
 }
 
-impl RenamingArea {
+impl RenameArea {
     pub fn new(definition: &DataLocation) -> Self {
         Self {
             definition: definition.clone(),

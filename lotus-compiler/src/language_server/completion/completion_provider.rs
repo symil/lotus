@@ -4,15 +4,15 @@ use crate::{program::CursorInfo, utils::is_valid_identifier};
 use super::{CompletionArea, CompletionDetails};
 
 #[derive(Debug)]
-pub struct CompletionAreaIndex {
+pub struct CompletionProvider {
     pub cursor: Option<CursorInfo>,
     pub areas_under_cursor: Vec<CompletionArea>
 }
 
-impl CompletionAreaIndex {
-    pub fn new(cursor: Option<CursorInfo>) -> Self {
+impl CompletionProvider {
+    pub fn new(cursor: &Option<CursorInfo>) -> Self {
         Self {
-            cursor,
+            cursor: cursor.clone(),
             areas_under_cursor: vec![],
         }
     }

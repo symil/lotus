@@ -9,7 +9,7 @@ pub fn provide_rename_edits(parameters: &LanguageServerCommandParameters, contex
     let cursor_index = parameters.cursor_index;
     let new_name = &parameters.new_name;
 
-    if let Some(occurences) = context.renaming.get_all_occurences(root_directory_path, file_path, cursor_index) {
+    if let Some(occurences) = context.rename_provider.get_all_occurences(root_directory_path, file_path, cursor_index) {
         for occurence in occurences {
             output
                 .line("replace")

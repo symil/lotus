@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::program::{ProgramContext, SharedIdentifier};
+use crate::program::{ProgramContext};
 
 pub struct LanguageServerCommandParameters {
     pub root_directory_path: String,

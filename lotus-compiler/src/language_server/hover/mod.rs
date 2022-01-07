@@ -1,5 +1,5 @@
-mod hover_area_index;
+mod hover_provider;
 mod hover_area;
 
-pub use hover_area_index::*;
+pub use hover_provider::*;
 pub use hover_area::*;
