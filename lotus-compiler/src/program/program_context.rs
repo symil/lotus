@@ -28,7 +28,7 @@ pub struct ProgramContext {
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
     pub shared_identifiers: HashMap<u64, SharedIdentifier>,
-    pub completion_area_index: CompletionAreaIndex,
+    pub completion_area_index: Option<CompletionAreaIndex>,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     main_types: HashMap<MainType, Type>,
@@ -71,7 +71,7 @@ impl ProgramContext {
             functions: Default::default(),
             global_vars: Default::default(),
             shared_identifiers: Default::default(),
-            completion_area_index: CompletionAreaIndex::new(options.cursor.clone()),
+            completion_area_index: Some(CompletionAreaIndex::new(options.cursor.clone())),
             builtin_types: Default::default(),
             main_types: Default::default(),
             autogen_type: Default::default(),
@@ -374,16 +374,76 @@ impl ProgramContext {
         None
     }
 
-    pub fn add_variable_autocomplete_area(&mut self) {
+    pub fn add_variable_completion_area(&mut self, location: &DataLocation) {
+        let mut index = take(&mut self.completion_area_index).unwrap();
 
+        index.insert(location, || {
+            let mut var_list = vec![];
+
+            for scope in self.scopes.iter().rev() {
+                for var_info_list in scope.variables.values() {
+                    var_list.push(var_info_list.last().unwrap().clone());
+                }
+            }
+
+            let constant_list = self.global_vars.get_all_from_location(location);
+            let function_list = self.functions.get_all_from_location(location);
+            let type_list = self.types.get_all_from_location(location);
+            let typedef_list = self.typedefs.get_all_from_location(location);
+            let current_type = self.get_current_type();
+
+            CompletionDetails::Variable(var_list, constant_list, function_list, type_list, typedef_list, current_type)
+        });
+
+        self.completion_area_index = Some(index);
     }
 
-    pub fn add_field_autocomple_area(&mut self, location: &DataLocation, ty: &Type) {
-        self.completion_area_index.insert(location, || CompletionDetails::Field(ty.clone()));
+    pub fn add_field_completion_area(&mut self, location: &DataLocation, parent_type: &Type) {
+        self.completion_area_index.as_mut().unwrap().insert(location, || CompletionDetails::Field(parent_type.clone()));
     }
 
-    pub fn get_autocomplete_area(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
-        self.completion_area_index.get(file_path, cursor_index)
+    pub fn add_static_field_completion_area(&mut self, location: &DataLocation, parent_type: &Type) {
+        self.completion_area_index.as_mut().unwrap().insert(location, || CompletionDetails::StaticField(parent_type.clone()));
+    }
+
+    pub fn add_type_completion_area(&mut self, location: &DataLocation) {
+        let mut index = take(&mut self.completion_area_index).unwrap();
+
+        index.insert(location, || {
+            let mut type_list = vec![];
+
+            for type_wrapped in self.types.get_all_from_location(location) {
+                type_list.push(type_wrapped.borrow().self_type.clone());
+            }
+
+            let current_type = self.get_current_type().map(|type_wrapped| type_wrapped.borrow().self_type.clone());
+
+            CompletionDetails::Type(type_list, current_type)
+        });
+
+        self.completion_area_index = Some(index);
+    }
+
+    pub fn add_event_completion_area(&mut self, location: &DataLocation) {
+        let mut index = take(&mut self.completion_area_index).unwrap();
+
+        index.insert(location, || {
+            let mut event_type_list = vec![];
+
+            for type_wrapped in self.types.get_all_from_location(location) {
+                if type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
+                    event_type_list.push(type_wrapped.borrow().self_type.clone());
+                }
+            }
+
+            CompletionDetails::Event(event_type_list)
+        });
+
+        self.completion_area_index = Some(index);
+    }
+
+    pub fn get_completion_area(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
+        self.completion_area_index.as_ref().unwrap().get(file_path, cursor_index)
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {

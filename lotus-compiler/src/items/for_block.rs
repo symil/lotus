@@ -60,7 +60,7 @@ impl ForBlock {
                     .raw(Wat::get_local(&item_var.wasm_name()))
                     .set_type(context.int_type());
 
-                if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, &self.range_start, context) {
+                if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(&self.range_start), context) {
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {
                             context.errors.generic(&self.body, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
@@ -117,7 +117,7 @@ impl ForBlock {
                 .raw(Wat::get_local(&item_var.wasm_name()))
                 .set_type(&item_type);
 
-            if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, &self.range_start, context) {
+            if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(&self.range_start), context) {
                 if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {

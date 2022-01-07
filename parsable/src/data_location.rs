@@ -36,7 +36,7 @@ impl DataLocation {
         self.clone().set_bounds(self.end)
     }
 
-    pub fn at_offset(&self, offset: usize) -> Self {
+    pub fn offset(&self, offset: usize) -> Self {
         self.clone().set_bounds(self.start + offset)
     }
 

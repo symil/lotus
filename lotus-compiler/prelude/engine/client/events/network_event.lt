@@ -1,4 +1,4 @@
-pub class NetworkEvent {
+pub event NetworkEvent {
     websocket_id: int,
     kind: NetworkEventKind,
     payload: int[]

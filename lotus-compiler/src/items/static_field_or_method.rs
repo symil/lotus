@@ -5,17 +5,37 @@ use super::{ArgumentList, Identifier, ParsedType, process_method_call, process_f
 #[parsable]
 pub struct StaticFieldOrMethod {
     pub ty: ParsedType,
-    #[parsable(prefix="::")]
-    pub name: Identifier,
+    pub double_colon: DoubleColonToken,
+    pub name: Option<Identifier>,
     pub args: Option<ArgumentList>
+}
+
+#[parsable]
+pub struct DoubleColonToken {
+    #[parsable(value="::")]
+    pub double_colon: String
 }
 
 impl StaticFieldOrMethod {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self.ty.process(true, context) {
-            Some(ty) => match &self.args {
-                Some(args) => process_method_call(&ty, FieldKind::Static, &self.name, &[], args, type_hint, AccessType::Get, context),
-                None => process_field_access(&ty, FieldKind::Static, &self.name, AccessType::Get, context),
+            Some(ty) => {
+                context.add_static_field_completion_area(&self.double_colon, &ty);
+
+                match &self.name {
+                    Some(name) => {
+                        context.add_static_field_completion_area(name, &ty);
+
+                        match &self.args {
+                            Some(args) => process_method_call(&ty, FieldKind::Static, name, &[], args, type_hint, AccessType::Get, context),
+                            None => process_field_access(&ty, FieldKind::Static, name, AccessType::Get, context),
+                        }
+                    },
+                    None => {
+                        context.errors.expected_identifier(&self.double_colon);
+                        None
+                    },
+                }
             },
             None => None,
         }

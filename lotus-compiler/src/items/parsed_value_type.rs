@@ -33,6 +33,8 @@ impl ParsedValueType {
         let parameters = self.arguments.process(check_interfaces, context);
         let parameter_count = parameters.len();
 
+        context.add_type_completion_area(&self.name);
+
         if self.name.as_str() == SELF_TYPE_NAME {
             result = context.get_this_type();
         }

@@ -1,30 +1,30 @@
-export class OnUserConnect {
+export event OnUserConnect {
     server: Server,
     user: #USER_TYPE
 }
 
-export class OnUserDisconnect {
+export event OnUserDisconnect {
     server: Server,
     user: #USER_TYPE
 }
 
-export class OnUserRequest {
+export event OnUserRequest {
     server: Server,
     user: #USER_TYPE,
     request: Object
 }
 
-export class OnWorldInit {
+export event OnWorldInit {
     server: Server,
     world: #WORLD_TYPE,
 }
 
-export class OnWorldUpdate {
+export event OnWorldUpdate {
     server: Server,
     world: #WORLD_TYPE,
 }
 
-export class OnWorldClose {
+export event OnWorldClose {
     server: Server,
     world: #WORLD_TYPE,
 }

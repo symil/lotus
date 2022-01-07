@@ -47,8 +47,9 @@ pub struct ParentInfo {
 
 #[derive(Debug)]
 pub struct EnumVariantInfo {
+    pub owner: Link<TypeBlueprint>,
     pub name: Identifier,
-    pub value: usize
+    pub value: usize,
 }
 
 #[derive(Debug)]

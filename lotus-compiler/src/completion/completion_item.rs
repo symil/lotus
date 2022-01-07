@@ -14,9 +14,9 @@ pub struct CompletionItem {
 }
 
 impl CompletionItem {
-    pub fn new(label: &str) -> Self {
+    pub fn new(label: String) -> Self {
         Self {
-            label: label.to_string(),
+            label,
             kind: None,
             description: None,
             detail: None,

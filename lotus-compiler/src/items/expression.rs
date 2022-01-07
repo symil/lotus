@@ -2,15 +2,13 @@ use std::{fmt::format, rc::Rc};
 use colored::Colorize;
 use parsable::{DataLocation, parsable};
 use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}};
-use super::{BinaryOperation, Identifier, ParsedType};
+use super::{BinaryOperation, Identifier, ParsedType, IsOperation, AsOperation};
 
 #[parsable(name="expression")]
 pub struct Expression {
     pub operation: Box<BinaryOperation>,
-    #[parsable(prefix="is")]
-    pub is_details: Option<IsKeywordDetails>,
-    #[parsable(prefix="as")]
-    pub as_type: Option<ParsedType>
+    pub is_operation: Option<IsOperation>,
+    pub as_operation: Option<AsOperation>,
 }
 
 #[parsable]
@@ -29,28 +27,15 @@ impl Expression {
         let mut result = None;
 
         if let Some(mut vasm) = self.operation.process(type_hint, context) {
-            if let Some(is_details) = &self.is_details {
-                if let Some(target_type) = is_details.ty.process(true, context) {
-                    match target_type.is_object() {
-                        true => {
-                            let var_info = context.declare_local_variable(is_details.var_name.clone(), target_type.clone());
-
-                            vasm = vasm
-                                .declare_variable(&var_info)
-                                .tee_tmp_var(&var_info)
-                                .call_static_method(&target_type, IS_METHOD_NAME, &[], vec![], context)
-                                .set_type(context.bool_type());
-                        },
-                        false => {
-                            context.errors.expected_class_type(&is_details.ty, &target_type);
-                        }
-                    }
+            if let Some(is_operation) = &self.is_operation {
+                if let Some(is_vasm) = is_operation.process(&vasm.ty, context) {
+                    vasm = vasm.append(is_vasm);
                 }
             }
 
-            if let Some(as_type) = &self.as_type {
-                if let Some(target_type) = as_type.process(true, context) {
-                    vasm = vasm.set_type(target_type);
+            if let Some(as_operation) = &self.as_operation {
+                if let Some(as_vasm) = as_operation.process(&vasm.ty, context) {
+                    vasm = vasm.append(as_vasm);
                 }
             }
 

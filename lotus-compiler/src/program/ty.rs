@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
 use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
-use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters};
+use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, EnumVariantInfo};
 
 pub type Type = Wrapper<TypeContent>;
 
@@ -582,6 +582,21 @@ impl Type {
             TypeContent::This(_) => vec![],
             TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.values().map(|field_info| field_info.clone()).collect()
+            }),
+            TypeContent::TypeParameter(_) => vec![],
+            TypeContent::FunctionParameter(_) => vec![],
+            TypeContent::Associated(_) => vec![],
+            TypeContent::Function(_) => vec![],
+        }
+    }
+
+    pub fn get_all_variants(&self) -> Vec<Rc<EnumVariantInfo>> {
+        match self.content() {
+            TypeContent::Undefined => vec![],
+            TypeContent::Any => vec![],
+            TypeContent::This(_) => vec![],
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                type_unwrapped.enum_variants.values().map(|variant_info| variant_info.clone()).collect()
             }),
             TypeContent::TypeParameter(_) => vec![],
             TypeContent::FunctionParameter(_) => vec![],

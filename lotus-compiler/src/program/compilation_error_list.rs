@@ -1,6 +1,6 @@
 use std::{ops::Deref, mem::take};
 use parsable::{DataLocation, ParseError};
-use crate::{utils::Link, items::Identifier};
+use crate::{utils::{Link, is_valid_identifier}, items::Identifier};
 
 use super::{CompilationError, CompilationErrorDetails, GenericErrorDetails, ParseErrorDetails, Type, TypeMismatchDetails, InterfaceBlueprint, InterfaceMismatchDetails, InvalidCharacterDetails, ExpectedClassTypeDetails, UndefinedItemDetails, ItemKind, UnexpectedTokenDetails, TokenKind, ExpectedTokenDetails, CompilationErrorChain};
 
@@ -148,6 +148,11 @@ impl CompilationErrorList {
     }
 
     fn expected_token(&mut self, location: &DataLocation, token: TokenKind) -> CompilationErrorChain {
+        let final_location = match is_valid_identifier(location.as_str()) {
+            true => location.get_end().offset(1),
+            false => location.get_end(),
+        };
+
         self.add(CompilationError {
             location: location.get_end(),
             details: CompilationErrorDetails::ExpectedToken(ExpectedTokenDetails {

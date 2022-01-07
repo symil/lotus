@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, Side, TypeBlueprint}, utils::Link};
-use super::{Identifier, VarPrefix};
+use super::{Identifier, VarPrefixValue};
 
 #[parsable]
 pub struct FunctionConditionOperand {
-    pub prefix: Option<VarPrefix>,
+    pub prefix: Option<VarPrefixValue>,
     pub field_name: Identifier
 }
 
@@ -29,7 +29,7 @@ impl FunctionConditionOperand {
         result
     }
 
-    fn has_prefix(&self, prefix: &VarPrefix) -> bool {
+    fn has_prefix(&self, prefix: &VarPrefixValue) -> bool {
         match &self.prefix {
             Some(self_prefix) => self_prefix == prefix,
             _ => false

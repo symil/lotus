@@ -93,6 +93,9 @@ mod macro_identifier;
 mod macro_type;
 mod var_declaration_names;
 mod event_callback_declaration;
+mod prefixed_var_ref;
+mod is_operation;
+mod as_operation;
 
 pub use type_declaration::*;
 pub use identifier::*;
@@ -190,3 +193,6 @@ pub use macro_identifier::*;
 pub use macro_type::*;
 pub use var_declaration_names::*;
 pub use event_callback_declaration::*;
+pub use prefixed_var_ref::*;
+pub use is_operation::*;
+pub use as_operation::*;

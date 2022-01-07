@@ -1,14 +1,24 @@
 type EventTypeId = int;
 type TargetTypeId = int;
 type EventCallbackPriority = int;
-type EventCallback = fn(Object, Object, EventOutput);
+type EventCallback = fn(Object, Event, EventOutput);
 type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 
 export const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>>::new();
 
+export class Event extends Object {
+    emit(targets: Object[]) {
+        emit_event(self, targets);
+    }
+
+    dyn __yield(object: Object) {
+
+    }
+}
+
 export class EventOutput {
     intercepted: bool,
-    yielded: Object[],
+    yielded: Object[]
 }
 
 sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_type_id: int, callback: EventCallback) {
@@ -25,9 +35,9 @@ sys fn sort_event_callbacks() {
     }
 }
 
-pub fn emit_event(event: Object, targets: Object[]) {
+pub fn emit_event(event: Event, targets: Object[]) {
     let output = EventOutput;
-    let event_type_id = event.get_type_id();
+    let event_type_id = event.__get_type_id();
     let event_map = EVENT_CALLBACKS.get(event_type_id);
 
     if !event_map {
@@ -45,20 +55,18 @@ pub fn emit_event(event: Object, targets: Object[]) {
     }
 }
 
-pub fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Object, target: Object, output: EventOutput) -> bool {
-    let callback_list = callback_map.get(target.get_type_id());
+pub fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, output: EventOutput) -> bool {
+    let callback_list = callback_map.get(target.__get_type_id());
 
     if !callback_list {
         return true;
     }
 
     for callback in callback_list {
-        output.yielded.clear();
-
         callback(target, event, output);
 
         for object in output.yielded {
-            event.yield(object);
+            event.__yield(object);
         }
 
         if output.intercepted {

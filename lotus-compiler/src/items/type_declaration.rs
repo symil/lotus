@@ -372,6 +372,7 @@ impl TypeDeclaration {
                             }
 
                             let variant_details = Rc::new(EnumVariantInfo {
+                                owner: type_wrapped.clone(),
                                 name: field.name.clone(),
                                 value: variants.len(),
                             });

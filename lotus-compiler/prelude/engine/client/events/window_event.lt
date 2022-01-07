@@ -1,4 +1,4 @@
-pub class WindowEvent {
+pub event WindowEvent {
     client: Client,
 }
 

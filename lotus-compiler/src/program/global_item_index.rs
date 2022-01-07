@@ -53,19 +53,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         let getter_location : &DataLocation = &getter_name.location;
 
         for item_wrapped in candidates.iter() {
-            let ok = item_wrapped.with_ref(|item| {
-                let item_name = item.get_name();
-                let item_location = &item_name.location;
-                match item.get_visibility() {
-                    Visibility::Private => item_location.file.path == getter_location.file.path,
-                    Visibility::Public => item_location.file.package_root_path == getter_location.file.package_root_path,
-                    Visibility::Export => true,
-                    Visibility::System => item_location.file.package_root_path == getter_location.file.package_root_path,
-                    Visibility::None => false,
-                }
-            });
-
-            if ok {
+            if is_item_accessible_from_location(item_wrapped, getter_location) {
                 return Some(item_wrapped.clone());
             }
         }
@@ -80,6 +68,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
             let ok = item_wrapped.with_ref(|item| {
                 let item_name = item.get_name();
                 let item_location = &item_name.location;
+
                 match item.get_visibility() {
                     Visibility::Private => false,
                     Visibility::Public => false,
@@ -130,6 +119,33 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
     pub fn get_all(&self) -> Vec<Link<V>> {
         self.items_by_id.values().map(|v| v.clone()).collect()
     }
+
+    pub fn get_all_from_location(&self, location: &DataLocation) -> Vec<Link<V>> {
+        let mut result = vec![];
+
+        for item in self.items_by_id.values() {
+            if is_item_accessible_from_location(item, location) {
+                result.push(item.clone());
+            }
+        }
+
+        result
+    }
+}
+
+fn is_item_accessible_from_location<I : GlobalItem>(item: &Link<I>, location: &DataLocation) -> bool {
+    item.with_ref(|item_unwrapped| {
+        let item_name = item_unwrapped.get_name();
+        let item_location = &item_name.location;
+
+        match item_unwrapped.get_visibility() {
+            Visibility::Private => item_location.file.path == location.file.path,
+            Visibility::Public => item_location.file.package_root_path == location.file.package_root_path,
+            Visibility::Export => true,
+            Visibility::System => item_location.file.package_root_path == location.file.package_root_path,
+            Visibility::None => false,
+        }
+    })
 }
 
 impl<V> Default for GlobalItemIndex<V> {

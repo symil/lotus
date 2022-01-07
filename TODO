@@ -76,15 +76,20 @@
 [X] Make so `Vasm` are not populated when unnecessary
 [X] Cache parsed files that didn't change since last parsing
 [X] Split regular methods and event callbacks during processing step
-[ ] Add variable/function/field/method/type autocompletion suggestions
-[ ] Add autocompletion when pressing `.`
-[ ] Add autocompletion when pressing `::`
-[ ] Add autocompletion when pressing `@`
-[ ] Function argument info when typing
-[ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
-[ ] Avoid re-validating document if no file has changed
-[ ] Fix error highlighting when function doesn't return the right type
-[ ] Add class `Event`
+[X] Add variable autocompletion suggestions
+[X] Add field/method autocompletion suggestions when pressing `.`
+[X] Add static field/method autocompletion suggestions when pressing `::`
+[X] Add system methods autocompletion suggestions when pressing `@`
+[X] Add events autocompletion suggestions when pressing `@`
+[X] Add autocompletion for types
+[X] Add class `Event`
+[X] Clean internal method names
+[X] Fix error highlighting when function doesn't return the right type
+[ ] Add `<…>` in completion label of types with parameters
+[ ] Properly insert arguments of functions/methods during autocompletion
+[ ] Show function argument info when typing
+[ ] Fix closures that use variables created by the `is` keyword
+[ ] Determine for each type of the prelude if it should be exported or not
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -116,6 +121,8 @@
 [ ] Improve interface system (basically copy the one from rust)
 [ ] Generalize tuples
 [ ] Change how interface are implemented to explicitely specify which interface is specified
+[ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
+[ ] Avoid re-validating document if no file has changed
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

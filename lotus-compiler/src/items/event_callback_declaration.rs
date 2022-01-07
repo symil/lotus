@@ -18,14 +18,28 @@ impl EventCallbackDeclaration {
         let this_type = context.get_current_type().unwrap();
         let type_id = this_type.borrow().type_id;
         let qualifier = self.event_callback_qualifier.process();
+
+        context.add_event_completion_area(&self.event_callback_qualifier);
+
         let (name, event_type) = match &self.name {
             Some(name) => match context.types.get_by_identifier(name) {
-                Some(event_type) => (name, event_type),
+                Some(event_type) => {
+                    let event_class_name = BuiltinType::Event.get_name();
+                    let is_valid_event = event_type.borrow().self_type.inherits_from(event_class_name);
+
+                    match is_valid_event {
+                        true => (name, event_type),
+                        false => {
+                            return context.errors.generic(name, format!("type `{}` does not inherit from `{}`", event_type.borrow().name.as_str(), event_class_name)).none();
+                        },
+                    }
+                },
                 None => return context.errors.undefined_type(name).none()
             },
             None => return context.errors.expected_identifier(&self.event_callback_qualifier).none()
         };
 
+        context.add_event_completion_area(name);
         context.access_wrapped_shared_identifier(&event_type, name);
 
         let priority_vasm = match &self.priority {

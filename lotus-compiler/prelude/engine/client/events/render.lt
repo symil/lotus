@@ -1,7 +1,7 @@
-export class OnRender {
+export event OnRender {
     client: Client,
 }
 
-export class OnPostRender {
+export event OnPostRender {
     client: Client,
 }

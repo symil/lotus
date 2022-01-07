@@ -11,7 +11,7 @@ sys type(i32) Enum {
         self as int
     }
 
-    static from_int(value: int) -> Self {
+    static __from_int(value: int) -> Self {
         match value < 0 || value >= #VARIANT_COUNT {
             true => none,
             false => value as Self

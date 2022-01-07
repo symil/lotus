@@ -24,6 +24,6 @@ impl VarDeclaration {
             None => (context.vasm(), &self.location),
         };
 
-        self.var_names.process(required_type.as_ref(), init_value, location, context)
+        self.var_names.process(required_type.as_ref(), init_value, Some(location), context)
     }
 }

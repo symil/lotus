@@ -7,7 +7,19 @@ enum TheEnum {
 }
 
 class Bar {
-    hello: int
+    hello: int,
+
+    static create() -> Self {
+        Self {}
+    }
+
+    do_something() {
+
+    }
+
+    @OnRender {
+        
+    }
 }
 
 fn test() {
@@ -19,9 +31,6 @@ fn test() {
     foo.hello = 6;
     foo.hello = 6;
     foo.hello = 6;
-
-    let d = TheEnum::TheBla;
-
 }
 
 fn this_is_a_test(foo: int, bar: int) -> int {

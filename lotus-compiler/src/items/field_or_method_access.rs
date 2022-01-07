@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
 use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat};
-use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefix};
+use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefixValue};
 
 #[parsable]
 pub struct DotToken {
@@ -24,13 +24,13 @@ impl FieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        context.add_field_autocomple_area(&self.dot, parent_type);
+        context.add_field_completion_area(&self.dot, parent_type);
 
         match &self.name {
             Some(identifier) => {
                 match identifier.process(context) {
                     Some(name) => {
-                        context.add_field_autocomple_area(&name.location, parent_type);
+                        context.add_field_completion_area(&name.location, parent_type);
 
                         match &self.arguments {
                             Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),

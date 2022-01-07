@@ -15,12 +15,14 @@ pub enum VarDeclarationNamesContent {
 }
 
 impl VarDeclarationNames {
-    pub fn process(&self, required_type: Option<&Type>, assigned_vasm: Vasm, location: &DataLocation, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
+    pub fn process(&self, required_type: Option<&Type>, assigned_vasm: Vasm, assigned_vasm_location: Option<&DataLocation>, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
         let current_function_level = Some(context.get_function_level());
         let variable_type = match required_type {
             Some(ty) => {
-                if !assigned_vasm.ty.is_assignable_to(ty) {
-                    context.errors.type_mismatch(location, ty, &assigned_vasm.ty);
+                if let Some(location) = assigned_vasm_location {
+                    if !assigned_vasm.ty.is_assignable_to(ty) {
+                        context.errors.type_mismatch(location, ty, &assigned_vasm.ty);
+                    }
                 }
 
                 ty.clone()

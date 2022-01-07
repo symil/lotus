@@ -63,8 +63,8 @@ export type(void) system {
         @log(value as int);
     }
 
-    emit(event: Object, targets: Object[]) {
-        emit_event(event, targets);
+    emit(event: Event, targets: Object[]) {
+        event.emit(targets);
     }
 }
 

@@ -1,4 +1,4 @@
-export class WheelEvent extends WindowEvent {
+export event WheelEvent extends WindowEvent {
     delta_x: float,
     delta_y: float,
     delta_z: float,

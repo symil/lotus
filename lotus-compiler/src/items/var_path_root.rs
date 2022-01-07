@@ -1,6 +1,6 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, TemplateString, VarDeclaration, VarRef, WhileBlock, MacroExpression};
+use super::{Action, ArrayLiteral, Assignment, BlockExpression, BooleanLiteral, CharLiteral, Expression, FieldOrMethodAccess, ForBlock, FunctionLiteral, Identifier, IfBlock, IterAncestors, IterFields, IterVariants, MatchBlock, NoneLiteral, NumberLiteral, ObjectLiteral, ParenthesizedExpression, StaticFieldOrMethod, StringLiteral, TemplateString, VarDeclaration, VarRef, WhileBlock, MacroExpression, PrefixedVarRef};
 
 #[parsable]
 pub enum VarPathRoot {
@@ -28,6 +28,7 @@ pub enum VarPathRoot {
     FunctionLiteral(FunctionLiteral),
     #[parsable(unset_marker="no-object")]
     Parenthesized(ParenthesizedExpression),
+    PrefixedVarRef(PrefixedVarRef),
     VarRef(VarRef),
 }
 
@@ -84,6 +85,7 @@ impl VarPathRoot {
             VarPathRoot::ForBlock(for_block) => for_block.process(context),
             VarPathRoot::MatchBlock(match_block) => match_block.process(type_hint, context),
             VarPathRoot::Parenthesized(expr) => expr.process(type_hint, context),
+            VarPathRoot::PrefixedVarRef(prefixed_var_ref) => prefixed_var_ref.process(type_hint, access_type, context),
             VarPathRoot::VarRef(var_ref) => var_ref.process(type_hint, access_type, context),
             VarPathRoot::Block(block) => block.process(type_hint, context),
             VarPathRoot::FunctionLiteral(function_literal) => function_literal.process(type_hint, context),

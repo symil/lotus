@@ -20,8 +20,8 @@ export fn main() {
 
     @assert(#LINE, p[-1] == 1);
     @assert(#LINE, (m as ptr)[-1] == 1);
-    @assert(#LINE, m.hash_table.as_ptr()[-1] == 1);
-    @assert(#LINE, m.data_table.as_ptr()[-1] == 1);
+    @assert(#LINE, m.hash_table.__as_ptr()[-1] == 1);
+    @assert(#LINE, m.data_table.__as_ptr()[-1] == 1);
 
     for entry in m.data_table {
         @assert(#LINE, (entry as ptr)[-1] == 1);

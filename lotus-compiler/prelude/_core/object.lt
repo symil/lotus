@@ -20,15 +20,11 @@ export class Object {
             return false;
         }
 
-        let type_id = object.as_ptr()[0];
+        let type_id = object.__as_ptr()[0];
 
         TYPE_ID_TO_ANCESTOR_IDS
             .get(type_id)
             .has(#TYPE_ID)
-    }
-
-    autogen static get_name() -> string {
-        #TYPE_NAME
     }
 
     autogen static __create() -> Self {
@@ -73,12 +69,12 @@ export class Object {
         (self as int).__hash()
     }
 
-    as_ptr() -> ptr {
+    __as_ptr() -> ptr {
         self as ptr
     }
 
-    get_type_id() -> int {
-        self.as_ptr()[0]
+    __get_type_id() -> int {
+        self.__as_ptr()[0]
     }
 
     to_string() -> string {
@@ -100,7 +96,7 @@ export class Object {
     }
 
     autogen dyn __to_debug_string_dyn(set: Set<ptr>) -> string {
-        if !set.add(self.as_ptr()) {
+        if !set.add(self.__as_ptr()) {
             return #TYPE_SHORT_NAME + " { <cycle> }";
         }
 
@@ -121,7 +117,7 @@ export class Object {
     }
 
     static __retain(value: Self) {
-        if retain_memory(value.as_ptr()) {
+        if retain_memory(value.__as_ptr()) {
             value.__retain_dyn();
         }
     }
@@ -133,7 +129,7 @@ export class Object {
     }
 
     static __serialize(buffer: Buffer, value: Self) {
-        if !value || (buffer.context && !value.allow_network_serialization(buffer.context as #USER_TYPE)) {
+        if !value || (buffer.context && !value.__allow_network_serialization(buffer.context as #USER_TYPE)) {
             buffer.write(0);
         } else {
             value.__serialize_dyn(buffer);
@@ -193,15 +189,7 @@ export class Object {
         }
     }
 
-    emit(targets: Object[]) {
-        emit_event(self, targets);
-    }
-
-    dyn allow_network_serialization(user: #USER_TYPE) -> bool {
+    dyn __allow_network_serialization(user: #USER_TYPE) -> bool {
         true
-    }
-
-    dyn yield(object: Object) {
-        
     }
 }
