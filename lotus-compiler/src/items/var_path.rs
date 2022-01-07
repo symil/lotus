@@ -40,8 +40,7 @@ impl VarPath {
                     parent_type = segment_vasm.ty.clone();
                     result = result.append(segment_vasm);
                 } else {
-                    result = result.set_type(Type::undefined());
-                    break;
+                    return None;
                 }
             }
         }

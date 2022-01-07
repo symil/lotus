@@ -1,13 +1,13 @@
 use parsable::parsable;
 
 #[parsable]
-pub struct AssignmentOperatorWrapper {
-    pub value: AssignmentOperator
+pub struct AssignmentOperator {
+    pub value: AssignmentOperatorValue
 }
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq)]
-pub enum AssignmentOperator {
+pub enum AssignmentOperatorValue {
     Equal = "=",
     PlusEqual = "+=",
     MinusEqual = "-=",

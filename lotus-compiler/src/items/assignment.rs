@@ -1,12 +1,12 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
-use crate::{items::{AssignmentOperator, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
-use super::{AssignmentOperatorWrapper, Expression, Identifier, VarPath, VarRef};
+use crate::{items::{AssignmentOperatorValue, BinaryOperator, BinaryOperatorWrapper}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
+use super::{AssignmentOperator, Expression, Identifier, VarPath, VarRef};
 
 #[parsable]
 pub struct Assignment {
     pub lvalue: VarPath,
-    pub rvalue: Option<(AssignmentOperatorWrapper, Expression)>,
+    pub rvalue: Option<(AssignmentOperator, Expression)>,
 }
 
 impl Assignment {
@@ -25,22 +25,22 @@ impl Assignment {
                 if let Some(right_vasm) = rvalue.process(Some(&left_vasm.ty), context) {
                     if right_vasm.ty.is_assignable_to(&left_vasm.ty) {
                         let assigned_vasm = match &equal_token.value {
-                            AssignmentOperator::Equal => right_vasm,
+                            AssignmentOperatorValue::Equal => right_vasm,
                             _ => {
                                 let associated_binary_operator = match &equal_token.value {
-                                    AssignmentOperator::Equal => unreachable!(),
-                                    AssignmentOperator::PlusEqual => BinaryOperator::Plus,
-                                    AssignmentOperator::MinusEqual => BinaryOperator::Minus,
-                                    AssignmentOperator::MultEqual => BinaryOperator::Mult,
-                                    AssignmentOperator::DivEqual => BinaryOperator::Div,
-                                    AssignmentOperator::ModEqual => BinaryOperator::Mod,
-                                    AssignmentOperator::ShlEqual => BinaryOperator::Shl,
-                                    AssignmentOperator::ShrEqual => BinaryOperator::Shr,
-                                    AssignmentOperator::XorEqual => BinaryOperator::Xor,
-                                    AssignmentOperator::DoubleAndEqual => BinaryOperator::DoubleAnd,
-                                    AssignmentOperator::DoubleOrEqual => BinaryOperator::DoubleOr,
-                                    AssignmentOperator::SingleAndEqual => BinaryOperator::SingleAnd,
-                                    AssignmentOperator::SingleOrEqual => BinaryOperator::SingleOr,
+                                    AssignmentOperatorValue::Equal => unreachable!(),
+                                    AssignmentOperatorValue::PlusEqual => BinaryOperator::Plus,
+                                    AssignmentOperatorValue::MinusEqual => BinaryOperator::Minus,
+                                    AssignmentOperatorValue::MultEqual => BinaryOperator::Mult,
+                                    AssignmentOperatorValue::DivEqual => BinaryOperator::Div,
+                                    AssignmentOperatorValue::ModEqual => BinaryOperator::Mod,
+                                    AssignmentOperatorValue::ShlEqual => BinaryOperator::Shl,
+                                    AssignmentOperatorValue::ShrEqual => BinaryOperator::Shr,
+                                    AssignmentOperatorValue::XorEqual => BinaryOperator::Xor,
+                                    AssignmentOperatorValue::DoubleAndEqual => BinaryOperator::DoubleAnd,
+                                    AssignmentOperatorValue::DoubleOrEqual => BinaryOperator::DoubleOr,
+                                    AssignmentOperatorValue::SingleAndEqual => BinaryOperator::SingleAnd,
+                                    AssignmentOperatorValue::SingleOrEqual => BinaryOperator::SingleOr,
                                 };
                                 let wrapper = BinaryOperatorWrapper::new(associated_binary_operator, &equal_token.location);
 

@@ -1,14 +1,14 @@
 export type(f32) float {
-    __add(float) -> float {{ f32.add }}
-    __sub(float) -> float {{ f32.sub }}
-    __mul(float) -> float {{ f32.mul }}
-    __div(float) -> float {{ f32.div }}
-    __eq(float) -> bool {{ f32.eq }}
-    __ne(float) -> bool {{ f32.ne }}
-    __ge(float) -> bool {{ f32.ge }}
-    __gt(float) -> bool {{ f32.gt }}
-    __le(float) -> bool {{ f32.le }}
-    __lt(float) -> bool {{ f32.lt }}
+    __add(other: float) -> float {{ f32.add }}
+    __sub(other: float) -> float {{ f32.sub }}
+    __mul(other: float) -> float {{ f32.mul }}
+    __div(other: float) -> float {{ f32.div }}
+    __eq(other: float) -> bool {{ f32.eq }}
+    __ne(other: float) -> bool {{ f32.ne }}
+    __ge(other: float) -> bool {{ f32.ge }}
+    __gt(other: float) -> bool {{ f32.gt }}
+    __le(other: float) -> bool {{ f32.le }}
+    __lt(other: float) -> bool {{ f32.lt }}
 
     as_int() -> int {{ i32.reinterpret_f32 }}
     to_int() -> int {{ i32.trunc_f32_s }}
@@ -21,8 +21,8 @@ export type(f32) float {
     trunc() -> float {{ f32.trunc }}
     round() -> float {{ f32.nearest }}
     sqrt() -> float {{ f32.sqrt }}
-    min(float) -> float {{ f32.min }}
-    max(float) -> float {{ f32.max }}
+    min(other: float) -> float {{ f32.min }}
+    max(other: float) -> float {{ f32.max }}
 
     sign() -> int {
         if self < 0f {
@@ -81,7 +81,7 @@ export type(f32) float {
         self.to_string()
     }
 
-    static __retain(Self) {{
+    static __retain(value: Self) {{
 
     }}
 
@@ -94,6 +94,6 @@ export type(f32) float {
     }
 }
 
-fn call_float_to_string(float, ptr) {{
+fn call_float_to_string(value: float, result_buffer: ptr) {{
     (call $float_to_string)
 }}

@@ -6,16 +6,16 @@ use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WA
 use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefixValue};
 
 #[parsable]
-pub struct DotToken {
-    #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
-    pub dot: String,
-}
-
-#[parsable]
 pub struct FieldOrMethodAccess {
     pub dot: DotToken,
     pub name: Option<IdentifierWrapper>,
     pub arguments: Option<ArgumentList>
+}
+
+#[parsable]
+pub struct DotToken {
+    #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
+    pub dot: String,
 }
 
 impl FieldOrMethodAccess {

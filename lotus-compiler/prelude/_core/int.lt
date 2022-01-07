@@ -1,20 +1,20 @@
 export type(i32) int {
-    __add(int) -> int {{ i32.add }}
-    __sub(int) -> int {{ i32.sub }}
-    __mul(int) -> int {{ i32.mul }}
-    __div(int) -> int {{ i32.div_s }}
-    __mod(int) -> int {{ i32.rem_s }}
-    __shl(int) -> int {{ i32.shl }}
-    __shr(int) -> int {{ i32.shr_u }}
-    __and(int) -> int {{ i32.and }}
-    __or(int) -> int {{ i32.or }}
-    __xor(int) -> int {{ i32.xor }}
-    __eq(int) -> bool {{ i32.eq }}
-    __ne(int) -> bool {{ i32.ne }}
-    __ge(int) -> bool {{ i32.ge_s }}
-    __gt(int) -> bool {{ i32.gt_s }}
-    __le(int) -> bool {{ i32.le_s }}
-    __lt(int) -> bool {{ i32.lt_s }}
+    __add(other: int) -> int {{ i32.add }}
+    __sub(other: int) -> int {{ i32.sub }}
+    __mul(other: int) -> int {{ i32.mul }}
+    __div(other: int) -> int {{ i32.div_s }}
+    __mod(other: int) -> int {{ i32.rem_s }}
+    __shl(other: int) -> int {{ i32.shl }}
+    __shr(other: int) -> int {{ i32.shr_u }}
+    __and(other: int) -> int {{ i32.and }}
+    __or(other: int) -> int {{ i32.or }}
+    __xor(other: int) -> int {{ i32.xor }}
+    __eq(other: int) -> bool {{ i32.eq }}
+    __ne(other: int) -> bool {{ i32.ne }}
+    __ge(other: int) -> bool {{ i32.ge_s }}
+    __gt(other: int) -> bool {{ i32.gt_s }}
+    __le(other: int) -> bool {{ i32.le_s }}
+    __lt(other: int) -> bool {{ i32.lt_s }}
     eqz() -> bool {{ i32.eqz }}
     __not() -> int {{ (i32.xor (i32.const 0xffffffff)) }}
     __plus() -> int {{ }}
@@ -149,7 +149,7 @@ export type(i32) int {
         hash & 0x3fffffff
     }
 
-    static __retain(Self) {{
+    static __retain(value: Self) {{
 
     }}
 

@@ -8,9 +8,9 @@ export type(void) void {
 
     to_string() -> string { "void" }
     __to_debug_string(set: Set<ptr>) -> string { "void" }
-    __eq(Self) -> bool {{ (i32.const 1) }}
-    __ne(Self) -> bool {{ (i32.const 0) }}
-    static __retain(Self) {{ }}
+    __eq(other: Self) -> bool {{ (i32.const 1) }}
+    __ne(other: Self) -> bool {{ (i32.const 0) }}
+    static __retain(value: Self) {{ }}
     static __serialize(buffer: Buffer, value: Self) {{ }}
     static __deserialize(buffer: Buffer) -> Self? {{ }}
 }

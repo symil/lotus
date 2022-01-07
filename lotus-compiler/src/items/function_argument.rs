@@ -4,18 +4,22 @@ use super::{Identifier, ParsedType};
 
 #[parsable]
 pub struct FunctionArgument {
-    #[parsable(suffix=":")]
-    pub name: Option<Identifier>,
-    pub ty: ParsedType,
+    pub name: Identifier,
+    #[parsable(prefix=":")]
+    pub ty: Option<ParsedType>,
 }
 
 impl FunctionArgument {
     pub fn process(&self, context: &mut ProgramContext) -> Option<(Identifier, Type)> {
-        let arg_name = self.name.clone().unwrap_or_else(|| Identifier::unique("arg"));
-
-        match self.ty.process(false, context) {
-            Some(arg_type) => Some((arg_name, arg_type)),
-            None => None
+        match &self.ty {
+            Some(parsed_type) => match parsed_type.process(false, context) {
+                Some(ty) => Some((self.name.clone(), ty)),
+                None => None
+            },
+            None => {
+                context.errors.expected_identifier(self);
+                None
+            }
         }
     }
 }

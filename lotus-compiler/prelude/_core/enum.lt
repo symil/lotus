@@ -52,7 +52,7 @@ sys type(i32) Enum {
         self.to_string()
     }
 
-    autogen static __retain(Self) {{
+    autogen static __retain(value: Self) {{
 
     }}
 

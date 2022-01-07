@@ -1,8 +1,8 @@
 export type(i32) bool {
-    __and(bool) -> bool {{ i32.and }}
-    __or(bool) -> bool {{ i32.or }}
-    __eq(bool) -> bool {{ i32.eq }}
-    __ne(bool) -> bool {{ i32.ne }}
+    __and(other: bool) -> bool {{ i32.and }}
+    __or(other: bool) -> bool {{ i32.or }}
+    __eq(other: bool) -> bool {{ i32.eq }}
+    __ne(other: bool) -> bool {{ i32.ne }}
     __not() -> bool {{ i32.eqz }}
     to_int() -> int {{ }}
 
@@ -37,7 +37,7 @@ export type(i32) bool {
         self.to_string()
     }
 
-    static __retain(Self) {{
+    static __retain(value: Self) {{
         
     }}
 

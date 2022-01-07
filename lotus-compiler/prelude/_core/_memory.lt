@@ -209,7 +209,7 @@ fn alloc_page() -> ptr {
     (wasm_memory_grow(WASM_PAGE_COUNT_PER_VIRTUAL_PAGE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr
 }
 
-fn wasm_memory_grow(int) -> int {{
+fn wasm_memory_grow(page_count: int) -> int {{
     memory.grow
 }}
 

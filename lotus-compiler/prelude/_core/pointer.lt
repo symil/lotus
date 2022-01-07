@@ -106,14 +106,14 @@ fn copy_memory_range(dest: ptr, src: ptr, count: int) {
     wasm_memory_copy(dest_arg, src_arg, count_arg);
 }
 
-fn wasm_memory_copy(int, int, int) {{
+fn wasm_memory_copy(dest_byte_offset: int, src_byte_offset: int, range_byte_count: int) {{
     memory.copy
 }}
 
-fn wasm_store<T>(int, T) {{
+fn wasm_store<T>(byte_offset: int, value: T) {{
     <T>.store
 }}
 
-fn wasm_load<T>(int) -> T {{
+fn wasm_load<T>(byte_offset: int) -> T {{
     <T>.load
 }}

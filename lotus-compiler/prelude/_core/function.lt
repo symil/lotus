@@ -32,11 +32,11 @@ export type Function {
         self.to_string()
     }
 
-    __eq(Self) -> bool {{
+    __eq(other: Self) -> bool {{
         i32.eq
     }}
 
-    __ne(Self) -> bool {{
+    __ne(other: Self) -> bool {{
         i32.ne
     }}
 
@@ -61,6 +61,6 @@ export type Function {
     }}
 }
 
-fn retain_closure_args(int, int) {{
+fn retain_closure_args(closure_args: int, retain_function_index: int) {{
     (call_indirect (type $retain_closure_args_func_type))
 }}

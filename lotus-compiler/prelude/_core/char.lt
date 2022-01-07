@@ -70,7 +70,7 @@ export type(i32) char {
         str
     }
 
-    static __retain(Self) {{
+    static __retain(value: Self) {{
 
     }}
 

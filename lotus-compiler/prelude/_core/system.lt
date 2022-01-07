@@ -29,7 +29,7 @@ export type(void) system {
         wasm_log(str);
     }
 
-    log_int(int) {{
+    log_int(value: int) {{
         (call $log_int)
     }}
 
@@ -68,10 +68,10 @@ export type(void) system {
     }
 }
 
-fn wasm_log(string) {{
+fn wasm_log(value: string) {{
     (call $log)
 }}
 
-fn assert(int, bool) {{
+fn assert(line_number: int, success: bool) {{
     (call $assert)
 }}

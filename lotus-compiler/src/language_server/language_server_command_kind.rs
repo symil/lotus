@@ -1,5 +1,5 @@
 use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover, provide_completion_items, LanguageServerCommandOutput, LanguageServerCommandReload};
+use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover, provide_completion_items, LanguageServerCommandOutput, LanguageServerCommandReload, provide_signature_help};
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum LanguageServerCommandKind {
@@ -9,6 +9,7 @@ pub enum LanguageServerCommandKind {
     ProvideDefinition,
     ProvideHover,
     ProvideCompletionItems,
+    ProvideSignatureHelp,
 }
 
 pub struct LanguageServerCommandCallbackDetails {
@@ -25,6 +26,7 @@ impl LanguageServerCommandKind {
             "provide-definition" => Some(Self::ProvideDefinition),
             "provide-hover" => Some(Self::ProvideHover),
             "provide-completion-items" => Some(Self::ProvideCompletionItems),
+            "provide-signature-help" => Some(Self::ProvideSignatureHelp),
             _ => None
         }
     }
@@ -54,6 +56,10 @@ impl LanguageServerCommandKind {
             LanguageServerCommandKind::ProvideCompletionItems => LanguageServerCommandCallbackDetails {
                 reload: LanguageServerCommandReload::WithHook,
                 callback: provide_completion_items,
+            },
+            LanguageServerCommandKind::ProvideSignatureHelp => LanguageServerCommandCallbackDetails {
+                reload: LanguageServerCommandReload::WithHook,
+                callback: provide_signature_help,
             },
         }
     }

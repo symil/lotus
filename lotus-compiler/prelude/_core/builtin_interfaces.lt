@@ -1,57 +1,57 @@
 export interface Add {
-    __add(Self) -> Self;
+    __add(other: Self) -> Self;
 }
 
 export interface Sub {
-    __sub(Self) -> Self;
+    __sub(other: Self) -> Self;
 }
 
 export interface Mul {
-    __mul(Self) -> Self;
+    __mul(other: Self) -> Self;
 }
 
 export interface Div {
-    __div(Self) -> Self;
+    __div(other: Self) -> Self;
 }
 
 export interface Mod {
-    __mod(Self) -> Self;
+    __mod(other: Self) -> Self;
 }
 
 export interface Shl {
-    __shl(int) -> Self;
+    __shl(other: int) -> Self;
 }
 
 export interface Shr {
-    __shr(int) -> Self;
+    __shr(other: int) -> Self;
 }
 
 export interface And {
-    __and(Self) -> Self;
+    __and(other: Self) -> Self;
 }
 
 export interface Or {
-    __or(Self) -> Self;
+    __or(other: Self) -> Self;
 }
 
 export interface Xor {
-    __xor(Self) -> Self;
+    __xor(other: Self) -> Self;
 }
 
 export interface Ge {
-    __ge(Self) -> bool;
+    __ge(other: Self) -> bool;
 }
 
 export interface Gt {
-    __gt(Self) -> bool;
+    __gt(other: Self) -> bool;
 }
 
 export interface Le {
-    __le(Self) -> bool;
+    __le(other: Self) -> bool;
 }
 
 export interface Lt {
-    __lt(Self) -> bool;
+    __lt(other: Self) -> bool;
 }
 
 export interface Plus {
@@ -71,19 +71,19 @@ export interface ToBool {
 }
 
 export interface Range {
-    __range(Self) -> Self[];
+    __range(other: Self) -> Self[];
 }
 
 export interface GetAtIndex {
     type Item;
 
-    __get_at(int) -> Item;
+    __get_at(index: int) -> Item;
 }
 
 export interface SetAtIndex {
     type Item;
 
-    __set_at(int, Item);
+    __set_at(index: int, value: Item);
 }
 
 export interface Iterable {
@@ -112,12 +112,12 @@ export interface Tuple {
 }
 
 export interface Object {
-    static __is(Object) -> bool;
+    static __is(object: Object) -> bool;
 }
 
 sys interface Builtin {
-    __eq(Self) -> bool;
-    __ne(Self) -> bool;
+    __eq(other: Self) -> bool;
+    __ne(other: Self) -> bool;
     static __type_name() -> string;
     static __default() -> Self;
     static __none() -> Self;

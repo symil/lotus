@@ -10,6 +10,7 @@ mod provide_hover;
 mod provide_completion_items;
 mod language_server_command_output;
 mod language_server_command_reload;
+mod provide_signature_help;
 
 pub use language_server::*;
 pub use language_server_command::*;
@@ -23,3 +24,4 @@ pub use provide_hover::*;
 pub use provide_completion_items::*;
 pub use language_server_command_output::*;
 pub use language_server_command_reload::*;
+pub use provide_signature_help::*;
