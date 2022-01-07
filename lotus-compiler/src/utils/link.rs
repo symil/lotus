@@ -1,4 +1,4 @@
-use std::{cell::{Ref, RefCell, RefMut}, fmt::Debug, hash::Hash, rc::Rc, borrow::Borrow};
+use std::{cell::{Ref, RefCell, RefMut}, fmt::Debug, hash::Hash, rc::Rc};
 
 pub struct Link<T> {
     value: Rc<RefCell<T>>

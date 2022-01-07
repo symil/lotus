@@ -70,7 +70,9 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                     },
                 };
 
-                context.access_shared_identifier(&field_info.name, field_name);
+                context.renaming.add_occurence(field_name, &field_info.name);
+                context.hover.set_definition(field_name, &field_info.name);
+                context.hover.set_type(field_name, &field_type);
 
                 result = Some(vasm);
             } else if !parent_type.is_undefined() {
@@ -88,7 +90,9 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
                 false => match parent_type.content() {
                     TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                         if let Some(variant_info) = type_unwrapped.enum_variants.get(field_name.as_str()) {
-                            context.access_shared_identifier(&variant_info.name, field_name);
+                            context.renaming.add_occurence(field_name, &variant_info.name);
+                            context.hover.set_definition(field_name, &variant_info.name);
+                            context.hover.set_type(field_name, parent_type);
 
                             match access_type {
                                 AccessType::Get => {
@@ -145,7 +149,9 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
 
 pub fn process_function_call(function_name: &Identifier, mut function_call: FunctionCall, arguments: &ArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
     if let FunctionCall::Named(details) = &function_call {
-        context.access_wrapped_shared_identifier(&details.function, function_name);
+        context.renaming.add_occurence(function_name, &details.function.borrow().name);
+        context.hover.set_definition(function_name, &details.function.borrow().name);
+        context.hover.set_type(function_name, &details.function.borrow().get_self_type());
     }
 
     if let AccessType::Set(set_location) = access_type  {

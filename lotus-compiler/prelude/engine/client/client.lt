@@ -3,7 +3,7 @@ const CLIENT : Client = none;
 const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
-export class Client {
+pub class Client {
     _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
     _websocket_id: int,
     _layout: Layout,
@@ -60,7 +60,7 @@ export class Client {
             let window_event = decode_window_event_from_buffer(self._buffer, self);
             let push = true;
 
-            if window_event is MouseEvent(mouse_event) {
+            if window_event is OnMouseEvent(mouse_event) {
                 mouse_event.x /= self.virtual_to_real_ratio;
                 mouse_event.y /= self.virtual_to_real_ratio;
 
@@ -162,7 +162,7 @@ export class Client {
 
         for event in self._window_events {
             match event {
-                MouseEvent(e) => {
+                OnMouseEvent(e) => {
                     let view = self._detect_view_at(e.x, e.y);
 
                     if view {
@@ -178,10 +178,10 @@ export class Client {
                         }
                     }
                 },
-                KeyboardEvent(event) => {
+                OnKeyboardEvent(event) => {
                     event.emit(views);
                 },
-                WheelEvent(event) => {
+                OnWheelEvent(event) => {
                     event.emit(views);
                 }
             }

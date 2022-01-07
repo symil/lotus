@@ -6,8 +6,22 @@ use super::Identifier;
 
 #[parsable]
 pub struct TypeParameters {
-    #[parsable(brackets="<>", separator=",", optional=true)]
-    pub list: Vec<TypeParameter>
+    pub opening_bracket: OpeningAngleBracketToken,
+    #[parsable(separator=",")]
+    pub list: Vec<TypeParameter>,
+    pub closing_bracket: Option<ClosingAngleBracketToken>,
+}
+
+#[parsable]
+pub struct OpeningAngleBracketToken {
+    #[parsable(value="<")]
+    pub value: String
+}
+
+#[parsable]
+pub struct ClosingAngleBracketToken {
+    #[parsable(value=">")]
+    pub value: String
 }
 
 #[parsable]
@@ -26,6 +40,8 @@ impl TypeParameters {
             let mut required_interfaces = vec![];
 
             for interface_name in &parameter.required_interfaces {
+                context.add_interface_completion_area(interface_name);
+
                 if let Some(interface) = context.interfaces.get_by_identifier(interface_name) {
                     required_interfaces.push(interface.clone());
                 } else {
@@ -45,6 +61,10 @@ impl TypeParameters {
             if result.insert(parameter.name.to_string(), item).is_some() {
                 context.errors.generic(&parameter.name, format!("duplicate type parameter `{}`", &parameter.name));
             }
+        }
+
+        if self.closing_bracket.is_none() {
+            context.errors.expected_token(self, ">");
         }
 
         result

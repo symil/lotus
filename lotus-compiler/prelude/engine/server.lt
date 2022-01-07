@@ -1,6 +1,6 @@
 const SERVER : Server = none;
 
-export class Server {
+pub class Server {
     _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
     _world: #WORLD_TYPE = none,
     _websocket_server_id: int,

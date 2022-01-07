@@ -18,7 +18,9 @@ impl ObjectFieldInitialization {
 
                 match &self.value {
                     Some(expr) => {
-                        context.access_shared_identifier(&field_info.name, &self.name);
+                        context.renaming.add_occurence(&self.name, &field_info.name);
+                        context.hover.set_definition(&self.name, &field_info.name);
+                        context.hover.set_type(&self.name, &field_type);
                         
                         match expr.process(Some(&field_type), context) {
                             Some(vasm) => match vasm.ty.is_assignable_to(&field_type) {

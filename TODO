@@ -92,10 +92,9 @@
 [X] Remove possibility to specify only the type of arguments in function signature
 [X] Move color constants to static methods
 [X] Type hints for binary operators
-[ ] Separate renaming, hover and goto definition
-[ ] Determine for each type of the prelude if it should be exported or not
-[ ] Add autocompletion for interfaces (when required for type parameter)
-[ ] Add autocompletion for macros
+[X] Separate renaming, hover and goto definition
+[X] Add autocompletion for interfaces (when required for type parameter)
+[X] Determine for each type of the prelude if it should be exported or not
 [ ] Show function argument info when typing
 
 -- LATER --
@@ -131,6 +130,10 @@
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
 [ ] Avoid re-validating document if no file has changed
 [ ] Merge `TypeBlueprint` and `InterfaceBlueprint`
+[ ] Make so language server features are not enabled in standard mode
+[ ] Make builtin interfaces internal by prefixing them with `__`
+[ ] Syntax highlighting: properly highlight types that starts with `_`
+[ ] Add autocompletion for macros
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME}, utils::Link};
+use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint}, utils::Link};
 use super::{CompletionItem, CompletionItemKind, CompletionItemList};
 
 #[derive(Debug)]
@@ -13,6 +13,7 @@ pub enum CompletionDetails {
     Field(Type),
     StaticField(Type),
     Event(Vec<Type>),
+    Interface(Vec<Link<InterfaceBlueprint>>),
     Type(Vec<Type>, Option<Type>), // list of types, current type
     Variable(Vec<VariableInfo>, Vec<Link<GlobalVarBlueprint>>, Vec<Link<FunctionBlueprint>>, Vec<Link<TypeBlueprint>>, Vec<Link<TypedefBlueprint>>, Option<Link<TypeBlueprint>>)
 }
@@ -58,6 +59,11 @@ impl CompletionArea {
                     if ty.get_type_blueprint().borrow().name.as_str() != BuiltinType::Event.get_name() {
                         items.add_type(ty.clone(), None);
                     }
+                }
+            },
+            CompletionDetails::Interface(interfaces) => {
+                for interface in interfaces {
+                    items.add_interface(interface.clone());
                 }
             },
             CompletionDetails::Variable(variables, constants, functions, types, typedefs, current_type) => {

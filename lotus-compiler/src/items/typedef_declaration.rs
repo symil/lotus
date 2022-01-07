@@ -14,7 +14,7 @@ pub struct TypedefDeclaration {
 impl TypedefDeclaration {
     pub fn process(&self, context: &mut ProgramContext) {
         if let Some(ty) = self.target.process(true, context) {
-            context.renaming.create_area(&self.name);
+            context.renaming.create(&self.name);
 
             let typedef_blueprint = TypedefBlueprint {
                 type_id: self.location.get_hash(),

@@ -1,18 +1,20 @@
 #[derive(Debug, Clone, Copy)]
-pub enum TokenKind {
+pub enum ExpectedItemKind {
     Expression,
     Identifier,
     Keyword,
-    FunctionBody
+    FunctionBody,
+    Token(&'static str)
 }
 
-impl TokenKind {
-    pub fn to_str(&self) -> &'static str {
+impl ExpectedItemKind {
+    pub fn to_string(&self) -> String {
         match self {
-            TokenKind::Expression => "expression",
-            TokenKind::Identifier => "identifier",
-            TokenKind::Keyword => "keyword",
-            TokenKind::FunctionBody => "function body",
+            ExpectedItemKind::Expression => format!("expression"),
+            ExpectedItemKind::Identifier => format!("identifier"),
+            ExpectedItemKind::Keyword => format!("keyword"),
+            ExpectedItemKind::FunctionBody => format!("function body"),
+            ExpectedItemKind::Token(token) => format!("token `{}`", token),
         }
     }
 }

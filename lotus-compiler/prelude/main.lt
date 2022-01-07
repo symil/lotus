@@ -6,8 +6,8 @@ enum TheEnum {
     TheBla
 }
 
-class Bar {
-    hello: int,
+class TheBar {
+    test: int,
 
     static create() -> Self {
         Self {}
@@ -22,7 +22,8 @@ class Bar {
     }
 
     @OnRender {
-        
+        let a = evt;
+        let b = self;
     }
 }
 
@@ -30,14 +31,16 @@ fn test() {
     let left = 8;
     let right = 14;
     let result = this_is_a_test(left, right);
-    let bar = Bar { hello: 8 };
-    bar.hello = 4;
-    bar.hello = 6;
-    bar.hello = 6;
-    bar.hello = 6;
+    let bar = TheBar { test: 8 };
+    bar.test = 4;
+    bar.test = 6;
+    bar.test = 6;
+    bar.test = 6;
 
     bar.do_something();
     let a = bar.do_some_operation(left, right);
+
+    let b = left as Array<int>;
 }
 
 fn this_is_a_test(foo: int, bar: int) -> int {

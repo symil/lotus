@@ -3,12 +3,14 @@ use parsable::DataLocation;
 
 #[derive(Debug)]
 pub struct RenamingArea {
+    pub definition: DataLocation,
     pub occurences: HashSet<DataLocation>
 }
 
 impl RenamingArea {
     pub fn new(definition: &DataLocation) -> Self {
         Self {
+            definition: definition.clone(),
             occurences: HashSet::from_iter(vec![definition.clone()]),
         }
     }
@@ -17,14 +19,18 @@ impl RenamingArea {
         self.occurences.insert(occurence.clone());
     }
 
-    pub fn contains_cursor(&self, file_path: &str, cursor_index: usize) -> bool {
+    pub fn get_occurence_under_cursor(&self, root_directory_path: &str, file_path: &str, cursor_index: usize) -> Option<DataLocation> {
+        if self.definition.file.package_root_path != root_directory_path {
+            return None;
+        }
+
         for location in &self.occurences {
             if location.contains_cursor(file_path, cursor_index) {
-                return true;
+                return Some(location.clone());
             }
         }
 
-        false
+        None
     }
 
     pub fn get_all_occurences(&self) -> Vec<DataLocation> {

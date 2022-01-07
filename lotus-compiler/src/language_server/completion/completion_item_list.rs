@@ -1,10 +1,10 @@
 use std::{mem::take, rc::Rc};
 use parsable::DataLocation;
 
-use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type}};
+use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint}};
 use super::{CompletionItem, CompletionItemKind};
 
-const INTERNAL_METHOD_PREFIX : &'static str = "__";
+const INTERNAL_ITEM_PREFIX : &'static str = "__";
 
 pub struct CompletionItemList {
     list: Vec<CompletionItem>,
@@ -88,7 +88,7 @@ impl CompletionItemList {
     pub fn add_function(&mut self, function: Link<FunctionBlueprint>) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();
-            let is_internal_method = function_name.starts_with(INTERNAL_METHOD_PREFIX);
+            let is_internal_method = function_name.starts_with(INTERNAL_ITEM_PREFIX);
             let should_display_internal_methods = false;
             // let should_display_internal_methods = location.as_str().starts_with(INTERNAL_METHOD_PREFIX);
 
@@ -159,6 +159,20 @@ impl CompletionItemList {
 
             self.insert_text(insert_text);
         }
+    }
+
+    pub fn add_interface(&mut self, interface: Link<InterfaceBlueprint>) {
+        interface.with_ref(|interface_unwrapped| {
+            let interface_name = interface_unwrapped.name.as_str();
+            let is_internal = interface_name.starts_with(INTERNAL_ITEM_PREFIX);
+            let should_display_internal = false;
+
+            if is_internal == should_display_internal {
+                self
+                    .add(format!("{}", interface_name))
+                    .kind(CompletionItemKind::Interface);
+            }
+        });
     }
 }
 

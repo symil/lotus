@@ -13,7 +13,7 @@ pub struct TypeDeclaration {
     #[parsable(brackets="()")]
     pub stack_type: Option<Identifier>,
     pub name: Identifier,
-    pub parameters: TypeParameters,
+    pub parameters: Option<TypeParameters>,
     #[parsable(prefix="extends")]
     pub parent: Option<ParsedType>,
     pub body: Option<TypeDeclarationBody>
@@ -103,7 +103,11 @@ impl TypeDeclaration {
         }
 
         let type_wrapped = context.types.insert(type_unwrapped, None);
-        let parameters = self.parameters.process(context);
+        let parameters = match &self.parameters {
+            Some(params) => params.process(context),
+            None => IndexMap::new()
+        };
+
         let stack_type = match &self.stack_type {
             Some(name) => match name.as_str() {
                 "i32" => WasmStackType::Fixed(StackType::Int),
@@ -120,10 +124,10 @@ impl TypeDeclaration {
             None => WasmStackType::Fixed(StackType::Int),
         };
 
-        context.renaming.create_area(&self.name);
+        context.renaming.create(&self.name);
 
         for details in parameters.values() {
-            context.renaming.create_area(&details.name);
+            context.renaming.create(&details.name);
         }
 
         type_wrapped.with_mut(|mut type_unwrapped| {
@@ -286,7 +290,7 @@ impl TypeDeclaration {
                         wasm_pattern,
                     });
 
-                    context.renaming.create_area(&name);
+                    context.renaming.create(&name);
 
                     if associated_types.insert(associatd_type_info.name.to_string(), associatd_type_info).is_some() {
                         context.errors.generic(&associated_type.name, format!("duplicate associated type `{}`", &name));
@@ -343,7 +347,7 @@ impl TypeDeclaration {
                             }
 
                             if let Some(field_type) = ty.process(false, context) {
-                                context.renaming.create_area(&field.name);
+                                context.renaming.create(&field.name);
 
                                 let field_details = Rc::new(FieldInfo {
                                     owner: type_wrapped.clone(),
@@ -360,7 +364,7 @@ impl TypeDeclaration {
                         None => {
                             // Enum variant
 
-                            context.renaming.create_area(&field.name);
+                            context.renaming.create(&field.name);
 
                             if !type_unwrapped.is_enum() {
                                 context.errors.generic(&field.name, format!("only enums can have variants"));

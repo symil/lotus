@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use colored::Colorize;
 use parsable::{DataLocation, ParseError};
 use crate::utils::Link;
-use super::{InterfaceBlueprint, Type, ItemKind, TokenKind};
+use super::{InterfaceBlueprint, Type, ItemKind, ExpectedItemKind};
 
 #[derive(Debug)]
 pub struct CompilationError {
@@ -26,12 +26,12 @@ pub enum CompilationErrorDetails {
 
 #[derive(Debug)]
 pub struct ExpectedTokenDetails {
-    pub kind: TokenKind,
+    pub kind: ExpectedItemKind,
 }
 
 #[derive(Debug)]
 pub struct UnexpectedTokenDetails {
-    pub kind: TokenKind,
+    pub kind: ExpectedItemKind,
     pub value: Option<String>
 }
 
@@ -136,10 +136,10 @@ impl CompilationError {
                 }
             },
             CompilationErrorDetails::ExpectedToken(details) => {
-                Some(format!("expected {}", details.kind.to_str()))
+                Some(format!("expected {}", details.kind.to_string()))
             },
             CompilationErrorDetails::UnexpectedToken(details) => {
-                let mut result = format!("unexpected {}", details.kind.to_str());
+                let mut result = format!("unexpected {}", details.kind.to_string());
 
                 if let Some(name) = &details.value {
                     result.push_str(&format!(" `{}`", name));

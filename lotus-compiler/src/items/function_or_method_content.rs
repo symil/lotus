@@ -10,7 +10,7 @@ pub struct FunctionOrMethodContent {
     pub meta_qualifier: Option<MethodMetaQualifierKeyword>,
     pub qualifier: Option<MethodQualifierKeyword>,
     pub name: Identifier,
-    pub parameters: TypeParameters,
+    pub parameters: Option<TypeParameters>,
     pub signature: FunctionSignature,
     pub body: Option<FunctionBody>,
 }
@@ -35,7 +35,10 @@ impl FunctionOrMethodContent {
         let is_dynamic = qualifier == MethodQualifier::Dynamic;
         let is_static = qualifier == MethodQualifier::Static;
         let is_autogen = self.is_autogen();
-        let parameters = self.parameters.process(context);
+        let parameters = match &self.parameters {
+            Some(params) => params.process(context),
+            None => IndexMap::new(),
+        };
         let has_parameters = !parameters.is_empty();
         let is_raw_wasm = self.body.as_ref().map(|body| body.is_raw_wasm()).unwrap_or(false);
 
@@ -56,7 +59,7 @@ impl FunctionOrMethodContent {
         };
 
         for details in function_blueprint.parameters.values() {
-            context.renaming.create_area(&details.name);
+            context.renaming.create(&details.name);
         }
 
         if let Some(type_wrapped) = &current_type {
@@ -112,7 +115,7 @@ impl FunctionOrMethodContent {
                 return_type.unwrap_or(context.void_type())
             );
 
-            context.renaming.create_area(&self.name);
+            context.renaming.create(&self.name);
         });
 
         context.pop_scope();

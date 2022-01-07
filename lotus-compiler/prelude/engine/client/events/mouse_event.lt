@@ -1,4 +1,4 @@
-export event MouseEvent extends WindowEvent {
+export event OnMouseEvent extends WindowEvent {
     action: MouseAction,
     button: MouseButton,
     x: float,

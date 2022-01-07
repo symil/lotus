@@ -1,6 +1,5 @@
 pub mod completion;
 pub mod renaming;
-pub mod definition;
 pub mod hover;
 
 mod utils;
