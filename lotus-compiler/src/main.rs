@@ -13,7 +13,6 @@ mod program;
 mod items;
 mod command_line;
 mod language_server;
-mod completion;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

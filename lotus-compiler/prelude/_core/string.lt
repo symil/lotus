@@ -59,7 +59,7 @@ export type(i32) string {
         self
     }
 
-    __get_at(index: int) -> char {
+    __get_at_index(index: int) -> char {
         self._content()[index]
     }
 

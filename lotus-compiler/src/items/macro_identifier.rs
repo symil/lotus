@@ -23,7 +23,7 @@ impl MacroIdentifier {
 
         match &self.value {
             MacroIdentifierValue::FieldName => m.access_current_field(|field_info, context| {
-                Identifier::new(field_info.name.as_str(), &self.location)
+                Identifier::new(field_info.name.as_str(), Some(&self.location))
             }),
             MacroIdentifierValue::WorldType => get_main_type_identifier(MainType::World, self, context),
             MacroIdentifierValue::UserType => get_main_type_identifier(MainType::User, self, context),

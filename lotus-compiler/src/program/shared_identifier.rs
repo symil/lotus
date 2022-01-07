@@ -1,12 +1,18 @@
+use std::{collections::HashSet, hash::Hash};
 use parsable::DataLocation;
-
 use super::Type;
 
 #[derive(Debug)]
 pub struct SharedIdentifier {
     pub definition: Option<DataLocation>,
     pub type_info: Option<Type>,
-    pub usages: Vec<DataLocation>,
+    pub usages: HashSet<SharedIdentifierUsage>,
+}
+
+#[derive(Debug)]
+pub struct SharedIdentifierUsage {
+    pub location: DataLocation,
+    pub shadow: bool,
 }
 
 impl SharedIdentifier {
@@ -14,8 +20,15 @@ impl SharedIdentifier {
         Self {
             definition: definition.cloned(),
             type_info: type_info.cloned(),
-            usages: vec![],
+            usages: HashSet::new(),
         }
+    }
+
+    pub fn add_usage(&mut self, location: &DataLocation) {
+        self.usages.insert(SharedIdentifierUsage {
+            location: location.clone(),
+            shadow: false,
+        });
     }
 
     pub fn get_all_occurences(&self) -> Vec<DataLocation> {
@@ -24,7 +37,12 @@ impl SharedIdentifier {
         if let Some(location) = &self.definition {
             result.push(location.clone());
         }
-        result.extend_from_slice(&self.usages);
+
+        for usage in &self.usages {
+            if !usage.shadow {
+                result.push(usage.location.clone());
+            }
+        }
 
         result
     }
@@ -37,11 +55,27 @@ impl SharedIdentifier {
         }
 
         for usage in &self.usages {
-            if usage.contains_cursor(cursor_file_path, cursor_index) {
-                return Some(&usage);
+            if usage.location.contains_cursor(cursor_file_path, cursor_index) {
+                return Some(&usage.location);
             }
         }
 
         None
     }
+}
+
+impl PartialEq for SharedIdentifierUsage {
+    fn eq(&self, other: &Self) -> bool {
+        self.location == other.location
+    }
+}
+
+impl Hash for SharedIdentifierUsage {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.location.hash(state);
+    }
+}
+
+impl Eq for SharedIdentifierUsage {
+
 }

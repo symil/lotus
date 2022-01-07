@@ -49,7 +49,7 @@ export class Array<T> {
         self.body
     }
 
-    __get_at(index: int) -> T {
+    __get_at_index(index: int) -> T {
         let length = self.length;
 
         if index < 0 {
@@ -62,8 +62,8 @@ export class Array<T> {
         }
     }
 
-    __set_at(index: int, value: T) {
-        self.body.__set_at(index, value);
+    __set_at_index(index: int, value: T) {
+        self.body.__set_at_index(index, value);
     }
 
     first() -> T? {
@@ -71,7 +71,7 @@ export class Array<T> {
             return none;
         }
 
-        self.__get_at(0)
+        self.__get_at_index(0)
     }
 
     last() -> T? {
@@ -79,7 +79,7 @@ export class Array<T> {
             return none;
         }
 
-        self.__get_at(self.length - 1)
+        self.__get_at_index(self.length - 1)
     }
 
     is_empty() -> bool {

@@ -144,7 +144,7 @@ export class Client {
                 cursor = view.graphics.cursor;
             }
 
-            self._draw_primitives.push(view.graphics.to_draw_primitive(view.rect, self.virtual_to_real_ratio));
+            self._draw_primitives.push(view.graphics.__to_draw_primitive(view.rect, self.virtual_to_real_ratio));
         }
 
         self._buffer.clear();

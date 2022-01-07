@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, borrow::Borrow};
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};

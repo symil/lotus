@@ -1,3 +1,9 @@
+pub mod completion;
+pub mod renaming;
+pub mod definition;
+pub mod hover;
+
+mod utils;
 mod language_server;
 mod language_server_command;
 mod language_server_command_kind;
@@ -12,6 +18,7 @@ mod language_server_command_output;
 mod language_server_command_reload;
 mod provide_signature_help;
 
+pub use utils::*;
 pub use language_server::*;
 pub use language_server_command::*;
 pub use language_server_command_kind::*;

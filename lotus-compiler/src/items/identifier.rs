@@ -11,11 +11,11 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub fn new(name: &str, location: &DataLocation) -> Self {
+    pub fn new(name: &str, location: Option<&DataLocation>) -> Self {
         let mut identifier = Identifier::default();
 
         identifier.value = name.to_string();
-        identifier.location = location.clone();
+        identifier.location = location.cloned().unwrap_or(DataLocation::empty());
 
         identifier
     }

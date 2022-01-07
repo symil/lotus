@@ -1,27 +1,20 @@
-use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc};
+use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc, fmt::Debug};
 use crate::{line_col_lookup::{lookup_line_col}, file_info::FileInfo};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct DataLocation {
     pub file: Rc<FileInfo>,
     pub start: usize,
     pub end: usize,
 }
 
-impl Hash for DataLocation {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.file.path.hash(state);
-        self.start.hash(state);
-        self.end.hash(state);
-    }
-}
-thread_local! {
-    static EMPTY_STRING : Rc<String> = Rc::new(String::new());
-}
-
 impl DataLocation {
     pub fn empty() -> Self {
         Self::default()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.file.path.is_empty()
     }
 
     pub fn get_hash(&self) -> u64 {
@@ -56,8 +49,8 @@ impl DataLocation {
         self
     }
 
-    pub fn contains_cursor(&self, file_path: &str, index: usize) -> bool {
-        self.file.path.as_str() == file_path && self.start <= index && self.end >= index
+    pub fn contains_cursor(&self, file_path: &str, cursor_index: usize) -> bool {
+        self.file.path.as_str() == file_path && self.start <= cursor_index && self.end >= cursor_index
     }
 
     pub fn as_str(&self) -> &str {
@@ -73,6 +66,14 @@ impl DataLocation {
     }
 }
 
+impl Hash for DataLocation {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.file.path.hash(state);
+        self.start.hash(state);
+        self.end.hash(state);
+    }
+}
+
 impl PartialEq for DataLocation {
     fn eq(&self, other: &Self) -> bool {
         self.start == other.start &&
@@ -83,4 +84,16 @@ impl PartialEq for DataLocation {
 
 impl Eq for DataLocation {
 
+}
+
+impl Debug for DataLocation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (line, col) = self.get_line_col();
+
+        f.debug_struct("DataLocation")
+            .field("file_path", &self.file.path)
+            .field("line", &line)
+            .field("col", &col)
+            .finish()
+    }
 }

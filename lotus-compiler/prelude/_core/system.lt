@@ -1,4 +1,4 @@
-export type(void) system {
+sys type(void) system {
     static __end_init() {
         init_memory();
     }

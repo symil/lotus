@@ -56,7 +56,7 @@ impl FunctionOrMethodContent {
         };
 
         for details in function_blueprint.parameters.values() {
-            context.declare_shared_identifier(&details.name, Some(&details.name), None);
+            context.renaming.create_area(&details.name);
         }
 
         if let Some(type_wrapped) = &current_type {
@@ -112,7 +112,7 @@ impl FunctionOrMethodContent {
                 return_type.unwrap_or(context.void_type())
             );
 
-            context.declare_shared_identifier(&self.name, Some(&self.name), Some(&Type::function(&function_unwrapped.signature)));
+            context.renaming.create_area(&self.name);
         });
 
         context.pop_scope();

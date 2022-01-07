@@ -1,4 +1,4 @@
-export type Function {
+sys type Function {
     static __default() -> Self {{
         (i32.const -2147483648)
     }}

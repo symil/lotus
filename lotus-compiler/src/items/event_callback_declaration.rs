@@ -1,6 +1,6 @@
 use colored::Colorize;
 use indexmap::IndexMap;
-use parsable::parsable;
+use parsable::{parsable, DataLocation};
 use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier}, utils::Link, wat};
 use super::{EventCallbackQualifierKeyword, Identifier, Expression, BlockExpression, VisibilityKeywordValue};
 
@@ -62,8 +62,8 @@ impl EventCallbackDeclaration {
             visibility: Visibility::None,
             parameters: IndexMap::new(),
             argument_names: vec![
-                Identifier::new(EVENT_VAR_NAME, &event_type.borrow().name),
-                Identifier::new(EVENT_OUTPUT_VAR_NAME, name),
+                Identifier::new(EVENT_VAR_NAME, None),
+                Identifier::new(EVENT_OUTPUT_VAR_NAME, None),
             ],
             signature: Signature::create(
                 Some(this_type.borrow().self_type.clone()),

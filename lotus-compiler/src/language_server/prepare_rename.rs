@@ -16,7 +16,7 @@ pub fn prepare_rename(parameters: &LanguageServerCommandParameters, context: &Pr
     }
 }
 
-fn is_special_identifier(name: &str) -> bool {
+pub fn is_special_identifier(name: &str) -> bool {
     match name {
         EVENT_VAR_NAME => true,
         SELF_VAR_NAME => true,

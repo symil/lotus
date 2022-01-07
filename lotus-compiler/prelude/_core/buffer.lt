@@ -1,4 +1,4 @@
-export class Buffer {
+pub class Buffer {
     data: ptr,
     size: int,
     capacity: int,

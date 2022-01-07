@@ -48,7 +48,7 @@ impl FunctionLiteral {
         let mut signature = Signature::create(None, argument_types, return_type.clone());
         let function_wrapped = context.functions.insert(FunctionBlueprint {
             function_id: self.location.get_hash(),
-            name: Identifier::new("anonymous_function", self),
+            name: Identifier::new("anonymous_function", Some(self)),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
             argument_names,
@@ -82,7 +82,7 @@ impl FunctionLiteral {
 
         function_wrapped.with_mut(|mut function_unwrapped| {
             if let Some(closure_details) = &mut function_unwrapped.closure_details {
-                let mut function = FunctionBlueprint::new(Identifier::new("retain_function", self), context);
+                let mut function = FunctionBlueprint::new(Identifier::new("retain_function", Some(self)), context);
                 let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0);
 
                 function.argument_variables = vec![closure_args_var.clone()];

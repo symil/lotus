@@ -66,24 +66,20 @@ export interface Not {
     __not() -> Self;
 }
 
-export interface ToBool {
-    to_bool() -> bool;
-}
-
-export interface Range {
+sys interface Range {
     __range(other: Self) -> Self[];
 }
 
 export interface GetAtIndex {
     type Item;
 
-    __get_at(index: int) -> Item;
+    __get_at_index(index: int) -> Item;
 }
 
 export interface SetAtIndex {
     type Item;
 
-    __set_at(index: int, value: Item);
+    __set_at_index(index: int, value: Item);
 }
 
 export interface Iterable {
@@ -93,13 +89,14 @@ export interface Iterable {
     __get_iterable_ptr() -> Pointer<Item>;
 }
 
-export interface Unwrap {
+sys interface Unwrap {
     type Item;
 
     unwrap() -> Item;
 }
 
-export interface ToFloat {
+export interface Number {
+    to_int() -> int;
     to_float() -> float;
 }
 
@@ -111,7 +108,7 @@ export interface Tuple {
     second() -> Second;
 }
 
-export interface Object {
+sys interface Object {
     static __is(object: Object) -> bool;
 }
 

@@ -56,7 +56,7 @@ export class Graphics {
         }
     }
 
-    to_draw_primitive(rect: Rect, virtual_to_real_ratio: float) -> DrawPrimitive {
+    __to_draw_primitive(rect: Rect, virtual_to_real_ratio: float) -> DrawPrimitive {
         let real_rect = rect.multiply(virtual_to_real_ratio);
         let width = real_rect.width;
         let height = real_rect.height;

@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat, completion::{CompletionDetails, CompletionArea, CompletionAreaIndex}};
+use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat, language_server::{completion::{CompletionAreaIndex, CompletionDetails, CompletionArea}, renaming::RenamingAreaIndex}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, SharedIdentifier, insert_in_vec_hashmap, shared_identifier, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo};
 
 #[derive(Debug, Default, Clone)]
@@ -12,7 +12,6 @@ pub struct ProgramContextOptions {
     pub cursor: Option<CursorInfo>,
 }
 
-#[derive(Debug)]
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
     pub source_file_list: Vec<SourceFileDetails>,
@@ -28,7 +27,8 @@ pub struct ProgramContext {
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
     pub shared_identifiers: HashMap<u64, SharedIdentifier>,
-    pub completion_area_index: Option<CompletionAreaIndex>,
+    pub completion_area_index: Option<CompletionAreaIndex>, // forced to use an Option so we can `take` it to work around the borrow checker
+    pub renaming: RenamingAreaIndex,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
     main_types: HashMap<MainType, Type>,
@@ -72,6 +72,7 @@ impl ProgramContext {
             global_vars: Default::default(),
             shared_identifiers: Default::default(),
             completion_area_index: Some(CompletionAreaIndex::new(options.cursor.clone())),
+            renaming: RenamingAreaIndex::new(),
             builtin_types: Default::default(),
             main_types: Default::default(),
             autogen_type: Default::default(),
@@ -262,13 +263,10 @@ impl ProgramContext {
 
         match kind {
             ScopeKind::Type(type_wrapped) => {
-                // self.declare_wrapped_shared_identifier(&type_wrapped);
             },
             ScopeKind::Interface(interface_wrapped) => {
-                // self.declare_wrapped_shared_identifier(&interface_wrapped);
             },
             ScopeKind::Function(function_wrapped) => {
-                // self.declare_wrapped_shared_identifier(&function_wrapped);
                 self.declare_function_arguments(&function_wrapped);
 
             },
@@ -312,17 +310,30 @@ impl ProgramContext {
             current_scope.insert_var_info(&var_info);
         }
 
-        self.declare_wrapped_shared_identifier(&var_info, Some(&var_info.ty()));
+        self.renaming.create_area(&var_info.name().location);
     }
 
-    pub fn declare_shared_identifier<K : Hash>(&mut self, key: &K, definition: Option<&DataLocation>, type_info: Option<&Type>) {
-        let id = compute_hash(key);
+    fn autogen_type_is_current_type(&self) -> bool {
+        match (&self.autogen_type, self.get_current_type()) {
+            (None, None) => true,
+            (None, Some(_)) => true,
+            (Some(_), None) => unreachable!(),
+            (Some(autogen_type), Some(current_type)) => autogen_type == &current_type,
+        }
+    }
+
+    pub fn declare_shared_identifier(&mut self, location: &DataLocation, definition: Option<&DataLocation>, type_info: Option<&Type>) {
+        if !self.autogen_type_is_current_type() {
+            return;
+        }
+
+        let id = compute_hash(location);
 
         match self.shared_identifiers.get_mut(&id) {
             Some(shared_identifier) => {
-                if let Some(location) = definition {
-                    shared_identifier.usages.push(location.clone());
-                }
+                panic!("skip");
+                // println!("INFO: skipping duplicate addition of identifier: {:?}", location);
+                // dbg!(&shared_identifier.definition);
             },
             None => {
                 self.shared_identifiers.insert(id, SharedIdentifier::new(definition, type_info));
@@ -330,32 +341,24 @@ impl ProgramContext {
         }
     }
 
-    pub fn access_shared_identifier<K : Hash>(&mut self, key: &K, identifier: &Identifier) {
-        // dbg!(identifier.as_str());
-        // dbg!(identifier.location.file_path);
-
+    pub fn access_shared_identifier(&mut self, location: &DataLocation, identifier: &Identifier) {
         if identifier.location.as_str().as_bytes()[0] == b'#' {
             return;
         }
 
-        let id = compute_hash(key);
+        if !self.autogen_type_is_current_type() {
+            return;
+        }
+
+        // if identifier.location.start == 2860 {
+        //     dbg!(identifier.as_str());
+        //     dbg!(&identifier.location.file.path);
+        // }
+
+        let id = compute_hash(location);
         let mut shared_identifier = self.shared_identifiers.get_mut(&id).unwrap();
 
-        shared_identifier.usages.push(identifier.location.clone());
-    }
-
-    pub fn declare_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>, type_info: Option<&Type>) {
-        item.with_ref(|item_unwrapped| {
-            let identifier = item_unwrapped.get_name();
-            let definition = match identifier.as_str() {
-                // SELF_VAR_NAME => None,
-                // EVENT_VAR_NAME => None,
-                EVENT_OUTPUT_VAR_NAME => None,
-                _ => Some(&identifier.location)
-            };
-
-            self.declare_shared_identifier(identifier, definition, type_info);
-        });
+        shared_identifier.add_usage(&identifier.location);
     }
 
     pub fn access_wrapped_shared_identifier<T : GlobalItem>(&mut self, item: &Link<T>, identifier: &Identifier) {
@@ -463,13 +466,13 @@ impl ProgramContext {
             let mut variables = vec![];
 
             if let Some(this_type) = &function_unwrapped.signature.this_type {
-                let location = match this_type.content() {
-                    TypeContent::This(interface_blueprint) => interface_blueprint.borrow().name.location.clone(),
-                    TypeContent::Actual(content) => content.type_blueprint.borrow().name.location.clone(),
-                    _ => function_unwrapped.name.location.clone()
-                };
+                // let location = match this_type.content() {
+                //     TypeContent::This(interface_blueprint) => interface_blueprint.borrow().name.location.clone(),
+                //     TypeContent::Actual(content) => content.type_blueprint.borrow().name.location.clone(),
+                //     _ => function_unwrapped.name.location.clone()
+                // };
 
-                let var_info = VariableInfo::create(Identifier::new(SELF_VAR_NAME, &location), this_type.clone(), VariableKind::Argument, self.get_function_level());
+                let var_info = VariableInfo::create(Identifier::new(SELF_VAR_NAME, None), this_type.clone(), VariableKind::Argument, self.get_function_level());
 
                 self.push_var(&var_info);
                 variables.push(var_info);

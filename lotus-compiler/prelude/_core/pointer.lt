@@ -43,13 +43,13 @@ export type(i32) Pointer<T> {
         self as int
     }
 
-    __set_at(index: int, value: T) {
+    __set_at_index(index: int, value: T) {
         let byte_index = ((self as int) + index) * 4;
 
         wasm_store(byte_index, value);
     }
 
-    __get_at(index: int) -> T {
+    __get_at_index(index: int) -> T {
         let byte_index = ((self as int) + index) * 4;
 
         wasm_load(byte_index)

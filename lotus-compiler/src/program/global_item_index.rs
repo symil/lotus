@@ -2,17 +2,12 @@ use std::{borrow::Borrow, cell::Ref, collections::{HashMap, hash_map::DefaultHas
 use indexmap::IndexMap;
 use parsable::DataLocation;
 use crate::{items::{Identifier}, utils::Link};
-use super::Visibility;
+use super::{Visibility, GlobalItem};
 
 #[derive(Debug)]
 pub struct GlobalItemIndex<V> {
     pub items_by_id: IndexMap<u64, Link<V>>,
     pub items_by_name: HashMap<String, Vec<Link<V>>>
-}
-
-pub trait GlobalItem {
-    fn get_name(&self) -> &Identifier;
-    fn get_visibility(&self) -> Visibility;
 }
 
 fn get_id_from_location(location: &DataLocation, marker: Option<u64>) -> u64 {

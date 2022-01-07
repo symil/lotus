@@ -1,4 +1,4 @@
-export enum DisplaySizeKind {
+enum DisplaySizeKind {
     Real,
     Virtual,
     ScaledFromContainerWidth,
@@ -14,7 +14,13 @@ export class DisplaySize {
         Self { kind, value }
     }
 
-    scale<F : ToFloat>(ratio: F) -> Self {
+    static real(value: float) -> Self { Self::new(DisplaySizeKind::Real, value) }
+    static virtual(value: float) -> Self { Self::new(DisplaySizeKind::Virtual, value) }
+    static scaled_from_width(value: float) -> Self { Self::new(DisplaySizeKind::ScaledFromContainerWidth, value) }
+    static scaled_from_height(value: float) -> Self { Self::new(DisplaySizeKind::ScaledFromContainerHeight, value) }
+    static scaled_from_min(value: float) -> Self { Self::new(DisplaySizeKind::ScaledFromContainerMin, value) }
+
+    scale<F : Number>(ratio: F) -> Self {
         Self {
             kind: self.kind,
             value: self.value * ratio.to_float()
