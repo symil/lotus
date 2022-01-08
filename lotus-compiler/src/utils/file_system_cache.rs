@@ -37,7 +37,7 @@ impl<T : Default, E> FileSystemCache<T, E> {
         }
     }
 
-    pub fn read_file<F : Fn(String) -> Result<T, E>>(&mut self, file_path: &str, process_function: F) -> Result<Rc<T>, Rc<E>> {
+    pub fn read_file<F : FnOnce(String) -> Result<T, E>>(&mut self, file_path: &str, process_function: F) -> Result<Rc<T>, Rc<E>> {
         let content_from_hook = self.read_from_hook(file_path);
         let item = self.files.entry(file_path.to_string())
             .or_insert_with(|| CachedItem {

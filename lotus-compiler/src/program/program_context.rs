@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache}, wat, language_server::{completion::{CompletionProvider, CompletionDetails, CompletionArea}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
+use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionDetails, CompletionArea}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo};
 
 #[derive(Debug, Default, Clone)]
@@ -628,6 +628,8 @@ impl ProgramContext {
         let mut empty_cache = FileSystemCache::new();
         let cache = provided_cache.unwrap_or(&mut empty_cache);
 
+        let mut processed_count = 0;
+
         for source_file_details in &self.source_file_list {
             let root_directory_path = &source_file_details.root_directory_path;
             let file_path = &source_file_details.file_path;
@@ -637,6 +639,8 @@ impl ProgramContext {
                     package_root_path: Some(root_directory_path.clone()),
                     comment_start: Some(COMMENT_START_TOKEN),
                 };
+
+                processed_count += 1;
 
                 LotusFile::parse(file_content, parse_options)
             };
@@ -648,9 +652,12 @@ impl ProgramContext {
                 Err(parse_error) => self.errors.parse_error(&parse_error).void(),
             }
         }
+
+        // println!("files processed: {}", processed_count);
     }
 
     pub fn process_source_files(&mut self) {
+        let mut timer = PerfTimer::new();
         let mut interfaces = vec![];
         let mut types = vec![];
         let mut typedefs = vec![];
@@ -671,20 +678,24 @@ impl ProgramContext {
             }
         }
 
+        timer.trigger("interface names");
         for interface_declaration in &interfaces {
             interface_declaration.process_name(self);
         }
 
+        timer.trigger("type names");
         for (i, type_declaration) in types.iter().enumerate() {
             type_declaration.process_name(i, self);
         }
 
+        timer.trigger("index builtin entities");
         self.index_builtin_entities();
 
         for typedef_declaration in &typedefs {
             typedef_declaration.process(self);
         }
 
+        timer.trigger("type dependencies");
         let mut links = vec![];
         for (i, type_declaration) in types.iter().enumerate() {
             let dependancies = type_declaration.compute_type_dependencies(self);
@@ -733,18 +744,22 @@ impl ProgramContext {
         //     println!("{}", &t.name);
         // }
 
+        timer.trigger("type parents");
         for type_declaration in &types {
             type_declaration.process_parent(self);
         }
 
+        timer.trigger("interface associated types");
         for interface_declaration in &interfaces {
             interface_declaration.process_associated_types(self);
         }
 
+        timer.trigger("type associated types");
         for type_declaration in &types {
             type_declaration.process_associated_types(self);
         }
 
+        timer.trigger("interface methods");
         for interface_declaration in &interfaces {
             interface_declaration.process_methods(self);
         }
@@ -753,34 +768,42 @@ impl ProgramContext {
         //     type_declaration.process_inheritance_chain(self)
         // });
 
+        timer.trigger("type descendants");
         for type_declaration in types.iter().rev() {
             type_declaration.compute_descendants(self);
         }
 
+        timer.trigger("type ancestors");
         for type_declaration in types.iter() {
             type_declaration.compute_ancestors(self);
         }
 
+        timer.trigger("type fields");
         for type_declaration in &types {
             type_declaration.process_fields(self);
         }
 
+        timer.trigger("type method signatures");
         for type_declaration in &types {
             type_declaration.process_method_signatures(self);
         }
 
+        timer.trigger("type autogen method signatures");
         for type_declaration in &types {
             type_declaration.process_autogen_method_signatures(self);
         }
 
+        timer.trigger("type dynamic methods");
         for type_declaration in &types {
             type_declaration.process_dynamic_methods(self);
         }
 
+        timer.trigger("function signatures");
         for function_declaration in &functions {
             function_declaration.process_signature(self);
         }
 
+        timer.trigger("parameters check");
         // TYPE PARAMS CHECK START
         for type_blueprint in self.types.get_all() {
             type_blueprint.borrow().check_types_parameters(self);
@@ -795,33 +818,37 @@ impl ProgramContext {
         }
         // TYPE PARAMS CHECK END
 
+        timer.trigger("global variables");
         for global_var_declaration in &global_vars {
             global_var_declaration.process(self);
         }
 
+        timer.trigger("type field default values");
         for type_declaration in &types {
             type_declaration.process_fields_default_values(self);
         }
 
+        timer.trigger("type method bodies");
         for type_declaration in &types {
             type_declaration.process_method_bodies(self);
         }
 
+        timer.trigger("type autogen method bodies");
         for type_declaration in &types {
             type_declaration.process_autogen_method_bodies(self);
         }
 
+        timer.trigger("function bodies");
         for function_declaration in &functions {
             function_declaration.process_body(self);
         }
 
+        timer.trigger("type event callbacks");
         for type_declaration in &types {
             type_declaration.process_event_callbacks(self);
         }
 
-        // if self.functions.get_by_name("main").is_none() {
-        //     self.errors.generic_unlocated(format!("missing required function `main`"));
-        // }
+        // timer.display();
 
         self.parsed_source_files = parsed_source_files;
     }

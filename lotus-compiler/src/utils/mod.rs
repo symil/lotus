@@ -6,6 +6,7 @@ mod hash;
 mod wrapper;
 mod file_system_cache;
 mod strings;
+mod perf_timer;
 
 pub use link::*;
 pub use sorting::*;
@@ -15,3 +16,4 @@ pub use hash::*;
 pub use wrapper::*;
 pub use file_system_cache::*;
 pub use strings::*;
+pub use perf_timer::*;

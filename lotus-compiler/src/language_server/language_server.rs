@@ -62,7 +62,7 @@ pub fn start_language_server(test_command: &Option<String>) {
                     }
 
                     let duration = start.elapsed().as_millis();
-                    println!("command took: {}ms", duration);
+                    // println!("COMMAND TOOK: {}ms", duration);
                 },
                 Err(error) => {
                 },

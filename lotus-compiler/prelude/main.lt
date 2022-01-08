@@ -42,8 +42,6 @@ fn test() -> int {
 
     let b = left as Array<int>;
 
-    hey(arg, other, something_else, and_again)
-
     bar.test
 }
 

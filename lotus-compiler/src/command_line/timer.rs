@@ -57,3 +57,9 @@ impl Timer {
         result
     }
 }
+
+pub fn time_function<F : FnOnce()>(label: &str, callback: F) {
+    let start = Instant::now();
+    callback();
+    println!("{}: {}ms", label, start.elapsed().as_millis());
+}
