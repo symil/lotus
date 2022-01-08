@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{program::{CursorInfo, Signature, FunctionBlueprint}, language_server::location_contains_cursor, utils::Link};
+use crate::{program::{CursorInfo, Signature, FunctionBlueprint, FunctionCall}, language_server::location_contains_cursor, utils::Link};
 use super::SignatureHelpArea;
 
 pub struct SignatureHelpProvider {
@@ -16,17 +16,17 @@ impl SignatureHelpProvider {
         }
     }
 
-    pub fn declare_signature(&mut self, location: &DataLocation, function: &Link<FunctionBlueprint>) {
+    pub fn declare_signature(&mut self, location: &DataLocation, name: &str, function_call: &FunctionCall) {
         if !location_contains_cursor(location, &self.cursor) {
             return;
         }
 
         self.areas
             .entry(location.clone())
-            .or_insert_with(|| SignatureHelpArea::new(location, function));
+            .or_insert_with(|| SignatureHelpArea::new(location, name, function_call));
     }
 
-    pub fn add_argument_location(&mut self, signature_location: &DataLocation, argument_index: usize, argument_location: &DataLocation) {
+    pub fn add_argument_location(&mut self, signature_location: &DataLocation, argument_index: usize, next_arg_location: Option<&DataLocation>) {
         if !location_contains_cursor(signature_location, &self.cursor) {
             return;
         }
@@ -38,7 +38,7 @@ impl SignatureHelpProvider {
             },
         };
 
-        area.set_argument_location(argument_index, argument_location);
+        area.set_argument_location(argument_index, next_arg_location);
     }
 
     pub fn get_area_under_cursor(&self, file_path: &str, cursor_index: usize) -> Option<&SignatureHelpArea> {

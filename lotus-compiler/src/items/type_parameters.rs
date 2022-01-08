@@ -2,26 +2,14 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::parsable;
 use crate::{program::{self, ParameterTypeInfo, InterfaceList, ProgramContext}, utils::Link};
-use super::Identifier;
+use super::{Identifier, OpeningAngleBracket, ClosingAngleBracket};
 
 #[parsable]
 pub struct TypeParameters {
-    pub opening_bracket: OpeningAngleBracketToken,
+    pub opening_bracket: OpeningAngleBracket,
     #[parsable(separator=",")]
     pub list: Vec<TypeParameter>,
-    pub closing_bracket: Option<ClosingAngleBracketToken>,
-}
-
-#[parsable]
-pub struct OpeningAngleBracketToken {
-    #[parsable(value="<")]
-    pub value: String
-}
-
-#[parsable]
-pub struct ClosingAngleBracketToken {
-    #[parsable(value=">")]
-    pub value: String
+    pub closing_bracket: Option<ClosingAngleBracket>,
 }
 
 #[parsable]

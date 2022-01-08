@@ -29,8 +29,16 @@ impl DataLocation {
         self.clone().set_bounds(self.end)
     }
 
-    pub fn offset(&self, offset: usize) -> Self {
+    pub fn set_start_with_offset(&self, offset: usize) -> Self {
         self.clone().set_bounds(self.start + offset)
+    }
+
+    pub fn offset(&self, start: isize, end: isize) -> Self {
+        Self {
+            file: self.file.clone(),
+            start: ((self.start as isize) + start) as usize,
+            end: ((self.end as isize) + end) as usize,
+        }
     }
 
     fn _set_start(mut self, start: usize) -> Self {
@@ -57,8 +65,12 @@ impl DataLocation {
         &self.file.content[self.start..self.end]
     }
 
-    pub fn get_line_col(&self) -> (usize, usize) {
+    pub fn get_start_line_col(&self) -> (usize, usize) {
         lookup_line_col(self.file.path.as_str(), self.file.content.as_str(), self.start)
+    }
+
+    pub fn get_end_line_col(&self) -> (usize, usize) {
+        lookup_line_col(self.file.path.as_str(), self.file.content.as_str(), self.end)
     }
 
     pub fn length(&self) -> usize {
@@ -88,12 +100,9 @@ impl Eq for DataLocation {
 
 impl Debug for DataLocation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (line, col) = self.get_line_col();
+        let (start_line, start_col) = self.get_start_line_col();
+        let (end_line, end_col) = self.get_end_line_col();
 
-        f.debug_struct("DataLocation")
-            .field("file_path", &self.file.path)
-            .field("line", &line)
-            .field("col", &col)
-            .finish()
+        write!(f, "{}: ({},{})->({}:{})", &self.file.path, start_line, start_col, end_line, end_col)
     }
 }

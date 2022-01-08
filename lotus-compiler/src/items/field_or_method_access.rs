@@ -183,6 +183,12 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, ty, &signature.return_type);
     }
 
+    context.signature_help_provider.declare_signature(&arguments.location, function_name.as_str(), &function_call);
+
+    for i in 0..arguments.len().max(1).min(signature.argument_types.len()) {
+        context.signature_help_provider.add_argument_location(&arguments.location, i, arguments.get_location_including_separator(i + 1));
+    }
+
     let arg_vasms : Vec<Vasm> = arguments.into_iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match is_var_call {
@@ -201,6 +207,8 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
 
                 arg_vasm = vasm;
             }
+        } else {
+            context.errors.expected_argument(&arguments.get_location_including_separator(i).unwrap().set_start_with_offset(1));
         }
 
         arg_vasm
@@ -226,11 +234,13 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
                     false => arg_type.replace_parameters(caller_type.as_ref(), &function_parameters),
                 };
 
-                if !arg_vasm.ty.is_undefined() {
-                    if arg_vasm.ty.is_ambiguous() {
-                        context.errors.generic(&arguments.get_location(i).unwrap(), format!("cannot infer type"));
-                    } else if !arg_vasm.ty.is_assignable_to(&expected_type) {
-                        context.errors.generic(&arguments.get_location(i).unwrap(), format!("expected `{}`, got `{}`", &expected_type, &arg_vasm.ty));
+                if let Some(location) = &arguments.get_location(i) {
+                    if !arg_vasm.ty.is_undefined() {
+                        if arg_vasm.ty.is_ambiguous() {
+                            context.errors.generic(location, format!("cannot infer type"));
+                        } else if !arg_vasm.ty.is_assignable_to(&expected_type) {
+                            context.errors.type_mismatch(location, &expected_type, &arg_vasm.ty);
+                        }
                     }
                 }
             }

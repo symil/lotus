@@ -147,13 +147,17 @@ impl CompilationErrorList {
         self.expected_item(location, ExpectedItemKind::FunctionBody)
     }
 
+    pub fn expected_argument(&mut self, location: &DataLocation) -> CompilationErrorChain {
+        self.expected_item(location, ExpectedItemKind::Argument)
+    }
+
     pub fn expected_token(&mut self, location: &DataLocation, token: &'static str) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Token(token))
     }
 
     fn expected_item(&mut self, location: &DataLocation, token: ExpectedItemKind) -> CompilationErrorChain {
         let final_location = match is_valid_identifier(location.as_str()) {
-            true => location.get_end().offset(1),
+            true => location.get_end().set_start_with_offset(1),
             false => location.get_end(),
         };
 

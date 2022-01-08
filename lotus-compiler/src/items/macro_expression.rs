@@ -31,7 +31,7 @@ impl MacroExpression {
         match &self.value {
             MacroExpressionValue::Line => {
                 Some(context.vasm()
-                    .int(self.location.get_line_col().0)
+                    .int(self.location.get_start_line_col().0)
                     .set_type(context.int_type())
                 )
             }

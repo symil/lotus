@@ -67,6 +67,20 @@ impl ArgumentList {
         }
     }
 
+    pub fn get_location_including_separator(&self, index: usize) -> Option<&DataLocation> {
+        let mut result = None;
+
+        if let Some(content) = &self.content {
+            if index == 0 {
+                result = Some(&content.first_argument.location);
+            } else {
+                result = content.other_arguments.get(index - 1).map(|arg| &arg.location);
+            }
+        }
+
+        result
+    }
+
     pub fn get_location(&self, index: usize) -> Option<&DataLocation> {
         let mut result = None;
 

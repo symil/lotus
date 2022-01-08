@@ -95,7 +95,8 @@
 [X] Separate renaming, hover and goto definition
 [X] Add autocompletion for interfaces (when required for type parameter)
 [X] Determine for each type of the prelude if it should be exported or not
-[ ] Show function argument info when typing
+[X] Show function argument info when typing
+[ ] Determine what slows the language server down
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -135,6 +136,7 @@
 [ ] Syntax highlighting: properly highlight types that starts with `_`
 [ ] Add autocompletion for macros
 [ ] Sort errors by location in the console
+[ ] Add parsing for types/interfaces/functions/methods documentation
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

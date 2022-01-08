@@ -1,4 +1,4 @@
-use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::Duration};
+use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::{Duration, Instant}};
 use colored::Colorize;
 use parsable::StringReader;
 use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache, language_server::LanguageServerCommand};
@@ -47,6 +47,7 @@ pub fn start_language_server(test_command: &Option<String>) {
                         return;
                     }
 
+                    let start = Instant::now();
                     let content = str::from_utf8(&buffer[0..size]).unwrap();
                     
                     if let Some(command) = LanguageServerCommand::from_str(content) {
@@ -58,8 +59,10 @@ pub fn start_language_server(test_command: &Option<String>) {
                         }
 
                         stream.write(&buffer[0..content.as_bytes().len()]).unwrap();
-
                     }
+
+                    let duration = start.elapsed().as_millis();
+                    println!("command took: {}ms", duration);
                 },
                 Err(error) => {
                 },
