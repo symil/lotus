@@ -42,6 +42,8 @@ fn test() -> int {
 
     let b = left as Array<int>;
 
+    let f : fn(int, int, int)(int) = (a, b, c) => a + b + c;
+
     bar.test
 }
 
