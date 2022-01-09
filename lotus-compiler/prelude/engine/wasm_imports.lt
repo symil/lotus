@@ -1,0 +1,55 @@
+pub fn wasm_get_current_time() -> int [
+    import env.get_current_time
+]
+
+pub fn wasm_init_window(aspect_ratio: float) [
+    import env.init_window
+]
+
+pub fn wasm_poll_window_events(buffer_addr: ptr, buffer_capacity: int) -> int [
+    import env.poll_window_events
+]
+
+pub fn wasm_get_window_width() -> float [
+    import env.get_window_width
+]
+
+pub fn wasm_get_window_height() -> float [
+    import env.get_window_height
+]
+
+pub fn wasm_draw_frame(buffer_addr: ptr, buffer_size: int) [
+    import env.draw_frame
+]
+
+pub fn wasm_clear_renderer_cache() [
+    import env.clear_renderer_cache
+]
+
+pub fn wasm_create_websocket(url: string) -> int [
+    import env.create_websocket
+]
+
+pub fn wasm_create_websocket_server(port: int) -> int [
+    import env.create_websocket_server
+]
+
+pub fn wasm_get_websocket_state(websocket_id: int) -> int [
+    import env.get_websocket_state
+]
+
+pub fn wasm_send_message(websocket_id: int, buffer_addr: ptr, buffer_size:int) [
+    import env.send_message
+]
+
+pub fn wasm_poll_network_events(buffer_addr: ptr, buffer_capacity: int) -> int [
+    import env.poll_network_events
+]
+
+pub fn wasm_write_file(file_path: string, buffer_addr: ptr, buffer_size: int) [
+    import env.write_file
+]
+
+pub fn wasm_read_file(file_path: string, buffer_addr: ptr, buffer_capacity: int) -> int [
+    import env.read_file
+]

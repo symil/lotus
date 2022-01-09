@@ -3,19 +3,13 @@ use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
 use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat};
-use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefixValue};
+use super::{ArgumentList, Identifier, IdentifierWrapper, VarPrefixValue, DotToken};
 
 #[parsable]
 pub struct FieldOrMethodAccess {
     pub dot: DotToken,
     pub name: Option<IdentifierWrapper>,
     pub arguments: Option<ArgumentList>
-}
-
-#[parsable]
-pub struct DotToken {
-    #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
-    pub dot: String,
 }
 
 impl FieldOrMethodAccess {

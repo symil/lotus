@@ -22,26 +22,7 @@ type FunctionType = (&'static str, &'static[&'static str], &'static[&'static str
 type Global = (&'static str, &'static str);
 type Function = (&'static str, &'static[(&'static str, &'static str)], &'static[&'static str], &'static[(&'static str, &'static str)], fn() -> Vec<Wat>);
 
-pub const HEADER_IMPORTS : &'static[Import] = &[
-    ("utils", "assert", "assert", &["i32", "i32"], None),
-    ("utils", "float_to_string", "float_to_string", &["f32", "i32"], None),
-    ("env", "log", "log", &["i32"], None),
-    ("env", "log_int", "log_int", &["i32"], None),
-    ("env", "get_current_time", "get_current_time", &[], Some("i32")),
-    ("env", "init_window", "init_window", &["f32"], None),
-    ("env", "poll_window_events", "poll_window_events", &["i32", "i32"], Some("i32")),
-    ("env", "get_window_width", "get_window_width", &[], Some("f32")),
-    ("env", "get_window_height", "get_window_height", &[], Some("f32")),
-    ("env", "draw_frame", "draw_frame", &["i32", "i32"], None),
-    ("env", "clear_renderer_cache", "clear_renderer_cache", &[], None),
-    ("env", "create_websocket", "create_websocket", &["i32"], Some("i32")),
-    ("env", "create_websocket_server", "create_websocket_server", &["i32"], Some("i32")),
-    ("env", "get_websocket_state", "get_websocket_state", &["i32"], Some("i32")),
-    ("env", "poll_network_events", "poll_network_events", &["i32", "i32"], Some("i32")),
-    ("env", "send_message", "send_message", &["i32", "i32", "i32"], None),
-    ("env", "write_file", "write_file", &["i32", "i32", "i32"], None),
-    ("env", "read_file", "read_file", &["i32", "i32", "i32"], Some("i32")),
-];
+pub const HEADER_IMPORTS : &'static[Import] = &[];
 
 pub const HEADER_MEMORIES : &'static[Memory] = &[
     (Some("memory"), HEADER_MEMORY_WASM_PAGE_COUNT)

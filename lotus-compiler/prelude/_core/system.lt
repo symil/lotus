@@ -4,7 +4,7 @@ sys type(void) system {
     }
 
     assert(line: int, value: bool) {
-        assert(line, value);
+        wasm_assert(line, value);
     }
 
     alloc(block_size: int) -> ptr {
@@ -26,19 +26,19 @@ sys type(void) system {
     log<T>(value: T) {
         let str = value.to_string();
 
-        wasm_log(str);
+        wasm_log_string(str);
     }
 
-    log_int(value: int) {{
-        (call $log_int)
-    }}
+    log_int(value: int) {
+        wasm_log_int(value);
+    }
 
     get_debug_string<T>(value: T) -> string {
         value.__to_debug_string(Set<ptr>::new())
     }
 
     dbg<T>(value: T) {
-        wasm_log(@get_debug_string(value));
+        wasm_log_string(@get_debug_string(value));
     }
 
     serialize<T>(value: T) -> int[] {
@@ -67,11 +67,3 @@ sys type(void) system {
         event.emit(targets);
     }
 }
-
-fn wasm_log(value: string) {{
-    (call $log)
-}}
-
-fn assert(line_number: int, success: bool) {{
-    (call $assert)
-}}

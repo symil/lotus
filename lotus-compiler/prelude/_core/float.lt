@@ -68,7 +68,7 @@ export type(f32) float {
 
         let result = @alloc(16);
 
-        call_float_to_string(self, result);
+        wasm_call_float_to_string(self, result);
 
         result as string
     }
@@ -93,7 +93,3 @@ export type(f32) float {
         buffer.read().as_float()
     }
 }
-
-fn call_float_to_string(value: float, result_buffer: ptr) {{
-    (call $float_to_string)
-}}

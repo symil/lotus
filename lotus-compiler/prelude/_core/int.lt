@@ -198,7 +198,3 @@ fn int_to_string(n: int, base: int) -> string {
 
     str
 }
-
-fn log_int(n: int) {{
-    (call $log_int)
-}}

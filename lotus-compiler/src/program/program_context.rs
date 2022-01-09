@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionDetails, CompletionArea}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo, FunctionBody};
 
 #[derive(Debug, Default, Clone)]
 pub struct ProgramContextOptions {
@@ -954,6 +954,29 @@ impl ProgramContext {
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
+        }
+
+        for function_wrapped in self.functions.get_all() {
+            function_wrapped.with_ref(|function_unwrapped| {
+                if let FunctionBody::Import(first_namespace, second_namespace) = &function_unwrapped.body {
+                    let function_instance = self.get_function_instance(FunctionInstanceParameters {
+                        function_blueprint: function_wrapped.clone(),
+                        this_type: None,
+                        function_parameters: vec![],
+                    });
+
+                    let mut args = vec![];
+                    let mut ret = function_unwrapped.signature.return_type.resolve(&TypeIndex::empty(), self).wasm_type;
+
+                    for ty in &function_unwrapped.signature.argument_types {
+                        if let Some(wasm_type) = ty.resolve(&TypeIndex::empty(), self).wasm_type {
+                            args.push(wasm_type);
+                        }
+                    }
+
+                    content.push(Wat::import_function(first_namespace, second_namespace, &function_instance.wasm_name, args, ret));
+                }
+            });
         }
 
         for (export_name, page_count) in HEADER_MEMORIES {

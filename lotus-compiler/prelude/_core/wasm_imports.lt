@@ -1,0 +1,16 @@
+pub fn wasm_assert(line_number: int, success: bool) [
+    import utils.assert
+]
+
+pub fn wasm_call_float_to_string(value: float, result_buffer: ptr) [
+    import utils.float_to_string
+]
+
+pub fn wasm_log_string(value: string) [
+    import env.log
+]
+
+pub fn wasm_log_int(value: int) [
+    import env.log_int
+]
+
