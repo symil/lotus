@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use crate::{program::{CLOSURE_VARIABLES_VAR_NAME, FunctionInstanceWasmType, SELF_VAR_NAME, TypeIndex, VariableInfo, VariableKind}, utils::Link};
-use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat, Vasm};
+use super::{FunctionInstanceHeader, FunctionInstanceParameters, ProgramContext, Wat, Vasm, FunctionBody};
 
 #[derive(Debug)]
 pub struct FunctionInstanceContent {
@@ -14,7 +14,7 @@ impl FunctionInstanceContent {
             let mut wasm_declaration = None;
             let mut wasm_type_name = String::new();
 
-            if !function_unwrapped.is_raw_wasm {
+            if let FunctionBody::Vasm(body_vasm) = &function_unwrapped.body {
                 let type_index = TypeIndex {
                     current_type_instance: parameters.this_type.clone(),
                     current_function_parameters: parameters.function_parameters.clone(),
@@ -28,36 +28,34 @@ impl FunctionInstanceContent {
                 let mut wat_body = vec![];
                 let mut list : Vec<(VariableInfo, String)> = vec![];
 
-                if !function_unwrapped.is_raw_wasm {
-                    for arg_var in &function_unwrapped.argument_variables {
-                        variables.push(arg_var.clone());
-                        wat_body.extend(context.vasm().init_var(arg_var).resolve(&type_index, context));
-                    }
+                for arg_var in &function_unwrapped.argument_variables {
+                    variables.push(arg_var.clone());
+                    wat_body.extend(context.vasm().init_var(arg_var).resolve(&type_index, context));
+                }
 
-                    if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
-                        wat_ret.push(wasm_type);
-                    }
+                if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
+                    wat_ret.push(wasm_type);
+                }
 
-                    function_unwrapped.body.collect_variables(&mut variables);
+                body_vasm.collect_variables(&mut variables);
 
-                    for var_info in variables {
-                        if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
-                            let mut array = match var_info.kind().clone() {
-                                VariableKind::Global => unreachable!(),
-                                VariableKind::Local => &mut wat_locals,
-                                VariableKind::Argument => &mut wat_args,
-                            };
+                for var_info in variables {
+                    if let Some(wasm_type) = var_info.ty().resolve(&type_index, context).wasm_type {
+                        let mut array = match var_info.kind().clone() {
+                            VariableKind::Global => unreachable!(),
+                            VariableKind::Local => &mut wat_locals,
+                            VariableKind::Argument => &mut wat_args,
+                        };
 
-                            array.push((var_info.get_wasm_name(), wasm_type))
-                        }
-                    }
-
-                    if function_unwrapped.is_closure() {
-                        wat_args.push((CLOSURE_VARIABLES_VAR_NAME.to_string(), "i32"));
+                        array.push((var_info.get_wasm_name(), wasm_type))
                     }
                 }
 
-                wat_body.extend(function_unwrapped.body.resolve(&type_index, context));
+                if function_unwrapped.is_closure() {
+                    wat_args.push((CLOSURE_VARIABLES_VAR_NAME.to_string(), "i32"));
+                }
+
+                wat_body.extend(body_vasm.resolve(&type_index, context));
 
                 let wasm_type = FunctionInstanceWasmType {
                     arg_types: wat_args.iter().map(|(name, ty)| *ty).collect(),

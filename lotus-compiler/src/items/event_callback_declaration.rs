@@ -1,7 +1,7 @@
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, DataLocation};
-use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier}, utils::Link, wat};
+use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody}, utils::Link, wat};
 use super::{EventCallbackQualifierKeyword, Identifier, Expression, BlockExpression, VisibilityKeywordValue};
 
 #[parsable]
@@ -88,8 +88,7 @@ impl EventCallbackDeclaration {
                 first_declared_by: Some(this_type.clone()),
                 dynamic_index: None,
             }),
-            is_raw_wasm: false,
-            body: Vasm::undefined(),
+            body: FunctionBody::Empty,
         };
 
         let function_wrapped = Link::new(function_blueprint);
@@ -138,7 +137,7 @@ impl EventCallbackDeclaration {
                         }
                     }
 
-                    function_unwrapped.body = body_vasm;
+                    function_unwrapped.body = FunctionBody::Vasm(body_vasm);
                 });
             }
 

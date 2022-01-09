@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
 use crate::{items::{EventCallbackQualifierKeyword, MethodQualifierKeyword, Identifier, VisibilityKeywordValue}, program::{VariableKind, Wat}, utils::Link};
-use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -17,8 +17,7 @@ pub struct FunctionBlueprint {
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub closure_details: Option<ClosureDetails>,
     pub method_details: Option<MethodDetails>,
-    pub is_raw_wasm: bool,
-    pub body: Vasm
+    pub body: FunctionBody
 }
 
 #[derive(Debug)]
@@ -57,8 +56,7 @@ impl FunctionBlueprint {
             owner_interface: None,
             closure_details: None,
             method_details: None,
-            is_raw_wasm: false,
-            body: context.vasm(),
+            body: FunctionBody::Empty
         }
     }
     

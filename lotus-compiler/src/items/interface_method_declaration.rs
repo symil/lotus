@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{FieldKind, ProgramContext, Type, FunctionBlueprint, MethodQualifier, Visibility, Signature, MethodDetails, Vasm}, utils::Link};
+use crate::{program::{FieldKind, ProgramContext, Type, FunctionBlueprint, MethodQualifier, Visibility, Signature, MethodDetails, Vasm, FunctionBody}, utils::Link};
 use super::{MethodQualifierKeyword, FunctionSignature, Identifier};
 
 #[parsable]
@@ -44,8 +44,7 @@ impl InterfaceMethodDeclaration {
                 first_declared_by: None,
                 dynamic_index: None,
             }),
-            is_raw_wasm: false,
-            body: Vasm::undefined(),
+            body: FunctionBody::Empty
         }
     }
 }

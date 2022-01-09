@@ -51,6 +51,7 @@ mod compilation_error_chain;
 mod qualifiers;
 mod cursor_info;
 mod global_item_trait;
+mod function_body;
 
 pub use program_context::*;
 pub use utils::*;
@@ -104,3 +105,4 @@ pub use compilation_error_chain::*;
 pub use qualifiers::*;
 pub use cursor_info::*;
 pub use global_item_trait::*;
+pub use function_body::*;

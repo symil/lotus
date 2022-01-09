@@ -1,6 +1,6 @@
 use std::{hash::Hash, rc::Rc};
 use crate::{items::VisibilityKeywordValue, program::FunctionInstanceWasmType, utils::Link};
-use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat, Visibility};
+use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat, Visibility, FunctionBody};
 
 #[derive(Debug)]
 pub struct FunctionInstanceHeader {
@@ -22,11 +22,11 @@ impl FunctionInstanceHeader {
                     None => format!("{}_{}", &function_unwrapped.name, id),
                 }
             };
-            let mut wasm_call = match function_unwrapped.is_raw_wasm {
-                true => function_unwrapped.body.resolve_without_context(),
-                false => vec![
-                    Wat::call_from_stack(&wasm_name)
-                ],
+            let mut wasm_call = match &function_unwrapped.body {
+                FunctionBody::Empty => unreachable!(),
+                FunctionBody::Vasm(_) => vec![ Wat::call_from_stack(&wasm_name) ],
+                FunctionBody::RawWasm(wat) => wat.clone(),
+                FunctionBody::Import(_, _) => vec![ Wat::call_from_stack(&wasm_name) ],
             };
             let this_type = parameters.this_type.clone();
             let mut function_index = None;

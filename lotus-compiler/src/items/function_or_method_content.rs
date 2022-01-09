@@ -2,8 +2,8 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError, SignatureContent, MethodMetaQualifier, MethodQualifier, Visibility}, utils::Link, wat};
-use super::{EventCallbackQualifierKeyword, FunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifierKeyword, MethodQualifierKeyword, BlockExpression, TypeParameters, VisibilityKeywordValue, Expression};
+use crate::{items::TypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError, SignatureContent, MethodMetaQualifier, MethodQualifier, Visibility, FunctionBody}, utils::Link, wat};
+use super::{EventCallbackQualifierKeyword, ParsedFunctionBody, FunctionConditionList, FunctionSignature, Identifier, MethodMetaQualifierKeyword, MethodQualifierKeyword, BlockExpression, TypeParameters, VisibilityKeywordValue, Expression};
 
 #[parsable]
 pub struct FunctionOrMethodContent {
@@ -12,7 +12,7 @@ pub struct FunctionOrMethodContent {
     pub name: Identifier,
     pub parameters: Option<TypeParameters>,
     pub signature: FunctionSignature,
-    pub body: Option<FunctionBody>,
+    pub body: Option<ParsedFunctionBody>,
 }
 
 impl FunctionOrMethodContent {
@@ -47,8 +47,6 @@ impl FunctionOrMethodContent {
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters,
-            is_raw_wasm,
-            body: Vasm::undefined(),
             argument_names: vec![],
             signature: Signature::undefined(),
             argument_variables: vec![],
@@ -56,6 +54,7 @@ impl FunctionOrMethodContent {
             owner_interface: None,
             closure_details: None,
             method_details: None,
+            body: FunctionBody::Empty,
         };
 
         for details in function_blueprint.parameters.values() {
@@ -136,16 +135,16 @@ impl FunctionOrMethodContent {
         
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
-        if let Some(vasm) = body.process(Some(&return_type), context) {
+        if let Some(body) = body.process(Some(&return_type), context) {
             function_wrapped.with_mut(|mut function_unwrapped| {
-                if let FunctionBody::Block(block) = body {
+                if let FunctionBody::Vasm(vasm) = &body {
                     if !vasm.ty.is_assignable_to(&return_type) {
-                        context.errors.type_mismatch(&block, &return_type, &vasm.ty);
+                        let location = self.signature.return_type.as_ref().map(|t| t.location.clone()).unwrap_or(self.signature.location.get_end());
+                        context.errors.type_mismatch(&location, &return_type, &vasm.ty);
                     }
                 }
 
-                function_unwrapped.body = vasm;
-                function_unwrapped.is_raw_wasm = is_raw_wasm;
+                function_unwrapped.body = body;
             });
         }
 

@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{DataLocation, parsable};
-use crate::{items::{MethodQualifierKeyword, VisibilityKeywordValue}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME}, utils::Link};
+use crate::{items::{MethodQualifierKeyword, VisibilityKeywordValue}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody}, utils::Link};
 use super::{BlockExpression, Expression, FunctionLiteralArguments, FunctionLiteralBody, Identifier};
 
 #[parsable]
@@ -56,10 +56,9 @@ impl FunctionLiteral {
             argument_variables: vec![],
             owner_type: context.get_current_type(),
             owner_interface: context.get_current_interface(),
-            is_raw_wasm: false,
             closure_details: None,
             method_details: None,
-            body: context.vasm(),
+            body: FunctionBody::Empty,
         }, None);
 
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
@@ -69,7 +68,7 @@ impl FunctionLiteral {
 
             function_wrapped.with_mut(|mut function_unwrapped| {
                 function_unwrapped.signature = signature.clone();
-                function_unwrapped.body = vasm;
+                function_unwrapped.body = FunctionBody::Vasm(vasm);
             });
         }
 
@@ -84,6 +83,7 @@ impl FunctionLiteral {
             if let Some(closure_details) = &mut function_unwrapped.closure_details {
                 let mut function = FunctionBlueprint::new(Identifier::new("retain_function", Some(self)), context);
                 let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0);
+                let mut retain_vasm = context.vasm();
 
                 function.argument_variables = vec![closure_args_var.clone()];
 
@@ -92,15 +92,16 @@ impl FunctionLiteral {
                     let pointer_type = context.get_builtin_type(BuiltinType::Pointer, vec![arg.ty().clone()]);
 
                     if !arg.ty().is_undefined() {
-                        function.body = function.body
+                        retain_vasm = retain_vasm
                             .call_static_method(&arg.ty(), RETAIN_METHOD_NAME, &[], vec![context.vasm()
                                 .get_tmp_var(&closure_args_var)
                                 .call_regular_method(&map_type, "get", &[], vec![context.vasm().int(arg.get_name_hash())], context)
                                 .call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![ context.vasm().int(0i32) ], context)
                                 ], context);
-                            }
+                    }
                 }
 
+                function.body = FunctionBody::Vasm(retain_vasm);
                 closure_details.retain_function = Some(Link::new(function));
             }
         });
