@@ -1,5 +1,5 @@
 use std::{hash::Hash, rc::Rc};
-use crate::{items::VisibilityKeywordValue, program::FunctionInstanceWasmType, utils::Link};
+use crate::{items::ParsedVisibilityToken, program::FunctionInstanceWasmType, utils::Link};
 use super::{FunctionBlueprint, FunctionInstanceParameters, ProgramContext, TypeInstanceHeader, Wat, Visibility, FunctionBody};
 
 #[derive(Debug)]

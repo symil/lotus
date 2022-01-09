@@ -1,11 +1,11 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, Type, Vasm, FunctionBody}};
-use super::{BlockExpression, WasmExpressionList, ParsedFunctionImport};
+use super::{ParsedBlockExpression, ParsedWatExpressionList, ParsedFunctionImport};
 
 #[parsable]
 pub enum ParsedFunctionBody {
-    WebAssembly(WasmExpressionList),
-    Block(BlockExpression),
+    WebAssembly(ParsedWatExpressionList),
+    Block(ParsedBlockExpression),
     Import(ParsedFunctionImport)
 }
 

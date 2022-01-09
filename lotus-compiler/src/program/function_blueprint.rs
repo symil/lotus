@@ -1,7 +1,7 @@
 use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::DataLocation;
-use crate::{items::{EventCallbackQualifierKeyword, MethodQualifierKeyword, Identifier, VisibilityKeywordValue}, program::{VariableKind, Wat}, utils::Link};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, ParsedMethodQualifier, Identifier, ParsedVisibilityToken}, program::{VariableKind, Wat}, utils::Link};
 use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody};
 
 #[derive(Debug)]

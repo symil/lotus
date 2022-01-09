@@ -98,9 +98,9 @@
 [X] Show function argument info when typing
 [X] Add icon for lotus files
 [X] Make so external wasm functions can be imported via lotus
-[ ] Add extension setting to select compiler
-[ ] Prefix all items with `Parsed`
+[X] Add extension setting to select compiler
 [X] Do not insert function arguments if they are already there
+[X] Prefix all items with `Parsed`
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -121,7 +121,7 @@
 [ ] Improve `Link::borrow()`
 [ ] Add `assert` macro or equivalent to do tests (and ensure everything is fine in prod)
 [ ] Add stack trace somehow
-[ ] Re-use temporary variables when possible
+[ ] Re-use temporary wasm variables when possible
 [ ] Detect unreachable path and adapt the return type of a block
 [ ] Add a way to specify a `_init` method for objects, that will be run after an object is constructed
 [ ] `if let` expression

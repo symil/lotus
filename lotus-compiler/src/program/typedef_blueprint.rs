@@ -1,4 +1,4 @@
-use crate::items::{Identifier, VisibilityKeywordValue};
+use crate::items::{Identifier, ParsedVisibilityToken};
 use super::{GlobalItem, ProgramContext, Type, Visibility};
 
 #[derive(Debug)]

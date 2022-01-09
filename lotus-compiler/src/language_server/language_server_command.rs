@@ -1,6 +1,6 @@
 use std::mem::take;
 use parsable::ParseError;
-use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorInfo}, utils::FileSystemCache, items::LotusFile};
+use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorInfo}, utils::FileSystemCache, items::ParsedSourceFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_SEPARATOR : &'static str = "##";
@@ -37,7 +37,7 @@ impl LanguageServerCommand {
         })
     }
 
-    pub fn run(mut self, mut cache: Option<&mut FileSystemCache<LotusFile, ParseError>>) -> LanguageServerCommandOutput {
+    pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> LanguageServerCommandOutput {
         let callback = self.kind.get_callback();
         let mut context = ProgramContext::new(ProgramContextOptions {
             validate_only: true,

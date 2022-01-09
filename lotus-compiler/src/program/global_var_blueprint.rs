@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use parsable::DataLocation;
-use crate::{items::{Identifier, VisibilityKeywordValue}, program::{RETAIN_METHOD_NAME, VariableKind}};
+use crate::{items::{Identifier, ParsedVisibilityToken}, program::{RETAIN_METHOD_NAME, VariableKind}};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm, Visibility};
 
 #[derive(Debug)]

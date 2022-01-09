@@ -2,7 +2,7 @@ use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, b
 use indexmap::IndexMap;
 use colored::*;
 use parsable::DataLocation;
-use crate::{items::{ParsedType, TypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
+use crate::{items::{ParsedType, ParsedTypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, EnumVariantInfo};
 
 pub type Type = Wrapper<TypeContent>;

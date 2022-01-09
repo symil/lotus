@@ -2,13 +2,13 @@ use std::{rc::Rc};
 use parsable::parsable;
 use colored::*;
 use crate::program::{ActualTypeContent, AssociatedTypeContent, ProgramContext, SELF_TYPE_NAME, SELF_VAR_NAME, Type, TypeContent};
-use super::{TypeArguments, Identifier, TypeSuffix};
+use super::{ParsedTypeArguments, Identifier, ParsedTypeSuffixToken};
 
 #[parsable]
 #[derive(Default)]
 pub struct ParsedValueType {
     pub name: Identifier,
-    pub arguments: TypeArguments,
+    pub arguments: ParsedTypeArguments,
     #[parsable(prefix=":", separator=":", min=1, optional=true)]
     pub associated_types: Vec<Identifier>
 }

@@ -1,16 +1,16 @@
 use parsable::parsable;
 use crate::program::{FunctionBody, ProgramContext};
-use super::{Identifier, OpeningSquareBracket, ClosingSquareBracket, DotToken};
+use super::{Identifier, ParsedOpeningSquareBracket, ParsedClosingSquareBracket, ParsedDot};
 
 #[parsable]
 pub struct ParsedFunctionImport {
-    pub opening_bracket: OpeningSquareBracket,
+    pub opening_bracket: ParsedOpeningSquareBracket,
     #[parsable(value="import")]
     pub import_keyword: String,
     pub first_namespace: Identifier,
-    pub dot: DotToken,
+    pub dot: ParsedDot,
     pub second_namespace: Identifier,
-    pub closing_bracket: ClosingSquareBracket,
+    pub closing_bracket: ParsedClosingSquareBracket,
 }
 
 impl ParsedFunctionImport {

@@ -1,7 +1,7 @@
 use std::{rc::Rc, borrow::Borrow};
 use indexmap::IndexMap;
 use parsable::DataLocation;
-use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};
+use crate::{items::{Identifier, ParsedVisibilityToken}, utils::Link};
 use super::{FuncRef, FunctionBlueprint, GlobalItem, InterfaceList, ParameterTypeInfo, Type, Visibility, FieldKind};
 
 #[derive(Debug)]

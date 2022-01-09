@@ -1,5 +1,5 @@
 use std::{cell::Ref, rc::Rc};
-use crate::{items::{Identifier, VisibilityKeywordValue}, utils::Link};
+use crate::{items::{Identifier, ParsedVisibilityToken}, utils::Link};
 use super::{ProgramContext, Type, TypeIndex, TypeInstanceHeader, Wat, GlobalItem, Visibility};
 
 pub type VariableInfo = Link<VariableInfoContent>;

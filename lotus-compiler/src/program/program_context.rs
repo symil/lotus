@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{EventCallbackQualifierKeyword, Identifier, LotusFile, TopLevelBlock, TypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo, FunctionBody};
 
 #[derive(Debug, Default, Clone)]
@@ -15,7 +15,7 @@ pub struct ProgramContextOptions {
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
     pub source_file_list: Vec<SourceFileDetails>,
-    pub parsed_source_files: Vec<Rc<LotusFile>>,
+    pub parsed_source_files: Vec<Rc<ParsedSourceFile>>,
     pub errors: CompilationErrorList,
 
     pub default_interfaces: InterfaceList,
@@ -620,7 +620,7 @@ impl ProgramContext {
         Vasm::new(!self.options.validate_only)
     }
 
-    pub fn parse_source_files(&mut self, directories: &[SourceDirectoryDetails], provided_cache: Option<&mut FileSystemCache<LotusFile, ParseError>>) {
+    pub fn parse_source_files(&mut self, directories: &[SourceDirectoryDetails], provided_cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) {
         for details in directories {
             let mut path_list = vec![];
 
@@ -659,7 +659,7 @@ impl ProgramContext {
 
                 processed_count += 1;
 
-                LotusFile::parse(file_content, parse_options)
+                ParsedSourceFile::parse(file_content, parse_options)
             };
 
             let result = cache.read_file(file_path, parse_function);
@@ -686,11 +686,11 @@ impl ProgramContext {
         for file in &parsed_source_files {
             for block in &file.blocks {
                 match block {
-                    TopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
-                    TopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
-                    TopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
-                    TopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
-                    TopLevelBlock::GlobalDeclaration(global_declaration) => global_vars.push(global_declaration),
+                    ParsedTopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
+                    ParsedTopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
+                    ParsedTopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
+                    ParsedTopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
+                    ParsedTopLevelBlock::GlobalDeclaration(global_declaration) => global_vars.push(global_declaration),
                 }
             }
         }
@@ -729,7 +729,7 @@ impl ProgramContext {
 
         match sort_dependancy_graph(links) {
             Ok(result) => {
-                let mut wrapped : Vec<Option<&TypeDeclaration>> = types.into_iter().map(|ty| Some(ty)).collect();
+                let mut wrapped : Vec<Option<&ParsedTypeDeclaration>> = types.into_iter().map(|ty| Some(ty)).collect();
                 types = vec![];
 
                 for index in result {

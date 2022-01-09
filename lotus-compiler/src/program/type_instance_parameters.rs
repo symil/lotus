@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::IndexMap;
-use crate::{items::StackType, program::OBJECT_HEADER_SIZE, utils::Link};
+use crate::{items::StackTypeToken, program::OBJECT_HEADER_SIZE, utils::Link};
 use super::{FieldInstance, ItemGenerator, ProgramContext, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, type_blueprint};
 
 #[derive(Debug, Clone)]

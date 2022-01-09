@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{items::VisibilityKeywordValue};
+use crate::{items::ParsedVisibilityToken};
 use super::{VariableInfo, Wat};
 
 #[derive(Debug)]

@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{Identifier, ParsedTypeSingle, ParsedTypeTuple, MacroType};
+use super::{Identifier, ParsedTypeSingle, ParsedTypeTuple, ParsedMacroType};
 
 #[parsable]
 pub enum ParsedTypeWithoutSuffix {
-    Macro(MacroType),
+    Macro(ParsedMacroType),
     Single(ParsedTypeSingle),
     Tuple(ParsedTypeTuple)
 }

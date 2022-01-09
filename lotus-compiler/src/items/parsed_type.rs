@@ -1,12 +1,12 @@
 use parsable::parsable;
 use crate::program::{BuiltinType, ProgramContext, Type};
-use super::{Identifier, ParsedTypeSingle, ParsedTypeWithoutSuffix, TypeSuffix, TypeSuffixWrapper};
+use super::{Identifier, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedTypeSuffixToken, ParsedTypeSuffix};
 
 #[parsable]
 #[derive(Default)]
 pub struct ParsedType {
     pub parsed_type: ParsedTypeWithoutSuffix,
-    pub suffix: Vec<TypeSuffixWrapper>
+    pub suffix: Vec<ParsedTypeSuffix>
 }
 
 impl ParsedType {
@@ -19,7 +19,7 @@ impl ParsedType {
 
     pub fn is_option(&self) -> bool {
         match self.suffix.last() {
-            Some(s) => s.value == TypeSuffix::Option,
+            Some(s) => s.token == ParsedTypeSuffixToken::Option,
             None => false,
         }
     }
