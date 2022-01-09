@@ -22,9 +22,10 @@ const EMPTY_TYPE_LIST : [Type; 0] = [];
 impl ParsedAnonymousFunction {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
-        let arg_names = self.arguments.process(type_hint, context);
+        let arguments = self.arguments.process(type_hint, context);
+        let provided_argument_count = arguments.len();
         let void_type = context.void_type();
-        let (arg_types, return_type) = match type_hint.map(|t| t.content()) {
+        let (expected_arg_types, expected_return_type) = match type_hint.map(|t| t.content()) {
             Some(TypeContent::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
             _ => (EMPTY_TYPE_LIST.as_slice(), &void_type)
         };
@@ -32,12 +33,15 @@ impl ParsedAnonymousFunction {
         let mut argument_names = vec![];
         let mut argument_types = vec![];
 
-        for (i, name) in arg_names.iter().enumerate() {
-            let arg_type = match arg_types.get(i) {
-                Some(ty) => ty.clone(),
-                None => {
-                    context.errors.generic(name, format!("cannot infer type of `{}`", name.as_str().bold()));
-                    Type::undefined()
+        for (i, (name, typt_opt)) in arguments.into_iter().enumerate() {
+            let arg_type = match typt_opt {
+                Some(ty) => ty,
+                None => match expected_arg_types.get(i) {
+                    Some(ty) => ty.clone(),
+                    None => {
+                        context.errors.generic(name, format!("cannot infer type of `{}`", name.as_str().bold()));
+                        Type::undefined()
+                    },
                 },
             };
 
@@ -45,7 +49,14 @@ impl ParsedAnonymousFunction {
             argument_types.push(arg_type);
         }
 
-        let mut signature = Signature::create(None, argument_types, return_type.clone());
+        if expected_arg_types.len() > provided_argument_count {
+            for (i, ty) in expected_arg_types[provided_argument_count..].iter().enumerate() {
+                argument_names.push(Identifier::unlocated(&format!("__unused_arg_{}", i + provided_argument_count)));
+                argument_types.push(ty.clone());
+            }
+        }
+
+        let mut signature = Signature::create(None, argument_types, expected_return_type.clone());
         let function_wrapped = context.functions.insert(FunctionBlueprint {
             function_id: self.location.get_hash(),
             name: Identifier::new("anonymous_function", Some(self)),
@@ -63,7 +74,7 @@ impl ParsedAnonymousFunction {
 
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
-        if let Some(vasm) = self.body.process(Some(return_type), context) {
+        if let Some(vasm) = self.body.process(Some(expected_return_type), context) {
             signature = Signature::create(None, signature.argument_types.clone(), vasm.ty.clone());
 
             function_wrapped.with_mut(|mut function_unwrapped| {

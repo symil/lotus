@@ -1,10 +1,11 @@
 use parsable::{DataLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ParsedAction, ParsedArrayLiteral, ParsedAssignment, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef};
+use super::{ParsedAction, ParsedArrayLiteral, ParsedAssignment, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug};
 
 #[parsable]
 pub enum ParsedVarPathRoot {
     Macro(ParsedMacroExpression),
+    DebugMacro(ParsedMacroDebug),
     VarDeclaration(ParsedVarDeclaration),
     Action(ParsedAction),
     MatchBlock(ParsedMatchBlock),
@@ -43,6 +44,7 @@ impl ParsedVarPathRoot {
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
         match self {
             ParsedVarPathRoot::Macro(_) => {},
+            ParsedVarPathRoot::DebugMacro(_) => {},
             ParsedVarPathRoot::NoneLiteral(_) => {},
             ParsedVarPathRoot::BooleanLiteral(_) => {},
             ParsedVarPathRoot::NumberLiteral(_) => {},
@@ -66,6 +68,7 @@ impl ParsedVarPathRoot {
 
         match self {
             ParsedVarPathRoot::Macro(mac) => mac.process(context),
+            ParsedVarPathRoot::DebugMacro(mac) => mac.process(context),
             ParsedVarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context),
             ParsedVarPathRoot::BooleanLiteral(boolean_literal) => boolean_literal.process(context),
             ParsedVarPathRoot::NumberLiteral(number_literal) => number_literal.process(type_hint, context),

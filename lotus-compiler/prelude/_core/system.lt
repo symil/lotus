@@ -63,6 +63,10 @@ sys type(void) system {
         @log(value as int);
     }
 
+    __type<T>(value: T) {
+        @log(T::__type_name());
+    }
+
     emit(event: Event, targets: Object[]) {
         event.emit(targets);
     }

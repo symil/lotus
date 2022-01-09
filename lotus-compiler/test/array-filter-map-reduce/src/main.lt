@@ -1,0 +1,21 @@
+export fn main() {
+    let a = [1, 2, 3, 4, 5].filter(n => n % 2 == 1);
+    let b = a.map(n => "number: " + n.to_string());
+    let c = a.reduce(0, (a, b) => a + b);
+    let d = [0, 1, 3, 4, 10, 5, 6].filter((n, i) => n == i);
+    let e = d.map((n, i) => n + i);
+    let f = e.reduce(1, (acc, n, i) => acc + n * i);
+    let g = ["a", "b", "c"].map(map_function);
+
+    @dbg(a);
+    @dbg(b);
+    @dbg(c);
+    @dbg(d);
+    @dbg(e);
+    @dbg(f);
+    @dbg(g);
+}
+
+fn map_function(str: string, i: int) -> string {
+    `${i}: ${str}`
+}

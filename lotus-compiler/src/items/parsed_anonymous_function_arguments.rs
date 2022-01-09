@@ -1,20 +1,40 @@
 use std::slice::from_ref;
 use parsable::{DataLocation, parsable};
-use crate::program::{ProgramContext, Type, Vasm};
-use super::{ParsedBlockExpression, ParsedExpression, Identifier};
+use crate::program::{ProgramContext, Type, Vasm, VariableInfo};
+use super::{ParsedBlockExpression, ParsedExpression, Identifier, ParsedType};
 
 #[parsable]
 pub enum ParsedAnonymousFunctionArguments {
     Single(Identifier),
     #[parsable(brackets="()", separator=",")]
-    Multiple(Vec<Identifier>)
+    Multiple(Vec<ParsedAnonymousFunctionArgument>)
+}
+
+#[parsable]
+pub struct ParsedAnonymousFunctionArgument {
+    pub name: Identifier,
+    #[parsable(prefix=":")]
+    pub ty: Option<ParsedType>
 }
 
 impl ParsedAnonymousFunctionArguments {
-    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> &[Identifier] {
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Vec<(&Identifier, Option<Type>)> {
+        let mut result = vec![];
+
         match self {
-            ParsedAnonymousFunctionArguments::Single(name) => from_ref(name),
-            ParsedAnonymousFunctionArguments::Multiple(names) => names.as_slice(),
-        }
+            ParsedAnonymousFunctionArguments::Single(name) => {
+                result.push((name, None));
+            },
+            ParsedAnonymousFunctionArguments::Multiple(arguments) => {
+                for arg in arguments {
+                    let name = &arg.name;
+                    let ty = arg.ty.as_ref().and_then(|ty| ty.process(true, context));
+
+                    result.push((name, ty));
+                }
+            },
+        };
+
+        result
     }
 }

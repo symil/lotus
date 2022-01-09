@@ -1,0 +1,13 @@
+export fn main() {
+    let f1 = () => {};
+    let f2 = () => 5;
+    let f3 = (a: int, b: int) => a + b;
+    let f4 : fn(int, int)(int) = (a, b) => a + b;
+    let f5 : fn(int, int) = () => {};
+
+    #DEBUG_TYPE(f1);
+    #DEBUG_TYPE(f2);
+    #DEBUG_TYPE(f3);
+    #DEBUG_TYPE(f4);
+    #DEBUG_TYPE(f5);
+}
