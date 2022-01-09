@@ -103,7 +103,7 @@
 [X] Prefix all items with `Parsed`
 [X] Allow to specify argument types in anonymous functions
 [X] Allow to not specify all expected arguments in anonymous functions
-[ ] Setting to disable language server
+[X] Setting to disable language server
 
 -- LATER --
 [ ] Allow manually specifying function parameters
