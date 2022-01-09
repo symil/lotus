@@ -9,13 +9,13 @@ view Window {
 
     @OnRender {
         self
-            .background_color(WHITE)
+            .background_color(Color::white())
             .scale(0.5)
     }
 
     @OnPostRender {
         self
-            .hover_background_color(ORANGE)
+            .hover_background_color(Color::orange())
             .hover_cursor(Cursor::Pointer)
             .on_click(() => evt.client.request(MyRequest { value: "foo" }))
     }
