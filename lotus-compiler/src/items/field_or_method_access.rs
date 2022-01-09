@@ -18,13 +18,13 @@ impl FieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        context.add_field_completion_area(&self.dot, parent_type);
+        context.add_field_completion_area(&self.dot, parent_type, self.arguments.is_none());
 
         match &self.name {
             Some(identifier) => {
                 match identifier.process(context) {
                     Some(name) => {
-                        context.add_field_completion_area(&name.location, parent_type);
+                        context.add_field_completion_area(&name.location, parent_type, self.arguments.is_none());
 
                         match &self.arguments {
                             Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),

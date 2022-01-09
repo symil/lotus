@@ -6,12 +6,12 @@ use super::{ArgumentList, FieldOrMethodAccess, ParsedType, Identifier, VarPrefix
 #[parsable]
 pub struct VarRef {
     pub name: IdentifierWrapper,
-    pub args: Option<ArgumentList>
+    pub arguments: Option<ArgumentList>
 }
 
 impl VarRef {
     pub fn has_side_effects(&self) -> bool {
-        self.args.is_some()
+        self.arguments.is_some()
     }
 
     pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
@@ -22,9 +22,9 @@ impl VarRef {
         let current_function_level = Some(context.get_function_level());
         let var_name = self.name.process(context)?;
 
-        context.add_variable_completion_area(&var_name.location);
+        context.add_variable_completion_area(&var_name.location, self.arguments.is_none());
 
-        match &self.args {
+        match &self.arguments {
             Some(args) => match context.access_var(&var_name) {
                 Some(var_info) => match &var_info.ty().clone().content() {
                     TypeContent::Function(signature) => {

@@ -85,7 +85,7 @@ impl CompletionItemList {
             .description(variant.owner.borrow().self_type.to_string());
     }
 
-    pub fn add_function(&mut self, function: Link<FunctionBlueprint>) {
+    pub fn add_function(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();
             let is_internal_method = function_name.starts_with(INTERNAL_ITEM_PREFIX);
@@ -101,17 +101,23 @@ impl CompletionItemList {
                 false => CompletionItemKind::Function,
             };
 
-            let mut insert_text = format!("{}(", function_name);
+            let insert_text = match insert_arguments {
+                true => {
+                    let mut text = format!("{}(", function_name);
 
-            for (i, arg) in function_unwrapped.argument_names.iter().enumerate() {
-                insert_text.push_str(&format!("${{{}:{}}}", i + 1, arg.as_str()));
+                    for (i, arg) in function_unwrapped.argument_names.iter().enumerate() {
+                        text.push_str(&format!("${{{}:{}}}", i + 1, arg.as_str()));
 
-                if i != function_unwrapped.argument_names.len() - 1 {
-                    insert_text.push_str(", ");
-                }
-            }
+                        if i != function_unwrapped.argument_names.len() - 1 {
+                            text.push_str(", ");
+                        }
+                    }
 
-            insert_text.push_str(")");
+                    text.push_str(")");
+                    text
+                },
+                false => function_name.to_string(),
+            };
 
             self
                 .add(format!("{}(…)", function_name))
@@ -121,8 +127,8 @@ impl CompletionItemList {
         });
     }
 
-    pub fn add_method(&mut self, method: Link<FunctionBlueprint>) {
-        self.add_function(method);
+    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool) {
+        self.add_function(method, insert_arguments);
     }
 
     pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>) {

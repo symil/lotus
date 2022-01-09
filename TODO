@@ -100,7 +100,7 @@
 [X] Make so external wasm functions can be imported via lotus
 [ ] Add extension setting to select compiler
 [ ] Prefix all items with `Parsed`
-[ ] Do not insert function arguments if they are already there
+[X] Do not insert function arguments if they are already there
 
 -- LATER --
 [ ] Allow manually specifying function parameters

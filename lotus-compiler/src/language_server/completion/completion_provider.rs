@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::DataLocation;
 use crate::{program::CursorInfo, utils::is_valid_identifier};
-use super::{CompletionArea, CompletionDetails};
+use super::{CompletionArea, CompletionContent};
 
 #[derive(Debug)]
 pub struct CompletionProvider {
@@ -17,7 +17,7 @@ impl CompletionProvider {
         }
     }
 
-    pub fn insert<F : FnOnce() -> CompletionDetails>(&mut self, area_location: &DataLocation, make_details: F) {
+    pub fn insert<F : FnOnce() -> CompletionContent>(&mut self, area_location: &DataLocation, make_details: F) {
         let (under_cursor, is_valid_identifier) = match &self.cursor {
             Some(cursor) => match cursor.file_path.as_str() == area_location.file.path.as_str() {
                 true => match is_valid_identifier(area_location.as_str()) {
@@ -38,7 +38,7 @@ impl CompletionProvider {
 
             self.areas_under_cursor.push(CompletionArea {
                 location,
-                details,
+                content: details,
             });
         }
     }
