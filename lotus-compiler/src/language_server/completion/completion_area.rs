@@ -37,17 +37,17 @@ impl CompletionArea {
             },
             CompletionContent::Type(details) => {
                 for ty in &details.available_types {
-                    items.add_type(ty.clone(), None);
+                    items.add_type(ty.clone(), None, false);
                 }
 
                 if let Some(ty) = &details.self_type {
-                    items.add_type(ty.clone(), Some(SELF_TYPE_NAME));
+                    items.add_type(ty.clone(), Some(SELF_TYPE_NAME), false);
                 }
             },
-            CompletionContent::Event(types) => {
-                for ty in types {
+            CompletionContent::Event(details) => {
+                for ty in &details.available_events {
                     if ty.get_type_blueprint().borrow().name.as_str() != BuiltinType::Event.get_name() {
-                        items.add_type(ty.clone(), None);
+                        items.add_event(ty.clone(), details.insert_brackets);
                     }
                 }
             },
@@ -70,15 +70,15 @@ impl CompletionArea {
                 }
 
                 for type_wrapped in &details.available_types {
-                    items.add_type(type_wrapped.borrow().self_type.clone(), None);
+                    items.add_type(type_wrapped.borrow().self_type.clone(), None, true);
                 }
 
                 for typedef_wrapped in &details.available_typedefs {
-                    items.add_type(typedef_wrapped.borrow().target.clone(), None);
+                    items.add_type(typedef_wrapped.borrow().target.clone(), None, true);
                 }
 
                 if let Some(type_blueprint) = &details.self_type {
-                    items.add_type(type_blueprint.borrow().self_type.clone(), Some(SELF_TYPE_NAME));
+                    items.add_type(type_blueprint.borrow().self_type.clone(), Some(SELF_TYPE_NAME), true);
                 }
             },
         }

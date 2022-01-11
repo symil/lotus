@@ -66,7 +66,7 @@ export type(f32) float {
             return "none";
         }
 
-        let result = @alloc(16);
+        let result = @alloc(64);
 
         wasm_call_float_to_string(self, result);
 

@@ -1,4 +1,4 @@
-use super::COMMAND_SEPARATOR;
+use super::{COMMAND_SEPARATOR, COMMAND_OUTPUT_ITEM_LINE_START};
 
 pub struct LanguageServerCommandOutput {
     id: u32,
@@ -46,6 +46,6 @@ impl LanguageServerCommandOutput {
     pub fn consume(mut self) -> String {
         self.flush();
         self.lines.insert(0, self.id.to_string());
-        self.lines.join("\n")
+        self.lines.join(COMMAND_OUTPUT_ITEM_LINE_START)
     }
 }

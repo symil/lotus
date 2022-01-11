@@ -147,6 +147,7 @@
 [ ] Improve performance of source files processing
 [ ] Improve performance of wasm generation
 [ ] Add better syntax highlighting from language server (https://code.visualstudio.com/api/references/vscode-api#DocumentSemanticTokensProvider)
+[ ] Have different types for `DisplaySize`?
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

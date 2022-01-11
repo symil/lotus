@@ -19,7 +19,11 @@ impl ParsedEventCallbackDeclaration {
         let type_id = this_type.borrow().type_id;
         let qualifier = self.event_callback_qualifier.process();
 
-        context.add_event_completion_area(&self.event_callback_qualifier);
+        context.add_event_completion_area(&self.event_callback_qualifier, self.body.is_none());
+
+        if let Some(name) = &self.name {
+            context.add_event_completion_area(name, self.body.is_none());
+        }
 
         let (name, event_type) = match &self.name {
             Some(name) => match context.types.get_by_identifier(name) {
@@ -41,7 +45,6 @@ impl ParsedEventCallbackDeclaration {
 
         context.rename_provider.add_occurence(name, &event_type.borrow().name);
         context.hover_provider.set_definition(name, &event_type.borrow().name);
-        context.add_event_completion_area(name);
 
         let priority_vasm = match &self.priority {
             Some(expression) => match expression.process(Some(&context.int_type()), context) {

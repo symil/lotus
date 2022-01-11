@@ -4,10 +4,16 @@ use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint
 pub enum CompletionContent {
     FieldOrMethod(FieldCompletionDetails),
     StaticField(FieldCompletionDetails),
-    Event(Vec<Type>),
+    Event(EventCompletionDetails),
     Interface(Vec<Link<InterfaceBlueprint>>),
     Type(TypeCompletionDetails),
     Variable(VariableCompletionDetails)
+}
+
+#[derive(Debug)]
+pub struct EventCompletionDetails {
+    pub available_events: Vec<Type>,
+    pub insert_brackets: bool
 }
 
 #[derive(Debug)]

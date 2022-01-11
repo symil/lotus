@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails, EventCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo, FunctionBody};
 
 #[derive(Debug, Default, Clone)]
@@ -384,19 +384,22 @@ impl ProgramContext {
         self.completion_provider = Some(index);
     }
 
-    pub fn add_event_completion_area(&mut self, location: &DataLocation) {
+    pub fn add_event_completion_area(&mut self, location: &DataLocation, insert_brackets: bool) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
         index.insert(location, || {
-            let mut event_type_list = vec![];
+            let mut available_events = vec![];
 
             for type_wrapped in self.types.get_all_from_location(location) {
                 if type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
-                    event_type_list.push(type_wrapped.borrow().self_type.clone());
+                    available_events.push(type_wrapped.borrow().self_type.clone());
                 }
             }
 
-            CompletionContent::Event(event_type_list)
+            CompletionContent::Event(EventCompletionDetails {
+                available_events,
+                insert_brackets,
+            })
         });
 
         self.completion_provider = Some(index);

@@ -1,0 +1,14 @@
+pub view TextBox {
+    text: string,
+
+    @OnRender {
+        self.background_color(Color::orange())
+            .border_color(Color::black())
+            .border_radius(.15m)
+            .border_width(.04m)
+            .text_horizontal_align(HorizontalAlign::Center)
+            .text_size(.5h)
+            .text(self.text)
+            .cursor(Cursor::Text);
+    }
+}

@@ -3,6 +3,7 @@ use parsable::ParseError;
 use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorInfo}, utils::FileSystemCache, items::ParsedSourceFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
+pub const COMMAND_OUTPUT_ITEM_LINE_START : &'static str = "\n#?!#";
 pub const COMMAND_SEPARATOR : &'static str = "##";
 
 pub struct LanguageServerCommand {

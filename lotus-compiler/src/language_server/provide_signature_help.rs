@@ -1,4 +1,4 @@
-use crate::program::{ProgramContext, FunctionCall};
+use crate::program::{ProgramContext, FunctionCall, SELF_VAR_NAME, VariableInfo};
 use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
 
 pub fn provide_signature_help(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
@@ -14,13 +14,15 @@ pub fn provide_signature_help(parameters: &LanguageServerCommandParameters, cont
         match &area.function_call {
             FunctionCall::Named(details) => {
                 details.function.with_ref(|function_unwrapped| {
-                    for (i, arg_info) in function_unwrapped.argument_variables.iter().enumerate() {
+                    let arguments : Vec<&VariableInfo> = function_unwrapped.argument_variables.iter().filter(|var| var.name().as_str() != SELF_VAR_NAME).collect();
+
+                    for (i, arg_info) in arguments.iter().enumerate() {
                         let arg_str = format!("{}: {}", arg_info.name().as_str(), arg_info.with_ref(|info| info.ty.to_string()));
 
                         argument_ranges.push((label.len(), label.len() + arg_str.len()));
                         label.push_str(&arg_str);
 
-                        if i != function_unwrapped.argument_variables.len() - 1 {
+                        if i != arguments.len() - 1 {
                             label.push_str(", ");
                         }
                     }

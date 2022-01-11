@@ -1,3 +1,5 @@
+import { readStringFromMemory } from './js-wasm-communication';
+
 export class MemoryBuffer {
     constructor(memory, index, capacity) {
         this._memoryAsInt = memory;

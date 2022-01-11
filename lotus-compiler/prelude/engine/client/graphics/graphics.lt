@@ -21,7 +21,7 @@ export class Graphics {
     text: string = none,
     text_font: Font = Font::Arial,
     text_size: DisplaySize = none,
-    text_color: Color = none,
+    text_color: Color = Color::black(),
     text_alpha: float = 1,
     text_margin: DisplaySize = none,
     text_max_width: DisplaySize = none,

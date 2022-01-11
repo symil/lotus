@@ -69,6 +69,8 @@ impl ParsedNumberLiteral {
             Number::ScaledFromContainerMinSize(value) => create_display_size(SCALED_FROM_MIN_SIZE_VARIANT_VALUE, value, context),
         };
 
+        context.hover_provider.set_type(self, &vasm.ty);
+
         Some(vasm)
     }
 }

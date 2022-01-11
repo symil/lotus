@@ -1,34 +1,17 @@
-class MyRequest {
-    value: string
-}
-
 view Window {
-    test() {
-        let a = self;
-    }
-
     @OnRender {
-        self
-            .background_color(Color::white())
-            .scale(0.5)
-    }
-
-    @OnPostRender {
-        self
-            .hover_background_color(Color::orange())
-            .hover_cursor(Cursor::Pointer)
-            .on_click(() => evt.client.request(MyRequest { value: "foo" }))
+        self.background_color(Color::white());
+        self.layout()
+            .move_to(0.5, 0.5)
+            .scale_x(0.35)
+            .strip_to_match_aspect_ratio(5)
+            .push(TextBox { text: "Hello" })
     }
 }
 
 class World {
     @OnWorldInit {
-        let value : string = evt.server.load("hello");
-        @dbg(value);
-        value = "This is a test";
-        evt.server.store("hello", value);
-        value = evt.server.load("hello");
-        @dbg(value);
+        @log("WORLD INIT");
     }
 
     @OnUserConnect {
@@ -42,15 +25,4 @@ class World {
     @OnUserRequest {
 
     }
-}
-
-class Foo {
-    int_field: int,
-    string: string,
-    string_field: string,
-    string_field_other: string
-}
-
-fn my_function() {
-    let foo = Foo {};
 }

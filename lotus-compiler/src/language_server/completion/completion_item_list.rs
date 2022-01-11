@@ -131,7 +131,21 @@ impl CompletionItemList {
         self.add_function(method, insert_arguments);
     }
 
-    pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>) {
+    pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
+        let label = event_type.to_string();
+        let mut insert_text = label.clone();
+
+        if insert_brackets {
+            insert_text.push_str(" {\n\t$0\n}");
+        }
+
+        self
+            .add(label)
+            .kind(CompletionItemKind::Event)
+            .insert_text(insert_text);
+    }
+
+    pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>, insert_double_colon_if_enum: bool) {
         let parameters = ty.get_parameters();
         let has_parameters = !parameters.is_empty();
         let type_name = replace_string(&ty.to_string(), '<', '>', "");
@@ -145,13 +159,10 @@ impl CompletionItemList {
             label = name.to_string();
         }
 
-        self
-            .add(format!("{}", label))
-            .kind(CompletionItemKind::Class)
-            .description(format!("(type) {}", &type_name));
+        let mut insert_text = label.clone();
         
         if !parameters.is_empty() {
-            let mut insert_text = format!("{}<", &type_name);
+            insert_text = format!("{}<", &type_name);
 
             for (i, param) in parameters.iter().enumerate() {
                 insert_text.push_str(&format!("${{{}:{}}}", i + 1, param.to_string()));
@@ -162,9 +173,17 @@ impl CompletionItemList {
             }
 
             insert_text.push_str(">");
-
-            self.insert_text(insert_text);
         }
+
+        if ty.is_enum() && insert_double_colon_if_enum {
+            insert_text.push_str("::");
+        }
+
+        self
+            .add(format!("{}", label))
+            .kind(CompletionItemKind::Class)
+            .description(format!("(type) {}", &type_name))
+            .insert_text(insert_text);
     }
 
     pub fn add_interface(&mut self, interface: Link<InterfaceBlueprint>) {
