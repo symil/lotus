@@ -190,10 +190,11 @@ impl CompletionItemList {
     }
 
     pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
-        let label = event_type.to_string();
+        let mut label = event_type.to_string();
         let mut insert_text = label.clone();
 
         if insert_brackets {
+            label.push_str(" {}");
             insert_text.push_str(" {\n\t$0\n}");
         }
 
