@@ -110,6 +110,16 @@ export class Array<T> {
         self.length = 0;
     }
 
+    index_of(searched_item: T) -> int? {
+        for [i, item] in self {
+            if item == searched_item {
+                return i;
+            }
+        }
+
+        none
+    }
+
     _add_length(additional_length: int) -> int {
         let current_length = self.length;
         let new_length = current_length + additional_length;

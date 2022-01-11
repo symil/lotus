@@ -104,6 +104,9 @@
 [X] Allow to specify argument types in anonymous functions
 [X] Allow to not specify all expected arguments in anonymous functions
 [X] Setting to disable language server
+[X] Add enum variants/static methods/true/false/none in completion list when they match the expected type
+[X] Handle completion item order in language server
+[X] Integrate autocompletion commands to language server
 
 -- LATER --
 [ ] Allow manually specifying function parameters

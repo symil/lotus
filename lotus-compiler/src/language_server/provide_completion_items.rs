@@ -7,11 +7,14 @@ pub fn provide_completion_items(parameters: &LanguageServerCommandParameters, co
             output
                 .line("item")
                 .push(item.label)
+                .push(item.position.map(|position| position as u32).unwrap_or(0))
                 .push_opt(item.kind.map(|kind| kind.to_str()))
                 .push_opt(item.description.as_ref())
                 .push_opt(item.detail.as_ref())
                 .push_opt(item.documentation.as_ref())
-                .push_opt(item.insert_text.as_ref());
+                .push_opt(item.insert_text.as_ref())
+                .push_opt(item.filter_text.as_ref())
+                .push_opt(item.command);
         }
     }
 }

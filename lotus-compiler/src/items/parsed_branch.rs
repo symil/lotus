@@ -7,7 +7,7 @@ use super::{ParsedExpression, ParsedBlockExpression};
 pub struct ParsedBranch {
     #[parsable(set_marker="no-object")]
     pub condition: ParsedExpression,
-    pub body: ParsedBlockExpression
+    pub body: Option<ParsedBlockExpression>
 }
 
 impl ParsedBranch {
@@ -19,7 +19,15 @@ impl ParsedBranch {
     }
 
     pub fn process_body(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        self.body.process(type_hint, context)
+        let body = match &self.body {
+            Some(body) => body,
+            None => {
+                context.errors.expected_block(self);
+                return None;
+            }
+        };
+
+        body.process(type_hint, context)
     }
 }
 

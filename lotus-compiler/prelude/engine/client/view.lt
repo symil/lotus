@@ -1,6 +1,8 @@
 type MouseHandlerCallback = fn();
 
 export class View {
+    client: Client?,
+    focused: bool,
     rect: Rect,
     graphics: Graphics,
     hover: Graphics = Graphics::empty(),

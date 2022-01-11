@@ -37,4 +37,5 @@ pub struct VariableCompletionDetails {
     pub available_typedefs: Vec<Link<TypedefBlueprint>>,
     pub self_type: Option<Link<TypeBlueprint>>,
     pub insert_arguments: bool,
+    pub expected_type: Option<Type>
 }

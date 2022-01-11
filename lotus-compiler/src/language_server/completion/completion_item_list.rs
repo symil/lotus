@@ -1,10 +1,8 @@
 use std::{mem::take, rc::Rc};
 use parsable::DataLocation;
 
-use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint}};
-use super::{CompletionItem, CompletionItemKind};
-
-const INTERNAL_ITEM_PREFIX : &'static str = "__";
+use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}};
+use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, PostCompletionCommand};
 
 pub struct CompletionItemList {
     list: Vec<CompletionItem>,
@@ -38,6 +36,10 @@ impl CompletionItemList {
         self
     }
 
+    pub fn position(&mut self, position: CompletionItemPosition) -> &mut Self {
+        self.with_current(|item| item.position = Some(position))
+    }
+
     pub fn kind(&mut self, kind: CompletionItemKind) -> &mut Self {
         self.with_current(|item| item.kind = Some(kind))
     }
@@ -58,6 +60,14 @@ impl CompletionItemList {
         self.with_current(|item| item.insert_text = Some(insert_text))
     }
 
+    pub fn filter_text(&mut self, filter_text: String) -> &mut Self {
+        self.with_current(|item| item.filter_text = Some(filter_text))
+    }
+
+    pub fn command(&mut self, command: PostCompletionCommand) -> &mut Self {
+        self.with_current(|item| item.command = Some(command))
+    }
+    
     pub fn consume(mut self) -> Vec<CompletionItem> {
         self.store();
         
@@ -65,34 +75,55 @@ impl CompletionItemList {
     }
 
     pub fn add_variable(&mut self, variable: VariableInfo) {
+        let variable_name = variable.name().as_str().to_string();
+
         self
-            .add(variable.name().as_str())
+            .add(&variable_name)
+            .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(&variable_name), false))
             .kind(CompletionItemKind::Variable)
             .description(variable.ty().to_string());
     }
 
     pub fn add_field(&mut self, field: Rc<FieldInfo>) {
+        let field_name = field.name.as_str();
+
         self
-            .add(field.name.as_str())
+            .add(field_name)
+            .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(field_name), false))
             .kind(CompletionItemKind::Field)
             .description(field.ty.to_string());
     }
 
-    pub fn add_enum_variant(&mut self, variant: Rc<EnumVariantInfo>) {
+    pub fn add_enum_variant(&mut self, variant: Rc<EnumVariantInfo>, show_owner: bool) {
+        let variant_name = variant.name.as_str();
+        let owner_type = variant.owner.borrow().self_type.clone();
+        let label = match show_owner {
+            true => format!("{}::{}", owner_type.to_string(), variant_name),
+            false => variant_name.to_string(),
+        };
+
         self
-            .add(variant.name.as_str())
+            .add(label)
+            .position(CompletionItemPosition::EnumMember)
             .kind(CompletionItemKind::EnumMember)
-            .description(variant.owner.borrow().self_type.to_string());
+            .description(owner_type.to_string())
+            .filter_text(variant_name.to_string());
     }
 
-    pub fn add_function(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool) {
+    pub fn add_literal(&mut self, literal: &str) {
+        self
+            .add(literal)
+            .position(CompletionItemPosition::Literal)
+            .kind(CompletionItemKind::EnumMember);
+    }
+
+    fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();
-            let is_internal_method = function_name.starts_with(INTERNAL_ITEM_PREFIX);
+            let visibility = CompletionItemVisibility::from_str(function_name);
             let should_display_internal_methods = false;
-            // let should_display_internal_methods = location.as_str().starts_with(INTERNAL_METHOD_PREFIX);
 
-            if is_internal_method != should_display_internal_methods {
+            if visibility.is_internal() != should_display_internal_methods {
                 return;
             }
 
@@ -101,7 +132,7 @@ impl CompletionItemList {
                 false => CompletionItemKind::Function,
             };
 
-            let insert_text = match insert_arguments {
+            let mut insert_text = match insert_arguments {
                 true => {
                     let mut text = format!("{}(", function_name);
 
@@ -119,16 +150,43 @@ impl CompletionItemList {
                 false => function_name.to_string(),
             };
 
+            let mut label = format!("{}(…)", function_name);
+
+            if show_owner {
+                let prefix = if let Some(owner_type) = &function_unwrapped.owner_type {
+                    Some(owner_type.borrow().self_type.to_string())
+                } else if let Some(owner_interface) = &function_unwrapped.owner_interface {
+                    Some(owner_interface.borrow().name.to_string())
+                } else {
+                    None
+                };
+
+                if let Some(string) = prefix {
+                    label = format!("{}::{}", string, label);
+                    insert_text = format!("{}::{}", string, insert_text);
+                }
+            }
+
             self
-                .add(format!("{}(…)", function_name))
+                .add(label)
+                .position(CompletionItemPosition::from_visibility(visibility, true))
                 .kind(kind)
                 .description(function_unwrapped.get_self_type().to_string())
-                .insert_text(insert_text);
+                .insert_text(insert_text)
+                .filter_text(function_name.to_string());
+            
+            if insert_arguments {
+                self.command(PostCompletionCommand::TriggerSignatureHelp);
+            }
         });
     }
 
-    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool) {
-        self.add_function(method, insert_arguments);
+    pub fn add_function(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool) {
+        self.add_function_or_method(method, insert_arguments, false);
+    }
+
+    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool) {
+        self.add_function_or_method(method, insert_arguments, show_owner);
     }
 
     pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
@@ -175,24 +233,29 @@ impl CompletionItemList {
             insert_text.push_str(">");
         }
 
+        let mut command = PostCompletionCommand::None;
+
         if ty.is_enum() && insert_double_colon_if_enum {
             insert_text.push_str("::");
+            command = PostCompletionCommand::TriggerCompletion;
         }
 
         self
             .add(format!("{}", label))
+            .position(CompletionItemPosition::PublicType)
             .kind(CompletionItemKind::Class)
             .description(format!("(type) {}", &type_name))
-            .insert_text(insert_text);
+            .insert_text(insert_text)
+            .command(command);
     }
 
     pub fn add_interface(&mut self, interface: Link<InterfaceBlueprint>) {
         interface.with_ref(|interface_unwrapped| {
             let interface_name = interface_unwrapped.name.as_str();
-            let is_internal = interface_name.starts_with(INTERNAL_ITEM_PREFIX);
+            let visibility = CompletionItemVisibility::from_str(interface_name);
             let should_display_internal = false;
 
-            if is_internal == should_display_internal {
+            if visibility.is_internal() == should_display_internal {
                 self
                     .add(format!("{}", interface_name))
                     .kind(CompletionItemKind::Interface);

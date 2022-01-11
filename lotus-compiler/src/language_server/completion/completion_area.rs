@@ -1,5 +1,5 @@
 use parsable::DataLocation;
-use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint}, utils::Link};
+use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint, NONE_LITERAL, TypeContent}, utils::Link};
 use super::{CompletionItem, CompletionItemKind, CompletionItemList, CompletionContent};
 
 #[derive(Debug)]
@@ -23,16 +23,16 @@ impl CompletionArea {
                 }
 
                 for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
-                    items.add_method(method_info, details.insert_arguments);
+                    items.add_method(method_info, details.insert_arguments, false);
                 }
             },
             CompletionContent::StaticField(details) => {
                 for variant in details.parent_type.get_all_variants() {
-                    items.add_enum_variant(variant);
+                    items.add_enum_variant(variant, false);
                 }
 
                 for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
-                    items.add_method(method_info, details.insert_arguments);
+                    items.add_method(method_info, details.insert_arguments, false);
                 }
             },
             CompletionContent::Type(details) => {
@@ -70,16 +70,40 @@ impl CompletionArea {
                 }
 
                 for type_wrapped in &details.available_types {
-                    items.add_type(type_wrapped.borrow().self_type.clone(), None, true);
+                    items.add_type(type_wrapped.borrow().self_type.clone(), None, false);
                 }
 
                 for typedef_wrapped in &details.available_typedefs {
-                    items.add_type(typedef_wrapped.borrow().target.clone(), None, true);
+                    items.add_type(typedef_wrapped.borrow().target.clone(), None, false);
                 }
 
                 if let Some(type_blueprint) = &details.self_type {
-                    items.add_type(type_blueprint.borrow().self_type.clone(), Some(SELF_TYPE_NAME), true);
+                    items.add_type(type_blueprint.borrow().self_type.clone(), Some(SELF_TYPE_NAME), false);
                 }
+
+                if let Some(ty) = &details.expected_type {
+                    if ty.is_enum() {
+                        ty.get_type_blueprint().with_ref(|type_blueprint| {
+                            for variant in type_blueprint.enum_variants.values() {
+                                items.add_enum_variant(variant.clone(), true)
+                            }
+                        });
+                    }
+
+                    for method in ty.get_all_methods(FieldKind::Static) {
+                        method.with_ref(|method_blueprint| {
+                            if method_blueprint.parameters.is_empty() {
+                                if method_blueprint.signature.return_type.replace_parameters(Some(ty), &[]).is_assignable_to(ty) {
+                                    items.add_method(method.clone(), details.insert_arguments, true);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                items.add_literal("true");
+                items.add_literal("false");
+                items.add_literal(NONE_LITERAL);
             },
         }
 

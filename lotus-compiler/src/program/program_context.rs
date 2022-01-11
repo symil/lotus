@@ -317,7 +317,7 @@ impl ProgramContext {
         self.hover_provider.set_type(&var_info.name(), &var_info.ty());
     }
 
-    pub fn add_variable_completion_area(&mut self, location: &DataLocation, insert_arguments: bool) {
+    pub fn add_variable_completion_area(&mut self, location: &DataLocation, insert_arguments: bool, expected_type: &Option<&Type>) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
         index.insert(location, || {
@@ -343,6 +343,7 @@ impl ProgramContext {
                 available_typedefs,
                 self_type,
                 insert_arguments,
+                expected_type: expected_type.cloned()
             })
         });
 

@@ -5,6 +5,7 @@ pub enum ExpectedItemKind {
     Keyword,
     Argument,
     FunctionBody,
+    Block,
     Token(&'static str)
 }
 
@@ -16,6 +17,7 @@ impl ExpectedItemKind {
             ExpectedItemKind::Keyword => format!("keyword"),
             ExpectedItemKind::Argument => format!("argument"),
             ExpectedItemKind::FunctionBody => format!("function body"),
+            ExpectedItemKind::Block => format!("block"),
             ExpectedItemKind::Token(token) => format!("token `{}`", token),
         }
     }

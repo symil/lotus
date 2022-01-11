@@ -147,6 +147,10 @@ impl CompilationErrorList {
         self.expected_item(location, ExpectedItemKind::FunctionBody)
     }
 
+    pub fn expected_block(&mut self, location: &DataLocation) -> CompilationErrorChain {
+        self.expected_item(location, ExpectedItemKind::Block)
+    }
+
     pub fn expected_argument(&mut self, location: &DataLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Argument)
     }

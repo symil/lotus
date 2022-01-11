@@ -11,10 +11,14 @@ pub class Client {
     _network_events: NetworkEvent[],
     _window_events: WindowEvent[],
 
+    _focused_index: int?,
+
     user: #USER_TYPE?,
     local_data: #LOCAL_DATA_TYPE,
     hovered: View?,
-    views: View[],
+    focus_chain: View[],
+    focused_view: View?,
+    all_views: View[],
     real_width: float,
     real_height: float,
     virtual_width: float = VIRTUAL_WIDTH,
@@ -91,7 +95,9 @@ pub class Client {
             rect: Rect::from_size(self.virtual_width, self.virtual_height)
         };
 
-        self.views.clear();
+        self.all_views.clear();
+        self.focus_chain.clear();
+        self.focused_view = none;
         self._render_view(root_view);
         self.hovered = self._detect_view_at(self.cursor_x, self.cursor_y);
         self._post_render();
@@ -102,8 +108,9 @@ pub class Client {
             client: self,
         };
 
+        view.client = self;
         event.emit([view]);
-        self.views.push(view);
+        self.all_views.push(view);
 
         for child in view.children {
             self._render_view(child);
@@ -113,7 +120,7 @@ pub class Client {
     _detect_view_at(x: float, y: float) -> View? {
         let current : View = none;
 
-        for view in self.views {
+        for view in self.all_views {
             if view.graphics.detectable && view.rect.contains(x, y) {
                 if !current || view.rect.z >= current.rect.z {
                     current = view;
@@ -128,7 +135,7 @@ pub class Client {
         let event = OnPostRender {
             client: self
         };
-        let views = self.views.clone().reverse();
+        let views = self.all_views.clone().reverse();
 
         event.emit(views);
     }
@@ -138,7 +145,7 @@ pub class Client {
 
         let cursor = Cursor::Default;
 
-        for view in self.views {
+        for view in self.all_views {
             if self.hovered == view {
                 view.graphics.set(view.hover);
                 cursor = view.graphics.cursor;
@@ -164,7 +171,7 @@ pub class Client {
     }
 
     _process_window_events() {
-        let views = self.views.clone().reverse();
+        let views = self.all_views.clone().reverse();
 
         for event in self._window_events {
             match event {
@@ -199,6 +206,39 @@ pub class Client {
         T::__serialize(self._buffer, value);
 
         wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
+    }
+
+    add_to_focus_chain(view: View) {
+        self.focus_chain.push(view);
+    }
+
+    focus(view: View?) {
+        if (view) {
+            view.focused = true;
+            self._focused_index = self.focus_chain.index_of(view);
+        } else {
+            self._focused_index = none;
+        }
+
+        self.focused_view = view;
+    }
+
+    _focus_next_or_prev(d: int) {
+        let focused_item_count = self.focus_chain.len();
+
+        if self._focused_index {
+            self.focus(self.focus_chain[(focused_item_count + self._focused_index + d) % focused_item_count]);
+        } else {
+            self.focus(self.focus_chain.first());
+        }
+    }
+
+    focus_next() {
+        self._focus_next_or_prev(1);
+    }
+
+    focus_prev() {
+        self._focus_next_or_prev(-1);
     }
 }
 

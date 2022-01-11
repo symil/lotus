@@ -22,7 +22,7 @@ impl ParsedVarRef {
         let current_function_level = Some(context.get_function_level());
         let var_name = self.name.process(context)?;
 
-        context.add_variable_completion_area(&var_name.location, self.arguments.is_none());
+        context.add_variable_completion_area(&var_name.location, self.arguments.is_none(), &type_hint);
 
         match &self.arguments {
             Some(args) => match context.access_var(&var_name) {
