@@ -28,19 +28,17 @@ const MEMORY = (0 as ptr);
 
 // Each allocated pointer has a single value (32 bits) of metadata:
 // - the 30 most significant bits indicates the number of times the pointer has been allocated (it is incremented each time the pointer is allocated)
-// - the 2 least significant bits indicate the state of the pointer:
-//     - 0: the pointer has been garbage collected and can be returned by a future call of `alloc_memory`
-//     - 1: the pointer is in use but will be garbage collected the next time GC is triggered
-//     - 2: the pointer has been retained and will ne be garbage collected the next time GC is triggered
-
-// Triggerring the GC changes the metadata of all pointer from 2 to 1
-// "Retaining" a pointer changes its metadata from 1 to 2
+// - the 2 least significant bits indicate the state of the pointer
 
 enum PointerState {
-    Unallocated,
-    Allocated,
-    Retained
+    Unallocated, // (= 0) the pointer is unallocated and may be returned by a future call of `alloc_memory`
+    Allocated,   // (= 1) the pointer is allocated but will be garbage collected the next time GC is triggered
+    Retained,    // (= 2) the pointer has been retained and will not be garbage collected the next time GC is triggered
 }
+
+// Triggering the garbage collection changes the state of all pointer from `Allocated` to `Unallocated` and from `Retained` to `Allocated`
+// Retaining a pointer changes its state from `Allocated` to `Retained`
+// In order for a pointer not to be unallocated by the garbage collector, it is necessary that it is retained before each GC call
 
 pub fn init_memory() {
     trigger_garbage_collection();
