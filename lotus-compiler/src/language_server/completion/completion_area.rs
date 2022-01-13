@@ -1,6 +1,6 @@
 use parsable::DataLocation;
 use enum_iterator::IntoEnumIterator;
-use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint, NONE_LITERAL, TypeContent}, utils::Link, items::ParsedActionKeywordToken};
+use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint, NONE_LITERAL, TypeContent}, utils::Link, items::{ParsedActionKeywordToken, ParsedBooleanLiteralToken}};
 use super::{CompletionItem, CompletionItemKind, CompletionItemList, CompletionContent};
 
 #[derive(Debug)]
@@ -102,14 +102,39 @@ impl CompletionArea {
                     }
                 }
 
-                items.add_literal("true");
-                items.add_literal("false");
+                for value in ParsedBooleanLiteralToken::into_enum_iter() {
+                    items.add_literal(value.as_str());
+                }
                 items.add_literal(NONE_LITERAL);
 
                 for keyword in ParsedActionKeywordToken::into_enum_iter() {
                     let value = format!("{}", keyword);
 
                     items.add_keyword(&value);
+                }
+            },
+            CompletionContent::MatchItem(details) => {
+                if details.matched_type.is_bool() {
+                    for value in ParsedBooleanLiteralToken::into_enum_iter() {
+                        items.add_literal(value.as_str());
+                    }
+                } else if details.matched_type.is_object() {
+                    for ty in &details.available_types {
+                        items.add_type(ty.clone(), None, false);
+                    }
+                } else if details.matched_type.is_enum() {
+                    details.matched_type.get_type_blueprint().with_ref(|type_blueprint| {
+                        for variant in type_blueprint.enum_variants.values() {
+                            items.add_enum_variant(variant.clone(), true)
+                        }
+                    });
+                }
+
+                items.add_literal(NONE_LITERAL);
+            },
+            CompletionContent::Enum(enum_type) => {
+                for variant in enum_type.get_all_variants() {
+                    items.add_enum_variant(variant.clone(), false)
                 }
             },
         }

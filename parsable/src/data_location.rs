@@ -57,6 +57,14 @@ impl DataLocation {
         self
     }
 
+    pub fn until(&self, other: &Self) -> Self {
+        Self {
+            file: self.file.clone(),
+            start: self.end,
+            end: other.start,
+        }
+    }
+
     pub fn contains_cursor(&self, file_path: &str, cursor_index: usize) -> bool {
         self.file.path.as_str() == file_path && self.start <= cursor_index && self.end >= cursor_index
     }

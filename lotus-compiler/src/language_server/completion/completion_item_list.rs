@@ -1,7 +1,7 @@
 use std::{mem::take, rc::Rc};
 use parsable::DataLocation;
 
-use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}};
+use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}, language_server::Range};
 use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, PostCompletionCommand};
 
 pub struct CompletionItemList {
@@ -42,6 +42,10 @@ impl CompletionItemList {
 
     pub fn kind(&mut self, kind: CompletionItemKind) -> &mut Self {
         self.with_current(|item| item.kind = Some(kind))
+    }
+
+    pub fn range(&mut self, range: Range) -> &mut Self {
+        self.with_current(|item| item.range = Some(range))
     }
 
     pub fn description(&mut self, description: String) -> &mut Self {

@@ -3,7 +3,7 @@ use crate::program::{Vasm, ProgramContext, EQ_METHOD_NAME, Type};
 use super::{ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedBooleanLiteral};
 
 #[parsable]
-pub enum ParsedMatchBlockLiteralItem {
+pub enum ParsedMatchBranchLiteralItem {
     None(ParsedNoneLiteral),
     Boolean(ParsedBooleanLiteral),
     Number(ParsedNumberLiteral),
@@ -11,25 +11,25 @@ pub enum ParsedMatchBlockLiteralItem {
     Character(ParsedCharLiteral),
 }
 
-impl ParsedMatchBlockLiteralItem {
-    fn get_location(&self) -> &DataLocation {
+impl ParsedMatchBranchLiteralItem {
+    pub fn get_location(&self) -> &DataLocation {
         match self {
-            ParsedMatchBlockLiteralItem::None(value) => value,
-            ParsedMatchBlockLiteralItem::Boolean(value) => value,
-            ParsedMatchBlockLiteralItem::Number(value) => value,
-            ParsedMatchBlockLiteralItem::String(value) => value,
-            ParsedMatchBlockLiteralItem::Character(value) => value,
+            ParsedMatchBranchLiteralItem::None(value) => value,
+            ParsedMatchBranchLiteralItem::Boolean(value) => value,
+            ParsedMatchBranchLiteralItem::Number(value) => value,
+            ParsedMatchBranchLiteralItem::String(value) => value,
+            ParsedMatchBranchLiteralItem::Character(value) => value,
         }
     }
 
     pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<(Type, Vasm)> {
         let type_hint = Some(&tested_value.ty);
         let item_vasm = match self {
-            ParsedMatchBlockLiteralItem::None(none_literal) => none_literal.process(type_hint, context),
-            ParsedMatchBlockLiteralItem::Boolean(bool_literal) => bool_literal.process(context),
-            ParsedMatchBlockLiteralItem::Number(number_literal) => number_literal.process(type_hint, context),
-            ParsedMatchBlockLiteralItem::String(string_literal) => string_literal.process(context),
-            ParsedMatchBlockLiteralItem::Character(char_literal) => char_literal.process(context),
+            ParsedMatchBranchLiteralItem::None(none_literal) => none_literal.process(type_hint, context),
+            ParsedMatchBranchLiteralItem::Boolean(bool_literal) => bool_literal.process(context),
+            ParsedMatchBranchLiteralItem::Number(number_literal) => number_literal.process(type_hint, context),
+            ParsedMatchBranchLiteralItem::String(string_literal) => string_literal.process(context),
+            ParsedMatchBranchLiteralItem::Character(char_literal) => char_literal.process(context),
         }?;
 
         if !item_vasm.ty.is_assignable_to(&tested_value.ty) {

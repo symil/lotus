@@ -1,18 +1,24 @@
+use enum_iterator::IntoEnumIterator;
 use parsable::parsable;
 use crate::{program::{ProgramContext, Vasm}};
 
 #[parsable(name="boolean")]
 pub struct ParsedBooleanLiteral {
-    #[parsable(regex = r"true|false")]
-    pub token: String
+    pub token: ParsedBooleanLiteralToken
+}
+
+#[parsable]
+#[derive(IntoEnumIterator)]
+pub enum ParsedBooleanLiteralToken {
+    True = "true",
+    False = "false"
 }
 
 impl ParsedBooleanLiteral {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let i32_value = match self.token.as_str() {
-            "true" => 1,
-            "false" => 0,
-            _ => unreachable!()
+        let i32_value = match &self.token {
+            ParsedBooleanLiteralToken::True => 1,
+            ParsedBooleanLiteralToken::False => 0,
         };
 
         let result = context.vasm()

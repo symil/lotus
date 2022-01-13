@@ -45,11 +45,11 @@ impl ParsedForBlock {
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {
                 if !range_start_vasm.ty.is_int() {
-                    context.errors.generic(&self.range_start, format!("expected `{}`, got `{}`", context.int_type(), &range_start_vasm.ty));
+                    context.errors.type_mismatch(&self.range_start, &context.int_type(), &range_start_vasm.ty);
                 }
 
                 if !range_end_vasm.ty.is_int() {
-                    context.errors.generic(range_end, format!("expected `{}`, got `{}`", context.int_type(), &range_end_vasm.ty));
+                    context.errors.type_mismatch(range_end, &context.int_type(), &range_end_vasm.ty);
                 }
 
                 let index_var = VariableInfo::tmp("index", context.int_type());
@@ -63,7 +63,7 @@ impl ParsedForBlock {
                 if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(&self.range_start), context) {
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
+                            context.errors.type_mismatch(&self.body, &context.void_type(), &block_vasm.ty);
                         }
 
                         let index_var_wasm_name = index_var.get_wasm_name();
@@ -121,7 +121,7 @@ impl ParsedForBlock {
                 if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
                     if let Some(block_vasm) = self.body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.generic(&self.body, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
+                            context.errors.type_mismatch(&self.body, &context.void_type(), &block_vasm.ty);
                         }
 
                         let iterable_type = iterable_vasm.ty.clone();

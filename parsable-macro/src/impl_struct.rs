@@ -117,6 +117,17 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     },
                     None => quote! {}
                 };
+
+                let mut exclude_parsing = quote! {};
+
+                if let Some(exclude) = &attributes.exclude {
+                    exclude_parsing = quote! {
+                        if !field_failed__ && reader__.peek_regex(#exclude) {
+                            #on_fail;
+                        }
+                    };
+                }
+
                 let mut followed_by_parsing = quote! {};
 
                 if let Some(followed_by) = &attributes.followed_by {
@@ -231,6 +242,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                         field_index__ = reader__.get_index();
                         prefix_ok__ = true;
                         #prefix_parsing
+                        #exclude_parsing
                         #assignment
                         #(#check)*
                         #consume_spaces

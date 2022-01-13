@@ -3,7 +3,7 @@ use crate::program::{ProgramContext, Vasm, IS_METHOD_NAME, EQ_METHOD_NAME, Type}
 use super::{ParsedType, Identifier, ParsedDoubleColon};
 
 #[parsable]
-pub struct ParsedMatchBlockTypeItem {
+pub struct ParsedMatchBranchTypeItem {
     pub ty: ParsedType,
     pub variant: Option<ParsedEnumVariantName>,
 }
@@ -14,7 +14,7 @@ pub struct ParsedEnumVariantName {
     pub name: Option<Identifier>
 }
 
-impl ParsedMatchBlockTypeItem {
+impl ParsedMatchBranchTypeItem {
     pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<(Type, Vasm)> {
         let ty = self.ty.process(true, context)?;
 
@@ -30,8 +30,12 @@ impl ParsedMatchBlockTypeItem {
 
         match &self.variant {
             Some(details) => {
+                context.add_enum_variant_completion_area(&details.double_colon, &ty);
+
                 match &details.name {
                     Some(name) => {
+                        context.add_enum_variant_completion_area(name, &ty);
+
                         match ty.get_variant(name.as_str()) {
                             Some(variant_info) => {
                                 Some((

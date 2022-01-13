@@ -168,6 +168,15 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         });
     }
 
+    output.as_str = Some(quote! {
+        pub fn as_str(&self) -> &'static str {
+            match self {
+                #(#impl_display_lines)*
+                _ => ""
+            }
+        }
+    });
+
     output.parse_item = quote! {
         fn parse_item(reader__: &mut parsable::StringReader) -> Option<Self> {
             let start_index__ = reader__.get_index();

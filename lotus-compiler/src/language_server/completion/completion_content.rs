@@ -7,7 +7,15 @@ pub enum CompletionContent {
     Event(EventCompletionDetails),
     Interface(Vec<Link<InterfaceBlueprint>>),
     Type(TypeCompletionDetails),
-    Variable(VariableCompletionDetails)
+    Variable(VariableCompletionDetails),
+    MatchItem(MatchItemCompletionDetails),
+    Enum(Type)
+}
+
+#[derive(Debug)]
+pub struct MatchItemCompletionDetails {
+    pub matched_type: Type,
+    pub available_types: Vec<Type>,
 }
 
 #[derive(Debug)]

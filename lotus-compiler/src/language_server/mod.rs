@@ -4,6 +4,7 @@ pub mod hover;
 pub mod signature_help_provider;
 
 mod utils;
+mod range;
 mod language_server;
 mod language_server_command;
 mod language_server_command_kind;
@@ -19,6 +20,7 @@ mod language_server_command_reload;
 mod provide_signature_help;
 
 pub use utils::*;
+pub use range::*;
 pub use language_server::*;
 pub use language_server_command::*;
 pub use language_server_command_kind::*;

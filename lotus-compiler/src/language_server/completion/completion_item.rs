@@ -1,3 +1,5 @@
+use crate::language_server::Range;
+
 use super::{CompletionItemKind, CompletionItemPosition, PostCompletionCommand};
 
 // https://code.visualstudio.com/api/references/vscode-api#CompletionItem
@@ -8,6 +10,8 @@ pub struct CompletionItem {
     pub position: Option<CompletionItemPosition>,
     // Icon indicating the kind of item
     pub kind: Option<CompletionItemKind>,
+    // Range of the text that should be replaced
+    pub range: Option<Range>,
     // Displayed in smaller character, at the right of the label
     pub description: Option<String>,
     // Title of the right panel
@@ -28,6 +32,7 @@ impl CompletionItem {
             label,
             position: None,
             kind: None,
+            range: None,
             description: None,
             detail: None,
             documentation: None,

@@ -6,7 +6,7 @@ static mut COUNTER : usize = 0;
 #[parsable(name="identifier")]
 #[derive(Default, Clone)]
 pub struct Identifier {
-    #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#)]
+    #[parsable(regex = r#"[a-zA-Z_][_\w\d]*"#, exclude = "(let|if|else|for|while|match|return|break|continue)\\b")]
     pub value: String
 }
 

@@ -3,12 +3,12 @@ use crate::program::{ProgramContext, Vasm, Type};
 use super::{ParsedArrow, ParsedExpression};
 
 #[parsable]
-pub struct ParsedMatchBlockBody {
+pub struct ParsedMatchBranchBody {
     pub arrow: ParsedArrow,
     pub expression: Option<ParsedExpression>
 }
 
-impl ParsedMatchBlockBody {
+impl ParsedMatchBranchBody {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let expression = match &self.expression {
             Some(expression) => expression,

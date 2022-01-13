@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails, EventCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{completion::{CompletionProvider, CompletionContent, CompletionArea, VariableCompletionDetails, FieldCompletionDetails, TypeCompletionDetails, EventCompletionDetails, MatchItemCompletionDetails}, rename::RenameProvider, hover::HoverProvider, signature_help_provider::SignatureHelpProvider}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo, FunctionBody};
 
 #[derive(Debug, Default, Clone)]
@@ -364,6 +364,35 @@ impl ProgramContext {
         }));
     }
 
+    pub fn add_match_item_completion_area(&mut self, location: &DataLocation, matched_type: &Type) {
+        let mut index = take(&mut self.completion_provider).unwrap();
+
+        index.insert(location, || {
+            let mut available_types = vec![];
+
+            for type_wrapped in self.types.get_all_from_location(location) {
+                available_types.push(type_wrapped.borrow().self_type.clone());
+            }
+
+            for typedef_wrapped in self.typedefs.get_all_from_location(location) {
+                available_types.push(typedef_wrapped.borrow().target.clone());
+            }
+
+            CompletionContent::MatchItem(MatchItemCompletionDetails {
+                matched_type: matched_type.clone(),
+                available_types,
+            })
+        });
+
+        self.completion_provider = Some(index);
+    }
+
+    pub fn add_enum_variant_completion_area(&mut self, location: &DataLocation, enum_type: &Type) {
+        self.completion_provider.as_mut().unwrap().insert(location, || {
+            CompletionContent::Enum(enum_type.clone())
+        });
+    }
+
     pub fn add_type_completion_area(&mut self, location: &DataLocation) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
@@ -372,6 +401,10 @@ impl ProgramContext {
 
             for type_wrapped in self.types.get_all_from_location(location) {
                 available_types.push(type_wrapped.borrow().self_type.clone());
+            }
+
+            for typedef_wrapped in self.typedefs.get_all_from_location(location) {
+                available_types.push(typedef_wrapped.borrow().target.clone());
             }
 
             let self_type = self.get_current_type().map(|type_wrapped| type_wrapped.borrow().self_type.clone());

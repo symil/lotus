@@ -198,22 +198,36 @@ impl VirtualAssembly {
     }
 
     pub fn call_regular_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
-        // println!("{}: {}", caller_type, method_name);
+        if caller_type.is_undefined() {
+            return self;
+        }
+
+        let method_blueprint = match caller_type.get_regular_method(method_name, context) {
+            Some(result) => result.function,
+            None => panic!("type {} has no regular method `{}`", caller_type.to_string(), method_name)
+        };
 
         self.call_function_named(
             Some(caller_type),
-            &caller_type.get_regular_method(method_name, context).unwrap().function,
+            &method_blueprint,
             parameters,
             arguments
         )
     }
 
     pub fn call_static_method(self, caller_type: &Type, method_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
-        // println!("{}: {}", caller_type, method_name);
+        if caller_type.is_undefined() {
+            return self;
+        }
+        
+        let method_blueprint = match caller_type.get_static_method(method_name, context) {
+            Some(result) => result.function,
+            None => panic!("type {} has no static method `{}`", caller_type.to_string(), method_name)
+        };
 
         self.call_function_named(
             Some(caller_type),
-            &caller_type.get_static_method(method_name, context).unwrap().function,
+            &method_blueprint,
             parameters,
             arguments
         )

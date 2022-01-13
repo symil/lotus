@@ -1,5 +1,4 @@
 use parsable::DataLocation;
-
 use crate::program::CursorInfo;
 
 pub fn is_invalid_location(location: &DataLocation) -> bool {

@@ -55,7 +55,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let impl_display = match output.display {
-        Some(body) => quote!{
+        Some(body) => quote! {
             impl std::fmt::Display for #name {
                 #body
             }
@@ -64,7 +64,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     };
 
     let impl_deref = match output.deref {
-        Some(body) => quote!{
+        Some(body) => quote! {
             impl std::ops::Deref for #name {
                 type Target = parsable::DataLocation;
     
@@ -72,6 +72,15 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             }
         },
         None => quote! {},
+    };
+
+    let impl_as_str = match output.as_str {
+        Some(body) => quote! {
+            impl #name {
+                #body
+            }
+        },
+        None => quote! {}
     };
 
     let impl_token_name = match root_attributes.name {
@@ -97,6 +106,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         #impl_deref
 
         #impl_display
+
+        #impl_as_str
     };
 
     result.into()
