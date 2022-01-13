@@ -107,6 +107,8 @@
 [X] Add enum variants/static methods/true/false/none in completion list when they match the expected type
 [X] Handle completion item order in language server
 [X] Integrate autocompletion commands to language server
+[ ] Option to skip parsing of successive `Option` items if one fails
+[ ] Improve `match` block
 
 -- LATER --
 [ ] Allow manually specifying function parameters

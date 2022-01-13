@@ -64,6 +64,9 @@ pub const SET_AT_INDEX_FUNC_NAME : &'static str = "__set_at_index";
 pub const GET_ITERABLE_LEN_FUNC_NAME : &'static str = "__get_iterable_len";
 pub const GET_ITERABLE_PTR_FUNC_NAME : &'static str = "__get_iterable_ptr";
 
+pub const EQ_METHOD_NAME : &'static str = "eq";
+pub const NE_METHOD_NAME : &'static str = "ne";
+
 pub const EVENT_VAR_NAME : &'static str = "evt";
 pub const EVENT_OUTPUT_VAR_NAME : &'static str = "__output";
 pub const HAS_TARGET_METHOD_NAME : &'static str = "has_target";

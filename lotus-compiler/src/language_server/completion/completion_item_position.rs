@@ -11,6 +11,7 @@ pub enum CompletionItemPosition {
     PrivateFunction,
     InternalVariable,
     InternalFunction,
+    Keyword
 }
 
 impl CompletionItemPosition {

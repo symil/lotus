@@ -117,6 +117,13 @@ impl CompletionItemList {
             .kind(CompletionItemKind::EnumMember);
     }
 
+    pub fn add_keyword(&mut self, keyword: &str) {
+        self
+            .add(keyword)
+            .position(CompletionItemPosition::Keyword)
+            .kind(CompletionItemKind::Keyword);
+    }
+
     fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();

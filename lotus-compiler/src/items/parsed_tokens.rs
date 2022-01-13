@@ -23,3 +23,9 @@ pub struct ParsedDoubleColon {
     #[parsable(value="::")]
     pub token: String
 }
+
+#[parsable]
+pub struct ParsedArrow {
+    #[parsable(value="=>")]
+    pub token: String
+}

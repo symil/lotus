@@ -11,6 +11,17 @@ pub view TextBox {
     }
 
     @OnKeyboardEvent {
-        
+        if evt.code == KeyCode::Escape {
+            evt.client.focus(none);
+            intercept;
+        } else {
+            let valid = true;
+
+            match evt.code {
+                Backspace => {
+                    
+                }
+            }
+        }
     }
 }

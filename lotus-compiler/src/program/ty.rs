@@ -590,6 +590,27 @@ impl Type {
         }
     }
 
+    pub fn get_variant(&self, name: &str) -> Option<Rc<EnumVariantInfo>> {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(_) => None,
+            TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
+                for variant_info in type_unwrapped.enum_variants.values() {
+                    if variant_info.name.as_str() == name {
+                        return Some(variant_info.clone());
+                    }
+                }
+
+                None
+            }),
+            TypeContent::TypeParameter(_) => None,
+            TypeContent::FunctionParameter(_) => None,
+            TypeContent::Associated(_) => None,
+            TypeContent::Function(_) => None,
+        }
+    }
+
     pub fn get_all_variants(&self) -> Vec<Rc<EnumVariantInfo>> {
         match self.content() {
             TypeContent::Undefined => vec![],

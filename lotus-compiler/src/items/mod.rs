@@ -95,6 +95,9 @@ mod parsed_brackets;
 mod parsed_tokens;
 mod parsed_function_import;
 mod parsed_macro_debug;
+mod parsed_match_block_item;
+mod parsed_match_block_type_item;
+mod parsed_match_block_literal_item;
 
 pub use identifier::*;
 pub use parsed_type_declaration::*;
@@ -194,3 +197,6 @@ pub use parsed_brackets::*;
 pub use parsed_tokens::*;
 pub use parsed_function_import::*;
 pub use parsed_macro_debug::*;
+pub use parsed_match_block_item::*;
+pub use parsed_match_block_type_item::*;
+pub use parsed_match_block_literal_item::*;

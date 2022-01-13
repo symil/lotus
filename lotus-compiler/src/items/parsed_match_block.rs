@@ -1,7 +1,7 @@
 use colored::Colorize;
 use parsable::parsable;
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent}, wat};
-use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier};
+use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColon, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrow, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBlockItem};
 
 #[parsable]
 pub struct ParsedMatchBlock {
@@ -13,11 +13,14 @@ pub struct ParsedMatchBlock {
 
 #[parsable]
 pub struct ParsedMatchBranch {
-    pub variant_name: ParsedType,
-    #[parsable(brackets="()")]
-    pub var_name: Option<Identifier>,
-    #[parsable(prefix="=>")]
-    pub expr: ParsedExpression
+    pub item: ParsedMatchBlockItem,
+    pub body: Option<ParsedMatchBlockBody>,
+}
+
+#[parsable]
+pub struct ParsedMatchBlockBody {
+    pub arrow: ParsedArrow,
+    pub expression: Option<ParsedExpression>
 }
 
 impl ParsedMatchBlock {
@@ -40,7 +43,7 @@ impl ParsedMatchBlock {
                             let mut var_vasm = context.vasm();
 
                             let test_vasm_opt = match &type_unwrapped.category {
-                                TypeCategory::Type => match &branch.variant_name.as_single_identifier() {
+                                TypeCategory::Type => match &branch.ty.as_single_identifier() {
                                     Some(name) => match name.as_str() {
                                         NONE_LITERAL | "false" => Some(context.vasm()
                                             .eqz()
@@ -59,12 +62,12 @@ impl ParsedMatchBlock {
                                         None
                                     }
                                 },
-                                TypeCategory::Class => match branch.variant_name.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
+                                TypeCategory::Class => match branch.ty.as_single_identifier().map(|name| name.as_str()).contains(&NONE_LITERAL) {
                                     true => Some(context.vasm()
                                         .call_regular_method(&matched_vasm.ty, IS_NONE_METHOD_NAME, &[], vec![], context)
                                         .eqz()
                                     ),
-                                    false => match branch.variant_name.process(true, context) {
+                                    false => match branch.ty.process(true, context) {
                                         Some(ty) => match ty.match_builtin_interface(BuiltinInterface::Object, context) {
                                             true => {
                                                 if let Some(var_name) = &branch.var_name {
@@ -83,7 +86,7 @@ impl ParsedMatchBlock {
                                                 )
                                             },
                                             false => {
-                                                context.errors.generic(&branch.variant_name, format!("type `{}` is not a class", &ty));
+                                                context.errors.generic(&branch.ty, format!("type `{}` is not a class", &ty));
                                                 None
                                             },
                                         },
@@ -91,7 +94,7 @@ impl ParsedMatchBlock {
                                     }
                                 }
                                 TypeCategory::Enum => {
-                                    match &branch.variant_name.as_single_identifier() {
+                                    match &branch.ty.as_single_identifier() {
                                         Some(name) => match name.as_str() {
                                             NONE_LITERAL => Some(context.vasm()
                                                 .int(INT_NONE_VALUE)

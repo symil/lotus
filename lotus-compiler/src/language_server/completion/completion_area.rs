@@ -1,5 +1,6 @@
 use parsable::DataLocation;
-use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint, NONE_LITERAL, TypeContent}, utils::Link};
+use enum_iterator::IntoEnumIterator;
+use crate::{program::{Type, FieldKind, VariableInfo, FunctionBlueprint, TypeBlueprint, TypedefBlueprint, GlobalVarBlueprint, BuiltinType, SELF_TYPE_NAME, InterfaceBlueprint, NONE_LITERAL, TypeContent}, utils::Link, items::ParsedActionKeywordToken};
 use super::{CompletionItem, CompletionItemKind, CompletionItemList, CompletionContent};
 
 #[derive(Debug)]
@@ -104,6 +105,12 @@ impl CompletionArea {
                 items.add_literal("true");
                 items.add_literal("false");
                 items.add_literal(NONE_LITERAL);
+
+                for keyword in ParsedActionKeywordToken::into_enum_iter() {
+                    let value = format!("{}", keyword);
+
+                    items.add_keyword(&value);
+                }
             },
         }
 
