@@ -185,7 +185,7 @@ function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, 
 }
 
 function compileWat(inputPath, outputPath, inheritStdio) {
-    return runCommand(`${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS.join(' ')} ${inputPath} -o ${outputPath}`, inheritStdio);
+    return runCommand(`${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS.join(' ')} ${inputPath} -o ${outputPath} --debug-names`, inheritStdio);
 }
 
 async function runWasm(wasmPath, inheritStdio, displayMemory) {

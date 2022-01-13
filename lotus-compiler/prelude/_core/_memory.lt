@@ -26,15 +26,21 @@ const HEADER_SIZE = HEADER_WASM_PAGE_COUNT * WASM_PAGE_SIZE;
 
 const MEMORY = (0 as ptr);
 
-const A = 9;
-
-// Each allocated pointer has a single value of metadata that can be one of the following:
-// 0: the pointer has been garbage collected and can be returned by a future call of `alloc_memory`
-// 1: the pointer is in use but will be garbage collected the next time GC is triggered
-// 2: the pointer has been retained and will ne be garbage collected the next time GC is triggered
+// Each allocated pointer has a single value (32 bits) of metadata:
+// - the 30 most significant bits indicates the number of times the pointer has been allocated (it is incremented each time the pointer is allocated)
+// - the 2 least significant bits indicate the state of the pointer:
+//     - 0: the pointer has been garbage collected and can be returned by a future call of `alloc_memory`
+//     - 1: the pointer is in use but will be garbage collected the next time GC is triggered
+//     - 2: the pointer has been retained and will ne be garbage collected the next time GC is triggered
 
 // Triggerring the GC changes the metadata of all pointer from 2 to 1
 // "Retaining" a pointer changes its metadata from 1 to 2
+
+enum PointerState {
+    Unallocated,
+    Allocated,
+    Retained
+}
 
 pub fn init_memory() {
     trigger_garbage_collection();
@@ -45,7 +51,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
         for i in 0..BIG_BLOCK_COUNT {
             let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
             
-            if block_ptr[0] >= block_size && block_ptr[1] == 0 {
+            if block_ptr[0] >= block_size && get_pointer_state(block_ptr[1]) == PointerState::Unallocated {
                 block_ptr[1] = 1;
 
                 return block_ptr.add(2);
@@ -56,7 +62,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
         let block_ptr = (wasm_memory_grow(rounded_block_size / WASM_PAGE_SIZE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
 
         block_ptr[0] = rounded_block_size;
-        block_ptr[1] = 1;
+        block_ptr[1] = set_pointer_state(block_ptr[1], PointerState::Allocated);
 
         MEMORY[BIG_BLOCKS_METADATA_START + BIG_BLOCK_COUNT] = block_ptr as int;
         BIG_BLOCK_COUNT += 1;
@@ -99,13 +105,22 @@ sys fn alloc_memory(block_size: int) -> ptr {
         if offset != 0 {
             offset -= 1;
             result = page_ptr[offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
-            result[-1] = 1;
+            result[-1] = set_pointer_state(result[-1] + 4, PointerState::Allocated);
             page_ptr[0] = offset;
             break;
         }
     }
 
     result
+}
+
+// TODO: inline these
+fn set_pointer_state(metadata: int, state: PointerState) -> int {
+    (metadata & 0xfffffffc) + (state as int)
+}
+
+fn get_pointer_state(metadata: int) -> PointerState {
+    (metadata & 0x3) as PointerState
 }
 
 sys fn trigger_garbage_collection() {
@@ -126,16 +141,17 @@ sys fn trigger_garbage_collection() {
 
             for k in 0..block_count {
                 let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
-                let metadata_value = metadata_ptr[0];
+                let metadata = metadata_ptr[0];
+                let state = get_pointer_state(metadata);
 
-                if metadata_value == 1 {
+                if state == PointerState::Allocated {
                     let avilable_block_count = page_ptr[0];
 
-                    metadata_ptr[0] = 0;
+                    metadata_ptr[0] = set_pointer_state(metadata, PointerState::Unallocated);
                     page_ptr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = (metadata_ptr as int) + 1;
                     page_ptr[0] = avilable_block_count + 1;
-                } else if metadata_value == 2 {
-                    metadata_ptr[0] = 1;
+                } else if state == PointerState::Retained {
+                    metadata_ptr[0] = set_pointer_state(metadata, PointerState::Allocated);
                 }
             }
         }
@@ -143,12 +159,13 @@ sys fn trigger_garbage_collection() {
 
     for i in 0..BIG_BLOCK_COUNT {
         let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
-        let metadata_value = block_ptr[1];
+        let metadata = block_ptr[1];
+        let state = get_pointer_state(metadata);
 
-        if metadata_value == 1 {
-            block_ptr[1] = 0;
-        } else if metadata_value == 2 {
-            block_ptr[1] = 1;
+        if state == PointerState::Allocated {
+            block_ptr[1] = set_pointer_state(metadata, PointerState::Unallocated);
+        } else if state == PointerState::Retained {
+            block_ptr[1] = set_pointer_state(metadata, PointerState::Allocated);
         }
     }
 }
@@ -156,9 +173,13 @@ sys fn trigger_garbage_collection() {
 sys fn retain_memory(addr: ptr) -> bool {
     let success = false;
 
-    if (addr as int) > 0 && addr[-1] == 1 {
-        addr[-1] = 2;
-        success = true;
+    if (addr as int) > 0 {
+        let metadata = addr[-1];
+        
+        if get_pointer_state(metadata) == PointerState::Allocated {
+            addr[-1] = set_pointer_state(metadata, PointerState::Retained);
+            success = true;
+        }
     }
 
     success
@@ -183,9 +204,10 @@ sys fn get_memory_usage() -> int {
 
             for k in 0..block_count {
                 let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
-                let metadata_value = metadata_ptr[0];
+                let metadata = metadata_ptr[0];
+                let state = get_pointer_state(metadata);
 
-                if metadata_value != 0 {
+                if state != PointerState::Unallocated {
                     count += full_block_size;
                 }
             }
@@ -195,9 +217,10 @@ sys fn get_memory_usage() -> int {
     for i in 0..BIG_BLOCK_COUNT {
         let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
         let block_size = block_ptr[0];
-        let allocated = block_ptr[1] != 0;
+        let metadata = block_ptr[1];
+        let state = get_pointer_state(metadata);
 
-        if allocated {
+        if state != PointerState::Unallocated {
             count += block_size;
         }
     }

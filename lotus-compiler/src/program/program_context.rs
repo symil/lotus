@@ -127,7 +127,7 @@ impl ProgramContext {
             if let Some(type_wrapped) = self.types.get_by_name(type_name) {
                 self.builtin_types.insert(builtin_type, type_wrapped);
             } else {
-                // panic!("undefined builtin type `{}`", type_name);
+                panic!("undefined builtin type `{}`", type_name);
             }
         }
 

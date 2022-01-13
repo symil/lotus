@@ -21,8 +21,8 @@ impl ParsedValueType {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-        list.push(self.name.clone());
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>) {
+        list.push(self.name.to_string());
         // self.arguments.collected_instancied_type_names(list);
     }
 

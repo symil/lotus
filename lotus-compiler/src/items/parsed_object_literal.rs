@@ -15,7 +15,7 @@ pub struct ParsedObjectLiteral {
 }
 
 impl ParsedObjectLiteral {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         self.object_type.collected_instancied_type_names(list, context);
     }
 

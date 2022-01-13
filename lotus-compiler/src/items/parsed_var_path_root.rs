@@ -41,7 +41,7 @@ impl ParsedVarPathRoot {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
             ParsedVarPathRoot::Macro(_) => {},
             ParsedVarPathRoot::DebugMacro(_) => {},

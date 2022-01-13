@@ -108,6 +108,7 @@
 [X] Handle completion item order in language server
 [X] Integrate autocompletion commands to language server
 [X] Improve `match` block
+[X] Add versioning to allocated pointers
 [ ] Command to add all enum variants to a `match` block
 
 -- LATER --

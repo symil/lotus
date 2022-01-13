@@ -16,7 +16,7 @@ impl ParsedOperand {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
             ParsedOperand::UnaryOperation(unary_operation) => unary_operation.collected_instancied_type_names(list, context),
             ParsedOperand::Assignment(assignment) => assignment.collected_instancied_type_names(list, context),

@@ -20,7 +20,7 @@ impl ParsedNumberLiteral {
         }
 
         let mut value = match s.starts_with("0x") {
-            true => Number::Int(i32::from_be_bytes(u32::from_str_radix(&s[2..], 16).unwrap().to_be_bytes())),
+            true => Number::Int(i32::from_be_bytes(u32::from_str_radix(&s[2..], 16).unwrap_or(0).to_be_bytes())),
             false => {
                 let (number, suffix) = split_number_suffix(s);
                 let mut prefer_float = false;

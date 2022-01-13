@@ -138,24 +138,29 @@ impl ParsedTypeDeclaration {
     }
 
     pub fn compute_type_dependencies(&self, context: &mut ProgramContext) -> IndexSet<Link<TypeBlueprint>> {
-        let mut list = vec![];
+        let mut type_names = vec![];
+        let mut builtin_types = vec![];
 
         match &self.parent {
-            Some(parent) => parent.collected_instancied_type_names(&mut list, context),
-            None => match self.name.as_str() == OBJECT_TYPE_NAME || self.qualifier.to_type_category() != TypeCategory::Class {
-                true => {},
-                false => {
-                    list.push(Identifier::unlocated(OBJECT_TYPE_NAME))
+            Some(parent) => parent.collected_instancied_type_names(&mut type_names, context),
+            None => match self.qualifier.get_inherited_type() {
+                Some(builtin_type) => {
+                    let builtin_type_name = builtin_type.get_name();
+
+                    if self.name.as_str() != builtin_type_name {
+                        builtin_types.push(builtin_type);
+                    }
                 },
-            },
+                None => {},
+            }
         };
 
         for field_declaration in self.get_fields() {
             match &field_declaration.default_value {
-                Some(default_value) => default_value.collected_instancied_type_names(&mut list, context),
+                Some(default_value) => default_value.collected_instancied_type_names(&mut type_names, context),
                 None => {
                     if let Some(ty) = &field_declaration.ty {
-                        ty.collected_instancied_type_names(&mut list, context);
+                        ty.collected_instancied_type_names(&mut type_names, context);
                     }
                 }
             }
@@ -163,7 +168,13 @@ impl ParsedTypeDeclaration {
 
         let mut dependancies = IndexSet::new();
 
-        for identifier in list {
+        for builtin_type in builtin_types {
+            dependancies.insert(context.get_builtin_type(builtin_type, vec![]).get_type_blueprint());
+        }
+
+        for name in type_names {
+            let identifier = Identifier::new(&name, Some(&DataLocation { file: self.location.file.clone(), start: 0, end: 0 }));
+
             if let Some(type_blueprint) = context.types.get_by_identifier(&identifier) {
                 dependancies.insert(type_blueprint);
             }

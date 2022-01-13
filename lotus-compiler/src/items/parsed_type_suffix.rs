@@ -15,14 +15,14 @@ pub enum ParsedTypeSuffixToken {
 }
 
 impl ParsedTypeSuffix {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>) {
         let builtin_type = match &self.token {
             ParsedTypeSuffixToken::Array => Some(BuiltinType::Array),
             ParsedTypeSuffixToken::Option => None
         };
 
         if let Some(builtin_type) = builtin_type {
-            list.push(Identifier::unlocated(builtin_type.get_name()));
+            list.push(builtin_type.get_name().to_string());
         }
     }
 

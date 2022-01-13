@@ -14,7 +14,7 @@ impl ParsedVarRef {
         self.arguments.is_some()
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>) {
         
     }
 

@@ -7,7 +7,7 @@ sys type(i32) Enum {
         i32.ne
     }}
 
-    to_int() -> int {
+    as_int() -> int {
         self as int
     }
 

@@ -16,7 +16,7 @@ impl ParsedTypeTuple {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<Identifier>, context: &mut ProgramContext) {
+    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         for parsed_type in &self.type_list {
             parsed_type.collected_instancied_type_names(list, context);
         }
