@@ -98,6 +98,7 @@ mod parsed_macro_debug;
 mod parsed_match_block_item;
 mod parsed_match_block_type_item;
 mod parsed_match_block_literal_item;
+mod parsed_match_block_body;
 
 pub use identifier::*;
 pub use parsed_type_declaration::*;
@@ -200,3 +201,4 @@ pub use parsed_macro_debug::*;
 pub use parsed_match_block_item::*;
 pub use parsed_match_block_type_item::*;
 pub use parsed_match_block_literal_item::*;
+pub use parsed_match_block_body::*;

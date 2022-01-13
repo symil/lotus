@@ -6,24 +6,24 @@ enum Test {
 
 export fn main() {
     let a = match Test::Foo {
-        Foo => 1,
-        Bar => "hey",
-        Baz => 1.5f
+        Test::Foo => 1,
+        Test::Bar => "hey",
+        Test::Baz => 1.5f
     };
 
     let b : bool = match Test::Foo {
-        Foo => 1,
-        Bar => "hey",
-        Baz => 1.5f
+        Test::Foo => 1,
+        Test::Bar => "hey",
+        Test::Baz => 1.5f
     };
 
     let c = match Test::Foo {};
 
     let d = match Test::Foo {
-        Hey => 6
+        Test::Hey => 6
     };
 
     let e = match "test" {
-        Hey => 6
+        Test::Hey => 6
     };
 }

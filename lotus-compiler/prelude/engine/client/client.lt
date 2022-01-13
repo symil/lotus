@@ -180,10 +180,10 @@ pub class Client {
 
                     if view {
                         let callback_list = match e.action {
-                            Down => view.on_down_callbacks,
-                            Click => view.on_click_callbacks,
-                            Up => view.on_up_callbacks,
-                            Drag => view.on_drag_callbacks
+                            MouseAction::Down => view.on_down_callbacks,
+                            MouseAction::Click => view.on_click_callbacks,
+                            MouseAction::Up => view.on_up_callbacks,
+                            MouseAction::Drag => view.on_drag_callbacks
                         };
 
                         for callback in callback_list {

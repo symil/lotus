@@ -1,7 +1,7 @@
-main.lt:10:16: error: expected `int`, got `string`
-main.lt:11:16: error: expected `int`, got `float`
-main.lt:16:16: error: expected `int`, got `string`
-main.lt:17:16: error: expected `int`, got `float`
+main.lt:10:22: error: expected `int`, got `string`
+main.lt:11:22: error: expected `int`, got `float`
+main.lt:16:22: error: expected `int`, got `string`
+main.lt:17:22: error: expected `int`, got `float`
 main.lt:14:20: error: expected `bool`, got `int`
-main.lt:22:19: error: enum `Test` has no variant `Hey`
-main.lt:26:19: error: expected enum or class type, got `string`
+main.lt:23:15: error: type `Test` has no enum variant `Hey`
+main.lt:27:9: error: expected `string`, got `Test`

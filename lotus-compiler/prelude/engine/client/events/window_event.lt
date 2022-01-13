@@ -12,14 +12,14 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Window
     let event_type : WindowEventType = buffer.read_unchecked();
 
     match event_type {
-        Mouse => OnMouseEvent {
+        WindowEventType::Mouse => OnMouseEvent {
             client,
             action: buffer.read_unchecked(),
             button: buffer.read_unchecked(),
             x: buffer.read_unchecked(),
             y: buffer.read_unchecked(),
         },
-        Keyboard => OnKeyboardEvent {
+        WindowEventType::Keyboard => OnKeyboardEvent {
             client,
             action: buffer.read_unchecked(),
             code: buffer.read_unchecked(),
@@ -28,7 +28,7 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Window
             shift_key: buffer.read_unchecked(),
             alt_key: buffer.read_unchecked(),
         },
-        Wheel => OnWheelEvent {
+        WindowEventType::Wheel => OnWheelEvent {
             client,
             delta_x: buffer.read_unchecked(),
             delta_y: buffer.read_unchecked(),

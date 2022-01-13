@@ -33,11 +33,11 @@ export class DisplaySize {
         }
 
         match self.kind {
-            Real => self.value,
-            Virtual => self.value * virtual_to_real_ratio,
-            ScaledFromContainerWidth => self.value * virtual_width * virtual_to_real_ratio,
-            ScaledFromContainerHeight => self.value * virtual_height * virtual_to_real_ratio,
-            ScaledFromContainerMin => self.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
+            DisplaySizeKind::Real => self.value,
+            DisplaySizeKind::Virtual => self.value * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerWidth => self.value * virtual_width * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerHeight => self.value * virtual_height * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerMin => self.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
         }
     }
 }

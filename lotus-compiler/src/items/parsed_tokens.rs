@@ -29,3 +29,9 @@ pub struct ParsedArrow {
     #[parsable(value="=>")]
     pub token: String
 }
+
+#[parsable]
+pub struct ParsedWildcard {
+    #[parsable(value="_")]
+    pub token: String
+}

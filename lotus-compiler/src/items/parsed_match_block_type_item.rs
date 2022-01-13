@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Vasm, IS_METHOD_NAME, EQ_METHOD_NAME};
+use crate::program::{ProgramContext, Vasm, IS_METHOD_NAME, EQ_METHOD_NAME, Type};
 use super::{ParsedType, Identifier, ParsedDoubleColon};
 
 #[parsable]
@@ -15,7 +15,7 @@ pub struct ParsedEnumVariantName {
 }
 
 impl ParsedMatchBlockTypeItem {
-    pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<(Type, Vasm)> {
         let ty = self.ty.process(true, context)?;
 
         if tested_value.ty.is_object() {
@@ -34,13 +34,15 @@ impl ParsedMatchBlockTypeItem {
                     Some(name) => {
                         match ty.get_variant(name.as_str()) {
                             Some(variant_info) => {
-                                Some(context.vasm()
-                                    .call_static_method(&context.int_type(), EQ_METHOD_NAME, &[], vec![
-                                        tested_value,
-                                        context.vasm().int(variant_info.value)
-                                    ], context)
-                                    .set_type(context.bool_type())
-                                )
+                                Some((
+                                    ty.clone(),
+                                    context.vasm()
+                                        .append(tested_value)
+                                        .call_regular_method(&context.int_type(), EQ_METHOD_NAME, &[], vec![
+                                            context.vasm().int(variant_info.value)
+                                        ], context)
+                                        .set_type(context.bool_type())
+                                ))
                             },
                             None => {
                                 context.errors.generic(name, format!("type `{}` has no enum variant `{}`", &ty, name.as_str()));
@@ -55,10 +57,12 @@ impl ParsedMatchBlockTypeItem {
                 }
             },
             None => {
-                Some(context.vasm()
-                    .call_static_method(&ty, IS_METHOD_NAME, &[], vec![tested_value], context)
-                    .set_type(context.bool_type())
-                )
+                Some((
+                    ty.clone(),
+                    context.vasm()
+                        .call_static_method(&ty, IS_METHOD_NAME, &[], vec![tested_value], context)
+                        .set_type(context.bool_type())
+                ))
             },
         }
     }

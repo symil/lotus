@@ -33,7 +33,7 @@ pub class Server {
             let event = decode_network_event_from_buffer(self._buffer);
 
             match event.kind {
-                ConnectionOpen => {
+                NetworkEventKind::ConnectionOpen => {
                     let user = #USER_TYPE;
 
                     self._websocket_id_to_user.set(event.websocket_id, user);
@@ -41,7 +41,7 @@ pub class Server {
 
                     @emit(OnUserConnect { server: self, user }, [self._world]);
                 },
-                ConnectionClosed => {
+                NetworkEventKind::ConnectionClosed => {
                     let user = self._websocket_id_to_user.get(event.websocket_id);
 
                     @emit(OnUserDisconnect { server: self, user }, [self._world]);
@@ -49,7 +49,7 @@ pub class Server {
                     self._websocket_id_to_user.delete(event.websocket_id);
                     self._user_to_websocket_id.delete(user);
                 },
-                Message => {
+                NetworkEventKind::Message => {
                     let user = self._websocket_id_to_user.get(event.websocket_id);
                     let request : Object = @deserialize(event.payload);
 

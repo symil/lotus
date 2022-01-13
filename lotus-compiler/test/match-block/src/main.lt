@@ -5,16 +5,54 @@ enum Test {
 }
 
 export fn main() {
-    test_match(Test::Foo);
-    test_match(Test::Bar);
-    test_match(Test::Baz);
-    test_match(Test::none);
+    for value in [Test::Foo, Test::Bar, Test::Baz, Test::none] {
+        @dbg(match value {
+            Test::Foo => 4,
+            Test::Bar => 8,
+            none => 12
+        });
+    }
+
+    @log("---");
+
+    for value in [produce_bool(true), produce_bool(false)] {
+        @dbg(match value {
+            false => "no",
+            true => "yes"
+        });
+    }
+
+    @log("---");
+
+    for n in [1, 2, 3] {
+        @dbg(match n {
+            0 => "zero",
+            1 => "one",
+            _ => "other"
+        })
+    }
+
+    @log("---");
+
+    for s in ["hello", "world", "!", none] {
+        @dbg(match s {
+            "world" => "world",
+            "hello" => "hello",
+            none => "none",
+            _ => "?"
+        })
+    }
+
+    @log("---");
+
+    for c in "abcd" {
+        @dbg(match c {
+            'a' => 'a'
+        });
+    }
 }
 
-fn test_match(value: Test) {
-    @dbg(match value {
-        Foo => 4,
-        Bar => 8,
-        none => 12
-    });
+fn produce_bool(value: bool) -> bool {
+    @log(value);
+    value
 }
