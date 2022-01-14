@@ -1,55 +1,44 @@
 use std::collections::HashMap;
 use parsable::DataLocation;
-use crate::{program::CursorInfo, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
-use super::{CompletionArea, CompletionContent};
+use crate::{program::{CursorLocation, Cursor}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
+use super::{CompletionItemGenerator, CompletionItem};
 
 #[derive(Debug)]
 pub struct CompletionProvider {
-    pub cursor: Option<CursorInfo>,
-    pub areas_under_cursor: Vec<CompletionArea>
+    pub cursor: Cursor,
+    pub completion_item_generators: Vec<CompletionItemGenerator>
 }
 
 impl CompletionProvider {
-    pub fn new(cursor: &Option<CursorInfo>) -> Self {
+    pub fn new(cursor: &Cursor) -> Self {
         Self {
             cursor: cursor.clone(),
-            areas_under_cursor: vec![],
+            completion_item_generators: vec![],
         }
     }
 
-    pub fn insert<F : FnOnce() -> CompletionContent>(&mut self, area_location: &DataLocation, make_content: F) {
-        let (under_cursor, is_valid_identifier) = match &self.cursor {
-            Some(cursor) => match cursor.file_path.as_str() == area_location.file.path.as_str() {
-                true => match contains_valid_identifier_character(area_location.as_str()) || is_blank_string(area_location.as_str()) {
-                    true => (cursor.index >= area_location.start && cursor.index <= area_location.end, false),
-                    false => (cursor.index == area_location.end, true),
-                },
-                false => (false, false),
-            },
-            None => (false, false),
+    pub fn add_completion_generator<F : FnOnce() -> CompletionItemGenerator>(&mut self, area_location: &DataLocation, make_item_generator: F) {
+        let is_under_cursor = self.cursor.is_on_location(area_location);
+
+        if !is_under_cursor {
+            return;
+        }
+
+        let insert_at_end_of_location = !contains_valid_identifier_character(area_location.as_str()) && !is_blank_string(area_location.as_str());
+        let location = match insert_at_end_of_location {
+            true => area_location.get_end(),
+            false => area_location.clone(),
         };
 
-        if under_cursor {
-            let content = make_content();
-            let location = match is_valid_identifier {
-                true => area_location.get_end(),
-                false => area_location.clone(),
-            };
-
-            self.areas_under_cursor.push(CompletionArea {
-                location,
-                content,
-            });
+        if self.cursor.is_on_location(&location) {
+            self.completion_item_generators.push(make_item_generator());
         }
     }
 
-    pub fn get(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
-        if let Some(cursor) = &self.cursor {
-            if file_path == cursor.file_path && cursor_index == cursor.index {
-                return self.areas_under_cursor.last();
-            }
+    pub fn get_completion_items(&self) -> Vec<CompletionItem> {
+        match self.completion_item_generators.last() {
+            Some(generator) => generator.generate(),
+            None => vec![],
         }
-
-        None
     }
 }

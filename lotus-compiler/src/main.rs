@@ -1,12 +1,14 @@
 #![feature(option_result_contains)]
 #![feature(array_methods)]
-// #![allow(unused)]
+#![allow(unused)]
 use std::{env, process};
 use colored::*;
 use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
 use language_server::start_language_server;
 use program::{ProgramContext, ProgramContextOptions};
 use utils::FileSystemCache;
+
+use crate::program::ProgramContextMode;
 
 mod utils;
 mod program;
@@ -22,17 +24,14 @@ fn main() {
         let root_directory = infer_root_directory(options.input_path.as_ref().unwrap()).unwrap();
         let source_directories = bundle_with_prelude(&root_directory);
         let mut cache = FileSystemCache::new();
-        let mut context = ProgramContext::new(ProgramContextOptions {
-            validate_only: true,
-            cursor: None,
-        });
+        let mut context = ProgramContext::new(ProgramContextOptions::compiler());
         let mut timer = Timer::new();
 
         for i in 0..3 {
             let duration = timer.time(ProgramStep::Total, || {
                 context = ProgramContext::new(ProgramContextOptions {
-                    validate_only: true,
-                    cursor: None,
+                    mode: ProgramContextMode::LanguageServer,
+                    cursor_location: None,
                 });
                 context.parse_source_files(&source_directories, Some(&mut cache));
                 context.process_source_files();
@@ -49,7 +48,7 @@ fn main() {
             let root_directory = infer_root_directory(input_path).unwrap();
             let source_directories = bundle_with_prelude(&root_directory);
             let mut timer = Timer::new();
-            let mut context = ProgramContext::new(ProgramContextOptions::default());
+            let mut context = ProgramContext::new(ProgramContextOptions::compiler());
 
             timer.time(ProgramStep::Parse, || context.parse_source_files(&source_directories, None));
 

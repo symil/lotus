@@ -1,7 +1,7 @@
 use std::{mem::take, rc::Rc};
 use parsable::DataLocation;
 use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}, language_server::Range};
-use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, PostCompletionCommand};
+use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, CompletionItemCommand};
 
 pub struct CompletionItemList {
     list: Vec<CompletionItem>,
@@ -67,7 +67,7 @@ impl CompletionItemList {
         self.with_current(|item| item.filter_text = Some(filter_text))
     }
 
-    pub fn command(&mut self, command: PostCompletionCommand) -> &mut Self {
+    pub fn command(&mut self, command: CompletionItemCommand) -> &mut Self {
         self.with_current(|item| item.command = Some(command))
     }
     
@@ -186,7 +186,7 @@ impl CompletionItemList {
                 .filter_text(function_name.to_string());
             
             if insert_arguments {
-                self.command(PostCompletionCommand::TriggerSignatureHelp);
+                self.command(CompletionItemCommand::TriggerSignatureHelp);
             }
         });
     }
@@ -244,11 +244,11 @@ impl CompletionItemList {
             insert_text.push_str(">");
         }
 
-        let mut command = PostCompletionCommand::None;
+        let mut command = CompletionItemCommand::None;
 
         if ty.is_enum() && insert_double_colon_if_enum {
             insert_text.push_str("::");
-            command = PostCompletionCommand::TriggerCompletion;
+            command = CompletionItemCommand::TriggerCompletion;
         }
 
         self

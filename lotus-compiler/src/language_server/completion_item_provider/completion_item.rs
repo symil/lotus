@@ -1,6 +1,6 @@
 use crate::language_server::Range;
 
-use super::{CompletionItemKind, CompletionItemPosition, PostCompletionCommand};
+use super::{CompletionItemKind, CompletionItemPosition, CompletionItemCommand};
 
 // https://code.visualstudio.com/api/references/vscode-api#CompletionItem
 pub struct CompletionItem {
@@ -23,7 +23,7 @@ pub struct CompletionItem {
     // What will be used when filtering the item
     pub filter_text: Option<String>,
     // Command that will be run after the completion is done
-    pub command: Option<PostCompletionCommand>
+    pub command: Option<CompletionItemCommand>
 }
 
 impl CompletionItem {

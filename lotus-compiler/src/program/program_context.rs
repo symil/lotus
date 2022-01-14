@@ -1,19 +1,14 @@
-use std::{cell::UnsafeCell, collections::{HashMap, HashSet, hash_map::DefaultHasher}, hash::{Hash, Hasher}, mem::{self, take}, ops::Deref, rc::{Rc, Weak}, fs::{self, DirBuilder, File}, path::Path, io::Write};
+use std::{collections::{HashMap, HashSet}, hash::{Hasher}, mem::{take}, rc::{Rc}, fs::{DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionContent, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, CompletionArea}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorInfo, FunctionBody};
-
-#[derive(Debug, Default, Clone)]
-pub struct ProgramContextOptions {
-    pub validate_only: bool,
-    pub cursor: Option<CursorInfo>,
-}
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider}};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
+    pub cursor_location: Option<DataLocation>,
     pub source_file_list: Vec<SourceFileDetails>,
     pub parsed_source_files: Vec<Rc<ParsedSourceFile>>,
     pub errors: CompilationErrorList,
@@ -30,6 +25,7 @@ pub struct ProgramContext {
     pub completion_provider: Option<CompletionProvider>,
     pub rename_provider: RenameProvider,
     pub hover_provider: HoverProvider,
+    pub definition_provider: DefinitionProvider,
     pub signature_help_provider: SignatureHelpProvider,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
@@ -61,8 +57,11 @@ pub struct ProgramContext {
 
 impl ProgramContext {
     pub fn new(options: ProgramContextOptions) -> Self {
+        let cursor = Cursor::new(&options.cursor_location);
+
         Self {
             options: options.clone(),
+            cursor_location: None,
             source_file_list: vec![],
             parsed_source_files: vec![],
             errors: Default::default(),
@@ -72,10 +71,11 @@ impl ProgramContext {
             interfaces: Default::default(),
             functions: Default::default(),
             global_vars: Default::default(),
-            completion_provider: Some(CompletionProvider::new(&options.cursor)),
-            rename_provider: RenameProvider::new(&options.cursor),
-            hover_provider: HoverProvider::new(&options.cursor),
-            signature_help_provider: SignatureHelpProvider::new(&options.cursor),
+            completion_provider: Some(CompletionProvider::new(&cursor)),
+            rename_provider: RenameProvider::new(&cursor),
+            hover_provider: HoverProvider::new(&cursor),
+            definition_provider: DefinitionProvider::new(&cursor),
+            signature_help_provider: SignatureHelpProvider::new(&cursor),
             builtin_types: Default::default(),
             main_types: Default::default(),
             autogen_type: Default::default(),
@@ -320,7 +320,7 @@ impl ProgramContext {
     pub fn add_variable_completion_area(&mut self, location: &DataLocation, insert_arguments: bool, expected_type: &Option<&Type>) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
-        index.insert(location, || {
+        index.add_completion_generator(location, || {
             let mut available_variables = vec![];
 
             for scope in self.scopes.iter().rev() {
@@ -335,7 +335,7 @@ impl ProgramContext {
             let available_typedefs = self.typedefs.get_all_from_location(location);
             let self_type = self.get_current_type();
             
-            CompletionContent::Variable(VariableCompletionDetails {
+            CompletionItemGenerator::Variable(VariableCompletionDetails {
                 available_variables,
                 available_globals,
                 available_functions,
@@ -351,14 +351,14 @@ impl ProgramContext {
     }
 
     pub fn add_field_completion_area(&mut self, location: &DataLocation, parent_type: &Type, insert_arguments: bool) {
-        self.completion_provider.as_mut().unwrap().insert(location, || CompletionContent::FieldOrMethod(FieldCompletionDetails {
+        self.completion_provider.as_mut().unwrap().add_completion_generator(location, || CompletionItemGenerator::FieldOrMethod(FieldCompletionDetails {
             parent_type: parent_type.clone(),
             insert_arguments,
         }));
     }
 
     pub fn add_static_field_completion_area(&mut self, location: &DataLocation, parent_type: &Type, insert_arguments: bool) {
-        self.completion_provider.as_mut().unwrap().insert(location, || CompletionContent::StaticField(FieldCompletionDetails {
+        self.completion_provider.as_mut().unwrap().add_completion_generator(location, || CompletionItemGenerator::StaticField(FieldCompletionDetails {
             parent_type: parent_type.clone(),
             insert_arguments,
         }));
@@ -367,7 +367,7 @@ impl ProgramContext {
     pub fn add_match_item_completion_area(&mut self, location: &DataLocation, matched_type: &Type) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
-        index.insert(location, || {
+        index.add_completion_generator(location, || {
             let mut available_types = vec![];
 
             for type_wrapped in self.types.get_all_from_location(location) {
@@ -378,7 +378,7 @@ impl ProgramContext {
                 available_types.push(typedef_wrapped.borrow().target.clone());
             }
 
-            CompletionContent::MatchItem(MatchItemCompletionDetails {
+            CompletionItemGenerator::MatchItem(MatchItemCompletionDetails {
                 matched_type: matched_type.clone(),
                 available_types,
             })
@@ -388,15 +388,15 @@ impl ProgramContext {
     }
 
     pub fn add_enum_variant_completion_area(&mut self, location: &DataLocation, enum_type: &Type) {
-        self.completion_provider.as_mut().unwrap().insert(location, || {
-            CompletionContent::Enum(enum_type.clone())
+        self.completion_provider.as_mut().unwrap().add_completion_generator(location, || {
+            CompletionItemGenerator::Enum(enum_type.clone())
         });
     }
 
     pub fn add_type_completion_area(&mut self, location: &DataLocation) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
-        index.insert(location, || {
+        index.add_completion_generator(location, || {
             let mut available_types = vec![];
 
             for type_wrapped in self.types.get_all_from_location(location) {
@@ -409,7 +409,7 @@ impl ProgramContext {
 
             let self_type = self.get_current_type().map(|type_wrapped| type_wrapped.borrow().self_type.clone());
 
-            CompletionContent::Type(TypeCompletionDetails {
+            CompletionItemGenerator::Type(TypeCompletionDetails {
                 available_types,
                 self_type,
             })
@@ -421,7 +421,7 @@ impl ProgramContext {
     pub fn add_event_completion_area(&mut self, location: &DataLocation, insert_brackets: bool) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
-        index.insert(location, || {
+        index.add_completion_generator(location, || {
             let mut available_events = vec![];
 
             for type_wrapped in self.types.get_all_from_location(location) {
@@ -430,7 +430,7 @@ impl ProgramContext {
                 }
             }
 
-            CompletionContent::Event(EventCompletionDetails {
+            CompletionItemGenerator::Event(EventCompletionDetails {
                 available_events,
                 insert_brackets,
             })
@@ -442,21 +442,17 @@ impl ProgramContext {
     pub fn add_interface_completion_area(&mut self, location: &DataLocation) {
         let mut index = take(&mut self.completion_provider).unwrap();
 
-        index.insert(location, || {
+        index.add_completion_generator(location, || {
             let mut interface_list = vec![];
 
             for type_wrapped in self.interfaces.get_all_from_location(location) {
                 interface_list.push(type_wrapped.clone());
             }
 
-            CompletionContent::Interface(interface_list)
+            CompletionItemGenerator::Interface(interface_list)
         });
 
         self.completion_provider = Some(index);
-    }
-
-    pub fn get_completion_area(&self, file_path: &str, cursor_index: usize) -> Option<&CompletionArea> {
-        self.completion_provider.as_ref().unwrap().get(file_path, cursor_index)
     }
 
     pub fn declare_local_variable(&mut self, name: Identifier, ty: Type) -> VariableInfo {
@@ -539,11 +535,11 @@ impl ProgramContext {
         if let Some(var_info) = &result {
             match var_info.borrow().name.as_str() {
                 SELF_VAR_NAME | EVENT_VAR_NAME => {
-                    self.hover_provider.set_definition(name, &var_info.ty().get_type_blueprint().borrow().name);
+                    self.definition_provider.set_definition(name, &var_info.ty().get_type_blueprint().borrow().name);
                 },
                 _ => {
                     self.rename_provider.add_occurence(name, &var_info.name());
-                    self.hover_provider.set_definition(name, &var_info.name());
+                    self.definition_provider.set_definition(name, &var_info.name());
                 }
             };
 
@@ -654,7 +650,7 @@ impl ProgramContext {
     }
 
     pub fn vasm(&self) -> Vasm {
-        Vasm::new(!self.options.validate_only)
+        Vasm::new(self.options.mode == ProgramContextMode::Compiler)
     }
 
     pub fn parse_source_files(&mut self, directories: &[SourceDirectoryDetails], provided_cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) {
@@ -702,8 +698,12 @@ impl ProgramContext {
             let result = cache.read_file(file_path, parse_function);
 
             match result {
-                Ok(lotus_file) => self.parsed_source_files.push(lotus_file),
-                Err(parse_error) => self.errors.parse_error(&parse_error).void(),
+                Ok(lotus_file) => {
+                    self.parsed_source_files.push(lotus_file);
+                },
+                Err(parse_error) => {
+                    self.errors.parse_error(&parse_error);
+                },
             }
         }
 

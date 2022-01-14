@@ -19,7 +19,7 @@ impl ParsedObjectFieldInitialization {
                 match &self.value {
                     Some(expr) => {
                         context.rename_provider.add_occurence(&self.name, &field_info.name);
-                        context.hover_provider.set_definition(&self.name, &field_info.name);
+                        context.definition_provider.set_definition(&self.name, &field_info.name);
                         context.hover_provider.set_type(&self.name, &field_type);
                         
                         match expr.process(Some(&field_type), context) {

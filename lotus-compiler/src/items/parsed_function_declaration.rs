@@ -39,11 +39,6 @@ impl ParsedFunctionDeclaration {
     }
 
     pub fn process_body(&self, context: &mut ProgramContext) {
-        let function_name = &self.content.name;
-        let type_id = context.get_current_type().map(|t| t.borrow().type_id);
-
-        context.push_scope(ScopeKind::Function(context.functions.get_by_location(function_name, type_id).clone()));
         self.content.process_body(context);
-        context.pop_scope();
     }
 }

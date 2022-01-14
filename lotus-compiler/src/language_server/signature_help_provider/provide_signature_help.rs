@@ -1,16 +1,16 @@
 use crate::{program::{ProgramContext, FunctionCall, SELF_VAR_NAME, VariableInfo}, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn provide_signature_help(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
-    if let Some(area) = context.signature_help_provider.get_area_under_cursor(&parameters.file_path, parameters.cursor_index) {
-        let active_argument_index = area.get_active_argument_index(&parameters.file_path, parameters.cursor_index).unwrap_or(-1);
+    if let Some(signature_help) = context.signature_help_provider.get_signature_help() {
+        let active_argument_index = signature_help.active_argument_index.map(|index| index as i32).unwrap_or(-1);
 
         // dbg!(&area.argument_locations);
 
-        let mut label = format!("fn {}(", &area.function_name);
+        let mut label = format!("fn {}(", &signature_help.function_name);
         let mut argument_ranges = vec![];
         let mut return_type_string = String::new();
         
-        match &area.function_call {
+        match &signature_help.function_call {
             FunctionCall::Named(details) => {
                 details.function.with_ref(|function_unwrapped| {
                     let arguments : Vec<&VariableInfo> = function_unwrapped.argument_variables.iter().filter(|var| var.name().as_str() != SELF_VAR_NAME).collect();

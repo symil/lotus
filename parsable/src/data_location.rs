@@ -69,6 +69,12 @@ impl DataLocation {
         self.file.path.as_str() == file_path && self.start <= cursor_index && self.end >= cursor_index
     }
 
+    pub fn contains(&self, other: &Self) -> bool {
+        other.file.path == self.file.path &&
+        (other.start >= self.start && other.start <= self.end) &&
+        (other.end >= self.start && other.end <= self.end)
+    }
+
     pub fn as_str(&self) -> &str {
         &self.file.content[self.start..self.end]
     }

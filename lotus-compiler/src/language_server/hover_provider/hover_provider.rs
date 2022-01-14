@@ -1,49 +1,45 @@
 use std::collections::HashMap;
 use parsable::DataLocation;
-use crate::{program::{CursorInfo, Type}, language_server::{is_invalid_location, location_contains_cursor}};
-use super::HoverArea;
+use crate::{program::{CursorLocation, Type, Cursor}, language_server::{is_invalid_location}};
+use super::{Hover};
 
 pub struct HoverProvider {
-    // TODO: option to disable the index
-    pub cursor: Option<CursorInfo>,
-    pub areas: HashMap<DataLocation, HoverArea>
+    pub cursor: Cursor,
+    pub hover: Option<Hover>
 }
 
 impl HoverProvider {
-    pub fn new(cursor: &Option<CursorInfo>) -> Self {
+    pub fn new(cursor: &Cursor) -> Self {
         Self {
             cursor: cursor.clone(),
-            areas: HashMap::new(),
+            hover: None,
         }
     }
 
-    fn area<F : FnOnce(&mut HoverArea)>(&mut self, location: &DataLocation, callback: F) {
-        if is_invalid_location(location) || !location_contains_cursor(location, &self.cursor) {
+    fn modify<F : FnOnce(&mut Hover)>(&mut self, location: &DataLocation, callback: F) {
+        if !self.cursor.is_on_location(location) {
             return;
         }
 
-        let area = self.areas
-            .entry(location.clone())
-            .or_insert_with(|| HoverArea::new(location));
-        
-        callback(area);
+        let hover = match &mut self.hover {
+            Some(hover) => match &hover.location == location {
+                true => hover,
+                false => {
+                    *hover = Hover::new(location);
+                    hover
+                },
+            },
+            None => self.hover.insert(Hover::new(location)),
+        };
+
+        callback(hover);
     }
 
     pub fn set_type(&mut self, location: &DataLocation, ty: &Type) {
-        self.area(location, |area| area.set_type(ty));
+        self.modify(location, |hover| hover.ty = Some(ty.clone()));
     }
 
-    pub fn set_definition(&mut self, location: &DataLocation, definition: &DataLocation) {
-        self.area(location, |area| area.set_definition(definition));
-    }
-
-    pub fn get_area_under_cursor(&self, file_path: &str, cursor_index: usize) -> Option<&HoverArea> {
-        for area in self.areas.values() {
-            if area.contains_cursor(file_path, cursor_index) {
-                return Some(area);
-            }
-        }
-
-        None
+    pub fn get_hover(&self) -> Option<&Hover> {
+        self.hover.as_ref()
     }
 }

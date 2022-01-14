@@ -14,3 +14,4 @@ pub use string_reader::{StringReader, ParseOptions};
 pub use parse_error::ParseError;
 pub use data_location::DataLocation;
 pub use parsable_macro::*;
+pub use file_info::FileInfo;

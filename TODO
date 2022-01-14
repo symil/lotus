@@ -109,6 +109,7 @@
 [X] Integrate autocompletion commands to language server
 [X] Improve `match` block
 [X] Add versioning to allocated pointers
+[X] Validate a single time after multiple files have been saved
 [ ] Command to add all enum variants to a `match` block
 [ ] Allow client to reference server objects with their addresses
 [ ] Find way to keep a view's state accross multiple updates
@@ -144,7 +145,6 @@
 [ ] Generalize tuples
 [ ] Change how interface are implemented to explicitely specify which interface is specified
 [ ] Make VS code extension ignore errors from files with a `// ignore-errors` comment
-[ ] Avoid re-validating document if no file has changed
 [ ] Merge `TypeBlueprint` and `InterfaceBlueprint`
 [ ] Make so language server features are not enabled in standard mode
 [ ] Make builtin interfaces internal by prefixing them with `__`

@@ -1,4 +1,5 @@
 mod utils;
+mod language_server;
 mod language_server_command;
 mod workspace_edit;
 mod validation_provider;
@@ -7,9 +8,10 @@ mod rename_provider;
 mod hover_provider;
 mod signature_help_provider;
 mod code_actions_provider;
-mod language_server;
+mod definition_provider;
 
 pub use utils::*;
+pub use language_server::*;
 pub use language_server_command::*;
 pub use validation_provider::*;
 pub use workspace_edit::*;
@@ -18,4 +20,4 @@ pub use rename_provider::*;
 pub use hover_provider::*;
 pub use signature_help_provider::*;
 pub use code_actions_provider::*;
-pub use language_server::*;
+pub use definition_provider::*;

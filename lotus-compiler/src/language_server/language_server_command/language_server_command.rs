@@ -1,6 +1,6 @@
 use std::mem::take;
 use parsable::ParseError;
-use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorInfo}, utils::FileSystemCache, items::ParsedSourceFile};
+use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation}, utils::FileSystemCache, items::ParsedSourceFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_OUTPUT_ITEM_LINE_START : &'static str = "\n#?!#";
@@ -9,6 +9,10 @@ pub const COMMAND_SEPARATOR : &'static str = "##";
 pub struct LanguageServerCommand {
     pub id: u32,
     pub kind: LanguageServerCommandKind,
+    pub root_directory_path: String,
+    pub file_path: String,
+    pub cursor_index: usize,
+    pub file_content: String,
     pub parameters: LanguageServerCommandParameters
 }
 
@@ -24,40 +28,34 @@ impl LanguageServerCommand {
         let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
 
         let parameters = LanguageServerCommandParameters {
-            root_directory_path,
-            file_path,
-            cursor_index,
-            file_content,
             new_name
         };
 
         Some(Self {
             id,
             kind,
+            root_directory_path,
+            file_path,
+            cursor_index,
+            file_content,
             parameters,
         })
     }
 
     pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> LanguageServerCommandOutput {
         let callback = self.kind.get_callback();
-        let mut context = ProgramContext::new(ProgramContextOptions {
-            validate_only: true,
-            cursor: Some(CursorInfo {
-                file_path: self.parameters.file_path.to_string(),
-                index: self.parameters.cursor_index,
-            }),
-        });
+        let mut context = ProgramContext::new(ProgramContextOptions::language_server(&self.root_directory_path, &self.file_path, self.cursor_index));
         let mut output = LanguageServerCommandOutput::new(self.id);
 
         if let Some(cache) = &mut cache {
             cache.delete_hook();
 
-            if !self.parameters.file_content.is_empty() {
-                cache.set_hook(&self.parameters.file_path, take(&mut self.parameters.file_content));
+            if !self.file_content.is_empty() {
+                cache.set_hook(&self.file_path, take(&mut self.file_content));
             }
         }
 
-        context.parse_source_files(&bundle_with_prelude(&self.parameters.root_directory_path), cache);
+        context.parse_source_files(&bundle_with_prelude(&self.root_directory_path), cache);
 
         if !context.has_errors() {
             context.process_source_files();

@@ -44,7 +44,7 @@ impl ParsedEventCallbackDeclaration {
         };
 
         context.rename_provider.add_occurence(name, &event_type.borrow().name);
-        context.hover_provider.set_definition(name, &event_type.borrow().name);
+        context.definition_provider.set_definition(name, &event_type.borrow().name);
 
         let priority_vasm = match &self.priority {
             Some(expression) => match expression.process(Some(&context.int_type()), context) {

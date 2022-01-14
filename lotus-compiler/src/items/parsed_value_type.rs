@@ -45,7 +45,7 @@ impl ParsedValueType {
                 result = typedef_blueprint.borrow().target.clone();
 
                 context.rename_provider.add_occurence(&self.name, &typedef_blueprint.borrow().name);
-                context.hover_provider.set_definition(&self.name, &typedef_blueprint.borrow().name);
+                context.definition_provider.set_definition(&self.name, &typedef_blueprint.borrow().name);
                 context.hover_provider.set_type(&self.name, &result);
             }
         }
@@ -55,15 +55,15 @@ impl ParsedValueType {
                 match ty.content() {
                     TypeContent::TypeParameter(details) => {
                         context.rename_provider.add_occurence(&self.name, &details.name);
-                        context.hover_provider.set_definition(&self.name, &details.name);
+                        context.definition_provider.set_definition(&self.name, &details.name);
                     },
                     TypeContent::FunctionParameter(details) => {
                         context.rename_provider.add_occurence(&self.name, &details.name);
-                        context.hover_provider.set_definition(&self.name, &details.name);
+                        context.definition_provider.set_definition(&self.name, &details.name);
                     },
                     TypeContent::Associated(details) => {
                         context.rename_provider.add_occurence(&self.name, &details.associated.name);
-                        context.hover_provider.set_definition(&self.name, &details.associated.name);
+                        context.definition_provider.set_definition(&self.name, &details.associated.name);
                     },
                     _ => unreachable!()
                 };
@@ -95,7 +95,7 @@ impl ParsedValueType {
                 }
 
                 context.rename_provider.add_occurence(&self.name, &type_blueprint.borrow().name);
-                context.hover_provider.set_definition(&self.name, &type_blueprint.borrow().name);
+                context.definition_provider.set_definition(&self.name, &type_blueprint.borrow().name);
             }
         }
 

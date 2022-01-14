@@ -1,46 +1,44 @@
 use std::collections::HashMap;
 use parsable::DataLocation;
-use crate::{language_server::is_invalid_location, program::CursorInfo};
-use super::RenameArea;
+use crate::{language_server::is_invalid_location, program::{CursorLocation, Cursor}};
+use super::SharedName;
 
 #[derive(Debug)]
 pub struct RenameProvider {
-    pub cursor: Option<CursorInfo>,
-    pub areas: HashMap<DataLocation, RenameArea>
+    pub cursor: Cursor,
+    pub shared_names: HashMap<DataLocation, SharedName>
 }
 
 impl RenameProvider {
-    pub fn new(cursor: &Option<CursorInfo>) -> Self {
+    pub fn new(cursor: &Cursor) -> Self {
         Self {
             cursor: cursor.clone(),
-            areas: HashMap::new(),
+            shared_names: HashMap::new(),
         }
     }
 
     pub fn add_occurence(&mut self, occurence: &DataLocation, definition: &DataLocation) {
-        if self.cursor.is_none() || is_invalid_location(definition) || is_invalid_location(occurence) {
+        if !self.cursor.exists() || is_invalid_location(definition) || is_invalid_location(occurence) {
             return;
         }
 
-        self.areas.entry(definition.clone())
-            .or_insert(RenameArea::new(definition))
+        self.shared_names.entry(definition.clone())
+            .or_insert(SharedName::new(definition))
             .add_occurence(occurence);
     }
 
-    pub fn get_occurence_under_cursor(&self, root_directory_path: &str, file_path: &str, cursor_index: usize) -> Option<DataLocation> {
-        for area in self.areas.values() {
-            if let Some(location) = area.get_occurence_under_cursor(root_directory_path, file_path, cursor_index) {
-                return Some(location);
+    pub fn get_shared_name(&self) -> Option<(&SharedName, &DataLocation)> {
+        let cursor_location = self.cursor.location.as_ref()?;
+
+        for shared_name in self.shared_names.values() {
+            if shared_name.definition.file.package_root_path != cursor_location.file.package_root_path {
+                continue;
             }
-        }
 
-        None
-    }
-
-    pub fn get_all_occurences(&self, root_directory_path: &str, file_path: &str, cursor_index: usize) -> Option<Vec<DataLocation>> {
-        for area in self.areas.values() {
-            if area.get_occurence_under_cursor(root_directory_path, file_path, cursor_index).is_some() {
-                return Some(area.get_all_occurences());
+            for occurence in &shared_name.occurences {
+                if self.cursor.is_on_location(occurence) {
+                    return Some((shared_name, occurence));
+                }
             }
         }
 
