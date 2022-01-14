@@ -1,4 +1,4 @@
-use crate::{program::ProgramContext, command_line::CommandLineOptions, language_server::{validate, prepare_rename, provide_rename_edits, provide_definition, provide_hover, provide_completion_items, provide_signature_help}};
+use crate::{program::ProgramContext, command_line::CommandLineOptions, language_server::{validate, prepare_rename, provide_rename_edits, provide_definition, provide_hover, provide_completion_items, provide_signature_help, provide_code_actions}};
 use super::{LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
@@ -10,6 +10,7 @@ pub enum LanguageServerCommandKind {
     ProvideHover,
     ProvideCompletionItems,
     ProvideSignatureHelp,
+    ProvideCodeActions,
 }
 
 pub type LanguageServerCommandCallback = fn(&LanguageServerCommandParameters, &ProgramContext, &mut LanguageServerCommandOutput);
@@ -24,6 +25,7 @@ impl LanguageServerCommandKind {
             "provide-hover" => Some(Self::ProvideHover),
             "provide-completion-items" => Some(Self::ProvideCompletionItems),
             "provide-signature-help" => Some(Self::ProvideSignatureHelp),
+            "provide-code-actions" => Some(Self::ProvideCodeActions),
             _ => None
         }
     }
@@ -37,6 +39,7 @@ impl LanguageServerCommandKind {
             LanguageServerCommandKind::ProvideHover => provide_hover,
             LanguageServerCommandKind::ProvideCompletionItems => provide_completion_items,
             LanguageServerCommandKind::ProvideSignatureHelp => provide_signature_help,
+            LanguageServerCommandKind::ProvideCodeActions => provide_code_actions,
         }
     }
 }

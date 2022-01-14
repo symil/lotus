@@ -566,7 +566,7 @@ impl ProgramContext {
 
         let content = TypeInstanceContent::from_parameters(&parameters, header.clone(), self);
 
-        self.type_instances.get_mut(&id).unwrap().1.insert(content);
+        self.type_instances.get_mut(&id).unwrap().1 = Some(content);
 
         header
     }
@@ -584,7 +584,7 @@ impl ProgramContext {
 
         let content = FunctionInstanceContent::from_parameters(&parameters, header.clone(), self);
 
-        self.function_instances.get_mut(&id).unwrap().1.insert(content);
+        self.function_instances.get_mut(&id).unwrap().1 = Some(content);
 
         header
     }
