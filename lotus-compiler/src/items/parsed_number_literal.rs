@@ -24,17 +24,25 @@ impl ParsedNumberLiteral {
             false => {
                 let (number, suffix) = split_number_suffix(s);
                 let mut prefer_float = false;
+                let mut prefer_display_size = false;
 
                 if let Some(ty) = type_hint {
                     if ty.is_builtin_type(BuiltinType::Float) {
                         prefer_float = true;
+                    } else if ty.is_builtin_type(BuiltinType::DisplaySize) {
+                        prefer_display_size = true;
                     }
                 }
 
-                if suffix.is_empty() && !number.contains(".") {
-                    match prefer_float {
-                        true => Number::Float(number.parse().unwrap()),
-                        false => Number::Int(i32::from_str_radix(s, 10).unwrap())
+                if suffix.is_empty() {
+                    if prefer_float {
+                        Number::Float(number.parse().unwrap())
+                    } else if prefer_display_size {
+                        Number::ScaledFromContainerMinSize(number.parse().unwrap())
+                    } else if number.contains(".") {
+                        Number::Float(number.parse().unwrap())
+                    } else {
+                        Number::Int(i32::from_str_radix(s, 10).unwrap())
                     }
                 } else {
                     let value : f32 = number.parse().unwrap();
