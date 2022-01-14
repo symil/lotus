@@ -38,14 +38,14 @@ pub struct VirtualInitVariableInfo {
     pub var_info: VariableInfo,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VariableAccessKind {
     Get,
     Set,
     Tee
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FieldAccessKind {
     Get,
     Set,
@@ -266,6 +266,11 @@ impl VirtualInstruction {
                 }
             },
             VirtualInstruction::VariableAccess(info) => {
+                if info.access_kind == VariableAccessKind::Get && info.var_info.kind().is_global() {
+                    
+                }
+
+
                 let mut content = vec![];
                 let value_wat = match &info.value {
                     Some(vasm) => vasm.resolve(type_index, context),
@@ -635,6 +640,31 @@ impl VirtualInstruction {
             VirtualInstruction::Jump(_) => unreachable!(),
             VirtualInstruction::JumpIf(_) => unreachable!(),
             VirtualInstruction::IfThenElse(_) => unreachable!(),
+        }
+    }
+
+    pub fn resolve_as_constant(&self) -> Option<Wat> {
+        match self {
+            VirtualInstruction::None => None,
+            VirtualInstruction::Eqz => None,
+            VirtualInstruction::Raw(_) => None,
+            VirtualInstruction::Drop(_) => None,
+            VirtualInstruction::Placeholder(_) => None,
+            VirtualInstruction::Return(_) => None,
+            VirtualInstruction::IntConstant(value) => Some(Wat::const_i32(*value)),
+            VirtualInstruction::FloatConstant(value) => Some(Wat::const_f32(*value)),
+            VirtualInstruction::TypeId(_) => None,
+            VirtualInstruction::TypeName(_) => None,
+            VirtualInstruction::InitVariable(_) => None,
+            VirtualInstruction::VariableAccess(_) => None,
+            VirtualInstruction::FieldAccess(_) => None,
+            VirtualInstruction::FunctionCall(_) => None,
+            VirtualInstruction::FunctionIndex(_) => None,
+            VirtualInstruction::Loop(_) => None,
+            VirtualInstruction::Block(_) => None,
+            VirtualInstruction::Jump(_) => None,
+            VirtualInstruction::JumpIf(_) => None,
+            VirtualInstruction::IfThenElse(_) => None,
         }
     }
 }

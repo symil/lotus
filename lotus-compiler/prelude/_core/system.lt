@@ -3,6 +3,10 @@ sys type(void) system {
         init_memory();
     }
 
+    todo<T>() -> T {{
+        unreachable
+    }}
+
     assert(line: int, value: bool) {
         wasm_assert(line, value);
     }

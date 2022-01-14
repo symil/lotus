@@ -1,7 +1,7 @@
 #![feature(option_result_contains)]
 #![feature(array_methods)]
-#![allow(unused)]
-use std::{env, fs, path::{Path, PathBuf}, process};
+// #![allow(unused)]
+use std::{env, process};
 use colored::*;
 use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
 use language_server::start_language_server;

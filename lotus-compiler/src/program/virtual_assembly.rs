@@ -352,4 +352,14 @@ impl VirtualAssembly {
 
         result
     }
+
+    pub fn resolve_as_constant(&self) -> Option<Wat> {
+        match &self.content {
+            Some(content) => match content.instructions.len() {
+                1 => content.instructions.first().unwrap().resolve_as_constant(),
+                _ => None
+            },
+            None => None,
+        }
+    }
 }

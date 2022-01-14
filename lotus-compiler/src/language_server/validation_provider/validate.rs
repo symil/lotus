@@ -1,7 +1,6 @@
 use indexmap::IndexMap;
 use parsable::StringReader;
-use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
+use crate::{program::ProgramContext, command_line::CommandLineOptions, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn validate(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
     let mut file_errors = IndexMap::new();

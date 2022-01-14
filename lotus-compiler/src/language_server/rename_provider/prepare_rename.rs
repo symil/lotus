@@ -1,5 +1,4 @@
-use crate::{program::{ProgramContext, EVENT_VAR_NAME, SELF_VAR_NAME, SELF_TYPE_NAME}, command_line::CommandLineOptions};
-use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
+use crate::{program::{ProgramContext, EVENT_VAR_NAME, SELF_VAR_NAME, SELF_TYPE_NAME}, command_line::CommandLineOptions, language_server::{LanguageServerCommandOutput, LanguageServerCommandParameters}};
 
 pub fn prepare_rename(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
     let root_directory_path = &parameters.root_directory_path;

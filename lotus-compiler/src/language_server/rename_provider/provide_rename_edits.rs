@@ -1,7 +1,5 @@
 use std::collections::HashSet;
-
-use crate::{program::{ProgramContext}, command_line::CommandLineOptions, utils::is_valid_identifier};
-use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
+use crate::{program::{ProgramContext}, command_line::CommandLineOptions, utils::is_valid_identifier, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn provide_rename_edits(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
     let root_directory_path = &parameters.root_directory_path;

@@ -1,5 +1,5 @@
-use crate::{program::ProgramContext, command_line::CommandLineOptions};
-use super::{validate, prepare_rename, provide_rename_edits, LanguageServerCommandParameters, provide_definition, provide_hover, provide_completion_items, LanguageServerCommandOutput, LanguageServerCommandReload, provide_signature_help};
+use crate::{program::ProgramContext, command_line::CommandLineOptions, language_server::{validate, prepare_rename, provide_rename_edits, provide_definition, provide_hover, provide_completion_items, provide_signature_help}};
+use super::{LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum LanguageServerCommandKind {

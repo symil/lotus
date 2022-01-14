@@ -1,5 +1,4 @@
-use crate::program::{ProgramContext, FunctionCall, SELF_VAR_NAME, VariableInfo};
-use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
+use crate::{program::{ProgramContext, FunctionCall, SELF_VAR_NAME, VariableInfo}, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn provide_signature_help(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
     if let Some(area) = context.signature_help_provider.get_area_under_cursor(&parameters.file_path, parameters.cursor_index) {

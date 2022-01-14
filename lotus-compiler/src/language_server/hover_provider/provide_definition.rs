@@ -1,5 +1,4 @@
-use crate::program::ProgramContext;
-use super::{LanguageServerCommandParameters, LanguageServerCommandOutput};
+use crate::{program::ProgramContext, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn provide_definition(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
     if let Some(area) = context.hover_provider.get_area_under_cursor(&parameters.file_path, parameters.cursor_index) {

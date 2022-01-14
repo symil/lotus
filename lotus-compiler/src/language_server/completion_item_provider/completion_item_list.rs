@@ -1,6 +1,5 @@
 use std::{mem::take, rc::Rc};
 use parsable::DataLocation;
-
 use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}, language_server::Range};
 use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, PostCompletionCommand};
 
