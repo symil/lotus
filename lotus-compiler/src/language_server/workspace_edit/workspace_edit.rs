@@ -1,13 +1,13 @@
 use super::TextEdit;
 
 pub struct WorkspaceEdit {
-    pub inserts: Vec<TextEdit>
+    pub text_edits: Vec<TextEdit>
 }
 
 impl WorkspaceEdit {
     pub fn new() -> Self {
         Self {
-            inserts: vec![],
+            text_edits: vec![],
         }
     }
 }

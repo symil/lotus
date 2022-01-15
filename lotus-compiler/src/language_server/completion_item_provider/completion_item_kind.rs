@@ -31,8 +31,8 @@ pub enum CompletionItemKind {
     Variable,
 }
 
-impl CompletionItemKind {
-    pub fn to_str(&self) -> &'static str {
+impl ToString for CompletionItemKind {
+    fn to_string(&self) -> String {
         match self {
             CompletionItemKind::Class => "class",
             CompletionItemKind::Color => "color",
@@ -61,6 +61,6 @@ impl CompletionItemKind {
             CompletionItemKind::User => "user",
             CompletionItemKind::Value => "value",
             CompletionItemKind::Variable => "variable",
-        }
+        }.to_string()
     }
 }

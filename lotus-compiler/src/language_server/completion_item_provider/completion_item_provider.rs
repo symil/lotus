@@ -4,12 +4,12 @@ use crate::{program::{CursorLocation, Cursor}, utils::{is_valid_identifier, is_b
 use super::{CompletionItemGenerator, CompletionItem};
 
 #[derive(Debug)]
-pub struct CompletionProvider {
+pub struct CompletionItemProvider {
     pub cursor: Cursor,
     pub completion_item_generators: Vec<CompletionItemGenerator>
 }
 
-impl CompletionProvider {
+impl CompletionItemProvider {
     pub fn new(cursor: &Cursor) -> Self {
         Self {
             cursor: cursor.clone(),

@@ -1,4 +1,5 @@
 // https://code.visualstudio.com/api/references/vscode-api#CodeActionKind
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CodeActionKind {
     Empty,
     QuickFix,
@@ -11,8 +12,8 @@ pub enum CodeActionKind {
     SourceOrganizeImports,
 }
 
-impl CodeActionKind {
-    pub fn to_str(&self) -> &'static str {
+impl ToString for CodeActionKind {
+    fn to_string(&self) -> String {
         match &self {
             CodeActionKind::Empty => "empty",
             CodeActionKind::QuickFix => "quick-fix",
@@ -23,6 +24,6 @@ impl CodeActionKind {
             CodeActionKind::Source => "source",
             CodeActionKind::SourceFixAll => "source-fix-all",
             CodeActionKind::SourceOrganizeImports => "source-organize-imports",
-        }
+        }.to_string()
     }
 }

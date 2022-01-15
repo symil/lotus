@@ -110,7 +110,7 @@
 [X] Improve `match` block
 [X] Add versioning to allocated pointers
 [X] Validate a single time after multiple files have been saved
-[ ] Command to add all enum variants to a `match` block
+[X] Command to add all enum variants to a `match` block
 [ ] Allow client to reference server objects with their addresses
 [ ] Find way to keep a view's state accross multiple updates
 

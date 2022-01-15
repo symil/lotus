@@ -1,7 +1,11 @@
+use std::iter::FromIterator;
+
 use colored::Colorize;
+use enum_iterator::IntoEnumIterator;
+use indexmap::IndexSet;
 use parsable::parsable;
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent}, wat};
-use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColon, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrow, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket};
+use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColon, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrow, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken};
 
 #[parsable]
 pub struct ParsedMatchBlock {
@@ -57,8 +61,11 @@ impl ParsedMatchBlock {
             },
         };
 
-        context.add_match_item_completion_area(&body.opening_bracket.location.until(&body.branches), &matched_type);
-        context.add_match_item_completion_area(&body.branches.location.until(&body.closing_bracket), &matched_type);
+        let first_half_location = body.opening_bracket.location.until(&body.branches);
+        let second_half_location = body.branches.location.until(&body.closing_bracket);
+
+        context.add_match_item_completion_area(&first_half_location, &matched_type);
+        context.add_match_item_completion_area(&second_half_location, &matched_type);
 
         for branch in &body.branches.list {
             context.add_match_item_completion_area(branch.item.get_location(), &matched_type);
@@ -78,7 +85,9 @@ impl ParsedMatchBlock {
                 }
 
                 if let Some(body) = &branch.body {
-                    if let Some(body_vasm) = body.process(type_hint, context) {
+                    let hint = type_hint.or(returned_type.as_ref());
+
+                    if let Some(body_vasm) = body.process(hint, context) {
                         branch_vasm = branch_vasm
                             .append(body_vasm)
                             .set_tmp_var(&result_var)
@@ -104,6 +113,43 @@ impl ParsedMatchBlock {
 
             vasm = vasm.block(branch_vasm);
         }
+
+        let generate_fill_match_arms = || {
+            let mut result = None;
+            let all_variants = if matched_type.is_enum() {
+                let type_name = matched_type.to_string();
+
+                matched_type.get_all_variants().iter()
+                    .map(|variant_info| format!("{}::{}", type_name, variant_info.name.as_str()))
+                    .collect::<Vec<String>>()
+            } else if matched_type.is_bool() {
+                ParsedBooleanLiteralToken::into_enum_iter()
+                    .map(|value| value.as_str().to_string())
+                    .collect::<Vec<String>>()
+            } else {
+                vec![]
+            };
+            let mut variant_set : IndexSet<String> = IndexSet::from_iter(all_variants);
+
+            for branch in &body.branches.list {
+                if let Some(variant) = branch.item.get_variant_name() {
+                    variant_set.remove(&variant);
+                }
+            }
+
+            if !variant_set.is_empty() {
+                result = Some(variant_set.iter()
+                    .map(|variant| format!("{} => @todo(),", variant))
+                    .collect::<Vec<String>>()
+                    .join("\n")
+                );
+            }
+
+            result
+        };
+
+        context.code_actions_provider.add_replace_action(&first_half_location, "Fill match arms", None, generate_fill_match_arms);
+        context.code_actions_provider.add_replace_action(&second_half_location, "Fill match arms", None, generate_fill_match_arms);
 
         let final_type = returned_type.unwrap_or(context.void_type());
 

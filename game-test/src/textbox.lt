@@ -18,9 +18,7 @@ pub view TextBox {
             let valid = true;
 
             match evt.code {
-                KeyCode::Backspace => {
-                    
-                }
+
             }
         }
     }

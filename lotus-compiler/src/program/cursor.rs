@@ -27,6 +27,10 @@ impl Cursor {
         }
     }
 
+    pub fn get_location(&self) -> Option<&DataLocation> {
+        self.location.as_ref()
+    }
+
     pub fn exists(&self) -> bool {
         self.location.is_some()
     }

@@ -6,19 +6,19 @@ use super::CodeActionKind;
 pub struct CodeAction {
     pub title: String,
     pub kind: CodeActionKind,
-    pub edit: WorkspaceEdit
+    pub workspace_edit: WorkspaceEdit
 }
 
 impl CodeAction {
-    pub fn new<S : ToString>(title: S) -> Self {
+    pub fn new<S : ToString>(title: S, kind: CodeActionKind) -> Self {
         Self {
             title: title.to_string(),
-            kind: CodeActionKind::Empty,
-            edit: WorkspaceEdit::new(),
+            kind,
+            workspace_edit: WorkspaceEdit::new(),
         }
     }
 
-    pub fn add_edit<L : Borrow<DataLocation>, T : ToString>(&mut self, deleted_location: L, inserted_text: T) {
-        self.edit.inserts.push(TextEdit::new(deleted_location.borrow().clone(), inserted_text.to_string()))
+    pub fn add_text_edit(&mut self, edit: TextEdit) {
+        self.workspace_edit.text_edits.push(edit);
     }
 }

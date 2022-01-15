@@ -3,7 +3,7 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{DataLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider}};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider}};
 use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode};
 
 pub struct ProgramContext {
@@ -21,11 +21,12 @@ pub struct ProgramContext {
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
 
-    // forced to use an Option so we can `take` it to work around the borrow checker (TODO: use a better solution)
-    pub completion_provider: Option<CompletionProvider>,
-    pub rename_provider: RenameProvider,
-    pub hover_provider: HoverProvider,
+    pub code_actions_provider: CodeActionsProvider,
+    // forced to use an Option so we can `take` it to work around the borrow checker (TODO: find a better solution)
+    pub completion_provider: Option<CompletionItemProvider>,
     pub definition_provider: DefinitionProvider,
+    pub hover_provider: HoverProvider,
+    pub rename_provider: RenameProvider,
     pub signature_help_provider: SignatureHelpProvider,
 
     builtin_types: HashMap<BuiltinType, Link<TypeBlueprint>>,
@@ -71,10 +72,11 @@ impl ProgramContext {
             interfaces: Default::default(),
             functions: Default::default(),
             global_vars: Default::default(),
-            completion_provider: Some(CompletionProvider::new(&cursor)),
-            rename_provider: RenameProvider::new(&cursor),
-            hover_provider: HoverProvider::new(&cursor),
+            code_actions_provider: CodeActionsProvider::new(&cursor),
+            completion_provider: Some(CompletionItemProvider::new(&cursor)),
             definition_provider: DefinitionProvider::new(&cursor),
+            hover_provider: HoverProvider::new(&cursor),
+            rename_provider: RenameProvider::new(&cursor),
             signature_help_provider: SignatureHelpProvider::new(&cursor),
             builtin_types: Default::default(),
             main_types: Default::default(),
