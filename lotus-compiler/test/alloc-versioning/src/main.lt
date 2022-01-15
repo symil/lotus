@@ -7,4 +7,6 @@ export fn main() {
         @log((p[-1] >> 2) - base);
         @trigger_garbage_collection();
     }
+
+    @log(base > 100);
 }
