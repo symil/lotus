@@ -13,6 +13,10 @@ impl TypedefBlueprint {
     pub fn check_types_parameters(&self, context: &mut ProgramContext) {
         self.target.check_parameters(context);
     }
+
+    pub fn destroy(&mut self) {
+        self.target = Type::undefined();
+    }
 }
 
 impl GlobalItem for TypedefBlueprint {

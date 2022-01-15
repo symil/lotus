@@ -32,7 +32,6 @@ pub fn start_language_server(test_command: &Option<String>) {
     loop {
         match listener.accept() {
             Ok((stream, _)) => {
-                // println!("OPEN");
                 stream.set_nonblocking(true).unwrap();
                 connections.push(stream);
             },
@@ -49,7 +48,7 @@ pub fn start_language_server(test_command: &Option<String>) {
 
                     let start = Instant::now();
                     let content = str::from_utf8(&buffer[0..size]).unwrap();
-                    
+
                     if let Some(command) = LanguageServerCommand::from_str(content) {
                         let output = command.run(Some(&mut cache));
                         let content = output.consume();

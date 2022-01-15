@@ -112,6 +112,21 @@ impl TypeBlueprint {
             FieldKind::Static => &self.static_methods,
         }
     }
+
+    pub fn destroy(&mut self) {
+        self.descendants.clear();
+        self.ancestors.clear();
+        self.parameters.clear();
+        self.associated_types.clear();
+        self.self_type = Type::undefined();
+        self.parent = None;
+        self.enum_variants.clear();
+        self.fields.clear();
+        self.regular_methods.clear();
+        self.static_methods.clear();
+        self.dynamic_methods.clear();
+        self.event_callbacks.clear();
+    }
 }
 
 impl GlobalItem for TypeBlueprint {

@@ -45,6 +45,11 @@ impl GlobalVarBlueprint {
             wasm_locals,
         }
     }
+
+    pub fn destroy(&mut self) {
+        self.var_info.destroy();
+        self.init_vasm.destroy();
+    }
 }
 
 impl GlobalItem for GlobalVarBlueprint {

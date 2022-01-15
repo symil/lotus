@@ -124,6 +124,10 @@ impl VariableInfo {
             }
         })
     }
+
+    pub fn destroy(&self) {
+        self.borrow_mut().ty = Type::undefined();
+    }
 }
 
 impl Default for VariableInfo {

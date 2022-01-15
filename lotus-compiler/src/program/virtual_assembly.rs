@@ -31,6 +31,10 @@ impl VirtualAssembly {
         Self { ty, content }
     }
 
+    pub fn destroy(&mut self) {
+        self.ty = Type::undefined();
+    }
+
     pub fn undefined() -> Self {
         Self::new(false)
     }

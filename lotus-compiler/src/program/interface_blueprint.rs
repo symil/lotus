@@ -40,6 +40,12 @@ impl InterfaceBlueprint {
             FieldKind::Static => &self.static_methods,
         }
     }
+
+    pub fn destroy(&mut self) {
+        self.associated_types.clear();
+        self.regular_methods.clear();
+        self.static_methods.clear();
+    }
 }
 
 impl GlobalItem for InterfaceBlueprint {

@@ -63,6 +63,8 @@ impl LanguageServerCommand {
 
         callback(&self.parameters, &context, &mut output);
 
+        context.destroy();
+
         output
     }
 }

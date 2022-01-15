@@ -1157,4 +1157,26 @@ impl ProgramContext {
 
         file.write_all(self.output_file.as_bytes()).unwrap();
     }
+
+    pub fn destroy(mut self) {
+        for interface_wrapped in self.interfaces.get_all() {
+            interface_wrapped.borrow_mut().destroy();
+        }
+
+        for type_wrapped in self.types.get_all() {
+            type_wrapped.borrow_mut().destroy();
+        }
+
+        for typedef_wrapped in self.typedefs.get_all() {
+            typedef_wrapped.borrow_mut().destroy();
+        }
+
+        for function_wrapped in self.functions.get_all() {
+            function_wrapped.borrow_mut().destroy();
+        }
+
+        for global_wrapped in self.global_vars.get_all() {
+            global_wrapped.borrow_mut().destroy();
+        }
+    }
 }

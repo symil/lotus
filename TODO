@@ -113,7 +113,8 @@
 [X] Command to add all enum variants to a `match` block
 [X] Make internal methods show up when working on the prelude
 [X] Allow client to reference server objects with their addresses
-[ ] Rename `DataLocation` into `ItemLocation`
+[X] Rename `DataLocation` into `ItemLocation`
+[X] Investigate memory leak
 
 -- LATER --
 [ ] Allow manually specifying function parameters

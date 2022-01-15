@@ -113,6 +113,21 @@ impl FunctionBlueprint {
     pub fn get_self_type(&self) -> Type {
         Type::function(&self.signature)
     }
+
+    pub fn destroy(&mut self) {
+        for arg in &mut self.argument_variables {
+            arg.destroy();
+        }
+        self.parameters.clear();
+        self.argument_names.clear();
+        self.signature = Signature::undefined();
+        self.argument_variables.clear();
+        self.owner_type = None;
+        self.owner_interface = None;
+        self.closure_details = None;
+        self.method_details = None;
+        self.body = FunctionBody::Empty;
+    }
 }
 
 impl GlobalItem for FunctionBlueprint {
