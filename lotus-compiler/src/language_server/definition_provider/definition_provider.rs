@@ -1,4 +1,4 @@
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 use crate::program::Cursor;
 use super::Definition;
@@ -16,7 +16,7 @@ impl DefinitionProvider {
         }
     }
 
-    pub fn set_definition(&mut self, location: &DataLocation, definition: &DataLocation) {
+    pub fn set_definition(&mut self, location: &ItemLocation, definition: &ItemLocation) {
         if !self.cursor.is_on_location(location) {
             return;
         }

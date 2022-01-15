@@ -1,4 +1,4 @@
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::program::{ProgramContext};
 
 pub struct LanguageServerCommandParameters {

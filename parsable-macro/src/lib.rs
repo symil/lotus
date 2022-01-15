@@ -66,7 +66,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     let impl_deref = match output.deref {
         Some(body) => quote! {
             impl std::ops::Deref for #name {
-                type Target = parsable::DataLocation;
+                type Target = parsable::ItemLocation;
     
                 #body
             }

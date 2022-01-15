@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{items::{Identifier, ParsedVisibilityToken}, program::{RETAIN_METHOD_NAME, VariableKind}};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm, Visibility};
 

@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 use colored::Colorize;
-use parsable::{DataLocation, ParseError};
+use parsable::{ItemLocation, ParseError};
 use crate::utils::Link;
 use super::{InterfaceBlueprint, Type, ItemKind, ExpectedItemKind};
 
 #[derive(Debug)]
 pub struct CompilationError {
-    pub location: DataLocation,
+    pub location: ItemLocation,
     pub details: CompilationErrorDetails,
 }
 

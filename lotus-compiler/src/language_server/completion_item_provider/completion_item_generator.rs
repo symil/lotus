@@ -1,5 +1,5 @@
 use enum_iterator::IntoEnumIterator;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken}};
 use super::{CompletionItem, CompletionItemList};
 
@@ -52,7 +52,7 @@ pub struct VariableCompletionDetails {
 }
 
 impl CompletionItemGenerator {
-    pub fn generate(&self, source_location: &DataLocation) -> Vec<CompletionItem> {
+    pub fn generate(&self, source_location: &ItemLocation) -> Vec<CompletionItem> {
         let show_internals = source_location.file.package_root_path.ends_with("prelude"); // TODO do this more properly
         let mut items = CompletionItemList::new();
 

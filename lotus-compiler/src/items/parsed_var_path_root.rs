@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
 use super::{ParsedAction, ParsedArrayLiteral, ParsedAssignment, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug};
 

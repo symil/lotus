@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::utils::Link;
 use super::{ActualTypeContent, FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, Type, TypeBlueprint, TypeInstanceParameters};
 
@@ -36,7 +36,7 @@ impl TypeInstanceHeader {
             let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
             let dynamic_method_table_offset = context.reserve_next_function_index();
-            let location = &DataLocation::default();
+            let location = &ItemLocation::default();
             let mut type_parameters = vec![];
             let mut name = type_unwrapped.name.to_string();
 

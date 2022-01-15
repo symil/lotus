@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 use crate::{program::{CursorLocation, Cursor}, language_server::TextEdit};
 use super::{CodeAction, CodeActionKind};
@@ -17,7 +17,7 @@ impl CodeActionsProvider {
         }
     }
 
-    pub fn add_replace_action<F : Fn() -> Option<String>>(&mut self, location: &DataLocation, title: &'static str, location_to_replace: Option<&DataLocation>, make_replacement: F) {
+    pub fn add_replace_action<F : Fn() -> Option<String>>(&mut self, location: &ItemLocation, title: &'static str, location_to_replace: Option<&ItemLocation>, make_replacement: F) {
         if !self.cursor.is_on_location(location) {
             return;
         }

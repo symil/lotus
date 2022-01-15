@@ -1,4 +1,4 @@
-use parsable::{DataLocation, Parsable, parsable};
+use parsable::{ItemLocation, Parsable, parsable};
 use crate::{program::{BuiltinType, ProgramContext, Vasm}, wat};
 
 #[parsable]

@@ -1,5 +1,5 @@
 use std::{rc::Rc, ops::Deref, borrow::Borrow};
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::utils::Link;
 use super::{ProgramContext, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat, VirtualInitVariableInfo, ToInt, PlaceholderDetails, VariableAccessKind, VirtualVariableAccessInfo, FunctionBlueprint, VirtualFunctionIndexInfo, VirtualAccessFieldInfo, FieldAccessKind, IfThenElseInfo, VirtualJumpIfInfo, VirtualBlockInfo, VirtualJumpInfo, VirtualLoopInfo, FunctionCall, NamedFunctionCallDetails, VirtualFunctionCallInfo, NONE_METHOD_NAME, AnonymousFunctionCallDetails, Signature};
 
@@ -98,7 +98,7 @@ impl VirtualAssembly {
         self.instruction(|| VirtualInstruction::Drop(ty.clone()))
     }
     
-    pub fn placeholder(self, location: &DataLocation) -> Self {
+    pub fn placeholder(self, location: &ItemLocation) -> Self {
         self.instruction(|| VirtualInstruction::Placeholder(PlaceholderDetails {
             location: location.clone(),
             vasm: None,
@@ -321,7 +321,7 @@ impl VirtualAssembly {
         }
     }
 
-    pub fn replace_placeholder(&mut self, location: &DataLocation, replacement: &Rc<Vasm>) {
+    pub fn replace_placeholder(&mut self, location: &ItemLocation, replacement: &Rc<Vasm>) {
         if let Some(content) = &mut self.content {
             for instruction in &mut content.instructions {
                 instruction.replace_placeholder(location, replacement);

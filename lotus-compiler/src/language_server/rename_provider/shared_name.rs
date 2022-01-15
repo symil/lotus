@@ -1,21 +1,21 @@
 use std::{collections::HashSet, iter::FromIterator};
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 #[derive(Debug)]
 pub struct SharedName {
-    pub definition: DataLocation,
-    pub occurences: HashSet<DataLocation>
+    pub definition: ItemLocation,
+    pub occurences: HashSet<ItemLocation>
 }
 
 impl SharedName {
-    pub fn new(definition: &DataLocation) -> Self {
+    pub fn new(definition: &ItemLocation) -> Self {
         Self {
             definition: definition.clone(),
             occurences: HashSet::new(),
         }
     }
 
-    pub fn add_occurence(&mut self, occurence: &DataLocation) {
+    pub fn add_occurence(&mut self, occurence: &ItemLocation) {
         self.occurences.insert(occurence.clone());
     }
 }

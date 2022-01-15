@@ -1,4 +1,4 @@
-use parsable::{parsable, DataLocation};
+use parsable::{parsable, ItemLocation};
 use super::{ParsedExpression, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedComma};
 
 #[parsable]
@@ -67,7 +67,7 @@ impl ParsedArgumentList {
         }
     }
 
-    pub fn get_location_including_separator(&self, index: usize) -> Option<&DataLocation> {
+    pub fn get_location_including_separator(&self, index: usize) -> Option<&ItemLocation> {
         let mut result = None;
 
         if let Some(content) = &self.content {
@@ -81,7 +81,7 @@ impl ParsedArgumentList {
         result
     }
 
-    pub fn get_location(&self, index: usize) -> Option<&DataLocation> {
+    pub fn get_location(&self, index: usize) -> Option<&ItemLocation> {
         let mut result = None;
 
         if let Some(content) = &self.content {

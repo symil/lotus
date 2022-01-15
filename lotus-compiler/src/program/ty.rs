@@ -1,7 +1,7 @@
 use std::{convert::TryInto, fmt::{Display, write}, ops::Deref, rc::Rc, result, borrow::Borrow};
 use indexmap::IndexMap;
 use colored::*;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{items::{ParsedType, ParsedTypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
 use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, EnumVariantInfo};
 
@@ -29,7 +29,7 @@ pub struct BuiltinTypeContent {
 pub struct ActualTypeContent {
     pub type_blueprint: Link<TypeBlueprint>,
     pub parameters: Vec<Type>,
-    pub location: DataLocation
+    pub location: ItemLocation
 }
 
 #[derive(Debug, Clone)]
@@ -56,7 +56,7 @@ impl Type {
         Self::new(TypeContent::This(interface.borrow().clone()))
     }
 
-    pub fn actual<T : Borrow<Link<TypeBlueprint>>>(type_blueprint: T, parameters: Vec<Type>, location: &DataLocation) -> Type {
+    pub fn actual<T : Borrow<Link<TypeBlueprint>>>(type_blueprint: T, parameters: Vec<Type>, location: &ItemLocation) -> Type {
         Self::new(TypeContent::Actual(ActualTypeContent {
             type_blueprint: type_blueprint.borrow().clone(),
             parameters,
@@ -208,7 +208,7 @@ impl Type {
                             let other_ancestor_wrapped = other_ancestor.get_type_blueprint();
 
                             if self_ancestor_wrapped == other_ancestor_wrapped {
-                                return Some(Type::actual(&self_ancestor_wrapped, vec![], &DataLocation::default()));
+                                return Some(Type::actual(&self_ancestor_wrapped, vec![], &ItemLocation::default()));
                             }
                         }
                     }
@@ -410,13 +410,13 @@ impl Type {
 
     pub fn match_builtin_interface(&self, interface: BuiltinInterface, context: &mut ProgramContext) -> bool {
         context.errors.set_enabled(false);
-        let result = self.check_match_interface(&context.get_builtin_interface(interface), &DataLocation::default(), context);
+        let result = self.check_match_interface(&context.get_builtin_interface(interface), &ItemLocation::default(), context);
         context.errors.set_enabled(true);
 
         result
     }
 
-    pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &DataLocation, context: &mut ProgramContext) -> bool {
+    pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &ItemLocation, context: &mut ProgramContext) -> bool {
         let mut ok = true;
         
         for interface in interface_list.list.iter() {
@@ -428,7 +428,7 @@ impl Type {
         ok
     }
 
-    pub fn check_match_interface(&self, interface: &Link<InterfaceBlueprint>, location: &DataLocation, context: &mut ProgramContext) -> bool {
+    pub fn check_match_interface(&self, interface: &Link<InterfaceBlueprint>, location: &ItemLocation, context: &mut ProgramContext) -> bool {
         let mut details = vec![];
 
         let ok = match self.content() {
@@ -503,9 +503,9 @@ impl Type {
     }
 
 
-    pub fn call_builtin_interface<L, F>(&self, location: &L, interface: BuiltinInterface, argument_types: &[(&Type, &DataLocation)], context: &mut ProgramContext, make_error_prefix: F) -> Option<Vasm>
+    pub fn call_builtin_interface<L, F>(&self, location: &L, interface: BuiltinInterface, argument_types: &[(&Type, &ItemLocation)], context: &mut ProgramContext, make_error_prefix: F) -> Option<Vasm>
         where
-            L : Deref<Target=DataLocation>,
+            L : Deref<Target=ItemLocation>,
             F : Fn() -> String
     {
         let interface_wrapped = context.get_builtin_interface(interface);
@@ -542,7 +542,7 @@ impl Type {
 
     pub fn call_builtin_interface_no_arg<L>(&self, location: &L, interface: BuiltinInterface, context: &mut ProgramContext) -> Option<Vasm>
         where
-            L : Deref<Target=DataLocation>
+            L : Deref<Target=ItemLocation>
     {
         self.call_builtin_interface(location, interface, &[], context, || String::new())
     }

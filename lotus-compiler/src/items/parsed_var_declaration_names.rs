@@ -1,4 +1,4 @@
-use parsable::{parsable, DataLocation};
+use parsable::{parsable, ItemLocation};
 use crate::{program::{ProgramContext, Vasm, Type, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}};
 use super::Identifier;
 
@@ -15,7 +15,7 @@ pub enum ParsedVarDeclarationNamesContent {
 }
 
 impl ParsedVarDeclarationNames {
-    pub fn process(&self, required_type: Option<&Type>, assigned_vasm: Vasm, assigned_vasm_location: Option<&DataLocation>, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
+    pub fn process(&self, required_type: Option<&Type>, assigned_vasm: Vasm, assigned_vasm_location: Option<&ItemLocation>, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
         let current_function_level = Some(context.get_function_level());
         let variable_type = match required_type {
             Some(ty) => {

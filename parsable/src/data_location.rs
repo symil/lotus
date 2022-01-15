@@ -2,13 +2,13 @@ use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc, fm
 use crate::{line_col_lookup::{lookup_line_col}, file_info::FileInfo};
 
 #[derive(Clone, Default)]
-pub struct DataLocation {
+pub struct ItemLocation {
     pub file: Rc<FileInfo>,
     pub start: usize,
     pub end: usize,
 }
 
-impl DataLocation {
+impl ItemLocation {
     pub fn empty() -> Self {
         Self::default()
     }
@@ -92,7 +92,7 @@ impl DataLocation {
     }
 }
 
-impl Hash for DataLocation {
+impl Hash for ItemLocation {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.file.path.hash(state);
         self.start.hash(state);
@@ -100,7 +100,7 @@ impl Hash for DataLocation {
     }
 }
 
-impl PartialEq for DataLocation {
+impl PartialEq for ItemLocation {
     fn eq(&self, other: &Self) -> bool {
         self.start == other.start &&
         self.end == other.end &&
@@ -108,11 +108,11 @@ impl PartialEq for DataLocation {
     }
 }
 
-impl Eq for DataLocation {
+impl Eq for ItemLocation {
 
 }
 
-impl Debug for DataLocation {
+impl Debug for ItemLocation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (start_line, start_col) = self.get_start_line_col();
         let (end_line, end_col) = self.get_end_line_col();

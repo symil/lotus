@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 use crate::items::Identifier;
 use super::Visibility;

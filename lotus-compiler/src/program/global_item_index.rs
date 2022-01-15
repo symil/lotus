@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, cell::Ref, collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, mem::take};
 use indexmap::IndexMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{items::{Identifier}, utils::Link};
 use super::{Visibility, GlobalItem};
 
@@ -10,7 +10,7 @@ pub struct GlobalItemIndex<V> {
     pub items_by_name: HashMap<String, Vec<Link<V>>>
 }
 
-fn get_id_from_location(location: &DataLocation, marker: Option<u64>) -> u64 {
+fn get_id_from_location(location: &ItemLocation, marker: Option<u64>) -> u64 {
     let mut state = DefaultHasher::new();
 
     location.hash(&mut state);
@@ -45,7 +45,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
 
     pub fn get_by_identifier(&self, getter_name: &Identifier) -> Option<Link<V>> {
         let candidates = self.items_by_name.get(getter_name.as_str())?;
-        let getter_location : &DataLocation = &getter_name.location;
+        let getter_location : &ItemLocation = &getter_name.location;
 
         for item_wrapped in candidates.iter() {
             if is_item_accessible_from_location(item_wrapped, getter_location) {
@@ -115,7 +115,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
         self.items_by_id.values().map(|v| v.clone()).collect()
     }
 
-    pub fn get_all_from_location(&self, location: &DataLocation) -> Vec<Link<V>> {
+    pub fn get_all_from_location(&self, location: &ItemLocation) -> Vec<Link<V>> {
         let mut result = vec![];
 
         for item in self.items_by_id.values() {
@@ -128,7 +128,7 @@ impl<V : GlobalItem> GlobalItemIndex<V> {
     }
 }
 
-fn is_item_accessible_from_location<I : GlobalItem>(item: &Link<I>, location: &DataLocation) -> bool {
+fn is_item_accessible_from_location<I : GlobalItem>(item: &Link<I>, location: &ItemLocation) -> bool {
     item.with_ref(|item_unwrapped| {
         let item_name = item_unwrapped.get_name();
         let item_location = &item_name.location;

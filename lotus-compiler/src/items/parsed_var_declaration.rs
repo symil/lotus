@@ -1,5 +1,5 @@
 use std::{collections::HashMap, rc::Rc};
-use parsable::{parsable, DataLocation};
+use parsable::{parsable, ItemLocation};
 use crate::{program::{ProgramContext, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_METHOD_NAME, Type, VariableInfo, VariableKind, Vasm}};
 use super::{ParsedExpression, Identifier, ParsedType, ParsedVarDeclarationQualifier, ParsedVarDeclarationNames};
 

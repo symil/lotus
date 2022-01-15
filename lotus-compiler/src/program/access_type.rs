@@ -1,9 +1,9 @@
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccessType<'a> {
     Get,
-    Set(&'a DataLocation)
+    Set(&'a ItemLocation)
 }
 
 impl<'a> AccessType<'a> {

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use colored::*;
 use crate::{items::Identifier, program::{BuiltinInterface, CompilationError, IS_NONE_METHOD_NAME, NONE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}, wat};
 
@@ -35,7 +35,7 @@ pub enum ParsedBinaryOperatorToken {
 }
 
 impl ParsedBinaryOperator {
-    pub fn new(value: ParsedBinaryOperatorToken, location: &DataLocation) -> Self {
+    pub fn new(value: ParsedBinaryOperatorToken, location: &ItemLocation) -> Self {
         let mut result = Self::default();
 
         result.token = value;
@@ -112,7 +112,7 @@ impl ParsedBinaryOperator {
         }
     }
 
-    pub fn process(&self, left_vasm: Vasm, right_vasm: Vasm, right_location: &DataLocation, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, left_vasm: Vasm, right_vasm: Vasm, right_location: &ItemLocation, context: &mut ProgramContext) -> Option<Vasm> {
         let operator_kind = match &self.token {
             ParsedBinaryOperatorToken::Plus => OperatorKind::BuiltinInterface(BuiltinInterface::Add),
             ParsedBinaryOperatorToken::Minus => OperatorKind::BuiltinInterface(BuiltinInterface::Sub),

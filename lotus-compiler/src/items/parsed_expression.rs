@@ -1,6 +1,6 @@
 use std::{fmt::format, rc::Rc};
 use colored::Colorize;
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{program::{IS_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm}};
 use super::{ParsedBinaryOperation, Identifier, ParsedType, ParsedIsOperation, ParsedAsOperation};
 

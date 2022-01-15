@@ -1,5 +1,5 @@
 use std::{ops::Deref, mem::take};
-use parsable::{DataLocation, ParseError};
+use parsable::{ItemLocation, ParseError};
 use crate::{utils::{Link, is_valid_identifier}, items::Identifier};
 
 use super::{CompilationError, CompilationErrorDetails, GenericErrorDetails, ParseErrorDetails, Type, TypeMismatchDetails, InterfaceBlueprint, InterfaceMismatchDetails, InvalidCharacterDetails, ExpectedClassTypeDetails, UndefinedItemDetails, ItemKind, UnexpectedTokenDetails, ExpectedItemKind, ExpectedTokenDetails, CompilationErrorChain};
@@ -38,7 +38,7 @@ impl CompilationErrorList {
         &self.errors
     }
 
-    pub fn generic(&mut self, location: &DataLocation, error: String) -> CompilationErrorChain {
+    pub fn generic(&mut self, location: &ItemLocation, error: String) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::Generic(GenericErrorDetails {
@@ -49,7 +49,7 @@ impl CompilationErrorList {
 
     pub fn parse_error(&mut self, parse_error: &ParseError) -> CompilationErrorChain {
         self.add(CompilationError {
-            location: DataLocation {
+            location: ItemLocation {
                 file: parse_error.file.clone(),
                 start: parse_error.index,
                 end: parse_error.index,
@@ -60,7 +60,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn type_mismatch(&mut self, location: &DataLocation, expected_type: &Type, actual_type: &Type) -> CompilationErrorChain {
+    pub fn type_mismatch(&mut self, location: &ItemLocation, expected_type: &Type, actual_type: &Type) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::TypeMismatch(TypeMismatchDetails {
@@ -70,7 +70,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn interface_mismatch(&mut self, location: &DataLocation, expected_interface: &Link<InterfaceBlueprint>, actual_type: &Type) -> CompilationErrorChain {
+    pub fn interface_mismatch(&mut self, location: &ItemLocation, expected_interface: &Link<InterfaceBlueprint>, actual_type: &Type) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::InterfaceMismatch(InterfaceMismatchDetails {
@@ -80,7 +80,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn unexpected_expression(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn unexpected_expression(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::UnexpectedToken(UnexpectedTokenDetails {
@@ -90,14 +90,14 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn unexpected_void_expression(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn unexpected_void_expression(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::UnexpectedVoidExpression,
         })
     }
 
-    pub fn unexpected_keyword(&mut self, location: &DataLocation, keyword: &str) -> CompilationErrorChain {
+    pub fn unexpected_keyword(&mut self, location: &ItemLocation, keyword: &str) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::UnexpectedToken(UnexpectedTokenDetails {
@@ -107,7 +107,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn invalid_character(&mut self, location: &DataLocation, character: &str) -> CompilationErrorChain {
+    pub fn invalid_character(&mut self, location: &ItemLocation, character: &str) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::InvalidCharacter(InvalidCharacterDetails {
@@ -116,7 +116,7 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn expected_class_type(&mut self, location: &DataLocation, actual_type: &Type) -> CompilationErrorChain {
+    pub fn expected_class_type(&mut self, location: &ItemLocation, actual_type: &Type) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::ExpectedClassType(ExpectedClassTypeDetails {
@@ -135,31 +135,31 @@ impl CompilationErrorList {
         })
     }
 
-    pub fn expected_identifier(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn expected_identifier(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Identifier)
     }
 
-    pub fn expected_expression(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn expected_expression(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Expression)
     }
 
-    pub fn expected_function_body(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn expected_function_body(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::FunctionBody)
     }
 
-    pub fn expected_block(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn expected_block(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Block)
     }
 
-    pub fn expected_argument(&mut self, location: &DataLocation) -> CompilationErrorChain {
+    pub fn expected_argument(&mut self, location: &ItemLocation) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Argument)
     }
 
-    pub fn expected_token(&mut self, location: &DataLocation, token: &'static str) -> CompilationErrorChain {
+    pub fn expected_token(&mut self, location: &ItemLocation, token: &'static str) -> CompilationErrorChain {
         self.expected_item(location, ExpectedItemKind::Token(token))
     }
 
-    fn expected_item(&mut self, location: &DataLocation, token: ExpectedItemKind) -> CompilationErrorChain {
+    fn expected_item(&mut self, location: &ItemLocation, token: ExpectedItemKind) -> CompilationErrorChain {
         let final_location = match is_valid_identifier(location.as_str()) {
             true => location.get_end().set_start_with_offset(1),
             false => location.get_end(),

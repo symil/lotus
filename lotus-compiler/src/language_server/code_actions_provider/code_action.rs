@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::language_server::{WorkspaceEdit, TextEdit};
 use super::CodeActionKind;
 

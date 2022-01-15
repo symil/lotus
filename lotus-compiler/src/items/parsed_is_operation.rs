@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Vasm, Type, IS_METHOD_NAME, VariableInfo};
 use super::{ParsedType, Identifier, ParsedVarDeclarationNames};
 

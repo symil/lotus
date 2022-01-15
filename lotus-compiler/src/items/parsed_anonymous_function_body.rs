@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Type, Vasm};
 use super::{ParsedBlockExpression, ParsedExpression};
 

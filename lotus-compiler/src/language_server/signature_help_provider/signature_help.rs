@@ -1,16 +1,16 @@
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{program::{Signature, FunctionBlueprint, FunctionCall, Cursor}, utils::Link};
 
 pub struct SignatureHelp {
-    pub location: DataLocation,
+    pub location: ItemLocation,
     pub function_name: String,
     pub function_call: FunctionCall,
-    pub argument_locations: Vec<DataLocation>,
+    pub argument_locations: Vec<ItemLocation>,
     pub active_argument_index: Option<usize>
 }
 
 impl SignatureHelp {
-    pub fn new(location: &DataLocation, name: &str, function_call: &FunctionCall) -> Self {
+    pub fn new(location: &ItemLocation, name: &str, function_call: &FunctionCall) -> Self {
         Self {
             location: location.offset(1, -1),
             function_name: name.to_string(),
@@ -20,7 +20,7 @@ impl SignatureHelp {
         }
     }
 
-    pub fn set_argument_location(&mut self, index: usize, next_arg_location: Option<&DataLocation>, cursor: &Cursor) {
+    pub fn set_argument_location(&mut self, index: usize, next_arg_location: Option<&ItemLocation>, cursor: &Cursor) {
         if index == self.argument_locations.len() {
             let file = self.location.file.clone();
             let start = match &self.argument_locations.last() {
@@ -32,7 +32,7 @@ impl SignatureHelp {
                 None => self.location.end,
             };
 
-            let location = DataLocation { file, start, end };
+            let location = ItemLocation { file, start, end };
 
             if cursor.is_on_location(&location) {
                 self.active_argument_index = Some(index);

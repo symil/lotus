@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{AccessType, ProgramContext, Type, Vasm};
 use super::{ParsedAction, ParsedArrayLiteral, ParsedAssignment, ParsedBooleanLiteral, ParsedExpression, ParsedForBlock, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedObjectLiteral, ParsedType, ParsedStringLiteral, ParsedUnaryOperation, ParsedVarDeclaration, ParsedVarPath, ParsedWhileBlock};
 
@@ -9,7 +9,7 @@ pub enum ParsedOperand {
 }
 
 impl ParsedOperand {
-    pub fn get_location(&self) -> &DataLocation {
+    pub fn get_location(&self) -> &ItemLocation {
         match self {
             ParsedOperand::UnaryOperation(op) => &op.location,
             ParsedOperand::Assignment(assignment) => &assignment.location,

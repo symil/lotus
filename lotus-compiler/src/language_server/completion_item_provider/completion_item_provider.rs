@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{program::{CursorLocation, Cursor}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
 use super::{CompletionItemGenerator, CompletionItem};
 
@@ -17,7 +17,7 @@ impl CompletionItemProvider {
         }
     }
 
-    pub fn add_completion_generator<F : FnOnce() -> CompletionItemGenerator>(&mut self, area_location: &DataLocation, make_item_generator: F) {
+    pub fn add_completion_generator<F : FnOnce() -> CompletionItemGenerator>(&mut self, area_location: &ItemLocation, make_item_generator: F) {
         let is_under_cursor = self.cursor.is_on_location(area_location);
 
         if !is_under_cursor {

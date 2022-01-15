@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, StackTypeToken, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
 use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind};
 
@@ -41,7 +41,7 @@ pub enum WasmStackType {
 
 #[derive(Debug)]
 pub struct ParentInfo {
-    pub location: DataLocation,
+    pub location: ItemLocation,
     pub ty: Type
 }
 

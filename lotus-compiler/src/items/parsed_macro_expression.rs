@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Vasm, MacroContext, BuiltinType};
 use super::{make_string_value_from_literal_unchecked};
 

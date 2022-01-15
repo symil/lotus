@@ -1,4 +1,4 @@
-use parsable::{parsable, DataLocation};
+use parsable::{parsable, ItemLocation};
 use crate::program::{Vasm, ProgramContext, EQ_METHOD_NAME, Type};
 use super::{ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedBooleanLiteral};
 
@@ -12,7 +12,7 @@ pub enum ParsedMatchBranchLiteralItem {
 }
 
 impl ParsedMatchBranchLiteralItem {
-    pub fn get_location(&self) -> &DataLocation {
+    pub fn get_location(&self) -> &ItemLocation {
         match self {
             ParsedMatchBranchLiteralItem::None(value) => value,
             ParsedMatchBranchLiteralItem::Boolean(value) => value,

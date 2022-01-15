@@ -1,6 +1,6 @@
 use std::{collections::{HashMap}, rc::Rc};
 use regex::Regex;
-use crate::{DataLocation, file_info::FileInfo};
+use crate::{ItemLocation, file_info::FileInfo};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
@@ -192,8 +192,8 @@ impl StringReader {
         regex.find(self.as_str()).is_some()
     }
 
-    pub fn get_data_location(&self, start: usize) -> DataLocation {
-        DataLocation {
+    pub fn get_data_location(&self, start: usize) -> ItemLocation {
+        ItemLocation {
             file: self.file.clone(),
             start,
             end: self.get_index_backtracked(),

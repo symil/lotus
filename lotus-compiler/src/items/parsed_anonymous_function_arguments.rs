@@ -1,5 +1,5 @@
 use std::slice::from_ref;
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Type, Vasm, VariableInfo};
 use super::{ParsedBlockExpression, ParsedExpression, Identifier, ParsedType};
 

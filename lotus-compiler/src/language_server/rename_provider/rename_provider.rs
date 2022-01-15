@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{language_server::is_invalid_location, program::{CursorLocation, Cursor}};
 use super::SharedName;
 
 #[derive(Debug)]
 pub struct RenameProvider {
     pub cursor: Cursor,
-    pub shared_names: HashMap<DataLocation, SharedName>
+    pub shared_names: HashMap<ItemLocation, SharedName>
 }
 
 impl RenameProvider {
@@ -17,7 +17,7 @@ impl RenameProvider {
         }
     }
 
-    pub fn add_occurence(&mut self, occurence: &DataLocation, definition: &DataLocation) {
+    pub fn add_occurence(&mut self, occurence: &ItemLocation, definition: &ItemLocation) {
         if !self.cursor.exists() || is_invalid_location(definition) || is_invalid_location(occurence) {
             return;
         }
@@ -27,7 +27,7 @@ impl RenameProvider {
             .add_occurence(occurence);
     }
 
-    pub fn get_shared_name(&self) -> Option<(&SharedName, &DataLocation)> {
+    pub fn get_shared_name(&self) -> Option<(&SharedName, &ItemLocation)> {
         let cursor_location = self.cursor.location.as_ref()?;
 
         for shared_name in self.shared_names.values() {

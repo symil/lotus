@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{items::escape_char, program::{BuiltinType, ProgramContext, SET_CHAR_FUNC_NAME, Vasm, CompilationError, STRING_CREATE_METHOD_NAME}, wat, utils::FlexRef};
 
 #[parsable(name="string")]
@@ -18,7 +18,7 @@ impl ParsedStringLiteral {
     }
 }
 
-pub fn make_string_value_from_literal(location: &DataLocation, literal: &str, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn make_string_value_from_literal(location: &ItemLocation, literal: &str, context: &mut ProgramContext) -> Option<Vasm> {
     Some(get_string_vasm_from_literal(Some(location), literal, FlexRef::Mut(context)))
 }
 
@@ -26,7 +26,7 @@ pub fn make_string_value_from_literal_unchecked(literal: &str, context: &Program
     get_string_vasm_from_literal(None, literal, FlexRef::Const(context))
 }
 
-fn get_string_vasm_from_literal(location: Option<&DataLocation>, literal: &str, mut context_ref: FlexRef<ProgramContext>) -> Vasm {
+fn get_string_vasm_from_literal(location: Option<&ItemLocation>, literal: &str, mut context_ref: FlexRef<ProgramContext>) -> Vasm {
     let mut chars : Vec<char> = literal.chars().collect();
     let mut escaping = false;
     let mut unescaped_chars = vec![];

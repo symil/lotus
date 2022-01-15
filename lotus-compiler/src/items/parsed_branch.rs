@@ -1,5 +1,5 @@
 use colored::Colorize;
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{program::{BuiltinInterface, BuiltinType, CompilationError, IS_NONE_METHOD_NAME, ProgramContext, Type, Vasm}, wat};
 use super::{ParsedExpression, ParsedBlockExpression};
 
@@ -31,7 +31,7 @@ impl ParsedBranch {
     }
 }
 
-pub fn convert_to_bool(location: &DataLocation, vasm: Vasm, context: &mut ProgramContext) -> Option<Vasm> {
+pub fn convert_to_bool(location: &ItemLocation, vasm: Vasm, context: &mut ProgramContext) -> Option<Vasm> {
     if vasm.ty.is_void() {
         context.errors.unexpected_void_expression(location);
         None

@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Vasm, MacroContext, BuiltinType, MainType};
 use super::{make_string_value_from_literal_unchecked, Identifier};
 
@@ -33,7 +33,7 @@ impl ParsedMacroIdentifier {
     }
 }
 
-pub fn get_main_type_identifier(main_type: MainType, location: &DataLocation, context: &ProgramContext) -> Option<Identifier> {
+pub fn get_main_type_identifier(main_type: MainType, location: &ItemLocation, context: &ProgramContext) -> Option<Identifier> {
     let ty = context.get_main_type(main_type);
     let mut identifier = Identifier::default();
 

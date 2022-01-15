@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use colored::*;
 use crate::{items::{ParsedObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, ParsedTypeArguments, process_field_access, process_function_call, process_method_call}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VariableKind, Vasm, TypeContent}};
 use super::{ParsedArgumentList, ParsedFieldOrMethodAccess, ParsedType, Identifier, ParsedVarPrefixToken, ParsedVarPrefix, ParsedIdentifierWrapper};

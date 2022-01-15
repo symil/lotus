@@ -1,4 +1,4 @@
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{program::{BuiltinType, IS_NONE_METHOD_NAME, ProgramContext, Type, Vasm}, wat};
 use super::{ParsedBinaryOperator, ParsedType, Identifier, ParsedOperand};
 
@@ -86,7 +86,7 @@ impl<'a> OperationTree<'a> {
         }
     }
 
-    fn get_location(&self) -> &'a DataLocation {
+    fn get_location(&self) -> &'a ItemLocation {
         match self {
             OperationTree::Operation(left, _, _) => left.get_location(),
             OperationTree::Value(operand) => operand.get_location(),

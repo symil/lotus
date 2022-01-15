@@ -1,7 +1,7 @@
 use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody}, utils::Link};
 use super::{ParsedBlockExpression, ParsedExpression, ParsedAnonymousFunctionArguments, ParsedAnonymousFunctionBody, Identifier};
 

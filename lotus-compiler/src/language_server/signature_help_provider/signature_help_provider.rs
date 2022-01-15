@@ -1,11 +1,11 @@
 use indexmap::IndexMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{program::{CursorLocation, Signature, FunctionBlueprint, FunctionCall, Cursor}, utils::Link};
 use super::SignatureHelp;
 
 pub struct SignatureHelpProvider {
     cursor: Cursor,
-    signature_helps: IndexMap<DataLocation, SignatureHelp>
+    signature_helps: IndexMap<ItemLocation, SignatureHelp>
 }
 
 impl SignatureHelpProvider {
@@ -16,7 +16,7 @@ impl SignatureHelpProvider {
         }
     }
 
-    pub fn declare_signature(&mut self, location: &DataLocation, name: &str, function_call: &FunctionCall) {
+    pub fn declare_signature(&mut self, location: &ItemLocation, name: &str, function_call: &FunctionCall) {
         if !self.cursor.is_on_location(location) {
             return;
         }
@@ -26,7 +26,7 @@ impl SignatureHelpProvider {
             .or_insert_with(|| SignatureHelp::new(location, name, function_call));
     }
 
-    pub fn add_argument_location(&mut self, signature_location: &DataLocation, argument_index: usize, next_arg_location: Option<&DataLocation>) {
+    pub fn add_argument_location(&mut self, signature_location: &ItemLocation, argument_index: usize, next_arg_location: Option<&ItemLocation>) {
         if !self.cursor.is_on_location(signature_location) {
             return;
         }

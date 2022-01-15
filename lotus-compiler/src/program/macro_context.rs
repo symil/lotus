@@ -1,12 +1,12 @@
 use std::{rc::Rc, cell::Ref, fmt::Display};
 use colored::Colorize;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 
 use crate::{utils::Link, items::Identifier};
 use super::{TypeBlueprint, FunctionBlueprint, FieldInfo, EnumVariantInfo, Type, ProgramContext};
 
 pub struct MacroContext<'a, 'b> {
-    location: &'a DataLocation,
+    location: &'a ItemLocation,
     context: &'b mut ProgramContext,
     current_type: Option<Link<TypeBlueprint>>,
     current_function: Option<Link<FunctionBlueprint>>,
@@ -16,7 +16,7 @@ pub struct MacroContext<'a, 'b> {
 }
 
 impl<'a, 'b> MacroContext<'a, 'b> {
-    pub fn new(location: &'a DataLocation, context: &'b mut ProgramContext) -> Self {
+    pub fn new(location: &'a ItemLocation, context: &'b mut ProgramContext) -> Self {
         let mut current_type = None;
         let mut current_function = None;
         let mut field_info = None;

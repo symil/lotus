@@ -15,7 +15,7 @@ impl Parse for Wrapper {
 }
 
 pub fn create_location_field(field_name: &str) -> Field {
-    let string = format!("pub {}: parsable::DataLocation", field_name);
+    let string = format!("pub {}: parsable::ItemLocation", field_name);
     let result : Result<Wrapper> = syn::parse_str(&string);
 
     result.unwrap().field

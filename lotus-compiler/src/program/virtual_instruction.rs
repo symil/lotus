@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{items::{Identifier, make_string_value_from_literal, make_string_value_from_literal_unchecked}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, SELF_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, wat};
 use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint};
 
@@ -29,7 +29,7 @@ pub enum VirtualInstruction {
 
 #[derive(Debug, Clone)]
 pub struct PlaceholderDetails {
-    pub location: DataLocation,
+    pub location: ItemLocation,
     pub vasm: Option<Rc<Vasm>>
 }
 
@@ -149,7 +149,7 @@ impl VirtualInstruction {
         }
     }
 
-    pub fn replace_placeholder(&mut self, location: &DataLocation, replacement: &Rc<Vasm>) {
+    pub fn replace_placeholder(&mut self, location: &ItemLocation, replacement: &Rc<Vasm>) {
         match self {
             VirtualInstruction::None => {},
             VirtualInstruction::Drop(_) => {},

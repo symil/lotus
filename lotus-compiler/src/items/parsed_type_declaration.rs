@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, fmt::format, hash::Hash, rc::Rc, slic
 use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
-use parsable::{DataLocation, parsable};
+use parsable::{ItemLocation, parsable};
 use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration};
 
@@ -173,7 +173,7 @@ impl ParsedTypeDeclaration {
         }
 
         for name in type_names {
-            let identifier = Identifier::new(&name, Some(&DataLocation { file: self.location.file.clone(), start: 0, end: 0 }));
+            let identifier = Identifier::new(&name, Some(&ItemLocation { file: self.location.file.clone(), start: 0, end: 0 }));
 
             if let Some(type_blueprint) = context.types.get_by_identifier(&identifier) {
                 dependancies.insert(type_blueprint);
@@ -217,7 +217,7 @@ impl ParsedTypeDeclaration {
 
                 if parent_type_wrapped != type_wrapped {
                     result = Some(ParentInfo {
-                        location: DataLocation::default(),
+                        location: ItemLocation::default(),
                         ty: parent_type_wrapped.borrow().self_type.clone(),
                     });
                 }

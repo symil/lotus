@@ -11,11 +11,11 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    pub fn new(name: &str, location: Option<&DataLocation>) -> Self {
+    pub fn new(name: &str, location: Option<&ItemLocation>) -> Self {
         let mut identifier = Identifier::default();
 
         identifier.value = name.to_string();
-        identifier.location = location.cloned().unwrap_or(DataLocation::empty());
+        identifier.location = location.cloned().unwrap_or(ItemLocation::empty());
 
         identifier
     }
@@ -106,8 +106,8 @@ impl AsRef<str> for Identifier {
     }
 }
 
-impl AsRef<DataLocation> for Identifier {
-    fn as_ref(&self) -> &DataLocation {
+impl AsRef<ItemLocation> for Identifier {
+    fn as_ref(&self) -> &ItemLocation {
         &self.location
     }
 }

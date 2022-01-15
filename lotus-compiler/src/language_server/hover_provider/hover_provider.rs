@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use parsable::DataLocation;
+use parsable::ItemLocation;
 use crate::{program::{CursorLocation, Type, Cursor}, language_server::{is_invalid_location}};
 use super::{Hover};
 
@@ -16,7 +16,7 @@ impl HoverProvider {
         }
     }
 
-    fn modify<F : FnOnce(&mut Hover)>(&mut self, location: &DataLocation, callback: F) {
+    fn modify<F : FnOnce(&mut Hover)>(&mut self, location: &ItemLocation, callback: F) {
         if !self.cursor.is_on_location(location) {
             return;
         }
@@ -35,7 +35,7 @@ impl HoverProvider {
         callback(hover);
     }
 
-    pub fn set_type(&mut self, location: &DataLocation, ty: &Type) {
+    pub fn set_type(&mut self, location: &ItemLocation, ty: &Type) {
         self.modify(location, |hover| hover.ty = Some(ty.clone()));
     }
 
