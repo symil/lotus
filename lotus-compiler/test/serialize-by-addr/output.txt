@@ -1,0 +1,62 @@
+false
+Test {
+  list: [
+    A {
+      a: 5,
+    },
+    B {
+      a: 8,
+      b: 1.2000000476837158,
+    },
+    C {
+      a: 8,
+      b: 1.2000000476837158,
+      c: "hello",
+    }
+  ],
+  link: C { <cycle> },
+  other: none,
+}
+---
+true
+Test {
+  list: [
+    A {
+      a: 5,
+    },
+    B {
+      a: 8,
+      b: 1.2000000476837158,
+    },
+    C {
+      a: 8,
+      b: 1.2000000476837158,
+      c: "hello",
+    }
+  ],
+  link: C { <cycle> },
+  other: none,
+}
+---
+false
+Test {
+  list: [
+    A {
+      a: 5,
+    },
+    B {
+      a: 8,
+      b: 1.2000000476837158,
+    },
+    C {
+      a: 8,
+      b: 1.2000000476837158,
+      c: "hello",
+    }
+  ],
+  link: C { <cycle> },
+  other: none,
+}
+---
+false
+none
