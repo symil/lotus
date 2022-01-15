@@ -209,8 +209,12 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     }).collect();
 
     for i in remaining_param_indexes_to_infer.into_iter() {
-        function_parameters[i] = context.void_type();
-        // context.errors.generic(function_name, format!("cannot infer type parameter `{}`", function_parameters[i]));
+        if function_name.as_str() == "todo" {
+            // TODO: improve default type parameters
+            function_parameters[i] = context.void_type();
+        } else {
+            context.errors.generic(function_name, format!("cannot infer type parameter `{}`", function_parameters[i]));
+        }
     }
 
     if let FunctionCall::Named(details) = &mut function_call {

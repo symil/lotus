@@ -37,7 +37,7 @@ impl CompletionItemProvider {
 
     pub fn get_completion_items(&self) -> Vec<CompletionItem> {
         match self.completion_item_generators.last() {
-            Some(generator) => generator.generate(),
+            Some(generator) => generator.generate(&self.cursor.location.as_ref().unwrap()),
             None => vec![],
         }
     }

@@ -127,13 +127,12 @@ impl CompletionItemList {
             .kind(CompletionItemKind::Keyword);
     }
 
-    fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool) {
+    fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();
             let visibility = CompletionItemVisibility::from_str(function_name);
-            let should_display_internal_methods = false;
 
-            if visibility.is_internal() != should_display_internal_methods {
+            if visibility.is_internal() && !show_internals {
                 return;
             }
 
@@ -192,11 +191,11 @@ impl CompletionItemList {
     }
 
     pub fn add_function(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool) {
-        self.add_function_or_method(method, insert_arguments, false);
+        self.add_function_or_method(method, insert_arguments, false, false);
     }
 
-    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool) {
-        self.add_function_or_method(method, insert_arguments, show_owner);
+    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
+        self.add_function_or_method(method, insert_arguments, show_owner, show_internals);
     }
 
     pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
@@ -266,11 +265,13 @@ impl CompletionItemList {
             let visibility = CompletionItemVisibility::from_str(interface_name);
             let should_display_internal = false;
 
-            if visibility.is_internal() == should_display_internal {
-                self
-                    .add(format!("{}", interface_name))
-                    .kind(CompletionItemKind::Interface);
+            if visibility.is_internal() && !should_display_internal {
+                return;
             }
+
+            self
+                .add(format!("{}", interface_name))
+                .kind(CompletionItemKind::Interface);
         });
     }
 }

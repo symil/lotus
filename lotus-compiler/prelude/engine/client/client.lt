@@ -4,7 +4,7 @@ const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
 pub class Client {
-    _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
+    _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _websocket_id: int,
     _layout: Layout,
     _draw_primitives: DrawPrimitive[],

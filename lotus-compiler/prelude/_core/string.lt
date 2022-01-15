@@ -249,7 +249,7 @@ export type(i32) string {
     }
 
     static __serialize(buffer: Buffer, value: Self) {
-        if buffer.save_addr(value) {
+        if buffer.write_string_addr(value) {
             buffer.write(value.len());
             
             for c in value {
@@ -265,7 +265,7 @@ export type(i32) string {
             return none;
         }
 
-        let str : string = buffer.retrieve(addr);
+        let str : string = buffer.retrieve_local_string(addr);
 
         if (str) {
             return str;
@@ -274,7 +274,7 @@ export type(i32) string {
         let length = buffer.read();
         str = string::__create(length);
 
-        buffer.register(addr, str);
+        buffer.register_local_string(addr, str);
 
         for i in 0..length {
             str.__set_char(i, char::__deserialize(buffer));

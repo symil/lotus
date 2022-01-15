@@ -74,7 +74,7 @@ export class Object {
     }
 
     __get_type_id() -> int {
-        self.__as_ptr()[0]
+        (self as ptr)[0]
     }
 
     to_string() -> string {
@@ -131,18 +131,25 @@ export class Object {
     static __serialize(buffer: Buffer, value: Self) {
         if !value || (buffer.context && !value.__allow_network_serialization(buffer.context as #USER_TYPE)) {
             buffer.write(0);
-        } else {
-            value.__serialize_dyn(buffer);
+        } else if buffer.write_object_addr(value) {
+            let remote_addr = buffer.get_remote_addr(value);
+            let object_version = value.__as_ptr().__get_version();
+
+            if remote_addr {
+                buffer.write(-1);
+                buffer.write(object_version);
+                buffer.write(remote_addr);
+            } else {
+                buffer.write(value.__get_type_id());
+                buffer.write(object_version);
+                value.__serialize_dyn(buffer);
+            }
         }
     }
 
     autogen dyn __serialize_dyn(buffer: Buffer) {
-        if buffer.save_addr(self) {
-            buffer.write(#TYPE_ID);
-
-            iter_fields {
-                #FIELD_TYPE::__serialize(buffer, self.#FIELD_NAME);
-            }
+        iter_fields {
+            #FIELD_TYPE::__serialize(buffer, self.#FIELD_NAME);
         }
     }
 
@@ -153,7 +160,7 @@ export class Object {
             return none; // no way to differenciate between "none because no more buffer" and "none because got 0"
         }
 
-        let obj : Object = buffer.retrieve(addr);
+        let obj : Object = buffer.retrieve_local_object(addr);
 
         if obj {
             return obj;
@@ -165,18 +172,39 @@ export class Object {
             return none;
         }
 
+        if obj_type_id == -1 {
+            let obj_version = buffer.read();
+            let obj_addr = buffer.read();
+
+            if !obj_addr {
+                return none;
+            }
+
+            // TODO: MAKE SO THIS OPERATION IS NOT INSANELY INSECURE
+            let obj = (obj_addr as Object);
+
+            if obj.__as_ptr().__get_version() != obj_version {
+                return none;
+            } else {
+                return obj;
+            }
+        }
+
         let obj_size = TYPE_ID_TO_FIELD_COUNT.get(obj_type_id);
 
         if !obj_size {
             return none;
         }
-        
+
+        let obj_version = buffer.read();
         let obj_ptr = @alloc(1 + obj_size);
+
+        obj_ptr.__set_version(obj_version);
         obj_ptr[0] = obj_type_id;
 
         obj = obj_ptr as Object;
 
-        buffer.register(addr, obj);
+        buffer.register_local_object(addr, obj);
 
         obj.__deserialize_dyn(buffer);
 

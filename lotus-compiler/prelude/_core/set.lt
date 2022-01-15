@@ -23,6 +23,7 @@ export class Set<V> {
         self._map.keys()
     }
 
+    // Returns `true` if the item is added to the set, `false` if it was already in the set
     add(value: V) -> bool {
         !self._map.set(value, 0)
     }

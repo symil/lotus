@@ -1,13 +1,20 @@
-pub class Buffer {
+export class Buffer {
     data: ptr,
     size: int,
     capacity: int,
     read_index: int,
-    set: Set<ptr>,
-    map: Map<int, ptr>,
+    serialized_strings: Set<string>,
+    remote_addr_to_local_string: Map<int, string>,
+    serialized_objects: Set<Object>,
+    remote_addr_to_local_object: Map<int, Object>,
+    local_object_to_remote_addr: Map<Object, int>,
     context: Object?
 
-    static new(capacity: int) -> Buffer {
+    static new() -> Buffer {
+        Buffer
+    }
+
+    static with_capacity(capacity: int) -> Buffer {
         let data = @alloc(capacity);
 
         Self { data, capacity }
@@ -21,26 +28,54 @@ pub class Buffer {
         }
     }
 
+    set_local_object_to_remote_addr_map(map: Map<Object, int>?) {
+        self.local_object_to_remote_addr = map || Map<Object, int>::new();
+    }
+
+    get_local_object_to_remote_addr_map() -> Map<Object, int> {
+        self.local_object_to_remote_addr
+    }
+
+    get_remote_addr(local_object: Object) -> int? {
+        self.local_object_to_remote_addr.get(local_object)
+    }
+
     clear() {
         self.size = 0;
         self.read_index = 0;
-        self.set.clear();
-        self.map.clear();
+        self.serialized_objects.clear();
+        self.remote_addr_to_local_object.clear();
+        self.local_object_to_remote_addr.clear();
         self.context = none;
     }
 
-    save_addr<T>(value: T) -> bool {
-        self.write(value as int);
+    write_string_addr(str: string) -> bool {
+        self.write(str as int);
 
-        self.set.add(value as ptr)
+        self.serialized_strings.add(str)
     }
 
-    retrieve<T>(key: int) -> T? {
-        (self.map.get(key) as T)
+    retrieve_local_string(remote_addr: int) -> string? {
+        self.remote_addr_to_local_string.get(remote_addr)
     }
 
-    register<T>(key: int, value: T) {
-        self.map.set(key, value as ptr);
+    register_local_string(remote_addr: int, local_string: string) {
+        self.remote_addr_to_local_string.set(remote_addr, local_string);
+    }
+
+    write_object_addr(object: Object) -> bool {
+        self.write(object as int);
+
+        self.serialized_objects.add(object)
+    }
+
+    retrieve_local_object(remote_addr: int) -> Object? {
+        self.remote_addr_to_local_object.get(remote_addr)
+    }
+
+    register_local_object(remote_addr: int, local_object: Object) {
+        self.remote_addr_to_local_object.set(remote_addr, local_object);
+        self.local_object_to_remote_addr.set(local_object, remote_addr);
     }
 
     write(value: int) {

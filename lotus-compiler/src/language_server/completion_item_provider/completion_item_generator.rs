@@ -1,4 +1,5 @@
 use enum_iterator::IntoEnumIterator;
+use parsable::DataLocation;
 use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken}};
 use super::{CompletionItem, CompletionItemList};
 
@@ -51,7 +52,8 @@ pub struct VariableCompletionDetails {
 }
 
 impl CompletionItemGenerator {
-    pub fn generate(&self) -> Vec<CompletionItem> {
+    pub fn generate(&self, source_location: &DataLocation) -> Vec<CompletionItem> {
+        let show_internals = source_location.file.package_root_path.ends_with("prelude"); // TODO do this more properly
         let mut items = CompletionItemList::new();
 
         match self {
@@ -61,7 +63,7 @@ impl CompletionItemGenerator {
                 }
 
                 for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
-                    items.add_method(method_info, details.insert_arguments, false);
+                    items.add_method(method_info, details.insert_arguments, false, show_internals);
                 }
             },
             Self::StaticField(details) => {
@@ -70,7 +72,7 @@ impl CompletionItemGenerator {
                 }
 
                 for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
-                    items.add_method(method_info, details.insert_arguments, false);
+                    items.add_method(method_info, details.insert_arguments, false, show_internals);
                 }
             },
             Self::Type(details) => {
@@ -132,7 +134,7 @@ impl CompletionItemGenerator {
                         method.with_ref(|method_blueprint| {
                             if method_blueprint.parameters.is_empty() {
                                 if method_blueprint.signature.return_type.replace_parameters(Some(ty), &[]).is_assignable_to(ty) {
-                                    items.add_method(method.clone(), details.insert_arguments, true);
+                                    items.add_method(method.clone(), details.insert_arguments, true, show_internals);
                                 }
                             }
                         });

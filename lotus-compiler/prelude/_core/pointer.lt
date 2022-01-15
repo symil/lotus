@@ -43,6 +43,14 @@ export type(i32) Pointer<T> {
         self as int
     }
 
+    __get_version() -> int {
+        (self as ptr)[-1] >> 2
+    }
+
+    __set_version(version: int) {
+        (self as ptr)[-1] = (version << 2) + ((self as ptr)[-1] & 3);
+    }
+
     __set_at_index(index: int, value: T) {
         let byte_index = ((self as int) + index) * 4;
 

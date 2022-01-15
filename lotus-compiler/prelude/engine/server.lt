@@ -1,7 +1,7 @@
 const SERVER : Server = none;
 
 pub class Server {
-    _buffer: Buffer = Buffer::new(BIG_BUFFER_SIZE),
+    _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _world: #WORLD_TYPE = none,
     _websocket_server_id: int,
     _user_to_websocket_id: Map<#USER_TYPE, int>,

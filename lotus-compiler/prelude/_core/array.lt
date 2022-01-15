@@ -291,13 +291,10 @@ export class Array<T> {
     }
 
     dyn __serialize_dyn(buffer: Buffer) {
-        if buffer.save_addr(self) {
-            buffer.write(#TYPE_ID);
-            buffer.write(self.length);
+        buffer.write(self.length);
 
-            for item in self {
-                T::__serialize(buffer, item);
-            }
+        for item in self {
+            T::__serialize(buffer, item);
         }
     }
 

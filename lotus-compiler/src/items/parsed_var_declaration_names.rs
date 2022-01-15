@@ -54,10 +54,6 @@ impl ParsedVarDeclarationNames {
                     context.errors.generic(self, format!("tuples can only be declared as pairs"));
                     None
                 } else {
-                    // if names[0].as_str() == "a" && names[0].as_str() == "b" {
-                    //     assigned_vasm.ty.print();
-                    // }
-
                     let mut result_vasm = context.vasm();
                     let tmp_var_info = VariableInfo::tmp("tmp", variable_type.clone());
                     let var_1 = context.declare_local_variable(names[0].clone(), Type::undefined());
