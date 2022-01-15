@@ -1,7 +1,10 @@
 export fn main() {
+    let base = @alloc(8)[-1] >> 2;
+    @trigger_garbage_collection();
+
     for i in 0..10 {
         let p = @alloc(8);
-        @log(p[-1] >> 2);
+        @log((p[-1] >> 2) - base);
         @trigger_garbage_collection();
     }
 }

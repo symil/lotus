@@ -4,6 +4,7 @@ export type(i32) int {
     __mul(other: int) -> int {{ i32.mul }}
     __div(other: int) -> int {{ i32.div_s }}
     __mod(other: int) -> int {{ i32.rem_s }}
+    __mod_u(other: int) -> int {{ i32.rem_u }}
     __shl(other: int) -> int {{ i32.shl }}
     __shr(other: int) -> int {{ i32.shr_u }}
     __and(other: int) -> int {{ i32.and }}

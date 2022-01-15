@@ -40,6 +40,15 @@ enum PointerState {
 // Retaining a pointer changes its state from `Allocated` to `Retained`
 // In order for a pointer not to be unallocated by the garbage collector, it is necessary that it is retained before each GC call
 
+let SEED = 0192837465;
+
+// https://en.wikipedia.org/wiki/Linear_congruential_generator
+fn get_random_version() -> int {
+    SEED = (1103515245 * SEED + 12345).__mod_u(0x7fffffff);
+
+    SEED & 0x3fffffff
+}
+
 pub fn init_memory() {
     trigger_garbage_collection();
 }
@@ -50,7 +59,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
             let block_ptr = MEMORY[BIG_BLOCKS_METADATA_START + i] as ptr;
             
             if block_ptr[0] >= block_size && get_pointer_state(block_ptr[1]) == PointerState::Unallocated {
-                block_ptr[1] = 1;
+                block_ptr[1] = set_pointer_state(block_ptr[1], PointerState::Allocated);
 
                 return block_ptr.add(2);
             }
@@ -60,7 +69,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
         let block_ptr = (wasm_memory_grow(rounded_block_size / WASM_PAGE_SIZE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
 
         block_ptr[0] = rounded_block_size;
-        block_ptr[1] = set_pointer_state(block_ptr[1], PointerState::Allocated);
+        block_ptr[1] = set_pointer_state(get_random_version() << 2, PointerState::Allocated);
 
         MEMORY[BIG_BLOCKS_METADATA_START + BIG_BLOCK_COUNT] = block_ptr as int;
         BIG_BLOCK_COUNT += 1;
@@ -103,6 +112,12 @@ sys fn alloc_memory(block_size: int) -> ptr {
         if offset != 0 {
             offset -= 1;
             result = page_ptr[offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
+
+            if (result[-1] == 0) {
+                // If the pointer is allocated for the first time, assign a random version to it
+                result[-1] = get_random_version() << 2;
+            }
+
             result[-1] = set_pointer_state(result[-1] + 4, PointerState::Allocated);
             page_ptr[0] = offset;
             break;

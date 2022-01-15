@@ -37,7 +37,7 @@ async function main() {
     let writeTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
     let mode = ((forceRelease || benchmark || runAll || (!isMocha && commandLineNames.length > 1)) && !writeTest) ? 'release' : 'debug';
-    let overwriteExpectedOutput = hasOption('--overwrite-output', '-ov');
+    let overwriteExpectedOutput = hasOption('--overwrite-output', '-ow');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !writeTest;
     let displayMemory = hasOption('--memory', '-m');

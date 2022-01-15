@@ -115,6 +115,7 @@
 [X] Allow client to reference server objects with their addresses
 [X] Rename `DataLocation` into `ItemLocation`
 [X] Investigate memory leak
+[X] Randomize pointer version when they are first allocated
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -164,7 +165,7 @@
 [ ] Add a `location()` method to parsable structs and enums
 [ ] Replace references to constants with their actual value when possible
 [ ] Introduce variables immutability
-[ ] Randomize pointer version when they are first allocated
+[ ] Display error when number literal is invalid
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

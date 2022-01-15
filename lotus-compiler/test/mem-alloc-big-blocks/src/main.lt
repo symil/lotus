@@ -2,11 +2,11 @@ export fn main() {
     let amount = 4.pow(10);
     let big = @alloc(amount);
 
-    @assert(#LINE, big[-1] == 1);
+    @assert(#LINE, big[-1] & 3 == 1);
     @assert(#LINE, !big.is_null())
 
     @trigger_garbage_collection();
-    @assert(#LINE, big[-1] == 0);
+    @assert(#LINE, big[-1] & 3 == 0);
 
     let big2 = @alloc(amount);
     @assert(#LINE, big2 == big);
