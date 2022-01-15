@@ -94,7 +94,7 @@ impl ParsedEventCallbackDeclaration {
             body: FunctionBody::Empty,
         };
 
-        let function_wrapped = Link::new(function_blueprint);
+        let function_wrapped = context.functions.insert(function_blueprint, None);
 
         if let Some(body) = &self.body {
             let return_type = context.void_type();

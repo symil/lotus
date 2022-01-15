@@ -118,6 +118,19 @@ impl FunctionBlueprint {
         for arg in &mut self.argument_variables {
             arg.destroy();
         }
+
+        if let Some(closure_details) = &mut self.closure_details {
+            if let Some(retain) = &mut closure_details.retain_function {
+                retain.borrow_mut().destroy();
+            }
+
+            for var_info in &closure_details.variables {
+                var_info.destroy();
+            }
+
+            closure_details.variables.clear();
+        }
+
         self.parameters.clear();
         self.argument_names.clear();
         self.signature = Signature::undefined();
