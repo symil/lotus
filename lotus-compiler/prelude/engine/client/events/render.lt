@@ -1,7 +1,0 @@
-export event OnRender {
-    client: Client,
-}
-
-export event OnPostRender {
-    client: Client,
-}

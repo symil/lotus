@@ -21,7 +21,7 @@ impl ParsedPrefixedVarRef {
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         let mut vasm = self.prefix.process(context);
 
-        context.add_field_completion_area(&self.prefix, &vasm.ty, self.arguments.is_none());
+        context.completion_provider.add_field_completion(&self.prefix, &vasm.ty, true, self.arguments.is_none());
 
         let name = match &self.name {
             Some(name) => name,
@@ -30,7 +30,7 @@ impl ParsedPrefixedVarRef {
             },
         };
         
-        context.add_field_completion_area(name, &vasm.ty, self.arguments.is_none());
+        context.completion_provider.add_field_completion(name, &vasm.ty, true, self.arguments.is_none());
 
         match &self.arguments {
             Some(args) => match process_method_call(&vasm.ty, FieldKind::Regular, name, &[], args, type_hint, access_type, context) {

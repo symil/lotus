@@ -18,6 +18,14 @@ impl ParsedMatchBranchItem {
         }
     }
 
+    pub fn is_enum_variant(&self) -> bool {
+        match self {
+            ParsedMatchBranchItem::Wildcard(_) => false,
+            ParsedMatchBranchItem::Literal(_) => false,
+            ParsedMatchBranchItem::TypeOrEnumVariant(item) => item.variant.is_some(),
+        }
+    }
+
     pub fn get_variant_name(&self) -> Option<String> {
         match self {
             ParsedMatchBranchItem::Wildcard(_) => None,

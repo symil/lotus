@@ -25,6 +25,10 @@ impl ParsedAnonymousFunction {
         let arguments = self.arguments.process(type_hint, context);
         let provided_argument_count = arguments.len();
         let void_type = context.void_type();
+        let return_type_hint = match type_hint.map(|t| t.content()) {
+            Some(TypeContent::Function(signature)) => Some(signature.return_type.clone()),
+            _ => None,
+        };
         let (expected_arg_types, expected_return_type) = match type_hint.map(|t| t.content()) {
             Some(TypeContent::Function(signature)) => (signature.argument_types.as_slice(), &signature.return_type),
             _ => (EMPTY_TYPE_LIST.as_slice(), &void_type)
@@ -74,7 +78,13 @@ impl ParsedAnonymousFunction {
 
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
-        if let Some(vasm) = self.body.process(Some(expected_return_type), context) {
+        if let Some(mut vasm) = self.body.process(Some(expected_return_type), context) {
+            if let Some(ty) = return_type_hint {
+                if ty.is_void() && !vasm.ty.is_void() {
+                    vasm = vasm.set_void(context);
+                }
+            }
+
             signature = Signature::create(None, signature.argument_types.clone(), vasm.ty.clone());
 
             function_wrapped.with_mut(|mut function_unwrapped| {

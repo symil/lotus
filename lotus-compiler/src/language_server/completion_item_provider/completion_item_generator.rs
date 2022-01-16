@@ -6,13 +6,18 @@ use super::{CompletionItem, CompletionItemList};
 #[derive(Debug)]
 pub enum CompletionItemGenerator {
     FieldOrMethod(FieldCompletionDetails),
-    StaticField(FieldCompletionDetails),
+    StaticFieldOrMethod(FieldCompletionDetails),
     Event(EventCompletionDetails),
-    Interface(Vec<Link<InterfaceBlueprint>>),
+    Interface(InterfaceCompletionDetails),
     Type(TypeCompletionDetails),
     Variable(VariableCompletionDetails),
     MatchItem(MatchItemCompletionDetails),
     Enum(Type)
+}
+
+#[derive(Debug)]
+pub struct InterfaceCompletionDetails {
+    pub available_interfaces: Vec<Link<InterfaceBlueprint>>
 }
 
 #[derive(Debug)]
@@ -30,6 +35,7 @@ pub struct EventCompletionDetails {
 #[derive(Debug)]
 pub struct FieldCompletionDetails {
     pub parent_type: Type,
+    pub show_methods: bool,
     pub insert_arguments: bool
 }
 
@@ -62,17 +68,21 @@ impl CompletionItemGenerator {
                     items.add_field(field_info);
                 }
 
-                for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
-                    items.add_method(method_info, details.insert_arguments, false, show_internals);
+                if details.show_methods {
+                    for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
+                        items.add_method(method_info, details.insert_arguments, false, show_internals);
+                    }
                 }
             },
-            Self::StaticField(details) => {
+            Self::StaticFieldOrMethod(details) => {
                 for variant in details.parent_type.get_all_variants() {
                     items.add_enum_variant(variant, false);
                 }
 
-                for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
-                    items.add_method(method_info, details.insert_arguments, false, show_internals);
+                if details.show_methods {
+                    for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
+                        items.add_method(method_info, details.insert_arguments, false, show_internals);
+                    }
                 }
             },
             Self::Type(details) => {
@@ -91,8 +101,8 @@ impl CompletionItemGenerator {
                     }
                 }
             },
-            Self::Interface(interfaces) => {
-                for interface in interfaces {
+            Self::Interface(details) => {
+                for interface in &details.available_interfaces {
                     items.add_interface(interface.clone());
                 }
             },

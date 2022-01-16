@@ -1,4 +1,9 @@
 export type(i32) char {
+    __ge(other: char) -> bool {{ i32.ge_s }}
+    __gt(other: char) -> bool {{ i32.gt_s }}
+    __le(other: char) -> bool {{ i32.le_s }}
+    __lt(other: char) -> bool {{ i32.lt_s }}
+
     __eq(other: Self) -> bool {{
         i32.eq
     }}

@@ -1,0 +1,9 @@
+const USERNAME_TEXTBOX_KEY = "username";
+
+pub class UsernameTextBox extends TextBox {
+    static __default() -> Self {
+        Self {
+            ..TextBox::new(USERNAME_TEXTBOX_KEY)
+        }
+    }
+}

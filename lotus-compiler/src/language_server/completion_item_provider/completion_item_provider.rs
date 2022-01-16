@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::ItemLocation;
-use crate::{program::{CursorLocation, Cursor}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
-use super::{CompletionItemGenerator, CompletionItem};
+use crate::{program::{CursorLocation, Cursor, Type}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
+use super::{CompletionItemGenerator, CompletionItem, FieldCompletionDetails};
 
 #[derive(Debug)]
 pub struct CompletionItemProvider {
@@ -17,7 +17,7 @@ impl CompletionItemProvider {
         }
     }
 
-    pub fn add_completion_generator<F : FnOnce() -> CompletionItemGenerator>(&mut self, area_location: &ItemLocation, make_item_generator: F) {
+    pub fn add_completion<F : FnOnce() -> CompletionItemGenerator>(&mut self, area_location: &ItemLocation, make_item_generator: F) {
         let is_under_cursor = self.cursor.is_on_location(area_location);
 
         if !is_under_cursor {
@@ -35,10 +35,45 @@ impl CompletionItemProvider {
         }
     }
 
+    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool) {
+        self.add_completion(location, || {
+            CompletionItemGenerator::FieldOrMethod(FieldCompletionDetails {
+                parent_type: parent_type.clone(),
+                show_methods,
+                insert_arguments,
+            })
+        })
+    }
+
+    pub fn add_static_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool) {
+        self.add_completion(location, || {
+            CompletionItemGenerator::StaticFieldOrMethod(FieldCompletionDetails {
+                parent_type: parent_type.clone(),
+                show_methods,
+                insert_arguments,
+            })
+        })
+    }
+
+    pub fn add_enum_variant_completion(&mut self, location: &ItemLocation, enum_type: &Type) {
+        self.add_completion(location, || {
+            CompletionItemGenerator::Enum(enum_type.clone())
+        })
+    }
+
     pub fn get_completion_items(&self) -> Vec<CompletionItem> {
         match self.completion_item_generators.last() {
             Some(generator) => generator.generate(&self.cursor.location.as_ref().unwrap()),
             None => vec![],
+        }
+    }
+}
+
+impl Default for CompletionItemProvider {
+    fn default() -> Self {
+        Self {
+            cursor: Cursor::new(&None),
+            completion_item_generators: vec![]
         }
     }
 }

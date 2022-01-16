@@ -1,18 +1,28 @@
 use parsable::parsable;
 use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm}};
-use super::ParsedExpression;
+use super::{ParsedExpression, ParsedDoubleDot};
 
 #[parsable]
 pub struct ParsedObjectSpreadOperator {
-    #[parsable(prefix="..")]
-    pub expression: ParsedExpression
+    pub double_dot: ParsedDoubleDot,
+    pub expression: Option<ParsedExpression>
 }
 
 impl ParsedObjectSpreadOperator {
     pub fn process(&self, object_type: &Type, context: &mut ProgramContext) -> ObjectInitResult {
         let mut object_init_result = ObjectInitResult::default();
 
-        if let Some(vasm) = self.expression.process(None, context) {
+        context.add_variable_completion_area(&self.double_dot, true, None);
+
+        let expression = match &self.expression {
+            Some(expr) => expr,
+            None => {
+                context.errors.expected_expression(self);
+                return ObjectInitResult::default();
+            },
+        };
+
+        if let Some(vasm) = expression.process(None, context) {
             let var_info = VariableInfo::tmp("spread_tmp", vasm.ty.clone());
             let expr_type = vasm.ty.clone();
 

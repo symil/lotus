@@ -66,6 +66,10 @@ export class Array<T> {
         self.body.__set_at_index(index, value);
     }
 
+    get(index: int) -> T? {
+        self.__get_at_index(index)
+    }
+
     first() -> T? {
         if self.is_empty() {
             return none;
@@ -118,6 +122,10 @@ export class Array<T> {
         }
 
         none
+    }
+
+    includes(searched_item: T) -> bool {
+        !!self.index_of(searched_item)
     }
 
     _add_length(additional_length: int) -> int {

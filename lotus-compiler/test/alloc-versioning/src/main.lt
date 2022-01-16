@@ -8,5 +8,7 @@ export fn main() {
         @trigger_garbage_collection();
     }
 
+    // Make sure the pointer version is not 0 or a low value
+    // If that was the case it would mean the pointer version was not properly randomized
     @log(base > 100);
 }

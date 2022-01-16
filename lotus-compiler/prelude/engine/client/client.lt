@@ -3,7 +3,7 @@ const CLIENT : Client = none;
 const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
-pub class Client {
+export class Client {
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _websocket_id: int,
     _layout: Layout,
@@ -14,8 +14,8 @@ pub class Client {
     _focused_index: int?,
 
     user: #USER_TYPE?,
-    local_data: #LOCAL_DATA_TYPE,
-    hovered: View?,
+    local_data: Map<string, Object>,
+    hovered_view: View?,
     focus_chain: View[],
     focused_view: View?,
     all_views: View[],
@@ -97,10 +97,15 @@ pub class Client {
 
         self.all_views.clear();
         self.focus_chain.clear();
-        self.focused_view = none;
+        // TODO: clear focused & hovered view?
         self._render_view(root_view);
-        self.hovered = self._detect_view_at(self.cursor_x, self.cursor_y);
-        self._post_render();
+        self.hovered_view = self._detect_view_at(self.cursor_x, self.cursor_y);
+        self._define_interactions();
+        self.focused_view = self.focus_chain.get(self._focused_index);
+
+        if self.focused_view {
+            self.focused_view.focused = true;
+        }
     }
 
     _render_view(view: View) {
@@ -131,10 +136,8 @@ pub class Client {
         current
     }
 
-    _post_render() {
-        let event = OnPostRender {
-            client: self
-        };
+    _define_interactions() {
+        let event = OnDefineMouseInteractions;
         let views = self.all_views.clone().reverse();
 
         event.emit(views);
@@ -146,8 +149,15 @@ pub class Client {
         let cursor = Cursor::Default;
 
         for view in self.all_views {
-            if self.hovered == view {
-                view.graphics.set(view.hover);
+            if self.hovered_view == view {
+                view.graphics.set(view.hovered_graphics);
+            }
+
+            if self.focused_view == view {
+                view.graphics.set(view.focused_graphics);
+            }
+            
+            if self.hovered_view == view {
                 cursor = view.graphics.cursor;
             }
 
@@ -213,9 +223,19 @@ pub class Client {
     }
 
     focus(view: View?) {
+        if self.focused_view == view {
+            return;
+        }
+
+        if self.focused_view {
+            self.focused_view.focused = false;
+        }
+
         if (view) {
             view.focused = true;
             self._focused_index = self.focus_chain.index_of(view);
+
+            OnFocus { target: view }.emit([view]);
         } else {
             self._focused_index = none;
         }

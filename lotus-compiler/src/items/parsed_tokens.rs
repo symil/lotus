@@ -19,6 +19,13 @@ pub struct ParsedDot {
 }
 
 #[parsable]
+pub struct ParsedColon {
+    #[parsable(value=":")]
+    pub token: String
+}
+
+
+#[parsable]
 pub struct ParsedDoubleColon {
     #[parsable(value="::")]
     pub token: String
@@ -33,5 +40,11 @@ pub struct ParsedArrow {
 #[parsable]
 pub struct ParsedWildcard {
     #[parsable(value="_")]
+    pub token: String
+}
+
+#[parsable]
+pub struct ParsedDoubleDot {
+    #[parsable(value="..")]
     pub token: String
 }

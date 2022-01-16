@@ -4,7 +4,7 @@ type EventCallbackPriority = int;
 type EventCallback = fn(Object, Event, EventOutput);
 type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 
-export const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>>::new();
+sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>>::new();
 
 export class Event extends Object {
     emit(targets: Object[]) {

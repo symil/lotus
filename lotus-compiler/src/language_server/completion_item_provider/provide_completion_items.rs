@@ -1,7 +1,7 @@
 use crate::{program::ProgramContext, utils::is_blank_string, language_server::{LanguageServerCommandParameters, LanguageServerCommandOutput}};
 
 pub fn provide_completion_items(parameters: &LanguageServerCommandParameters, context: &ProgramContext, output: &mut LanguageServerCommandOutput) {
-    let completion_items = context.completion_provider.as_ref().unwrap().get_completion_items();
+    let completion_items = context.completion_provider.get_completion_items();
     let range : Option<String> = None;
 
     for item in completion_items {

@@ -63,12 +63,12 @@ export type(i32) int {
     }
 
     clamp(min: int, max: int) -> int {
-        match self < min {
-            true => min,
-            false => match self > max {
-                true => max,
-                false => self
-            }
+        if self <= min {
+            min
+        } else if self >= max {
+            max
+        } else {
+            self
         }
     }
 

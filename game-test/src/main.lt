@@ -7,6 +7,10 @@ view Window {
             .strip_to_match_aspect_ratio(5)
             .push(TextBox)
     }
+
+    @OnDefineMouseInteractions {
+        
+    }
 }
 
 class World {

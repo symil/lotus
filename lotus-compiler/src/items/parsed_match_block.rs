@@ -68,8 +68,6 @@ impl ParsedMatchBlock {
         context.add_match_item_completion_area(&second_half_location, &matched_type);
 
         for branch in &body.branches.list {
-            context.add_match_item_completion_area(branch.item.get_location(), &matched_type);
-            
             let mut branch_vasm = context.vasm();
 
             if let Some((item_type, item_vasm)) = branch.item.process(tested_vasm.clone(), context) {
@@ -109,6 +107,10 @@ impl ParsedMatchBlock {
                 }
 
                 context.pop_scope();
+            }
+
+            if !branch.item.is_enum_variant() {
+                context.add_match_item_completion_area(branch.item.get_location(), &matched_type);
             }
 
             vasm = vasm.block(branch_vasm);

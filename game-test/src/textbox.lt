@@ -1,25 +1,133 @@
+pub class TextBoxData {
+    text: string,
+    cursor_index: int
+}
+
 pub view TextBox {
+    data_key: string,
+
+    static new(data_key: string) -> Self {
+        Self { data_key }
+    }
+
+    _get_data() -> TextBoxData {
+        match self.client.local_data.get(self.data_key) {
+            TextBoxData(data) => data,
+            _ => {
+                let data = TextBoxData;
+                self.client.local_data.set(self.data_key, data);
+                data
+            }
+        }
+    }
+
     @OnRender {
-        self.background_color(Color::orange())
+        let data = self._get_data();
+
+        self.add_to_focus_chain()
+            .background_color(Color::orange())
             .border_color(Color::black())
             .border_radius(.15h)
             .border_width(.04h)
-            .text_horizontal_align(HorizontalAlign::Center)
+            .text_horizontal_align(HorizontalAlign::Left)
             .text_size(.5h)
-            .text(evt.client.local_data.name)
+            .text(data.text)
             .cursor(Cursor::Text)
+            .focus_border_color(Color::blue())
+            // .focus_text_cursor_index(data.cursor_index)
+            .focus()
+    }
+
+    @OnDefineMouseInteractions {
+        for view in self.client.all_views {
+            view.on_click(() => self.unfocus());
+        }
+
+        self.on_click(() => self.focus());
     }
 
     @OnKeyboardEvent {
+        if !self.focused {
+            return;
+        }
+
+        let data = self._get_data();
+        let ctrl = evt.ctrl_key;
+
         if evt.code == KeyCode::Escape {
-            evt.client.focus(none);
+            self.client.focus(none);
             intercept;
         } else {
             let valid = true;
+            let text = data.text;
+            let cursor_index = data.cursor_index;
+
+            cursor_index = cursor_index.clamp(0, text.len());
 
             match evt.code {
+                KeyCode::Backspace => {
+                    if ctrl {
+                        text = text.substring(cursor_index, none);
+                        cursor_index = 0;
+                    } else {
+                        text = text.substring(0, cursor_index - 1) + text.substring(cursor_index, none);
+                        cursor_index -= 1;
+                    }
+                },
+                KeyCode::Delete => {
+                    if (ctrl) {
+                        text = text.substring(0, cursor_index);
+                    } else {
+                        text = text.substring(0, cursor_index) + text.substring(cursor_index + 1, none);
+                    }
+                },
+                KeyCode::Home => {
+                    cursor_index = 0;
+                },
+                KeyCode::End => {
+                    cursor_index = text.len();
+                },
+                KeyCode::ArrowLeft => {
+                    if ctrl {
+                        cursor_index = 0;
+                    } else {
+                        cursor_index -= 1;
+                    }
+                },
+                KeyCode::ArrowRight => {
+                    if ctrl {
+                        cursor_index = text.len();
+                    } else {
+                        cursor_index += 1;
+                    }
+                },
+                _ => {
+                    if is_valid_character(evt.text) && !ctrl {
+                        text = text.substring(0, cursor_index) + evt.text.to_string() + text.substring(cursor_index, text.len());
+                        cursor_index += 1;
+                    } else {
+                        valid = false;
+                    }
+                }
+            }
 
+            if (valid) {
+                cursor_index = cursor_index.clamp(0, text.len());
+
+                if evt.action == KeyboardAction::Down {
+                    data.text = text;
+                    data.cursor_index = cursor_index;
+                }
+                intercept;
             }
         }
     }
 }
+
+const VALID_TEXTBOX_CHARACTERS = ['_', ' ', '~', '!', '@', '#', '$', '%', '&', '*', '(', ')', '+', '-', '=', ',', '<', '.', '>', '/', '?', '|'];
+
+fn is_valid_character(c: char) -> bool {
+    c && (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || VALID_TEXTBOX_CHARACTERS.includes(c)
+}
+
+// return /^[0-9a-zA-Z_ ~!@#$%&*()+-=,<.>/?|]$/.test(c);

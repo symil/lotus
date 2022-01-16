@@ -108,7 +108,7 @@ impl Signature {
             }
         }
 
-        if !other.return_type.is_assignable_to(&self.return_type) {
+        if !self.return_type.is_assignable_to(&other.return_type) {
             return false;
         }
 

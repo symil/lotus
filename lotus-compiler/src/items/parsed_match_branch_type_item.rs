@@ -23,18 +23,31 @@ impl ParsedMatchBranchTypeItem {
                 context.errors.expected_class_type(&self.ty, &ty);
                 return None;
             }
-        } else if ty != tested_value.ty {
-            context.errors.type_mismatch(&self.ty, &tested_value.ty, &ty);
-            return None;
+
+            if let Some(variant) = &self.variant {
+                context.errors.generic(variant, format!("unexpected enum variant"));
+                return None;
+            }
+
+        } else {
+            if ty != tested_value.ty {
+                context.errors.type_mismatch(&self.ty, &tested_value.ty, &ty);
+                return None;
+            }
+
+            if self.variant.is_none() {
+                context.errors.expected_token(self, "::");
+                return None;
+            }
         }
 
         match &self.variant {
             Some(details) => {
-                context.add_enum_variant_completion_area(&details.double_colon, &ty);
+                context.completion_provider.add_enum_variant_completion(&details.double_colon, &ty);
 
                 match &details.name {
                     Some(name) => {
-                        context.add_enum_variant_completion_area(name, &ty);
+                        context.completion_provider.add_enum_variant_completion(name, &ty);
 
                         match ty.get_variant(name.as_str()) {
                             Some(variant_info) => {
