@@ -117,13 +117,9 @@
 [X] Investigate memory leak
 [X] Randomize pointer version when they are first allocated
 [X] Add autocompletion on field name when constructing an object
-[ ] Option to skip parsing of successive `Option` items if one fails
+[X] Option to skip parsing of successive `Option` items if one fails
 [ ] Add `fill class fields` code action
-[ ] Find smooth solution for constructors (maybe separate classes/structs?)
-[ ] Function default arguments
-[ ] Regular expressions
-[ ] Common type `any`
-[ ] Method `or` on `any` type
+[ ] Allow to specify default values for parent class fields
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -174,6 +170,10 @@
 [ ] Introduce variables immutability
 [ ] Display error when number literal is invalid
 [ ] Allocate literal strings a single time
+[ ] Common type `any`
+[ ] Method `or` on `any` type
+[ ] Regular expressions
+[ ] Function default arguments
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

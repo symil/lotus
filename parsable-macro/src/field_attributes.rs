@@ -12,6 +12,7 @@ pub struct FieldAttributes {
     pub min: Option<usize>,
     pub separator: Option<String>,
     pub optional: Option<bool>,
+    pub cascade: Option<bool>,
     pub consume_spaces: Option<bool>,
     pub consume_spaces_after_prefix: Option<bool>,
     pub consume_spaces_after_suffix: Option<bool>,
@@ -21,7 +22,7 @@ pub struct FieldAttributes {
     pub set_marker: Option<LitStr>,
     pub unset_marker: Option<LitStr>,
     pub ignore_if_marker: Option<LitStr>,
-    pub ignore: bool
+    pub ignore: bool,
 }
 
 impl Parse for FieldAttributes {
@@ -57,6 +58,7 @@ impl Parse for FieldAttributes {
                     "sep" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
                     "separator" => attributes.separator = Some(content.parse::<LitStr>()?.value()),
                     "optional" => attributes.optional = Some(content.parse::<LitBool>()?.value()),
+                    "cascade" => attributes.cascade = Some(content.parse::<LitBool>()?.value()),
                     "followed_by" => attributes.followed_by = Some(content.parse::<LitStr>()?.value()),
                     "exclude" => attributes.exclude = Some(content.parse::<LitStr>()?.value()),
                     "set_marker" => attributes.set_marker = Some(content.parse::<LitStr>()?),

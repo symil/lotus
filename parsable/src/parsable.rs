@@ -1,4 +1,4 @@
-use crate::{ParseError, string_reader::{ParseOptions, StringReader}, utils::get_type_name};
+use crate::{ParseError, string_reader::{ParseOptions, StringReader}};
 
 pub trait Parsable : Sized {
     fn parse_item(reader: &mut StringReader) -> Option<Self>;
@@ -13,14 +13,10 @@ pub trait Parsable : Sized {
         unimplemented!()
     }
 
-    fn get_token_name() -> Option<String> {
-        None
-    }
+    fn token_name() -> &'static str;
 
     fn parse(string: String, options: ParseOptions) -> Result<Self, ParseError> {
         let mut reader = StringReader::new(string, options);
-
-        // reader.push_marker_value("no-object", true);
 
         reader.eat_spaces();
 
@@ -28,12 +24,12 @@ pub trait Parsable : Sized {
             Some(value) => match reader.is_finished() {
                 true => Ok(value),
                 false => {
-                    reader.set_expected_token(Some("<EOF>".to_string()));
+                    reader.set_expected_token("<EOF>");
                     Err(reader.get_error())
                 }
             },
             None => {
-                reader.set_expected_token(Some(get_type_name::<Self>()));
+                reader.set_expected_token(<Self as Parsable>::token_name());
                 Err(reader.get_error())
             }
         }

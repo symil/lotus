@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
 use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
-use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration};
+use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue};
 
 #[parsable]
 pub struct ParsedTypeDeclaration {
@@ -29,6 +29,7 @@ pub struct ParsedTypeDeclarationBody {
 pub enum ParsedTypeDeclarationBodyItem {
     EventCallbackDeclaration(ParsedEventCallbackDeclaration),
     AssociatedTypeDeclaration(ParsedAssociatedTypeDeclaration),
+    SuperFieldDefaultValue(ParsedSuperFieldDefaultValue),
     MethodDeclaration(ParsedMethodDeclaration),
     FieldDeclaration(ParsedFieldDeclaration),
 }
@@ -44,6 +45,13 @@ impl ParsedTypeDeclaration {
     fn get_associated_types(&self) -> Vec<&ParsedAssociatedTypeDeclaration> {
         self.get_body_items().iter().filter_map(|item| match item {
             ParsedTypeDeclarationBodyItem::AssociatedTypeDeclaration(value) => Some(value),
+            _ => None,
+        }).collect()
+    }
+
+    fn get_super_fields_default_values(&self) -> Vec<&ParsedSuperFieldDefaultValue> {
+        self.get_body_items().iter().filter_map(|item| match item {
+            ParsedTypeDeclarationBodyItem::SuperFieldDefaultValue(value) => Some(value),
             _ => None,
         }).collect()
     }

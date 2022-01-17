@@ -19,7 +19,7 @@ use impl_enum::*;
 
 use crate::output::Output;
 
-// https://docs.rs/syn/1.0.75/syn/struct.DeriveInput.html
+// https://docs.rs/syn/latest/syn/struct.DeriveInput.html
 #[proc_macro_error]
 #[proc_macro_attribute]
 pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
@@ -83,13 +83,16 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         None => quote! {}
     };
 
-    let impl_token_name = match root_attributes.name {
-        Some(name) => quote! {
-            fn get_token_name() -> Option<String> {
-                Some(#name.to_string())
-            }
-        },
-        None => quote! { }
+    let token_name = match &root_attributes.name {
+        Some(specified_name) => specified_name.to_string(),
+        None => name.to_string(),
+    };
+    let token_name_lit = LitStr::new(&token_name, Span::call_site());
+
+    let impl_token_name = quote! {
+        fn token_name() -> &'static str {
+            #token_name_lit
+        }
     };
 
     let parse_item = output.parse_item;

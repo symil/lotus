@@ -1,4 +1,5 @@
 #![feature(hash_set_entry)]
+#![feature(const_format_args)]
 
 mod utils;
 mod parsable;

@@ -51,12 +51,12 @@ impl StringReader {
         &self.file.content
     }
 
-    pub fn set_expected_token(&mut self, expected: Option<String>) {
-        if let Some(expected) = expected {
+    pub fn set_expected_token(&mut self, expected: &'static str) {
+        if !expected.is_empty() {
             if self.index == self.error_index {
-                self.expected.push(expected);
+                self.expected.push(expected.to_string());
             } else if self.index > self.error_index {
-                self.expected = vec![expected];
+                self.expected = vec![expected.to_string()];
                 self.error_index = self.index;
             }
         }

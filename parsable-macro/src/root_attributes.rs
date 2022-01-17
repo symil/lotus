@@ -4,12 +4,18 @@ use syn::{*, parse::{Parse, ParseStream}};
 pub struct RootAttributes {
     pub located: bool,
     pub impl_display: bool,
+    pub none_cascade: bool,
     pub name: Option<String>
 }
 
 impl Default for RootAttributes {
     fn default() -> Self {
-        Self { located: true, impl_display: false, name: None }
+        Self {
+            located: true,
+            impl_display: false,
+            none_cascade: false,
+            name: None
+        }
     }
 }
 
@@ -24,6 +30,7 @@ impl Parse for RootAttributes {
             match name.as_str() {
                 "located" => attributes.located = content.parse::<LitBool>()?.value(),
                 "impl_display" => attributes.impl_display = content.parse::<LitBool>()?.value(),
+                "none_cascade" => attributes.none_cascade = content.parse::<LitBool>()?.value(),
                 "name" => attributes.name = Some(content.parse::<LitStr>()?.value()),
                 _ => {}
             }

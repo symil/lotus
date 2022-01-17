@@ -1,6 +1,6 @@
 use syn::{*, parse::{Parse, ParseStream}};
 use quote::quote;
-use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::is_type};
+use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::{is_type, make_str_lit}};
 
 struct Wrapper {
     field: Field
@@ -21,7 +21,7 @@ pub fn create_location_field(field_name: &str) -> Field {
     result.unwrap().field
 }
 
-pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes, output: &mut Output) {
+pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttributes, output: &mut Output) {
     output.deref = Some(quote! {
         fn deref(&self) -> &Self::Target {
             &self.location
@@ -45,6 +45,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 field_names.push(quote! { #field_name });
 
                 let optional = is_option || attributes.optional.unwrap_or(false);
+                let participate_in_cascade = root_attributes.none_cascade && attributes.cascade.unwrap_or(true);
                 let consume_spaces = match attributes.consume_spaces {
                     Some(false) => quote! {},
                     _ => quote! { reader__.eat_spaces(); }
@@ -57,8 +58,14 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 };
 
                 if optional {
+                    let set_option_failed = match participate_in_cascade {
+                        true => quote! { option_failed__ = true },
+                        false => quote! {},
+                    };
+
                     on_fail = quote! {
                         field_failed__ = true;
+                        #set_option_failed;
                         reader__.set_index(field_index__);
                         <#field_type as Default>::default()
                     };
@@ -75,6 +82,17 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 let mut check = vec![];
                 let has_prefix = attributes.prefix.is_some();
                 let has_suffix = attributes.suffix.is_some();
+
+                let mut pre_parsing_check = quote! {};
+
+                if optional && participate_in_cascade {
+                    pre_parsing_check = quote! {
+                        if option_failed__ {
+                            field_failed__ = true;
+                        }
+                    };
+                }
+
                 let prefix_parsing = match attributes.prefix {
                     Some(prefix) => {
                         let prefix_consume_spaces = match attributes.consume_spaces_after_prefix {
@@ -82,16 +100,20 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                             _ => quote! { reader__.eat_spaces() },
                         };
 
+                        let prefix_lit = make_str_lit(&prefix);
+
                         quote! {
-                            match reader__.read_string(#prefix) {
-                                Some(_) => #prefix_consume_spaces,
-                                None => {
-                                    reader__.set_expected_token(Some(format!("{:?}", #prefix)));
-                                    prefix_ok__ = false;
-                                    field_failed__ = true;
-                                    #on_fail;
-                                }
-                            };
+                            if !field_failed__ {
+                                match reader__.read_string(#prefix) {
+                                    Some(_) => #prefix_consume_spaces,
+                                    None => {
+                                        reader__.set_expected_token(#prefix_lit);
+                                        prefix_ok__ = false;
+                                        field_failed__ = true;
+                                        #on_fail;
+                                    }
+                                };
+                            }
                         }
                     },
                     None => quote! {}
@@ -103,12 +125,14 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                             _ => quote! { reader__.eat_spaces() },
                         };
 
+                        let suffix_lit = make_str_lit(&suffix);
+
                         quote! {
                             if !field_failed__ {
                                 match reader__.read_string(#suffix) {
                                     Some(_) => #suffix_consume_spaces,
                                     None => {
-                                        reader__.set_expected_token(Some(format!("{:?}", #suffix)));
+                                        reader__.set_expected_token(#suffix_lit);
                                         #on_fail;
                                     }
                                 };
@@ -131,9 +155,11 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 let mut followed_by_parsing = quote! {};
 
                 if let Some(followed_by) = &attributes.followed_by {
+                    let followed_by_lit = make_str_lit(followed_by);
+
                     followed_by_parsing = quote! {
                         if !field_failed__ && !reader__.peek_regex(#followed_by) {
-                            reader__.set_expected_token(Some(format!("{:?}", #followed_by)));
+                            reader__.set_expected_token(#followed_by_lit);
                             #on_fail;
                         }
                     };
@@ -153,19 +179,19 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     let mut #field_name = match <#field_type as parsable::Parsable>::#parse_method {
                         Some(value) => value,
                         None => {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
+                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
                             #on_fail
                         }
                     };
                 };
 
-                if has_prefix && optional {
+                if (has_prefix || participate_in_cascade) && optional {
                     assignment = quote! {
-                        let mut #field_name = match prefix_ok__ {
+                        let mut #field_name = match prefix_ok__ && !option_failed__ {
                             true => match <#field_type as parsable::Parsable>::#parse_method {
                                 Some(value) => value,
                                 None => {
-                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
+                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
                                     #on_fail
                                 }
                             },
@@ -208,7 +234,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 if let Some(min) = attributes.min {
                     check.push(quote! {
                         if !field_failed__ && #field_name.len() < #min {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
+                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
                             #on_fail;
                         }
                     });
@@ -225,7 +251,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                 if is_vec && has_prefix && !has_suffix {
                     check.push(quote! {
                         if #field_name.is_empty() && prefix_ok__ {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::get_token_name());
+                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
                             #on_fail;
                         }
                     });
@@ -239,8 +265,9 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     lines.push(quote! {
                         #push_markers
                         field_failed__ = false;
-                        field_index__ = reader__.get_index();
                         prefix_ok__ = true;
+                        field_index__ = reader__.get_index();
+                        #pre_parsing_check
                         #prefix_parsing
                         #exclude_parsing
                         #assignment
@@ -256,7 +283,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
 
             let mut set_location = quote! {};
 
-            if attributes.located {
+            if root_attributes.located {
                 field_names.push(quote! { location });
                 named_fields.named.insert(0, create_location_field("location"));
                 set_location = quote! { let location = reader__.get_data_location(start_index__); };
@@ -268,6 +295,7 @@ pub fn process_struct(data_struct: &mut DataStruct, attributes: &RootAttributes,
                     let mut field_index__ : usize = 0;
                     let mut field_failed__ = false;
                     let mut prefix_ok__ = true;
+                    let mut option_failed__ = false;
                     #(#lines)*
                     #set_location
                     Some(Self { #(#field_names),* })

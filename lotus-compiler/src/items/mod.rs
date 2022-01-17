@@ -99,6 +99,8 @@ mod parsed_match_branch_item;
 mod parsed_match_branch_type_item;
 mod parsed_match_branch_literal_item;
 mod parsed_match_branch_body;
+mod parsed_super_field_default_value;
+mod parsed_keywords;
 
 pub use identifier::*;
 pub use parsed_type_declaration::*;
@@ -202,3 +204,5 @@ pub use parsed_match_branch_item::*;
 pub use parsed_match_branch_type_item::*;
 pub use parsed_match_branch_literal_item::*;
 pub use parsed_match_branch_body::*;
+pub use parsed_super_field_default_value::*;
+pub use parsed_keywords::*;

@@ -48,3 +48,9 @@ pub struct ParsedDoubleDot {
     #[parsable(value="..")]
     pub token: String
 }
+
+#[parsable(name=r#""=""#)]
+pub struct ParsedEqual {
+    #[parsable(value="=")]
+    pub token: String
+}

@@ -1,5 +1,4 @@
 use std::slice;
-
 use parsable::{parsable, ItemLocation};
 use crate::{program::{ProgramContext, Vasm, Type, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME, SELF_VAR_NAME, EVENT_VAR_NAME}};
 use super::Identifier;

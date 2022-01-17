@@ -7,7 +7,7 @@ export class Buffer {
     remote_addr_to_local_string: Map<int, string>,
     serialized_objects: Set<Object>,
     remote_addr_to_local_object: Map<int, Object>,
-    local_object_to_remote_addr: Map<Object, int>,
+    local_object_to_remote_addr: Map<Object, int>
     context: Object?
 
     static new() -> Buffer {
