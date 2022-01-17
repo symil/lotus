@@ -6,7 +6,7 @@ view Window {
             .scale_x(0.35)
             .strip_to_match_aspect_ratio(5)
             .pad_to_match_aspect_ratio(10)
-            .push(TextBox::new("Username", "username"))
+            .push(UsernameTextBox)
     }
 
     @OnDefineMouseInteractions {

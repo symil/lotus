@@ -121,6 +121,7 @@
 [X] Allow to specify default values for parent class fields
 [ ] Improve `for` loop autocompletion
 [ ] Improve `extends` autocompletion
+[ ] Add shortcut to reload language server
 
 -- LATER --
 [ ] Allow manually specifying function parameters
