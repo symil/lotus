@@ -14,15 +14,16 @@ async function main() {
     let httpPort = +getOption('--port', '-p') || 8080;
     let locations = computeLocations(root);
     let buildOnly = hasOption('--build', '-b');
+    let open = hasOption('--open', '-o')
 
     if (buildOnly) {
         await buildProject(locations);
     } else {
-        await startHttpServer(locations, httpPort);
+        await startHttpServer(locations, httpPort, open);
     }
 }
 
-async function startHttpServer(locations, port) {
+async function startHttpServer(locations, port, open) {
     let app = express();
     let serverCommand = new Command('node', [locations.outputServerFilePath]);
 
@@ -41,7 +42,7 @@ async function startHttpServer(locations, port) {
     });
     app.use(express.static(locations.buildDirPath));
     app.use(express.static(locations.rootDirPath));
-    app.listen(port, 'localhost');
+    app.listen(port, open ? null : 'localhost');
 
     console.log(`${chalk.bold('> info:')} listening on port ${chalk.bold(port)}...`);
 }

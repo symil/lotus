@@ -78,10 +78,15 @@ async function main() {
                 });
             }
         });
-    } else if (serverMode) {
+    } else if (validate || serverMode) {
+        let command = commandLineNames[0];
         let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
 
-        runCommand(`${compilerPath} --server --command=${commandLineNames[0]}`, true);
+        if (validate) {
+            command = `1##validate##${commandLineNames[0]}##`;
+        }
+
+        runCommand(`${compilerPath} --server --command=${command}`, true);
     } else if (clean) {
         let fileList = readDirRecursive(TEST_DIR);
         let wasmFileList = fileList.filter(({ path }) => path.endsWith('.wat') || path.endsWith('.wasm'));

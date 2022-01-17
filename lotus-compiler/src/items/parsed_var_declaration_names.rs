@@ -1,5 +1,7 @@
+use std::slice;
+
 use parsable::{parsable, ItemLocation};
-use crate::{program::{ProgramContext, Vasm, Type, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME}};
+use crate::{program::{ProgramContext, Vasm, Type, VariableInfo, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_METHOD_NAME, SELF_VAR_NAME, EVENT_VAR_NAME}};
 use super::Identifier;
 
 #[parsable]
@@ -35,6 +37,18 @@ impl ParsedVarDeclarationNames {
                 assigned_vasm.ty.clone()
             },
         };
+
+        let names = match &self.content {
+            ParsedVarDeclarationNamesContent::Single(name) => slice::from_ref(name),
+            ParsedVarDeclarationNamesContent::Multiple(names) => names.as_slice(),
+        };
+
+        for name in names {
+            if name.as_str() == SELF_VAR_NAME || name.as_str() == EVENT_VAR_NAME {
+                context.errors.generic(name, format!("invalid variable name `{}`", name.as_str()));
+                return None;
+            }
+        }
         
         match &self.content {
             ParsedVarDeclarationNamesContent::Single(name) => {

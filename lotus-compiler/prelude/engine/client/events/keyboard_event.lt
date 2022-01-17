@@ -8,8 +8,8 @@ export event OnKeyboardEvent extends WindowEvent {
 }
 
 export enum KeyboardAction {
+    Down,
     Up,
-    Down
 }
 
 export enum KeyCode {

@@ -4,10 +4,11 @@ pub class TextBoxData {
 }
 
 pub view TextBox {
+    placeholder: string,
     data_key: string,
 
-    static new(data_key: string) -> Self {
-        Self { data_key }
+    static new(placeholder: string, data_key: string) -> Self {
+        Self { placeholder, data_key }
     }
 
     _get_data() -> TextBoxData {
@@ -23,18 +24,28 @@ pub view TextBox {
 
     @OnRender {
         let data = self._get_data();
+        let text = data.text;
+        let cursor_index = data.cursor_index;
+        let color = Color::black();
+
+        if text.is_empty() {
+            text = self.placeholder;
+            cursor_index = none;
+            color = Color::gray();
+        }
 
         self.add_to_focus_chain()
-            .background_color(Color::orange())
+            .background_color(Color::white())
             .border_color(Color::black())
             .border_radius(.15h)
             .border_width(.04h)
             .text_horizontal_align(HorizontalAlign::Left)
             .text_size(.5h)
-            .text(data.text)
+            .text_color(color)
+            .text(text)
             .cursor(Cursor::Text)
             .focus_border_color(Color::blue())
-            // .focus_text_cursor_index(data.cursor_index)
+            .focus_text_cursor_index(cursor_index)
             .focus()
     }
 
@@ -124,7 +135,7 @@ pub view TextBox {
     }
 }
 
-const VALID_TEXTBOX_CHARACTERS = ['_', ' ', '~', '!', '@', '#', '$', '%', '&', '*', '(', ')', '+', '-', '=', ',', '<', '.', '>', '/', '?', '|'];
+const VALID_TEXTBOX_CHARACTERS = ['_', '~', '!', '@', '#', '$', '%', '&', '*', '(', ')', '+', '-', '=', ',', '<', '.', '>', '/', '?', '|'];
 
 fn is_valid_character(c: char) -> bool {
     c && (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || VALID_TEXTBOX_CHARACTERS.includes(c)
