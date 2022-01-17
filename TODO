@@ -119,7 +119,8 @@
 [X] Add autocompletion on field name when constructing an object
 [X] Option to skip parsing of successive `Option` items if one fails
 [X] Allow to specify default values for parent class fields
-[ ] Add `fill class fields` code action
+[ ] Improve `for` loop autocompletion
+[ ] Improve `extends` autocompletion
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -174,6 +175,8 @@
 [ ] Method `or` on `any` type
 [ ] Regular expressions
 [ ] Function default arguments
+[ ] Add `fill class fields` code action
+[ ] Convenience macro to create simple tokens
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

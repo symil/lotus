@@ -5,12 +5,13 @@ use enum_iterator::IntoEnumIterator;
 use indexmap::IndexSet;
 use parsable::parsable;
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent}, wat};
-use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColonToken, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrowToken, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken};
+use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColonToken, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrowToken, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken, ParsedMatchKeyword, unwrap_item};
 
 #[parsable]
 pub struct ParsedMatchBlock {
-    #[parsable(prefix="match", set_marker="no-object")]
-    pub value_to_match: Box<ParsedExpression>,
+    pub match_keyword: ParsedMatchKeyword,
+    #[parsable(set_marker="no-object")]
+    pub expression: Option<Box<ParsedExpression>>,
     pub body: Option<ParsedMatchBody>,
 }
 
@@ -37,7 +38,8 @@ pub struct ParsedMatchBranch {
 
 impl ParsedMatchBlock {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        let matched_vasm = self.value_to_match.process(None, context)?;
+        let expression = unwrap_item(&self.expression, &self.match_keyword, context)?;
+        let matched_vasm = expression.process(None, context)?;
         let matched_type = matched_vasm.ty.clone();
         let tmp_var = VariableInfo::tmp("tmp", matched_type.clone());
         let result_var = VariableInfo::tmp("result", Type::undefined());
