@@ -16,9 +16,9 @@ impl ParsedTypeSingle {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
-            ParsedTypeSingle::Value(value_type) => value_type.collected_instancied_type_names(list),
+            ParsedTypeSingle::Value(value_type) => value_type.collecte_instancied_type_names(list),
             ParsedTypeSingle::Function(_) => {},
         }
     }

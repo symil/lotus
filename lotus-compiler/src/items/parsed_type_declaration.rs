@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, BUILTIN_DEFAULT_METHOD_NAME, BuiltinType, DEFAULT_METHOD_NAME, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue};
 
 #[parsable]
@@ -150,7 +150,7 @@ impl ParsedTypeDeclaration {
         let mut builtin_types = vec![];
 
         match &self.parent {
-            Some(parent) => parent.collected_instancied_type_names(&mut type_names, context),
+            Some(parent) => parent.collecte_instancied_type_names(&mut type_names, context),
             None => match self.qualifier.get_inherited_type() {
                 Some(builtin_type) => {
                     let builtin_type_name = builtin_type.get_name();
@@ -164,12 +164,9 @@ impl ParsedTypeDeclaration {
         };
 
         for field_declaration in self.get_fields() {
-            match &field_declaration.default_value {
-                Some(default_value) => default_value.collected_instancied_type_names(&mut type_names, context),
-                None => {
-                    if let Some(ty) = &field_declaration.ty {
-                        ty.collected_instancied_type_names(&mut type_names, context);
-                    }
+            if let Some(default_value) = &field_declaration.default_value {
+                if let Some(expression) = &default_value.expression {
+                    expression.collecte_instancied_type_names(&mut type_names, context);
                 }
             }
         }
@@ -365,7 +362,7 @@ impl ParsedTypeDeclaration {
                                 context.errors.generic(&field.name, format!("duplicate field `{}`", self.name.as_str().bold()));
                             }
 
-                            if let Some(field_type) = ty.process(false, context) {
+                            if let Some(field_type) = ty.process(context) {
                                 context.rename_provider.add_occurence(&field.name, &field.name);
 
                                 let field_details = Rc::new(FieldInfo {
@@ -519,12 +516,10 @@ impl ParsedTypeDeclaration {
                                     context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);
                                 }
                             }
-                        } else if field.ty.as_ref().unwrap().is_option() {
+                        } else if field.ty.as_ref().unwrap().ty.as_ref().unwrap().is_option() {
                             default_value_vasm = context.vasm().call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context);
-                        } else if let Some(_) = field_info.ty.get_static_method(DEFAULT_METHOD_NAME, context) {
-                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context);
                         } else {
-                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, BUILTIN_DEFAULT_METHOD_NAME, &[], vec![], context);
+                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context);
                         }
 
                         default_value_vasm.ty = field_info.ty.clone();

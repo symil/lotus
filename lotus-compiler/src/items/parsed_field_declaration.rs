@@ -1,17 +1,11 @@
 use parsable::parsable;
-use super::{ParsedExpression, ParsedType, Identifier, ParsedColon, ParsedEqual, ParsedComma};
+use crate::program::{Type, Vasm, ProgramContext};
+use super::{ParsedExpression, ParsedType, Identifier, ParsedColon, ParsedEqual, ParsedComma, unwrap_item, ParsedVarTypeDeclaration, ParsedDefaultValueAssignment};
 
-#[parsable(none_cascade = true)]
+#[parsable]
 pub struct ParsedFieldDeclaration {
     pub name: Identifier,
-    pub colon: Option<ParsedColon>,
-    pub ty: Option<ParsedType>,
-    pub equal: Option<ParsedEqual>,
-    pub default_value: Option<ParsedExpression>,
-    #[parsable(cascade = false)]
+    pub ty: Option<ParsedVarTypeDeclaration>,
+    pub default_value: Option<ParsedDefaultValueAssignment>,
     pub comma: Option<ParsedComma>,
-}
-
-impl ParsedFieldDeclaration {
-    
 }

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use colored::Colorize;
 use parsable::{ItemLocation, ParseError};
 use crate::utils::Link;
-use super::{InterfaceBlueprint, Type, ItemKind, ExpectedItemKind};
+use super::{InterfaceBlueprint, Type, ItemKind, ExpectedKind};
 
 #[derive(Debug)]
 pub struct CompilationError {
@@ -26,12 +26,12 @@ pub enum CompilationErrorDetails {
 
 #[derive(Debug)]
 pub struct ExpectedTokenDetails {
-    pub kind: ExpectedItemKind,
+    pub kind: ExpectedKind,
 }
 
 #[derive(Debug)]
 pub struct UnexpectedTokenDetails {
-    pub kind: ExpectedItemKind,
+    pub kind: ExpectedKind,
     pub value: Option<String>
 }
 

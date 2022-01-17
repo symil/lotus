@@ -45,7 +45,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttrib
                 field_names.push(quote! { #field_name });
 
                 let optional = is_option || attributes.optional.unwrap_or(false);
-                let participate_in_cascade = root_attributes.none_cascade && attributes.cascade.unwrap_or(true);
+                let participate_in_cascade = root_attributes.cascade && attributes.cascade.unwrap_or(true);
                 let consume_spaces = match attributes.consume_spaces {
                     Some(false) => quote! {},
                     _ => quote! { reader__.eat_spaces(); }

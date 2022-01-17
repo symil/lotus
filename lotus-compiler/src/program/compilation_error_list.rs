@@ -1,8 +1,8 @@
 use std::{ops::Deref, mem::take};
-use parsable::{ItemLocation, ParseError};
+use parsable::{ItemLocation, ParseError, Parsable};
 use crate::{utils::{Link, is_valid_identifier}, items::Identifier};
 
-use super::{CompilationError, CompilationErrorDetails, GenericErrorDetails, ParseErrorDetails, Type, TypeMismatchDetails, InterfaceBlueprint, InterfaceMismatchDetails, InvalidCharacterDetails, ExpectedClassTypeDetails, UndefinedItemDetails, ItemKind, UnexpectedTokenDetails, ExpectedItemKind, ExpectedTokenDetails, CompilationErrorChain};
+use super::{CompilationError, CompilationErrorDetails, GenericErrorDetails, ParseErrorDetails, Type, TypeMismatchDetails, InterfaceBlueprint, InterfaceMismatchDetails, InvalidCharacterDetails, ExpectedClassTypeDetails, UndefinedItemDetails, ItemKind, UnexpectedTokenDetails, ExpectedKind, ExpectedTokenDetails, CompilationErrorChain};
 
 #[derive(Debug)]
 pub struct CompilationErrorList {
@@ -84,7 +84,7 @@ impl CompilationErrorList {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::UnexpectedToken(UnexpectedTokenDetails {
-                kind: ExpectedItemKind::Expression,
+                kind: ExpectedKind::Expression,
                 value: None,
             }),
         })
@@ -101,7 +101,7 @@ impl CompilationErrorList {
         self.add(CompilationError {
             location: location.clone(),
             details: CompilationErrorDetails::UnexpectedToken(UnexpectedTokenDetails {
-                kind: ExpectedItemKind::Keyword,
+                kind: ExpectedKind::Keyword,
                 value: Some(keyword.to_string()),
             }),
         })
@@ -136,30 +136,34 @@ impl CompilationErrorList {
     }
 
     pub fn expected_identifier(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::Identifier)
+        self.expected(location, ExpectedKind::Identifier)
     }
 
     pub fn expected_expression(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::Expression)
+        self.expected(location, ExpectedKind::Expression)
     }
 
     pub fn expected_function_body(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::FunctionBody)
+        self.expected(location, ExpectedKind::FunctionBody)
     }
 
     pub fn expected_block(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::Block)
+        self.expected(location, ExpectedKind::Block)
     }
 
     pub fn expected_argument(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::Argument)
+        self.expected(location, ExpectedKind::Argument)
     }
 
     pub fn expected_token(&mut self, location: &ItemLocation, token: &'static str) -> CompilationErrorChain {
-        self.expected_item(location, ExpectedItemKind::Token(token))
+        self.expected(location, ExpectedKind::Token(token))
     }
 
-    fn expected_item(&mut self, location: &ItemLocation, token: ExpectedItemKind) -> CompilationErrorChain {
+    pub fn expected_item<T : Parsable>(&mut self, location: &ItemLocation) -> CompilationErrorChain {
+        self.expected(location, ExpectedKind::Item(T::token_name()))
+    }
+
+    fn expected(&mut self, location: &ItemLocation, token: ExpectedKind) -> CompilationErrorChain {
         let final_location = match is_valid_identifier(location.as_str()) {
             true => location.get_end().set_start_with_offset(1),
             false => location.get_end(),

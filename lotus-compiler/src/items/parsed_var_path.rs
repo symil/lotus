@@ -9,8 +9,8 @@ pub struct ParsedVarPath {
 }
 
 impl ParsedVarPath {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
-        self.root.collected_instancied_type_names(list, context);
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+        self.root.collecte_instancied_type_names(list, context);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

@@ -18,11 +18,11 @@ impl ParsedTypeWithoutSuffix {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
             ParsedTypeWithoutSuffix::Macro(mac) => list.push(mac.process_as_name(context).unwrap().to_string()),
-            ParsedTypeWithoutSuffix::Single(single) => single.collected_instancied_type_names(list, context),
-            ParsedTypeWithoutSuffix::Tuple(tuple) => tuple.collected_instancied_type_names(list, context),
+            ParsedTypeWithoutSuffix::Single(single) => single.collecte_instancied_type_names(list, context),
+            ParsedTypeWithoutSuffix::Tuple(tuple) => tuple.collecte_instancied_type_names(list, context),
         }
     }
 

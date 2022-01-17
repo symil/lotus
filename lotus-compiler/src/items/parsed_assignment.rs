@@ -10,10 +10,10 @@ pub struct ParsedAssignment {
 }
 
 impl ParsedAssignment {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match &self.rvalue {
             Some(rvalue) => {},
-            None => self.lvalue.collected_instancied_type_names(list, context),
+            None => self.lvalue.collecte_instancied_type_names(list, context),
         }
     }
 

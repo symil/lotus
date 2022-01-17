@@ -12,8 +12,8 @@ pub struct ParsedExpression {
 }
 
 impl ParsedExpression {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
-        self.operation.collected_instancied_type_names(list, context);
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+        self.operation.collecte_instancied_type_names(list, context);
     }
 
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {

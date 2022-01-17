@@ -1,3 +1,4 @@
+mod utils;
 mod identifier;
 mod parsed_type_declaration;
 mod parsed_source_file;
@@ -101,7 +102,10 @@ mod parsed_match_branch_literal_item;
 mod parsed_match_branch_body;
 mod parsed_super_field_default_value;
 mod parsed_keywords;
+mod parsed_var_type_declaration;
+mod parsed_default_value_assignment;
 
+pub use utils::*;
 pub use identifier::*;
 pub use parsed_type_declaration::*;
 pub use parsed_source_file::*;
@@ -206,3 +210,5 @@ pub use parsed_match_branch_literal_item::*;
 pub use parsed_match_branch_body::*;
 pub use parsed_super_field_default_value::*;
 pub use parsed_keywords::*;
+pub use parsed_var_type_declaration::*;
+pub use parsed_default_value_assignment::*;

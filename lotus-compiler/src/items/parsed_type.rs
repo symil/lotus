@@ -2,7 +2,7 @@ use parsable::parsable;
 use crate::program::{BuiltinType, ProgramContext, Type};
 use super::{Identifier, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedTypeSuffixToken, ParsedTypeSuffix};
 
-#[parsable]
+#[parsable(name = "type")]
 #[derive(Default)]
 pub struct ParsedType {
     pub parsed_type: ParsedTypeWithoutSuffix,
@@ -24,10 +24,10 @@ impl ParsedType {
         }
     }
 
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self.suffix.last() {
-            Some(type_suffix) => type_suffix.collected_instancied_type_names(list),
-            None => self.parsed_type.collected_instancied_type_names(list, context),
+            Some(type_suffix) => type_suffix.collecte_instancied_type_names(list),
+            None => self.parsed_type.collecte_instancied_type_names(list, context),
         }
     }
 

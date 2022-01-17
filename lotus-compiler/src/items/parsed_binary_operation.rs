@@ -9,11 +9,11 @@ pub struct ParsedBinaryOperation {
 }
 
 impl ParsedBinaryOperation {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
-        self.first.collected_instancied_type_names(list, context);
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+        self.first.collecte_instancied_type_names(list, context);
         
         for (_, operand) in &self.others {
-            operand.collected_instancied_type_names(list, context);
+            operand.collecte_instancied_type_names(list, context);
         }
     }
 

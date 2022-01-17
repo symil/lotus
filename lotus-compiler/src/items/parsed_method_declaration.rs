@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::parsable;
 use colored::*;
-use crate::{items::ParsedVisibilityToken, program::{DEFAULT_METHOD_NAME, FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, SELF_VAR_NAME, VariableKind, display_join, hashmap_get_or_insert_with, insert_in_vec_hashmap, Visibility}, utils::Link};
+use crate::{items::ParsedVisibilityToken, program::{FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, SELF_VAR_NAME, VariableKind, display_join, hashmap_get_or_insert_with, insert_in_vec_hashmap, Visibility}, utils::Link};
 use super::{ParsedEventCallbackQualifierKeyword, ParsedFunctionOrMethodContent, ParsedFunctionDeclaration, ParsedFunctionSignature, Identifier, ParsedBlockExpression, ParsedTypeDeclaration, ParsedTypeQualifier, ParsedVarPath};
 
 #[parsable]

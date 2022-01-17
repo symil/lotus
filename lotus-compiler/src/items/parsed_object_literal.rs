@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{items::ParsedTypeQualifier, program::{DEFAULT_METHOD_NAME, OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
+use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
 use super::{ParsedExpression, Identifier, ParsedObjectFieldInitialization, ParsedObjectInitializationItem, ParsedType};
 
 #[parsable]
@@ -15,8 +15,8 @@ pub struct ParsedObjectLiteral {
 }
 
 impl ParsedObjectLiteral {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
-        self.object_type.collected_instancied_type_names(list, context);
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+        self.object_type.collecte_instancied_type_names(list, context);
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {

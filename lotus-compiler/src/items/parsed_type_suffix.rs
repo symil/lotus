@@ -15,7 +15,7 @@ pub enum ParsedTypeSuffixToken {
 }
 
 impl ParsedTypeSuffix {
-    pub fn collected_instancied_type_names(&self, list: &mut Vec<String>) {
+    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>) {
         let builtin_type = match &self.token {
             ParsedTypeSuffixToken::Array => Some(BuiltinType::Array),
             ParsedTypeSuffixToken::Option => None
