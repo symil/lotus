@@ -9,9 +9,9 @@ pub struct ParsedParenthesizedExpression {
 }
 
 impl ParsedParenthesizedExpression {
-    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         for expr in &self.expr_list {
-            expr.collecte_instancied_type_names(list, context);
+            expr.collect_instancied_type_names(list, context);
         }
     }
 

@@ -150,7 +150,7 @@ impl ParsedTypeDeclaration {
         let mut builtin_types = vec![];
 
         match &self.parent {
-            Some(parent) => parent.collecte_instancied_type_names(&mut type_names, context),
+            Some(parent) => parent.collect_instancied_type_names(&mut type_names, context),
             None => match self.qualifier.get_inherited_type() {
                 Some(builtin_type) => {
                     let builtin_type_name = builtin_type.get_name();
@@ -166,8 +166,14 @@ impl ParsedTypeDeclaration {
         for field_declaration in self.get_fields() {
             if let Some(default_value) = &field_declaration.default_value {
                 if let Some(expression) = &default_value.expression {
-                    expression.collecte_instancied_type_names(&mut type_names, context);
+                    expression.collect_instancied_type_names(&mut type_names, context);
                 }
+            }
+        }
+
+        for super_field_default_value in self.get_super_fields_default_values() {
+            if let Some(expression) = &super_field_default_value.expression {
+                expression.collect_instancied_type_names(&mut type_names, context);
             }
         }
 
@@ -525,6 +531,12 @@ impl ParsedTypeDeclaration {
                         default_value_vasm.ty = field_info.ty.clone();
 
                         default_values.insert(field_info.name.to_string(), default_value_vasm);
+                    }
+                }
+
+                for super_field in self.get_super_fields_default_values() {
+                    if let Some((name, vasm)) = super_field.process(&type_unwrapped.self_type, context) {
+                        default_values.insert(name, vasm);
                     }
                 }
             });

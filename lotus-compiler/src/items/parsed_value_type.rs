@@ -21,9 +21,9 @@ impl ParsedValueType {
         }
     }
 
-    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>) {
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>) {
         list.push(self.name.to_string());
-        // self.arguments.collecte_instancied_type_names(list);
+        // self.arguments.collect_instancied_type_names(list);
     }
 
     pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {

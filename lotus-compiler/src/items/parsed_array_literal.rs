@@ -10,9 +10,9 @@ pub struct ParsedArrayLiteral {
 }
 
 impl ParsedArrayLiteral {
-    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         for item in &self.items {
-            item.collecte_instancied_type_names(list, context);
+            item.collect_instancied_type_names(list, context);
         }
     }
 

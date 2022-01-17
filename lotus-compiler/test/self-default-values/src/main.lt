@@ -1,0 +1,25 @@
+class Foo {
+    a: float = 1,
+    b: string = "foo",
+    c: string?,
+}
+
+class Bar extends Foo {
+    d: float = 1.2,
+
+    self.a = 5.5,
+}
+
+class Baz extends Bar {
+    e: int = 8,
+    f: int,
+
+    self.b = "bar",
+    self.f = 4,
+}
+
+export fn main() {
+    let baz = Baz;
+
+    @dbg(baz);
+}

@@ -11,9 +11,9 @@ pub struct ParsedTypeArguments {
 }
 
 impl ParsedTypeArguments {
-    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         for ty in &self.list {
-            ty.collecte_instancied_type_names(list, context);
+            ty.collect_instancied_type_names(list, context);
         }
     }
 

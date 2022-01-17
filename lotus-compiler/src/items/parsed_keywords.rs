@@ -2,6 +2,6 @@ use parsable::parsable;
 
 #[parsable]
 pub struct ParsedSuperKeyword {
-    #[parsable(value = "super")]
+    #[parsable(value = "self")]
     pub token: String
 }

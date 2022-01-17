@@ -41,7 +41,7 @@ impl ParsedVarPathRoot {
         }
     }
 
-    pub fn collecte_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
             ParsedVarPathRoot::Macro(_) => {},
             ParsedVarPathRoot::DebugMacro(_) => {},
@@ -50,11 +50,11 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::NumberLiteral(_) => {},
             ParsedVarPathRoot::CharLiteral(_) => {},
             ParsedVarPathRoot::StringLiteral(_) => {},
-            ParsedVarPathRoot::ArrayLiteral(array_literal) => array_literal.collecte_instancied_type_names(list, context),
-            ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.collecte_instancied_type_names(list, context),
+            ParsedVarPathRoot::ArrayLiteral(array_literal) => array_literal.collect_instancied_type_names(list, context),
+            ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.collect_instancied_type_names(list, context),
             ParsedVarPathRoot::StaticFieldOrMethod(_) => {},
-            ParsedVarPathRoot::Parenthesized(expr) => expr.collecte_instancied_type_names(list, context),
-            ParsedVarPathRoot::VarRef(var_ref) => var_ref.collecte_instancied_type_names(list),
+            ParsedVarPathRoot::Parenthesized(expr) => expr.collect_instancied_type_names(list, context),
+            ParsedVarPathRoot::VarRef(var_ref) => var_ref.collect_instancied_type_names(list),
             _ => todo!()
         }
     }
