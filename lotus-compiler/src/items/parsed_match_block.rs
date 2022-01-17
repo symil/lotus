@@ -5,7 +5,7 @@ use enum_iterator::IntoEnumIterator;
 use indexmap::IndexSet;
 use parsable::parsable;
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent}, wat};
-use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColon, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrow, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken};
+use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColonToken, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrowToken, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken};
 
 #[parsable]
 pub struct ParsedMatchBlock {

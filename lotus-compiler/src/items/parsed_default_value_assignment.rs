@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type, Vasm};
-use super::{ParsedEqual, ParsedExpression, unwrap_item};
+use super::{ParsedEqualToken, ParsedExpression, unwrap_item};
 
 #[parsable]
 pub struct ParsedDefaultValueAssignment {
-    pub equal: ParsedEqual,
+    pub equal: ParsedEqualToken,
     pub expression: Option<ParsedExpression>,
 }
 

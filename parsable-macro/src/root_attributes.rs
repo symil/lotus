@@ -5,7 +5,8 @@ pub struct RootAttributes {
     pub located: bool,
     pub impl_display: bool,
     pub cascade: bool,
-    pub name: Option<String>
+    pub name: Option<String>,
+    pub token: Option<String>,
 }
 
 impl Default for RootAttributes {
@@ -14,7 +15,8 @@ impl Default for RootAttributes {
             located: true,
             impl_display: false,
             cascade: false,
-            name: None
+            name: None,
+            token: None,
         }
     }
 }

@@ -21,7 +21,7 @@ pub fn create_location_field(field_name: &str) -> Field {
     result.unwrap().field
 }
 
-pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttributes, output: &mut Output) {
+pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAttributes, output: &mut Output) {
     output.deref = Some(quote! {
         fn deref(&self) -> &Self::Target {
             &self.location
@@ -30,6 +30,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttrib
 
     match &mut data_struct.fields {
         Fields::Named(named_fields) => {
+            let field_count = named_fields.named.len();
             let mut field_names = vec![];
             let mut lines = vec![];
 
@@ -218,7 +219,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttrib
                             },
                             None => { #on_fail }
                         };
-                    }
+                    };
                 } else if let Some(literal) = attributes.value {
                     assignment = quote! {
                         let #field_name = match reader__.read_string(#literal) {
@@ -228,6 +229,10 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &RootAttrib
                             },
                             None => { #on_fail }
                         };
+                    };
+
+                    if field_count == 1 && root_attributes.token.is_none() {
+                        root_attributes.token = Some(literal.clone());
                     }
                 }
 

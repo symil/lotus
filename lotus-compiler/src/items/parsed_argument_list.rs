@@ -1,5 +1,5 @@
 use parsable::{parsable, ItemLocation};
-use super::{ParsedExpression, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedComma};
+use super::{ParsedExpression, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedCommaToken};
 
 #[parsable]
 pub struct ParsedArgumentList {
@@ -16,7 +16,7 @@ struct ParsedArgumentListContent {
 
 #[parsable]
 struct ParsedOtherArgument {
-    comma: ParsedComma,
+    comma: ParsedCommaToken,
     expression: Option<ParsedExpression>
 }
 

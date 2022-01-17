@@ -1,16 +1,16 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type, Vasm};
-use super::{ParsedSuperKeyword, ParsedDot, Identifier, ParsedEqual, ParsedExpression, unwrap_item, ParsedComma};
+use super::{ParsedSelfKeyword, ParsedDotToken, Identifier, ParsedEqualToken, ParsedExpression, unwrap_item, ParsedCommaToken};
 
 #[parsable(cascade = true)]
 pub struct ParsedSuperFieldDefaultValue {
-    pub super_keyword: ParsedSuperKeyword,
-    pub dot: Option<ParsedDot>,
+    pub super_keyword: ParsedSelfKeyword,
+    pub dot: Option<ParsedDotToken>,
     pub name: Option<Identifier>,
-    pub equal: Option<ParsedEqual>,
+    pub equal: Option<ParsedEqualToken>,
     pub expression: Option<ParsedExpression>,
     #[parsable(cascade = false)]
-    pub comma: Option<ParsedComma>,
+    pub comma: Option<ParsedCommaToken>,
 }
 
 impl ParsedSuperFieldDefaultValue {

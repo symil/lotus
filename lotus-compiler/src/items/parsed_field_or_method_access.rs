@@ -3,11 +3,11 @@ use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
 use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat};
-use super::{ParsedArgumentList, Identifier, ParsedIdentifierWrapper, ParsedVarPrefixToken, ParsedDot};
+use super::{ParsedArgumentList, Identifier, ParsedIdentifierWrapper, ParsedVarPrefixToken, ParsedDotToken};
 
 #[parsable]
 pub struct ParsedFieldOrMethodAccess {
-    pub dot: ParsedDot,
+    pub dot: ParsedDotToken,
     pub name: Option<ParsedIdentifierWrapper>,
     pub arguments: Option<ParsedArgumentList>
 }

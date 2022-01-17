@@ -1,56 +1,55 @@
 use parsable::parsable;
 
 #[parsable]
-pub struct ParsedComma {
+pub struct ParsedCommaToken {
     #[parsable(value=",")]
     pub token: String
 }
 
 #[parsable]
-pub struct ParsedSemicolon {
+pub struct ParsedSemicolonToken {
     #[parsable(value=";")]
     pub token: String
 }
 
 #[parsable]
-pub struct ParsedDot {
+pub struct ParsedDotToken {
     #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
     pub token: String,
 }
 
 #[parsable]
-pub struct ParsedColon {
+pub struct ParsedColonToken {
     #[parsable(value=":")]
     pub token: String
 }
 
-
 #[parsable]
-pub struct ParsedDoubleColon {
+pub struct ParsedDoubleColonToken {
     #[parsable(value="::")]
     pub token: String
 }
 
 #[parsable]
-pub struct ParsedArrow {
+pub struct ParsedArrowToken {
     #[parsable(value="=>")]
     pub token: String
 }
 
 #[parsable]
-pub struct ParsedWildcard {
+pub struct ParsedWildcardToken {
     #[parsable(value="_")]
     pub token: String
 }
 
 #[parsable]
-pub struct ParsedDoubleDot {
+pub struct ParsedDoubleDotToken {
     #[parsable(value="..")]
     pub token: String
 }
 
-#[parsable(name=r#""=""#)]
-pub struct ParsedEqual {
+#[parsable]
+pub struct ParsedEqualToken {
     #[parsable(value="=")]
     pub token: String
 }

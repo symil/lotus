@@ -23,7 +23,7 @@ use crate::output::Output;
 #[proc_macro_error]
 #[proc_macro_attribute]
 pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let root_attributes = match syn::parse::<RootAttributes>(attr.clone()) {
+    let mut root_attributes = match syn::parse::<RootAttributes>(attr.clone()) {
         Ok(attributes) => attributes,
         Err(error) => {
             emit_call_site_error!(error);
@@ -49,7 +49,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     ast.attrs.push(derive_attribute);
 
     match &mut ast.data {
-        Data::Struct(data) => process_struct(data, &root_attributes, &mut output),
+        Data::Struct(data) => process_struct(data, &mut root_attributes, &mut output),
         Data::Enum(data) => process_enum(data, &root_attributes, &mut output),
         Data::Union(_) => emit_call_site_error!("unions are not supported")
     }
@@ -85,7 +85,10 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
     let token_name = match &root_attributes.name {
         Some(specified_name) => specified_name.to_string(),
-        None => name.to_string(),
+        None => match &root_attributes.token {
+            Some(token) => format!("\"{}\"", token),
+            None => name.to_string(),
+        }
     };
     let token_name_lit = LitStr::new(&token_name, Span::call_site());
 

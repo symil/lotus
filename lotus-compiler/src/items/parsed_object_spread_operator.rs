@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm}};
-use super::{ParsedExpression, ParsedDoubleDot};
+use super::{ParsedExpression, ParsedDoubleDotToken};
 
 #[parsable]
 pub struct ParsedObjectSpreadOperator {
-    pub double_dot: ParsedDoubleDot,
+    pub double_dot: ParsedDoubleDotToken,
     pub expression: Option<ParsedExpression>
 }
 

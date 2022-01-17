@@ -1,10 +1,10 @@
 use parsable::{parsable, ItemLocation};
 use crate::program::{Type, ProgramContext, Vasm};
-use super::{ParsedNoneLiteral, ParsedNumberLiteral, ParsedType, ParsedDoubleColon, Identifier, ParsedMatchBranchTypeItem, ParsedMatchBranchLiteralItem, ParsedWildcard};
+use super::{ParsedNoneLiteral, ParsedNumberLiteral, ParsedType, ParsedDoubleColonToken, Identifier, ParsedMatchBranchTypeItem, ParsedMatchBranchLiteralItem, ParsedWildcardToken};
 
 #[parsable]
 pub enum ParsedMatchBranchItem {
-    Wildcard(ParsedWildcard),
+    Wildcard(ParsedWildcardToken),
     Literal(ParsedMatchBranchLiteralItem),
     TypeOrEnumVariant(ParsedMatchBranchTypeItem),
 }

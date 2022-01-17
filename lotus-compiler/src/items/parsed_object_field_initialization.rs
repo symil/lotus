@@ -1,7 +1,7 @@
 use colored::Colorize;
 use parsable::parsable;
 use crate::{items::ObjectInitResult, program::{CompilationError, ProgramContext, Type, Vasm}};
-use super::{ParsedExpression, Identifier, ParsedColon};
+use super::{ParsedExpression, Identifier, ParsedColonToken};
 
 #[parsable]
 pub struct ParsedObjectFieldInitialization {
@@ -11,7 +11,7 @@ pub struct ParsedObjectFieldInitialization {
 
 #[parsable]
 pub struct ParsedObjectFieldInitializationValue {
-    pub colon: ParsedColon,
+    pub colon: ParsedColonToken,
     pub expression: Option<ParsedExpression>
 }
 

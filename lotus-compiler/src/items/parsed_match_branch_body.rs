@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Vasm, Type};
-use super::{ParsedArrow, ParsedExpression};
+use super::{ParsedArrowToken, ParsedExpression};
 
 #[parsable]
 pub struct ParsedMatchBranchBody {
-    pub arrow: ParsedArrow,
+    pub arrow: ParsedArrowToken,
     pub expression: Option<ParsedExpression>
 }
 

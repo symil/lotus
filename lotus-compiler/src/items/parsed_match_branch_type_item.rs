@@ -1,6 +1,6 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Vasm, IS_METHOD_NAME, EQ_METHOD_NAME, Type};
-use super::{ParsedType, Identifier, ParsedDoubleColon};
+use super::{ParsedType, Identifier, ParsedDoubleColonToken};
 
 #[parsable]
 pub struct ParsedMatchBranchTypeItem {
@@ -10,7 +10,7 @@ pub struct ParsedMatchBranchTypeItem {
 
 #[parsable]
 pub struct ParsedEnumVariantName {
-    pub double_colon: ParsedDoubleColon,
+    pub double_colon: ParsedDoubleColonToken,
     pub name: Option<Identifier>
 }
 

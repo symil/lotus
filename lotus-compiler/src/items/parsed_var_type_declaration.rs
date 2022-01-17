@@ -1,10 +1,10 @@
 use parsable::parsable;
 use crate::program::{ProgramContext, Type};
-use super::{ParsedColon, ParsedType, unwrap_item};
+use super::{ParsedColonToken, ParsedType, unwrap_item};
 
 #[parsable]
 pub struct ParsedVarTypeDeclaration {
-    pub colon: ParsedColon,
+    pub colon: ParsedColonToken,
     pub ty: Option<ParsedType>
 }
 
