@@ -10,11 +10,7 @@ impl Parsable for EndOfFile {
         }
     }
 
-    fn item_name() -> &'static str {
-        "EOF"
-    }
-
-    fn item_name_wrapper() -> &'static str {
-        "<>"
+    fn get_item_name() -> String {
+        "<EOF>".to_string()
     }
 }

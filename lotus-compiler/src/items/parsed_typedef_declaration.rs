@@ -1,19 +1,23 @@
-use parsable::parsable;
-use crate::program::{ProgramContext, TypedefBlueprint, Visibility};
-use super::{ParsedType, Identifier, ParsedVisibilityToken, ParsedVisibility};
+use parsable::{parsable, Token};
+use crate::{program::{ProgramContext, TypedefBlueprint, Visibility, TYPE_KEYWORD}, utils::Link};
+use super::{ParsedType, Identifier, ParsedVisibilityToken, ParsedVisibility, ParsedEqualToken, ParsedSemicolonToken, unwrap_item};
 
 #[parsable]
 pub struct ParsedTypedefDeclaration {
     pub visibility: Option<ParsedVisibility>,
-    #[parsable(prefix="type")]
+    pub qualifier: Token<TYPE_KEYWORD>,
     pub name: Identifier,
-    #[parsable(prefix="=", suffix=";")]
-    pub target: ParsedType
+    pub equal: ParsedEqualToken,
+    pub target: Option<ParsedType>,
+    pub semicolon: Option<ParsedSemicolonToken>
 }
 
 impl ParsedTypedefDeclaration {
-    pub fn process(&self, context: &mut ProgramContext) {
-        if let Some(ty) = self.target.process(true, context) {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<Link<TypedefBlueprint>> {
+        let mut result = None;
+        let target = unwrap_item(&self.target, &self.equal, context)?;
+
+        if let Some(ty) = target.process(true, context) {
             context.rename_provider.add_occurence(&self.name, &self.name);
 
             let typedef_blueprint = TypedefBlueprint {
@@ -23,7 +27,11 @@ impl ParsedTypedefDeclaration {
                 target: ty,
             };
 
-            context.typedefs.insert(typedef_blueprint, None);
+            result = Some(context.typedefs.insert(typedef_blueprint, None));
         }
+
+        unwrap_item(&self.semicolon, target, context)?;
+
+        result
     }
 }

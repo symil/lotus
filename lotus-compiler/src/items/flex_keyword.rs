@@ -16,12 +16,8 @@ impl<const KEYWORD: &'static str> Parsable for FlexKeyword<KEYWORD> {
         }
     }
 
-    fn item_name() -> &'static str {
-        KEYWORD
-    }
-
-    fn item_name_wrapper() -> &'static str {
-        "\""
+    fn get_item_name() -> String {
+        format!("\"{}\"", KEYWORD)
     }
 }
 

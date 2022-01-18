@@ -93,8 +93,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
     let token_name_lit = LitStr::new(&token_name, Span::call_site());
 
     let impl_item_name = quote! {
-        fn item_name() -> &'static str {
-            #token_name_lit
+        fn get_item_name() -> String {
+            #token_name_lit.to_string()
         }
     };
 

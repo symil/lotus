@@ -35,6 +35,8 @@ impl ParsedTopLevelBlockInProgress {
 
                         if !VISIBILITY_KEYWORDS.contains(&self.visibility_keyword.as_str()) {
                             context.errors.keyword_mismatch(&self.visibility_keyword, VISIBILITY_KEYWORDS);
+                        } else {
+                            context.errors.expected_identifier(qualifier_keyword);
                         }
 
                         if !non_visibility_keywords.contains(&qualifier_keyword.as_str()) {
@@ -46,9 +48,11 @@ impl ParsedTopLevelBlockInProgress {
                         context.completion_provider.add_keyword_completion(self, all_keywords);
 
                         if VISIBILITY_KEYWORDS.contains(&self.visibility_keyword.as_str()) {
-                            context.errors.expected_keyword_among(self, non_visibility_keywords);
+                            context.errors.expected_keyword_among(&self.visibility_keyword, non_visibility_keywords);
                         } else if !all_keywords.contains(&self.visibility_keyword.as_str()) {
                             context.errors.keyword_mismatch(&self.visibility_keyword, all_keywords);
+                        } else {
+                            context.errors.expected_identifier(&self.visibility_keyword);
                         }
                     });
                 },

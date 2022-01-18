@@ -167,7 +167,7 @@ impl CompilationErrorList {
     }
 
     pub fn expected_item<T : Parsable>(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Item(T::get_wrapped_name()), false)
+        self.expected(location, ExpectedKind::Item(T::get_item_name()), false)
     }
 
     pub fn keyword_mismatch(&mut self, word: &Word, expected: &[&'static str]) -> CompilationErrorChain {

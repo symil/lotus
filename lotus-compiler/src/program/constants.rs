@@ -95,12 +95,16 @@ pub const CONST_KEYWORD : &'static str = "const";
 pub const SYS_KEYWORD : &'static str = "sys";
 pub const PUB_KEYWORD : &'static str = "pub";
 pub const EXPORT_KEYWORD : &'static str = "export";
+pub const I32_KEYWORD : &'static str = "i32";
+pub const F32_KEYWORD : &'static str = "f32";
+pub const VOID_KEYWORD : &'static str = "void";
 
 pub const EXPRESSION_KEYWORDS : &'static[&'static str] = &[ MATCH_KEYWORD, FOR_KEYWORD, WHILE_KEYWORD, IF_KEYWORD, ELSE_KEYWORD ];
 pub const VISIBILITY_KEYWORDS : &'static[&'static str] = &[ PUB_KEYWORD, EXPORT_KEYWORD ];
 pub const VAR_DECLARATION_KEYWORDS : &'static[&'static str] = &[ CONST_KEYWORD, LET_KEYWORD ];
 pub const FUNCTION_DECLARATION_KEYWORDS : &'static[&'static str] = &[ FN_KEYWORD ];
 pub const TYPE_DECLARATION_KEYWORDS : &'static[&'static str] = &[ INTERFACE_KEYWORD, TYPE_KEYWORD, CLASS_KEYWORD, ENUM_KEYWORD, EVENT_KEYWORD, VIEW_KEYWORD ];
+pub const STACK_TYPE_KEYWORDS : &'static[&'static str] = &[ I32_KEYWORD, F32_KEYWORD, VOID_KEYWORD ];
 
 pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
     "main",

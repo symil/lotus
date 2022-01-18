@@ -1,7 +1,7 @@
 use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, StackTypeToken, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
 use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind};
 
 #[derive(Debug)]
@@ -33,10 +33,11 @@ pub enum TypeCategory {
     Class
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum WasmStackType {
-    Fixed(StackTypeToken),
-    TypeParameter(usize)
+    I32,
+    F32,
+    Void
 }
 
 #[derive(Debug)]
@@ -79,12 +80,9 @@ impl TypeBlueprint {
 
     pub fn get_wasm_type(&self, parameters: &[Rc<TypeInstanceHeader>]) -> Option<&'static str> {
         match self.stack_type {
-            WasmStackType::Fixed(stack_type) => match stack_type {
-                StackTypeToken::Void => None,
-                StackTypeToken::Int => Some("i32"),
-                StackTypeToken::Float => Some("f32"),
-            },
-            WasmStackType::TypeParameter(index) => parameters[index].wasm_type,
+            WasmStackType::I32 => Some("i32"),
+            WasmStackType::F32 => Some("f32"),
+            WasmStackType::Void => None,
         }
     }
 

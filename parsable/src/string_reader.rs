@@ -62,7 +62,7 @@ impl StringReader {
     }
 
     pub fn set_expected_item<T : Parsable>(&mut self) {
-        self.set_expected_entity(T::get_wrapped_name());
+        self.set_expected_entity(T::get_item_name());
     }
 
     fn set_expected_entity(&mut self, string_to_display: String) {

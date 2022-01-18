@@ -4,14 +4,13 @@ use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
 use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
-use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend};
+use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
 pub struct ParsedTypeDeclaration {
     pub visibility: Option<ParsedVisibility>,
     pub qualifier: ParsedTypeQualifier,
-    #[parsable(brackets="()")]
-    pub stack_type: Option<Identifier>,
+    pub stack_type: Option<ParsedStackTypeDeclaration>,
     pub name: Identifier,
     pub parameters: Option<ParsedTypeParameters>,
     pub parent: Option<ParsedTypeExtend>,
@@ -84,7 +83,7 @@ impl ParsedTypeDeclaration {
             name: self.name.clone(),
             visibility: ParsedVisibility::process_or(&self.visibility, Visibility::Private),
             category: self.qualifier.to_type_category(),
-            stack_type: WasmStackType::Fixed(StackTypeToken::Void),
+            stack_type: WasmStackType::Void,
             descendants: vec![],
             ancestors: vec![],
             parameters: IndexMap::new(),
@@ -115,21 +114,9 @@ impl ParsedTypeDeclaration {
             None => IndexMap::new()
         };
 
-        let stack_type = match &self.stack_type {
-            Some(name) => match name.as_str() {
-                "i32" => WasmStackType::Fixed(StackTypeToken::Int),
-                "f32" => WasmStackType::Fixed(StackTypeToken::Float),
-                "void" => WasmStackType::Fixed(StackTypeToken::Void),
-                other => match parameters.get_index_of(other) {
-                    Some(index) => WasmStackType::TypeParameter(index),
-                    None => {
-                        context.errors.generic(name, format!("undefined type parameter `{}`", other.bold()));
-                        WasmStackType::Fixed(StackTypeToken::Int)
-                    },
-                }
-            },
-            None => WasmStackType::Fixed(StackTypeToken::Int),
-        };
+        let stack_type = self.stack_type.as_ref()
+            .and_then(|declaration| declaration.process(context))
+            .unwrap_or(WasmStackType::I32);
 
         context.rename_provider.add_occurence(&self.name, &self.name);
 

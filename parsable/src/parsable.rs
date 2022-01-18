@@ -13,26 +13,22 @@ pub trait Parsable : Sized {
         unimplemented!()
     }
 
-    fn item_name() -> &'static str;
+    fn get_item_name() -> String;
 
-    fn item_name_wrapper() -> &'static str {
-        ""
-    }
+    // fn get_wrapped_name() -> String {
+    //     let name = Self::item_name();
+    //     let wrapper = Self::item_name_wrapper();
 
-    fn get_wrapped_name() -> String {
-        let name = Self::item_name();
-        let wrapper = Self::item_name_wrapper();
+    //     match wrapper.as_bytes().get(0) {
+    //         Some(first) => {
+    //             let second = wrapper.as_bytes().get(1).unwrap_or(first);
+    //             let result = format!("{}{}{}", *first as char, name, *second as char);
 
-        match wrapper.as_bytes().get(0) {
-            Some(first) => {
-                let second = wrapper.as_bytes().get(1).unwrap_or(first);
-                let result = format!("{}{}{}", *first as char, name, *second as char);
-
-                result
-            },
-            None => name.to_string(),
-        }
-    }
+    //             result
+    //         },
+    //         None => name.to_string(),
+    //     }
+    // }
 
     fn parse(string: String, options: ParseOptions) -> Result<Self, ParseError> {
         let mut reader = StringReader::new(string, options);
