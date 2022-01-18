@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
@@ -341,6 +341,10 @@ impl ParsedTypeDeclaration {
                 }
 
                 for field in self.get_fields() {
+                    if field.comma.is_none() && field.ty.is_none() {
+                        context.completion_provider.add_keyword_completion(&field.name, &[SELF_VAR_NAME]);
+                    }
+
                     match &field.ty {
                         Some(ty) => {
                             // Regular field
