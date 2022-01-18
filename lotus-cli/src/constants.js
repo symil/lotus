@@ -18,3 +18,7 @@ export const OUTPUT_WASM_FILE_NAME = 'module.wasm';
 export const OUTPUT_CLIENT_FILE_NAME = 'client.js';
 export const OUTPUT_SERVER_FILE_NAME = 'server.js';
 export const OUTPUT_HTTP_SERVER_FILE_NAME = 'run.js';
+
+export const SSH_PORT = 221;
+export const SSH_USER = 'bus';
+export const SSH_HOSTNAME = 'ytawo.eu';

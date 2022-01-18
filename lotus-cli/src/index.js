@@ -9,6 +9,7 @@ import { computeLocations } from './locations';
 import { runCommand } from './utils';
 import { Command } from './command';
 import { execSync } from 'child_process';
+import { stopRemoteServer, uploadBuild } from './upload';
 
 const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
 
@@ -16,11 +17,19 @@ async function main() {
     let root = getOption('--root', '-r') || '.';
     let httpPort = +getOption('--port', '-p') || 8080;
     let locations = computeLocations(root);
-    let buildOnly = hasOption('--build', '-b');
-    let open = hasOption('--open', '-o')
+    let upload = hasOption('--upload', '-u');
+    let buildOnly = hasOption('--build', '-b') || upload;
+    let open = hasOption('--open', '-o');
+    let killServer = hasOption('-k');
 
-    if (buildOnly) {
+    if (killServer) {
+        stopRemoteServer(locations);
+    } else if (buildOnly) {
         await buildProject(locations);
+
+        if (upload) {
+            uploadBuild(locations);
+        }
     } else {
         await startHttpServer(locations, httpPort, open);
     }
@@ -57,7 +66,7 @@ async function buildProject(locations) {
         runCommand(`cd ${locations.buildDirPath} && npm install ${REQUIRED_NODE_PACKAGES.join(' ')}`);
     }
 
-    process.stdout.write(chalk.bold.blue('> build bundle...'));
+    process.stdout.write(chalk.bold.blue('> building bundle...'));
 
 
     let ok = await compileLotus({
