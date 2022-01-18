@@ -129,7 +129,7 @@ export class Object {
     }
 
     static __serialize(buffer: Buffer, value: Self) {
-        if !value || (buffer.context && !value.__allow_network_serialization(buffer.context as #USER_TYPE)) {
+        if !value || (buffer.context && !value.__allows_network_serialization(buffer.context as #USER_TYPE)) {
             buffer.write(0);
         } else if buffer.write_object_addr(value) {
             let remote_addr = buffer.get_remote_addr(value);
@@ -217,7 +217,7 @@ export class Object {
         }
     }
 
-    dyn __allow_network_serialization(user: #USER_TYPE) -> bool {
+    dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         true
     }
 }

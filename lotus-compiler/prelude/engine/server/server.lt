@@ -94,9 +94,14 @@ pub class Server {
             false => value
         }
     }
+
+    dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
+        false
+    }
 }
 
 sys fn start_server() {
+    set_pointer_version_seed(wasm_get_current_time());
     SERVER = Server;
     SERVER._start();
 }

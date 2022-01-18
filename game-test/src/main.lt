@@ -5,12 +5,22 @@ view Window {
             .move_to(0.5, 0.5)
             .scale_x(0.35)
             .strip_to_match_aspect_ratio(5)
-            .pad_to_match_aspect_ratio(10)
             .push(UsernameTextBox)
     }
 
     @OnDefineMouseInteractions {
         
+    }
+
+    @OnKeyboardEvent {
+        if evt.code == KeyCode::Tab && evt.action == KeyboardAction::Down {
+            if evt.shift_key {
+                self.client.focus_prev();
+            } else {
+                self.client.focus_next();
+            }
+            intercept;
+        }
     }
 }
 

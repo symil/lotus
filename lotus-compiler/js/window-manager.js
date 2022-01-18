@@ -214,6 +214,10 @@ export class WindowManager {
     }
 
     _onKeyDown(evt) {
+        if (evt.key === 'Tab') {
+            evt.preventDefault();
+        }
+
         this._emit('keyboard', {
             action: 'down',
             code: evt.code,

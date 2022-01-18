@@ -4,10 +4,13 @@ import chalk from 'chalk';
 import express from 'express';
 import esbuild from 'esbuild';
 import { wasmLoader } from 'esbuild-plugin-wasm';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, FILES_DIR_NAME, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, HTTP_SERVER_ENTRY_PATH, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
 import { computeLocations } from './locations';
 import { runCommand } from './utils';
 import { Command } from './command';
+import { execSync } from 'child_process';
+
+const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
 
 async function main() {
     let root = getOption('--root', '-r') || '.';
@@ -35,11 +38,6 @@ async function startHttpServer(locations, port, open) {
             .catch(e => serveError(res, e));
     });
 
-    app.all(`/${FILES_DIR_NAME}/*`, (req, res, next) => {
-       res.status(403).send({
-          message: 'Access Forbidden'
-       });
-    });
     app.use(express.static(locations.buildDirPath));
     app.use(express.static(locations.rootDirPath));
     app.listen(port, open ? null : 'localhost');
@@ -53,7 +51,10 @@ async function buildProject(locations) {
     }
 
     if (!fs.existsSync(locations.nodeModulesDirPath)) {
-        runCommand(`cd ${locations.buildDirPath} && npm install ws`);
+        if (!fs.existsSync(locations.buildDirPath)) {
+            fs.mkdirSync(locations.buildDirPath);
+        }
+        runCommand(`cd ${locations.buildDirPath} && npm install ${REQUIRED_NODE_PACKAGES.join(' ')}`);
     }
 
     process.stdout.write(chalk.bold.blue('> build bundle...'));
@@ -82,12 +83,19 @@ async function buildProject(locations) {
         outputPath: locations.outputServerFilePath,
         platform: 'node'
     });
+    await compileJs({
+        inputPath: HTTP_SERVER_ENTRY_PATH,
+        outputPath: locations.outputHttpServerFilePath,
+        platform: 'node',
+        banner: '#!/usr/bin/env node\n'
+    });
     writeIndexHtml({
         title: path.basename(locations.rootDirPath),
         bundleFileName: OUTPUT_CLIENT_FILE_NAME,
         outputPath: locations.outputIndexHtmlFilePath,
     });
 
+    execSync(`chmod +x ${locations.outputHttpServerFilePath}`);
     process.stdout.write(chalk.bold.blue(' ok\n'));
 }
 
@@ -103,7 +111,7 @@ function compileLotus({ inputPath, outputPath }) {
         && runCommand(`${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS} ${watFilePath} -o ${wasmFilePath}`);
 }
 
-async function compileJs({ inputPath, outputPath, platform }) {
+async function compileJs({ inputPath, outputPath, platform, banner = '' }) {
     return esbuild.build({
         entryPoints: [inputPath],
         bundle: true,
@@ -111,7 +119,10 @@ async function compileJs({ inputPath, outputPath, platform }) {
         minify: false,
         sourcemap: true,
         platform,
-        external: ['ws'],
+        banner: {
+            js: banner
+        },
+        external: REQUIRED_NODE_PACKAGES,
         plugins: [ wasmLoader({}) ]
     });
 }

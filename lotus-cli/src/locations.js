@@ -1,5 +1,5 @@
 import path from 'path';
-import { PROJECT_BUILD_DIR_NAME, PROJECT_SRC_DIR_NAME, OUTPUT_WASM_FILE_NAME, OUTPUT_CLIENT_FILE_NAME, OUTPUT_SERVER_FILE_NAME, FILES_DIR_NAME } from './constants';
+import { PROJECT_BUILD_DIR_NAME, PROJECT_SRC_DIR_NAME, OUTPUT_WASM_FILE_NAME, OUTPUT_CLIENT_FILE_NAME, OUTPUT_SERVER_FILE_NAME, OUTPUT_HTTP_SERVER_FILE_NAME } from './constants';
 
 function findRootDirectory() {
     return path.resolve('.');
@@ -12,9 +12,13 @@ export function computeLocations(root) {
     let outputWasmFilePath = path.join(buildDirPath, OUTPUT_WASM_FILE_NAME);
     let outputClientFilePath = path.join(buildDirPath, OUTPUT_CLIENT_FILE_NAME);
     let outputServerFilePath = path.join(buildDirPath, OUTPUT_SERVER_FILE_NAME);
+    let outputHttpServerFilePath = path.join(buildDirPath, OUTPUT_HTTP_SERVER_FILE_NAME);
     let outputIndexHtmlFilePath = path.join(buildDirPath, 'index.html');
     let nodeModulesDirPath = path.join(buildDirPath, 'node_modules');
-    let filesDirPath = path.join(buildDirPath, FILES_DIR_NAME);
 
-    return { rootDirPath, srcDirPath, buildDirPath, outputWasmFilePath, outputClientFilePath, outputServerFilePath, outputIndexHtmlFilePath, nodeModulesDirPath, filesDirPath };
+    return {
+        rootDirPath, srcDirPath, buildDirPath,
+        outputWasmFilePath, outputClientFilePath, outputServerFilePath, outputHttpServerFilePath, outputIndexHtmlFilePath,
+        nodeModulesDirPath
+    };
 }

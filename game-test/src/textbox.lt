@@ -46,7 +46,6 @@ pub view TextBox {
             .cursor(Cursor::Text)
             .focus_border_color(Color::blue())
             .focus_text_cursor_index(cursor_index)
-            .focus()
     }
 
     @OnDefineMouseInteractions {
@@ -66,7 +65,7 @@ pub view TextBox {
         let ctrl = evt.ctrl_key;
 
         if evt.code == KeyCode::Escape {
-            self.client.focus(none);
+            self.unfocus();
             intercept;
         } else {
             let valid = true;

@@ -127,6 +127,11 @@
 [X] Add time in language server logs
 [X] Improve completion on type declarations
 [X] Add a `location()` method to parsable structs and enums
+[ ] Find solution so that serialization stays compatible between different versions of the program
+[ ] Add local storage api
+[X] Add script to start http server in build
+[ ] Prevent http clients to access private server files
+[ ] Add completion for dynamic method names
 
 -- LATER --
 [ ] Allow manually specifying function parameters

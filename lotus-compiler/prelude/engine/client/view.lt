@@ -27,7 +27,7 @@ export class View {
     }
 
     unfocus() -> Self {
-        if self.client {
+        if self.client && self.focused {
             self.client.focus(none);
         }
         self
@@ -40,25 +40,10 @@ export class View {
         self
     }
 
-    on_click(callback: MouseHandlerCallback) -> Self {
-        self.on_click_callbacks.push(callback);
-        self
-    }
-    
-    on_down(callback: MouseHandlerCallback) -> Self {
-        self.on_down_callbacks.push(callback);
-        self
-    }
-
-    on_up(callback: MouseHandlerCallback) -> Self {
-        self.on_up_callbacks.push(callback);
-        self
-    }
-
-    on_drag(callback: MouseHandlerCallback) -> Self {
-        self.on_drag_callbacks.push(callback);
-        self
-    }
+    on_click(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_click_callbacks, callback) }
+    on_down(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_down_callbacks, callback) }
+    on_up(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_up_callbacks, callback) }
+    on_drag(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_drag_callbacks, callback) }
 
     scale(ratio: float) -> Self {
         self.rect = self.rect.scale(ratio);
@@ -183,4 +168,14 @@ export class View {
     focus_text_cursor_index(text_cursor_index: int) -> Self { self._focused_graphics().set_text_cursor_index(self, text_cursor_index) }
     focus_detectable(detectable: bool) -> Self { self._focused_graphics().set_detectable(self, detectable) }
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().set_cursor(self, cursor) }
+}
+
+fn push_or_clear_callback<S, T>(owner: S, array: T[], value: T?) -> S {
+    if value {
+        array.push(value);
+    } else {
+        array.clear();
+    }
+
+    owner
 }

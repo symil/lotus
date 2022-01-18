@@ -260,6 +260,10 @@ export class Client {
     focus_prev() {
         self._focus_next_or_prev(-1);
     }
+
+    dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
+        false
+    }
 }
 
 sys fn start_client() {
