@@ -83,14 +83,24 @@ pub const WHILE_KEYWORD : &'static str = "while";
 pub const IF_KEYWORD : &'static str = "if";
 pub const ELSE_KEYWORD : &'static str = "else";
 pub const IN_KEYWORD : &'static str = "in";
+pub const TYPE_KEYWORD : &'static str = "type";
+pub const CLASS_KEYWORD : &'static str = "class";
+pub const ENUM_KEYWORD : &'static str = "enum";
+pub const EVENT_KEYWORD : &'static str = "event";
+pub const VIEW_KEYWORD : &'static str = "view";
+pub const INTERFACE_KEYWORD : &'static str = "interface";
+pub const FN_KEYWORD : &'static str = "fn";
+pub const LET_KEYWORD : &'static str = "let";
+pub const CONST_KEYWORD : &'static str = "const";
+pub const SYS_KEYWORD : &'static str = "sys";
+pub const PUB_KEYWORD : &'static str = "pub";
+pub const EXPORT_KEYWORD : &'static str = "export";
 
-pub const EXPRESSION_KEYWORDS : &'static[&'static str] = &[
-    MATCH_KEYWORD,
-    FOR_KEYWORD,
-    WHILE_KEYWORD,
-    IF_KEYWORD,
-    ELSE_KEYWORD
-];
+pub const EXPRESSION_KEYWORDS : &'static[&'static str] = &[ MATCH_KEYWORD, FOR_KEYWORD, WHILE_KEYWORD, IF_KEYWORD, ELSE_KEYWORD ];
+pub const VISIBILITY_KEYWORDS : &'static[&'static str] = &[ PUB_KEYWORD, EXPORT_KEYWORD ];
+pub const VAR_DECLARATION_KEYWORDS : &'static[&'static str] = &[ CONST_KEYWORD, LET_KEYWORD ];
+pub const FUNCTION_DECLARATION_KEYWORDS : &'static[&'static str] = &[ FN_KEYWORD ];
+pub const TYPE_DECLARATION_KEYWORDS : &'static[&'static str] = &[ INTERFACE_KEYWORD, TYPE_KEYWORD, CLASS_KEYWORD, ENUM_KEYWORD, EVENT_KEYWORD, VIEW_KEYWORD ];
 
 pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
     "main",

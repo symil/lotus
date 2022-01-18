@@ -1,10 +1,10 @@
 use parsable::{parsable, Parsable};
 use crate::program::{ProgramContext, Type, EXTENDS_KEYWORD};
-use super::{Identifier, ParsedType, unwrap_item};
+use super::{Identifier, ParsedType, unwrap_item, FlexKeyword};
 
 #[parsable]
 pub struct ParsedTypeExtend {
-    pub extends: Identifier,
+    pub extends: FlexKeyword<EXTENDS_KEYWORD>,
     pub ty: Option<ParsedType>
 }
 
@@ -16,13 +16,7 @@ impl ParsedTypeExtend {
     }
 
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
-        context.completion_provider.add_keyword_completion(&self.extends, &[EXTENDS_KEYWORD]);
-        
-        if self.extends.as_str() != EXTENDS_KEYWORD {
-            context.errors.expected_keyword(self, EXTENDS_KEYWORD);
-            return None;
-        }
-
+        let keyword = self.extends.process(context)?;
         let ty = unwrap_item(&self.ty, self, context)?;
 
         ty.process(false, context)

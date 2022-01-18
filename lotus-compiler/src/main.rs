@@ -1,5 +1,7 @@
+#![allow(incomplete_features)]
 #![feature(option_result_contains)]
 #![feature(array_methods)]
+#![feature(adt_const_params)]
 #![allow(unused)]
 use std::{env, process};
 use colored::*;

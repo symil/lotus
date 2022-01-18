@@ -120,10 +120,11 @@
 [X] Option to skip parsing of successive `Option` items if one fails
 [X] Allow to specify default values for parent class fields
 [X] Improve `extends` autocompletion
-[ ] Improve `for` loop autocompletion
+[X] Improve `for` loop autocompletion
 [X] Convenience type to create simple tokens
-[ ] Convenience type to create flexible tokens
-[ ] Add shortcut to reload language server
+[X] Convenience type to create flexible tokens
+[X] Reload language server after compilation
+[ ] Add time in language server logs
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -179,6 +180,7 @@
 [ ] Regular expressions
 [ ] Function default arguments
 [ ] Add `fill class fields` code action
+[ ] Use global attributes to specify whether to implement `Debug` and `location` by default or not
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

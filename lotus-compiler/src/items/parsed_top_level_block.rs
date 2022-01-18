@@ -1,5 +1,5 @@
 use parsable::parsable;
-use super::{ParsedFunctionDeclaration, ParsedGlobalVarDeclaration, ParsedInterfaceDeclaration, ParsedTypeDeclaration, ParsedTypedefDeclaration, ParsedVarDeclaration};
+use super::{ParsedFunctionDeclaration, ParsedGlobalVarDeclaration, ParsedInterfaceDeclaration, ParsedTypeDeclaration, ParsedTypedefDeclaration, ParsedVarDeclaration, ParsedTopLevelBlockInProgress};
 
 #[parsable]
 pub enum ParsedTopLevelBlock {
@@ -8,4 +8,5 @@ pub enum ParsedTopLevelBlock {
     TypeDeclaration(ParsedTypeDeclaration),
     FunctionDeclaration(ParsedFunctionDeclaration),
     GlobalDeclaration(ParsedGlobalVarDeclaration),
+    InProgress(ParsedTopLevelBlockInProgress)
 }

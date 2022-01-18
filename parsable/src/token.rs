@@ -20,11 +20,11 @@ impl<const TOKEN: &'static str> Parsable for Token<TOKEN> {
         }
     }
 
-    fn token_name() -> &'static str {
+    fn item_name() -> &'static str {
         TOKEN
     }
 
-    fn token_name_wrapper() -> &'static str {
+    fn item_name_wrapper() -> &'static str {
         "\""
     }
 }

@@ -5,14 +5,14 @@ impl Parsable for () {
         Some(())
     }
 
-    fn token_name() -> &'static str {
+    fn item_name() -> &'static str {
         "()"
     }
 }
 
 impl<T : Parsable> Parsable for Box<T> {
-    fn token_name() -> &'static str {
-        <T as Parsable>::token_name()
+    fn item_name() -> &'static str {
+        <T as Parsable>::item_name()
     }
 
     fn parse_item(reader: &mut StringReader) -> Option<Self> {
@@ -24,8 +24,8 @@ impl<T : Parsable> Parsable for Box<T> {
 }
 
 impl<T : Parsable> Parsable for Option<T> {
-    fn token_name() -> &'static str {
-        <T as Parsable>::token_name()
+    fn item_name() -> &'static str {
+        <T as Parsable>::item_name()
     }
 
     fn parse_item(reader: &mut StringReader) -> Option<Self> {
@@ -61,8 +61,8 @@ impl<T : Parsable> Parsable for Vec<T> {
         Some(result)
     }
 
-    fn token_name() -> &'static str {
-        <T as Parsable>::token_name()
+    fn item_name() -> &'static str {
+        <T as Parsable>::item_name()
     }
 
     fn parse_item_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
@@ -86,9 +86,9 @@ impl<T : Parsable> Parsable for Vec<T> {
 }
 
 impl<T : Parsable, U : Parsable> Parsable for (T, U) {
-    fn token_name() -> &'static str {
+    fn item_name() -> &'static str {
         // TODO
-        <T as Parsable>::token_name()
+        <T as Parsable>::item_name()
         // const_format_args!("({}, {})", <T as Parsable>::token_name(), <U as Parsable>::token_name()).as_str().unwrap()
     }
 

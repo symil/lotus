@@ -10,11 +10,11 @@ impl Parsable for EndOfFile {
         }
     }
 
-    fn token_name() -> &'static str {
+    fn item_name() -> &'static str {
         "EOF"
     }
 
-    fn token_name_wrapper() -> &'static str {
+    fn item_name_wrapper() -> &'static str {
         "<>"
     }
 }

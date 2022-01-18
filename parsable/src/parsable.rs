@@ -13,15 +13,15 @@ pub trait Parsable : Sized {
         unimplemented!()
     }
 
-    fn token_name() -> &'static str;
+    fn item_name() -> &'static str;
 
-    fn token_name_wrapper() -> &'static str {
+    fn item_name_wrapper() -> &'static str {
         ""
     }
 
     fn get_wrapped_name() -> String {
-        let name = Self::token_name();
-        let wrapper = Self::token_name_wrapper();
+        let name = Self::item_name();
+        let wrapper = Self::item_name_wrapper();
 
         match wrapper.as_bytes().get(0) {
             Some(first) => {

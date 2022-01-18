@@ -159,6 +159,10 @@ impl CompilationErrorList {
         self.expected(location, ExpectedKind::Token(keyword))
     }
 
+    pub fn expected_keyword_among(&mut self, location: &ItemLocation, keyword_list: &[&'static str]) -> CompilationErrorChain {
+        self.expected(location, ExpectedKind::TokenAmong(keyword_list.to_vec()))
+    }
+
     pub fn expected_token(&mut self, location: &ItemLocation, token: &'static str) -> CompilationErrorChain {
         self.expected(location, ExpectedKind::Token(token))
     }

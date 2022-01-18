@@ -7,6 +7,7 @@ pub enum ExpectedKind {
     FunctionBody,
     Block,
     Token(&'static str),
+    TokenAmong(Vec<&'static str>),
     Item(String)
 }
 
@@ -19,7 +20,8 @@ impl ExpectedKind {
             ExpectedKind::Argument => format!("argument"),
             ExpectedKind::FunctionBody => format!("function body"),
             ExpectedKind::Block => format!("block"),
-            ExpectedKind::Token(token) => format!("`{}`", token),
+            ExpectedKind::Token(token) => format!("\"{}\"", token),
+            ExpectedKind::TokenAmong(list) => list.iter().map(|token| format!("\"{}\"", token)).collect::<Vec<String>>().join(" | "),
             ExpectedKind::Item(item) => item.to_string(),
         }
     }

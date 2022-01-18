@@ -711,6 +711,7 @@ impl ProgramContext {
                     ParsedTopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
                     ParsedTopLevelBlock::FunctionDeclaration(function_declaration) => functions.push(function_declaration),
                     ParsedTopLevelBlock::GlobalDeclaration(global_declaration) => global_vars.push(global_declaration),
+                    ParsedTopLevelBlock::InProgress(block) => block.process(self),
                 }
             }
         }
