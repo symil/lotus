@@ -32,7 +32,7 @@ impl<T : Parsable> Parsable for Option<T> {
         match <T as Parsable>::parse_item(reader) {
             Some(value) => Some(Some(value)),
             None => {
-                reader.set_expected_token(<T as Parsable>::token_name());
+                reader.set_expected_item::<T>();
                 None
             }
         }
@@ -75,7 +75,7 @@ impl<T : Parsable> Parsable for Vec<T> {
             match reader.read_string(separator) {
                 Some(_) => reader.eat_spaces(),
                 None => {
-                    reader.set_expected_token(separator);
+                    reader.set_expected_string(separator);
                     break;
                 }
             }
@@ -97,14 +97,14 @@ impl<T : Parsable, U : Parsable> Parsable for (T, U) {
         let first = match T::parse_item(reader) {
             Some(value) => value,
             None => {
-                reader.set_expected_token(T::token_name());
+                reader.set_expected_item::<T>();
                 return None;
             }
         };
         let second = match U::parse_item(reader) {
             Some(value) => value,
             None => {
-                reader.set_expected_token(U::token_name());
+                reader.set_expected_item::<U>();
                 reader.set_index(start_index);
                 return None;
             }

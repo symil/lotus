@@ -1,6 +1,6 @@
 use enum_iterator::IntoEnumIterator;
 use parsable::{ItemLocation, Parsable};
-use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken, ParsedMatchKeyword}};
+use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL, EXPRESSION_KEYWORDS}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken, ParsedMatchKeyword}};
 use super::{CompletionItem, CompletionItemList};
 
 #[derive(Debug)]
@@ -173,7 +173,9 @@ impl CompletionItemGenerator {
                     items.add_keyword(&value);
                 }
 
-                items.add_keyword(ParsedMatchKeyword::token_name());
+                for keyword in EXPRESSION_KEYWORDS {
+                    items.add_keyword(keyword);
+                }
             },
             Self::MatchItem(details) => {
                 if details.matched_type.is_bool() {

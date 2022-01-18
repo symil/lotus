@@ -105,6 +105,7 @@ mod parsed_keywords;
 mod parsed_var_type_declaration;
 mod parsed_default_value_assignment;
 mod parsed_type_extend;
+mod parsed_for_iterator;
 
 pub use utils::*;
 pub use identifier::*;
@@ -214,3 +215,4 @@ pub use parsed_keywords::*;
 pub use parsed_var_type_declaration::*;
 pub use parsed_default_value_assignment::*;
 pub use parsed_type_extend::*;
+pub use parsed_for_iterator::*;

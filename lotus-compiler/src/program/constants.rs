@@ -76,6 +76,22 @@ pub const SORT_EVENT_CALLBACK_FUNC_NAME : &'static str = "sort_event_callbacks";
 
 pub const NAN_WASM : &'static str = "nan:0x200000";
 
+pub const EXTENDS_KEYWORD : &'static str = "extends";
+pub const MATCH_KEYWORD : &'static str = "match";
+pub const FOR_KEYWORD : &'static str = "for";
+pub const WHILE_KEYWORD : &'static str = "while";
+pub const IF_KEYWORD : &'static str = "if";
+pub const ELSE_KEYWORD : &'static str = "else";
+pub const IN_KEYWORD : &'static str = "in";
+
+pub const EXPRESSION_KEYWORDS : &'static[&'static str] = &[
+    MATCH_KEYWORD,
+    FOR_KEYWORD,
+    WHILE_KEYWORD,
+    IF_KEYWORD,
+    ELSE_KEYWORD
+];
+
 pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
     "main",
     "start_client",

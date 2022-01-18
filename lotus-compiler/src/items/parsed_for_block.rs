@@ -1,51 +1,39 @@
 use std::borrow::Cow;
-use parsable::parsable;
-use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, TypeIndex, VariableInfo, VariableKind, Vasm, Wat}, wat};
-use super::{ParsedExpression, Identifier, ParsedBlockExpression, ParsedVarDeclarationNames};
+use parsable::{parsable, Token};
+use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, FOR_KEYWORD, IN_KEYWORD}, wat};
+use super::{ParsedExpression, Identifier, ParsedBlockExpression, ParsedVarDeclarationNames, ParsedOpeningSquareBracket, ParsedForIterator, unwrap_item};
 
-#[parsable]
+#[parsable(cascade=true)]
 pub struct ParsedForBlock {
-    #[parsable(prefix="for")]
-    pub iterator: ForIterator,
-    #[parsable(prefix="in", set_marker="no-object")]
-    pub range_start: ParsedExpression,
+    pub for_keyword: Token<FOR_KEYWORD>,
+    pub iterator: Option<ParsedForIterator>,
+    pub in_keyword: Option<Token<IN_KEYWORD>>,
+    #[parsable(set_marker="no-object")]
+    pub range_start: Option<ParsedExpression>,
     #[parsable(prefix="..", set_marker="no-object")]
     pub range_end: Option<ParsedExpression>,
-    pub body: ParsedBlockExpression
-}
-
-#[parsable]
-pub enum ForIterator {
-    Item(ParsedVarDeclarationNames),
-    IndexAndItem(ParsedIndexAndItem)
-}
-
-#[parsable]
-pub struct ParsedIndexAndItem {
-    #[parsable(prefix="[")]
-    pub index_name: Identifier,
-    #[parsable(prefix=",", suffix="]")]
-    pub item_names: ParsedVarDeclarationNames
+    #[parsable(cascade=false)]
+    pub body: Option<ParsedBlockExpression>
 }
 
 impl ParsedForBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
-        let (index_var_name, item_var_names) = match &self.iterator {
-            ForIterator::Item(item_names) => (Cow::Owned(Identifier::unique("index")), item_names),
-            ForIterator::IndexAndItem(index_and_item) => (Cow::Borrowed(&index_and_item.index_name), &index_and_item.item_names),
-        };
+        let iterator = unwrap_item(&self.iterator, &self.for_keyword, context)?;
+        let (index_var_name, item_var_names) = iterator.process(context)?;
+        let in_keyword = unwrap_item(&self.in_keyword, iterator.location(), context)?;
+        let range_start = unwrap_item(&self.range_start, in_keyword, context)?;
 
         context.push_scope(ScopeKind::Loop);
 
         let mut result = None;
-        let range_start_vasm_opt = self.range_start.process(None, context);
+        let range_start_vasm_opt = range_start.process(None, context);
         let range_end_vasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(None, context));
         let current_function_level = Some(context.get_function_level());
 
         if let Some(range_end) = &self.range_end {
             if let (Some(range_start_vasm), Some(range_end_vasm)) = (range_start_vasm_opt, range_end_vasm_opt) {
                 if !range_start_vasm.ty.is_int() {
-                    context.errors.type_mismatch(&self.range_start, &context.int_type(), &range_start_vasm.ty);
+                    context.errors.type_mismatch(range_start, &context.int_type(), &range_start_vasm.ty);
                 }
 
                 if !range_end_vasm.ty.is_int() {
@@ -60,10 +48,12 @@ impl ParsedForBlock {
                     .raw(Wat::get_local(&item_var.wasm_name()))
                     .set_type(context.int_type());
 
-                if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(&self.range_start), context) {
-                    if let Some(block_vasm) = self.body.process(None, context) {
+                if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
+                    let body = unwrap_item(&self.body, range_end, context)?;
+
+                    if let Some(block_vasm) = body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.type_mismatch(&self.body, &context.void_type(), &block_vasm.ty);
+                            context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
                         }
 
                         let index_var_wasm_name = index_var.get_wasm_name();
@@ -117,11 +107,13 @@ impl ParsedForBlock {
                 .raw(Wat::get_local(&item_var.wasm_name()))
                 .set_type(&item_type);
 
-            if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(&self.range_start), context) {
-                if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, &self.range_start, context) {
-                    if let Some(block_vasm) = self.body.process(None, context) {
+            if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
+                if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, range_start, context) {
+                    let body = unwrap_item(&self.body, range_start, context)?;
+
+                    if let Some(block_vasm) = body.process(None, context) {
                         if !block_vasm.ty.is_void() {
-                            context.errors.type_mismatch(&self.body, &context.void_type(), &block_vasm.ty);
+                            context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
                         }
 
                         let iterable_type = iterable_vasm.ty.clone();

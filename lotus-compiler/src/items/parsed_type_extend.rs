@@ -1,5 +1,5 @@
 use parsable::{parsable, Parsable};
-use crate::program::{ProgramContext, Type};
+use crate::program::{ProgramContext, Type, EXTENDS_KEYWORD};
 use super::{Identifier, ParsedType, unwrap_item};
 
 #[parsable]
@@ -7,8 +7,6 @@ pub struct ParsedTypeExtend {
     pub extends: Identifier,
     pub ty: Option<ParsedType>
 }
-
-const EXTENDS_KEYWORD : &'static str = "extends";
 
 impl ParsedTypeExtend {
     pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {

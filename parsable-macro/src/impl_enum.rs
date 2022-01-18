@@ -1,7 +1,7 @@
 use proc_macro2::{Span};
 use syn::*;
 use quote::quote;
-use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::make_str_lit};
+use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes};
 
 pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, output: &mut Output) {
     let mut lines = vec![];
@@ -32,12 +32,10 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                 _ => quote! { reader__.eat_spaces() },
             };
 
-            let prefix_lit = make_str_lit(&prefix);
-
             parse_prefix = quote! {
                 match reader__.read_string(#prefix) {
                     Some(_) => { #prefix_consume_spaces; true },
-                    None => { reader__.set_expected_token(#prefix_lit); false }
+                    None => { reader__.set_expected_string(#prefix); false }
                 }
             };
         }
@@ -48,12 +46,10 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                 _ => quote! { reader__.eat_spaces() },
             };
 
-            let suffix_lit = make_str_lit(&suffix);
-
             parse_suffix = quote! {
                 match reader__.read_string(#suffix) {
                     Some(_) => { #suffix_consume_spaces; true },
-                    None => { reader__.set_expected_token(#suffix_lit); false }
+                    None => { reader__.set_expected_string(#suffix); false }
                 }
             };
         }
@@ -125,8 +121,6 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
 
                 match string {
                     Some(lit_str) => {
-                        let expected_lit = make_str_lit(&lit_str.value());
-
                         line = quote! {
                             if let Some(_) = reader__.read_string(#lit_str) {
                                 reader__.eat_spaces();
@@ -134,7 +128,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                                 return Some(Self::#variant_name);
                             } else if (! #has_name) {
 
-                                reader__.set_expected_token(#expected_lit);
+                                reader__.set_expected_string(#lit_str);
                             }
                         };
 
@@ -189,7 +183,6 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
             let start_index__ = reader__.get_index();
             #(#lines)*
 
-            // reader__.set_expected_token(<Self as parsable::Parsable>::token_name());
             None
         }
     };

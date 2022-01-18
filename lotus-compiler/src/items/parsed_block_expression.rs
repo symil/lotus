@@ -1,8 +1,8 @@
 use parsable::parsable;
 use crate::{program::{ProgramContext, ScopeKind, Type, Vasm}};
-use super::ParsedExpression;
+use super::{ParsedExpression, ParsedSemicolonToken};
 
-#[parsable]
+#[parsable(name="block")]
 pub struct ParsedBlockExpression {
     #[parsable(brackets="{}")]
     pub list: Vec<ParsedBlockItem>
@@ -11,8 +11,7 @@ pub struct ParsedBlockExpression {
 #[parsable]
 pub struct ParsedBlockItem {
     pub expression: ParsedExpression,
-    #[parsable(value=";")]
-    pub semicolon: Option<String>
+    pub semicolon: Option<ParsedSemicolonToken>
 }
 
 impl ParsedBlockExpression {

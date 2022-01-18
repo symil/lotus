@@ -1,4 +1,4 @@
-use crate::{ParseError, string_reader::{ParseOptions, StringReader}};
+use crate::{ParseError, string_reader::{ParseOptions, StringReader}, end_of_file::EndOfFile};
 
 pub trait Parsable : Sized {
     fn parse_item(reader: &mut StringReader) -> Option<Self>;
@@ -15,6 +15,25 @@ pub trait Parsable : Sized {
 
     fn token_name() -> &'static str;
 
+    fn token_name_wrapper() -> &'static str {
+        ""
+    }
+
+    fn get_wrapped_name() -> String {
+        let name = Self::token_name();
+        let wrapper = Self::token_name_wrapper();
+
+        match wrapper.as_bytes().get(0) {
+            Some(first) => {
+                let second = wrapper.as_bytes().get(1).unwrap_or(first);
+                let result = format!("{}{}{}", *first as char, name, *second as char);
+
+                result
+            },
+            None => name.to_string(),
+        }
+    }
+
     fn parse(string: String, options: ParseOptions) -> Result<Self, ParseError> {
         let mut reader = StringReader::new(string, options);
 
@@ -24,12 +43,12 @@ pub trait Parsable : Sized {
             Some(value) => match reader.is_finished() {
                 true => Ok(value),
                 false => {
-                    reader.set_expected_token("<EOF>");
+                    reader.set_expected_item::<EndOfFile>();
                     Err(reader.get_error())
                 }
             },
             None => {
-                reader.set_expected_token(<Self as Parsable>::token_name());
+                reader.set_expected_item::<Self>();
                 Err(reader.get_error())
             }
         }

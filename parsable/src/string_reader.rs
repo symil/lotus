@@ -1,6 +1,6 @@
 use std::{collections::{HashMap}, rc::Rc};
 use regex::Regex;
-use crate::{ItemLocation, file_info::FileInfo};
+use crate::{ItemLocation, file_info::FileInfo, Parsable};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
@@ -51,14 +51,26 @@ impl StringReader {
         &self.file.content
     }
 
-    pub fn set_expected_token(&mut self, expected: &'static str) {
+    pub fn set_expected_regex(&mut self, expected: &'static str) {
+        self.set_expected_entity(format!("/{}/", expected));
+    }
+
+    pub fn set_expected_string(&mut self, expected: &'static str) {
         if !expected.is_empty() {
-            if self.index == self.error_index {
-                self.expected.push(expected.to_string());
-            } else if self.index > self.error_index {
-                self.expected = vec![expected.to_string()];
-                self.error_index = self.index;
-            }
+            self.set_expected_entity(format!("\"{}\"", expected));
+        }
+    }
+
+    pub fn set_expected_item<T : Parsable>(&mut self) {
+        self.set_expected_entity(T::get_wrapped_name());
+    }
+
+    fn set_expected_entity(&mut self, string_to_display: String) {
+        if self.index == self.error_index {
+            self.expected.push(string_to_display);
+        } else if self.index > self.error_index {
+            self.expected = vec![string_to_display];
+            self.error_index = self.index;
         }
     }
 
@@ -192,7 +204,7 @@ impl StringReader {
         regex.find(self.as_str()).is_some()
     }
 
-    pub fn get_data_location(&self, start: usize) -> ItemLocation {
+    pub fn get_item_location(&self, start: usize) -> ItemLocation {
         ItemLocation {
             file: self.file.clone(),
             start,

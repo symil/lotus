@@ -164,7 +164,7 @@ impl CompilationErrorList {
     }
 
     pub fn expected_item<T : Parsable>(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Item(T::token_name()))
+        self.expected(location, ExpectedKind::Item(T::get_wrapped_name()))
     }
 
     fn expected(&mut self, location: &ItemLocation, token: ExpectedKind) -> CompilationErrorChain {

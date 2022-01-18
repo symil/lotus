@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum ExpectedKind {
     Expression,
     Identifier,
@@ -7,7 +7,7 @@ pub enum ExpectedKind {
     FunctionBody,
     Block,
     Token(&'static str),
-    Item(&'static str)
+    Item(String)
 }
 
 impl ExpectedKind {

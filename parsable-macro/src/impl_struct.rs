@@ -1,6 +1,6 @@
 use syn::{*, parse::{Parse, ParseStream}};
 use quote::quote;
-use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::{is_type, make_str_lit}};
+use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::RootAttributes, utils::{is_type}};
 
 struct Wrapper {
     field: Field
@@ -101,14 +101,12 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                             _ => quote! { reader__.eat_spaces() },
                         };
 
-                        let prefix_lit = make_str_lit(&prefix);
-
                         quote! {
                             if !field_failed__ {
                                 match reader__.read_string(#prefix) {
                                     Some(_) => #prefix_consume_spaces,
                                     None => {
-                                        reader__.set_expected_token(#prefix_lit);
+                                        reader__.set_expected_string(#prefix);
                                         prefix_ok__ = false;
                                         field_failed__ = true;
                                         #on_fail;
@@ -126,14 +124,12 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                             _ => quote! { reader__.eat_spaces() },
                         };
 
-                        let suffix_lit = make_str_lit(&suffix);
-
                         quote! {
                             if !field_failed__ {
                                 match reader__.read_string(#suffix) {
                                     Some(_) => #suffix_consume_spaces,
                                     None => {
-                                        reader__.set_expected_token(#suffix_lit);
+                                        reader__.set_expected_string(#suffix);
                                         #on_fail;
                                     }
                                 };
@@ -156,11 +152,9 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 let mut followed_by_parsing = quote! {};
 
                 if let Some(followed_by) = &attributes.followed_by {
-                    let followed_by_lit = make_str_lit(followed_by);
-
                     followed_by_parsing = quote! {
                         if !field_failed__ && !reader__.peek_regex(#followed_by) {
-                            reader__.set_expected_token(#followed_by_lit);
+                            reader__.set_expected_regex(#followed_by);
                             #on_fail;
                         }
                     };
@@ -180,7 +174,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                     let mut #field_name = match <#field_type as parsable::Parsable>::#parse_method {
                         Some(value) => value,
                         None => {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
+                            reader__.set_expected_item::<#field_type>();
                             #on_fail
                         }
                     };
@@ -192,7 +186,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                             true => match <#field_type as parsable::Parsable>::#parse_method {
                                 Some(value) => value,
                                 None => {
-                                    reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
+                                    reader__.set_expected_item::<#field_type>();
                                     #on_fail
                                 }
                             },
@@ -239,7 +233,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 if let Some(min) = attributes.min {
                     check.push(quote! {
                         if !field_failed__ && #field_name.len() < #min {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
+                            reader__.set_expected_item::<#field_type>();
                             #on_fail;
                         }
                     });
@@ -256,7 +250,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 if is_vec && has_prefix && !has_suffix {
                     check.push(quote! {
                         if #field_name.is_empty() && prefix_ok__ {
-                            reader__.set_expected_token(<#field_type as parsable::Parsable>::token_name());
+                            reader__.set_expected_item::<#field_type>();
                             #on_fail;
                         }
                     });
@@ -291,7 +285,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
             if root_attributes.located {
                 field_names.push(quote! { location });
                 named_fields.named.insert(0, create_location_field("location"));
-                set_location = quote! { let location = reader__.get_data_location(start_index__); };
+                set_location = quote! { let location = reader__.get_item_location(start_index__); };
             }
 
             output.parse_item = quote! {
