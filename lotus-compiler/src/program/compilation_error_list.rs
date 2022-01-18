@@ -155,6 +155,10 @@ impl CompilationErrorList {
         self.expected(location, ExpectedKind::Argument)
     }
 
+    pub fn expected_keyword(&mut self, location: &ItemLocation, keyword: &'static str) -> CompilationErrorChain {
+        self.expected(location, ExpectedKind::Token(keyword))
+    }
+
     pub fn expected_token(&mut self, location: &ItemLocation, token: &'static str) -> CompilationErrorChain {
         self.expected(location, ExpectedKind::Token(token))
     }

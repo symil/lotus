@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::ItemLocation;
 use crate::{program::{CursorLocation, Cursor, Type}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
-use super::{CompletionItemGenerator, CompletionItem, FieldCompletionDetails};
+use super::{CompletionItemGenerator, CompletionItem, FieldCompletionDetails, KeywordCompletionDetails};
 
 #[derive(Debug)]
 pub struct CompletionItemProvider {
@@ -33,6 +33,14 @@ impl CompletionItemProvider {
         if self.cursor.is_on_location(&location) {
             self.completion_item_generators.push(make_item_generator());
         }
+    }
+
+    pub fn add_keyword_completion(&mut self, location: &ItemLocation, keywords: &[&'static str]) {
+        self.add_completion(location, || {
+            CompletionItemGenerator::Keyword(KeywordCompletionDetails {
+                available_keywords: keywords.to_vec(),
+            })
+        })
     }
 
     pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool) {

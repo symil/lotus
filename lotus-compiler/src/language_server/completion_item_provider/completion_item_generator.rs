@@ -5,6 +5,7 @@ use super::{CompletionItem, CompletionItemList};
 
 #[derive(Debug)]
 pub enum CompletionItemGenerator {
+    Keyword(KeywordCompletionDetails),
     FieldOrMethod(FieldCompletionDetails),
     StaticFieldOrMethod(FieldCompletionDetails),
     Event(EventCompletionDetails),
@@ -13,6 +14,11 @@ pub enum CompletionItemGenerator {
     Variable(VariableCompletionDetails),
     MatchItem(MatchItemCompletionDetails),
     Enum(Type)
+}
+
+#[derive(Debug)]
+pub struct KeywordCompletionDetails {
+    pub available_keywords: Vec<&'static str>
 }
 
 #[derive(Debug)]
@@ -63,6 +69,11 @@ impl CompletionItemGenerator {
         let mut items = CompletionItemList::new();
 
         match self {
+            Self::Keyword(details) => {
+                for keyword in &details.available_keywords {
+                    items.add_keyword(keyword);
+                }
+            },
             Self::FieldOrMethod(details) => {
                 for field_info in details.parent_type.get_all_fields() {
                     items.add_field(field_info);
@@ -187,7 +198,7 @@ impl CompletionItemGenerator {
                 for variant in enum_type.get_all_variants() {
                     items.add_enum_variant(variant.clone(), false)
                 }
-            },
+            }
         }
 
         items.consume()

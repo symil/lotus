@@ -19,7 +19,7 @@ impl ExpectedKind {
             ExpectedKind::Argument => format!("argument"),
             ExpectedKind::FunctionBody => format!("function body"),
             ExpectedKind::Block => format!("block"),
-            ExpectedKind::Token(token) => format!("token `{}`", token),
+            ExpectedKind::Token(token) => format!("`{}`", token),
             ExpectedKind::Item(item) => item.to_string(),
         }
     }

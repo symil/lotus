@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
 use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody}, utils::Link};
-use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue};
+use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, StackTypeToken, ParsedStackType, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend};
 
 #[parsable]
 pub struct ParsedTypeDeclaration {
@@ -14,8 +14,7 @@ pub struct ParsedTypeDeclaration {
     pub stack_type: Option<Identifier>,
     pub name: Identifier,
     pub parameters: Option<ParsedTypeParameters>,
-    #[parsable(prefix="extends")]
-    pub parent: Option<ParsedType>,
+    pub parent: Option<ParsedTypeExtend>,
     pub body: Option<ParsedTypeDeclarationBody>
 }
 
@@ -149,19 +148,17 @@ impl ParsedTypeDeclaration {
         let mut type_names = vec![];
         let mut builtin_types = vec![];
 
-        match &self.parent {
-            Some(parent) => parent.collect_instancied_type_names(&mut type_names, context),
-            None => match self.qualifier.get_inherited_type() {
-                Some(builtin_type) => {
-                    let builtin_type_name = builtin_type.get_name();
+        if let Some(builtin_type) = self.qualifier.get_inherited_type() {
+            let builtin_type_name = builtin_type.get_name();
 
-                    if self.name.as_str() != builtin_type_name {
-                        builtin_types.push(builtin_type);
-                    }
-                },
-                None => {},
+            if self.name.as_str() != builtin_type_name {
+                builtin_types.push(builtin_type);
             }
-        };
+        }
+
+        if let Some(parent) = &self.parent {
+            parent.collect_instancied_type_names(&mut type_names, context);
+        }
 
         for field_declaration in self.get_fields() {
             if let Some(default_value) = &field_declaration.default_value {
@@ -198,8 +195,19 @@ impl ParsedTypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let mut result = None;
 
+            if let Some(inherited_type) = self.qualifier.get_inherited_type() {
+                let parent_type_wrapped = context.types.get_by_name(inherited_type.get_name()).unwrap();
+
+                if parent_type_wrapped != type_wrapped {
+                    result = Some(ParentInfo {
+                        location: ItemLocation::default(),
+                        ty: parent_type_wrapped.borrow().self_type.clone(),
+                    });
+                }
+            }
+
             if let Some(parsed_parent_type) = &self.parent {
-                if let Some(parent_type) = parsed_parent_type.process(false, context) {
+                if let Some(parent_type) = parsed_parent_type.process(context) {
                     if !type_wrapped.borrow().is_class() {
                         context.errors.generic(parsed_parent_type, format!("only class types can inherit"));
                     } else {
@@ -222,15 +230,6 @@ impl ParsedTypeDeclaration {
                             _ => unreachable!()
                         }
                     }
-                }
-            } else if let Some(inherited_type) = self.qualifier.get_inherited_type() {
-                let parent_type_wrapped = context.types.get_by_name(inherited_type.get_name()).unwrap();
-
-                if parent_type_wrapped != type_wrapped {
-                    result = Some(ParentInfo {
-                        location: ItemLocation::default(),
-                        ty: parent_type_wrapped.borrow().self_type.clone(),
-                    });
                 }
             }
 

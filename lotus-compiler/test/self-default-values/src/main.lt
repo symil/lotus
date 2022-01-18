@@ -7,15 +7,15 @@ class Foo {
 class Bar extends Foo {
     d: float = 1.2,
 
-    self.a = 5.5,
+    self.a = 5.5;
 }
 
 class Baz extends Bar {
     e: int = 8,
     f: int,
 
-    self.b = "bar",
-    self.f = 4,
+    self.b = "bar";
+    self.f = 4;
 }
 
 export fn main() {
