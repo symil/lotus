@@ -1,10 +1,10 @@
-use parsable::parsable;
-use crate::program::{ProgramContext, Type, Vasm};
-use super::{ParsedSelfKeyword, ParsedDotToken, Identifier, ParsedEqualToken, ParsedExpression, unwrap_item, ParsedCommaToken, ParsedSemicolonToken};
+use parsable::{parsable, Token};
+use crate::program::{ProgramContext, Type, Vasm, SELF_VAR_NAME};
+use super::{ParsedDotToken, Identifier, ParsedEqualToken, ParsedExpression, unwrap_item, ParsedCommaToken, ParsedSemicolonToken};
 
 #[parsable(cascade = true)]
 pub struct ParsedSuperFieldDefaultValue {
-    pub super_keyword: ParsedSelfKeyword,
+    pub self_keyword: Token<SELF_VAR_NAME>,
     pub dot: Option<ParsedDotToken>,
     pub name: Option<Identifier>,
     pub equal: Option<ParsedEqualToken>,
