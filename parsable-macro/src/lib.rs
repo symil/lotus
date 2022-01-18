@@ -63,17 +63,6 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         None => quote! {},
     };
 
-    let impl_deref = match output.deref {
-        Some(body) => quote! {
-            impl std::ops::Deref for #name {
-                type Target = parsable::ItemLocation;
-    
-                #body
-            }
-        },
-        None => quote! {},
-    };
-
     let impl_as_str = match output.as_str {
         Some(body) => quote! {
             impl #name {
@@ -98,6 +87,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let get_location = output.get_location;
     let parse_item = output.parse_item;
 
     let result = quote! {
@@ -107,9 +97,17 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             #parse_item
 
             #impl_item_name
+
+            #get_location
         }
 
-        #impl_deref
+        impl std::ops::Deref for #name {
+            type Target = parsable::ItemLocation;
+
+            fn deref(&self) -> &parsable::ItemLocation {
+                <Self as parsable::Parsable>::location(self)
+            }
+        }
 
         #impl_display
 

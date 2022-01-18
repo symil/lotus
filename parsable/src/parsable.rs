@@ -1,4 +1,4 @@
-use crate::{ParseError, string_reader::{ParseOptions, StringReader}, end_of_file::EndOfFile};
+use crate::{ParseError, string_reader::{ParseOptions, StringReader}, end_of_file::EndOfFile, ItemLocation};
 
 pub trait Parsable : Sized {
     fn parse_item(reader: &mut StringReader) -> Option<Self>;
@@ -11,6 +11,10 @@ pub trait Parsable : Sized {
     #[allow(unused_variables)]
     fn parse_item_with_separator(reader: &mut StringReader, separator: &'static str) -> Option<Self> {
         unimplemented!()
+    }
+
+    fn location(&self) -> &ItemLocation {
+        panic!("type {} has no location", std::any::type_name::<Self>());
     }
 
     fn get_item_name() -> String;

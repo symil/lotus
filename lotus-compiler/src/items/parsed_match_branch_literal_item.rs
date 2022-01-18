@@ -12,16 +12,6 @@ pub enum ParsedMatchBranchLiteralItem {
 }
 
 impl ParsedMatchBranchLiteralItem {
-    pub fn get_location(&self) -> &ItemLocation {
-        match self {
-            ParsedMatchBranchLiteralItem::None(value) => value,
-            ParsedMatchBranchLiteralItem::Boolean(value) => value,
-            ParsedMatchBranchLiteralItem::Number(value) => value,
-            ParsedMatchBranchLiteralItem::String(value) => value,
-            ParsedMatchBranchLiteralItem::Character(value) => value,
-        }
-    }
-
     pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<(Type, Vasm)> {
         let type_hint = Some(&tested_value.ty);
         let item_vasm = match self {
@@ -33,7 +23,7 @@ impl ParsedMatchBranchLiteralItem {
         }?;
 
         if !item_vasm.ty.is_assignable_to(&tested_value.ty) {
-            context.errors.type_mismatch(self.get_location(), &tested_value.ty, &item_vasm.ty);
+            context.errors.type_mismatch(self, &tested_value.ty, &item_vasm.ty);
             return None;
         }
 

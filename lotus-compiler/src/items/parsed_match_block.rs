@@ -112,7 +112,7 @@ impl ParsedMatchBlock {
             }
 
             if !branch.item.is_enum_variant() {
-                context.add_match_item_completion_area(branch.item.get_location(), &matched_type);
+                context.add_match_item_completion_area(&branch.item, &matched_type);
             }
 
             vasm = vasm.block(branch_vasm);

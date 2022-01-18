@@ -22,11 +22,11 @@ pub fn create_location_field(field_name: &str) -> Field {
 }
 
 pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAttributes, output: &mut Output) {
-    output.deref = Some(quote! {
-        fn deref(&self) -> &Self::Target {
+    output.get_location = quote! {
+        fn location(&self) -> &parsable::ItemLocation {
             &self.location
         }
-    });
+    };
 
     match &mut data_struct.fields {
         Fields::Named(named_fields) => {

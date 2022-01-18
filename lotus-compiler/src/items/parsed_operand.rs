@@ -9,13 +9,6 @@ pub enum ParsedOperand {
 }
 
 impl ParsedOperand {
-    pub fn get_location(&self) -> &ItemLocation {
-        match self {
-            ParsedOperand::UnaryOperation(op) => &op.location,
-            ParsedOperand::Assignment(assignment) => &assignment.location,
-        }
-    }
-
     pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
             ParsedOperand::UnaryOperation(unary_operation) => unary_operation.collect_instancied_type_names(list, context),

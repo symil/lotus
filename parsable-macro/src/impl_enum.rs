@@ -6,6 +6,7 @@ use crate::{field_attributes::FieldAttributes, output::Output, root_attributes::
 pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, output: &mut Output) {
     let mut lines = vec![];
     let mut impl_display_lines = vec![];
+    let mut get_location_lines = vec![];
     let has_name = root_attributes.name.is_some();
 
     for i in 0..data_enum.variants.len() {
@@ -14,6 +15,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         // TODO: check if variant should be skipped to avoid recursion
 
         let variant_name = &variant.ident;
+        let variant_name_as_str = variant_name.to_string();
         let attributes = FieldAttributes::from_field_attributes(&mut variant.attrs);
         let mut parse_prefix = quote! { true };
         let mut parse_suffix = quote! { true };
@@ -105,6 +107,24 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
 
                     reader__.set_index(start_index__);
                 };
+
+                if fields_unnamed.unnamed.len() == 1 {
+                    let field = &fields_unnamed.unnamed[0];
+                    let field_type = &field.ty;
+
+                    get_location_lines.push(quote! {
+                        Self::#variant_name(value) => <#field_type as parsable::Parsable>::location(value),
+                    });
+                } else {
+                    let mut fields = vec![];
+                    
+                    for _ in 0..fields_unnamed.unnamed.len() {
+                        fields.push(quote! { _ });
+                    }
+                    get_location_lines.push(quote! {
+                        Self::#variant_name(#(#fields),*) => panic!("variant `{}` has no location (because it doesn't have exactly 1 field)", #variant_name_as_str),
+                    });
+                }
             },
             Fields::Unit => {
                 let string = match &variant.discriminant {
@@ -118,6 +138,10 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                     },
                     _ => None
                 };
+
+                get_location_lines.push(quote! {
+                    Self::#variant_name => panic!("variant `{}` has no location (because it doesn't have exactly 1 field)", #variant_name_as_str),
+                });
 
                 match string {
                     Some(lit_str) => {
@@ -184,6 +208,14 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
             #(#lines)*
 
             None
+        }
+    };
+
+    output.get_location = quote! {
+        fn location(&self) -> &parsable::ItemLocation {
+            match self {
+                #(#get_location_lines)*
+            }
         }
     };
 }

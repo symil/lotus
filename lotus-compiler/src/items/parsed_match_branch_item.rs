@@ -10,14 +10,6 @@ pub enum ParsedMatchBranchItem {
 }
 
 impl ParsedMatchBranchItem {
-    pub fn get_location(&self) -> &ItemLocation {
-        match self {
-            ParsedMatchBranchItem::Wildcard(value) => value,
-            ParsedMatchBranchItem::Literal(value) => value.get_location(),
-            ParsedMatchBranchItem::TypeOrEnumVariant(value) => value,
-        }
-    }
-
     pub fn is_enum_variant(&self) -> bool {
         match self {
             ParsedMatchBranchItem::Wildcard(_) => false,

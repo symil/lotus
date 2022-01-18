@@ -1,4 +1,4 @@
-use crate::{parsable::Parsable, string_reader::StringReader};
+use crate::{parsable::Parsable, string_reader::StringReader, ItemLocation};
 
 impl Parsable for () {
     fn parse_item(_reader: &mut StringReader) -> Option<Self> {
@@ -20,6 +20,10 @@ impl<T : Parsable> Parsable for Box<T> {
             Some(value) => Some(Box::new(value)),
             None => None
         }
+    }
+
+    fn location(&self) -> &ItemLocation {
+        Box::as_ref(self).location()
     }
 }
 

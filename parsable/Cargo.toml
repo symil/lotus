@@ -7,5 +7,4 @@ edition = "2018"
 
 [dependencies]
 parsable-macro = { path = "../parsable-macro" }
-lazy_static = "*"
 regex = "1"

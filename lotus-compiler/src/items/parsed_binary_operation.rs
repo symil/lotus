@@ -89,7 +89,7 @@ impl<'a> OperationTree<'a> {
     fn get_location(&self) -> &'a ItemLocation {
         match self {
             OperationTree::Operation(left, _, _) => left.get_location(),
-            OperationTree::Value(operand) => operand.get_location(),
+            OperationTree::Value(operand) => operand,
         }
     }
 }

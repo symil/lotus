@@ -23,6 +23,10 @@ impl<const TOKEN: &'static str> Parsable for Token<TOKEN> {
     fn get_item_name() -> String {
         format!("\"{}\"", TOKEN)
     }
+
+    fn location(&self) -> &ItemLocation {
+        &self.location
+    }
 }
 
 impl<const TOKEN: &'static str> Deref for Token<TOKEN> {
