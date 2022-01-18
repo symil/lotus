@@ -124,7 +124,8 @@
 [X] Convenience type to create simple tokens
 [X] Convenience type to create flexible tokens
 [X] Reload language server after compilation
-[ ] Add time in language server logs
+[X] Add time in language server logs
+[ ] Improve completion on type declarations
 
 -- LATER --
 [ ] Allow manually specifying function parameters

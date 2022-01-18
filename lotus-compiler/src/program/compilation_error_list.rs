@@ -1,7 +1,6 @@
 use std::{ops::Deref, mem::take};
 use parsable::{ItemLocation, ParseError, Parsable};
-use crate::{utils::{Link, is_valid_identifier}, items::Identifier};
-
+use crate::{utils::{Link, is_valid_identifier}, items::{Identifier, Word}};
 use super::{CompilationError, CompilationErrorDetails, GenericErrorDetails, ParseErrorDetails, Type, TypeMismatchDetails, InterfaceBlueprint, InterfaceMismatchDetails, InvalidCharacterDetails, ExpectedClassTypeDetails, UndefinedItemDetails, ItemKind, UnexpectedTokenDetails, ExpectedKind, ExpectedTokenDetails, CompilationErrorChain};
 
 #[derive(Debug)]
@@ -136,49 +135,58 @@ impl CompilationErrorList {
     }
 
     pub fn expected_identifier(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Identifier)
+        self.expected(location, ExpectedKind::Identifier, is_valid_identifier(location.as_str()))
     }
 
     pub fn expected_expression(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Expression)
+        self.expected(location, ExpectedKind::Expression, is_valid_identifier(location.as_str()))
     }
 
     pub fn expected_function_body(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::FunctionBody)
+        self.expected(location, ExpectedKind::FunctionBody, false)
     }
 
     pub fn expected_block(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Block)
+        self.expected(location, ExpectedKind::Block, false)
     }
 
     pub fn expected_argument(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Argument)
+        self.expected(location, ExpectedKind::Argument, is_valid_identifier(location.as_str()))
     }
 
     pub fn expected_keyword(&mut self, location: &ItemLocation, keyword: &'static str) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Token(keyword))
+        self.expected(location, ExpectedKind::Token(keyword), is_valid_identifier(location.as_str()))
     }
 
     pub fn expected_keyword_among(&mut self, location: &ItemLocation, keyword_list: &[&'static str]) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::TokenAmong(keyword_list.to_vec()))
+        self.expected(location, ExpectedKind::TokenAmong(keyword_list.to_vec()), is_valid_identifier(location.as_str()))
     }
 
     pub fn expected_token(&mut self, location: &ItemLocation, token: &'static str) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Token(token))
+        self.expected(location, ExpectedKind::Token(token), false)
     }
 
     pub fn expected_item<T : Parsable>(&mut self, location: &ItemLocation) -> CompilationErrorChain {
-        self.expected(location, ExpectedKind::Item(T::get_wrapped_name()))
+        self.expected(location, ExpectedKind::Item(T::get_wrapped_name()), false)
     }
 
-    fn expected(&mut self, location: &ItemLocation, token: ExpectedKind) -> CompilationErrorChain {
-        let final_location = match is_valid_identifier(location.as_str()) {
+    pub fn keyword_mismatch(&mut self, word: &Word, expected: &[&'static str]) -> CompilationErrorChain {
+        self.add(CompilationError {
+            location: word.location.clone(),
+            details: CompilationErrorDetails::ExpectedToken(ExpectedTokenDetails {
+                kind: ExpectedKind::TokenAmong(expected.to_vec()),
+            }),
+        })
+    }
+
+    fn expected(&mut self, location: &ItemLocation, token: ExpectedKind, add_offset: bool) -> CompilationErrorChain {
+        let final_location = match add_offset {
             true => location.get_end().set_start_with_offset(1),
             false => location.get_end(),
         };
 
         self.add(CompilationError {
-            location: location.get_end(),
+            location: final_location,
             details: CompilationErrorDetails::ExpectedToken(ExpectedTokenDetails {
                 kind: token,
             }),

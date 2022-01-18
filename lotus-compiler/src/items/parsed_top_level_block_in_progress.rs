@@ -34,11 +34,11 @@ impl ParsedTopLevelBlockInProgress {
                         context.completion_provider.add_keyword_completion(qualifier_keyword, non_visibility_keywords);
 
                         if !VISIBILITY_KEYWORDS.contains(&self.visibility_keyword.as_str()) {
-                            context.errors.expected_keyword_among(&self.visibility_keyword, VISIBILITY_KEYWORDS);
+                            context.errors.keyword_mismatch(&self.visibility_keyword, VISIBILITY_KEYWORDS);
                         }
 
                         if !non_visibility_keywords.contains(&qualifier_keyword.as_str()) {
-                            context.errors.expected_keyword_among(qualifier_keyword, non_visibility_keywords);
+                            context.errors.keyword_mismatch(qualifier_keyword, non_visibility_keywords);
                         }
                 },
                 None => {
@@ -48,7 +48,7 @@ impl ParsedTopLevelBlockInProgress {
                         if VISIBILITY_KEYWORDS.contains(&self.visibility_keyword.as_str()) {
                             context.errors.expected_keyword_among(self, non_visibility_keywords);
                         } else if !all_keywords.contains(&self.visibility_keyword.as_str()) {
-                            context.errors.expected_keyword_among(self, all_keywords);
+                            context.errors.keyword_mismatch(&self.visibility_keyword, all_keywords);
                         }
                     });
                 },
