@@ -1,10 +1,10 @@
-use parsable::parsable;
-use crate::{program::{ProgramContext, ScopeKind, Type, Vasm}, wat};
+use parsable::{parsable, Token};
+use crate::{program::{ProgramContext, ScopeKind, Type, Vasm, WHILE_KEYWORD}, wat};
 use super::ParsedBranch;
 
 #[parsable]
 pub struct ParsedWhileBlock {
-    #[parsable(prefix="while")]
+    pub while_keyword: Token<WHILE_KEYWORD>,
     pub while_branch: ParsedBranch
 }
 

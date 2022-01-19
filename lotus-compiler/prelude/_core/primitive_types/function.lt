@@ -59,6 +59,14 @@ sys type Function {
         drop
         (i32.const -2147483648)
     }}
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
 }
 
 fn retain_closure_args(closure_args: int, retain_function_index: int) {{

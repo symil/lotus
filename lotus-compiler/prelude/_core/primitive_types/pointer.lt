@@ -99,6 +99,14 @@ export type(i32) Pointer<T> {
         buffer.read() as Self
     }
 
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
+
     swap(i: int, j: int) {
         let tmp = self[i];
         self[i] = self[j];

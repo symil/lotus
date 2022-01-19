@@ -92,4 +92,12 @@ export type(f32) float {
     static __deserialize(buffer: Buffer) -> float? {
         buffer.read().as_float()
     }
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
 }

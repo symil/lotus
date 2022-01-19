@@ -48,4 +48,12 @@ export type(i32) bool {
     static __deserialize(buffer: Buffer) -> bool? {
         buffer.read().to_bool()
     }
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
 }

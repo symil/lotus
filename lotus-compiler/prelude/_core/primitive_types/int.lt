@@ -161,12 +161,20 @@ export type(i32) int {
     static __deserialize(buffer: Buffer) -> int? {
         buffer.read()
     }
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
 }
 
 fn get_char(n: int) -> char {
     match n < 10 {
-        true => ('0'.to_int() + n).to_char(),
-        false => ('A'.to_int() + (n - 10)).to_char()
+        true => ('0'.as_int() + n).to_char(),
+        false => ('A'.as_int() + (n - 10)).to_char()
     }
 }
 

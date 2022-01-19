@@ -69,4 +69,12 @@ sys type(i32) Enum {
             false => none
         }
     }
+    
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
+    }
 }

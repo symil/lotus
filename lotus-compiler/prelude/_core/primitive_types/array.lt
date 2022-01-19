@@ -318,6 +318,10 @@ export class Array<T> {
         }
     }
 
+    dyn __serialize_with_schema_dyn(buffer: Buffer) {
+        
+    }
+
     dyn __to_string_dyn() -> string {
         if self.__is_none() {
             return "none";

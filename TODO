@@ -130,7 +130,7 @@
 [ ] Find solution so that serialization stays compatible between different versions of the program
 [ ] Add local storage api
 [X] Add script to start http server in build
-[X] Prevent http clients to access private server files
+[X] Prevent http clients from accessing private server files
 [ ] Add completion for dynamic method names
 
 -- LATER --

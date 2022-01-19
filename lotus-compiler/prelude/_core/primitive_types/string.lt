@@ -253,7 +253,7 @@ export type(i32) string {
             buffer.write(value.len());
             
             for c in value {
-                buffer.write(c.to_int());
+                buffer.write(c.as_int());
             }
         }
     }
@@ -281,6 +281,22 @@ export type(i32) string {
         }
 
         str
+    }
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        let hash = value.__hash();
+
+        if buffer.write_string_addr(value) {
+            buffer.write(value.len());
+
+            for c in value {
+                buffer.write(c.as_int());
+            }
+        }
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
     }
 }
 

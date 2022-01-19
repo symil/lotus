@@ -12,7 +12,7 @@ export type(i32) char {
         i32.ne
     }}
 
-    to_int() -> int {{
+    as_int() -> int {{
 
     }}
 
@@ -80,10 +80,18 @@ export type(i32) char {
     }}
 
     static __serialize(buffer: Buffer, value: Self) {
-        buffer.write(value.to_int());
+        buffer.write(value.as_int());
     }
 
     static __deserialize(buffer: Buffer) -> char? {
         buffer.read().to_char()
+    }
+
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
+        @todo()
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        @todo()
     }
 }

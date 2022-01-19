@@ -13,4 +13,6 @@ export type(void) void {
     static __retain(value: Self) {{ }}
     static __serialize(buffer: Buffer, value: Self) {{ }}
     static __deserialize(buffer: Buffer) -> Self? {{ }}
+    static __serialize_with_schema(buffer: Buffer, value: Self) {{ }}
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {{ }}
 }
