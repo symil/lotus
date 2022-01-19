@@ -1,6 +1,7 @@
 pub enum TypeSchema {
     Int,
     Float,
+    String,
     Object,
     Array
 }

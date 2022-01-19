@@ -49,18 +49,18 @@ export class Buffer {
         self.context = none;
     }
 
-    write_string_addr(str: string) -> bool {
-        self.write(str as int);
+    write_string_hash(str: string) -> bool {
+        self.write(str.__hash());
 
         self.serialized_strings.add(str)
     }
 
-    retrieve_local_string(remote_addr: int) -> string? {
-        self.remote_addr_to_local_string.get(remote_addr)
+    retrieve_local_string(string_hash: int) -> string? {
+        self.remote_addr_to_local_string.get(string_hash)
     }
 
-    register_local_string(remote_addr: int, local_string: string) {
-        self.remote_addr_to_local_string.set(remote_addr, local_string);
+    register_local_string(local_string: string) {
+        self.remote_addr_to_local_string.set(local_string.__hash(), local_string);
     }
 
     write_object_addr(object: Object) -> bool {

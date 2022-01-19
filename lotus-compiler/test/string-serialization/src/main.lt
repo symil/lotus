@@ -1,0 +1,11 @@
+export fn main() {
+    let strings = ["foo", "foo", "foo", "bar", "foo", "bar"];
+    let bytes = @serialize(strings);
+    let result : string[] = @deserialize(bytes);
+
+    @assert(#LINE, result[0].__get_ptr() == result[1].__get_ptr());
+    @assert(#LINE, result[0].__get_ptr() == result[2].__get_ptr());
+    @assert(#LINE, result[0].__get_ptr() != result[3].__get_ptr());
+    @assert(#LINE, result[0].__get_ptr() == result[4].__get_ptr());
+    @assert(#LINE, result[3].__get_ptr() == result[5].__get_ptr());
+}
