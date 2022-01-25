@@ -289,14 +289,7 @@ export type(i32) string {
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
         buffer.write(TypeSchema::String.as_int());
-
-        if buffer.write_string_hash(value) {
-            buffer.write(value.len());
-
-            for c in value {
-                buffer.write(c.as_int());
-            }
-        }
+        Self::__serialize_with_schema_no_header(buffer, value);
     }
 
     static __serialize_with_schema_no_header(buffer: Buffer, value: Self) {

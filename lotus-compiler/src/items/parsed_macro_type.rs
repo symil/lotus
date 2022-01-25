@@ -24,7 +24,7 @@ impl ParsedMacroType {
         match &self.token {
             MacroTypeToken::FieldType => m.access_current_field(|field_info, context| {
                 field_info.ty.clone()
-            }),
+            }, context),
             MacroTypeToken::WorldType => Some(context.get_main_type(MainType::World)),
             MacroTypeToken::UserType => Some(context.get_main_type(MainType::User)),
             MacroTypeToken::WindowType => Some(context.get_main_type(MainType::Window)),

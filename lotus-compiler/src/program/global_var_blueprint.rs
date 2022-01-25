@@ -36,6 +36,10 @@ impl GlobalVarBlueprint {
                 context.vasm().get_var(&self.var_info, None)
             ], context)
             .resolve(&type_index, context);
+        
+        
+        // TODO: do this more properly
+        let is_essential = self.name.location.file.path.ends_with("_memory.lt");
 
         GlobalVarInstance {
             wasm_name,
@@ -43,6 +47,7 @@ impl GlobalVarBlueprint {
             init_wat,
             retain_wat,
             wasm_locals,
+            is_essential,
         }
     }
 

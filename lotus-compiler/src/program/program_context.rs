@@ -3,8 +3,8 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, StringLiteralManager, RETAIN_METHOD_NAME};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
@@ -20,6 +20,7 @@ pub struct ProgramContext {
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
+    pub string_literals: StringLiteralManager,
 
     pub code_actions_provider: CodeActionsProvider,
     pub completion_provider: CompletionItemProvider,
@@ -71,6 +72,7 @@ impl ProgramContext {
             interfaces: Default::default(),
             functions: Default::default(),
             global_vars: Default::default(),
+            string_literals: StringLiteralManager::new(),
             code_actions_provider: CodeActionsProvider::new(&cursor),
             completion_provider: CompletionItemProvider::new(&cursor),
             definition_provider: DefinitionProvider::new(&cursor),
@@ -140,6 +142,8 @@ impl ProgramContext {
 
             self.main_types.insert(main_type, ty);
         }
+
+        self.string_literals.set_string_type(self.get_builtin_type(BuiltinType::String, vec![]));
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
@@ -894,6 +898,7 @@ impl ProgramContext {
     pub fn resolve_wat(&mut self) {
         let mut content = wat!["module"];
         let mut globals_declaration = vec![];
+        let mut essential_globals_initialization = vec![];
         let mut globals_initialization = vec![];
         let mut globals_retaining = vec![];
         let mut types_initialization = vec![];
@@ -984,11 +989,12 @@ impl ProgramContext {
             }
         }
 
+        let empty_type_index = TypeIndex::empty();
         let sort_function = self.functions.get_by_name(SORT_EVENT_CALLBACK_FUNC_NAME).unwrap();
 
         events_initialization.extend(self.vasm()
             .call_function_named(None, &sort_function, &[], vec![])
-            .resolve(&TypeIndex::empty(), self));
+            .resolve(&empty_type_index, self));
 
         for (file_namespace1, file_namespace2, func_name, arguments, return_type) in HEADER_IMPORTS {
             content.push(Wat::import_function(file_namespace1, file_namespace2, func_name, arguments.to_vec(), return_type.clone()));
@@ -1004,10 +1010,10 @@ impl ProgramContext {
                     });
 
                     let mut args = vec![];
-                    let mut ret = function_unwrapped.signature.return_type.resolve(&TypeIndex::empty(), self).wasm_type;
+                    let mut ret = function_unwrapped.signature.return_type.resolve(&empty_type_index, self).wasm_type;
 
                     for ty in &function_unwrapped.signature.argument_types {
-                        if let Some(wasm_type) = ty.resolve(&TypeIndex::empty(), self).wasm_type {
+                        if let Some(wasm_type) = ty.resolve(&empty_type_index, self).wasm_type {
                             args.push(wasm_type);
                         }
                     }
@@ -1085,11 +1091,26 @@ impl ProgramContext {
             globals_declaration.push(Wat::declare_global(wasm_name, wasm_type));
         }
 
+        for (string, var_info) in self.string_literals.get_all() {
+            globals_declaration.push(Wat::declare_global(&var_info.wasm_name(), "i32"));
+            globals_initialization.extend(self.vasm()
+                .set_var(&var_info, None, init_string_literal(&string, self))
+                .resolve(&empty_type_index, self)
+            );
+            globals_retaining.extend(self.vasm()
+                .call_static_method(&var_info.ty(), RETAIN_METHOD_NAME, &[], vec![self.vasm().get_var(&var_info, None)], self)
+                .resolve(&empty_type_index, self)
+            );
+        }
+
         let mut wasm_locals = vec![];
 
         for global_var in take(&mut self.global_var_instances) {
             globals_declaration.push(Wat::declare_global(&global_var.wasm_name, global_var.wasm_type));
-            globals_initialization.extend(global_var.init_wat);
+            match global_var.is_essential {
+                true => essential_globals_initialization.extend(global_var.init_wat),
+                false => globals_initialization.extend(global_var.init_wat),
+            };
             globals_retaining.extend(global_var.retain_wat);
             wasm_locals.extend(global_var.wasm_locals);
         }
@@ -1105,6 +1126,8 @@ impl ProgramContext {
             Wat::call(INIT_TYPES_FUNC_NAME, vec![]),
             Wat::call(INIT_EVENTS_FUNC_NAME, vec![]),
         ];
+
+        globals_initialization.splice(0..0, essential_globals_initialization);
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));

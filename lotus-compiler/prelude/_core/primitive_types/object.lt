@@ -231,7 +231,7 @@ export class Object {
         buffer.write(#FIELD_COUNT);
 
         iter_fields {
-            string::__serialize_with_schema(buffer, #FIELD_NAME);
+            string::__serialize_with_schema_no_header(buffer, #FIELD_NAME);
             #FIELD_TYPE::__serialize_with_schema(buffer, self.#FIELD_NAME);
         }
     }

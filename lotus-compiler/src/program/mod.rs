@@ -55,6 +55,7 @@ mod function_body;
 mod cursor_location;
 mod program_context_options;
 mod program_index;
+mod string_literal_manager;
 
 pub use program_context::*;
 pub use utils::*;
@@ -112,3 +113,4 @@ pub use function_body::*;
 pub use cursor_location::*;
 pub use program_context_options::*;
 pub use program_index::*;
+pub use string_literal_manager::*;

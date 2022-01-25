@@ -1,0 +1,42 @@
+const GLOBAL_STRING = "hello";
+
+class Foo {
+    hello: string,
+
+    static check_addr() {
+        iter_fields {
+            @assert(#LINE, cmp_string_addr(#FIELD_NAME, "hello"));
+        }
+    }
+
+    static check_state() {
+        iter_fields {
+            @assert(#LINE, check_string_pointer_state(#FIELD_NAME));
+        }
+    }
+}
+
+export fn main() {
+    let local_string = "hello";
+
+    @assert(#LINE, !cmp_string_addr(local_string, "foo"));
+    @assert(#LINE, cmp_string_addr(local_string, GLOBAL_STRING));
+    @assert(#LINE, cmp_string_addr(GLOBAL_STRING, "hello"));
+    @assert(#LINE, cmp_string_addr(local_string, "hello"));
+    Foo::check_addr();
+    Foo::check_state();
+
+    @trigger_garbage_collection();
+    @assert(#LINE, check_string_pointer_state("hello"));
+    @assert(#LINE, check_string_pointer_state(local_string));
+    @assert(#LINE, check_string_pointer_state(GLOBAL_STRING));
+    Foo::check_state();
+}
+
+fn cmp_string_addr(s1: string, s2: string) -> bool {
+    (s1 as ptr) == (s2 as ptr)
+}
+
+fn check_string_pointer_state(s: string) -> bool {
+    ((s as ptr)[-1] & 3) == 1
+}

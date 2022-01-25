@@ -20,6 +20,7 @@ pub const INT_NONE_VALUE : i32 = i32::MIN;
 pub const NONE_LITERAL : &'static str = "none";
 
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
+pub const INIT_STRING_LITERALS_FUNC_NAME : &'static str = "init_string_literals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
 pub const INIT_EVENTS_FUNC_NAME : &'static str = "init_events";
 pub const RETAIN_GLOBALS_FUNC_NAME : &'static str = "retain_globals";

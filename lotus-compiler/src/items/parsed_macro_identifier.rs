@@ -24,7 +24,7 @@ impl ParsedMacroIdentifier {
         match &self.token {
             MacroIdentifierToken::FieldName => m.access_current_field(|field_info, context| {
                 Identifier::new(field_info.name.as_str(), Some(&self.location))
-            }),
+            }, context),
             MacroIdentifierToken::WorldType => get_main_type_identifier(MainType::World, self, context),
             MacroIdentifierToken::UserType => get_main_type_identifier(MainType::User, self, context),
             MacroIdentifierToken::WindowType => get_main_type_identifier(MainType::Window, self, context),

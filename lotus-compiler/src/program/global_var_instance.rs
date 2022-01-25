@@ -8,5 +8,7 @@ pub struct GlobalVarInstance {
     pub wasm_type: &'static str,
     pub init_wat: Vec<Wat>,
     pub retain_wat: Vec<Wat>,
-    pub wasm_locals: Vec<(&'static str, String)>
+    pub wasm_locals: Vec<(&'static str, String)>,
+    // Indicates if the variable should be initialized before anything else (e.g constants used during memory allocation)
+    pub is_essential: bool,
 }
