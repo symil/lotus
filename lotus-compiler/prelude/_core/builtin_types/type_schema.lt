@@ -15,11 +15,7 @@ pub fn consume_float(buffer: Buffer) {
 }
 
 pub fn consume_string(buffer: Buffer) {
-    let length = buffer.read();
-
-    for i in 0..length {
-        buffer.read();
-    }
+    string::__deserialize_with_schema_without_header(buffer);
 }
 
 pub fn consume_object(buffer: Buffer) {

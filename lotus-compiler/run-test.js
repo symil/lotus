@@ -173,7 +173,7 @@ function hasOption(longOption, shortOption) {
 function compileCompiler({ mode = 'debug' } = {}) {
     let option = mode === "release" ? '--release' : '';
 
-    return runCommand(`cd ${ROOT_DIR} && cargo build --${option}`, true).success;
+    return runCommand(`cd ${ROOT_DIR} && cargo build ${option}`, true).success;
 }
 
 function compileLotus({ inputPath, outputPath, inheritStdio, showDetails, mode, validate, benchmark }) {
