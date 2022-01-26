@@ -128,7 +128,7 @@
 [X] Improve completion on type declarations
 [X] Add a `location()` method to parsable structs and enums
 [X] Use serialization with schema when storing items with file system
-[ ] Add local storage api
+[X] Add local storage api
 [X] Add script to start http server in build
 [X] Prevent http clients from accessing private server files
 [X] Allocate literal strings a single time
@@ -188,6 +188,7 @@
 [ ] Function default arguments
 [ ] Add `fill class fields` code action
 [ ] Use global attributes to specify whether to implement `Debug` and `location` by default or not
+[ ] Improve schema serialization to keep info about the object class (use class name as key?)
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

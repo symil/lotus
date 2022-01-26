@@ -13,7 +13,11 @@ view Window {
     }
 
     @OnKeyboardEvent {
-        if evt.code == KeyCode::Tab && evt.action == KeyboardAction::Down {
+        if evt.action != KeyboardAction::Down {
+            return;
+        }
+
+        if evt.code == KeyCode::Tab {
             if evt.shift_key {
                 self.client.focus_prev();
             } else {

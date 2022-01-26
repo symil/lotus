@@ -69,3 +69,15 @@ pub fn wasm_write_file(file_path: string, buffer_addr: ptr, buffer_size: int) [
 pub fn wasm_read_file(file_path: string, buffer_addr: ptr, buffer_capacity: int) -> int [
     import env.read_file
 ]
+
+pub fn wasm_set_local_storage_item(key: string, buffer_addr: ptr, buffer_size: int) [
+    import env.set_local_storage_item
+]
+
+pub fn wasm_get_local_storage_item(key: string, buffer_addr: ptr, buffer_capacity: int) -> int [
+    import env.get_local_storage_item
+]
+
+pub fn wasm_clear_local_storage() -> int [
+    import env.clear_local_storage
+]

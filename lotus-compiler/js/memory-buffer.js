@@ -10,7 +10,12 @@ export class MemoryBuffer {
     }
 
     toRegularBuffer() {
+        // TODO: this only works in Node.js
         return Buffer.from(this._memoryAsInt.buffer, this._startIndex * 4, this._capacity * 4);
+    }
+
+    toInt32Buffer() {
+        return new Int32Array(this._memoryAsInt.buffer, this._startIndex * 4, this._capacity);
     }
 
     isFinished() {

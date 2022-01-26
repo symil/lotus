@@ -261,6 +261,29 @@ export class Client {
         self._focus_next_or_prev(-1);
     }
 
+    set_local_storage_item<T>(key: string, data: T) {
+        self._buffer.clear();
+        T::__serialize_with_schema(self._buffer, data);
+
+        wasm_set_local_storage_item(key, self._buffer.data, self._buffer.size);
+    }
+
+    get_local_storage_item<T>(key: string) -> T? {
+        self._buffer.clear();
+        self._buffer.size = wasm_get_local_storage_item(key, self._buffer.data, self._buffer.capacity);
+
+        let value = T::__deserialize_with_schema(self._buffer);
+
+        match self._buffer.has_read_overflow() {
+            true => none,
+            false => value
+        }
+    }
+
+    clear_local_storage() {
+        wasm_clear_local_storage();
+    }
+
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         false
     }

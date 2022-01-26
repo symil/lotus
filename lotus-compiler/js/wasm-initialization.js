@@ -162,7 +162,39 @@ function getWasmImportsObject(env) {
                 buffer.writeBuffer(bytes);
 
                 return buffer.getSize();
-            }
+            },
+
+            set_local_storage_item(keyAddr, bufferAddr, bufferSize) {
+                let key = readStringFromMemory(env.getMemory(), keyAddr);
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferSize);
+                let bytes = buffer.toInt32Buffer();
+                let base64 = btoa(String.fromCharCode(...bytes));
+                let localStorage = env.getWindow().localStorage;
+
+                localStorage.setItem(key, base64);
+            },
+
+            get_local_storage_item(keyAddr, bufferAddr, bufferCapacity) {
+                let key = readStringFromMemory(env.getMemory(), keyAddr);
+                let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
+                let localStorage = env.getWindow().localStorage;
+                let item = localStorage.getItem(key) || '';
+                let decoded = atob(item);
+
+                for (let i = 0; i < decoded.length; ++i) {
+                    let code = decoded.charCodeAt(i);
+
+                    buffer.write(code);
+                }
+
+                return buffer.getSize();
+            },
+
+            clear_local_storage() {
+                let localStorage = env.getWindow().localStorage;
+
+                localStorage.clear();
+            },
         }
     };
 }
