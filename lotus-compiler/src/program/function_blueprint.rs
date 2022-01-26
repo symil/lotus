@@ -6,7 +6,6 @@ use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, 
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
-    pub function_id: u64,
     pub name: Identifier,
     pub visibility: Visibility,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
@@ -45,7 +44,6 @@ pub struct EventCallbackDetails {
 impl FunctionBlueprint {
     pub fn new(name: Identifier, context: &ProgramContext) -> Self {
         Self {
-            function_id: name.location.get_hash(),
             name: name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),

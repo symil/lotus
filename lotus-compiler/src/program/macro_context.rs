@@ -52,7 +52,7 @@ impl<'a> MacroContext<'a> {
                 Some(type_wrapped.with_ref(|ty| callback(ty, context)))
             },
             None => {
-                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside type a declaration", self));
+                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside type a declaration", self.location.as_str()));
                 None
             },
         }
@@ -64,7 +64,7 @@ impl<'a> MacroContext<'a> {
                 Some(function_wrapped.with_ref(|function| callback(function,context)))
             },
             None => {
-                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside a function", self));
+                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside a function", self.location.as_str()));
                 None
             },
         }
@@ -76,7 +76,7 @@ impl<'a> MacroContext<'a> {
                 Some(callback(field_info, context))
             },
             None => {
-                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_fields` block", self));
+                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_fields` block", self.location.as_str()));
                 None
             },
         }
@@ -88,7 +88,7 @@ impl<'a> MacroContext<'a> {
                 Some(callback(variant_info, context))
             },
             None => {
-                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_variants` block", self));
+                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_variants` block", self.location.as_str()));
                 None
             },
         }
@@ -100,15 +100,9 @@ impl<'a> MacroContext<'a> {
                 Some(callback(ancestor_type, context))
             },
             None => {
-                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", self));
+                context.errors.generic(&self.location, format!("macro `{}` can only be accessed from inside an `iter_ancestors` block", self.location.as_str()));
                 None
             },
         }
-    }
-}
-
-impl<'a> Display for MacroContext<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("#{}", self.location.as_str()).bold())
     }
 }

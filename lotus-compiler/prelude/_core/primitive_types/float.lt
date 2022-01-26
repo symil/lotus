@@ -94,10 +94,25 @@ export type(f32) float {
     }
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
-        @todo()
+        buffer.write(TypeSchema::Float.as_int());
+        buffer.write(value.as_int());
     }
 
     static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+        let result : Self = none;
+
+        match TypeSchema::__from_int(buffer.read()) {
+            TypeSchema::Int => {
+                result = buffer.read().to_float()
+            },
+            TypeSchema::Float => {
+                result = buffer.read().as_float()
+            },
+            TypeSchema::String => consume_string(buffer),
+            TypeSchema::Object => consume_object(buffer),
+            TypeSchema::Array => consume_array(buffer),
+        }
+
+        result
     }
 }

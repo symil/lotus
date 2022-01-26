@@ -217,25 +217,52 @@ export class Object {
         }
     }
 
-    static __serialize_with_schema(buffer: Buffer, value: Object) {
+    autogen static __serialize_with_schema(buffer: Buffer, value: Self) {
         buffer.write(TypeSchema::Object.as_int());
 
-        if !value {
-            buffer.write(0);
-        } else if buffer.write_object_addr(value) {
-            value.__serialize_with_schema_dyn(buffer);
+        if !value || !buffer.mark_object_as_serialized(value) {
+            buffer.write(-1);
+        } else {
+            buffer.write(#FIELD_COUNT);
+
+            iter_fields {
+                string::__serialize_with_schema_without_header(buffer, #FIELD_NAME);
+                #FIELD_TYPE::__serialize_with_schema(buffer, value.#FIELD_NAME);
+            }
         }
     }
 
-    autogen dyn __serialize_with_schema_dyn(buffer: Buffer) {
-        buffer.write(#FIELD_COUNT);
+    autogen static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        let result : Self = none;
 
-        iter_fields {
-            string::__serialize_with_schema_no_header(buffer, #FIELD_NAME);
-            #FIELD_TYPE::__serialize_with_schema(buffer, self.#FIELD_NAME);
-        }
+        match TypeSchema::__from_int(buffer.read()) {
+            TypeSchema::Int => consume_int(buffer),
+            TypeSchema::Float => consume_float(buffer),
+            TypeSchema::String => consume_string(buffer),
+            TypeSchema::Object => {
+                let field_count = buffer.read();
+
+                if field_count < 0 {
+                    return none;
+                }
+                
+                result = Self::__default();
+
+                for i in 0..field_count {
+                    let field_name = string::__deserialize_with_schema_without_header(buffer);
+
+                    iter_fields {
+                        if field_name == #FIELD_NAME {
+                            result.#FIELD_NAME = #FIELD_TYPE::__deserialize_with_schema(buffer);
+                        }
+                    }
+                }
+            },
+            TypeSchema::Array => consume_array(buffer),
+        };
+
+        result
     }
-
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         true

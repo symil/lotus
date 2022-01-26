@@ -289,10 +289,10 @@ export type(i32) string {
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
         buffer.write(TypeSchema::String.as_int());
-        Self::__serialize_with_schema_no_header(buffer, value);
+        Self::__serialize_with_schema_without_header(buffer, value);
     }
 
-    static __serialize_with_schema_no_header(buffer: Buffer, value: Self) {
+    static __serialize_with_schema_without_header(buffer: Buffer, value: Self) {
         let hash = value.__hash();
 
         if buffer.write_string_hash(value) {
@@ -305,7 +305,39 @@ export type(i32) string {
     }
 
     static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+        let result = "";
+
+        match TypeSchema::__from_int(buffer.read()) {
+            TypeSchema::Int => consume_int(buffer),
+            TypeSchema::Float => consume_float(buffer),
+            TypeSchema::String => {
+                result = string::__deserialize_with_schema_without_header(buffer);
+            },
+            TypeSchema::Object => consume_object(buffer),
+            TypeSchema::Array => consume_array(buffer),
+        }
+
+        result
+    }
+
+    static __deserialize_with_schema_without_header(buffer: Buffer) -> Self? {
+        let hash = buffer.read();
+        let str = buffer.retrieve_local_string(hash);
+
+        if str {
+            return str;
+        }
+
+        let length = buffer.read();
+        str = string::__create(length);
+
+        for i in 0..length {
+            str.__set_char(i, char::__deserialize(buffer));
+        }
+
+        buffer.register_local_string(str);
+
+        str
     }
 }
 

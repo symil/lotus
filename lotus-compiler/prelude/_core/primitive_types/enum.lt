@@ -11,7 +11,7 @@ sys type(i32) Enum {
         self as int
     }
 
-    static __from_int(value: int) -> Self {
+    autogen static __from_int(value: int) -> Self {
         match value < 0 || value >= #VARIANT_COUNT {
             true => none,
             false => value as Self
@@ -70,11 +70,17 @@ sys type(i32) Enum {
         }
     }
     
-    static __serialize_with_schema(buffer: Buffer, value: Self) {
-        @todo()
+    autogen static __serialize_with_schema(buffer: Buffer, value: Self) {
+        buffer.write(value as int);
     }
 
-    static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+    autogen static __deserialize_with_schema(buffer: Buffer) -> Self? {
+        let int_value = buffer.read();
+        let ok = int_value >= 0 && int_value < #VARIANT_COUNT;
+
+        match ok {
+            true => int_value as Self,
+            false => none
+        }
     }
 }

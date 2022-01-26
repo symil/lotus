@@ -69,6 +69,10 @@ export class Buffer {
         self.serialized_objects.add(object)
     }
 
+    mark_object_as_serialized(object: Object) -> bool {
+        self.serialized_objects.add(object)
+    }
+
     retrieve_local_object(remote_addr: int) -> Object? {
         self.remote_addr_to_local_object.get(remote_addr)
     }

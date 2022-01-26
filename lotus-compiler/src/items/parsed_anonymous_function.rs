@@ -62,7 +62,6 @@ impl ParsedAnonymousFunction {
 
         let mut signature = Signature::create(None, argument_types, expected_return_type.clone());
         let function_wrapped = context.functions.insert(FunctionBlueprint {
-            function_id: self.location.get_hash(),
             name: Identifier::new("anonymous_function", Some(self)),
             visibility: Visibility::None,
             parameters: IndexMap::new(),

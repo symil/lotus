@@ -7,6 +7,11 @@ sys type(void) system {
         unreachable
     }}
 
+    panic(message: string) {
+        @log(`panic: ${message}`);
+        trap();
+    }
+
     assert(line: int, value: bool) {
         wasm_assert(line, value);
     }
@@ -63,6 +68,24 @@ sys type(void) system {
         }
     }
 
+    serialize_with_schema<T>(value: T) -> int[] {
+        let buffer = Buffer;
+
+        T::__serialize_with_schema(buffer, value);
+
+        buffer.consume()
+    }
+
+    deserialize_with_schema<T>(array: int[]) -> T? {
+        let buffer = Buffer::from_array(array);
+        let value = T::__deserialize_with_schema(buffer);
+
+        match buffer.has_read_overflow() {
+            true => none,
+            false => value
+        }
+    }
+
     int<T>(value: T) {
         @log(value as int);
     }
@@ -75,3 +98,7 @@ sys type(void) system {
         event.emit(targets);
     }
 }
+
+fn trap() {{
+    trap
+}}

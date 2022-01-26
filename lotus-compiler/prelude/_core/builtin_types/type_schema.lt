@@ -5,3 +5,52 @@ pub enum TypeSchema {
     Object,
     Array
 }
+
+pub fn consume_int(buffer: Buffer) {
+    buffer.read();
+}
+
+pub fn consume_float(buffer: Buffer) {
+    buffer.read();
+}
+
+pub fn consume_string(buffer: Buffer) {
+    let length = buffer.read();
+
+    for i in 0..length {
+        buffer.read();
+    }
+}
+
+pub fn consume_object(buffer: Buffer) {
+    let field_count = buffer.read();
+
+    if field_count >= 0 {
+        for i in 0..field_count {
+            // consume field name
+            consume_string(buffer);
+            // consume field content
+            consume_item(buffer);
+        }
+    }
+}
+
+pub fn consume_array(buffer: Buffer) {
+    let item_count = buffer.read();
+
+    for i in 0..item_count {
+        consume_item(buffer);
+    }
+}
+
+pub fn consume_item(buffer: Buffer) {
+    let item_type = TypeSchema::__from_int(buffer.read());
+
+    match item_type {
+        TypeSchema::Int => consume_int(buffer),
+        TypeSchema::Float => consume_float(buffer),
+        TypeSchema::String => consume_string(buffer),
+        TypeSchema::Object => consume_object(buffer),
+        TypeSchema::Array => consume_array(buffer),
+    }
+}

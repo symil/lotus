@@ -61,7 +61,6 @@ impl ParsedEventCallbackDeclaration {
         };
 
         let function_blueprint = FunctionBlueprint {
-            function_id: self.location.get_hash(),
             name: name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),

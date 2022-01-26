@@ -50,10 +50,23 @@ export type(i32) bool {
     }
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
-        @todo()
+        buffer.write(TypeSchema::Int.as_int());
+        buffer.write(value as int);
     }
 
     static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+        let result : Self = none;
+
+        match TypeSchema::__from_int(buffer.read()) {
+            TypeSchema::Int => {
+                result = buffer.read() > 0;
+            },
+            TypeSchema::Float => consume_float(buffer),
+            TypeSchema::String => consume_string(buffer),
+            TypeSchema::Object => consume_object(buffer),
+            TypeSchema::Array => consume_array(buffer),
+        }
+
+        result
     }
 }

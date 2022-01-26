@@ -49,46 +49,46 @@ impl ParsedForBlock {
                     .set_type(context.int_type());
 
                 if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
-                    let body = unwrap_item(&self.body, range_end, context)?;
+                    if let Some(body) = unwrap_item(&self.body, range_end, context) {
+                        if let Some(block_vasm) = body.process(None, context) {
+                            if !block_vasm.ty.is_void() {
+                                context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
+                            }
 
-                    if let Some(block_vasm) = body.process(None, context) {
-                        if !block_vasm.ty.is_void() {
-                            context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
-                        }
-
-                        let index_var_wasm_name = index_var.get_wasm_name();
-                        let item_var_wasm_name = item_var.get_wasm_name();
-                        let range_end_var_wasm_name = range_end_var.get_wasm_name();
-                        let content = context.vasm()
-                            .declare_variable(&declared_index_var)
-                            .declare_variable(&index_var)
-                            .declare_variable(&item_var)
-                            .declare_variable(&range_end_var)
-                            .append(range_end_vasm)
-                            .set_tmp_var(&range_end_var)
-                            .append(range_start_vasm)
-                            .set_tmp_var(&item_var)
-                            .int(-1i32)
-                            .set_tmp_var(&index_var)
-                            .raw(Wat::increment_local_i32(&item_var_wasm_name, -1i32))
-                            .block(context.vasm()
-                                .loop_(context.vasm()
-                                    .raw(Wat::increment_local_i32(&index_var_wasm_name, 1i32))
-                                    .raw(Wat::increment_local_i32(&item_var_wasm_name, 1i32))
-                                    .raw(wat!["i32.lt_s", Wat::get_local(&item_var_wasm_name), Wat::get_local(&range_end_var_wasm_name)])
-                                    .jump_if(1, context.vasm().eqz())
-                                    .init_var(&declared_index_var)
-                                    .set_var(&declared_index_var, current_function_level, context.vasm()
-                                        .raw(Wat::get_local(&index_var_wasm_name))
+                            let index_var_wasm_name = index_var.get_wasm_name();
+                            let item_var_wasm_name = item_var.get_wasm_name();
+                            let range_end_var_wasm_name = range_end_var.get_wasm_name();
+                            let content = context.vasm()
+                                .declare_variable(&declared_index_var)
+                                .declare_variable(&index_var)
+                                .declare_variable(&item_var)
+                                .declare_variable(&range_end_var)
+                                .append(range_end_vasm)
+                                .set_tmp_var(&range_end_var)
+                                .append(range_start_vasm)
+                                .set_tmp_var(&item_var)
+                                .int(-1i32)
+                                .set_tmp_var(&index_var)
+                                .raw(Wat::increment_local_i32(&item_var_wasm_name, -1i32))
+                                .block(context.vasm()
+                                    .loop_(context.vasm()
+                                        .raw(Wat::increment_local_i32(&index_var_wasm_name, 1i32))
+                                        .raw(Wat::increment_local_i32(&item_var_wasm_name, 1i32))
+                                        .raw(wat!["i32.lt_s", Wat::get_local(&item_var_wasm_name), Wat::get_local(&range_end_var_wasm_name)])
+                                        .jump_if(1, context.vasm().eqz())
+                                        .init_var(&declared_index_var)
+                                        .set_var(&declared_index_var, current_function_level, context.vasm()
+                                            .raw(Wat::get_local(&index_var_wasm_name))
+                                        )
+                                        .append(init_vasm)
+                                        .append(block_vasm)
+                                        .jump(0)
                                     )
-                                    .append(init_vasm)
-                                    .append(block_vasm)
-                                    .jump(0)
                                 )
-                            )
-                            .set_type(context.void_type());
-                        
-                        result = Some(content);
+                                .set_type(context.void_type());
+
+                            result = Some(content);
+                        }
                     }
                 }
             }
@@ -109,54 +109,54 @@ impl ParsedForBlock {
 
             if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
                 if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, range_start, context) {
-                    let body = unwrap_item(&self.body, range_start, context)?;
+                    if let Some(body) = unwrap_item(&self.body, range_start, context) {
+                        if let Some(block_vasm) = body.process(None, context) {
+                            if !block_vasm.ty.is_void() {
+                                context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
+                            }
 
-                    if let Some(block_vasm) = body.process(None, context) {
-                        if !block_vasm.ty.is_void() {
-                            context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
-                        }
-
-                        let iterable_type = iterable_vasm.ty.clone();
-                        let index_var_wasm_name = index_var.get_wasm_name();
-                        let item_var_wasm_name = item_var.get_wasm_name();
-                        let iterable_len_var_wasm_name = iterable_len_var.get_wasm_name();
-                        let content = context.vasm()
-                            .declare_variable(&declared_index_var)
-                            .declare_variable(&iterable_var)
-                            .declare_variable(&iterable_len_var)
-                            .declare_variable(&iterable_ptr_var)
-                            .declare_variable(&index_var)
-                            .declare_variable(&item_var)
-                            .append(iterable_vasm)
-                            .set_tmp_var(&iterable_var)
-                            .int(-1i32)
-                            .set_tmp_var(&index_var)
-                            .call_regular_method(&iterable_type, GET_ITERABLE_LEN_FUNC_NAME, &[], vec![context.vasm().get_tmp_var(&iterable_var)], context)
-                            .set_tmp_var(&iterable_len_var)
-                            .call_regular_method(&iterable_type, GET_ITERABLE_PTR_FUNC_NAME, &[], vec![context.vasm().get_tmp_var(&iterable_var)], context)
-                            .set_tmp_var(&iterable_ptr_var)
-                            .block(context.vasm()
-                                .loop_(context.vasm()
-                                    .raw(Wat::increment_local_i32(&index_var_wasm_name, 1i32))
-                                    .raw(wat!["i32.lt_s", Wat::get_local(&index_var_wasm_name), Wat::get_local(&iterable_len_var_wasm_name)])
-                                    .jump_if(1, context.vasm().eqz())
-                                    .call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![
-                                        context.vasm().get_tmp_var(&iterable_ptr_var),
-                                        context.vasm().get_tmp_var(&index_var)
-                                    ], context)
-                                    .set_tmp_var(&item_var)
-                                    .init_var(&declared_index_var)
-                                    .set_var(&declared_index_var, current_function_level,
-                                        context.vasm().raw(Wat::get_local(&index_var_wasm_name))
+                            let iterable_type = iterable_vasm.ty.clone();
+                            let index_var_wasm_name = index_var.get_wasm_name();
+                            let item_var_wasm_name = item_var.get_wasm_name();
+                            let iterable_len_var_wasm_name = iterable_len_var.get_wasm_name();
+                            let content = context.vasm()
+                                .declare_variable(&declared_index_var)
+                                .declare_variable(&iterable_var)
+                                .declare_variable(&iterable_len_var)
+                                .declare_variable(&iterable_ptr_var)
+                                .declare_variable(&index_var)
+                                .declare_variable(&item_var)
+                                .append(iterable_vasm)
+                                .set_tmp_var(&iterable_var)
+                                .int(-1i32)
+                                .set_tmp_var(&index_var)
+                                .call_regular_method(&iterable_type, GET_ITERABLE_LEN_FUNC_NAME, &[], vec![context.vasm().get_tmp_var(&iterable_var)], context)
+                                .set_tmp_var(&iterable_len_var)
+                                .call_regular_method(&iterable_type, GET_ITERABLE_PTR_FUNC_NAME, &[], vec![context.vasm().get_tmp_var(&iterable_var)], context)
+                                .set_tmp_var(&iterable_ptr_var)
+                                .block(context.vasm()
+                                    .loop_(context.vasm()
+                                        .raw(Wat::increment_local_i32(&index_var_wasm_name, 1i32))
+                                        .raw(wat!["i32.lt_s", Wat::get_local(&index_var_wasm_name), Wat::get_local(&iterable_len_var_wasm_name)])
+                                        .jump_if(1, context.vasm().eqz())
+                                        .call_regular_method(&pointer_type, GET_AT_INDEX_FUNC_NAME, &[], vec![
+                                            context.vasm().get_tmp_var(&iterable_ptr_var),
+                                            context.vasm().get_tmp_var(&index_var)
+                                        ], context)
+                                        .set_tmp_var(&item_var)
+                                        .init_var(&declared_index_var)
+                                        .set_var(&declared_index_var, current_function_level,
+                                            context.vasm().raw(Wat::get_local(&index_var_wasm_name))
+                                        )
+                                        .append(init_vasm)
+                                        .append(block_vasm)
+                                        .jump(0)
                                     )
-                                    .append(init_vasm)
-                                    .append(block_vasm)
-                                    .jump(0)
                                 )
-                            )
-                            .set_type(context.void_type());
+                                .set_type(context.void_type());
 
-                        result = Some(content);
+                            result = Some(content);
+                        }
                     }
                 }
             }

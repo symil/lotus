@@ -24,7 +24,6 @@ impl ParsedInterfaceMethodDeclaration {
         };
 
         FunctionBlueprint {
-            function_id: self.name.get_hash(),
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),

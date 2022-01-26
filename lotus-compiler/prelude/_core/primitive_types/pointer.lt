@@ -100,11 +100,11 @@ export type(i32) Pointer<T> {
     }
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
-        @todo()
+        
     }
 
     static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+        none
     }
 
     swap(i: int, j: int) {

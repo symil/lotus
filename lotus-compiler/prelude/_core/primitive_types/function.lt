@@ -61,11 +61,11 @@ sys type Function {
     }}
 
     static __serialize_with_schema(buffer: Buffer, value: Self) {
-        @todo()
+        
     }
 
     static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        @todo()
+        none
     }
 }
 

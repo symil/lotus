@@ -489,7 +489,6 @@ impl ParsedTypeDeclaration {
                             if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
                                 if vasm.ty.is_assignable_to(&field_info.ty) {
                                     let function_blueprint = FunctionBlueprint {
-                                        function_id: field_info.name.location.get_hash(),
                                         name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
                                         visibility: Visibility::None,
                                         parameters: IndexMap::new(),

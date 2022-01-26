@@ -43,7 +43,6 @@ impl ParsedFunctionOrMethodContent {
         let is_raw_wasm = self.body.as_ref().map(|body| body.is_raw_wasm()).unwrap_or(false);
 
         let mut function_blueprint = FunctionBlueprint {
-            function_id: self.location.get_hash(),
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters,
