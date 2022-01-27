@@ -1,5 +1,5 @@
 use parsable::{ItemLocation, parsable};
-use crate::program::{ProgramContext, Vasm, Type, IS_METHOD_NAME, VariableInfo};
+use crate::program::{ProgramContext, Vasm, Type, IS_METHOD_NAME, VariableInfo, BuiltinInterface};
 use super::{ParsedType, Identifier, ParsedVarDeclarationNames};
 
 #[parsable]
@@ -20,7 +20,7 @@ impl ParsedIsOperation {
     pub fn process(&self, source_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         let (target_type, type_location) = match &self.ty {
             Some(parsed_type) => match parsed_type.process(true, context) {
-                Some(ty) => match ty.is_object() {
+                Some(ty) => match ty.match_builtin_interface(BuiltinInterface::Object, context) {
                     true => (ty, &parsed_type.location),
                     false => {
                         context.errors.expected_class_type(parsed_type, &ty);

@@ -108,7 +108,7 @@ export interface Tuple {
     second() -> Second;
 }
 
-sys interface Object {
+export interface Object {
     static __is(object: Object) -> bool;
 }
 

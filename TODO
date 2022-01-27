@@ -134,6 +134,7 @@
 [X] Allocate literal strings a single time
 [ ] Add completion for dynamic method names
 [ ] Add completion for type parameters
+[ ] Signature help: correctly infer type parameters
 
 -- LATER --
 [ ] Allow manually specifying function parameters

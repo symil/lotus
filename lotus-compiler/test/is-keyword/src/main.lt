@@ -8,6 +8,11 @@ export fn main() {
     test(a);
     @log("---");
     test(b);
+    @log("---");
+
+    let maybe : A = test_params(b);
+    @log("---");
+    let maybe : B = test_params(a);
 }
 
 fn test(obj: Object) {
@@ -21,5 +26,15 @@ fn test(obj: Object) {
 
     if obj is B(b) {
         @log("B: " + b.bar);
+    }
+}
+
+fn test_params<T : Object>(value: Object) -> T? {
+    if value is T(casted) {
+        @log(`value is a ${T::__type_name()}`);
+        casted
+    } else {
+        @log(`value is not a ${T::__type_name()}`);
+        none
     }
 }

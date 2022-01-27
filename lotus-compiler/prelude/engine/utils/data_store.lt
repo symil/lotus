@@ -1,0 +1,13 @@
+export class DataStore {
+    _map: Map<string, Object>,
+
+    // read<T : Object>(key: string) -> T? {
+    //     let value = self._map.get(key);
+
+    //     if value && value is T(casted) {
+    //         casted
+    //     } else {
+    //         none
+    //     }
+    // }
+}

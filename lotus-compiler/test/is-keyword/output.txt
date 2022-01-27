@@ -4,3 +4,7 @@ A: 4
 Object
 A: 8
 B: hello
+---
+value is a A
+---
+value is not a B
