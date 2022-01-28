@@ -102,7 +102,7 @@ impl ParsedAnonymousFunction {
         function_wrapped.with_mut(|mut function_unwrapped| {
             if let Some(closure_details) = &mut function_unwrapped.closure_details {
                 let mut function = FunctionBlueprint::new(Identifier::new("retain_function", Some(self)), context);
-                let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0);
+                let closure_args_var = VariableInfo::create(Identifier::unique("closure_args"), context.int_type(), VariableKind::Argument, 0, None);
                 let mut retain_vasm = context.vasm();
 
                 function.argument_variables = vec![closure_args_var.clone()];

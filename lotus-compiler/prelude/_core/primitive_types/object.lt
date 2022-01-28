@@ -1,5 +1,6 @@
 const TYPE_CAPACITY = 1024; // TODO: use a macro
 const TYPE_ID_TO_FIELD_COUNT = Map<int, int>::with_capacity(TYPE_CAPACITY);
+const FULL_TYPE_NAME_HASH_TO_TYPE_ID = Map<int, int>::with_capacity(TYPE_CAPACITY);
 pub const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>::with_capacity(TYPE_CAPACITY);
 
 export class Object {
@@ -13,6 +14,7 @@ export class Object {
 
         TYPE_ID_TO_FIELD_COUNT.set(#TYPE_ID, #FIELD_COUNT);
         TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);
+        FULL_TYPE_NAME_HASH_TO_TYPE_ID.set(#TYPE_FULL_NAME.__hash(), #TYPE_ID);
     }
 
     autogen static __is(object: Object) -> bool {
@@ -47,6 +49,14 @@ export class Object {
 
     autogen static __type_name() -> string {
         #TYPE_NAME
+    }
+
+    autogen static __type_full_name() -> string {
+        #TYPE_FULL_NAME
+    }
+
+    autogen static __type_id() -> int {
+        #TYPE_ID
     }
 
     autogen static __none() -> Self {{
@@ -217,22 +227,27 @@ export class Object {
         }
     }
 
-    autogen static __serialize_with_schema(buffer: Buffer, value: Self) {
+    static __serialize_with_schema(buffer: Buffer, value: Self) {
         buffer.write(TypeSchema::Object.as_int());
 
-        if !value || !buffer.mark_object_as_serialized(value) {
-            buffer.write(-1);
-        } else {
-            buffer.write(#FIELD_COUNT);
-
-            iter_fields {
-                string::__serialize_with_schema_without_header(buffer, #FIELD_NAME);
-                #FIELD_TYPE::__serialize_with_schema(buffer, value.#FIELD_NAME);
-            }
+        if !value {
+            buffer.write(0);
+        } else if buffer.write_object_addr(value) {
+            value.__serialize_with_schema_dyn(buffer);
         }
     }
 
-    autogen static __deserialize_with_schema(buffer: Buffer) -> Self? {
+    autogen dyn __serialize_with_schema_dyn(buffer: Buffer) {
+        buffer.write(#TYPE_FULL_NAME.__hash());
+        buffer.write(#FIELD_COUNT);
+
+        iter_fields {
+            string::__serialize_with_schema_without_header(buffer, #FIELD_NAME);
+            #FIELD_TYPE::__serialize_with_schema(buffer, self.#FIELD_NAME);
+        }
+    }
+
+    static __deserialize_with_schema(buffer: Buffer) -> Self? {
         let result : Self = none;
 
         match TypeSchema::__from_int(buffer.read()) {
@@ -240,28 +255,78 @@ export class Object {
             TypeSchema::Float => consume_float(buffer),
             TypeSchema::String => consume_string(buffer),
             TypeSchema::Object => {
-                let field_count = buffer.read();
-
-                if field_count < 0 {
-                    return none;
-                }
-                
-                result = Self::__default();
-
-                for i in 0..field_count {
-                    let field_name = string::__deserialize_with_schema_without_header(buffer);
-
-                    iter_fields {
-                        if field_name == #FIELD_NAME {
-                            result.#FIELD_NAME = #FIELD_TYPE::__deserialize_with_schema(buffer);
-                        }
-                    }
-                }
+                result = Self::__deserialize_with_schema_without_header(buffer);
             },
-            TypeSchema::Array => consume_array(buffer),
         };
 
         result
+    }
+
+    static __deserialize_with_schema_without_header(buffer: Buffer) -> Self? {
+        let obj_addr = buffer.read();
+
+        if !obj_addr || obj_addr == 0 {
+            return none;
+        }
+
+        let result = buffer.retrieve_local_object(obj_addr);
+
+        if result {
+            return result;
+        }
+
+        let full_type_name_hash = buffer.read();
+
+        if !full_type_name_hash || full_type_name_hash == 0 {
+            return none;
+        }
+
+        let type_id = FULL_TYPE_NAME_HASH_TO_TYPE_ID.get(full_type_name_hash);
+        let type_size = TYPE_ID_TO_FIELD_COUNT.get(type_id);
+
+        if !type_id || !type_size {
+            return none;
+        }
+
+        let obj_ptr = @alloc(1 + type_size);
+
+        obj_ptr[0] = type_id;
+
+        result = obj_ptr as Object;
+
+        buffer.register_local_object(obj_addr, result);
+
+        result.__deserialize_with_schema_dyn(buffer);
+
+        result
+    }
+
+    autogen dyn __deserialize_with_schema_dyn(buffer: Buffer) {
+        let field_count = buffer.read();
+
+        iter_fields {
+            self.#FIELD_NAME = none;
+        }
+
+        for i in 0..field_count {
+            let field_name = string::__deserialize_with_schema_without_header(buffer);
+            let value_found = false;
+
+            iter_fields {
+                if field_name == #FIELD_NAME {
+                    let field_value = #FIELD_TYPE::__deserialize_with_schema(buffer);
+                    value_found = true;
+
+                    if field_value is #FIELD_TYPE(casted) {
+                        self.#FIELD_NAME = casted;
+                    }
+                }
+            }
+
+            if !value_found {
+                consume_item(buffer);
+            }
+        }
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

@@ -447,7 +447,8 @@ impl ProgramContext {
             Some(_) => VariableKind::Local,
             None => VariableKind::Global,
         };
-        let var_info = VariableInfo::create(name, ty, kind, self.get_function_level());
+        let suffix = self.iter_fields_counter.clone();
+        let var_info = VariableInfo::create(name, ty, kind, self.get_function_level(), suffix);
 
         self.push_var(&var_info);
 
@@ -465,14 +466,14 @@ impl ProgramContext {
                 //     _ => function_unwrapped.name.location.clone()
                 // };
 
-                let var_info = VariableInfo::create(Identifier::new(SELF_VAR_NAME, None), this_type.clone(), VariableKind::Argument, self.get_function_level());
+                let var_info = VariableInfo::create(Identifier::new(SELF_VAR_NAME, None), this_type.clone(), VariableKind::Argument, self.get_function_level(), None);
 
                 self.push_var(&var_info);
                 variables.push(var_info);
             }
 
             for (arg_name, arg_type) in function_unwrapped.argument_names.iter().zip(function_unwrapped.signature.argument_types.iter()) {
-                let var_info = VariableInfo::create(arg_name.clone(), arg_type.clone(), VariableKind::Argument, self.get_function_level());
+                let var_info = VariableInfo::create(arg_name.clone(), arg_type.clone(), VariableKind::Argument, self.get_function_level(), None);
 
                 self.push_var(&var_info);
                 variables.push(var_info);

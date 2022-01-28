@@ -318,44 +318,31 @@ export class Array<T> {
         }
     }
 
-    static __serialize_with_schema(buffer: Buffer, value: Self) {
-        buffer.write(TypeSchema::Array.as_int());
+    dyn __serialize_with_schema_dyn(buffer: Buffer) {
+        buffer.write(#TYPE_FULL_NAME.__hash());
+        buffer.write(self.len());
 
-        if !value || !buffer.mark_object_as_serialized(value) {
-            buffer.write(-1);
-        } else {
-            buffer.write(value.len());
-
-            for item in value {
-                T::__serialize_with_schema(buffer, item);
-            }
+        for item in self {
+            T::__serialize_with_schema(buffer, item);
         }
     }
 
-    static __deserialize_with_schema(buffer: Buffer) -> Self? {
-        let result : Self = none;
+    dyn __deserialize_with_schema_dyn(buffer: Buffer) {
+        let item_count = buffer.read();
 
-        match TypeSchema::__from_int(buffer.read()) {
-            TypeSchema::Int => consume_int(buffer),
-            TypeSchema::Float => consume_float(buffer),
-            TypeSchema::String => consume_string(buffer),
-            TypeSchema::Object => consume_object(buffer),
-            TypeSchema::Array => {
-                let item_count = buffer.read();
+        self.capacity = item_count.next_power_of_4();
+        self.body = @alloc(self.capacity) as Pointer<T>;
+        self.length = item_count;
 
-                if item_count < 0 {
-                    return none;
-                }
+        for i in 0..item_count {
+            let item = T::__deserialize_with_schema(buffer);
 
-                result = Self::with_capacity(item_count);
-
-                for i in 0..item_count {
-                    result.push_unchecked(T::__deserialize_with_schema(buffer));
-                }
-            },
-        };
-
-        result
+            if item is T(casted) {
+                self.body[i] = casted;
+            } else {
+                self.body[i] = none;
+            }
+        }
     }
 
     dyn __to_string_dyn() -> string {

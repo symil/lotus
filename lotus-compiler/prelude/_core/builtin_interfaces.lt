@@ -116,6 +116,7 @@ sys interface Builtin {
     __eq(other: Self) -> bool;
     __ne(other: Self) -> bool;
     static __type_name() -> string;
+    static __type_id() -> int;
     static __default() -> Self;
     static __none() -> Self;
     __is_none() -> bool;

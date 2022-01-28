@@ -35,6 +35,10 @@ sys type(i32) Enum {
         #TYPE_NAME
     }
 
+    autogen static __type_id() -> int {
+        #TYPE_ID
+    }
+
     autogen to_string() -> string {
         let int_value = self as int;
 

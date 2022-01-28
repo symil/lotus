@@ -14,6 +14,7 @@ pub enum MacroExpressionToken {
     TypeId = "TYPE_ID",
     TypeName = "TYPE_NAME",
     TypeShortName = "TYPE_SHORT_NAME",
+    TypeFullName = "TYPE_FULL_NAME",
     FieldCount = "FIELD_COUNT",
     FieldName = "FIELD_NAME",
     FieldDefaultExpression = "FIELD_DEFAULT_EXPRESSION",
@@ -42,11 +43,16 @@ impl ParsedMacroExpression {
             }, context),
             MacroExpressionToken::TypeName => m.access_current_type(|type_unwrapped, context| {
                 context.vasm()
-                    .type_name(&type_unwrapped.self_type)
+                    .type_name(&type_unwrapped.self_type, false)
                     .set_type(context.get_builtin_type(BuiltinType::String, vec![]))
             }, context),
             MacroExpressionToken::TypeShortName => m.access_current_type(|type_unwrapped, context| {
                 make_string_value_from_literal_unchecked(type_unwrapped.name.as_str(), context)
+            }, context),
+            MacroExpressionToken::TypeFullName => m.access_current_type(|type_unwrapped, context| {
+                context.vasm()
+                    .type_name(&type_unwrapped.self_type, true)
+                    .set_type(context.get_builtin_type(BuiltinType::String, vec![]))
             }, context),
             MacroExpressionToken::FieldCount => m.access_current_type(|type_unwrapped, context| {
                 context.vasm()

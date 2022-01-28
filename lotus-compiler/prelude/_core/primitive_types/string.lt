@@ -18,6 +18,10 @@ export type(i32) string {
         #TYPE_NAME
     }
 
+    static __type_id() -> int {
+        #TYPE_ID
+    }
+
     static __none() -> string {{
         (i32.const 0)
     }}
@@ -314,7 +318,6 @@ export type(i32) string {
                 result = string::__deserialize_with_schema_without_header(buffer);
             },
             TypeSchema::Object => consume_object(buffer),
-            TypeSchema::Array => consume_array(buffer),
         }
 
         result

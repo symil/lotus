@@ -13,6 +13,13 @@ export fn main() {
     let maybe : A = test_params(b);
     @log("---");
     let maybe : B = test_params(a);
+
+    @assert(#LINE, (4 is int(v)));
+    @assert(#LINE, !(4 is string(v)));
+
+    @log("---");
+    are_same_type(4, 2);
+    are_same_type(4, false);
 }
 
 fn test(obj: Object) {
@@ -36,5 +43,13 @@ fn test_params<T : Object>(value: Object) -> T? {
     } else {
         @log(`value is not a ${T::__type_name()}`);
         none
+    }
+}
+
+fn are_same_type<T, U>(v1: T, v2: U) {
+    if v1 is U(v) {
+        @log(`${v1} has the same type as ${v2}`);
+    } else {
+        @log(`${v1} has not the same type as ${v2}`);
     }
 }

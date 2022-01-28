@@ -1,7 +1,7 @@
 use std::{rc::Rc, ops::Deref, borrow::Borrow};
 use parsable::ItemLocation;
 use crate::utils::Link;
-use super::{ProgramContext, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat, VirtualInitVariableInfo, ToInt, PlaceholderDetails, VariableAccessKind, VirtualVariableAccessInfo, FunctionBlueprint, VirtualFunctionIndexInfo, VirtualAccessFieldInfo, FieldAccessKind, IfThenElseInfo, VirtualJumpIfInfo, VirtualBlockInfo, VirtualJumpInfo, VirtualLoopInfo, FunctionCall, NamedFunctionCallDetails, VirtualFunctionCallInfo, NONE_METHOD_NAME, AnonymousFunctionCallDetails, Signature};
+use super::{ProgramContext, Type, TypeIndex, VariableInfo, VirtualInstruction, Wat, VirtualInitVariableInfo, ToInt, PlaceholderDetails, VariableAccessKind, VirtualVariableAccessInfo, FunctionBlueprint, VirtualFunctionIndexInfo, VirtualAccessFieldInfo, FieldAccessKind, IfThenElseInfo, VirtualJumpIfInfo, VirtualBlockInfo, VirtualJumpInfo, VirtualLoopInfo, FunctionCall, NamedFunctionCallDetails, VirtualFunctionCallInfo, NONE_METHOD_NAME, AnonymousFunctionCallDetails, Signature, TypeNameDetails};
 
 pub type Vasm = VirtualAssembly;
 
@@ -125,8 +125,11 @@ impl VirtualAssembly {
         self.instruction(|| VirtualInstruction::TypeId(ty.clone()))
     }
 
-    pub fn type_name(self, ty: &Type) -> Self {
-        self.instruction(|| VirtualInstruction::TypeName(ty.clone()))
+    pub fn type_name(self, ty: &Type, include_package: bool) -> Self {
+        self.instruction(|| VirtualInstruction::TypeName(TypeNameDetails {
+            ty: ty.clone(),
+            include_package,
+        }))
     }
 
     pub fn init_var(self, var_info: &VariableInfo) -> Self {
@@ -232,6 +235,20 @@ impl VirtualAssembly {
         self.call_function_named(
             Some(caller_type),
             &method_blueprint,
+            parameters,
+            arguments
+        )
+    }
+
+    pub fn call_sys_function(self, function_name: &str, parameters: &[Type], arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
+        let function_blueprint = match context.functions.get_by_name(function_name) {
+            Some(result) => result,
+            None => panic!("function `{}` does not exist", function_name),
+        };
+
+        self.call_function_named(
+            None,
+            &function_blueprint,
             parameters,
             arguments
         )

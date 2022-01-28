@@ -14,7 +14,7 @@ pub enum VirtualInstruction {
     IntConstant(i32),
     FloatConstant(f32),
     TypeId(Type),
-    TypeName(Type),
+    TypeName(TypeNameDetails),
     InitVariable(VirtualInitVariableInfo),
     VariableAccess(VirtualVariableAccessInfo),
     FieldAccess(VirtualAccessFieldInfo),
@@ -25,6 +25,12 @@ pub enum VirtualInstruction {
     Jump(VirtualJumpInfo),
     JumpIf(VirtualJumpIfInfo),
     IfThenElse(IfThenElseInfo)
+}
+
+#[derive(Debug, Clone)]
+pub struct TypeNameDetails {
+    pub ty: Type,
+    pub include_package: bool
 }
 
 #[derive(Debug, Clone)]
@@ -216,8 +222,14 @@ impl VirtualInstruction {
 
                 vec![Wat::const_i32(type_instance.dynamic_method_table_offset)]
             },
-            VirtualInstruction::TypeName(ty) => {
-                let name = ty.resolve(type_index, context).ty.to_string();
+            VirtualInstruction::TypeName(details) => {
+                let resolved_type = details.ty.resolve(type_index, context);
+                let type_name = resolved_type.ty.to_string();
+                let name = match details.include_package {
+                    true => format!("{}:{}", resolved_type.type_blueprint.borrow().name.location.get_root_directory_name(), type_name),
+                    false => type_name,
+                };
+
                 let vasm = make_string_value_from_literal_unchecked(&name, context);
 
                 vasm.resolve(type_index, context)

@@ -27,7 +27,7 @@ impl StringLiteralManager {
         }
 
         let var_name = format!("string_literal_{}", self.counter);
-        let var_info = VariableInfo::create(Identifier::unlocated(&var_name), self.string_type.clone(), VariableKind::Global, u32::MAX);
+        let var_info = VariableInfo::create(Identifier::unlocated(&var_name), self.string_type.clone(), VariableKind::Global, u32::MAX, None);
 
         self.counter += 1;
         self.strings.insert(value.to_string(), var_info.clone());

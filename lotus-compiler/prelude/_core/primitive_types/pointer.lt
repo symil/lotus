@@ -11,6 +11,10 @@ export type(i32) Pointer<T> {
         #TYPE_NAME
     }
 
+    static __type_id() -> int {
+        #TYPE_ID
+    }
+
     static __none() -> Self {{
         (i32.const 0)
     }}

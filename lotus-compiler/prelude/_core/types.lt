@@ -1,0 +1,7 @@
+// sys fn __is_same_type<T, U>() -> bool {
+//     T::__type_id() == U::__type_id()
+// }
+
+sys fn __is_same_type(type_1_id: int, type_2_id: int) -> bool {
+    type_1_id == type_2_id
+}

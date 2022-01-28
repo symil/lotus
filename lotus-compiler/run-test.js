@@ -58,7 +58,9 @@ async function main() {
             mode = 'release';
         }
 
-        describe('Lotus', () => {
+        describe('Lotus', function() {
+            this.timeout(5000);
+
             for (let dirName of testsToRun) {
                 let testName = dirName;
                 let dirPath = path.join(TEST_DIR, dirName);

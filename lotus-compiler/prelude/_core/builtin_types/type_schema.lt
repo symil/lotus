@@ -2,8 +2,7 @@ pub enum TypeSchema {
     Int,
     Float,
     String,
-    Object,
-    Array
+    Object
 }
 
 pub fn consume_int(buffer: Buffer) {
@@ -19,16 +18,7 @@ pub fn consume_string(buffer: Buffer) {
 }
 
 pub fn consume_object(buffer: Buffer) {
-    let field_count = buffer.read();
-
-    if field_count >= 0 {
-        for i in 0..field_count {
-            // consume field name
-            consume_string(buffer);
-            // consume field content
-            consume_item(buffer);
-        }
-    }
+    Object::__deserialize_with_schema_without_header(buffer);
 }
 
 pub fn consume_array(buffer: Buffer) {
@@ -47,6 +37,5 @@ pub fn consume_item(buffer: Buffer) {
         TypeSchema::Float => consume_float(buffer),
         TypeSchema::String => consume_string(buffer),
         TypeSchema::Object => consume_object(buffer),
-        TypeSchema::Array => consume_array(buffer),
     }
 }

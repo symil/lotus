@@ -1,4 +1,4 @@
-use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc, fmt::Debug};
+use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc, fmt::Debug, path::{Path}};
 use crate::{line_col_lookup::{lookup_line_col}, file_info::FileInfo};
 
 #[derive(Clone, Default)]
@@ -89,6 +89,10 @@ impl ItemLocation {
 
     pub fn length(&self) -> usize {
         self.end - self.start
+    }
+
+    pub fn get_root_directory_name(&self) -> &str {
+        Path::new(&self.file.package_root_path).file_name().and_then(|os_str| os_str.to_str()).unwrap_or("")
     }
 }
 

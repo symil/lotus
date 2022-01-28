@@ -1,0 +1,44 @@
+class Foo<T> {
+    value: T
+}
+
+class Bar {
+    a: Bar?,
+    b: Bar?,
+    c: string,
+    d: string,
+    e: int[],
+    f: int[]
+}
+
+export fn main() {
+    test(8);
+    test(true);
+    test('l');
+    test(1.8);
+    test("hello");
+    test(Foo<int> { value: 15 });
+    test([1, 1, 2, 3, 5, 8]);
+    @log("---");
+
+    let bar = Bar {};
+    bar.a = none;
+    bar.b = bar;
+    bar.c = "hello";
+    bar.d = bar.c;
+    bar.e = [1, 2, 3, 4];
+    bar.f = bar.e;
+
+    let result = test(bar);
+    @assert(#LINE, result.b == result);
+    @assert(#LINE, (result.c as int) == (result.d as int));
+    @assert(#LINE, (result.e as int) == (result.f as int));
+}
+
+fn test<T>(input: T) -> T {
+    let bytes = @serialize_with_schema(input);
+    let output : T = @deserialize_with_schema(bytes);
+
+    @dbg(output);
+    output
+}

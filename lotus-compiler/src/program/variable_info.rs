@@ -11,7 +11,7 @@ pub struct VariableInfoContent {
     pub kind: VariableKind,
     pub wasm_name: String,
     pub declaration_level: u32,
-    pub is_closure_arg: bool
+    pub is_closure_arg: bool,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -37,9 +37,16 @@ impl VariableKind {
     }
 }
 
+fn make_wasm_name(name: &Identifier, suffix: Option<usize>) -> String {
+    match suffix {
+        Some(value) => format!("{}_{}", name.to_unique_string(), value),
+        None => name.to_unique_string(),
+    }
+}
+
 impl VariableInfo {
-    pub fn create(name: Identifier, ty: Type, kind: VariableKind, declaration_level: u32) -> Self {
-        let wasm_name = name.to_unique_string();
+    pub fn create(name: Identifier, ty: Type, kind: VariableKind, declaration_level: u32, suffix: Option<usize>) -> Self {
+        let wasm_name = make_wasm_name(&name, suffix);
         let is_closure_arg = false;
         let content = VariableInfoContent { name, ty, kind, declaration_level, wasm_name, is_closure_arg };
 

@@ -8,3 +8,6 @@ B: hello
 value is a A
 ---
 value is not a B
+---
+4 has the same type as 2
+4 has not the same type as false
