@@ -9,11 +9,11 @@ event OnDealDamages {
 }
 
 class Log {
-    @OnDealDamages[-100] {
+    @OnDealDamages[100] {
         @log(`${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
     }
 
-    @OnDealDamages[100] {
+    @OnDealDamages[-100] {
         @log(`${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
     }
 }
@@ -28,7 +28,7 @@ class Character {
         self.total_damages_received += evt.amount;
     }
 
-    @OnDealDamages[-50] {
+    @OnDealDamages[50] {
         check evt.source == self;
 
         self.total_damages_dealt += evt.amount;
@@ -36,7 +36,7 @@ class Character {
 }
 
 class Attacker extends Character {
-    @OnDealDamages[1] {
+    @OnDealDamages[-1] {
         check evt.source == self;
 
         evt.amount *= 2;

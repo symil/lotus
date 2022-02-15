@@ -148,8 +148,6 @@ impl ParsedEventCallbackDeclaration {
             context.errors.expected_function_body(self);
         }
 
-        
-
         Some(function_wrapped)
     }
 }

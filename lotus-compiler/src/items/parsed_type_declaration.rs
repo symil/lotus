@@ -612,17 +612,6 @@ impl ParsedTypeDeclaration {
         self.process(context, |type_wrapped, context| {
             let parent_opt = type_wrapped.borrow().parent.as_ref().map(|info| info.ty.get_type_blueprint());
 
-            for event_callback in self.get_event_callbacks() {
-                if let Some(function_wrapped) = event_callback.process(context) {
-                    type_wrapped.with_mut(|mut type_unwrapped| {
-                        let event_type = function_wrapped.borrow().get_event_callback_details().unwrap().event_type.clone();
-                        let callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, &event_type, || vec![]);
-
-                        callback_list.push(function_wrapped.clone());
-                    });
-                }
-            }
-
             if let Some(parent_type) = parent_opt {
                 type_wrapped.with_mut(|mut type_unwrapped| {
                     parent_type.with_ref(|parent_unwrapped| {
@@ -635,6 +624,17 @@ impl ParsedTypeDeclaration {
                         }
                     });
                 });
+            }
+
+            for event_callback in self.get_event_callbacks() {
+                if let Some(function_wrapped) = event_callback.process(context) {
+                    type_wrapped.with_mut(|mut type_unwrapped| {
+                        let event_type = function_wrapped.borrow().get_event_callback_details().unwrap().event_type.clone();
+                        let callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, &event_type, || vec![]);
+
+                        callback_list.push(function_wrapped.clone());
+                    });
+                }
             }
         });
     }

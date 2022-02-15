@@ -1,10 +1,10 @@
 type EventTypeId = int;
 type TargetTypeId = int;
-type EventCallbackPriority = int;
+type EventCallbackIndex = int;
 type EventCallback = fn(Object, Event, EventOutput);
 type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 
-sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>>::new();
+sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>>::new();
 
 export class Event extends Object {
     emit(targets: Object[]) {
@@ -22,8 +22,8 @@ export class EventOutput {
 }
 
 sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_type_id: int, callback: EventCallback) {
-    let callback_priorities = EVENT_CALLBACKS.get_or_insert_with(event_type_id, () => Map<EventCallbackPriority, Map<TargetTypeId, EventCallback[]>>::new());
-    let target_callbacks = callback_priorities.get_or_insert_with(callback_priority, () => Map<TargetTypeId, EventCallback[]>::new());
+    let callback_indexes = EVENT_CALLBACKS.get_or_insert_with(event_type_id, () => Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>::new());
+    let target_callbacks = callback_indexes.get_or_insert_with(callback_priority, () => Map<TargetTypeId, EventCallback[]>::new());
     let callback_list = target_callbacks.get_or_insert_with(target_type_id, () => []);
 
     callback_list.push(callback);
@@ -31,7 +31,7 @@ sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_
 
 sys fn sort_event_callbacks() {
     for entry in EVENT_CALLBACKS {
-        entry.value.sort((a, b) => b - a);
+        entry.value.sort((a, b) => a - b);
     }
 }
 
