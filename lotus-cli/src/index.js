@@ -18,9 +18,9 @@ async function main() {
     let locations = computeLocations(root);
     let upload = hasOption('--upload', '-u');
     let buildOnly = hasOption('--build', '-b') || upload;
-    let open = hasOption('--open', '-o');
+    let openHttpServer = hasOption('--open', '-o');
     let killServer = hasOption('-k');
-    let buildOptions = { locations, httpPort };
+    let buildOptions = { locations, httpPort, openHttpServer };
 
     if (killServer) {
         stopRemoteServer(locations);
@@ -31,11 +31,12 @@ async function main() {
             uploadBuild(locations);
         }
     } else {
-        await startHttpServer(locations, httpPort, open);
+        await startHttpServer(buildOptions);
     }
 }
 
-async function startHttpServer(locations, port, open) {
+async function startHttpServer(buildOptions) {
+    let { locations, httpPort, openHttpServer } = buildOptions;
     let app = express();
     let serverCommand = new Command('node', [locations.outputServerFilePath]);
 
@@ -49,9 +50,9 @@ async function startHttpServer(locations, port, open) {
 
     app.use(express.static(locations.buildDirPath));
     app.use(express.static(locations.rootDirPath));
-    app.listen(port, open ? null : 'localhost');
+    app.listen(httpPort, openHttpServer ? null : 'localhost');
 
-    console.log(`${chalk.bold('> info:')} listening on port ${chalk.bold(port)}...`);
+    console.log(`${chalk.bold('> info:')} listening on port ${chalk.bold(httpPort)}...`);
 }
 
 async function buildProject({ locations, httpPort }) {
