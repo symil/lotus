@@ -9,6 +9,7 @@ export const COMPILER_BINARY_PATH = path.join(COMPILER_DIR, 'target', 'debug', '
 export const CLIENT_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'client.js');
 export const SERVER_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'server.js');
 export const HTTP_SERVER_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'http-server.js');
+export const START_SCRIPT_ENTRY_PATH = path.join(ROOT_DIR, 'static', 'start.sh');
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
 export const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
@@ -17,7 +18,8 @@ export const PROJECT_BUILD_DIR_NAME = 'build';
 export const OUTPUT_WASM_FILE_NAME = 'module.wasm';
 export const OUTPUT_CLIENT_FILE_NAME = 'client.js';
 export const OUTPUT_SERVER_FILE_NAME = 'server.js';
-export const OUTPUT_HTTP_SERVER_FILE_NAME = 'run.js';
+export const OUTPUT_HTTP_SERVER_FILE_NAME = 'entry-point.js';
+export const START_SCRIPT_NAME = 'start.sh';
 
 export const SSH_PORT = 221;
 export const SSH_USER = 'bus';

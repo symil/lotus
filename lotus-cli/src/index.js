@@ -4,11 +4,10 @@ import chalk from 'chalk';
 import express from 'express';
 import esbuild from 'esbuild';
 import { wasmLoader } from 'esbuild-plugin-wasm';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, HTTP_SERVER_ENTRY_PATH, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, COMPILER_DIR, HTTP_SERVER_ENTRY_PATH, OUTPUT_CLIENT_FILE_NAME, SERVER_ENTRY_PATH, START_SCRIPT_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
 import { computeLocations } from './locations';
 import { runCommand } from './utils';
 import { Command } from './command';
-import { execSync } from 'child_process';
 import { stopRemoteServer, uploadBuild } from './upload';
 
 const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
@@ -21,11 +20,12 @@ async function main() {
     let buildOnly = hasOption('--build', '-b') || upload;
     let open = hasOption('--open', '-o');
     let killServer = hasOption('-k');
+    let buildOptions = { locations, httpPort };
 
     if (killServer) {
         stopRemoteServer(locations);
     } else if (buildOnly) {
-        await buildProject(locations);
+        await buildProject(buildOptions);
 
         if (upload) {
             uploadBuild(locations);
@@ -41,7 +41,7 @@ async function startHttpServer(locations, port, open) {
 
     app.get(`/`, (req, res, next) => {
         return serverCommand.stop()
-            .then(() => buildProject(locations))
+            .then(() => buildProject(buildOptions))
             .then(() => serverCommand.start())
             .then(() => next())
             .catch(e => serveError(res, e));
@@ -54,7 +54,7 @@ async function startHttpServer(locations, port, open) {
     console.log(`${chalk.bold('> info:')} listening on port ${chalk.bold(port)}...`);
 }
 
-async function buildProject(locations) {
+async function buildProject({ locations, httpPort }) {
     if (!compileCompiler()) {
         process.exit(1);
     }
@@ -103,8 +103,12 @@ async function buildProject(locations) {
         bundleFileName: OUTPUT_CLIENT_FILE_NAME,
         outputPath: locations.outputIndexHtmlFilePath,
     });
+    writeStartScript({
+        inputPath: START_SCRIPT_ENTRY_PATH,
+        outputPath: locations.outputStartScriptFilePath,
+        defaultPort: httpPort
+    });
 
-    execSync(`chmod +x ${locations.outputHttpServerFilePath}`);
     process.stdout.write(chalk.bold.blue(' ok\n'));
 }
 
@@ -143,6 +147,14 @@ function writeIndexHtml({ title, bundleFileName, outputPath }) {
     ].join('\n');
 
     fs.writeFileSync(outputPath, content, 'utf8');
+}
+
+function writeStartScript({ inputPath, outputPath, defaultPort }) {
+    let input = fs.readFileSync(inputPath, 'utf8');
+    let output = input.replace('#PORT=X', `PORT=${defaultPort}`);
+
+    fs.writeFileSync(outputPath, output, 'utf8');
+    fs.chmodSync(outputPath, '755');
 }
 
 function serveError(response, error) {

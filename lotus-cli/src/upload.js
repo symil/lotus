@@ -1,35 +1,45 @@
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { basename } from 'path';
-import { OUTPUT_HTTP_SERVER_FILE_NAME, SSH_HOSTNAME, SSH_PORT, SSH_USER } from './constants';
+import { SSH_HOSTNAME, SSH_PORT, SSH_USER, START_SCRIPT_NAME } from './constants';
 
 export function uploadBuild(locations) {
-    let targetDirName = basename(locations.rootDirPath);
+    let targetDirName = getTargetDirName(locations);
     let preUploadCommandList = [
-        `killall node`,
         `rm -rf ${targetDirName}`,
     ];
     let postUploadCommandList = [
-        `cd ${targetDirName}`,
-        `nohup node ${OUTPUT_HTTP_SERVER_FILE_NAME} > /dev/null 2>&1 &`
+        `cd ${targetDirName} && ./${START_SCRIPT_NAME}`
     ];
 
-    let preUploadCommand = makeSshCommand(preUploadCommandList);
-    let uploadCommand = makeScpUploadCommand(locations.buildDirPath, targetDirName);
-    let postUploadCommand = makeSshCommand(postUploadCommandList);
+    let sshPreUploadCommand = makeSshCommand(preUploadCommandList);
+    let sshUploadCommand = makeScpUploadCommand(locations.buildDirPath, targetDirName);
+    let sshPostUploadCommand = makeSshCommand(postUploadCommandList);
 
-    run(preUploadCommand, 'removing existing build');
-    run(uploadCommand, 'uploading build');
-    run(postUploadCommand, 'starting server');
+    run(sshPreUploadCommand, 'removing existing build');
+    run(sshUploadCommand, 'uploading build');
+    run(sshPostUploadCommand, 'starting server');
 }
 
 export function stopRemoteServer(locations) {
-    let stopCommand = makeSshCommand(['killall node']);
+    let targetDirName = getTargetDirName(locations);
+    let commands = [
+        `cd ${targetDirName} && ./${START_SCRIPT_NAME} --stop`
+    ];
+    let sshStopCommand = makeSshCommand(commands);
 
-    run(stopCommand, 'stopping server');
+    run(sshStopCommand, 'stopping server');
+}
+
+function getTargetDirName(locations) {
+    return basename(locations.rootDirPath);
 }
 
 function makeSshCommand(commandList) {
+    if (!Array.isArray(commandList)) {
+        commandList = [commandList];
+    }
+
     return `ssh -p ${SSH_PORT} ${SSH_USER}@${SSH_HOSTNAME} '${commandList.join('; ')}'`;
 }
 
