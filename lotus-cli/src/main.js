@@ -1,5 +1,5 @@
 import path from 'path';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS, WRITE_SERVER_CONFIG_SCRIPT_PATH } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS, WRITE_SERVER_CONFIG_SCRIPT_PATH } from './constants';
 import { execSync } from 'child_process';
 
 const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
@@ -18,8 +18,8 @@ async function main() {
 
     let inputPath = path.join(rootPath, 'src');
     let buildPath = path.join(rootPath, BUILD_DIRECTORY_NAME);
-    let watFilePath = path.join(buildPath, 'client', 'module.wat');
-    let wasmFilePath = path.join(buildPath, 'client', 'module.wasm');
+    let watFilePath = path.join(buildPath, 'client', OUTPUT_WAT_FILE_NAME);
+    let wasmFilePath = path.join(buildPath, 'client', OUTPUT_WASM_FILE_NAME);
     let configFilePath = path.join(buildPath, 'server', SERVER_CONFIG_FILE_NAME);
     let lotusToWatCommand = `'${COMPILER_BINARY_PATH} ${inputPath} ${watFilePath} --silent'`;
     let watToWasmCommand = `'${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS} ${watFilePath} -o ${wasmFilePath}'`;
