@@ -132,9 +132,8 @@
 [X] Add script to start http server in build
 [X] Prevent http clients from accessing private server files
 [X] Allocate literal strings a single time
-[ ] Add completion for dynamic method names
-[ ] Add completion for type parameters
-[ ] Signature help: correctly infer type parameters (`Array<int>.push()` should display `int` instead of `T`)
+[X] Use vanguard as build system
+[X] Copy config file to server during build
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -193,6 +192,10 @@
 [ ] Compute string hash during string creation
 [ ] Fix serialization with schema for arrays/objects (what happens when an array field becomes a non-array field? or vice-versa)
 [ ] Fix interaction when A defines a dyn autogen method, and B inherits from A and redefines the same autogen dyn method
+[ ] Add completion for dynamic method names
+[ ] Add completion for type parameters
+[ ] Signature help: correctly infer type parameters (`Array<int>.push()` should display `int` instead of `T`)
+[ ] Fix structure of compiler/cli
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

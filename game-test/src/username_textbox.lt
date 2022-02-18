@@ -6,6 +6,6 @@ pub class UsernameTextBox extends TextBox {
     self.data_key = DATA_KEY;
 
     @OnRender {
-        self.background_color(Color::orange())
+        self.background_color(Color::white())
     }
 }

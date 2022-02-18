@@ -8,8 +8,9 @@ export const COMPILER_DIR = path.join(ROOT_DIR, '..', 'lotus-compiler');
 export const COMPILER_BINARY_PATH = path.join(COMPILER_DIR, 'target', 'debug', 'lotus-compiler');
 export const CLIENT_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'client.js');
 export const SERVER_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'server.js');
-export const HTTP_SERVER_ENTRY_PATH = path.join(COMPILER_DIR, 'js', 'http-server.js');
-export const START_SCRIPT_ENTRY_PATH = path.join(ROOT_DIR, 'static', 'start.sh');
+export const SCRIPTS_DIR_PATH = path.join(ROOT_DIR, 'scripts');
+export const WRITE_SERVER_CONFIG_SCRIPT_PATH = path.join(SCRIPTS_DIR_PATH, 'write-server-config.js');
+
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
 export const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
 
@@ -21,6 +22,5 @@ export const OUTPUT_SERVER_FILE_NAME = 'server.js';
 export const OUTPUT_HTTP_SERVER_FILE_NAME = 'entry-point.js';
 export const START_SCRIPT_NAME = 'start.sh';
 
-export const SSH_PORT = 221;
-export const SSH_USER = 'bus';
-export const SSH_HOSTNAME = 'ytawo.eu';
+export const DEFAULT_HTTP_PORT = 8000;
+export const SERVER_CONFIG_FILE_NAME = 'lotus.json';

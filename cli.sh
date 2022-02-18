@@ -1,11 +1,12 @@
 #!/bin/bash
 
-if [ "$1" == "--install" ] || [ "$1" == "-i" ] ; then
-    cd lotus-cli && npm install
-fi
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+TEST_GAME_PATH=$SCRIPT_DIR/game-test
 
 if [ "$1" == "-d" ] ; then
-    rm -rf game-test/build
+    rm -rf $TEST_GAME_PATH/build
+    exit
 fi
 
-node --enable-source-maps --experimental-specifier-resolution=node lotus-cli/src/index.js --root game-test $@
+cd $TEST_GAME_PATH
+node --enable-source-maps --experimental-specifier-resolution=node $SCRIPT_DIR/lotus-cli/src/main.js 33902 az@ytawo.eu:221 $@

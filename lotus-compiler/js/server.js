@@ -1,39 +1,51 @@
 import path from 'path';
 import fs from 'fs';
-import ws from 'ws';
+import express from 'express';
+import { WebSocketServer } from 'ws';
 import { initializeWasm } from './wasm-initialization';
-import { FILES_DIR_NAME } from './constants';
-
-const ROOT_DIR = path.dirname(process.argv[1]);
-const FILES_DIR_PATH = path.join(ROOT_DIR, FILES_DIR_NAME);
+import { SERVER_CONFIG_FILE_NAME } from '../../lotus-cli/src/constants';
 
 async function main() {
-    let wasmPath = path.join(ROOT_DIR, 'module.wasm');
-    let env = { log, createWebSocketServer, getPathModule, getFileSystemModule, getFileSystemRootPath };
-    let instance = await initializeWasm(fs.readFileSync(wasmPath, null), env);
+    let serverDirectory = path.dirname(process.argv[1]);
+    let httpPort = parseInt(process.argv[2]);
+    let clientDirectory = path.resolve(process.argv[3]);
 
-    instance.exports.start_server();
-    setInterval(() => instance.exports.update_server(), 10);
+    let wasmPath = path.join(clientDirectory, 'module.wasm');
+    let configPath = path.join(serverDirectory, SERVER_CONFIG_FILE_NAME);
+    let config = JSON.parse(fs.readFileSync(configPath));
+    let fileSystemRootPath = path.join(process.env.HOME, '.cache', 'lotus', config.name);
+    let wasmEnv = makeWasmEnv({ fileSystemRootPath });
+    let wasmBytes = fs.readFileSync(wasmPath, null);
+    let wasmInstance = await initializeWasm(wasmBytes, wasmEnv);
+    let httpServer = express();
+
+    wasmInstance.exports.start_server();
+    setInterval(() => wasmInstance.exports.update_server(), 10);
+    
+    httpServer.use(express.static(clientDirectory));
+    httpServer.listen(httpPort, () => {
+        console.log(`=> http server listening on port ${httpPort}...`);
+    });
 }
 
-function log(string) {
-    console.log(string);
-}
-
-function createWebSocketServer(options) {
-    return new ws.WebSocketServer(options);
-}
-
-function getPathModule() {
-    return path;
-}
-
-function getFileSystemModule() {
-    return fs;
-}
-
-function getFileSystemRootPath() {
-    return FILES_DIR_PATH;
+function makeWasmEnv({ fileSystemRootPath }) {
+    return {
+        log(string) {
+            console.log(string);
+        },
+        createWebSocketServer(options) {
+            return new WebSocketServer(options);
+        },
+        getPathModule() {
+            return path;
+        },
+        getFileSystemModule() {
+            return fs;
+        },
+        getFileSystemRootPath() {
+            return fileSystemRootPath;
+        }
+    }
 }
 
 main();
