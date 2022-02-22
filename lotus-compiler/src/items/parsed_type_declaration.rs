@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
@@ -330,6 +330,7 @@ impl ParsedTypeDeclaration {
                                 owner: field_info.owner.clone(),
                                 ty: field_info.ty.replace_parameters(Some(&parent.ty), &[]),
                                 name: field_info.name.clone(),
+                                visibility: field_info.visibility.clone(),
                                 offset,
                                 default_value: context.vasm()
                             });
@@ -341,9 +342,7 @@ impl ParsedTypeDeclaration {
                 }
 
                 for field in self.get_fields() {
-                    if field.comma.is_none() && field.ty.is_none() {
-                        context.completion_provider.add_keyword_completion(&field.name, &[SELF_VAR_NAME]);
-                    }
+                    field.process(type_unwrapped.parent.as_ref().map(|p| &p.ty), context);
 
                     match &field.ty {
                         Some(ty) => {
@@ -365,6 +364,7 @@ impl ParsedTypeDeclaration {
                                     owner: type_wrapped.clone(),
                                     ty: field_type,
                                     name: field.name.clone(),
+                                    visibility: FieldVisibility::from_name(field.name.as_str()),
                                     offset,
                                     default_value: context.vasm()
                                 });

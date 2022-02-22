@@ -1,4 +1,4 @@
-use std::{mem::take, rc::Rc};
+use std::{mem::take, rc::Rc, fmt::format};
 use parsable::ItemLocation;
 use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}, language_server::Range};
 use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, CompletionItemCommand};
@@ -87,11 +87,12 @@ impl CompletionItemList {
             .description(variable.ty().to_string());
     }
 
-    pub fn add_field(&mut self, field: Rc<FieldInfo>) {
+    pub fn add_field(&mut self, field: Rc<FieldInfo>, prefix: &'static str) {
         let field_name = field.name.as_str();
+        let label = format!("{}{}", prefix, field_name);
 
         self
-            .add(field_name)
+            .add(label)
             .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(field_name), false))
             .kind(CompletionItemKind::Field)
             .description(field.ty.to_string());

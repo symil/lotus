@@ -14,6 +14,16 @@ class Bar {
     d: string
 }
 
+class WithPrivate1 {
+    _a: int,
+    a: int
+}
+
+class WithPrivate2 {
+    _a: int,
+    a: int
+}
+
 export fn main() {
     let foo = Foo {
         a: 1,
@@ -32,9 +42,18 @@ export fn main() {
         ..target,
         a: 8
     };
+    let p1 = WithPrivate1 {
+        _a: 5,
+        a: 6
+    };
+    let p2 = WithPrivate2 {
+        ..p1
+    };
 
     @dbg(foo);
     @dbg(bar);
     @dbg(target);
     @dbg(target2);
+    @dbg(p1);
+    @dbg(p2);
 }

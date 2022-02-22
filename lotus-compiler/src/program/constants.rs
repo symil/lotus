@@ -16,9 +16,6 @@ pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE *
 
 pub const OBJECT_HEADER_SIZE : usize = 1;
 
-pub const INT_NONE_VALUE : i32 = i32::MIN;
-pub const NONE_LITERAL : &'static str = "none";
-
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
 pub const INIT_STRING_LITERALS_FUNC_NAME : &'static str = "init_string_literals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";
@@ -29,6 +26,12 @@ pub const SELF_VAR_NAME : &'static str = "self";
 pub const CLOSURE_VARIABLES_VAR_NAME : &'static str = "closure_args";
 pub const INIT_TYPE_METHOD_NAME : &'static str = "__init";
 pub const END_INIT_TYPE_METHOD_NAME : &'static str = "__end_init";
+
+pub const INT_NONE_VALUE : i32 = i32::MIN;
+pub const NONE_LITERAL : &'static str = "none";
+
+pub const SYSTEM_FIELD_PREFIX : &'static str = "__";
+pub const PRIVATE_FIELD_PREFIX : &'static str = "_";
 
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const ENUM_TYPE_NAME : &'static str = "Enum";

@@ -17,11 +17,11 @@ impl ParsedSuperFieldDefaultValue {
     pub fn process(&self, self_type: &Type, context: &mut ProgramContext) -> Option<(String, Vasm)> {
         let dot = unwrap_item(&self.dot, self, context)?;
 
-        context.completion_provider.add_field_completion(dot, self_type, false, false);
+        context.completion_provider.add_field_completion(dot, self_type, false, false, "");
 
         let name = unwrap_item(&self.name, self, context)?;
 
-        context.completion_provider.add_field_completion(name, self_type, false, false);
+        context.completion_provider.add_field_completion(name, self_type, false, false, "");
 
         let equal = unwrap_item(&self.equal, self, context)?;
         let expression = unwrap_item(&self.expression, self, context)?;

@@ -42,7 +42,8 @@ pub struct EventCompletionDetails {
 pub struct FieldCompletionDetails {
     pub parent_type: Type,
     pub show_methods: bool,
-    pub insert_arguments: bool
+    pub insert_arguments: bool,
+    pub prefix: &'static str,
 }
 
 #[derive(Debug)]
@@ -76,7 +77,7 @@ impl CompletionItemGenerator {
             },
             Self::FieldOrMethod(details) => {
                 for field_info in details.parent_type.get_all_fields() {
-                    items.add_field(field_info);
+                    items.add_field(field_info, details.prefix);
                 }
 
                 if details.show_methods {

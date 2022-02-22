@@ -134,6 +134,8 @@
 [X] Allocate literal strings a single time
 [X] Use outpost as build system
 [X] Copy config file to server during build
+[X] Differenciate between public, private and internal fields/methods
+[X] Make so spread operator only copies public fields
 
 -- LATER --
 [ ] Allow manually specifying function parameters

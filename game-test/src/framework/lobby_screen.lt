@@ -1,0 +1,37 @@
+export view LobbyScreen {
+    title: string,
+    background_color : Color,
+    text_font: Font,
+    title_color : Color,
+
+    @OnRender {
+        let title_label = Label {
+            text: self.title,
+            text_color: self.title_color,
+            text_font: self.text_font,
+            background_color: Color::orange()
+        };
+
+        self.background_color(self.background_color);
+        self.layout()
+            .move_to(0.5, 0)
+            .towards_bottom()
+            .scale_y(0.15)
+            .push(title_label)
+    }
+
+    @OnKeyboardEvent {
+        if evt.action != KeyboardAction::Down {
+            return;
+        }
+
+        if evt.code == KeyCode::Tab {
+            if evt.shift_key {
+                self.client.focus_prev();
+            } else {
+                self.client.focus_next();
+            }
+            intercept;
+        }
+    }
+}

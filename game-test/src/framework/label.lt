@@ -1,0 +1,15 @@
+export view Label {
+    text: string,
+    text_color: Color = Color::black(),
+    text_size: DisplaySize = .8h,
+    text_font: Font = Font::Arial,
+    background_color : Color = Color::transparent(),
+
+    @OnRender {
+        self.background_color(self.background_color)
+            .text(self.text)
+            .text_color(self.text_color)
+            .text_size(self.text_size)
+            .text_font(self.text_font)
+    }
+}

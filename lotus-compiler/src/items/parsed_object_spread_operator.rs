@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm}};
+use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm, FieldVisibility}};
 use super::{ParsedExpression, ParsedDoubleDotToken};
 
 #[parsable]
@@ -33,6 +33,10 @@ impl ParsedObjectSpreadOperator {
             );
 
             for field in expr_type.get_all_fields() {
+                if field.visibility != FieldVisibility::Public {
+                    continue;
+                }
+
                 if let Some(object_field) = object_type.get_field(field.name.as_str()) {
                     let actual_type = field.ty.replace_parameters(Some(&expr_type), &[]);
                     let expected_type = object_field.ty.replace_parameters(Some(object_type), &[]);

@@ -22,7 +22,7 @@ async function main() {
     let wasmFilePath = path.join(buildPath, 'client', OUTPUT_WASM_FILE_NAME);
     let configFilePath = path.join(buildPath, 'server', SERVER_CONFIG_FILE_NAME);
     let lotusToWatCommand = `'${COMPILER_BINARY_PATH} ${inputPath} ${watFilePath} --silent'`;
-    let watToWasmCommand = `'${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS} ${watFilePath} -o ${wasmFilePath}'`;
+    let watToWasmCommand = `'${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS.join(' ')} ${watFilePath} -o ${wasmFilePath}'`;
     let buildConfigCommand = `'${WRITE_SERVER_CONFIG_SCRIPT_PATH} ${rootPath} ${configFilePath}'`;
 
     let command = [

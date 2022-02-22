@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use parsable::parsable;
-use crate::{program::{FieldKind, ProgramContext, Type, FunctionBlueprint, MethodQualifier, Visibility, Signature, MethodDetails, Vasm, FunctionBody}, utils::Link};
+use crate::{program::{FieldKind, ProgramContext, Type, FunctionBlueprint, MethodQualifier, Visibility, Signature, MethodDetails, Vasm, FunctionBody, FieldVisibility}, utils::Link};
 use super::{ParsedMethodQualifier, ParsedFunctionSignature, Identifier};
 
 #[parsable]
@@ -39,6 +39,7 @@ impl ParsedInterfaceMethodDeclaration {
             closure_details: None,
             method_details: Some(MethodDetails {
                 qualifier: qualifier,
+                visibility: FieldVisibility::from_name(self.name.as_str()),
                 event_callback_details: None,
                 first_declared_by: None,
                 dynamic_index: None,

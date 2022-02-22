@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, ParsedMethodQualifier, Identifier, ParsedVisibilityToken}, program::{VariableKind, Wat}, utils::Link};
-use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody, FieldVisibility};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -29,6 +29,7 @@ pub struct ClosureDetails {
 #[derive(Debug)]
 pub struct MethodDetails {
     pub qualifier: MethodQualifier,
+    pub visibility: FieldVisibility,
     pub event_callback_details: Option<EventCallbackDetails>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub dynamic_index: Option<i32>,

@@ -1,0 +1,18 @@
+export view BasicGameWindow {
+    background_color : Color = Color::white(),
+    title: string = "Game",
+    title_color : Color = Color::black(),
+    text_font: Font = Font::Arial,
+
+    @OnRender {
+        let lobby_screen = LobbyScreen {
+            background_color: self.background_color,
+            title: self.title,
+            title_color: self.title_color,
+            text_font: self.text_font
+        };
+
+        self.layout()
+            .push(lobby_screen)
+    }
+}

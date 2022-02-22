@@ -43,12 +43,13 @@ impl CompletionItemProvider {
         })
     }
 
-    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool) {
+    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool, prefix: &'static str) {
         self.add_completion(location, || {
             CompletionItemGenerator::FieldOrMethod(FieldCompletionDetails {
                 parent_type: parent_type.clone(),
                 show_methods,
                 insert_arguments,
+                prefix
             })
         })
     }
@@ -59,6 +60,7 @@ impl CompletionItemProvider {
                 parent_type: parent_type.clone(),
                 show_methods,
                 insert_arguments,
+                prefix: ""
             })
         })
     }

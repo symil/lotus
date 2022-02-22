@@ -1,7 +1,7 @@
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, ItemLocation};
-use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody}, utils::Link, wat};
+use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility}, utils::Link, wat};
 use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken};
 
 #[parsable]
@@ -82,6 +82,7 @@ impl ParsedEventCallbackDeclaration {
             closure_details: None,
             method_details: Some(MethodDetails {
                 qualifier: MethodQualifier::None,
+                visibility: FieldVisibility::Private,
                 event_callback_details: Some(EventCallbackDetails {
                     event_type: event_type.clone(),
                     qualifier: qualifier,

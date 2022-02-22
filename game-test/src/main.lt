@@ -1,31 +1,7 @@
-view Window {
-    @OnRender {
-        self.background_color(Color::white());
-        self.layout()
-            .move_to(0.5, 0.5)
-            .scale_x(0.35)
-            .strip_to_match_aspect_ratio(5)
-            .push(UsernameTextBox)
-    }
-
-    @OnDefineMouseInteractions {
-        
-    }
-
-    @OnKeyboardEvent {
-        if evt.action != KeyboardAction::Down {
-            return;
-        }
-
-        if evt.code == KeyCode::Tab {
-            if evt.shift_key {
-                self.client.focus_prev();
-            } else {
-                self.client.focus_next();
-            }
-            intercept;
-        }
-    }
+view Window extends BasicGameWindow {
+    self.background_color = Color::light_green();
+    self.title = "Some game";
+    self.title_color = Color::red();
 }
 
 class World {

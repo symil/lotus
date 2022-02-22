@@ -16,3 +16,11 @@ Target {
   b: 1.2000000476837158,
   c: "world",
 }
+WithPrivate1 {
+  _a: 5,
+  a: 6,
+}
+WithPrivate2 {
+  _a: 0,
+  a: 6,
+}

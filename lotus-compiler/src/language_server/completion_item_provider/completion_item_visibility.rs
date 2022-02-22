@@ -1,7 +1,5 @@
+use crate::program::{SYSTEM_FIELD_PREFIX, PRIVATE_FIELD_PREFIX};
 use super::CompletionItemPosition;
-
-const INTERNAL_ITEM_PREFIX : &'static str = "__";
-const PRIVATE_ITEM_PREFIX : &'static str = "_";
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum CompletionItemVisibility {
@@ -12,9 +10,9 @@ pub enum CompletionItemVisibility {
 
 impl CompletionItemVisibility {
     pub fn from_str(item_name: &str) -> Self {
-        if item_name.starts_with(INTERNAL_ITEM_PREFIX) {
+        if item_name.starts_with(SYSTEM_FIELD_PREFIX) {
             Self::Internal
-        } else if item_name.starts_with(PRIVATE_ITEM_PREFIX) {
+        } else if item_name.starts_with(PRIVATE_FIELD_PREFIX) {
             Self::Private
         } else {
             Self::Public

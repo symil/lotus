@@ -56,6 +56,7 @@ mod cursor_location;
 mod program_context_options;
 mod program_index;
 mod string_literal_manager;
+mod field_visibility;
 
 pub use program_context::*;
 pub use utils::*;
@@ -114,3 +115,4 @@ pub use cursor_location::*;
 pub use program_context_options::*;
 pub use program_index::*;
 pub use string_literal_manager::*;
+pub use field_visibility::*;
