@@ -1,12 +1,12 @@
 use parsable::parsable;
 use crate::program::{GlobalVarBlueprint, GlobalVarInstance, ProgramContext, VariableInfo, VariableKind, Visibility};
-use super::{ParsedVarDeclaration, ParsedVisibilityToken, ParsedVisibility};
+use super::{ParsedVarDeclaration, ParsedVisibilityToken, ParsedVisibility, ParsedSemicolonToken, unwrap_item};
 
 #[parsable]
 pub struct ParsedGlobalVarDeclaration {
     pub visibility: Option<ParsedVisibility>,
-    #[parsable(suffix=";")]
     pub var_declaration: ParsedVarDeclaration,
+    pub semicolon: Option<ParsedSemicolonToken>,
 }
 
 impl ParsedGlobalVarDeclaration {
@@ -31,6 +31,8 @@ impl ParsedGlobalVarDeclaration {
             }
 
             context.global_vars.insert(global_var_blueprint, None);
+
+            unwrap_item(&self.semicolon, self, context);
         }
     }
 }

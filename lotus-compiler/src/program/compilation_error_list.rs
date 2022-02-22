@@ -115,6 +115,15 @@ impl CompilationErrorList {
         })
     }
 
+    pub fn expected_type(&mut self, location: &ItemLocation) -> CompilationErrorChain {
+        self.add(CompilationError {
+            location: location.clone(),
+            details: CompilationErrorDetails::ExpectedToken(ExpectedTokenDetails {
+                kind: ExpectedKind::Type,
+            })
+        })
+    }
+
     pub fn expected_class_type(&mut self, location: &ItemLocation, actual_type: &Type) -> CompilationErrorChain {
         self.add(CompilationError {
             location: location.clone(),

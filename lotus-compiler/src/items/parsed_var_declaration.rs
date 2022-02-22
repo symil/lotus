@@ -1,32 +1,25 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::{parsable, ItemLocation};
 use crate::{program::{ProgramContext, TUPLE_FIRST_ASSOCIATED_TYPE_NAME, TUPLE_FIRST_METHOD_NAME, TUPLE_SECOND_ASSOCIATED_TYPE_NAME, TUPLE_SECOND_METHOD_NAME, Type, VariableInfo, VariableKind, Vasm}};
-use super::{ParsedExpression, Identifier, ParsedType, ParsedVarDeclarationQualifier, ParsedVarDeclarationNames};
+use super::{ParsedExpression, Identifier, ParsedType, ParsedVarDeclarationQualifier, ParsedVarDeclarationNames, ParsedColonToken, ParsedEqualToken, unwrap_item, ParsedVarDeclarationType};
 
-#[parsable]
+#[parsable(cascade = true)]
 pub struct ParsedVarDeclaration {
     pub qualifier: ParsedVarDeclarationQualifier,
-    pub var_names: ParsedVarDeclarationNames,
-    #[parsable(prefix=":")]
-    pub var_type: Option<ParsedType>,
-    #[parsable(prefix="=")]
+    pub var_names: Option<ParsedVarDeclarationNames>,
+    pub var_type: ParsedVarDeclarationType,
+    pub equal: Option<ParsedEqualToken>,
     pub init_value: Option<ParsedExpression>,
 }
 
 impl ParsedVarDeclaration {
     pub fn process(&self, context: &mut ProgramContext) -> Option<(Vec<VariableInfo>, Vasm)> {
-        let required_type = self.var_type.as_ref().and_then(|parsed_type| parsed_type.process(true, context));
-        let (init_value, location) = match &self.init_value {
-            Some(init_value) => (
-                init_value.process(required_type.as_ref(), context).unwrap_or(context.vasm()),
-                &init_value.location
-            ),
-            None => {
-                context.errors.expected_expression(self);
-                (context.vasm(), &self.location)
-            },
-        };
+        let var_names = unwrap_item(&self.var_names, &self.qualifier, context)?;
+        let required_type = self.var_type.process(context);
+        let equal = unwrap_item(&self.equal, &self.var_type, context)?;
+        let init_value = unwrap_item(&self.init_value, equal, context)?;
+        let vasm = init_value.process(required_type.as_ref(), context).unwrap_or(context.vasm());
 
-        self.var_names.process(required_type.as_ref(), init_value, Some(location), context)
+        var_names.process(required_type.as_ref(), vasm, Some(&init_value.location), context)
     }
 }

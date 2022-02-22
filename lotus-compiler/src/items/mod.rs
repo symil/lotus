@@ -109,6 +109,7 @@ mod parsed_type_extend;
 mod parsed_for_iterator;
 mod parsed_top_level_block_in_progress;
 mod parsed_stack_type_declaration;
+mod parsed_var_declaration_type;
 
 pub use utils::*;
 pub use word::*;
@@ -222,3 +223,4 @@ pub use parsed_type_extend::*;
 pub use parsed_for_iterator::*;
 pub use parsed_top_level_block_in_progress::*;
 pub use parsed_stack_type_declaration::*;
+pub use parsed_var_declaration_type::*;

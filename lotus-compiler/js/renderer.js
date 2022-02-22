@@ -146,9 +146,14 @@ export class Renderer {
                 this._ctx.setLineDash([]);
             }
 
-            let m = shape === 'line' ? 1 : 2;
+            if (shape === 'rectangle') {
+                borderWidth = Math.ceil(borderWidth);
+            }
 
-            this._ctx.lineWidth = borderWidth * m;
+            let m = shape === 'line' ? 1 : 2;
+            let lineWidth = borderWidth * m;
+
+            this._ctx.lineWidth = lineWidth;
             this._ctx.strokeStyle = colorToString(borderColor);
             this._ctx.stroke();
         }

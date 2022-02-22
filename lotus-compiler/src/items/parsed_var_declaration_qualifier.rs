@@ -1,8 +1,13 @@
 use parsable::parsable;
 
-#[parsable(impl_display=true)]
-#[derive(PartialEq)]
-pub enum ParsedVarDeclarationQualifier {
+#[parsable]
+pub struct ParsedVarDeclarationQualifier {
+    pub token: ParsedVarDeclarationQualifierToken
+}
+
+#[parsable]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ParsedVarDeclarationQualifierToken {
     Let = "let",
     Const = "const"
 }

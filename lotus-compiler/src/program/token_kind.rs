@@ -2,6 +2,7 @@
 pub enum ExpectedKind {
     Expression,
     Identifier,
+    Type,
     Keyword,
     Argument,
     FunctionBody,
@@ -16,6 +17,7 @@ impl ExpectedKind {
         match self {
             ExpectedKind::Expression => format!("expression"),
             ExpectedKind::Identifier => format!("identifier"),
+            ExpectedKind::Type => format!("type"),
             ExpectedKind::Keyword => format!("keyword"),
             ExpectedKind::Argument => format!("argument"),
             ExpectedKind::FunctionBody => format!("function body"),

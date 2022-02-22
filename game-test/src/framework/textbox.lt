@@ -1,3 +1,4 @@
+
 pub class TextBoxData {
     text: string = "",
     cursor_index: int = 0
@@ -5,10 +6,10 @@ pub class TextBoxData {
 
 pub view TextBox {
     data_key: string = "", 
-    background_color: Color = Color::white(),
-    text_color: Color = Color::black(),
     placeholder: string = "",
+    text_color: Color = Color::black(),
     placeholder_color: Color = Color::gray(),
+    background_color: Color = Color::white(),
 
     static new(placeholder: string, data_key: string) -> Self {
         Self { placeholder, data_key }
@@ -22,7 +23,8 @@ pub view TextBox {
         let data = self._get_data();
         let text = data.text;
         let cursor_index = data.cursor_index;
-        let color = Color::black();
+        let color = self.text_color;
+        let border_widh = DEFAULT_BORDER_WIDTH;
 
         if text.is_empty() {
             text = self.placeholder;
@@ -31,16 +33,16 @@ pub view TextBox {
         }
 
         self.add_to_focus_chain()
-            .background_color(Color::white())
-            .border_color(Color::black())
-            .border_radius(.15h)
-            .border_width(.04h)
+            .background_color(self.background_color)
+            .border_color(self.text_color)
+            .border_radius(DEFAULT_BORDER_RADIUS)
+            .border_width(DEFAULT_BORDER_WIDTH)
             .text_horizontal_align(HorizontalAlign::Left)
             .text_size(.5h)
             .text_color(color)
             .text(text)
             .cursor(Cursor::Text)
-            .focus_border_color(Color::blue())
+            .focus_border_width(border_widh.scale(2))
             .focus_text_cursor_index(cursor_index)
     }
 
