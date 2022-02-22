@@ -14,7 +14,7 @@ export class Client {
     _focused_index: int?,
 
     user: #USER_TYPE?,
-    local_data: Map<string, Object>,
+    local_data: DataStore,
     hovered_view: View?,
     focus_chain: View[],
     focused_view: View?,

@@ -4,7 +4,7 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, StringLiteralManager, RETAIN_METHOD_NAME};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, StringLiteralManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
@@ -117,7 +117,7 @@ impl ProgramContext {
         }
     }
 
-    fn index_builtin_entities(&mut self) {
+    fn index_builtin_types(&mut self) {
         for builtin_interface in DEFAULT_INTERFACES {
             let interface = self.interfaces.get_by_name(builtin_interface.get_name()).unwrap();
 
@@ -134,16 +134,19 @@ impl ProgramContext {
             }
         }
 
+        self.string_literals.set_string_type(self.get_builtin_type(BuiltinType::String, vec![]));
+    }
+
+    fn index_main_types(&mut self) {
         for main_type in MainType::into_enum_iter() {
             let type_name = main_type.get_name();
             let default_name = main_type.get_default_type().get_name();
-            let type_wrapped = self.types.get_by_name_private(type_name).unwrap_or_else(|| self.types.get_by_name(default_name).unwrap());
-            let ty = Type::actual(type_wrapped, vec![], &ItemLocation::default());
+            let ty = self.types.get_by_name_private(type_name).map(|type_wrapped| type_wrapped.borrow().self_type.clone())
+                .or_else(|| self.typedefs.get_by_name_private(type_name).map(|typedef_wrapped| typedef_wrapped.borrow().target.clone()))
+                .unwrap_or_else(|| self.types.get_by_name(default_name).unwrap().borrow().self_type.clone());
 
             self.main_types.insert(main_type, ty);
         }
-
-        self.string_literals.set_string_type(self.get_builtin_type(BuiltinType::String, vec![]));
     }
 
     pub fn get_builtin_type(&self, builtin_type: BuiltinType, parameters: Vec<Type>) -> Type {
@@ -205,6 +208,18 @@ impl ProgramContext {
         for scope in self.scopes.iter().rev() {
             if let ScopeKind::Function(function_wrapped) = &scope.kind {
                 return Some(function_wrapped.clone());
+            }
+        }
+
+        None
+    }
+
+    pub fn get_named_current_function(&self) -> Option<Link<FunctionBlueprint>> {
+        for scope in self.scopes.iter().rev() {
+            if let ScopeKind::Function(function_wrapped) = &scope.kind {
+                if function_wrapped.borrow().name.as_str() != ANONYMOUS_FUNCTION_NAME {
+                    return Some(function_wrapped.clone());
+                }
             }
         }
 
@@ -731,12 +746,15 @@ impl ProgramContext {
             type_declaration.process_name(i, self);
         }
 
-        timer.trigger("index builtin entities");
-        self.index_builtin_entities();
+        timer.trigger("index builtin types");
+        self.index_builtin_types();
 
         for typedef_declaration in &typedefs {
             typedef_declaration.process(self);
         }
+
+        timer.trigger("index main types");
+        self.index_main_types();
 
         timer.trigger("type dependencies");
         let mut links = vec![];

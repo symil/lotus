@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{ItemLocation, parsable};
-use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody}, utils::Link};
+use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody, ANONYMOUS_FUNCTION_NAME}, utils::Link};
 use super::{ParsedBlockExpression, ParsedExpression, ParsedAnonymousFunctionArguments, ParsedAnonymousFunctionBody, Identifier};
 
 #[parsable]
@@ -60,11 +60,17 @@ impl ParsedAnonymousFunction {
             }
         }
 
+        let parameters = match context.get_named_current_function() {
+            Some(function_wrapped) => function_wrapped.borrow().parameters.clone(),
+            None => IndexMap::new(),
+        };
+        let parameter_types : Vec<Type> = parameters.values().map(|parameter_type_info| Type::function_parameter(parameter_type_info)).collect();
+
         let mut signature = Signature::create(None, argument_types, expected_return_type.clone());
         let function_wrapped = context.functions.insert(FunctionBlueprint {
-            name: Identifier::new("anonymous_function", Some(self)),
+            name: Identifier::new(ANONYMOUS_FUNCTION_NAME, Some(self)),
             visibility: Visibility::None,
-            parameters: IndexMap::new(),
+            parameters,
             argument_names,
             signature: signature.clone(),
             argument_variables: vec![],
@@ -93,7 +99,7 @@ impl ParsedAnonymousFunction {
         }
 
         result = Some(context.vasm()
-            .function_index(&function_wrapped, &[])
+            .function_index(&function_wrapped, &parameter_types)
             .set_type(Type::function(signature))
         );
 

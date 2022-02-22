@@ -1,0 +1,11 @@
+class RootUser {
+    name: string = "user"
+}
+
+type User = RootUser;
+
+export fn main() {
+    let foo = #USER_TYPE {};
+
+    @log(foo.name);
+}

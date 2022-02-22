@@ -1,6 +1,10 @@
 export class DataStore {
     _map: Map<string, Object>,
 
+    static new() -> Self {
+        Self {}
+    }
+
     get<T : Object>(key: string) -> T? {
         let value = self._map.get(key);
 
@@ -20,6 +24,10 @@ export class DataStore {
         }
 
         result
+    }
+
+    get_or_insert_default<T : Object>(key: string) -> T {
+        self.get_or_insert_with(key, () => T::__default())
     }
 
     set(key: string, value: Object) {

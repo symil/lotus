@@ -136,6 +136,7 @@
 [X] Copy config file to server during build
 [X] Differenciate between public, private and internal fields/methods
 [X] Make so spread operator only copies public fields
+[X] Allow anonymous method to use function parameter of parent function
 
 -- LATER --
 [ ] Allow manually specifying function parameters

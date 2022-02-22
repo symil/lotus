@@ -57,6 +57,7 @@ export class NetworkManager {
     }
 
     _registerEvent(webSocketId, messageType, messagePayload) {
+        this._events = []; // to avoid stacking an infinite amount of events when the tab is not focused, works for now but should be reworked
         this._events.push({
             webSocketId,
             messageType,

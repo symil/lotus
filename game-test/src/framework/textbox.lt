@@ -1,25 +1,21 @@
 pub class TextBoxData {
-    text: string,
-    cursor_index: int
+    text: string = "",
+    cursor_index: int = 0
 }
 
 pub view TextBox {
-    placeholder: string,
-    data_key: string,
+    data_key: string = "", 
+    background_color: Color = Color::white(),
+    text_color: Color = Color::black(),
+    placeholder: string = "",
+    placeholder_color: Color = Color::gray(),
 
     static new(placeholder: string, data_key: string) -> Self {
         Self { placeholder, data_key }
     }
 
     _get_data() -> TextBoxData {
-        match self.client().local_data.get(self.data_key) {
-            TextBoxData(data) => data,
-            _ => {
-                let data = TextBoxData;
-                self.client().local_data.set(self.data_key, data);
-                data
-            }
-        }
+        self.client().local_data.get_or_insert_default(self.data_key)
     }
 
     @OnRender {
@@ -31,7 +27,7 @@ pub view TextBox {
         if text.is_empty() {
             text = self.placeholder;
             cursor_index = none;
-            color = Color::gray();
+            color = self.placeholder_color;
         }
 
         self.add_to_focus_chain()
