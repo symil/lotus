@@ -132,7 +132,7 @@
 [X] Add script to start http server in build
 [X] Prevent http clients from accessing private server files
 [X] Allocate literal strings a single time
-[X] Use vanguard as build system
+[X] Use outpost as build system
 [X] Copy config file to server during build
 
 -- LATER --

@@ -26,7 +26,7 @@ async function main() {
     let buildConfigCommand = `'${WRITE_SERVER_CONFIG_SCRIPT_PATH} ${rootPath} ${configFilePath}'`;
 
     let command = [
-        'vanguard', port, remoteHost,
+        'outpost', port, remoteHost,
         '-n', ...REQUIRED_NODE_PACKAGES,
         '-z', buildConfigCommand, lotusToWatCommand, watToWasmCommand,
         '-c', CLIENT_ENTRY_PATH,
