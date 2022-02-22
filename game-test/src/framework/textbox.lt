@@ -12,11 +12,11 @@ pub view TextBox {
     }
 
     _get_data() -> TextBoxData {
-        match self.client.local_data.get(self.data_key) {
+        match self.client().local_data.get(self.data_key) {
             TextBoxData(data) => data,
             _ => {
                 let data = TextBoxData;
-                self.client.local_data.set(self.data_key, data);
+                self.client().local_data.set(self.data_key, data);
                 data
             }
         }
@@ -49,7 +49,7 @@ pub view TextBox {
     }
 
     @OnDefineMouseInteractions {
-        for view in self.client.all_views {
+        for view in self.client().all_views {
             view.on_click(() => self.unfocus());
         }
 
@@ -57,7 +57,7 @@ pub view TextBox {
     }
 
     @OnKeyboardEvent {
-        if !self.focused {
+        if !self.is_focused() {
             return;
         }
 

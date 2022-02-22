@@ -5,12 +5,9 @@ export view BasicGameWindow {
     text_font: Font = Font::Arial,
 
     @OnRender {
-        let lobby_screen = LobbyScreen {
-            background_color: self.background_color,
-            title: self.title,
-            title_color: self.title_color,
-            text_font: self.text_font
-        };
+        let lobby_screen = LobbyScreen { ..self };
+
+        self.client().set_window_title(self.title);
 
         self.layout()
             .push(lobby_screen)

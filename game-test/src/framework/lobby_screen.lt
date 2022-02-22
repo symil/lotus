@@ -27,9 +27,9 @@ export view LobbyScreen {
 
         if evt.code == KeyCode::Tab {
             if evt.shift_key {
-                self.client.focus_prev();
+                self.client().focus_prev();
             } else {
-                self.client.focus_next();
+                self.client().focus_next();
             }
             intercept;
         }

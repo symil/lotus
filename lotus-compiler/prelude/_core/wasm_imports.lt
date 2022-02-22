@@ -22,16 +22,20 @@ pub fn wasm_init_window(aspect_ratio: float) [
     import env.init_window
 ]
 
-pub fn wasm_poll_window_events(buffer_addr: ptr, buffer_capacity: int) -> int [
-    import env.poll_window_events
-]
-
 pub fn wasm_get_window_width() -> float [
     import env.get_window_width
 ]
 
 pub fn wasm_get_window_height() -> float [
     import env.get_window_height
+]
+
+pub fn wasm_set_window_title(title: string) [
+    import env.set_window_title
+]
+
+pub fn wasm_poll_window_events(buffer_addr: ptr, buffer_capacity: int) -> int [
+    import env.poll_window_events
 ]
 
 pub fn wasm_draw_frame(buffer_addr: ptr, buffer_size: int) [

@@ -12,7 +12,7 @@ pub class Layout {
     dynamic_views: View[] = [],
 
     static new(parent_view: View) -> Self {
-        let target = parent_view.rect.clone();
+        let target = parent_view._rect.clone();
 
         Self { parent_view, target }
     }
@@ -71,19 +71,19 @@ pub class Layout {
     move_to(x: float, y: float) -> Self {
         self._flush();
         self.last = none;
-        self.target.x = self.parent_view.rect.width * x;
-        self.target.y = self.parent_view.rect.height * y;
+        self.target.x = self.parent_view._rect.width * x;
+        self.target.y = self.parent_view._rect.height * y;
         self
     }
 
     resize_from_width(width: float, aspect_ratio: float) -> Self {
-        self.target.width = self.parent_view.rect.width * width;
+        self.target.width = self.parent_view._rect.width * width;
         self.target.height = self.target.width / aspect_ratio;
         self
     }
 
     resize_from_height(height: float, aspect_ratio: float) -> Self {
-        self.target.height = self.parent_view.rect.height * height;
+        self.target.height = self.parent_view._rect.height * height;
         self.target.width = self.target.height * aspect_ratio;
         self
     }
@@ -101,8 +101,8 @@ pub class Layout {
 
         if self.dynamic && self.dynamic_views.len() > 0 {
             for view in self.dynamic_views {
-                view.rect.x -= dx / 2f;
-                view.rect.y -= dy / 2f;
+                view._rect.x -= dx / 2f;
+                view._rect.y -= dy / 2f;
             }
 
             self.target.x -= dx / 2f;
@@ -118,8 +118,8 @@ pub class Layout {
             dy += dy2;
 
             for view in self.dynamic_views {
-                view.rect.x += dx;
-                view.rect.y += dy;
+                view._rect.x += dx;
+                view._rect.y += dy;
             }
         }
 
@@ -127,10 +127,10 @@ pub class Layout {
         self.target.y += dy;
         self.last = self.target.clone();
 
-        view.rect = self.target.clone();
+        view._rect = self.target.clone();
 
         self.dynamic_views.push(view);
-        self.parent_view.children.push(view);
+        self.parent_view._children.push(view);
 
         self
     }
@@ -155,10 +155,10 @@ pub class Layout {
         let dy = 0f;
 
         dx = dx.max(self.outer_margin - rect.x1());
-        dx = dx.min(self.parent_view.rect.width - self.outer_margin - rect.x2());
+        dx = dx.min(self.parent_view._rect.width - self.outer_margin - rect.x2());
 
         dy = dy.max(self.outer_margin - rect.y1());
-        dy = dy.min(self.parent_view.rect.height - self.outer_margin - rect.y2());
+        dy = dy.min(self.parent_view._rect.height - self.outer_margin - rect.y2());
 
         (dx, dy)
     }
@@ -172,7 +172,7 @@ pub class Layout {
             return (0, 0);
         }
 
-        self._snap_against_edges(self.dynamic_views[0].rect)
+        self._snap_against_edges(self.dynamic_views[0]._rect)
     }
 
     towards(dx: float, dy: float) -> Self {

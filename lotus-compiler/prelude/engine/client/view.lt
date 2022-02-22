@@ -1,106 +1,118 @@
 type MouseHandlerCallback = fn();
 
 export class View {
-    client: Client?,
-    hovered: bool,
-    focused: bool,
-    rect: Rect,
-    graphics: Graphics,
-    hovered_graphics: Graphics?,
-    focused_graphics: Graphics?,
-    disabled_graphics: Graphics?,
-    children: View[],
-    on_click_callbacks: MouseHandlerCallback[],
-    on_down_callbacks: MouseHandlerCallback[],
-    on_up_callbacks: MouseHandlerCallback[],
-    on_drag_callbacks: MouseHandlerCallback[],
+    _client: Client?,
+    _hovered: bool,
+    _focused: bool,
+    _rect: Rect,
+    _graphics: Graphics,
+    _hovered_graphics: Graphics?,
+    _focused_graphics: Graphics?,
+    _disabled_graphics: Graphics?,
+    _children: View[],
+    _on_click_callbacks: MouseHandlerCallback[],
+    _on_down_callbacks: MouseHandlerCallback[],
+    _on_up_callbacks: MouseHandlerCallback[],
+    _on_drag_callbacks: MouseHandlerCallback[],
+
+    client() -> Client? {
+        self._client
+    }
+
+    is_focused() -> bool {
+        self._focused
+    }
+
+    is_hovered() -> bool {
+        self._hovered
+    }
 
     layout() -> Layout {
         Layout::new(self)
     }
 
     focus() -> Self {
-        if self.client {
-            self.client.focus(self);
+        if self._client {
+            self._client.focus(self);
         }
         self
     }
 
     unfocus() -> Self {
-        if self.client && self.focused {
-            self.client.focus(none);
+        if self._client && self._focused {
+            self._client.focus(none);
         }
         self
     }
 
     add_to_focus_chain() -> Self {
-        if self.client {
-            self.client.add_to_focus_chain(self)
+        if self._client {
+            self._client.add_to_focus_chain(self)
         }
         self
     }
 
-    on_click(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_click_callbacks, callback) }
-    on_down(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_down_callbacks, callback) }
-    on_up(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_up_callbacks, callback) }
-    on_drag(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self.on_drag_callbacks, callback) }
+    on_click(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_click_callbacks, callback) }
+    on_down(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_down_callbacks, callback) }
+    on_up(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_up_callbacks, callback) }
+    on_drag(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_drag_callbacks, callback) }
 
     scale(ratio: float) -> Self {
-        self.rect = self.rect.scale(ratio);
+        self._rect = self._rect.scale(ratio);
         self
     }
 
     strip_to_match_aspect_ratio(aspect_ratio: float) -> Self {
-        self.rect = self.rect.strip_to_match_aspect_ratio(aspect_ratio);
+        self._rect = self._rect.strip_to_match_aspect_ratio(aspect_ratio);
         self
     }
 
 
-    shape(shape: Shape) -> Self { self.graphics.set_shape(self, shape) }
-    border_radius(border_radius: DisplaySize) -> Self { self.graphics.set_border_radius(self, border_radius) }
-    border_width(border_width: DisplaySize) -> Self { self.graphics.set_border_width(self, border_width) }
-    border_dash_length(border_dash_length: DisplaySize) -> Self { self.graphics.set_border_dash_length(self, border_dash_length) }
-    border_gap_length(border_gap_length: DisplaySize) -> Self { self.graphics.set_border_gap_length(self, border_gap_length) }
-    border_color(border_color: Color) -> Self { self.graphics.set_border_color(self, border_color) }
-    border_alpha(border_alpha: float) -> Self { self.graphics.set_border_alpha(self, border_alpha) }
-    background_color(background_color: Color) -> Self { self.graphics.set_background_color(self, background_color) }
-    background_alpha(background_alpha: float) -> Self { self.graphics.set_background_alpha(self, background_alpha) }
-    overlay_color(overlay_color: Color) -> Self { self.graphics.set_overlay_color(self, overlay_color) }
-    overlay_alpha(overlay_alpha: float) -> Self { self.graphics.set_overlay_alpha(self, overlay_alpha) }
-    image_url(image_url: string) -> Self { self.graphics.set_image_url(self, image_url) }
-    image_scale(image_scale: float) -> Self { self.graphics.set_image_scale(self, image_scale) }
-    text(text: string) -> Self { self.graphics.set_text(self, text) }
-    text_font(text_font: Font) -> Self { self.graphics.set_text_font(self, text_font) }
-    text_size(text_size: DisplaySize) -> Self { self.graphics.set_text_size(self, text_size) }
-    text_color(text_color: Color) -> Self { self.graphics.set_text_color(self, text_color) }
-    text_alpha(text_alpha: float) -> Self { self.graphics.set_text_alpha(self, text_alpha) }
-    text_margin(text_margin: DisplaySize) -> Self { self.graphics.set_text_margin(self, text_margin) }
-    text_max_width(text_max_width: DisplaySize) -> Self { self.graphics.set_text_max_width(self, text_max_width) }
-    text_max_height(text_max_height: DisplaySize) -> Self { self.graphics.set_text_max_height(self, text_max_height) }
-    text_background_color(text_background_color: Color) -> Self { self.graphics.set_text_background_color(self, text_background_color) }
-    text_background_alpha(text_background_alpha: float) -> Self { self.graphics.set_text_background_alpha(self, text_background_alpha) }
-    text_border_color(text_border_color: Color) -> Self { self.graphics.set_text_border_color(self, text_border_color) }
-    text_border_alpha(text_border_alpha: float) -> Self { self.graphics.set_text_border_alpha(self, text_border_alpha) }
-    text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self.graphics.set_text_horizontal_align(self, text_horizontal_align) }
-    text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self.graphics.set_text_vertical_align(self, text_vertical_align) }
-    text_bold(text_bold: bool) -> Self { self.graphics.set_text_bold(self, text_bold) }
-    text_italic(text_italic: bool) -> Self { self.graphics.set_text_italic(self, text_italic) }
-    text_cursor_index(text_cursor_index: int) -> Self { self.graphics.set_text_cursor_index(self, text_cursor_index) }
-    detectable(detectable: bool) -> Self { self.graphics.set_detectable(self, detectable) }
-    cursor(cursor: Cursor) -> Self { self.graphics.set_cursor(self, cursor) }
+    shape(shape: Shape) -> Self { self._graphics.set_shape(self, shape) }
+    border_radius(border_radius: DisplaySize) -> Self { self._graphics.set_border_radius(self, border_radius) }
+    border_width(border_width: DisplaySize) -> Self { self._graphics.set_border_width(self, border_width) }
+    border_dash_length(border_dash_length: DisplaySize) -> Self { self._graphics.set_border_dash_length(self, border_dash_length) }
+    border_gap_length(border_gap_length: DisplaySize) -> Self { self._graphics.set_border_gap_length(self, border_gap_length) }
+    border_color(border_color: Color) -> Self { self._graphics.set_border_color(self, border_color) }
+    border_alpha(border_alpha: float) -> Self { self._graphics.set_border_alpha(self, border_alpha) }
+    background_color(background_color: Color) -> Self { self._graphics.set_background_color(self, background_color) }
+    background_alpha(background_alpha: float) -> Self { self._graphics.set_background_alpha(self, background_alpha) }
+    overlay_color(overlay_color: Color) -> Self { self._graphics.set_overlay_color(self, overlay_color) }
+    overlay_alpha(overlay_alpha: float) -> Self { self._graphics.set_overlay_alpha(self, overlay_alpha) }
+    image_url(image_url: string) -> Self { self._graphics.set_image_url(self, image_url) }
+    image_scale(image_scale: float) -> Self { self._graphics.set_image_scale(self, image_scale) }
+    text(text: string) -> Self { self._graphics.set_text(self, text) }
+    text_font(text_font: Font) -> Self { self._graphics.set_text_font(self, text_font) }
+    text_size(text_size: DisplaySize) -> Self { self._graphics.set_text_size(self, text_size) }
+    text_color(text_color: Color) -> Self { self._graphics.set_text_color(self, text_color) }
+    text_alpha(text_alpha: float) -> Self { self._graphics.set_text_alpha(self, text_alpha) }
+    text_margin(text_margin: DisplaySize) -> Self { self._graphics.set_text_margin(self, text_margin) }
+    text_max_width(text_max_width: DisplaySize) -> Self { self._graphics.set_text_max_width(self, text_max_width) }
+    text_max_height(text_max_height: DisplaySize) -> Self { self._graphics.set_text_max_height(self, text_max_height) }
+    text_background_color(text_background_color: Color) -> Self { self._graphics.set_text_background_color(self, text_background_color) }
+    text_background_alpha(text_background_alpha: float) -> Self { self._graphics.set_text_background_alpha(self, text_background_alpha) }
+    text_border_color(text_border_color: Color) -> Self { self._graphics.set_text_border_color(self, text_border_color) }
+    text_border_alpha(text_border_alpha: float) -> Self { self._graphics.set_text_border_alpha(self, text_border_alpha) }
+    text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._graphics.set_text_horizontal_align(self, text_horizontal_align) }
+    text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._graphics.set_text_vertical_align(self, text_vertical_align) }
+    text_bold(text_bold: bool) -> Self { self._graphics.set_text_bold(self, text_bold) }
+    text_italic(text_italic: bool) -> Self { self._graphics.set_text_italic(self, text_italic) }
+    text_cursor_index(text_cursor_index: int) -> Self { self._graphics.set_text_cursor_index(self, text_cursor_index) }
+    detectable(detectable: bool) -> Self { self._graphics.set_detectable(self, detectable) }
+    cursor(cursor: Cursor) -> Self { self._graphics.set_cursor(self, cursor) }
 
     _hovered_graphics() -> Graphics {
-        if !self.hovered_graphics {
-            self.hovered_graphics = Graphics::empty();
+        if !self._hovered_graphics {
+            self._hovered_graphics = Graphics::empty();
         }
-        self.hovered_graphics
+        self._hovered_graphics
     }
 
     _focused_graphics() -> Graphics {
-        if !self.focused_graphics {
-            self.focused_graphics = Graphics::empty();
+        if !self._focused_graphics {
+            self._focused_graphics = Graphics::empty();
         }
-        self.focused_graphics
+        self._focused_graphics
     }
 
     hover_shape(shape: Shape) -> Self { self._hovered_graphics().set_shape(self, shape) }

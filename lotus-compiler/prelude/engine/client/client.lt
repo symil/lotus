@@ -92,7 +92,7 @@ export class Client {
 
     _create_views() {
         let root_view = #WINDOW_TYPE {
-            rect: Rect::from_size(self.virtual_width, self.virtual_height)
+            _rect: Rect::from_size(self.virtual_width, self.virtual_height)
         };
 
         self.all_views.clear();
@@ -104,7 +104,7 @@ export class Client {
         self.focused_view = self.focus_chain.get(self._focused_index);
 
         if self.focused_view {
-            self.focused_view.focused = true;
+            self.focused_view._focused = true;
         }
     }
 
@@ -113,11 +113,11 @@ export class Client {
             client: self,
         };
 
-        view.client = self;
+        view._client = self;
         event.emit([view]);
         self.all_views.push(view);
 
-        for child in view.children {
+        for child in view._children {
             self._render_view(child);
         }
     }
@@ -126,8 +126,8 @@ export class Client {
         let current : View = none;
 
         for view in self.all_views {
-            if view.graphics.detectable && view.rect.contains(x, y) {
-                if !current || view.rect.z >= current.rect.z {
+            if view._graphics.detectable && view._rect.contains(x, y) {
+                if !current || view._rect.z >= current._rect.z {
                     current = view;
                 }
             }
@@ -150,18 +150,18 @@ export class Client {
 
         for view in self.all_views {
             if self.hovered_view == view {
-                view.graphics.set(view.hovered_graphics);
+                view._graphics.set(view._hovered_graphics);
             }
 
             if self.focused_view == view {
-                view.graphics.set(view.focused_graphics);
+                view._graphics.set(view._focused_graphics);
             }
             
             if self.hovered_view == view {
-                cursor = view.graphics.cursor;
+                cursor = view._graphics.cursor;
             }
 
-            let draw_primitive = view.graphics.__to_draw_primitive(view.rect, self.virtual_to_real_ratio);
+            let draw_primitive = view._graphics.__to_draw_primitive(view._rect, self.virtual_to_real_ratio);
 
             self._draw_primitives.push(draw_primitive);
 
@@ -190,10 +190,10 @@ export class Client {
 
                     if view {
                         let callback_list = match e.action {
-                            MouseAction::Down => view.on_down_callbacks,
-                            MouseAction::Click => view.on_click_callbacks,
-                            MouseAction::Up => view.on_up_callbacks,
-                            MouseAction::Drag => view.on_drag_callbacks
+                            MouseAction::Down => view._on_down_callbacks,
+                            MouseAction::Click => view._on_click_callbacks,
+                            MouseAction::Up => view._on_up_callbacks,
+                            MouseAction::Drag => view._on_drag_callbacks
                         };
 
                         for callback in callback_list {
@@ -228,11 +228,11 @@ export class Client {
         }
 
         if self.focused_view {
-            self.focused_view.focused = false;
+            self.focused_view._focused = false;
         }
 
         if (view) {
-            view.focused = true;
+            view._focused = true;
             self._focused_index = self.focus_chain.index_of(view);
 
             OnFocus { target: view }.emit([view]);
@@ -282,6 +282,10 @@ export class Client {
 
     clear_local_storage() {
         wasm_clear_local_storage();
+    }
+
+    set_window_title(title: string) {
+        wasm_set_window_title(title);
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

@@ -87,6 +87,12 @@ function getWasmImportsObject(env) {
                 return windowManager.getHeight();
             },
 
+            set_window_title(stringAddr) {
+                let title = readStringFromMemory(env.getMemory(), stringAddr);
+
+                windowManager.setTitle(title);
+            },
+
             poll_window_events(bufferAddr, bufferCapacity) {
                 let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
                 let events = windowManager.pollEvents();
