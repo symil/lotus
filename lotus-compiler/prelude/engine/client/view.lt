@@ -1,4 +1,4 @@
-type MouseHandlerCallback = fn();
+pub type MouseHandlerCallback = fn(Client);
 
 export class View {
     _client: Client?,
@@ -52,10 +52,17 @@ export class View {
         self
     }
 
-    on_click(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_click_callbacks, callback) }
-    on_down(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_down_callbacks, callback) }
-    on_up(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_up_callbacks, callback) }
-    on_drag(callback: MouseHandlerCallback) -> Self { push_or_clear_callback(self, self._on_drag_callbacks, callback) }
+    on_click(callback: MouseHandlerCallback) -> Self { push_callback(self, self._on_click_callbacks, callback) }
+    on_down(callback: MouseHandlerCallback) -> Self { push_callback(self, self._on_down_callbacks, callback) }
+    on_up(callback: MouseHandlerCallback) -> Self { push_callback(self, self._on_up_callbacks, callback) }
+    on_drag(callback: MouseHandlerCallback) -> Self { push_callback(self, self._on_drag_callbacks, callback) }
+    clear_mouse_handlers() -> Self {
+        self._on_click_callbacks.clear();
+        self._on_down_callbacks.clear();
+        self._on_up_callbacks.clear();
+        self._on_drag_callbacks.clear();
+        self
+    }
 
     scale(ratio: float) -> Self {
         self._rect = self._rect.scale(ratio);
@@ -182,11 +189,9 @@ export class View {
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().set_cursor(self, cursor) }
 }
 
-fn push_or_clear_callback<S, T>(owner: S, array: T[], value: T?) -> S {
+fn push_callback<S, T>(owner: S, array: T[], value: T?) -> S {
     if value {
         array.push(value);
-    } else {
-        array.clear();
     }
 
     owner

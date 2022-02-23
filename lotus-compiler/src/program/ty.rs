@@ -298,6 +298,7 @@ impl Type {
             (TypeContent::FunctionParameter(self_info), TypeContent::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (TypeContent::Associated(self_info), TypeContent::Associated(target_info)) => self_info == target_info,
             (TypeContent::Function(self_signature), TypeContent::Function(target_signature)) => self_signature.is_assignable_to(target_signature),
+            (TypeContent::Function(_), _) => target.is_builtin_type(BuiltinType::Function),
             _ => false
         }
     }

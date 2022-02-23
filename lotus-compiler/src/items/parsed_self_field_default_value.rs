@@ -9,19 +9,17 @@ pub struct ParsedSuperFieldDefaultValue {
     pub name: Option<Identifier>,
     pub equal: Option<ParsedEqualToken>,
     pub expression: Option<ParsedExpression>,
-    #[parsable(cascade = false)]
-    pub semicolon: Option<ParsedSemicolonToken>,
 }
 
 impl ParsedSuperFieldDefaultValue {
     pub fn process(&self, self_type: &Type, context: &mut ProgramContext) -> Option<(String, Vasm)> {
         let dot = unwrap_item(&self.dot, self, context)?;
 
-        context.completion_provider.add_field_completion(dot, self_type, false, false, "");
+        context.completion_provider.add_field_completion(dot, self_type, None);
 
         let name = unwrap_item(&self.name, self, context)?;
 
-        context.completion_provider.add_field_completion(name, self_type, false, false, "");
+        context.completion_provider.add_field_completion(name, self_type, None);
 
         let equal = unwrap_item(&self.equal, self, context)?;
         let expression = unwrap_item(&self.expression, self, context)?;
@@ -42,8 +40,6 @@ impl ParsedSuperFieldDefaultValue {
             },
             None => return None,
         };
-
-        unwrap_item(&self.semicolon, self, context);
 
         Some((name.to_string(), vasm))
     }

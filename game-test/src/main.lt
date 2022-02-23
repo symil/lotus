@@ -1,7 +1,7 @@
 view Window extends BasicGameWindow {
-    self.background_color = Color::light_green();
-    self.title = "Some game";
-    self.title_color = Color::red();
+    self.background_color = Color::light_green()
+    self.title = "Some game"
+    self.title_color = Color::red()
 }
 
 class World {
@@ -18,7 +18,9 @@ class World {
     }
 
     @OnUserRequest {
-
+        if evt.request is LoginRequest(login_request) {
+            evt.user.name = login_request.username;
+        }
     }
 }
 

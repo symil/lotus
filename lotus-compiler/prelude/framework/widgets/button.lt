@@ -1,0 +1,28 @@
+export view Button {
+    text: string = "",
+    text_color: Color = Color::black(),
+    text_size: DisplaySize = DEFAULT_BUTTON_TEXT_SIZE,
+    text_font: Font = Font::Arial,
+    background_color : Color = DEFAULT_BACKGROUND_COLOR,
+    border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
+    on_click: MouseHandlerCallback = none,
+
+    @OnRender {
+        self
+            .background_color(self.background_color)
+            .text(self.text)
+            .text_color(self.text_color)
+            .text_size(self.text_size)
+            .text_font(self.text_font)
+            .border_color(self.text_color)
+            .border_width(self.border_width)
+            .border_radius(DEFAULT_BORDER_RADIUS)
+            .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
+            .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
+            .hover_cursor(Cursor::Pointer)
+    }
+
+    @OnDefineMouseInteractions {
+        self.on_click(self.on_click);
+    }
+}

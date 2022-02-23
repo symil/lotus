@@ -87,12 +87,14 @@ impl CompletionItemList {
             .description(variable.ty().to_string());
     }
 
-    pub fn add_field(&mut self, field: Rc<FieldInfo>, prefix: &'static str) {
+    pub fn add_field(&mut self, field: Rc<FieldInfo>, prefix: &'static str, suffix: &'static str) {
         let field_name = field.name.as_str();
         let label = format!("{}{}", prefix, field_name);
+        let insert_text = format!("{}{}", label, suffix);
 
         self
             .add(label)
+            .insert_text(insert_text)
             .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(field_name), false))
             .kind(CompletionItemKind::Field)
             .description(field.ty.to_string());

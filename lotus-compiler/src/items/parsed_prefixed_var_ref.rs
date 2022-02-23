@@ -1,6 +1,6 @@
 use parsable::{ItemLocation, parsable};
-use crate::program::{ProgramContext, Vasm, FieldKind, Type, AccessType};
-use super::{ParsedVarPrefix, Identifier, ParsedArgumentList, process_method_call, process_field_access};
+use crate::{program::{ProgramContext, Vasm, FieldKind, Type, AccessType}, language_server::FieldCompletionOptions};
+use super::{ParsedVarPrefix, Identifier, ParsedArgumentList, process_method_call, process_field_access, unwrap_item};
 
 #[parsable]
 pub struct ParsedPrefixedVarRef {
@@ -21,16 +21,19 @@ impl ParsedPrefixedVarRef {
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         let mut vasm = self.prefix.process(context);
 
-        context.completion_provider.add_field_completion(&self.prefix, &vasm.ty, true, self.arguments.is_none(), "");
+        context.completion_provider.add_field_completion(&self.prefix, &vasm.ty, Some(&FieldCompletionOptions {
+            show_methods: true,
+            insert_arguments: self.arguments.is_none(),
+            ..Default::default()
+        }));
 
-        let name = match &self.name {
-            Some(name) => name,
-            None => {
-                return context.errors.expected_identifier(&self.prefix).none();
-            },
-        };
+        let name = unwrap_item(&self.name, &self.prefix, context)?;
         
-        context.completion_provider.add_field_completion(name, &vasm.ty, true, self.arguments.is_none(), "");
+        context.completion_provider.add_field_completion(name, &vasm.ty, Some(&FieldCompletionOptions {
+            show_methods: true,
+            insert_arguments: self.arguments.is_none(),
+            ..Default::default()
+        }));
 
         match &self.arguments {
             Some(args) => match process_method_call(&vasm.ty, FieldKind::Regular, name, &[], args, type_hint, access_type, context) {

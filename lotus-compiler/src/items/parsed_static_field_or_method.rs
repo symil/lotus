@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::{program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
+use crate::{program::{AccessType, FieldKind, ProgramContext, Type, Vasm}, language_server::FieldCompletionOptions};
 use super::{ParsedArgumentList, Identifier, ParsedType, process_method_call, process_field_access, ParsedDoubleColonToken};
 
 #[parsable]
@@ -14,11 +14,19 @@ impl ParsedStaticFieldOrMethod {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self.ty.process(true, context) {
             Some(ty) => {
-                context.completion_provider.add_static_field_completion(&self.double_colon, &ty, true, self.arguments.is_none());
+                context.completion_provider.add_static_field_completion(&self.double_colon, &ty, Some(&FieldCompletionOptions {
+                    show_methods: true,
+                    insert_arguments: self.arguments.is_none(),
+                    ..Default::default()
+                }));
 
                 match &self.name {
                     Some(name) => {
-                        context.completion_provider.add_static_field_completion(name, &ty, true, self.arguments.is_none());
+                        context.completion_provider.add_static_field_completion(name, &ty, Some(&FieldCompletionOptions {
+                            show_methods: true,
+                            insert_arguments: self.arguments.is_none(),
+                            ..Default::default()
+                        }));
 
                         match &self.arguments {
                             Some(args) => process_method_call(&ty, FieldKind::Static, name, &[], args, type_hint, AccessType::Get, context),

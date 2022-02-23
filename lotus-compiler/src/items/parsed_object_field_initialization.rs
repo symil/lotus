@@ -17,7 +17,7 @@ pub struct ParsedObjectFieldInitializationValue {
 
 impl ParsedObjectFieldInitialization {
     pub fn process(&self, object_type: &Type, context: &mut ProgramContext) -> ObjectInitResult {
-        context.completion_provider.add_field_completion(&self.name, object_type, false, false, "");
+        context.completion_provider.add_field_completion(&self.name, object_type, None);
 
         let result = match object_type.get_field(self.name.as_str()) {
             Some(field_info) => {

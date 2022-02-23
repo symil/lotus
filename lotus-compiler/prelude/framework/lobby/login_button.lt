@@ -1,0 +1,15 @@
+pub class LoginButton extends Button {
+    self.on_click = send_login_request
+    self.text = "Log in"
+}
+
+fn send_login_request(client: Client) {
+    let textbox_data : TextBoxData = client.local_data.get(USERNAME_TEXTBOX_DATA_KEY);
+    let username = textbox_data.text;
+
+    if (!username.is_empty()) {
+        client.send_request(LoginRequest {
+            username
+        });
+    }
+}

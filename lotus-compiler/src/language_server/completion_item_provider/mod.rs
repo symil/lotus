@@ -7,6 +7,7 @@ mod completion_item_position;
 mod completion_item_visibility;
 mod completion_item_command;
 mod provide_completion_items;
+mod field_completion_options;
 
 pub use completion_item_provider::*;
 pub use completion_item_kind::*;
@@ -17,3 +18,4 @@ pub use completion_item_position::*;
 pub use completion_item_visibility::*;
 pub use completion_item_command::*;
 pub use provide_completion_items::*;
+pub use field_completion_options::*;

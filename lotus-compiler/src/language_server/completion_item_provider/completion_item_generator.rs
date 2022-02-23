@@ -1,7 +1,7 @@
 use enum_iterator::IntoEnumIterator;
 use parsable::{ItemLocation, Parsable};
 use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL, EXPRESSION_KEYWORDS}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken}};
-use super::{CompletionItem, CompletionItemList};
+use super::{CompletionItem, CompletionItemList, FieldCompletionOptions};
 
 #[derive(Debug)]
 pub enum CompletionItemGenerator {
@@ -41,9 +41,7 @@ pub struct EventCompletionDetails {
 #[derive(Debug)]
 pub struct FieldCompletionDetails {
     pub parent_type: Type,
-    pub show_methods: bool,
-    pub insert_arguments: bool,
-    pub prefix: &'static str,
+    pub options: FieldCompletionOptions
 }
 
 #[derive(Debug)]
@@ -77,12 +75,16 @@ impl CompletionItemGenerator {
             },
             Self::FieldOrMethod(details) => {
                 for field_info in details.parent_type.get_all_fields() {
-                    items.add_field(field_info, details.prefix);
+                    if !details.options.hide_private || !field_info.visibility.is_private() {
+                        items.add_field(field_info, details.options.prefix, details.options.suffix);
+                    }
                 }
 
-                if details.show_methods {
+                if details.options.show_methods {
                     for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
-                        items.add_method(method_info, details.insert_arguments, false, show_internals);
+                        if !details.options.hide_private || !method_info.borrow().method_details.as_ref().unwrap().visibility.is_private() {
+                            items.add_method(method_info, details.options.insert_arguments, false, show_internals);
+                        }
                     }
                 }
             },
@@ -91,9 +93,9 @@ impl CompletionItemGenerator {
                     items.add_enum_variant(variant, false);
                 }
 
-                if details.show_methods {
+                if details.options.show_methods {
                     for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
-                        items.add_method(method_info, details.insert_arguments, false, show_internals);
+                        items.add_method(method_info, details.options.insert_arguments, false, show_internals);
                     }
                 }
             },

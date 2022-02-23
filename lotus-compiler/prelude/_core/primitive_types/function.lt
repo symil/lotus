@@ -56,7 +56,8 @@ sys type Function {
     }
 
     static __serialize(buffer: Buffer, value: Self) {{
-
+        drop
+        drop
     }}
 
     static __deserialize(buffer: Buffer) -> Self? {{

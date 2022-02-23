@@ -1,5 +1,8 @@
 pub const DEFAULT_TEXT_COLOR = Color::black();
 pub const DEFAULT_BACKGROUND_COLOR = Color::white();
-pub const DEFAULT_BORDER_RADIUS = 0.15h;
-pub const DEFAULT_BORDER_WIDTH = 0.04h;
+pub const DEFAULT_BORDER_RADIUS = .15h;
+pub const DEFAULT_BORDER_WIDTH = .04h;
 pub const DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER = 1.5;
+pub const DEFAULT_HOVER_OVERLAY_COLOR = Color::black();
+pub const DEFAULT_HOVER_OVERLAY_ALPHA = 0.3;
+pub const DEFAULT_BUTTON_TEXT_SIZE = .6h;

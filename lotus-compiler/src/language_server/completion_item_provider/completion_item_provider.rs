@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::ItemLocation;
 use crate::{program::{CursorLocation, Cursor, Type}, utils::{is_valid_identifier, is_blank_string, contains_valid_identifier_character}};
-use super::{CompletionItemGenerator, CompletionItem, FieldCompletionDetails, KeywordCompletionDetails};
+use super::{CompletionItemGenerator, CompletionItem, FieldCompletionDetails, KeywordCompletionDetails, FieldCompletionOptions};
 
 #[derive(Debug)]
 pub struct CompletionItemProvider {
@@ -43,24 +43,20 @@ impl CompletionItemProvider {
         })
     }
 
-    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool, prefix: &'static str) {
+    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, options: Option<&FieldCompletionOptions>) {
         self.add_completion(location, || {
             CompletionItemGenerator::FieldOrMethod(FieldCompletionDetails {
                 parent_type: parent_type.clone(),
-                show_methods,
-                insert_arguments,
-                prefix
+                options: options.cloned().unwrap_or_default()
             })
         })
     }
 
-    pub fn add_static_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, show_methods: bool, insert_arguments: bool) {
+    pub fn add_static_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, options: Option<&FieldCompletionOptions>) {
         self.add_completion(location, || {
             CompletionItemGenerator::StaticFieldOrMethod(FieldCompletionDetails {
                 parent_type: parent_type.clone(),
-                show_methods,
-                insert_arguments,
-                prefix: ""
+                options: options.cloned().unwrap_or_default()
             })
         })
     }

@@ -2,7 +2,7 @@ use std::{cell::Ref, collections::{HashMap, HashSet}, rc::Rc};
 use indexmap::IndexMap;
 use parsable::parsable;
 use colored::*;
-use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat};
+use crate::{program::{AccessType, AnonymousFunctionCallDetails, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionBlueprint, FunctionCall, GET_AT_INDEX_FUNC_NAME, NONE_LITERAL, NONE_METHOD_NAME, NamedFunctionCallDetails, ParameterTypeInfo, ProgramContext, Type, VariableInfo, VariableKind, Vasm, Wat, print_type_list, print_type_ref_list, TypeContent}, utils::Link, wat, language_server::FieldCompletionOptions};
 use super::{ParsedArgumentList, Identifier, ParsedIdentifierWrapper, ParsedVarPrefixToken, ParsedDotToken};
 
 #[parsable]
@@ -18,13 +18,21 @@ impl ParsedFieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        context.completion_provider.add_field_completion(&self.dot, parent_type, true, self.arguments.is_none(), "");
+        context.completion_provider.add_field_completion(&self.dot, parent_type, Some(&FieldCompletionOptions {
+            show_methods: true,
+            insert_arguments: self.arguments.is_none(),
+            ..Default::default()
+        }));
 
         match &self.name {
             Some(identifier) => {
                 match identifier.process(context) {
                     Some(name) => {
-                        context.completion_provider.add_field_completion(&name.location, parent_type, true, self.arguments.is_none(), "");
+                        context.completion_provider.add_field_completion(&name.location, parent_type, Some(&FieldCompletionOptions {
+                            show_methods: true,
+                            insert_arguments: self.arguments.is_none(),
+                            ..Default::default()
+                        }));
 
                         match &self.arguments {
                             Some(arguments) => process_method_call(parent_type, field_kind, &name, &[], arguments, type_hint, access_type, context),

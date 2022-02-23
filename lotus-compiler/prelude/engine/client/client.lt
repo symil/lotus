@@ -197,7 +197,7 @@ export class Client {
                         };
 
                         for callback in callback_list {
-                            callback();
+                            callback(self);
                         }
                     }
                 },
@@ -211,7 +211,7 @@ export class Client {
         }
     }
 
-    request<T>(value: T) {
+    send_request<T>(value: T) {
         self._buffer.clear();
         T::__serialize(self._buffer, value);
 

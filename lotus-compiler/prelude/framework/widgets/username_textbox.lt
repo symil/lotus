@@ -1,7 +1,0 @@
-const PLACEHOLDER = "Username";
-const DATA_KEY = "username";
-
-pub class UsernameTextBox extends TextBox {
-    self.placeholder = PLACEHOLDER;
-    self.data_key = DATA_KEY;
-}
