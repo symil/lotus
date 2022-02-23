@@ -34,7 +34,7 @@ pub class Server {
 
             match event.kind {
                 NetworkEventKind::ConnectionOpen => {
-                    let user = #USER_TYPE {};
+                    let user = #USER_TYPE::__default();
 
                     self._websocket_id_to_user.set(event.websocket_id, user);
                     self._user_to_websocket_id.set(user, event.websocket_id);

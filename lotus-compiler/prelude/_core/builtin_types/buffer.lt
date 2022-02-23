@@ -43,6 +43,7 @@ export class Buffer {
     clear() {
         self.size = 0;
         self.read_index = 0;
+        self.serialized_strings.clear();
         self.serialized_objects.clear();
         self.remote_addr_to_local_object.clear();
         self.local_object_to_remote_addr.clear();

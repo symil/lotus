@@ -42,7 +42,7 @@ pub view TextBox {
             .text_color(color)
             .text(text)
             .cursor(Cursor::Text)
-            .focus_border_width(border_widh.scale(2))
+            .focus_border_width(border_widh.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .focus_text_cursor_index(cursor_index)
     }
 

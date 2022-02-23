@@ -13,7 +13,7 @@ export class Client {
 
     _focused_index: int?,
 
-    user: #USER_TYPE?,
+    user: #USER_TYPE,
     local_data: DataStore,
     hovered_view: View?,
     focus_chain: View[],

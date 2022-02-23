@@ -19,11 +19,13 @@ export view LobbyScreen {
             .scale_y(0.15)
             .push(title_label)
         
-        if (!evt.client.user.name) {
-            self.layout()
-                .move_to(0.5, 0.5)
-                .resize_from_height(0.1, 5)
-                .push(UsernameTextBox);
+        if evt.client.user is BasicGameUser(basic_game_user) {
+            if !basic_game_user.name {
+                self.layout()
+                    .move_to(0.5, 0.5)
+                    .resize_from_height(0.1, 5)
+                    .push(UsernameTextBox);
+            }
         }
     }
 
