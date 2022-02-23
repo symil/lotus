@@ -4,24 +4,6 @@ view Window extends BasicGameWindow {
     self.title_color = Color::red()
 }
 
-class World {
-    @OnWorldInit {
-        @log("WORLD INIT");
-    }
-
-    @OnUserConnect {
-        @log(`CONNECT: ${evt.user}`);
-    }
-
-    @OnUserDisconnect {
-        @log(`DISCONNECT: ${evt.user}`);
-    }
-
-    @OnUserRequest {
-        if evt.request is LoginRequest(login_request) {
-            evt.user.name = login_request.username;
-        }
-    }
-}
+type World = BasicGameWorld;
 
 type User = BasicGameUser;

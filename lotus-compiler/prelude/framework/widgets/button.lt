@@ -9,6 +9,7 @@ export view Button {
 
     @OnRender {
         self
+            .add_to_focus_chain()
             .background_color(self.background_color)
             .text(self.text)
             .text_color(self.text_color)
@@ -17,6 +18,7 @@ export view Button {
             .border_color(self.text_color)
             .border_width(self.border_width)
             .border_radius(DEFAULT_BORDER_RADIUS)
+            .focus_border_width(self.border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
@@ -24,5 +26,16 @@ export view Button {
 
     @OnDefineMouseInteractions {
         self.on_click(self.on_click);
+    }
+
+    @OnKeyboardEvent {
+        check self.is_focused();
+        check evt.action == KeyboardAction::Down;
+        check self.on_click;
+
+        if evt.code == KeyCode::Enter {
+            let callback = self.on_click;
+            callback(evt.client);
+        }
     }
 }

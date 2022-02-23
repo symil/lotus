@@ -1,0 +1,23 @@
+export class BasicGameWorld {
+    @OnWorldInit {
+        @log("WORLD INIT");
+    }
+
+    @OnUserConnect {
+        
+    }
+
+    @OnUserDisconnect {
+        
+    }
+
+    @OnUserRequest {
+        check evt.user is BasicGameUser(user);
+
+        match evt.request {
+            LoginRequest(login_request) => {
+                user.name = login_request.username;
+            }
+        }
+    }
+}

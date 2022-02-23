@@ -9,6 +9,7 @@ pub view TextBox {
     text_color: Color = Color::black(),
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
+    on_enter: MouseHandlerCallback = none,
 
     static new(placeholder: string, data_key: string) -> Self {
         Self { placeholder, data_key }
@@ -23,7 +24,7 @@ pub view TextBox {
         let text = data.text;
         let cursor_index = data.cursor_index;
         let color = self.text_color;
-        let border_widh = DEFAULT_BORDER_WIDTH;
+        let border_width = DEFAULT_BORDER_WIDTH;
 
         if text.is_empty() {
             text = self.placeholder;
@@ -41,7 +42,7 @@ pub view TextBox {
             .text_color(color)
             .text(text)
             .cursor(Cursor::Text)
-            .focus_border_width(border_widh.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
+            .focus_border_width(border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .focus_text_cursor_index(cursor_index)
     }
 
@@ -54,15 +55,19 @@ pub view TextBox {
     }
 
     @OnKeyboardEvent {
-        if !self.is_focused() {
-            return;
-        }
+        check evt.action == KeyboardAction::Down;
+        check self.is_focused();
 
         let data = self._get_data();
         let ctrl = evt.ctrl_key;
 
         if evt.code == KeyCode::Escape {
             self.unfocus();
+            intercept;
+        } else if evt.code == KeyCode::Enter {
+            if self.on_enter {
+                (self.on_enter)(evt.client);
+            }
             intercept;
         } else {
             let valid = true;
@@ -120,11 +125,8 @@ pub view TextBox {
 
             if (valid) {
                 cursor_index = cursor_index.clamp(0, text.len());
-
-                if evt.action == KeyboardAction::Down {
-                    data.text = text;
-                    data.cursor_index = cursor_index;
-                }
+                data.text = text;
+                data.cursor_index = cursor_index;
                 intercept;
             }
         }

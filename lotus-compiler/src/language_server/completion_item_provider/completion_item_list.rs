@@ -168,7 +168,10 @@ impl CompletionItemList {
                 false => "",
             };
 
-            let mut label = format!("{}({})", function_name, parenthesis_content);
+            let mut label = match insert_arguments {
+                true => format!("{}({})", function_name, parenthesis_content),
+                false => function_name.to_string()
+            };
 
             if show_owner {
                 let prefix = if let Some(owner_type) = &function_unwrapped.owner_type {

@@ -130,7 +130,9 @@ impl CompletionItemGenerator {
                 }
 
                 for function_wrapped in &details.available_functions {
-                    items.add_function(function_wrapped.clone(), details.insert_arguments);
+                    let is_expected_function = details.expected_type.as_ref().map(|ty| ty.is_function()).unwrap_or(false);
+
+                    items.add_function(function_wrapped.clone(), details.insert_arguments && !is_expected_function);
                 }
 
                 for type_wrapped in &details.available_types {

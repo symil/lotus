@@ -1,4 +1,5 @@
 pub class UsernameTextBox extends TextBox {
     self.placeholder = USERNAME_TEXTBOX_PLACEHOLDER
     self.data_key = USERNAME_TEXTBOX_DATA_KEY
+    self.on_enter = send_login_request
 }

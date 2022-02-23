@@ -4,6 +4,18 @@ export view LobbyScreen {
     text_font: Font,
     title_color : Color,
 
+    _displayLoginPanel(client: Client) {
+        check (client.user is BasicGameUser(user)) && !user.name;
+
+        self.layout()
+            .move_to(0.5, 0.5)
+            .resize_from_height(0.1, 5)
+            .towards_bottom()
+            .inner_margin(20)
+            .push(UsernameTextBox)
+            .push(LoginButton);
+    }
+
     @OnRender {
         let title_label = Label {
             text: self.title,
@@ -19,18 +31,7 @@ export view LobbyScreen {
             .scale_y(0.15)
             .push(title_label)
         
-        if evt.client.user is BasicGameUser(basic_game_user) {
-            if !basic_game_user.name {
-                self.layout()
-                    .move_to(0.5, 0.5)
-                    .resize_from_height(0.1, 5)
-                    .towards_bottom()
-                    .inner_margin(20)
-                    .push(UsernameTextBox)
-                    .push(LoginButton)
-                    ;
-            }
-        }
+        self._displayLoginPanel(evt.client);
     }
 
     @OnKeyboardEvent {
@@ -47,4 +48,9 @@ export view LobbyScreen {
             intercept;
         }
     }
+}
+
+fn log<T>(value: T) -> bool {
+    @dbg(value);
+    true
 }

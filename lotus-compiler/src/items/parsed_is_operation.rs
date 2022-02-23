@@ -1,6 +1,6 @@
 use parsable::{ItemLocation, parsable};
 use crate::program::{ProgramContext, Vasm, Type, IS_METHOD_NAME, VariableInfo, BuiltinInterface, IS_SAME_TYPE_FUNCTION_NAME, TYPE_ID_METHOD_NAME};
-use super::{ParsedType, Identifier, ParsedVarDeclarationNames};
+use super::{ParsedType, Identifier, ParsedVarDeclarationNames, unwrap_item};
 
 #[parsable]
 pub struct ParsedIsOperation {
@@ -31,14 +31,7 @@ impl ParsedIsOperation {
             },
         };
 
-        let var_name = match &self.var_name {
-            Some(name) => name,
-            None => {
-                context.errors.expected_identifier(type_location);
-                return None;
-            },
-        };
-
+        let var_name = unwrap_item(&self.var_name, self, context)?;
         let is_source_object = source_type.match_builtin_interface(BuiltinInterface::Object, context);
         let is_target_object = target_type.match_builtin_interface(BuiltinInterface::Object, context);
         let both_object = is_source_object && is_target_object;

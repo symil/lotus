@@ -138,6 +138,9 @@
 [X] Make so spread operator only copies public fields
 [X] Allow anonymous method to use function parameter of parent function
 [X] Add proper completion on variable declaration
+[X] Do not insert function argument when expecting a function identifier
+[ ] Allow chaining function calls (e.g `a()()()`)
+[ ] Invert priority of `is`/`as` and binary operators
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -154,7 +157,6 @@
 [ ] Reduce size of generated wat by merging functions that have exactly the same body
 [ ] Unify function & value types (probably by introducing function overloading + `()` operator?)
 [ ] Allow `@alloc` to return exactly 1 `i32`
-[ ] Allow chaining function calls (e.g `a()()()`)
 [ ] Improve `Link::borrow()`
 [ ] Add `assert` macro or equivalent to do tests (and ensure everything is fine in prod)
 [ ] Add stack trace somehow

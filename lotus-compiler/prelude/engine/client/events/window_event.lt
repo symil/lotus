@@ -1,4 +1,5 @@
 pub event WindowEvent {
+    client: Client
 }
 
 enum WindowEventType {
@@ -12,12 +13,14 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Window
 
     match event_type {
         WindowEventType::Mouse => OnMouseEvent {
+            client,
             action: buffer.read_unchecked(),
             button: buffer.read_unchecked(),
             x: buffer.read_unchecked(),
             y: buffer.read_unchecked(),
         },
         WindowEventType::Keyboard => OnKeyboardEvent {
+            client,
             action: buffer.read_unchecked(),
             code: buffer.read_unchecked(),
             text: buffer.read_unchecked(),
@@ -26,6 +29,7 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Window
             alt_key: buffer.read_unchecked(),
         },
         WindowEventType::Wheel => OnWheelEvent {
+            client,
             delta_x: buffer.read_unchecked(),
             delta_y: buffer.read_unchecked(),
             delta_z: buffer.read_unchecked(),
