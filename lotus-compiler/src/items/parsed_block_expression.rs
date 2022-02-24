@@ -17,6 +17,7 @@ pub struct ParsedBlockItem {
 impl ParsedBlockExpression {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = context.vasm().set_void(context);
+        let is_result_void = type_hint.map(|ty| ty.is_void()).unwrap_or(false);
 
         context.push_scope(ScopeKind::Block);
 
@@ -30,7 +31,7 @@ impl ParsedBlockExpression {
             if let Some(item_vasm) = item.expression.process(hint, context) {
                 result = result.append(item_vasm);
 
-                if !is_last || item.semicolon.is_some() {
+                if !is_last || item.semicolon.is_some() || is_result_void {
                     let ty = result.ty.clone();
 
                     result = result

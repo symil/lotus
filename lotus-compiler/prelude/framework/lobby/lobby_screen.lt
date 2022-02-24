@@ -13,7 +13,7 @@ export view LobbyScreen {
             .towards_bottom()
             .inner_margin(20)
             .push(UsernameTextBox)
-            .push(LoginButton);
+            .push(LoginButton)
     }
 
     @OnRender {
