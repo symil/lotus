@@ -2,7 +2,7 @@ use parsable::parsable;
 use crate::{program::{AccessType, FieldKind, ProgramContext, Type, Vasm}};
 use super::{Identifier, ParsedVarPathRoot, ParsedVarPathSegment};
 
-#[parsable]
+#[parsable(declare_marker = "no-function-call")]
 pub struct ParsedVarPath {
     pub root: Box<ParsedVarPathRoot>,
     pub path: Vec<ParsedVarPathSegment>

@@ -27,9 +27,11 @@ pub enum ParsedVarPathRoot {
     #[parsable(ignore_if_marker = "no-object")]
     ObjectLiteral(ParsedObjectLiteral),
     FunctionLiteral(ParsedAnonymousFunction),
-    #[parsable(declare_marker = "no-object")]
+    #[parsable(unset_marker = "no-object", unset_marker = "no-function-call")]
     Parenthesized(ParsedParenthesizedExpression),
+    #[parsable(unset_marker = "no-function-call")]
     PrefixedVarRef(ParsedPrefixedVarRef),
+    #[parsable(unset_marker = "no-function-call")]
     VarRef(ParsedVarRef),
 }
 

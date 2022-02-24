@@ -224,8 +224,20 @@ impl StringReader {
         self.markers.remove(id);
     }
 
-    pub fn set_marker(&mut self, name: &'static str, value: bool) {
-        self.markers.set(name, value);
+    pub fn set_marker(&mut self, name: &'static str, value: bool) -> bool {
+        self.markers.set(name, value)
+    }
+
+    pub fn debug(&self, message: &str) {
+        if self.file.path.ends_with("main.lt") {
+            println!("{}", message);
+        }
+    }
+
+    pub fn display_marker(&self, name: &'static str) {
+        if self.file.path.ends_with("main.lt") {
+            println!("{}: {}", name, self.get_marker(name));
+        }
     }
 }
 

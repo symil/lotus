@@ -59,6 +59,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 let mut on_fail = quote ! {
                     reader__.set_index(start_index__);
                     #(#markers_on_fail)*
+                    #root_markers_on_exit
                     return None;
                 };
 

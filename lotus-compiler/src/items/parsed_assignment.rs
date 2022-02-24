@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
 use crate::{items::{ParsedAssignmentOperatorToken, ParsedBinaryOperatorToken, ParsedBinaryOperator}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
-use super::{ParsedAssignmentOperator, ParsedExpression, Identifier, ParsedVarPath, ParsedVarRef};
+use super::{ParsedAssignmentOperator, ParsedExpression, Identifier, ParsedVarPath};
 
 #[parsable]
 pub struct ParsedAssignment {

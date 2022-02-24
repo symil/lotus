@@ -40,8 +40,8 @@ impl MarkerOutput {
 
         Self {
             on_parse_start: quote! { #(#start)* },
-            on_parse_fail: quote! { #(#fail)* },
             on_parse_exit: quote! { #(#exit)* },
+            on_parse_fail: quote! { #(#fail)* },
         }
     }
 

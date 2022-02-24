@@ -64,7 +64,8 @@ impl MarkerList {
             marker.value = value;
             prev_value
         } else {
-            panic!("marker {} does not exist", name);
+            // panic!("marker {} does not exist", name);
+            false
         }
     }
 }
