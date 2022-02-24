@@ -157,7 +157,7 @@ sys fn trigger_garbage_collection() {
             let block_count = page_ptr[3];
 
             for k in 0..block_count {
-                let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
+                let metadata_ptr = (block_list_start_addr + (full_block_size * k)) as ptr;
                 let metadata = metadata_ptr[0];
                 let state = get_pointer_state(metadata);
 
@@ -220,7 +220,7 @@ sys fn get_memory_usage() -> int {
             let block_count = page_ptr[3];
 
             for k in 0..block_count {
-                let metadata_ptr = block_list_start_addr + (full_block_size * k) as ptr;
+                let metadata_ptr = (block_list_start_addr + (full_block_size * k)) as ptr;
                 let metadata = metadata_ptr[0];
                 let state = get_pointer_state(metadata);
 

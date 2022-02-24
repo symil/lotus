@@ -1,0 +1,29 @@
+class Foo {
+    callback: fn() = level_1,
+    nested_callback: fn()(fn()(fn())) = level_3
+}
+
+export fn main() {
+    let foo = Foo;
+    let f = foo.callback;
+    let array = [f, f, f];
+
+    f();
+    (foo.callback)();
+    level_2()();
+    level_3()()();
+    array[1]();
+    (foo.nested_callback)()()();
+}
+
+fn level_1() {
+    @log("hello");
+}
+
+fn level_2() -> fn() {
+    level_1
+}
+
+fn level_3() -> fn()(fn()) {
+    level_2
+}

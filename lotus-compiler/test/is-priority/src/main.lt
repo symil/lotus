@@ -1,0 +1,15 @@
+class Foo {
+    a: int = 5
+}
+
+export fn main() {
+    let foo = Foo;
+
+    check_foo(foo);
+}
+
+fn check_foo(obj: Object) {
+    check obj is Foo(foo) && foo.a != 5;
+
+    @log("should not be displayed!");
+}

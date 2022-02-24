@@ -140,7 +140,7 @@
 [X] Add proper completion on variable declaration
 [X] Do not insert function argument when expecting a function identifier
 [X] Allow chaining function calls (e.g `a()()()`)
-[ ] Invert priority of `is`/`as` and binary operators
+[X] Swap priority of `is`/`as` and binary operators
 [ ] Allow void blocks to return anything (drop the returned value)
 [ ] Use `QuickGame*` as default for main type values
 

@@ -7,8 +7,6 @@ use super::{ParsedBinaryOperation, Identifier, ParsedType, ParsedIsOperation, Pa
 #[parsable(name="expression")]
 pub struct ParsedExpression {
     pub operation: Box<ParsedBinaryOperation>,
-    pub is_operation: Option<ParsedIsOperation>,
-    pub as_operation: Option<ParsedAsOperation>,
 }
 
 impl ParsedExpression {
@@ -20,18 +18,6 @@ impl ParsedExpression {
         let mut result = None;
 
         if let Some(mut vasm) = self.operation.process(type_hint, context) {
-            if let Some(is_operation) = &self.is_operation {
-                if let Some(is_vasm) = is_operation.process(&vasm.ty, context) {
-                    vasm = vasm.append(is_vasm);
-                }
-            }
-
-            if let Some(as_operation) = &self.as_operation {
-                if let Some(as_vasm) = as_operation.process(&vasm.ty, context) {
-                    vasm = vasm.append(as_vasm);
-                }
-            }
-
             result = Some(vasm);
         }
 
