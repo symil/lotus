@@ -1,0 +1,35 @@
+export class QuickGameWorld {
+    users: Map<string, QuickGameUser>,
+
+    @OnWorldInit {
+        @log("WORLD INIT");
+    }
+
+    @OnUserConnect {
+        
+    }
+
+    @OnUserDisconnect {
+        check evt.user is QuickGameUser(user);
+        check user.name;
+
+        self.users.delete(user.name);
+    }
+
+    @OnUserRequest {
+        check evt.user is QuickGameUser(user);
+
+        match evt.request {
+            LoginRequest(login_request) => {
+                check !login_request.username.is_empty();
+
+                if self.users.get(login_request.username) {
+                    user.error = `Name "${login_request.username} is already used."`;
+                } else {
+                    self.users.set(login_request.username, user);
+                    user.name = login_request.username;
+                }
+            }
+        }
+    }
+}

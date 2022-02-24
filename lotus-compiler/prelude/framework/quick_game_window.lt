@@ -1,4 +1,4 @@
-export view BasicGameWindow {
+export view QuickGameWindow {
     background_color : Color = Color::white(),
     title: string = "Game",
     title_color : Color = Color::black(),

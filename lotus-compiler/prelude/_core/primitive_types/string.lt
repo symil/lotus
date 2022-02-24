@@ -128,7 +128,7 @@ export type(i32) string {
     }
 
     is_empty() -> bool {
-        self.len() == 0
+        self && self.len() == 0
     }
 
     pad_start(c: char, target_length: int) -> string {

@@ -141,6 +141,8 @@
 [X] Do not insert function argument when expecting a function identifier
 [ ] Allow chaining function calls (e.g `a()()()`)
 [ ] Invert priority of `is`/`as` and binary operators
+[ ] Allow void functions to return anything (drop the returned value)
+[ ] Use `QuickGame*` as default for main type values
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -202,6 +204,7 @@
 [ ] Add completion for type parameters
 [ ] Signature help: correctly infer type parameters (`Array<int>.push()` should display `int` instead of `T`)
 [ ] Fix structure of compiler/cli (merge them?)
+[ ] Properly automatically trigger completion in template strings (e.g `${foo}`)
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

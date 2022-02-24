@@ -1,0 +1,4 @@
+export class QuickGameUser {
+    name: string = none,
+    error: string = none,
+}

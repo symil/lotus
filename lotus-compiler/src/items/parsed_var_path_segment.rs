@@ -7,6 +7,7 @@ use super::{ParsedArgumentList, ParsedBracketIndexing, ParsedExpression, ParsedF
 pub enum ParsedVarPathSegment {
     FieldOrMethodAccess(ParsedFieldOrMethodAccess),
     BracketIndexing(ParsedBracketIndexing),
+    // TODO: parenthesis
 }
 
 impl ParsedVarPathSegment {
