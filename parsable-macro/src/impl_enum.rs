@@ -21,12 +21,26 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         let mut parse_suffix = quote! { true };
         let mut parse_method = quote! { parse_item(reader__) };
         let mut line = quote! { };
+        let mut pass_marker_test_fragments = vec![];
 
-        let marker_value = match &attributes.ignore_if_marker {
-            Some(name) => quote! { reader__.get_marker_value(#name) },
-            None => quote! { false },
+        for marker_name in &attributes.ignore_if_marker {
+            pass_marker_test_fragments.push(quote! {
+                !reader__.get_marker(#marker_name)
+            });
+        }
+
+        for marker_name in &attributes.ignore_if_not_marker {
+            pass_marker_test_fragments.push(quote! {
+                reader__.get_marker(#marker_name)
+            });
+        }
+
+        let pass_marker_test = match pass_marker_test_fragments.is_empty() {
+            true => quote! { true },
+            false => quote! { #(#pass_marker_test_fragments)&&* }
         };
-        let (push_markers, pop_markers) = attributes.get_push_pop_markers();
+
+        let (field_markers_on_start, field_markers_on_exit, field_markers_on_fail) = attributes.get_push_pop_markers(i);
 
         if let Some(prefix) = attributes.prefix {
             let prefix_consume_spaces = match attributes.consume_spaces_after_prefix {
@@ -75,7 +89,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                     let suffix_ok__ = #parse_suffix;
 
                     if suffix_ok__ {
-                        #pop_markers
+                        #field_markers_on_exit
                         return Some(Self::#variant_name(#(#value_names),*))
                     }
                 };
@@ -148,7 +162,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
                         line = quote! {
                             if let Some(_) = reader__.read_string(#lit_str) {
                                 reader__.eat_spaces();
-                                #pop_markers
+                                #field_markers_on_exit
                                 return Some(Self::#variant_name);
                             } else if (! #has_name) {
 
@@ -168,10 +182,11 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
         }
 
         lines.push(quote! {
-            if !(#marker_value) {
-                #push_markers
+            if (#pass_marker_test) {
+                #field_markers_on_start
                 #line
-                #pop_markers
+                #field_markers_on_fail
+                #field_markers_on_exit
             }
         });
     }

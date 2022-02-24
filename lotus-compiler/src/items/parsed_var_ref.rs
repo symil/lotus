@@ -33,7 +33,7 @@ impl ParsedVarRef {
                             function_offset: 0,
                         });
 
-                        match process_function_call(&var_name, function_call, args, type_hint, access_type, context) {
+                        match process_function_call(Some(&var_name), function_call, args, type_hint, access_type, context) {
                             Some(function_vasm) => Some(context.vasm()
                                 .get_var(&var_info, current_function_level)
                                 .append(function_vasm)
@@ -57,7 +57,7 @@ impl ParsedVarRef {
                             parameters: vec![],
                         });
 
-                        process_function_call(&var_name, function_call, args, type_hint, access_type, context)
+                        process_function_call(Some(&var_name), function_call, args, type_hint, access_type, context)
                     },
                     None => {
                         context.errors.generic(&var_name, format!("undefined function `{}`", &var_name));

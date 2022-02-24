@@ -6,6 +6,7 @@ mod utils;
 mod impl_struct;
 mod impl_enum;
 mod output;
+mod markers;
 
 use proc_macro::{TokenStream};
 use proc_macro2::{Span};

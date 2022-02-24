@@ -24,10 +24,10 @@ pub enum ParsedVarPathRoot {
     TemplateString(ParsedTemplateString),
     ArrayLiteral(ParsedArrayLiteral),
     StaticFieldOrMethod(ParsedStaticFieldOrMethod),
-    #[parsable(ignore_if_marker="no-object")]
+    #[parsable(ignore_if_marker = "no-object")]
     ObjectLiteral(ParsedObjectLiteral),
     FunctionLiteral(ParsedAnonymousFunction),
-    #[parsable(unset_marker="no-object")]
+    #[parsable(declare_marker = "no-object")]
     Parenthesized(ParsedParenthesizedExpression),
     PrefixedVarRef(ParsedPrefixedVarRef),
     VarRef(ParsedVarRef),

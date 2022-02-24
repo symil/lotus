@@ -28,15 +28,18 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
         }
     };
 
+    let (root_markers_on_start, root_markers_on_exit, root_markers_on_fail) = root_attributes.get_push_pop_markers();
+    let mut markers_on_fail = vec![root_markers_on_fail];
+
     match &mut data_struct.fields {
         Fields::Named(named_fields) => {
             let field_count = named_fields.named.len();
             let mut field_names = vec![];
             let mut lines = vec![];
 
-            for field in named_fields.named.iter_mut() {
+            for (i, field) in named_fields.named.iter_mut().enumerate() {
                 let attributes = FieldAttributes::from_field_attributes(&mut field.attrs);
-                let (push_markers, pop_markers) = attributes.get_push_pop_markers();
+                let (field_markers_on_start, field_markers_on_exit, field_markers_on_fail) = attributes.get_push_pop_markers(i);
                 let is_vec = is_type(&field.ty, "Vec");
                 let is_option = is_type(&field.ty, "Option");
 
@@ -44,6 +47,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 let field_type = &field.ty;
 
                 field_names.push(quote! { #field_name });
+                markers_on_fail.insert(0, field_markers_on_fail);
 
                 let optional = is_option || attributes.optional.unwrap_or(false);
                 let participate_in_cascade = root_attributes.cascade && attributes.cascade.unwrap_or(true);
@@ -54,7 +58,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                 let mut handle_failure = quote! {};
                 let mut on_fail = quote ! {
                     reader__.set_index(start_index__);
-                    #pop_markers
+                    #(#markers_on_fail)*
                     return None;
                 };
 
@@ -262,7 +266,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                     });
                 } else {
                     lines.push(quote! {
-                        #push_markers
+                        #field_markers_on_start
                         field_failed__ = false;
                         prefix_ok__ = true;
                         field_index__ = reader__.get_index();
@@ -275,7 +279,7 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                         #suffix_parsing
                         #followed_by_parsing
                         #handle_failure
-                        #pop_markers
+                        #field_markers_on_exit
                     });
                 }
             }
@@ -295,7 +299,9 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                     let mut field_failed__ = false;
                     let mut prefix_ok__ = true;
                     let mut option_failed__ = false;
+                    #root_markers_on_start
                     #(#lines)*
+                    #root_markers_on_exit
                     #set_location
                     Some(Self { #(#field_names),* })
                 }

@@ -205,6 +205,7 @@
 [ ] Signature help: correctly infer type parameters (`Array<int>.push()` should display `int` instead of `T`)
 [ ] Fix structure of compiler/cli (merge them?)
 [ ] Properly automatically trigger completion in template strings (e.g `${foo}`)
+[ ] Fix `class`/`enum`/etc keywords completion when they are inserted in the middle of the file
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

@@ -8,9 +8,9 @@ pub struct ParsedForBlock {
     pub for_keyword: Token<FOR_KEYWORD>,
     pub iterator: Option<ParsedForIterator>,
     pub in_keyword: Option<Token<IN_KEYWORD>>,
-    #[parsable(set_marker="no-object")]
+    #[parsable(declare_marker="no-object")]
     pub range_start: Option<ParsedExpression>,
-    #[parsable(prefix="..", set_marker="no-object")]
+    #[parsable(prefix="..", declare_marker="no-object")]
     pub range_end: Option<ParsedExpression>,
     #[parsable(cascade=false)]
     pub body: Option<ParsedBlockExpression>

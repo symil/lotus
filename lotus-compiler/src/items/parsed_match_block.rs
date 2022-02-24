@@ -10,7 +10,7 @@ use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, Parse
 #[parsable]
 pub struct ParsedMatchBlock {
     pub match_keyword: Token<MATCH_KEYWORD>,
-    #[parsable(set_marker="no-object")]
+    #[parsable(declare_marker="no-object")]
     pub expression: Option<Box<ParsedExpression>>,
     pub body: Option<ParsedMatchBody>,
 }

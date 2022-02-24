@@ -5,7 +5,7 @@ use super::{ParsedExpression, ParsedBlockExpression};
 
 #[parsable]
 pub struct ParsedBranch {
-    #[parsable(set_marker="no-object")]
+    #[parsable(declare_marker = "no-object")]
     pub condition: ParsedExpression,
     pub body: Option<ParsedBlockExpression>
 }

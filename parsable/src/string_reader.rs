@@ -1,6 +1,6 @@
 use std::{collections::{HashMap}, rc::Rc};
 use regex::Regex;
-use crate::{ItemLocation, file_info::FileInfo, Parsable};
+use crate::{ItemLocation, file_info::FileInfo, Parsable, marker_list::MarkerList};
 use super::parse_error::ParseError;
 
 pub struct StringReader {
@@ -9,7 +9,7 @@ pub struct StringReader {
     index: usize,
     error_index: usize,
     expected: Vec<String>,
-    markers: HashMap<&'static str, Vec<bool>>
+    markers: MarkerList
 }
 
 pub struct ParseOptions {
@@ -43,7 +43,7 @@ impl StringReader {
             index: 0,
             error_index: 0,
             expected: vec![],
-            markers: HashMap::new()
+            markers: MarkerList::new()
         }
     }
 
@@ -212,25 +212,20 @@ impl StringReader {
         }
     }
 
-    pub fn get_marker_value(&self, name: &'static str) -> bool {
-        match self.markers.get(name) {
-            Some(list) => *list.last().unwrap_or(&false),
-            None => false
-        }
+    pub fn get_marker(&self, name: &'static str) -> bool {
+        self.markers.get(name)
     }
 
-    pub fn push_marker_value(&mut self, name: &'static str, value: bool) {
-        if !self.markers.contains_key(name) {
-            self.markers.insert(name, vec![]);
-        }
-
-        self.markers.get_mut(name).unwrap().push(value);
+    pub fn declare_marker(&mut self, name: &'static str) -> u64 {
+        self.markers.declare(name)
     }
 
-    pub fn pop_marker_value(&mut self, name: &'static str) {
-        if let Some(list) = self.markers.get_mut(name) {
-            list.pop();
-        }
+    pub fn remove_marker(&mut self, id: u64) {
+        self.markers.remove(id);
+    }
+
+    pub fn set_marker(&mut self, name: &'static str, value: bool) {
+        self.markers.set(name, value);
     }
 }
 

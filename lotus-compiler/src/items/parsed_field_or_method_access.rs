@@ -141,7 +141,7 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
             }
         });
 
-        result = process_function_call(method_name, function_call, arguments, type_hint, access_type, context);
+        result = process_function_call(Some(method_name), function_call, arguments, type_hint, access_type, context);
     } else if !caller_type.is_undefined() {
         context.errors.generic(method_name, format!("type `{}` has no {}method `{}`", caller_type, field_kind.get_qualifier(), method_name.as_str().bold()));
     }
@@ -149,11 +149,18 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
     result
 }
 
-pub fn process_function_call(function_name: &Identifier, mut function_call: FunctionCall, arguments: &ParsedArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-    if let FunctionCall::Named(details) = &function_call {
-        context.rename_provider.add_occurence(function_name, &details.function.borrow().name);
-        context.definition_provider.set_definition(function_name, &details.function.borrow().name);
-        context.hover_provider.set_type(function_name, &details.function.borrow().get_self_type());
+pub fn process_function_call(function_identifier: Option<&Identifier>, mut function_call: FunctionCall, arguments: &ParsedArgumentList, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
+    let function_name = match &function_identifier {
+        Some(identifier) => identifier.as_str(),
+        None => "",
+    };
+
+    if let Some(identifier) = function_identifier {
+        if let FunctionCall::Named(details) = &function_call {
+            context.rename_provider.add_occurence(identifier, &details.function.borrow().name);
+            context.definition_provider.set_definition(identifier, &details.function.borrow().name);
+            context.hover_provider.set_type(identifier, &details.function.borrow().get_self_type());
+        }
     }
 
     if let AccessType::Set(set_location) = access_type  {
@@ -185,7 +192,7 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
         function_parameters = infer_function_parameters(&function_parameters, &mut remaining_param_indexes_to_infer, ty, &signature.return_type);
     }
 
-    context.signature_help_provider.declare_signature(&arguments.location, function_name.as_str(), &function_call);
+    context.signature_help_provider.declare_signature(&arguments.location, function_name, &function_call);
 
     for i in 0..arguments.len().max(1).min(signature.argument_types.len()) {
         context.signature_help_provider.add_argument_location(&arguments.location, i, arguments.get_location_including_separator(i + 1));
@@ -217,18 +224,18 @@ pub fn process_function_call(function_name: &Identifier, mut function_call: Func
     }).collect();
 
     for i in remaining_param_indexes_to_infer.into_iter() {
-        if function_name.as_str() == "todo" {
+        if function_name == "todo" {
             // TODO: improve default type parameters
             function_parameters[i] = context.void_type();
         } else {
-            context.errors.generic(function_name, format!("cannot infer type parameter `{}`", function_parameters[i]));
+            context.errors.generic(function_identifier.as_ref().unwrap(), format!("cannot infer type parameter `{}`", function_parameters[i]));
         }
     }
 
     if let FunctionCall::Named(details) = &mut function_call {
         details.function.with_ref(|function_unwrapped| {
             for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(function_parameters.iter()) {
-                actual_param.check_match_interface_list(&expected_param.required_interfaces, function_name, context);
+                actual_param.check_match_interface_list(&expected_param.required_interfaces, function_identifier.as_ref().unwrap(), context);
             }
         });
     }

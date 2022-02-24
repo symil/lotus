@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use proc_macro_error::emit_call_site_error;
-use quote::quote;
 use syn::{*, parse::{Parse, ParseStream}};
+use crate::markers::MarkerOutput;
 
 #[derive(Default)]
 pub struct FieldAttributes {
@@ -19,9 +19,11 @@ pub struct FieldAttributes {
     pub consume_spaces_between_items: Option<bool>,
     pub exclude: Option<String>,
     pub followed_by: Option<String>,
-    pub set_marker: Option<LitStr>,
-    pub unset_marker: Option<LitStr>,
-    pub ignore_if_marker: Option<LitStr>,
+    pub declared_markers: Vec<LitStr>,
+    pub set_markers: Vec<LitStr>,
+    pub unset_markers: Vec<LitStr>,
+    pub ignore_if_marker: Vec<LitStr>,
+    pub ignore_if_not_marker: Vec<LitStr>,
     pub ignore: bool,
 }
 
@@ -61,9 +63,11 @@ impl Parse for FieldAttributes {
                     "cascade" => attributes.cascade = Some(content.parse::<LitBool>()?.value()),
                     "followed_by" => attributes.followed_by = Some(content.parse::<LitStr>()?.value()),
                     "exclude" => attributes.exclude = Some(content.parse::<LitStr>()?.value()),
-                    "set_marker" => attributes.set_marker = Some(content.parse::<LitStr>()?),
-                    "unset_marker" => attributes.unset_marker = Some(content.parse::<LitStr>()?),
-                    "ignore_if_marker" => attributes.ignore_if_marker = Some(content.parse::<LitStr>()?),
+                    "declare_marker" => attributes.declared_markers.push(content.parse::<LitStr>()?),
+                    "set_marker" => attributes.set_markers.push(content.parse::<LitStr>()?),
+                    "unset_marker" => attributes.unset_markers.push(content.parse::<LitStr>()?),
+                    "ignore_if_marker" => attributes.ignore_if_marker.push(content.parse::<LitStr>()?),
+                    "ignore_if_not_marker" => attributes.ignore_if_not_marker.push(content.parse::<LitStr>()?),
                     "consume_spaces" => attributes.consume_spaces = Some(content.parse::<LitBool>()?.value()),
                     "consume_spaces_after_prefix" => attributes.consume_spaces_after_prefix = Some(content.parse::<LitBool>()?.value()),
                     "consume_spaces_after_suffix" => attributes.consume_spaces_after_suffix = Some(content.parse::<LitBool>()?.value()),
@@ -99,23 +103,7 @@ impl FieldAttributes {
         attributes
     }
 
-    pub fn get_push_pop_markers(&self) -> (TokenStream, TokenStream) {
-        let mut push_markers = vec![];
-        let mut pop_markers = vec![];
-
-        if let Some(name) = &self.set_marker {
-            push_markers.push(quote! { reader__.push_marker_value(#name, true); });
-            pop_markers.push(quote! { reader__.pop_marker_value(#name); });
-        }
-
-        if let Some(name) = &self.unset_marker {
-            push_markers.push(quote! { reader__.push_marker_value(#name, false); });
-            pop_markers.push(quote! { reader__.pop_marker_value(#name); });
-        }
-
-        (
-            quote! { #(#push_markers)* },
-            quote! { #(#pop_markers)* },
-        )
+    pub fn get_push_pop_markers(&self, field_index: usize) -> (TokenStream, TokenStream, TokenStream) {
+        MarkerOutput::from_attributes(&self.declared_markers, &self.set_markers, &self.unset_markers, Some(field_index)).to_tuple()
     }
 }

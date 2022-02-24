@@ -13,6 +13,7 @@ mod line_col_lookup;
 mod file_info;
 mod token;
 mod end_of_file;
+mod marker_list;
 
 pub use parsable::Parsable;
 pub use string_reader::{StringReader, ParseOptions};
