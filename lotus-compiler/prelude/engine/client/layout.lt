@@ -32,13 +32,13 @@ pub class Layout {
         self
     }
 
-    scale_x(ratio: float) -> Self {
-        self.target.width *= ratio;
+    scale_width(ratio: float) -> Self {
+        self.target = self.target.scale_width(ratio);
         self
     }
 
-    scale_y(ratio: float) -> Self {
-        self.target.height *= ratio;
+    scale_height(ratio: float) -> Self {
+        self.target = self.target.scale_height(ratio);
         self
     }
 
@@ -192,18 +192,18 @@ pub class Layout {
         self
     }
 
-    towards_top() -> Self    { self.towards(0, -1) }
-    towards_bottom() -> Self { self.towards(0,  1) }
-    towards_left() -> Self   { self.towards(-1, 0) }
-    towards_right() -> Self  { self.towards(1,  0) }
+    towards_top() -> Self       { self.towards(0, -1) }
+    towards_bottom() -> Self    { self.towards(0,  1) }
+    towards_left() -> Self      { self.towards(-1, 0) }
+    towards_right() -> Self     { self.towards(1,  0) }
 
-    move_top_left() -> Self      { self.move_to(0  , 0  ) }
-    move_top() -> Self           { self.move_to(0.5, 0  ) }
-    move_top_right() -> Self     { self.move_to(1  , 0  ) }
-    move_left() -> Self          { self.move_to(0  , 0.5) }
-    move_center() -> Self        { self.move_to(0.5, 0.5) }
-    move_right() -> Self         { self.move_to(1  , 0.5) }
-    move_bottom_left() -> Self   { self.move_to(0  , 1  ) }
-    move_bottom() -> Self        { self.move_to(0.5, 1  ) }
-    move_bottom_right() -> Self  { self.move_to(1  , 1  ) }
+    move_top_left() -> Self     { self.move_to(0  , 0  ) }
+    move_top() -> Self          { self.move_to(0.5, 0  ) }
+    move_top_right() -> Self    { self.move_to(1  , 0  ) }
+    move_left() -> Self         { self.move_to(0  , 0.5) }
+    move_center() -> Self       { self.move_to(0.5, 0.5) }
+    move_right() -> Self        { self.move_to(1  , 0.5) }
+    move_bottom_left() -> Self  { self.move_to(0  , 1  ) }
+    move_bottom() -> Self       { self.move_to(0.5, 1  ) }
+    move_bottom_right() -> Self { self.move_to(1  , 1  ) }
 }

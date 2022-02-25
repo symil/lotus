@@ -113,6 +113,20 @@ export class Rect {
         }
     }
 
+    scale_width(ratio: float) -> Self {
+        Self {
+            ..self,
+            width: self.width * ratio,
+        }
+    }
+
+    scale_height(ratio: float) -> Self {
+        Self {
+            ..self,
+            height: self.height * ratio,
+        }
+    }
+
     rotate(angle: float) -> Self {
         Self {
             ..self,
