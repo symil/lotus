@@ -12,4 +12,13 @@ export view QuickGameWindow {
         self.layout()
             .push(lobby_screen)
     }
+
+    @OnClientStart {
+        return;
+        evt.client.wait_until(client => client.user is QuickGameUser(user) && !!user.name);
+
+        evt.client.send_request(LoginRequest {
+            username: "Test"
+        });
+    }
 }

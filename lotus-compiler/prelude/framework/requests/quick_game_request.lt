@@ -1,0 +1,5 @@
+export class QiuckGameRequest {
+    dyn process(world: #WORLD_TYPE, server: Server) {
+        
+    }
+}

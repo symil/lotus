@@ -3,6 +3,7 @@ export view Label {
     text_color: Color = Color::black(),
     text_size: DisplaySize = .8h,
     text_font: Font = Font::Arial,
+    text_align: HorizontalAlign = HorizontalAlign::Center,
     background_color : Color = Color::transparent(),
 
     @OnRender {
@@ -11,5 +12,7 @@ export view Label {
             .text_color(self.text_color)
             .text_size(self.text_size)
             .text_font(self.text_font)
+            .text_horizontal_align(self.text_align)
+            .text_margin(.2h)
     }
 }

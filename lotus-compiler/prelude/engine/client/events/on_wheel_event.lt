@@ -1,4 +1,4 @@
-export event OnWheelEvent extends WindowEvent {
+export event OnWheelEvent extends OnWindowEvent {
     delta_x: float,
     delta_y: float,
     delta_z: float,

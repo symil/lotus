@@ -142,7 +142,6 @@
 [X] Allow chaining function calls (e.g `a()()()`)
 [X] Swap priority of `is`/`as` and binary operators
 [X] Allow void blocks to return anything (drop the returned value)
-[ ] Use `QuickGame*` as default for main type values
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -206,6 +205,7 @@
 [ ] Fix structure of compiler/cli (merge them?)
 [ ] Properly automatically trigger completion in template strings (e.g `${foo}`)
 [ ] Fix `class`/`enum`/etc keywords completion when they are inserted in the middle of the file
+[ ] Use `QuickGame*` as default for main type values
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

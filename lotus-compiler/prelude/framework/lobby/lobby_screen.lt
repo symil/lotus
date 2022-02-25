@@ -1,12 +1,14 @@
+const TITLE_BAR_HEIGHT = .15;
+const TITLE_TEXT_SIZE = .8h;
+const USERNAME_TEXT_SIZE = .5h;
+
 export view LobbyScreen {
     title: string,
     background_color : Color,
     text_font: Font,
     title_color : Color,
 
-    _displayLoginPanel(client: Client) {
-        check (client.user is QuickGameUser(user)) && !user.name;
-
+    _displayLoginPanel() {
         self.layout()
             .move_to(0.5, 0.5)
             .resize_from_height(0.1, 5)
@@ -16,7 +18,21 @@ export view LobbyScreen {
             .push(LoginButton)
     }
 
+    _displayUserInfo(user: QuickGameUser) {
+        let username_label = Label {
+            text: user.name,
+            text_size: USERNAME_TEXT_SIZE,
+            background_color: Color::blue(),
+        };
+
+        self.layout()
+            .move_top_right()
+            .resize_from_height(TITLE_BAR_HEIGHT, 2)
+            .push(username_label)
+    }
+
     @OnRender {
+        let is_user_connected = evt.client.user is QuickGameUser(user) && user.name;
         let title_label = Label {
             text: self.title,
             text_color: self.title_color,
@@ -28,10 +44,14 @@ export view LobbyScreen {
         self.layout()
             .move_to(0.5, 0)
             .towards_bottom()
-            .scale_y(0.15)
+            .scale_y(TITLE_BAR_HEIGHT)
             .push(title_label)
         
-        self._displayLoginPanel(evt.client);
+        if is_user_connected {
+            self._displayUserInfo(user);
+        } else {
+            self._displayLoginPanel();
+        }
     }
 
     @OnKeyboardEvent {

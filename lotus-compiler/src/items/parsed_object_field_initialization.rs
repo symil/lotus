@@ -1,22 +1,23 @@
 use colored::Colorize;
 use parsable::parsable;
 use crate::{items::ObjectInitResult, program::{CompilationError, ProgramContext, Type, Vasm}};
-use super::{ParsedExpression, Identifier, ParsedColonToken};
+use super::{ParsedExpression, Identifier, ParsedColonToken, ParsedCommaToken, unwrap_item};
 
 #[parsable]
 pub struct ParsedObjectFieldInitialization {
     pub name: Identifier,
-    pub value: Option<ParsedObjectFieldInitializationValue>
+    pub value: Option<ParsedObjectFieldInitializationValue>,
+    pub comma: Option<ParsedCommaToken>,
 }
 
 #[parsable]
 pub struct ParsedObjectFieldInitializationValue {
     pub colon: ParsedColonToken,
-    pub expression: Option<ParsedExpression>
+    pub expression: Option<ParsedExpression>,
 }
 
 impl ParsedObjectFieldInitialization {
-    pub fn process(&self, object_type: &Type, context: &mut ProgramContext) -> ObjectInitResult {
+    pub fn process(&self, object_type: &Type, is_last: bool, context: &mut ProgramContext) -> ObjectInitResult {
         context.completion_provider.add_field_completion(&self.name, object_type, None);
 
         let result = match object_type.get_field(self.name.as_str()) {
@@ -69,6 +70,10 @@ impl ParsedObjectFieldInitialization {
                 None
             },
         };
+
+        if !is_last {
+            unwrap_item(&self.comma, self, context);
+        }
 
         let mut object_init_result = ObjectInitResult::default();
 

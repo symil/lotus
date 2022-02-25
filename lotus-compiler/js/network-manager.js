@@ -40,7 +40,13 @@ export class NetworkManager {
         let webSocket = this._webSockets.get(webSocketId);
         
         if (webSocket) {
-            webSocket.send(message);
+            if (webSocket.readyState === 0) {
+                webSocket.addEventListener('open', () => {
+                    webSocket.send(message);
+                });
+            } else {
+                webSocket.send(message);
+            }
         }
     }
 
@@ -57,12 +63,17 @@ export class NetworkManager {
     }
 
     _registerEvent(webSocketId, messageType, messagePayload) {
-        this._events = []; // to avoid stacking an infinite amount of events when the tab is not focused, works for now but should be reworked
         this._events.push({
             webSocketId,
             messageType,
             messagePayload
         });
+
+        if (this._events.length > 100) {
+            // avoid storing an infinite amount of events
+            // TODO: find a better solution
+            this._events = this._events.slice(100);
+        }
     }
 
     _initWebSocket(webSocket) {

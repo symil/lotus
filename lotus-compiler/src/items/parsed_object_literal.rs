@@ -3,14 +3,14 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
-use super::{ParsedExpression, Identifier, ParsedObjectFieldInitialization, ParsedObjectInitializationItem, ParsedType};
+use super::{ParsedExpression, Identifier, ParsedObjectInitializationItem, ParsedType};
 
 #[parsable]
 #[derive(Default)]
 pub struct ParsedObjectLiteral {
     pub object_type: ParsedType,
     // pub field_list: Option<ObjectFieldInitializationList>
-    #[parsable(brackets="{}", separator=",")]
+    #[parsable(brackets="{}")]
     pub items: Vec<ParsedObjectInitializationItem>
 }
 
@@ -37,8 +37,9 @@ impl ParsedObjectLiteral {
                         .call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context)
                         .set_tmp_var(&object_var);
 
-                    for item in &self.items {
-                        let init_info = item.process(&object_type, context);
+                    for (i, item) in self.items.iter().enumerate() {
+                        let is_last = i == self.items.len() - 1;
+                        let init_info = item.process(&object_type, is_last, context);
 
                         for (field_name, vasm) in init_info.fields {
                             fields_init.insert(field_name, vasm);

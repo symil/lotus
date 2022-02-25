@@ -8,8 +8,10 @@ export class Client {
     _websocket_id: int,
     _layout: Layout,
     _draw_primitives: DrawPrimitive[],
-    _network_events: NetworkEvent[],
-    _window_events: WindowEvent[],
+    _network_events: OnNetworkEvent[],
+    _window_events: OnWindowEvent[],
+    _is_connected: bool = false,
+    _wait_until: fn(Client)(bool) = none,
 
     _focused_index: int?,
 
@@ -30,15 +32,37 @@ export class Client {
     _start() {
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
         self._websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
+
+        let window = #WINDOW_TYPE {};
+        let event = OnClientStart {
+            client: self
+        };
+
+        event.emit([window]);
     }
 
     _update() {
         self._collect_network_events();
         self._collect_window_events();
         self._process_network_events();
+        check self._should_continue_frame();
         self._create_views();
         self._draw_frame();
         self._process_window_events();
+    }
+
+    _should_continue_frame() -> bool {
+        let ok = true;
+
+        if self._wait_until {
+            ok = (self._wait_until)(self);
+
+            if ok {
+                self._wait_until = none;
+            }
+        }
+
+        ok
     }
 
     _collect_network_events() {
@@ -87,6 +111,7 @@ export class Client {
 
         if last_event && last_event.kind == NetworkEventKind::Message {
             self.user = @deserialize(last_event.payload);
+            self._is_connected = true;
         }
     }
 
@@ -286,6 +311,10 @@ export class Client {
 
     set_window_title(title: string) {
         wasm_set_window_title(title);
+    }
+
+    wait_until(predicate: fn(Client)(bool)) {
+        self._wait_until = predicate;
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

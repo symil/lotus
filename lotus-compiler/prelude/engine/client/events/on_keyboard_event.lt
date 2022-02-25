@@ -1,4 +1,4 @@
-export event OnKeyboardEvent extends WindowEvent {
+export event OnKeyboardEvent extends OnWindowEvent {
     action: KeyboardAction,
     code: KeyCode,
     text: char?,

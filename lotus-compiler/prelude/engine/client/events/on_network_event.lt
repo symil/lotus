@@ -1,4 +1,4 @@
-pub event NetworkEvent {
+pub event OnNetworkEvent {
     websocket_id: int,
     kind: NetworkEventKind,
     payload: int[]
@@ -10,8 +10,8 @@ pub enum NetworkEventKind {
     Message
 }
 
-pub fn decode_network_event_from_buffer(buffer: Buffer) -> NetworkEvent {
-    NetworkEvent {
+pub fn decode_network_event_from_buffer(buffer: Buffer) -> OnNetworkEvent {
+    OnNetworkEvent {
         websocket_id: buffer.read_unchecked(),
         kind: buffer.read_unchecked(),
         payload: buffer.read_buffer_unchecked()

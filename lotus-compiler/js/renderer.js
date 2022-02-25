@@ -122,7 +122,7 @@ export class Renderer {
             if (textHorizontalAlign === 'left') {
                 textX -= dx;
             } else if (textHorizontalAlign === 'right') {
-                textX += dy;
+                textX += dx;
             }
 
             if (textVerticalAlign === 'top') {

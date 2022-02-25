@@ -1,15 +1,16 @@
 use parsable::parsable;
 use crate::{items::ObjectInitResult, program::{ProgramContext, Type, VariableInfo, Vasm, FieldVisibility}};
-use super::{ParsedExpression, ParsedDoubleDotToken};
+use super::{ParsedExpression, ParsedDoubleDotToken, ParsedCommaToken, unwrap_item};
 
 #[parsable]
 pub struct ParsedObjectSpreadOperator {
     pub double_dot: ParsedDoubleDotToken,
-    pub expression: Option<ParsedExpression>
+    pub expression: Option<ParsedExpression>,
+    pub comma: Option<ParsedCommaToken>,
 }
 
 impl ParsedObjectSpreadOperator {
-    pub fn process(&self, object_type: &Type, context: &mut ProgramContext) -> ObjectInitResult {
+    pub fn process(&self, object_type: &Type, is_last: bool, context: &mut ProgramContext) -> ObjectInitResult {
         let mut object_init_result = ObjectInitResult::default();
 
         context.add_variable_completion_area(&self.double_dot, true, None);
@@ -51,6 +52,10 @@ impl ParsedObjectSpreadOperator {
                     }
                 }
             }
+        }
+
+        if !is_last {
+            unwrap_item(&self.comma, self, context);
         }
 
         object_init_result

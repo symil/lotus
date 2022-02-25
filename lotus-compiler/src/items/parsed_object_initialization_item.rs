@@ -15,10 +15,10 @@ pub struct ObjectInitResult {
 }
 
 impl ParsedObjectInitializationItem {
-    pub fn process(&self, object_type: &Type, context: &mut ProgramContext) -> ObjectInitResult {
+    pub fn process(&self, object_type: &Type, is_last: bool, context: &mut ProgramContext) -> ObjectInitResult {
         match self {
-            ParsedObjectInitializationItem::FieldInitialization(field_initialization) => field_initialization.process(object_type, context),
-            ParsedObjectInitializationItem::SpreadOperator(spread_operator) => spread_operator.process(object_type, context),
+            ParsedObjectInitializationItem::FieldInitialization(field_initialization) => field_initialization.process(object_type, is_last, context),
+            ParsedObjectInitializationItem::SpreadOperator(spread_operator) => spread_operator.process(object_type, is_last, context),
         }
     }
 }
