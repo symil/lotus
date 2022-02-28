@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use colored::*;
 use parsable::ItemLocation;
 use crate::{items::{ParsedType, ParsedTypeQualifier}, program::{CompilationError, FunctionCall, ItemGenerator, NamedFunctionCallDetails, SELF_TYPE_NAME, SELF_VAR_NAME, Vasm, display_join}, utils::{Link, Wrapper}, wat};
-use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, EnumVariantInfo};
+use super::{BuiltinInterface, BuiltinType, FieldInfo, FieldKind, FuncRef, FunctionBlueprint, InterfaceAssociatedTypeInfo, InterfaceBlueprint, InterfaceList, ParameterTypeInfo, ProgramContext, Signature, TypeBlueprint, TypeIndex, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, EnumVariantInfo, ANY_TYPE_NAME};
 
 pub type Type = Wrapper<TypeContent>;
 

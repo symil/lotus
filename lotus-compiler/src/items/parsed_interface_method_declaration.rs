@@ -43,6 +43,7 @@ impl ParsedInterfaceMethodDeclaration {
                 event_callback_details: None,
                 first_declared_by: None,
                 dynamic_index: None,
+                is_autogen: false,
             }),
             body: FunctionBody::Empty
         }

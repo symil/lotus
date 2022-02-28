@@ -90,6 +90,7 @@ impl ParsedEventCallbackDeclaration {
                 }),
                 first_declared_by: Some(this_type.clone()),
                 dynamic_index: None,
+                is_autogen: false
             }),
             body: FunctionBody::Empty,
         };

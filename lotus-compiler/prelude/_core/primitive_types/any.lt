@@ -1,0 +1,20 @@
+export type(void) any {
+    autogen static __type_name() -> string { #TYPE_NAME }
+    autogen static __type_id() -> int { #TYPE_ID }
+    autogen static __type_full_name() -> string { #TYPE_FULL_NAME }
+
+    autogen static __default() -> Self {{ }}
+    autogen static __none() -> Self {{ }}
+    autogen __is_none() -> bool  {{ (i32.const 1) }}
+    autogen __hash() -> int  {{ (i32.const 0) }}
+
+    autogen to_string() -> string { #TYPE_NAME }
+    autogen __to_debug_string(set: Set<ptr>) -> string { #TYPE_NAME }
+    autogen __eq(other: Self) -> bool {{ (i32.const 1) }}
+    autogen __ne(other: Self) -> bool {{ (i32.const 0) }}
+    autogen static __retain(value: Self) {{ }}
+    autogen static __serialize(buffer: Buffer, value: Self) {{ }}
+    autogen static __deserialize(buffer: Buffer) -> Self? {{ }}
+    autogen static __serialize_with_schema(buffer: Buffer, value: Self) {{ }}
+    autogen static __deserialize_with_schema(buffer: Buffer) -> Self? {{ }}
+}

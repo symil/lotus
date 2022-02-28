@@ -18,6 +18,10 @@ impl FieldVisibility {
         }
     }
 
+    pub fn is_system(&self) -> bool {
+        self == &FieldVisibility::System
+    }
+
     pub fn is_private(&self) -> bool {
         self == &FieldVisibility::Private
     }

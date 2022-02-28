@@ -81,6 +81,7 @@ impl ParsedFunctionOrMethodContent {
                 event_callback_details: None,
                 first_declared_by: Some(type_wrapped.clone()),
                 dynamic_index,
+                is_autogen,
             });
         } else {
             if is_static {

@@ -57,7 +57,20 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::StaticFieldOrMethod(_) => {},
             ParsedVarPathRoot::Parenthesized(expr) => expr.collect_instancied_type_names(list, context),
             ParsedVarPathRoot::VarRef(var_ref) => var_ref.collect_instancied_type_names(list),
-            _ => todo!()
+            ParsedVarPathRoot::VarDeclaration(_) => todo!(),
+            ParsedVarPathRoot::Action(_) => todo!(),
+            ParsedVarPathRoot::MatchBlock(_) => todo!(),
+            ParsedVarPathRoot::IfBlock(_) => todo!(),
+            ParsedVarPathRoot::IterFields(_) => todo!(),
+            ParsedVarPathRoot::IterVariants(_) => todo!(),
+            ParsedVarPathRoot::IterAncestors(_) => todo!(),
+            ParsedVarPathRoot::WhileBlock(_) => todo!(),
+            ParsedVarPathRoot::ForBlock(_) => todo!(),
+            ParsedVarPathRoot::Block(_) => todo!(),
+            ParsedVarPathRoot::TemplateString(_) => todo!(),
+            ParsedVarPathRoot::FunctionLiteral(_) => {},
+            ParsedVarPathRoot::PrefixedVarRef(_) => todo!(),
+            
         }
     }
 

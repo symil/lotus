@@ -33,6 +33,7 @@ pub struct MethodDetails {
     pub event_callback_details: Option<EventCallbackDetails>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub dynamic_index: Option<i32>,
+    pub is_autogen: bool
 }
 
 #[derive(Debug)]

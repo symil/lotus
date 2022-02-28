@@ -1,8 +1,5 @@
 export type(void) void {
-    static __chosen() -> Self {{ }}
     static __default() -> Self {{ }}
-    static __type_name() -> string { #TYPE_NAME }
-    static __type_id() -> int { #TYPE_ID }
     static __none() -> Self {{ }}
     __is_none() -> bool  {{ (i32.const 1) }}
     __hash() -> int  {{ (i32.const 0) }}

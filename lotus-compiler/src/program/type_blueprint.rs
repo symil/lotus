@@ -2,7 +2,7 @@ use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher},
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility, TypeCategory};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -24,13 +24,6 @@ pub struct TypeBlueprint {
     pub static_methods: IndexMap<String, FuncRef>,
     pub dynamic_methods: Vec<FuncRef>,
     pub event_callbacks: HashMap<Link<TypeBlueprint>, Vec<Link<FunctionBlueprint>>>,
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum TypeCategory {
-    Type,
-    Enum,
-    Class
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

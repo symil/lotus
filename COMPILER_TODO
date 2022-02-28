@@ -142,6 +142,7 @@
 [X] Allow chaining function calls (e.g `a()()()`)
 [X] Swap priority of `is`/`as` and binary operators
 [X] Allow void blocks to return anything (drop the returned value)
+[X] Common type `any`
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -189,7 +190,6 @@
 [ ] Replace references to constants with their actual value when possible
 [ ] Introduce variables immutability
 [ ] Display error when number literal is invalid
-[ ] Common type `any`
 [ ] Method `or` on `any` type
 [ ] Regular expressions
 [ ] Function default arguments

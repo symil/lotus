@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use parsable::parsable;
 use colored::*;
-use crate::{items::ParsedVisibilityToken, program::{FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, SELF_VAR_NAME, VariableKind, display_join, hashmap_get_or_insert_with, insert_in_vec_hashmap, Visibility}, utils::Link};
+use crate::{items::ParsedVisibilityToken, program::{FuncRef, FunctionBlueprint, ProgramContext, ScopeKind, SELF_VAR_NAME, VariableKind, display_join, hashmap_get_or_insert_with, insert_in_vec_hashmap, Visibility, TO_STRING_METHOD_NAME}, utils::Link};
 use super::{ParsedEventCallbackQualifierKeyword, ParsedFunctionOrMethodContent, ParsedFunctionDeclaration, ParsedFunctionSignature, Identifier, ParsedBlockExpression, ParsedTypeDeclaration, ParsedTypeQualifier, ParsedVarPath};
 
 #[parsable]
@@ -48,7 +48,10 @@ impl ParsedMethodDeclaration {
                     method_details.first_declared_by = Some(type_wrapped.clone());
                 }
 
-                let should_insert = index_map.get(name.as_str()).is_none() || !self.is_autogen();
+                let should_insert = match index_map.get(name.as_str()) {
+                    Some(prev) => prev.function.borrow().method_details.as_ref().unwrap().is_autogen || !self.is_autogen(),
+                    None => true,
+                };
 
                 match should_insert {
                     true => index_map.insert(name.to_string(), func_ref),
@@ -66,10 +69,13 @@ impl ParsedMethodDeclaration {
 
                         let is_prev_dynamic = prev_unwrapped.is_dynamic();
                         let prev_method_details = prev_unwrapped.method_details.as_ref().unwrap();
+                        let is_prev_autogen = prev_method_details.is_autogen;
 
                         if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
                             // The type declares the same method twice
-                            context.errors.generic(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
+                            if !is_prev_autogen {
+                                context.errors.generic(self, format!("duplicate {}method `{}`", s, name.as_str().bold()));
+                            }
                         } else {
                             let parent_class_name = prev_unwrapped.owner_type.as_ref().unwrap().borrow().name.to_string();
 
@@ -84,7 +90,7 @@ impl ParsedMethodDeclaration {
                                 function_unwrapped.method_details.as_mut().unwrap().dynamic_index = Some(-1);
                             } else if is_dynamic {
                                 context.errors.generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
-                            } else {
+                            } else if !is_prev_autogen {
                                 context.errors.generic(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
                             }
                         }

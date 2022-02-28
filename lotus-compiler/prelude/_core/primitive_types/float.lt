@@ -38,14 +38,6 @@ export type(f32) float {
         (f32.const 0)
     }}
 
-    static __type_name() -> string {
-        #TYPE_NAME
-    }
-
-    static __type_id() -> int {
-        #TYPE_ID
-    }
-
     static __none() -> float {{
         (f32.const nan:0x200000)
     }}

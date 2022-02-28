@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility, ANY_TYPE_NAME}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
@@ -77,12 +77,13 @@ impl ParsedTypeDeclaration {
 
     pub fn process_name(&self, index: usize, context: &mut ProgramContext) {
         let type_id = self.location.get_hash();
+        let category = self.qualifier.to_type_category();
         let mut type_unwrapped = TypeBlueprint {
             declaration_index: index,
             type_id,
             name: self.name.clone(),
             visibility: ParsedVisibility::process_or(&self.visibility, Visibility::Private),
-            category: self.qualifier.to_type_category(),
+            category,
             stack_type: WasmStackType::Void,
             descendants: vec![],
             ancestors: vec![],
@@ -116,8 +117,8 @@ impl ParsedTypeDeclaration {
 
         let stack_type = self.stack_type.as_ref()
             .and_then(|declaration| declaration.process(context))
-            .unwrap_or(WasmStackType::I32);
-
+            .unwrap_or(category.get_default_wasm_stack_type());
+        
         context.rename_provider.add_occurence(&self.name, &self.name);
 
         for details in parameters.values() {
@@ -205,7 +206,7 @@ impl ParsedTypeDeclaration {
                             TypeContent::Actual(info) => {
                                 let parent_unwrapped = info.type_blueprint.borrow();
 
-                                if parent_unwrapped.is_class() {
+                                if parent_unwrapped.is_class() || parent_unwrapped.name.as_str() == ANY_TYPE_NAME {
                                     result = Some(ParentInfo{
                                         location: parsed_parent_type.location.clone(),
                                         ty: parent_type.clone(),
@@ -253,6 +254,10 @@ impl ParsedTypeDeclaration {
 
                 if let Some(parent_info) = &type_unwrapped.parent {
                     parent_info.ty.get_type_blueprint().with_ref(|parent_unwrapped| {
+                        if parent_unwrapped.name.as_str() == ANY_TYPE_NAME {
+                            return;
+                        }
+                        
                         for parent_ancestor in &parent_unwrapped.ancestors {
                             let ancestor = parent_ancestor.replace_parameters(Some(&parent_info.ty), &[]);
 

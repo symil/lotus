@@ -2,6 +2,7 @@ use enum_iterator::IntoEnumIterator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
 pub enum BuiltinType {
+    Any,
     System,
     Void,
     Bool,
@@ -26,6 +27,7 @@ pub enum BuiltinType {
 impl BuiltinType {
     pub fn get_name(&self) -> &'static str {
         match self {
+            BuiltinType::Any => "any",
             BuiltinType::System => "system",
             BuiltinType::Void => "void",
             BuiltinType::Bool => "bool",

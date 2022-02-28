@@ -57,6 +57,7 @@ mod program_context_options;
 mod program_index;
 mod string_literal_manager;
 mod field_visibility;
+mod type_category;
 
 pub use program_context::*;
 pub use utils::*;
@@ -116,3 +117,4 @@ pub use program_context_options::*;
 pub use program_index::*;
 pub use string_literal_manager::*;
 pub use field_visibility::*;
+pub use type_category::*;

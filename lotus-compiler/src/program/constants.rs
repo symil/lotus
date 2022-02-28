@@ -34,6 +34,7 @@ pub const SYSTEM_FIELD_PREFIX : &'static str = "__";
 pub const PRIVATE_FIELD_PREFIX : &'static str = "_";
 pub const ANONYMOUS_FUNCTION_NAME : &'static str = "#anonymous_function#";
 
+pub const ANY_TYPE_NAME : &'static str = "any";
 pub const OBJECT_TYPE_NAME : &'static str = "Object";
 pub const ENUM_TYPE_NAME : &'static str = "Enum";
 pub const SELF_TYPE_NAME : &'static str = "Self";

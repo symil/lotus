@@ -1,0 +1,7 @@
+export class QuickGameLocalData {
+    ui: QuickGameUiData
+}
+
+export class QuickGameUiData {
+    username: TextBoxData,
+}

@@ -4,19 +4,15 @@ pub class TextBoxData {
 }
 
 pub view TextBox {
-    data_key: string = "", 
+    get_data: fn(#LOCAL_DATA_TYPE)(TextBoxData),
     placeholder: string = "",
     text_color: Color = Color::black(),
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
     on_enter: MouseHandlerCallback = none,
 
-    static new(placeholder: string, data_key: string) -> Self {
-        Self { placeholder, data_key }
-    }
-
     _get_data() -> TextBoxData {
-        self.client().local_data.get_or_insert_default(self.data_key)
+        (self.get_data)(self.client().local_data)
     }
 
     @OnRender {

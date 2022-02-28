@@ -3,7 +3,7 @@ const TYPE_ID_TO_FIELD_COUNT = Map<int, int>::with_capacity(TYPE_CAPACITY);
 const FULL_TYPE_NAME_HASH_TO_TYPE_ID = Map<int, int>::with_capacity(TYPE_CAPACITY);
 pub const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>::with_capacity(TYPE_CAPACITY);
 
-export class Object {
+export class Object extends any {
     autogen static __init() {
         // @log("INIT: " + #TYPE_NAME);
         let ancestor_set = Set<int>::new();
@@ -45,18 +45,6 @@ export class Object {
         }
 
         obj
-    }
-
-    autogen static __type_name() -> string {
-        #TYPE_NAME
-    }
-
-    autogen static __type_full_name() -> string {
-        #TYPE_FULL_NAME
-    }
-
-    autogen static __type_id() -> int {
-        #TYPE_ID
     }
 
     autogen static __none() -> Self {{

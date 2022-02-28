@@ -1,5 +1,5 @@
 use parsable::parsable;
-use crate::program::{TypeCategory, BuiltinType};
+use crate::program::{TypeCategory, BuiltinType, WasmStackType};
 
 #[parsable(impl_display=true)]
 #[derive(PartialEq, Clone, Copy)]
@@ -24,7 +24,7 @@ impl ParsedTypeQualifier {
 
     pub fn get_inherited_type(&self) -> Option<BuiltinType> {
         match self {
-            ParsedTypeQualifier::Type => None,
+            ParsedTypeQualifier::Type => Some(BuiltinType::Any),
             ParsedTypeQualifier::Enum => Some(BuiltinType::Enum),
             ParsedTypeQualifier::Class => Some(BuiltinType::Object),
             ParsedTypeQualifier::View => Some(BuiltinType::View),

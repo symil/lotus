@@ -7,14 +7,6 @@ export type(i32) Pointer<T> {
         (i32.const 0)
     }}
 
-    static __type_name() -> string {
-        #TYPE_NAME
-    }
-
-    static __type_id() -> int {
-        #TYPE_ID
-    }
-
     static __none() -> Self {{
         (i32.const 0)
     }}
