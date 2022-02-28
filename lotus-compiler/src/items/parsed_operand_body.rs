@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 use parsable::parsable;
 use crate::{items::{ParsedAssignmentOperatorToken, ParsedBinaryOperatorToken, ParsedBinaryOperator}, program::{AccessType, CompilationError, ProgramContext, Type, Vasm}, wat};
-use super::{ParsedAssignmentOperator, ParsedExpression, Identifier, ParsedVarPath, ParsedOperandSuffix};
+use super::{ParsedAssignmentOperator, ParsedExpression, Identifier, ParsedVarPath, ParsedOperandSuffix, unwrap_item};
 
 #[parsable]
 pub struct ParsedOperandBody {
@@ -22,7 +22,7 @@ impl ParsedOperandBody {
 
         if let Some(ParsedOperandSuffix::Assignment(assignment)) = &self.suffix {
             let equal_token = &assignment.operator;
-            let rvalue = &assignment.expression;
+            let rvalue = unwrap_item(&assignment.expression, assignment, context)?;
 
             if let Some(mut left_vasm) = self.lvalue.process(None, AccessType::Set(&equal_token), context) {
                 if let Some(right_vasm) = rvalue.process(Some(&left_vasm.ty), context) {

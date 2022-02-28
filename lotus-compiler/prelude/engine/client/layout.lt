@@ -17,6 +17,13 @@ pub class Layout {
         Self { parent_view, target }
     }
 
+    resey() -> Self {
+        self._flush();
+        self.target = self.parent_view._rect.clone();
+        self.towards_bottom();
+        self
+    }
+
     dynamic() -> Self {
         self.dynamic = true;
         self
@@ -73,6 +80,16 @@ pub class Layout {
         self.last = none;
         self.target.x = self.parent_view._rect.width * x;
         self.target.y = self.parent_view._rect.height * y;
+        self
+    }
+
+    set_width(width: float) -> Self {
+        self.target.width = self.parent_view._rect.width * width;
+        self
+    }
+
+    set_height(height: float) -> Self {
+        self.target.height = self.parent_view._rect.height * height;
         self
     }
 
@@ -135,6 +152,14 @@ pub class Layout {
         self
     }
 
+    push_list(views: View[]) -> Self {
+        for view in views {
+            self.push(view);
+        }
+
+        self
+    }
+
     _snap_target_against_last_item() -> (float, float) {
         if !self.last {
             return (0, 0);
@@ -151,14 +176,13 @@ pub class Layout {
     }
 
     _snap_against_edges(rect: Rect) -> (float, float) {
-        let dx = 0f;
-        let dy = 0f;
-
-        dx = dx.max(self.outer_margin - rect.x1());
-        dx = dx.min(self.parent_view._rect.width - self.outer_margin - rect.x2());
-
-        dy = dy.max(self.outer_margin - rect.y1());
-        dy = dy.min(self.parent_view._rect.height - self.outer_margin - rect.y2());
+        let parent_rect = self.parent_view._rect;
+        let min_x = parent_rect.x1() + self.outer_margin;
+        let max_x = parent_rect.x2() - self.outer_margin;
+        let min_y = parent_rect.y1() + self.outer_margin;
+        let max_y = parent_rect.y2() - self.outer_margin;
+        let dx = 0f.clamp(min_x - rect.x1(), max_x - rect.x2());
+        let dy = 0f.clamp(min_y - rect.y1(), max_y - rect.y2());
 
         (dx, dy)
     }

@@ -10,7 +10,11 @@ export class QuickGameWorld {
     }
 
     @OnUserConnect {
-        
+        let user = evt.user as QuickGameUser;
+
+        user.messages.push(QuickGameMessage {
+            message: "Welcome!"
+        });
     }
 
     @OnUserDisconnect {
@@ -28,7 +32,9 @@ export class QuickGameWorld {
                 check !login_request.username.is_empty();
 
                 if self.users.get(login_request.username) {
-                    user.error = `Name "${login_request.username} is already used."`;
+                    user.messages.push(QuickGameMessage {
+                        message: `Name "${login_request.username} is already used."`
+                    });
                 } else {
                     self.users.set(login_request.username, user);
                     user.name = login_request.username;

@@ -1,0 +1,25 @@
+export view Grid {
+    items: View[] = [],
+    item_count_per_row: int = none,
+    item_count_per_column: int = none,
+    item_aspect_ratio: int = 1,
+    outer_horizontal_margin: float = 0,
+    outer_vertical_margin: float = 0,
+    inner_horizontal_margin: float = 0,
+    inner_vertical_margin: float = 0,
+
+    @OnRender {
+        let row_size = self.item_count_per_row;
+        let column_size = self.item_count_per_column;
+        let item_count = self.items.len().max(1);
+
+        if !row_size && !column_size {
+            row_size = item_count.to_float().sqrt().ceil().to_int();
+            column_size = row_size;
+        } else if !column_size {
+            column_size = (item_count.to_float() / row_size.to_float()).ceil().to_int();
+        } else if !row_size {
+            row_size = (item_count.to_float() / column_size.to_float()).ceil().to_int();
+        }
+    }
+}

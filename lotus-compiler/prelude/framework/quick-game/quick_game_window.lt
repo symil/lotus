@@ -5,12 +5,27 @@ export view QuickGameWindow {
     text_font: Font = Font::Arial,
 
     @OnRender {
+        let user = evt.client.user as QuickGameUser;
         let lobby_screen = LobbyScreen { ..self };
+        let layout = self.layout();
 
         self.client().set_window_title(self.title);
 
-        self.layout()
-            .push(lobby_screen)
+        layout.push(lobby_screen);
+        layout.scale(0.5)
+        
+        for message in user.messages {
+            let modal = Modal {
+                message: message.message,
+                buttons: [ModalButton {
+                    content: "Thanks",
+                    on_click: () => @log("hello")
+                }]
+            };
+
+            layout.move_center();
+            layout.push(modal);
+        }
     }
 
     @OnClientStart {
@@ -23,7 +38,7 @@ export view QuickGameWindow {
         }
 
         return;
-        evt.client.wait_until(client => client.user is QuickGameUser(user) && !!user.name);
+        evt.client.wait_until(client => !!(client.user as QuickGameUser).name);
 
         evt.client.send_request(LoginRequest {
             username: "Test"

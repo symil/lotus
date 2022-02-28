@@ -1,0 +1,32 @@
+export view Modal {
+    message: string = "",
+    buttons: ModalButton[] = [],
+
+    @OnRender {
+        let message = Label {
+            text: self.message,
+            text_size: .2h,
+            background_color: Color::magenta()
+        };
+        let buttons = self.buttons.map(button => Button {
+            text: button.content,
+            on_click: button.on_click
+        });
+
+        self.layout()
+            .set_height(0.8)
+            .move_top()
+            .towards_bottom()
+            .push(message)
+            .set_height(0.2)
+            .towards_right()
+            .push_list(buttons)
+        
+        self.background_color(Color::pink());
+    }
+}
+
+export class ModalButton {
+    content: string = "",
+    on_click: fn(Client) = none
+}

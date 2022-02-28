@@ -19,6 +19,14 @@ export class View {
         self._client
     }
 
+    rect() -> Rect {
+        self._rect
+    }
+
+    add_child(view: View) {
+        self._children.push(view);
+    }
+
     is_focused() -> bool {
         self._focused
     }

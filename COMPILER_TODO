@@ -206,6 +206,7 @@
 [ ] Properly automatically trigger completion in template strings (e.g `${foo}`)
 [ ] Fix `class`/`enum`/etc keywords completion when they are inserted in the middle of the file
 [ ] Use `QuickGame*` as default for main type values
+[ ] Completion: order items by type relevance (put items that have an expected type first)
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

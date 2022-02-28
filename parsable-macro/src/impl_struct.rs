@@ -163,6 +163,13 @@ pub fn process_struct(data_struct: &mut DataStruct, root_attributes: &mut RootAt
                             #on_fail;
                         }
                     };
+                } else if let Some(not_followed_by) = &attributes.not_followed_by {
+                    followed_by_parsing = quote! {
+                        if !field_failed__ && reader__.peek_regex(#not_followed_by) {
+                            // reader__.set_expected_regex(#not_followed_by);
+                            #on_fail;
+                        }
+                    };
                 }
 
                 let mut parse_method = quote! { parse_item(reader__) };

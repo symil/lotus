@@ -34,6 +34,16 @@ export type(f32) float {
         }
     }
 
+    clamp(min: float, max: float) -> float {
+        if self <= min {
+            min
+        } else if self >= max {
+            max
+        } else {
+            self
+        }
+    }
+
     static __default() -> float {{
         (f32.const 0)
     }}

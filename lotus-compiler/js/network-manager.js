@@ -47,6 +47,8 @@ export class NetworkManager {
             } else {
                 webSocket.send(message);
             }
+        } else {
+            throw new Error(`cannot send message: websocket is closed`);
         }
     }
 

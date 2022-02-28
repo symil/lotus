@@ -1,0 +1,3 @@
+pub class QuickGameMessage {
+    message: string = ""
+}
