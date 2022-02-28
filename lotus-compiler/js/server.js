@@ -36,6 +36,9 @@ function makeWasmEnv({ fileSystemRootPath }) {
         createWebSocketServer(options) {
             return new WebSocketServer(options);
         },
+        getProcess() {
+            return process;
+        },
         getPathModule() {
             return path;
         },

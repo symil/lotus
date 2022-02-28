@@ -8,4 +8,4 @@ type World = QuickGameWorld;
 
 type User = QuickGameUser;
 
-type LocalData
+type LocalData = QuickGameLocalData;

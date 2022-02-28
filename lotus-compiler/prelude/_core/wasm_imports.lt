@@ -85,3 +85,7 @@ pub fn wasm_get_local_storage_item(key: string, buffer_addr: ptr, buffer_capacit
 pub fn wasm_clear_local_storage() -> int [
     import env.clear_local_storage
 ]
+
+pub fn wasm_process_exit(code: int) [
+    import env.process_exit
+]

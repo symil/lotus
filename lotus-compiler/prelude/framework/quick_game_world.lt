@@ -2,6 +2,10 @@ export class QuickGameWorld {
     users: Map<string, QuickGameUser>,
 
     @OnWorldInit {
+        if !(#USER_TYPE::__default()) is QuickGameUser(_) {
+            @panic("type `User` must inherit from `QuickGameUser`");
+        }
+
         @log("WORLD INIT");
     }
 

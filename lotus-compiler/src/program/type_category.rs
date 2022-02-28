@@ -10,7 +10,7 @@ pub enum TypeCategory {
 impl TypeCategory {
     pub fn get_default_wasm_stack_type(&self) -> WasmStackType {
         match self {
-            TypeCategory::Type => WasmStackType::Void,
+            TypeCategory::Type => WasmStackType::I32,
             TypeCategory::Enum => WasmStackType::I32,
             TypeCategory::Class => WasmStackType::I32,
         }

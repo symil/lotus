@@ -25,13 +25,14 @@ export async function initializeWasm(wasm, userEnv) {
 /*
     `env` must have the following methods:
     - `log(string)`: log the string in the console
-    - `getMemory()`: returns the WASM instance memory as an Int32Array
-    - `getWindow()`: returns the `window` main object of the browser
+    - `getMemory()`: return the WASM instance memory as an Int32Array
+    - `getWindow()`: return the `window` main object of the browser
     - `createWebSocket(url)`: create a WebSocket connecting to the specified url
     - `createWebSocketServer(port)`: create a WebSocket server listening on the specified port
-    - `getPathModule()`: returns the `path` module of Node.js
-    - `getFileSystemModule()`: returns the `fs` module of Node.js
-    - `getFileSystemRootPath()`: returns the path of the root directory where files should be stored
+    - `getProcess()` return the `process` module of Node.js
+    - `getPathModule()`: return the `path` module of Node.js
+    - `getFileSystemModule()`: return the `fs` module of Node.js
+    - `getFileSystemRootPath()`: return the path of the root directory where files should be stored
 */
 function getWasmImportsObject(env) {
     let windowManager = null;
@@ -200,6 +201,12 @@ function getWasmImportsObject(env) {
                 let localStorage = env.getWindow().localStorage;
 
                 localStorage.clear();
+            },
+
+            process_exit(code) {
+                if (env.getProcess) {
+                    env.getProcess().exit(code);
+                }
             },
         }
     };

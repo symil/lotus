@@ -9,6 +9,7 @@ sys type(void) system {
 
     panic(message: string) {
         @log(`panic: ${message}`);
+        wasm_process_exit(1);
         trap();
     }
 
@@ -100,5 +101,5 @@ sys type(void) system {
 }
 
 fn trap() {{
-    trap
+    unreachable
 }}
