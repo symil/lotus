@@ -65,6 +65,12 @@ export class Rect {
         Self { ..self }
     }
 
+    set(other: Self) {
+        iter_fields {
+            self.#FIELD_NAME = other.#FIELD_NAME;
+        }
+    }
+
     round() -> Self {
         // TODO: take angle into account
         let x1 = self.x1().round();

@@ -13,12 +13,14 @@ pub struct ParsedClosingRoundBracket {
 }
 
 #[parsable]
+#[derive(Default)]
 pub struct ParsedOpeningCurlyBracket {
     #[parsable(value="{")]
     pub token: String
 }
 
 #[parsable]
+#[derive(Default)]
 pub struct ParsedClosingCurlyBracket {
     #[parsable(value="}")]
     pub token: String

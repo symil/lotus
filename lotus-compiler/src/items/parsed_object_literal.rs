@@ -3,15 +3,22 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
-use super::{ParsedExpression, Identifier, ParsedObjectInitializationItem, ParsedType};
+use super::{ParsedExpression, Identifier, ParsedObjectInitializationItem, ParsedType, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket};
 
 #[parsable]
 #[derive(Default)]
 pub struct ParsedObjectLiteral {
     pub object_type: ParsedType,
     // pub field_list: Option<ObjectFieldInitializationList>
-    #[parsable(brackets="{}")]
-    pub items: Vec<ParsedObjectInitializationItem>
+    pub opening_bracket: ParsedOpeningCurlyBracket,
+    pub body: ParsedObjectLiteralInitializationBody,
+    pub closing_bracket: ParsedClosingCurlyBracket,
+}
+
+#[parsable]
+#[derive(Default)]
+pub struct ParsedObjectLiteralInitializationBody {
+    pub items: Vec<ParsedObjectInitializationItem>,
 }
 
 impl ParsedObjectLiteral {
@@ -25,6 +32,12 @@ impl ParsedObjectLiteral {
         if let Some(object_type) = self.object_type.process(true, context) {
             result = result.set_type(&object_type);
 
+            let first_half_location = self.opening_bracket.location.until(&self.body);
+            let second_half_location = self.body.location.until(&self.closing_bracket);
+
+            context.completion_provider.add_field_completion(&first_half_location, &object_type, None);
+            context.completion_provider.add_field_completion(&second_half_location, &object_type, None);
+
             if let TypeContent::Actual(info) = object_type.content() {
                 let object_var = VariableInfo::tmp("object", context.int_type());
                 let type_unwrapped = info.type_blueprint.borrow();
@@ -37,8 +50,8 @@ impl ParsedObjectLiteral {
                         .call_static_method(&object_type, OBJECT_CREATE_METHOD_NAME, &[], vec![], context)
                         .set_tmp_var(&object_var);
 
-                    for (i, item) in self.items.iter().enumerate() {
-                        let is_last = i == self.items.len() - 1;
+                    for (i, item) in self.body.items.iter().enumerate() {
+                        let is_last = i == self.body.items.len() - 1;
                         let init_info = item.process(&object_type, is_last, context);
 
                         for (field_name, vasm) in init_info.fields {

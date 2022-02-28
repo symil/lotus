@@ -19,7 +19,10 @@ export view QuickGameWindow {
                 message: message.message,
                 buttons: [ModalButton {
                     content: "Thanks",
-                    on_click: () => @log("hello")
+                    on_click: () => @log("left")
+                }, ModalButton {
+                    content: "Hello",
+                    on_click: () => @log("right")
                 }]
             };
 
