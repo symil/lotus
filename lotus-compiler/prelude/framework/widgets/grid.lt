@@ -1,3 +1,5 @@
+const EPSILON = 0.000001;
+
 export view Grid {
     items: View[] = [],
     item_count_per_row: int = none,
@@ -6,10 +8,10 @@ export view Grid {
     margin: DisplaySize = none,
     outer_margin: DisplaySize = none,
     inner_margin: DisplaySize = none,
-    outer_horizontal_margin: DisplaySize = none,
-    outer_vertical_margin: DisplaySize = none,
-    inner_horizontal_margin: DisplaySize = none,
-    inner_vertical_margin: DisplaySize = none,
+    horizontal_outer_margin: DisplaySize = none,
+    vertical_outer_margin: DisplaySize = none,
+    horizontal_inner_margin: DisplaySize = none,
+    vertical_inner_margin: DisplaySize = none,
 
     @OnRender {
         let row_size = self.item_count_per_row.to_float();
@@ -31,17 +33,18 @@ export view Grid {
             height: parent_rect.height / column_size
         }.strip_to_match_aspect_ratio(self.item_aspect_ratio);
 
-        let input_outer_horizontal_margin = self.outer_horizontal_margin || self.outer_margin || self.margin;
-        let input_outer_vertical_margin = self.outer_vertical_margin || self.outer_margin || self.margin;
-        let input_inner_horizontal_margin = self.inner_horizontal_margin || self.inner_margin || self.margin;
-        let input_inner_vertical_margin = self.inner_vertical_margin || self.inner_margin || self.margin;
+        let input_horizontal_outer_margin = self.horizontal_outer_margin || self.outer_margin || self.margin;
+        let input_vertical_outer_margin = self.vertical_outer_margin || self.outer_margin || self.margin;
+        let input_horizontal_inner_margin = self.horizontal_inner_margin || self.inner_margin || self.margin;
+        let input_vertical_inner_margin = self.vertical_inner_margin || self.inner_margin || self.margin;
 
-        let outer_horizontal_margin = input_outer_horizontal_margin.resolve(item_rect.width, item_rect.height, 1);
-        let outer_vertical_margin = input_outer_vertical_margin.resolve(item_rect.width, item_rect.height, 1);
-        let inner_horizontal_margin = input_inner_horizontal_margin.resolve(item_rect.width, item_rect.height, 1);
-        let inner_vertical_margin = input_inner_vertical_margin.resolve(item_rect.width, item_rect.height, 1);
-        let max_item_width = (parent_rect.width - (2f * outer_horizontal_margin) - ((row_size - 1) * inner_horizontal_margin)) / row_size;
-        let max_item_height = (parent_rect.height - (2f * outer_vertical_margin) - ((column_size - 1) * inner_vertical_margin)) / column_size;
+        let horizontal_outer_margin = input_horizontal_outer_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
+        let vertical_outer_margin = input_vertical_outer_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
+        let horizontal_inner_margin = input_horizontal_inner_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
+        let vertical_inner_margin = input_vertical_inner_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
+
+        let max_item_width = (parent_rect.width - (2f * horizontal_outer_margin) - ((row_size - 1) * horizontal_inner_margin)) / row_size;
+        let max_item_height = (parent_rect.height - (2f * vertical_outer_margin) - ((column_size - 1) * vertical_inner_margin)) / column_size;
         let x_start = parent_rect.x1();
         let y_start = parent_rect.y1();
 
@@ -50,15 +53,40 @@ export view Grid {
             height: max_item_height
         }.strip_to_match_aspect_ratio(self.item_aspect_ratio);
 
+        let final_item_width = item_rect.width;
+        let final_item_height = item_rect.height;
+        let (additional_horizontal_outer_margin, additional_horizontal_inner_margin) = get_additional_margins(max_item_width, final_item_width, row_size, horizontal_outer_margin, horizontal_inner_margin);
+        let (additional_vertical_outer_margin, additional_vertical_inner_margin) = get_additional_margins(max_item_height, final_item_height, column_size, vertical_outer_margin, vertical_inner_margin);
+
+        horizontal_outer_margin += additional_horizontal_outer_margin;
+        horizontal_inner_margin += additional_horizontal_inner_margin;
+        vertical_outer_margin += additional_vertical_outer_margin;
+        vertical_inner_margin += additional_vertical_inner_margin;
+
         for [i, item] in self.items {
             let x_index = i % row_size.to_int();
             let y_index = i / row_size.to_int();
 
-            item_rect.x = x_start + outer_horizontal_margin + x_index.to_float() * (inner_horizontal_margin + max_item_width) + (max_item_width / 2);
-            item_rect.y = y_start + outer_vertical_margin + y_index.to_float() * (inner_vertical_margin + max_item_height) + (max_item_height / 2);
+            item_rect.x = x_start + horizontal_outer_margin + x_index.to_float() * (horizontal_inner_margin + final_item_width) + (final_item_width / 2);
+            item_rect.y = y_start + vertical_outer_margin + y_index.to_float() * (vertical_inner_margin + final_item_height) + (final_item_height / 2);
 
             item.rect().set(item_rect);
             self.add_child(item);
         }
     }
+}
+
+fn get_additional_margins(max_item_size: float, actual_item_size: float, item_count: float, outer_margin: float, inner_margin: float) -> (float, float) {
+    let total_leftover = (max_item_size - actual_item_size) * item_count;
+
+    if item_count == 1 {
+        return (total_leftover / 2, 0);
+    }
+
+    let ratio = inner_margin / outer_margin;
+    let additional_outer_margin = total_leftover / (2f + ratio * (item_count - 1));
+    let additional_inner_margin = additional_outer_margin * ratio;
+
+    (additional_outer_margin, additional_inner_margin)
+
 }

@@ -38,7 +38,7 @@ impl ParsedNumberLiteral {
                     if prefer_float {
                         Number::Float(number.parse().unwrap())
                     } else if prefer_display_size {
-                        Number::ScaledFromContainerMinSize(number.parse().unwrap())
+                        Number::VirtualSize(number.parse().unwrap())
                     } else if number.contains(".") {
                         Number::Float(number.parse().unwrap())
                     } else {
