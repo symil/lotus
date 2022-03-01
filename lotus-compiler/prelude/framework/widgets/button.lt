@@ -5,6 +5,7 @@ export view Button {
     text_font: Font = Font::Arial,
     background_color : Color = DEFAULT_BACKGROUND_COLOR,
     border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
+    border_radius: DisplaySize = DEFAULT_BORDER_RADIUS,
     on_click: MouseHandlerCallback = none,
 
     @OnRender {
@@ -17,7 +18,7 @@ export view Button {
             .text_font(self.text_font)
             .border_color(self.text_color)
             .border_width(self.border_width)
-            .border_radius(DEFAULT_BORDER_RADIUS)
+            .border_radius(self.border_radius)
             .focus_border_width(self.border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)

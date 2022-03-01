@@ -1,5 +1,5 @@
 import path from 'path';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS, WRITE_SERVER_CONFIG_SCRIPT_PATH } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, HTML_ENTRY_PATH, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS, WRITE_SERVER_CONFIG_SCRIPT_PATH } from './constants';
 import { execSync } from 'child_process';
 
 const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
@@ -29,6 +29,7 @@ async function main() {
         'outpost', port, remoteHost,
         '-n', ...REQUIRED_NODE_PACKAGES,
         '-z', buildConfigCommand, lotusToWatCommand, watToWasmCommand,
+        '-h', HTML_ENTRY_PATH,
         '-c', CLIENT_ENTRY_PATH,
         '-s', SERVER_ENTRY_PATH,
         '-o', buildPath

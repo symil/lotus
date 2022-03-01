@@ -26,7 +26,7 @@ pub class Server {
     }
 
     _process_network_events() {
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
         while !self._buffer.is_finished() {
@@ -51,7 +51,7 @@ pub class Server {
                 },
                 NetworkEventKind::Message => {
                     let user = self._websocket_id_to_user.get(event.websocket_id);
-                    let request : Object = @deserialize(event.payload);
+                    let request : Object = @deserialize(Buffer::from_array(event.payload));
 
                     if request {
                         @emit(OnUserRequest { server: self, user, request }, [self._world]);
@@ -67,32 +67,27 @@ pub class Server {
             let user = entry.value;
 
             if user {
-                self._buffer.clear();
+                self._buffer.reset();
                 self._buffer.context = user;
 
-                #USER_TYPE::__serialize(self._buffer, user);
+                @serialize(user, self._buffer)
                 wasm_send_message(websocket_id, self._buffer.data, self._buffer.size);
             }
         }
     }
 
     store<T>(path: string, content: T) {
-        self._buffer.clear();
-        T::__serialize(self._buffer, content);
+        self._buffer.reset();
+        @serialize(content, self._buffer);
         wasm_write_file(path, self._buffer.data, self._buffer.size);
     }
 
     load<T>(path: string) -> T {
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.size = wasm_read_file(path, self._buffer.data, self._buffer.capacity);
         self._buffer.read();
 
-        let value = T::__deserialize(self._buffer);
-
-        match self._buffer.has_read_overflow() {
-            true => none,
-            false => value
-        }
+        @deserialize(self._buffer)
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

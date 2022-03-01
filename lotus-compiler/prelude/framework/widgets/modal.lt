@@ -1,26 +1,29 @@
 export view Modal {
-    kind: ModalKind = ModalKind::Info,
-    message: string = "",
+    kind: MessageKind = MessageKind::Info,
+    content: string = "",
     buttons: ModalButton[] = [],
 
-    _get_color() -> Color {
+    _get_color() -> (Color, Color) {
         match self.kind {
-            ModalKind::Info => #00529B,
-            ModalKind::Success => #4F8A10,
-            ModalKind::Warning => #9F6000,
-            ModalKind::Error => #D8000C,
+            MessageKind::Info => (#00529B, #BDE5F8),
+            MessageKind::Success => (#4F8A10, #DFF2BF),
+            MessageKind::Warning => (#9F6000, #FEEFB3),
+            MessageKind::Error => (#D8000C, #FFD2D2),
         }
     }
 
     @OnRender {
+        let (text_color, background_color) = self._get_color();
         let message = Label {
-            text: self.message,
+            text: self.content,
+            text_color,
             text_size: .15h,
         };
         let buttons = self.buttons.map(button => Button {
             text: button.content,
             on_click: button.on_click,
-            text_size: .7h
+            text_size: .7h,
+            border_width: 1r
         });
         let button_grid = Grid {
             items: buttons,
@@ -36,21 +39,41 @@ export view Modal {
             .set_height(0.2)
             .push(button_grid)
         
-        self.background_color(Color::dark_gray())
-            .border_radius(.1h)
-            .border_color(Color::black())
-            .border_width(.007m)
+        self.background_color(background_color)
+            .border_radius(10v)
+            .border_color(text_color)
+            .border_width(1r)
+    }
+
+    @OnDefineMouseInteractions[MODAL_HOOK_INDEX] {
+        // let new_focus_chain = evt.client.get_focus_chain().filter(view => view.is_descendant_of(self));
+
+        // @dbg(new_focus_chain.length);
+
+        // evt.client.set_focus_chain(new_focus_chain);
+
+        // intercept;
+    }
+
+    @OnKeyboardEvent[MODAL_HOOK_INDEX] {
+        check evt.action == KeyboardAction::Down;
+        check evt.has_no_modifier();
+        check evt.code == KeyCode::Enter;
+        check self.buttons.len() == 1;
+
+        let button = self.buttons[0];
+
+        if button.on_click {
+            (button.on_click)(evt.client);
+        }
+    }
+
+    @OnKeyboardEvent[MODAL_HOOK_INDEX] {
+        intercept;
     }
 }
 
 export class ModalButton {
     content: string = "",
     on_click: fn(Client) = none
-}
-
-export enum ModalKind {
-    Info,
-    Success,
-    Warning,
-    Error,
 }

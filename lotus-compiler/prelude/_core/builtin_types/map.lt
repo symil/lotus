@@ -1,11 +1,14 @@
 const START_CAPACITY = 32;
 
+let _last_entry_index : int = none;
+let _entry_hash_index : int = none;
+
 export class Map<K, V> {
     type Item = MapEntry<K, V>;
 
     capacity: int,
     size: int,
-    hash_table: MapEntry<K, V>?[],
+    hash_table: int?[],
     data_table: MapEntry<K, V>[],
 
     static __default() -> Self {
@@ -21,7 +24,7 @@ export class Map<K, V> {
         let map = Self {
             capacity: bucket_count * 2,
             size: 0,
-            hash_table: MapEntry<K, V>[]::with_capacity(bucket_count),
+            hash_table: int[]::with_capacity(bucket_count),
             data_table: []
         };
 
@@ -30,6 +33,15 @@ export class Map<K, V> {
         }
 
         map
+    }
+
+    clone() -> Self {
+        Self {
+            capacity: self.capacity,
+            size: self.size,
+            hash_table: self.hash_table.clone(),
+            data_table: self.data_table.map(entry => entry.clone()),
+        }
     }
 
     _rehash() {
@@ -51,22 +63,26 @@ export class Map<K, V> {
         self.data_table = other.data_table;
     }
 
-    _get_index(key: K) -> int {
-        let hash = key.__hash();
-        let index = hash % self.hash_table.len();
-
-        index
-    }
-
     _get_entry(key: K) -> MapEntry<K, V>? {
-        let index = self._get_index(key);
-        let entry = self.hash_table[index];
+        let hash = key.__hash();
+        let hash_index = hash % self.hash_table.len();
+        let entry_index = self.hash_table[hash_index];
+        let entry : MapEntry<K, V> = none;
 
-        while entry && entry.key != key {
-            entry = entry.next;
+        _entry_hash_index = hash_index;
+        _last_entry_index = none;
+
+        while entry_index {
+            _last_entry_index = entry_index;
+            entry = self.data_table[entry_index];
+            entry_index = entry.next_entry_index;
+
+            if entry.key == key {
+                return entry;
+            }
         }
 
-        entry
+        none
     }
 
     __get_iterable_len() -> int {
@@ -152,45 +168,37 @@ export class Map<K, V> {
     }
 
     set(key: K, value: V) -> V? {
-        let index = self._get_index(key);
-        let entry = self.hash_table[index];
-        let last : MapEntry<K, V>? = none;
-        let already_present = false;
+        let entry = self._get_entry(key);
+        let previous_value : V = none;
 
-        while entry && entry.key != key {
-            last = entry;
-            entry = entry.next;
-        }
-
-        if !entry {
+        if entry {
+            previous_value = entry.value;
+            entry.key = key;
+            entry.value = value;
+        } else {
             entry = MapEntry<K, V> {
                 key: key,
                 value: value,
-                next: none
+                next_entry_index: none
             };
 
             self.data_table.push(entry);
             self.size += 1;
 
-            if last {
-                last.next = entry;
+            let entry_index = self.data_table.len() - 1;
+
+            if _last_entry_index {
+                self.data_table[_last_entry_index].next_entry_index = entry_index;
             } else {
-                self.hash_table[index] = entry;
+                self.hash_table[_entry_hash_index] = entry_index;
             }
 
             if self.data_table.len() > self.hash_table.len() * 2 {
                 self._rehash();
             }
-
-            none
-        } else {
-            let ret = entry.value;
-
-            entry.key = key;
-            entry.value = value;
-
-            ret
         }
+
+        previous_value
     }
 
     delete(key: K) -> V? {
@@ -228,5 +236,9 @@ export class Map<K, V> {
 class MapEntry<K, V> {
     key: K?,
     value: V?,
-    next: MapEntry<K, V>?
+    next_entry_index: int?,
+
+    clone() -> Self {
+        self && Self { ..self }
+    }
 }

@@ -128,7 +128,23 @@ export class Array<T> {
         !!self.index_of(searched_item)
     }
 
+    remove(item: T) -> bool {
+        let index = self.index_of(item);
+
+        if index {
+            let dest = self.body.add(index);
+            let src = dest.add(1);
+            let data_size = self.length - index - 1;
+
+            src.copy_to(dest, data_size);
+            self.length -= 1;
+        }
+
+        !!index
+    }
+
     _add_length(additional_length: int) -> int {
+        let current_length = self.length;
         let current_length = self.length;
         let new_length = current_length + additional_length;
 

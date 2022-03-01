@@ -5,6 +5,10 @@ export event OnKeyboardEvent extends OnWindowEvent {
     ctrl_key: bool,
     shift_key: bool,
     alt_key: bool,
+
+    has_no_modifier() -> bool {
+        !self.ctrl_key && !self.shift_key && !self.alt_key
+    }
 }
 
 export enum KeyboardAction {

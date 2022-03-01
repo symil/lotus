@@ -1,5 +1,5 @@
-export class QiuckGameRequest {
-    dyn process(world: #WORLD_TYPE, server: Server) {
+export class QuickGameRequest {
+    dyn process(world: QuickGameWorld, server: Server) {
         
     }
 }

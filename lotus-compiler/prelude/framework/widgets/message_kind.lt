@@ -1,0 +1,6 @@
+export enum MessageKind {
+    Info,
+    Success,
+    Warning,
+    Error,
+}

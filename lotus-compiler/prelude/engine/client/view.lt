@@ -2,6 +2,7 @@ pub type MouseHandlerCallback = fn(Client);
 
 export class View {
     _client: Client?,
+    _parent: View?,
     _hovered: bool,
     _focused: bool,
     _rect: Rect,
@@ -24,7 +25,27 @@ export class View {
     }
 
     add_child(view: View) {
+        view._parent = self;
         self._children.push(view);
+    }
+
+    is_ancestor_of(view: View) -> bool {
+        if !view {
+            return false;
+        }
+
+        match view == self {
+            true => true,
+            false => self.is_ancestor_of(view._parent),
+        }
+    }
+
+    is_descendant_of(view: View) -> bool {
+        if !view {
+            return false;
+        }
+
+        view.is_ancestor_of(self)
     }
 
     is_focused() -> bool {

@@ -24,12 +24,12 @@ pub class Layout {
         self
     }
 
-    dynamic() -> Self {
+    use_dynamic_positionnning() -> Self {
         self.dynamic = true;
         self
     }
 
-    fixed() -> Self {
+    use_fixed_positionning() -> Self {
         self.dynamic = false;
         self
     }
@@ -80,6 +80,14 @@ pub class Layout {
         self.last = none;
         self.target.x = self.parent_view._rect.width * x;
         self.target.y = self.parent_view._rect.height * y;
+        self
+    }
+
+    move_by(dx: float, dy: float) -> Self {
+        self._flush();
+        self.last = none;
+        self.target.x += self.parent_view._rect.width * dx;
+        self.target.y += self.parent_view._rect.height * dy;
         self
     }
 
@@ -147,7 +155,7 @@ pub class Layout {
         view._rect = self.target.clone();
 
         self.dynamic_views.push(view);
-        self.parent_view._children.push(view);
+        self.parent_view.add_child(view);
 
         self
     }

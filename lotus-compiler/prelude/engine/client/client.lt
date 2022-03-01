@@ -5,6 +5,7 @@ const VIRTUAL_HEIGHT = 900f;
 
 export class Client {
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
+    _local_object_to_remote_addr: Map<Object, int> = none,
     _websocket_id: int,
     _layout: Layout,
     _draw_primitives: DrawPrimitive[],
@@ -67,7 +68,7 @@ export class Client {
 
     _collect_network_events() {
         self._network_events.clear();
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
         while !self._buffer.is_finished() {
@@ -81,7 +82,7 @@ export class Client {
         self.virtual_to_real_ratio = self.real_width / self.virtual_width;
 
         self._window_events.clear();
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.size = wasm_poll_window_events(self._buffer.data, self._buffer.capacity);
 
         while !self._buffer.is_finished() {
@@ -110,7 +111,10 @@ export class Client {
         let last_event = self._network_events.last();
 
         if last_event && last_event.kind == NetworkEventKind::Message {
-            self.user = @deserialize(last_event.payload);
+            let buffer = Buffer::from_array(last_event.payload);
+
+            self.user = @deserialize(buffer);
+            self._local_object_to_remote_addr = buffer.get_local_object_to_remote_addr_map().clone();
             self._is_connected = true;
         }
     }
@@ -162,7 +166,9 @@ export class Client {
     }
 
     _define_interactions() {
-        let event = OnDefineMouseInteractions;
+        let event = OnDefineMouseInteractions {
+            client: self
+        };
         let views = self.all_views.clone().reverse();
 
         event.emit(views);
@@ -195,7 +201,7 @@ export class Client {
             // }
         }
 
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.write_unchecked(cursor);
 
         for primitive in self._draw_primitives {
@@ -237,14 +243,29 @@ export class Client {
     }
 
     send_request<T>(value: T) {
-        self._buffer.clear();
-        T::__serialize(self._buffer, value);
+        self._buffer.reset();
+        self._buffer.set_local_object_to_remote_addr_map(self._local_object_to_remote_addr);
+        @serialize(value, self._buffer);
 
         wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
     }
 
     add_to_focus_chain(view: View) {
         self.focus_chain.push(view);
+    }
+
+    clear_focus_chain() {
+        self.focus(none);
+        self.focus_chain.clear();
+    }
+
+    set_focus_chain(views: View[]) {
+        self.focus(none);
+        self.focus_chain = views;
+    }
+
+    get_focus_chain() -> View[] {
+        self.focus_chain.clone()
     }
 
     focus(view: View?) {
@@ -287,22 +308,17 @@ export class Client {
     }
 
     set_local_storage_item<T>(key: string, data: T) {
-        self._buffer.clear();
+        self._buffer.reset();
         T::__serialize_with_schema(self._buffer, data);
 
         wasm_set_local_storage_item(key, self._buffer.data, self._buffer.size);
     }
 
     get_local_storage_item<T>(key: string) -> T? {
-        self._buffer.clear();
+        self._buffer.reset();
         self._buffer.size = wasm_get_local_storage_item(key, self._buffer.data, self._buffer.capacity);
 
-        let value = T::__deserialize_with_schema(self._buffer);
-
-        match self._buffer.has_read_overflow() {
-            true => none,
-            false => value
-        }
+        @deserialize(self._buffer)
     }
 
     clear_local_storage() {

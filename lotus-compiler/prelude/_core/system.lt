@@ -51,16 +51,11 @@ sys type(void) system {
         wasm_log_string(@get_debug_string(value));
     }
 
-    serialize<T>(value: T) -> int[] {
-        let buffer = Buffer;
-
+    serialize<T>(value: T, buffer: Buffer) {
         T::__serialize(buffer, value);
-
-        buffer.consume()
     }
 
-    deserialize<T>(array: int[]) -> T? {
-        let buffer = Buffer::from_array(array);
+    deserialize<T>(buffer: Buffer) -> T? {
         let value = T::__deserialize(buffer);
 
         match buffer.has_read_overflow() {

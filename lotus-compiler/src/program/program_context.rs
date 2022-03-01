@@ -1113,6 +1113,7 @@ impl ProgramContext {
             globals_declaration.push(Wat::declare_global(wasm_name, wasm_type));
         }
 
+        // TODO: merge literals handling
         for (string, var_info) in self.string_literals.get_all() {
             globals_declaration.push(Wat::declare_global(&var_info.wasm_name(), "i32"));
             globals_initialization.extend(self.vasm()

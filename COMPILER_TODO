@@ -146,7 +146,8 @@
 [X] Remove duplicate errors
 [X] Add hexadecimal color literal
 [X] Allocate color literals a single time
-[ ] Make sure server objects can be referenced by address from the client
+[X] Make sure server objects can be referenced by address from the client
+[ ] Disable completion on non-current files
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -212,6 +213,8 @@
 [ ] Use `QuickGame*` as default for main type values
 [ ] Completion: order items by type relevance (put items that have an expected type first)
 [ ] Use `DisplaySize` to specify margins in `Layout`
+[ ] Display `(a, b)` instead of `Pair<a, b>`
+[ ] Force fields that don't have a default value to be specified
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

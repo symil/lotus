@@ -7,28 +7,24 @@ export view QuickGameWindow {
     @OnRender {
         let user = evt.client.user as QuickGameUser;
         let lobby_screen = LobbyScreen { ..self };
-        let layout = self.layout();
+        let modals = user.messages.map(message => Modal {
+            kind: message.kind,
+            content: message.content,
+            buttons: [ModalButton {
+                content: "Ok",
+                on_click: (client) => client.send_request(AcknowledgeRequest { message })
+            }]
+        });
 
-        self.client().set_window_title(self.title);
+        evt.client.set_window_title(self.title);
 
-        layout.push(lobby_screen);
-        layout.scale(0.4)
-        
-        for message in user.messages {
-            let modal = Modal {
-                message: message.message,
-                buttons: [ModalButton {
-                    content: "Thanks",
-                    on_click: () => @log("left")
-                }, ModalButton {
-                    content: "Hello",
-                    on_click: () => @log("right")
-                }]
-            };
-
-            layout.move_center();
-            layout.push(modal);
-        }
+        self.layout()
+            .push(lobby_screen)
+            .scale(0.3)
+            .move_center()
+            .move_by(0, 0.4)
+            .use_fixed_positionning()
+            .push_list(modals)
     }
 
     @OnClientStart {

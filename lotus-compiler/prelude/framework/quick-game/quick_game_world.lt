@@ -13,7 +13,8 @@ export class QuickGameWorld {
         let user = evt.user as QuickGameUser;
 
         user.messages.push(QuickGameMessage {
-            message: "Welcome!"
+            kind: MessageKind::Error,
+            content: "Welcome!"
         });
     }
 
@@ -33,12 +34,30 @@ export class QuickGameWorld {
 
                 if self.users.get(login_request.username) {
                     user.messages.push(QuickGameMessage {
-                        message: `Name "${login_request.username} is already used."`
+                        kind: MessageKind::Error,
+                        content: `Name "${login_request.username} is already used."`
                     });
                 } else {
                     self.users.set(login_request.username, user);
                     user.name = login_request.username;
                 }
+            },
+            LogoutRequest(logout_request) => {
+                if user.name {
+                    self.users.delete(user.name);
+                    user.name = none;
+                } else {
+                    user.messages.push(QuickGameMessage {
+                        kind: MessageKind::Error,
+                        content: `Cannot log out because you are not logged in.`
+                    });
+                }
+            },
+            AcknowledgeRequest(request) => {
+                let ok = user.messages.remove(request.message);
+
+                @dbg(request.message);
+                @log(`message removed : ${ok}`);
             }
         }
     }

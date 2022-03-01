@@ -1,0 +1,1 @@
+pub const MODAL_HOOK_INDEX = -1;

@@ -40,7 +40,7 @@ export class Buffer {
         self.local_object_to_remote_addr.get(local_object)
     }
 
-    clear() {
+    reset() {
         self.size = 0;
         self.read_index = 0;
         self.serialized_strings.clear();
