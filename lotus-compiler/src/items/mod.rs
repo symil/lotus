@@ -113,6 +113,7 @@ mod parsed_var_declaration_type;
 mod parsed_function_call;
 mod parsed_assignment_rvalue;
 mod parsed_operand_suffix;
+mod parsed_color_literal;
 
 pub use utils::*;
 pub use word::*;
@@ -230,3 +231,4 @@ pub use parsed_var_declaration_type::*;
 pub use parsed_function_call::*;
 pub use parsed_assignment_rvalue::*;
 pub use parsed_operand_suffix::*;
+pub use parsed_color_literal::*;

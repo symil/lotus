@@ -55,7 +55,7 @@ mod function_body;
 mod cursor_location;
 mod program_context_options;
 mod program_index;
-mod string_literal_manager;
+mod literal_item_manager;
 mod field_visibility;
 mod type_category;
 
@@ -115,6 +115,6 @@ pub use function_body::*;
 pub use cursor_location::*;
 pub use program_context_options::*;
 pub use program_index::*;
-pub use string_literal_manager::*;
+pub use literal_item_manager::*;
 pub use field_visibility::*;
 pub use type_category::*;

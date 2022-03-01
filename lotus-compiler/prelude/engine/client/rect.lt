@@ -57,6 +57,10 @@ export class Rect {
         self.y + self.height / 2f
     }
 
+    aspect_ratio() -> float {
+        self.width / self.height
+    }
+
     contains(x: float, y: float) -> bool {
         self && x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
     }

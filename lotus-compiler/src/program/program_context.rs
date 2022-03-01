@@ -3,8 +3,8 @@ use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
-use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, StringLiteralManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME};
+use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal, init_color_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
@@ -20,7 +20,8 @@ pub struct ProgramContext {
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
     pub functions: GlobalItemIndex<FunctionBlueprint>,
     pub global_vars: GlobalItemIndex<GlobalVarBlueprint>,
-    pub string_literals: StringLiteralManager,
+    pub string_literals: LiteralItemManager,
+    pub color_literals: LiteralItemManager,
 
     pub code_actions_provider: CodeActionsProvider,
     pub completion_provider: CompletionItemProvider,
@@ -72,7 +73,8 @@ impl ProgramContext {
             interfaces: Default::default(),
             functions: Default::default(),
             global_vars: Default::default(),
-            string_literals: StringLiteralManager::new(),
+            string_literals: LiteralItemManager::new("string"),
+            color_literals: LiteralItemManager::new("color"),
             code_actions_provider: CodeActionsProvider::new(&cursor),
             completion_provider: CompletionItemProvider::new(&cursor),
             definition_provider: DefinitionProvider::new(&cursor),
@@ -134,7 +136,8 @@ impl ProgramContext {
             }
         }
 
-        self.string_literals.set_string_type(self.get_builtin_type(BuiltinType::String, vec![]));
+        self.string_literals.set_item_type(self.get_builtin_type(BuiltinType::String, vec![]));
+        self.color_literals.set_item_type(self.get_builtin_type(BuiltinType::Color, vec![]));
     }
 
     fn index_main_types(&mut self) {
@@ -1114,6 +1117,18 @@ impl ProgramContext {
             globals_declaration.push(Wat::declare_global(&var_info.wasm_name(), "i32"));
             globals_initialization.extend(self.vasm()
                 .set_var(&var_info, None, init_string_literal(&string, self))
+                .resolve(&empty_type_index, self)
+            );
+            globals_retaining.extend(self.vasm()
+                .call_static_method(&var_info.ty(), RETAIN_METHOD_NAME, &[], vec![self.vasm().get_var(&var_info, None)], self)
+                .resolve(&empty_type_index, self)
+            );
+        }
+
+        for (string, var_info) in self.color_literals.get_all() {
+            globals_declaration.push(Wat::declare_global(&var_info.wasm_name(), "i32"));
+            globals_initialization.extend(self.vasm()
+                .set_var(&var_info, None, init_color_literal(&string, self))
                 .resolve(&empty_type_index, self)
             );
             globals_retaining.extend(self.vasm()

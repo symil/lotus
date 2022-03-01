@@ -4,6 +4,14 @@ export class Color {
     b: int,
     a: int,
 
+    __eq(other: Self) -> bool {
+        self.r == other.r && self.g == other.g && self.b == other.b && self.a == other.a
+    }
+
+    __ne(other: Self) -> bool {
+        self.r != other.r || self.g != other.g || self.b != other.b || self.a != other.a
+    }
+
     static new(r: int, g: int, b: int, a: int) -> Self {
         Self { r, g, b, a }
     }

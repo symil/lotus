@@ -22,6 +22,7 @@ pub enum BuiltinType {
     View,
     Event,
     EventOutput,
+    Color,
 }
 
 impl BuiltinType {
@@ -47,6 +48,7 @@ impl BuiltinType {
             BuiltinType::View => "View",
             BuiltinType::Event => "Event",
             BuiltinType::EventOutput => "EventOutput",
+            BuiltinType::Color => "Color",
         }
     }
 }

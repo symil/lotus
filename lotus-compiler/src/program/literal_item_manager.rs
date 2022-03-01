@@ -2,23 +2,25 @@ use std::collections::{HashMap, hash_map::Iter};
 use crate::{items::Identifier, program::VariableKind};
 use super::{VariableInfo, Type, Wat};
 
-pub struct StringLiteralManager {
+pub struct LiteralItemManager {
     strings: HashMap<String, VariableInfo>,
     counter: usize,
-    string_type: Type
+    item_name: &'static str,
+    item_type: Type
 }
 
-impl StringLiteralManager {
-    pub fn new() -> Self {
+impl LiteralItemManager {
+    pub fn new(item_name: &'static str) -> Self {
         Self {
             strings: HashMap::new(),
             counter: 1,
-            string_type: Type::undefined()
+            item_name,
+            item_type: Type::undefined()
         }
     }
 
-    pub fn set_string_type(&mut self, string_type: Type) {
-        self.string_type = string_type;
+    pub fn set_item_type(&mut self, item_type: Type) {
+        self.item_type = item_type;
     }
 
     pub fn add(&mut self, value: &str) -> VariableInfo {
@@ -26,8 +28,8 @@ impl StringLiteralManager {
             return var_info.clone();
         }
 
-        let var_name = format!("string_literal_{}", self.counter);
-        let var_info = VariableInfo::create(Identifier::unlocated(&var_name), self.string_type.clone(), VariableKind::Global, u32::MAX, None);
+        let var_name = format!("literal_{}_{}", self.item_name, self.counter);
+        let var_info = VariableInfo::create(Identifier::unlocated(&var_name), self.item_type.clone(), VariableKind::Global, u32::MAX, None);
 
         self.counter += 1;
         self.strings.insert(value.to_string(), var_info.clone());

@@ -1,0 +1,5 @@
+export fn main() {
+    @dbg(#AAA);
+    @dbg(#ABCDEF);
+    @dbg(#ABCDEF56);
+}

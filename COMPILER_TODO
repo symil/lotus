@@ -142,7 +142,11 @@
 [X] Allow chaining function calls (e.g `a()()()`)
 [X] Swap priority of `is`/`as` and binary operators
 [X] Allow void blocks to return anything (drop the returned value)
-[X] Common type `any`
+[X] Add common type `any`
+[X] Remove duplicate errors
+[X] Add hexadecimal color literal
+[X] Allocate color literals a single time
+[ ] Make sure server objects can be referenced by address from the client
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -207,7 +211,7 @@
 [ ] Fix `class`/`enum`/etc keywords completion when they are inserted in the middle of the file
 [ ] Use `QuickGame*` as default for main type values
 [ ] Completion: order items by type relevance (put items that have an expected type first)
-[ ] Use `DisplaySize` to specify margins
+[ ] Use `DisplaySize` to specify margins in `Layout`
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

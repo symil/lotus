@@ -14,13 +14,21 @@ export view Grid {
     vertical_inner_margin: DisplaySize = none,
 
     @OnRender {
-        let row_size = self.item_count_per_row.to_float();
-        let column_size = self.item_count_per_column.to_float();
+        let row_size = self.item_count_per_row && self.item_count_per_row.to_float();
+        let column_size = self.item_count_per_column && self.item_count_per_column.to_float();
         let item_count = self.items.len().max(1).to_float();
 
         if !row_size && !column_size {
-            row_size = item_count.sqrt().ceil();
-            column_size = row_size;
+            let grid_aspect_ratio = self.rect().aspect_ratio();
+            let item_aspect_ratio = self.item_aspect_ratio || 1f;
+            let ratio = grid_aspect_ratio / item_aspect_ratio;
+            
+            column_size = (item_count / ratio).sqrt().ceil();
+            row_size = (column_size * ratio).ceil();
+
+            if ((column_size - 1f).abs() < EPSILON) {
+                row_size = item_count;
+            }
         } else if !column_size {
             column_size = (item_count / row_size).ceil();
         } else if !row_size {

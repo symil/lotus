@@ -6,6 +6,7 @@
 use std::{env, process};
 use colored::*;
 use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
+use indexmap::IndexSet;
 use language_server::start_language_server;
 use program::{ProgramContext, ProgramContextOptions};
 use utils::FileSystemCache;
@@ -60,11 +61,18 @@ fn main() {
 
             match context.take_errors() {
                 Some(errors) => {
+                    let mut set = IndexSet::new();
+
                     for error in errors {
                         if let Some(string) = error.to_string() {
-                            println!("{}", string);
+                            set.insert(string);
                         }
                     }
+
+                    for string in set {
+                        println!("{}", string);
+                    }
+                    
                     process::exit(1);
                 },
                 None => {

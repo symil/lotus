@@ -1,6 +1,6 @@
 use parsable::{ItemLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ParsedAction, ParsedArrayLiteral, ParsedOperandBody, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug};
+use super::{ParsedAction, ParsedArrayLiteral, ParsedOperandBody, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug, ParsedColorLiteral};
 
 #[parsable]
 pub enum ParsedVarPathRoot {
@@ -26,6 +26,7 @@ pub enum ParsedVarPathRoot {
     StaticFieldOrMethod(ParsedStaticFieldOrMethod),
     #[parsable(ignore_if_marker = "no-object")]
     ObjectLiteral(ParsedObjectLiteral),
+    ColorLiteral(ParsedColorLiteral),
     FunctionLiteral(ParsedAnonymousFunction),
     #[parsable(unset_marker = "no-object", unset_marker = "no-function-call")]
     Parenthesized(ParsedParenthesizedExpression),
@@ -52,6 +53,7 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::NumberLiteral(_) => {},
             ParsedVarPathRoot::CharLiteral(_) => {},
             ParsedVarPathRoot::StringLiteral(_) => {},
+            ParsedVarPathRoot::ColorLiteral(_) => {},
             ParsedVarPathRoot::ArrayLiteral(array_literal) => array_literal.collect_instancied_type_names(list, context),
             ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.collect_instancied_type_names(list, context),
             ParsedVarPathRoot::StaticFieldOrMethod(_) => {},
@@ -89,6 +91,7 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::NumberLiteral(number_literal) => number_literal.process(type_hint, context),
             ParsedVarPathRoot::CharLiteral(char_literal) => char_literal.process(context),
             ParsedVarPathRoot::StringLiteral(string_literal) => string_literal.process(context),
+            ParsedVarPathRoot::ColorLiteral(color_literal) => color_literal.process(context),
             ParsedVarPathRoot::TemplateString(template_string) => template_string.process(context),
             ParsedVarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context),
             ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),

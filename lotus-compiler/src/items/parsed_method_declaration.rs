@@ -70,6 +70,7 @@ impl ParsedMethodDeclaration {
                         let is_prev_dynamic = prev_unwrapped.is_dynamic();
                         let prev_method_details = prev_unwrapped.method_details.as_ref().unwrap();
                         let is_prev_autogen = prev_method_details.is_autogen;
+                        let is_prev_system = prev_method_details.visibility.is_system();
 
                         if prev_unwrapped.owner_type.as_ref().unwrap() == &type_wrapped {
                             // The type declares the same method twice
@@ -90,7 +91,7 @@ impl ParsedMethodDeclaration {
                                 function_unwrapped.method_details.as_mut().unwrap().dynamic_index = Some(-1);
                             } else if is_dynamic {
                                 context.errors.generic(self, format!("method `{}` is dynamic, but was declared as not dynamic by parent type `{}`", name.as_str().bold(), parent_class_name.bold()));
-                            } else if !is_prev_autogen {
+                            } else if !is_prev_autogen && !is_prev_system {
                                 context.errors.generic(self, format!("duplicate {}method `{}` (already declared by parent type `{}`)", s, name.as_str().bold(), parent_class_name.bold()));
                             }
                         }
