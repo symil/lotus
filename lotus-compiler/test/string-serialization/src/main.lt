@@ -1,7 +1,7 @@
 export fn main() {
     let strings = ["foo", "foo", "foo", "bar", "foo", "bar"];
-    let bytes = @serialize(strings);
-    let result : string[] = @deserialize(bytes);
+    let bytes = @serialize(strings, Buffer).consume();
+    let result : string[] = @deserialize(Buffer::from_array(bytes));
 
     @assert(#LINE, result[0].__get_ptr() == result[1].__get_ptr());
     @assert(#LINE, result[0].__get_ptr() == result[2].__get_ptr());

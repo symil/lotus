@@ -17,7 +17,8 @@ export fn main() {
         ]
     };
     value.link = value.list[2];
-    let buffer = @serialize(value);
+    let buffer = Buffer;
+    @serialize(value, buffer);
     let result : Test = @deserialize(buffer);
 
     @dbg(result);

@@ -1,16 +1,5 @@
-use parsable::parsable;
-
-#[parsable]
-pub struct ParsedCommaToken {
-    #[parsable(value=",")]
-    pub token: String
-}
-
-#[parsable]
-pub struct ParsedSemicolonToken {
-    #[parsable(value=";")]
-    pub token: String
-}
+use parsable::{parsable, Token};
+use super::FlexKeyword;
 
 #[parsable]
 pub struct ParsedDotToken {
@@ -18,38 +7,21 @@ pub struct ParsedDotToken {
     pub token: String,
 }
 
-#[parsable]
-pub struct ParsedColonToken {
-    #[parsable(value=":")]
-    pub token: String
-}
+pub type ParsedCommaToken = Token<",">;
+pub type ParsedSemicolonToken = Token<";">;
+pub type ParsedColonToken = Token<":">;
+pub type ParsedDoubleColonToken = Token<"::">;
+pub type ParsedArrowToken = Token<"=>">;
+pub type ParsedWildcardToken = Token<"_">;
+pub type ParsedDoubleDotToken = Token<"..">;
+pub type ParsedEqualToken = Token<"=">;
+pub type ParsedHashToken = Token<"#">;
 
-#[parsable]
-pub struct ParsedDoubleColonToken {
-    #[parsable(value="::")]
-    pub token: String
-}
-
-#[parsable]
-pub struct ParsedArrowToken {
-    #[parsable(value="=>")]
-    pub token: String
-}
-
-#[parsable]
-pub struct ParsedWildcardToken {
-    #[parsable(value="_")]
-    pub token: String
-}
-
-#[parsable]
-pub struct ParsedDoubleDotToken {
-    #[parsable(value="..")]
-    pub token: String
-}
-
-#[parsable]
-pub struct ParsedEqualToken {
-    #[parsable(value="=")]
-    pub token: String
-}
+pub type ParsedOpeningRoundBracket = Token<"(">;
+pub type ParsedClosingRoundBracket = Token<")">;
+pub type ParsedOpeningCurlyBracket = Token<"{">;
+pub type ParsedClosingCurlyBracket = Token<"}">;
+pub type ParsedOpeningSquareBracket = Token<"[">;
+pub type ParsedClosingSquareBracket = Token<"]">;
+pub type ParsedOpeningAngleBracket = Token<"<">;
+pub type ParsedClosingAngleBracket = Token<">">;

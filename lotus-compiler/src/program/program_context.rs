@@ -723,12 +723,14 @@ impl ProgramContext {
         let mut typedefs = vec![];
         let mut functions = vec![];
         let mut global_vars = vec![];
+        let mut main_type_declarations = vec![];
 
         let parsed_source_files = take(&mut self.parsed_source_files);
 
         for file in &parsed_source_files {
             for block in &file.blocks {
                 match block {
+                    ParsedTopLevelBlock::MainTypeDeclaration(main_type_declaration) => main_type_declarations.push(main_type_declaration),
                     ParsedTopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
                     ParsedTopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
                     ParsedTopLevelBlock::TypedefDeclaration(typedef_declaration) => typedefs.push(typedef_declaration),
@@ -758,6 +760,10 @@ impl ProgramContext {
 
         timer.trigger("index main types");
         self.index_main_types();
+
+        for main_type_declaration in &main_type_declarations {
+            main_type_declaration.process(self);
+        }
 
         timer.trigger("type dependencies");
         let mut links = vec![];

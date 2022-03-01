@@ -51,8 +51,9 @@ sys type(void) system {
         wasm_log_string(@get_debug_string(value));
     }
 
-    serialize<T>(value: T, buffer: Buffer) {
+    serialize<T>(value: T, buffer: Buffer) -> Buffer {
         T::__serialize(buffer, value);
+        buffer
     }
 
     deserialize<T>(buffer: Buffer) -> T? {

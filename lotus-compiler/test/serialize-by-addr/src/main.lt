@@ -19,7 +19,7 @@ export fn main() {
     input_value.link = input_value.list[2];
 
     // Object serialization should properly work in the general case
-    let server_bytes = @serialize(input_value);
+    let server_bytes = @serialize(input_value, Buffer).consume();
     let client_deserialization_buffer = Buffer::from_array(server_bytes);
     let client_value = Test::__deserialize(client_deserialization_buffer);
     @log(client_value == input_value); // should be false
@@ -30,7 +30,7 @@ export fn main() {
     let client_serialization_buffer_1 = Buffer::new();
     client_serialization_buffer_1.set_local_object_to_remote_addr_map(client_deserialization_buffer.get_local_object_to_remote_addr_map());
     Test::__serialize(client_serialization_buffer_1, client_value);
-    let server_value_1 : Test = @deserialize(client_serialization_buffer_1.consume());
+    let server_value_1 : Test = @deserialize(client_serialization_buffer_1);
     @log(server_value_1 == input_value); // should be true
     @dbg(server_value_1);
     @log("---");
@@ -38,7 +38,7 @@ export fn main() {
     // Server should recreate objects that are not references by their address
     let client_serialization_buffer_2 = Buffer::new();
     Test::__serialize(client_serialization_buffer_2, client_value);
-    let server_value_2 : Test = @deserialize(client_serialization_buffer_2.consume());
+    let server_value_2 : Test = @deserialize(client_serialization_buffer_2);
     @log(server_value_2 == input_value); // should be false
     @dbg(server_value_2);
     @log("---");
@@ -48,7 +48,7 @@ export fn main() {
     client_serialization_buffer_3.set_local_object_to_remote_addr_map(client_deserialization_buffer.get_local_object_to_remote_addr_map());
     Test::__serialize(client_serialization_buffer_3, client_value);
     input_value.__as_ptr().__set_version(-42);
-    let server_value_3 : Test = @deserialize(client_serialization_buffer_3.consume());
+    let server_value_3 : Test = @deserialize(client_serialization_buffer_3);
     @log(server_value_3 == input_value); // should be false
     @dbg(server_value_3); // should be none
 }

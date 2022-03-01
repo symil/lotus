@@ -36,3 +36,12 @@ impl<const TOKEN: &'static str> Deref for Token<TOKEN> {
         &self.location
     }
 }
+
+impl<const TOKEN: &'static str> Default for Token<TOKEN> {
+    fn default() -> Self {
+        Self {
+            token: TOKEN,
+            location: Default::default()
+        }
+    }
+}

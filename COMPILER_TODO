@@ -147,7 +147,6 @@
 [X] Add hexadecimal color literal
 [X] Allocate color literals a single time
 [X] Make sure server objects can be referenced by address from the client
-[ ] Split prelude into multiple packages (core and framework)
 [ ] Add declarative statements that specify the main types (window, world, user, local data)
 
 -- LATER --
@@ -156,7 +155,7 @@
 [ ] Avoid recomputing the full path when using operation-assigment operators (e.g `a.b.c.d += 4` should not compute `a.b.c` twice)
 [ ] Compute constants value at compile time when possible
 [ ] Make `self` available in field default values
-[ ] Add type parameter inference
+[ ] Add type parameter inference (e.g `let a : Map<int, string> = Map::new()` should work)
 [ ] Improve variable type inference according to their first use
 [ ] Change the `?` suffix operator to return `none` if the expression it is applied to is `none`
 [ ] Optimize `&&` and `||` when applied to boolean operands
@@ -216,6 +215,7 @@
 [ ] Use `DisplaySize` to specify margins in `Layout`
 [ ] Display `(a, b)` instead of `Pair<a, b>`
 [ ] Force fields that don't have a default value to be specified
+[ ] Split prelude into multiple packages (core and framework)
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

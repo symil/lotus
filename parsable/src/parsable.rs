@@ -17,6 +17,10 @@ pub trait Parsable : Sized {
         panic!("type {} has no location", std::any::type_name::<Self>());
     }
 
+    fn get_completion_suggestions() -> &'static[&'static str] {
+        &[]
+    }
+
     fn get_item_name() -> String;
 
     // fn get_wrapped_name() -> String {

@@ -7,6 +7,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
     let mut lines = vec![];
     let mut impl_display_lines = vec![];
     let mut get_location_lines = vec![];
+    let mut completion_suggestions = vec![];
     let has_name = root_attributes.name.is_some();
 
     for i in 0..data_enum.variants.len() {
@@ -159,6 +160,7 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
 
                 match string {
                     Some(lit_str) => {
+                        completion_suggestions.push(lit_str.clone());
                         line = quote! {
                             if let Some(_) = reader__.read_string(#lit_str) {
                                 reader__.eat_spaces();
@@ -233,4 +235,10 @@ pub fn process_enum(data_enum: &mut DataEnum, root_attributes: &RootAttributes, 
             }
         }
     };
+
+    output.get_completion_suggestions = Some(quote! {
+        fn get_completion_suggestions() -> &'static[&'static str] {
+            &[ #(#completion_suggestions),* ]
+        }
+    });
 }

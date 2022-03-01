@@ -90,6 +90,7 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
 
     let get_location = output.get_location;
     let parse_item = output.parse_item;
+    let get_completion_suggestions = output.get_completion_suggestions.unwrap_or_default();
 
     let result = quote! {
         #ast
@@ -100,6 +101,8 @@ pub fn parsable(attr: TokenStream, input: TokenStream) -> TokenStream {
             #impl_item_name
 
             #get_location
+
+            #get_completion_suggestions
         }
 
         impl std::ops::Deref for #name {
