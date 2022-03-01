@@ -1,3 +1,5 @@
+
+
 export view QuickGameWindow {
     background_color : Color = Color::white(),
     title: string = "Game",

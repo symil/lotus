@@ -255,8 +255,7 @@ export class Client {
     }
 
     clear_focus_chain() {
-        self.focus(none);
-        self.focus_chain.clear();
+        self.set_focus_chain([]);
     }
 
     set_focus_chain(views: View[]) {

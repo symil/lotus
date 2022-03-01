@@ -147,7 +147,8 @@
 [X] Add hexadecimal color literal
 [X] Allocate color literals a single time
 [X] Make sure server objects can be referenced by address from the client
-[ ] Disable completion on non-current files
+[ ] Split prelude into multiple packages (core and framework)
+[ ] Add declarative statements that specify the main types (window, world, user, local data)
 
 -- LATER --
 [ ] Allow manually specifying function parameters

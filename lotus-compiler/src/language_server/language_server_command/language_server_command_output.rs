@@ -2,6 +2,7 @@ use super::{COMMAND_SEPARATOR, COMMAND_OUTPUT_ITEM_LINE_START};
 
 pub struct LanguageServerCommandOutput {
     id: u32,
+    duration: u128,
     lines: Vec<String>,
     current_line: Vec<String>
 }
@@ -10,6 +11,7 @@ impl LanguageServerCommandOutput {
     pub fn new(id: u32) -> Self {
         Self {
             id,
+            duration: 0,
             lines: vec![],
             current_line: vec![]
         }
@@ -43,9 +45,10 @@ impl LanguageServerCommandOutput {
         self
     }
 
-    pub fn consume(mut self) -> String {
+    pub fn consume(mut self, duration: u128) -> String {
+        self.duration = duration;
         self.flush();
-        self.lines.insert(0, self.id.to_string());
+        self.lines.insert(0, format!("{}:{}", self.id, self.duration));
         self.lines.join(COMMAND_OUTPUT_ITEM_LINE_START)
     }
 }

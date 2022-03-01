@@ -15,9 +15,8 @@ pub fn start_language_server(test_command: &Option<String>) {
     if let Some(string) = test_command {
         let command = LanguageServerCommand::from_str(string).unwrap();
         let output = command.run(None);
-        let string = output.consume();
         
-        println!("{}", string);
+        println!("{}", output);
 
         return;
     }
@@ -46,21 +45,19 @@ pub fn start_language_server(test_command: &Option<String>) {
                         return;
                     }
 
-                    let start = Instant::now();
                     let content = str::from_utf8(&buffer[0..size]).unwrap();
 
                     if let Some(command) = LanguageServerCommand::from_str(content) {
                         let output = command.run(Some(&mut cache));
-                        let content = output.consume();
+                        let bytes = output.as_bytes();
 
-                        for (src, dest) in content.as_bytes().iter().zip(buffer.as_mut()) {
+                        for (src, dest) in bytes.iter().zip(buffer.as_mut()) {
                             *dest = *src;
                         }
 
-                        stream.write(&buffer[0..content.as_bytes().len()]).unwrap();
+                        stream.write(&buffer[0..bytes.len()]).unwrap();
                     }
 
-                    let duration = start.elapsed().as_millis();
                     // println!("COMMAND TOOK: {}ms", duration);
                 },
                 Err(error) => {

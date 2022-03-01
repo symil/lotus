@@ -1,4 +1,4 @@
-use std::mem::take;
+use std::{mem::take, time::Instant};
 use parsable::ParseError;
 use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation}, utils::FileSystemCache, items::ParsedSourceFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
@@ -27,6 +27,7 @@ impl LanguageServerCommand {
         let new_name = arguments.next().and_then(|str| Some(str.to_string())).unwrap_or_default();
         let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
 
+        let duration = 0;
         let parameters = LanguageServerCommandParameters {
             new_name
         };
@@ -42,8 +43,9 @@ impl LanguageServerCommand {
         })
     }
 
-    pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> LanguageServerCommandOutput {
+    pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> String {
         let callback = self.kind.get_callback();
+        let start = Instant::now();
         let mut context = ProgramContext::new(ProgramContextOptions::language_server(&self.root_directory_path, &self.file_path, self.cursor_index));
         let mut output = LanguageServerCommandOutput::new(self.id);
 
@@ -65,6 +67,8 @@ impl LanguageServerCommand {
 
         context.destroy();
 
-        output
+        let duration = start.elapsed().as_millis();
+
+        output.consume(duration)
     }
 }
