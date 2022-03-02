@@ -1,11 +1,7 @@
+#WINDOW_TYPE = Window
+
 view Window extends QuickGameWindow {
     self.background_color = Color::light_green()
     self.title = "Some game"
     self.title_color = Color::red()
 }
-
-type World = QuickGameWorld;
-
-type User = QuickGameUser;
-
-type LocalData = QuickGameLocalData;

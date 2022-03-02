@@ -1,0 +1,11 @@
+#WINDOW_TYPE = Hello
+
+view Hello extends QuickGameWindow {
+    self.background_color = Color::light_green()
+}
+
+export fn main() {
+    let window = #WINDOW_TYPE::__default();
+
+    @dbg(window.background_color);
+}

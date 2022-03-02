@@ -1,3 +1,4 @@
+use core::panic;
 use std::{collections::{HashMap, HashSet}, hash::{Hasher}, mem::{take}, rc::{Rc}, fs::{DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
@@ -177,6 +178,7 @@ impl ProgramContext {
     pub fn get_main_type(&self, main_type: MainType) -> Type {
         self.main_types.get(main_type)
             .unwrap_or_else(|| panic!("main type \"{:?}\" is not defined", main_type))
+            // .unwrap_or_else(|| self.get_builtin_type(BuiltinType::Object, vec![]))
     }
 
     pub fn get_this_type(&self) -> Type {
@@ -747,12 +749,6 @@ impl ProgramContext {
             typedef_declaration.process(self);
         }
 
-        timer.trigger("main type declarations");
-
-        for main_type_declaration in &main_type_declarations {
-            main_type_declaration.process(self);
-        }
-
         timer.trigger("type dependencies");
         let mut links = vec![];
         for (i, type_declaration) in types.iter().enumerate() {
@@ -834,6 +830,11 @@ impl ProgramContext {
         timer.trigger("type ancestors");
         for type_declaration in types.iter() {
             type_declaration.compute_ancestors(self);
+        }
+
+        timer.trigger("main type declarations");
+        for main_type_declaration in &main_type_declarations {
+            main_type_declaration.process(self);
         }
 
         timer.trigger("type fields");

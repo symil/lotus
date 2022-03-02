@@ -147,7 +147,7 @@
 [X] Add hexadecimal color literal
 [X] Allocate color literals a single time
 [X] Make sure server objects can be referenced by address from the client
-[ ] Add declarative statements that specify the main types (window, world, user, local data)
+[X] Add declarative statements that specify the main types (window, world, user, local data)
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -216,6 +216,7 @@
 [ ] Display `(a, b)` instead of `Pair<a, b>`
 [ ] Force fields that don't have a default value to be specified
 [ ] Split prelude into multiple packages (core and framework)
+[ ] Parsable: add way to forbid new lines after a field
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev
