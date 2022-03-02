@@ -58,6 +58,7 @@ mod program_index;
 mod literal_item_manager;
 mod field_visibility;
 mod type_category;
+mod main_type_index;
 
 pub use program_context::*;
 pub use utils::*;
@@ -118,3 +119,4 @@ pub use program_index::*;
 pub use literal_item_manager::*;
 pub use field_visibility::*;
 pub use type_category::*;
+pub use main_type_index::*;

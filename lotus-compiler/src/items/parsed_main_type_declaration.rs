@@ -15,10 +15,15 @@ impl ParsedMainTypeDeclaration {
         context.completion_provider.add_keyword_completion(&self.hash, ParsedMainTypeName::get_completion_suggestions());
 
         let name = unwrap_item(&self.name, &self.hash, context)?;
-        let assigned_type_name = name.process(context)?;
+        let main_type_name = name.process(context)?;
+        let main_type = main_type_name.to_main_type();
         let equal = unwrap_item(&self.equal, name, context)?;
         let ty = unwrap_item(&self.ty, equal, context)?;
         let assigned_type = ty.process(true, context)?;
+
+        if let Err(expected_type) = context.main_types.set(main_type, assigned_type.clone()) {
+            context.errors.type_mismatch(ty, &expected_type, &assigned_type);
+        }
 
         Some(())
     }

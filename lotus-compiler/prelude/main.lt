@@ -1,1 +1,6 @@
 // Temporary file to let the VS code extension that this is the root of the prelude
+
+#USER_TYPE = Object
+#WORLD_TYPE = Object
+#WINDOW_TYPE = View
+#LOCAL_DATA_TYPE = Object

@@ -3,7 +3,7 @@ use super::FlexKeyword;
 
 #[parsable]
 pub struct ParsedDotToken {
-    #[parsable(value=".", followed_by="[^.]")] // to avoid working on the `..` operator
+    #[parsable(value=".", followed_by="[^.]")] // to avoid the confusion with the range operator `..`
     pub token: String,
 }
 
