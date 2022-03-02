@@ -85,10 +85,12 @@ async function main() {
         let compilerPath = path.join(ROOT_DIR, 'target', mode, 'lotus-compiler');
 
         if (validate) {
-            command = `1##validate##${commandLineNames[0]}##`;
+            command = `1##validate##${commandLineNames[0] || WORKSHOP_DIR}##`;
         }
 
-        runCommand(`${compilerPath} --server --command=${command}`, true);
+        let { result } = runCommand(`${compilerPath} --server --command=${command}`);
+
+        console.log(result.split('\n')[0].substring(2).split(', ').join('\n'));
     } else if (clean) {
         let fileList = readDirRecursive(TEST_DIR);
         let wasmFileList = fileList.filter(({ path }) => path.endsWith('.wat') || path.endsWith('.wasm'));

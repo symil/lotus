@@ -19,6 +19,6 @@ export class QuickGameWorld {
     }
 
     @OnUserRequest {
-        evt.emit([evt.request]);
+        evt.emit([evt.request])
     }
 }

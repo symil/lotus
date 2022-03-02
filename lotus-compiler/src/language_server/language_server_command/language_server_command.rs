@@ -1,6 +1,6 @@
-use std::{mem::take, time::Instant};
+use std::{mem::take, time::Instant, fmt::format};
 use parsable::ParseError;
-use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation}, utils::FileSystemCache, items::ParsedSourceFile};
+use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation}, utils::{FileSystemCache, PerfTimer}, items::ParsedSourceFile};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_OUTPUT_ITEM_LINE_START : &'static str = "\n#?!#";
@@ -45,7 +45,7 @@ impl LanguageServerCommand {
 
     pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> String {
         let callback = self.kind.get_callback();
-        let start = Instant::now();
+        let mut timer = PerfTimer::new();
         let mut context = ProgramContext::new(ProgramContextOptions::language_server(&self.root_directory_path, &self.file_path, self.cursor_index));
         let mut output = LanguageServerCommandOutput::new(self.id);
 
@@ -57,18 +57,22 @@ impl LanguageServerCommand {
             }
         }
 
+        timer.trigger("parsing");
         context.parse_source_files(&bundle_with_prelude(&self.root_directory_path), cache);
 
+        timer.trigger("processing");
         if !context.has_errors() {
             context.process_source_files();
         }
 
+        timer.trigger("cleanup");
         callback(&self.parameters, &context, &mut output);
 
         context.destroy();
 
-        let duration = start.elapsed().as_millis();
+        // let header = format!("{}ms", timer.get_total());
+        let header = timer.to_string(", ", 0);
 
-        output.consume(duration)
+        output.format(Some(header))
     }
 }
