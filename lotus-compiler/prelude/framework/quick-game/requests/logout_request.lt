@@ -1,3 +1,13 @@
 export class LogoutRequest {
-    
+    @OnUserRequest {
+        if evt.user.name {
+            evt.world.users.delete(evt.user.name);
+            evt.user.name = none;
+        } else {
+            evt.user.messages.push(QuickGameMessage {
+                kind: MessageKind::Error,
+                content: `Cannot log out because you are not logged in.`
+            });
+        }
+    }
 }

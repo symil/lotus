@@ -30,14 +30,6 @@ export view QuickGameWindow {
     }
 
     @OnClientStart {
-        if !(#USER_TYPE::__default()) is QuickGameUser(_) {
-            @panic("type `User` must inherit from `QuickGameUser`");
-        }
-
-        if !(#LOCAL_DATA_TYPE::__default()) is QuickGameLocalData(_) {
-            @panic("type `LocalData` must inherit from `QuickGameLocalData`");
-        }
-
         return;
         evt.client.wait_until(client => !!(client.user as QuickGameUser).name);
 

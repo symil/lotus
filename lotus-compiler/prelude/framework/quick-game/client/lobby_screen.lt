@@ -32,7 +32,7 @@ export view LobbyScreen {
     }
 
     @OnRender {
-        let is_user_connected = evt.client.user is QuickGameUser(user) && user.name;
+        let is_user_logged = !!evt.client.user.name;
         let title_label = Label {
             text: self.title,
             text_color: self.title_color,
@@ -47,8 +47,8 @@ export view LobbyScreen {
             .scale_height(TITLE_BAR_HEIGHT)
             .push(title_label)
         
-        if is_user_connected {
-            self._displayUserInfo(user);
+        if is_user_logged {
+            self._displayUserInfo(evt.client.user);
         } else {
             self._displayLoginPanel();
         }

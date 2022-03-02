@@ -1,3 +1,7 @@
 export class AcknowledgeRequest {
-    message: QuickGameMessage
+    message: QuickGameMessage,
+
+    @OnUserRequest {
+        evt.user.messages.remove(self.message);
+    }
 }

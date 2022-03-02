@@ -4,7 +4,7 @@ pub class LoginButton extends Button {
 }
 
 pub fn send_login_request(client: Client) {
-    let username = (client.local_data as QuickGameLocalData).ui.username.text;
+    let username = client.local_data.ui.username.text;
 
     if (!username.is_empty()) {
         client.send_request(LoginRequest {

@@ -2,63 +2,23 @@ export class QuickGameWorld {
     users: Map<string, QuickGameUser>,
 
     @OnWorldInit {
-        if !(#USER_TYPE::__default()) is QuickGameUser(_) {
-            @panic("type `User` must inherit from `QuickGameUser`");
-        }
-
         @log("WORLD INIT");
     }
 
     @OnUserConnect {
-        let user = evt.user as QuickGameUser;
-
-        user.messages.push(QuickGameMessage {
+        evt.user.messages.push(QuickGameMessage {
             kind: MessageKind::Error,
             content: "Welcome!"
         });
     }
 
     @OnUserDisconnect {
-        check evt.user is QuickGameUser(user);
-        check user.name;
+        check evt.user.name;
 
-        self.users.delete(user.name);
+        self.users.delete(evt.user.name);
     }
 
     @OnUserRequest {
-        check evt.user is QuickGameUser(user);
-
-        match evt.request {
-            LoginRequest(login_request) => {
-                check !login_request.username.is_empty();
-
-                if self.users.get(login_request.username) {
-                    user.messages.push(QuickGameMessage {
-                        kind: MessageKind::Error,
-                        content: `Name "${login_request.username} is already used."`
-                    });
-                } else {
-                    self.users.set(login_request.username, user);
-                    user.name = login_request.username;
-                }
-            },
-            LogoutRequest(logout_request) => {
-                if user.name {
-                    self.users.delete(user.name);
-                    user.name = none;
-                } else {
-                    user.messages.push(QuickGameMessage {
-                        kind: MessageKind::Error,
-                        content: `Cannot log out because you are not logged in.`
-                    });
-                }
-            },
-            AcknowledgeRequest(request) => {
-                let ok = user.messages.remove(request.message);
-
-                @dbg(request.message);
-                @log(`message removed : ${ok}`);
-            }
-        }
+        evt.emit([evt.request]);
     }
 }
