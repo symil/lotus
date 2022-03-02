@@ -1,5 +1,0 @@
-#USER_TYPE = int
-
-export fn main() {
-    @log("hello");
-}

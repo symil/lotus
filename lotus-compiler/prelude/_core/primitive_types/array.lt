@@ -1,9 +1,9 @@
 export class Array<T> {
     type Item = T;
 
-    body: Pointer<T>,
-    length: int,
-    capacity: int,
+    _body: Pointer<T>,
+    _length: int,
+    _capacity: int,
 
     __add(other: Self) -> Self {
         self.concat(other)
@@ -19,38 +19,42 @@ export class Array<T> {
 
     static with_capacity(capacity: int) -> Self {
         Self {
-            body: @alloc(capacity) as Pointer<T>,
-            length: 0,
-            capacity: capacity.next_power_of_4()
+            _body: @alloc(capacity) as Pointer<T>,
+            _length: 0,
+            _capacity: capacity.next_power_of_4()
         }
     }
 
     static from_raw_parts(body: Pointer<T>, length: int, capacity: int) -> Self {
-        Self { body, length, capacity }
+        Self {
+            _body: body,
+            _length: length,
+            _capacity: capacity
+        }
     }
 
     body() -> Pointer<T> {
-        self.body
+        self._body
     }
 
     len() -> int {
-        self.length
+        self._length
     }
 
     capacity() -> int {
-        self.capacity
+        self._capacity
     }
 
     __get_iterable_len() -> int {
-        self.length
+        self._length
     }
 
     __get_iterable_ptr() -> Pointer<T> {
-        self.body
+        self._body
     }
 
     __get_at_index(index: int) -> T {
-        let length = self.length;
+        let length = self._length;
 
         if index < 0 {
             index = length + index;
@@ -58,12 +62,12 @@ export class Array<T> {
 
         match index < 0 || index >= length {
             true => none,
-            false => self.body[index]
+            false => self._body[index]
         }
     }
 
     __set_at_index(index: int, value: T) {
-        self.body.__set_at_index(index, value);
+        self._body.__set_at_index(index, value);
     }
 
     get(index: int) -> T? {
@@ -83,11 +87,11 @@ export class Array<T> {
             return none;
         }
 
-        self.__get_at_index(self.length - 1)
+        self.__get_at_index(self._length - 1)
     }
 
     is_empty() -> bool {
-        self.length == 0
+        self._length == 0
     }
 
     clone() -> Self {
@@ -99,19 +103,19 @@ export class Array<T> {
     }
 
     reverse() -> Self {
-        for i in 0..(self.length / 2) {
-            let i2 = self.length - i - 1;
-            let tmp = self.body[i];
+        for i in 0..(self._length / 2) {
+            let i2 = self._length - i - 1;
+            let tmp = self._body[i];
 
-            self.body[i] = self.body[i2];
-            self.body[i2] = tmp;
+            self._body[i] = self._body[i2];
+            self._body[i2] = tmp;
         }
 
         self
     }
 
     clear() {
-        self.length = 0;
+        self._length = 0;
     }
 
     index_of(searched_item: T) -> int? {
@@ -132,34 +136,34 @@ export class Array<T> {
         let index = self.index_of(item);
 
         if index {
-            let dest = self.body.add(index);
+            let dest = self._body.add(index);
             let src = dest.add(1);
-            let data_size = self.length - index - 1;
+            let data_size = self._length - index - 1;
 
             src.copy_to(dest, data_size);
-            self.length -= 1;
+            self._length -= 1;
         }
 
         !!index
     }
 
     _add_length(additional_length: int) -> int {
-        let current_length = self.length;
-        let current_length = self.length;
+        let current_length = self._length;
+        let current_length = self._length;
         let new_length = current_length + additional_length;
 
-        if new_length > self.capacity {
-            let current_body = self.body;
-            let new_capacity = self.capacity * 4;
+        if new_length > self._capacity {
+            let current_body = self._body;
+            let new_capacity = self._capacity * 4;
             let new_body = @alloc(new_capacity) as Pointer<T>;
 
             current_body.copy_to(new_body, current_length);
 
-            self.body = new_body;
-            self.capacity = new_capacity;
+            self._body = new_body;
+            self._capacity = new_capacity;
         }
 
-        self.length = new_length;
+        self._length = new_length;
 
         current_length
     }
@@ -167,19 +171,19 @@ export class Array<T> {
     push(value: T) -> Self {
         let length = self._add_length(1);
 
-        self.body[length] = value;
+        self._body[length] = value;
 
         self
     }
 
     push_unchecked(value: T) {
-        self.body[self.length] = value;
-        self.length += 1;
+        self._body[self._length] = value;
+        self._length += 1;
     }
 
     pop() -> Self {
-        if self.length > 0 {
-            self.length -= 1;
+        if self._length > 0 {
+            self._length -= 1;
         }
 
         self
@@ -187,7 +191,7 @@ export class Array<T> {
 
     extend(other: Self) {
         let length = self._add_length(other.len());
-        let body = self.body;
+        let body = self._body;
 
         for [i, item] in other {
             body[length + i] = item;
@@ -200,7 +204,7 @@ export class Array<T> {
         }
 
         self.insert_none(index, other.len());
-        let body = self.body;
+        let body = self._body;
         
         for [i, item] in other {
             body[index + i] = item;
@@ -214,7 +218,7 @@ export class Array<T> {
 
     insert_none(index: int, count: int) {
         let length = self._add_length(count);
-        let body = self.body;
+        let body = self._body;
 
         for i in 0..count {
             let i2 = count - i - 1;
@@ -227,7 +231,7 @@ export class Array<T> {
     }
 
     concat(other: Self) -> Self {
-        let new_array = Self::with_capacity(self.length + other.length);
+        let new_array = Self::with_capacity(self._length + other._length);
 
         for item in self {
             new_array.push_unchecked(item);
@@ -242,7 +246,7 @@ export class Array<T> {
 
     join(separator: string) -> string {
         let str = "";
-        let length = self.length;
+        let length = self._length;
 
         if length > 0 {
             let last_index = length - 1;
@@ -295,19 +299,19 @@ export class Array<T> {
     }
 
     sort(compare: fn(T, T)(int)) -> Self {
-        let secondary_keys = @alloc(self.length);
+        let secondary_keys = @alloc(self._length);
 
-        for i in 0..self.length {
+        for i in 0..self._length {
             secondary_keys[i] = i;
         }
 
-        quick_sort(self.body, 0, self.length - 1, compare, secondary_keys);
+        quick_sort(self._body, 0, self._length - 1, compare, secondary_keys);
 
         self
     }
 
     dyn __retain_dyn() {
-        Pointer<T>::__retain(self.body);
+        Pointer<T>::__retain(self._body);
 
         for item in self {
             T::__retain(item);
@@ -315,7 +319,7 @@ export class Array<T> {
     }
 
     dyn __serialize_dyn(buffer: Buffer) {
-        buffer.write(self.length);
+        buffer.write(self._length);
 
         for item in self {
             T::__serialize(buffer, item);
@@ -325,9 +329,9 @@ export class Array<T> {
     dyn __deserialize_dyn(buffer: Buffer) {
         let length = buffer.read();
 
-        self.body = @alloc(length) as Pointer<T>;
-        self.length = 0;
-        self.capacity = length.next_power_of_4();
+        self._body = @alloc(length) as Pointer<T>;
+        self._length = 0;
+        self._capacity = length.next_power_of_4();
 
         for i in 0..length {
             self.push_unchecked(T::__deserialize(buffer));
@@ -346,17 +350,17 @@ export class Array<T> {
     dyn __deserialize_with_schema_dyn(buffer: Buffer) {
         let item_count = buffer.read();
 
-        self.capacity = item_count.next_power_of_4();
-        self.body = @alloc(self.capacity) as Pointer<T>;
-        self.length = item_count;
+        self._capacity = item_count.next_power_of_4();
+        self._body = @alloc(self._capacity) as Pointer<T>;
+        self._length = item_count;
 
         for i in 0..item_count {
             let item = T::__deserialize_with_schema(buffer);
 
             if item is T(casted) {
-                self.body[i] = casted;
+                self._body[i] = casted;
             } else {
-                self.body[i] = none;
+                self._body[i] = none;
             }
         }
     }
@@ -370,7 +374,7 @@ export class Array<T> {
     }
 
     dyn __to_debug_string_dyn(set: Set<ptr>) -> string {
-        let length = self.length;
+        let length = self._length;
 
         if length == 0 {
             return "[]";
