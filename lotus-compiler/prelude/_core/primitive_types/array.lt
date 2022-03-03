@@ -288,6 +288,20 @@ export class Array<T> {
         result
     }
 
+    filter_map<U>(callback: fn(T, int)(U)) -> U[] {
+        let result : U[] = [];
+
+        for [i, item] in self {
+            let mapped = callback(item, i);
+
+            if mapped {
+                result.push(mapped);
+            }
+        }
+
+        result
+    }
+
     reduce<U>(init: U, callback: fn(U, T, int)(U)) -> U {
         let result = init;
 

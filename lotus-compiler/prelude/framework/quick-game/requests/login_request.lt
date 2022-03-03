@@ -4,14 +4,13 @@ export class LoginRequest {
     @OnUserRequest {
         check !self.username.is_empty();
 
-        if evt.world.users.get(self.username) {
-            evt.user.messages.push(QuickGameMessage {
-                kind: MessageKind::Error,
-                content: `Name "${self.username} is already used."`
-            });
+        if evt.user.name {
+            evt.user.show_error(`You are already logged as "${evt.user.name}".`);
+        } else if evt.world.users.get(self.username) {
+            evt.user.show_error(`Name "${self.username}"" is already used.`);
         } else {
-            evt.world.users.set(self.username, evt.user);
             evt.user.name = self.username;
+            evt.world.users.set(self.username, evt.user);
         }
     }
 }

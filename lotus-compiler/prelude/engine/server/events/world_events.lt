@@ -17,12 +17,6 @@ export event OnUserRequest {
     request: Object
 }
 
-export event OnTriggerRequest {
-    server: Server,
-    world: #WORLD_TYPE,
-    user: #USER_TYPE,
-}
-
 export event OnWorldInit {
     server: Server,
     world: #WORLD_TYPE,

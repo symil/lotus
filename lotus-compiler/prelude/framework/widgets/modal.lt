@@ -45,31 +45,20 @@ export view Modal {
             .border_width(1r)
     }
 
-    @OnDefineMouseInteractions[MODAL_HOOK_INDEX] {
-        // let new_focus_chain = evt.client.get_focus_chain().filter(view => view.is_descendant_of(self));
-
-        // @dbg(new_focus_chain.length);
-
-        // evt.client.set_focus_chain(new_focus_chain);
-
-        // intercept;
-    }
-
-    @OnKeyboardEvent[MODAL_HOOK_INDEX] {
-        check evt.action == KeyboardAction::Down;
-        check evt.has_no_modifier();
-        check evt.code == KeyCode::Enter;
-        check self.buttons.len() == 1;
-
-        let button = self.buttons[0];
-
-        if button.on_click {
-            (button.on_click)(evt.client);
+    @OnPostRender[MODAL_POST_RENDER_INDEX] {
+        for view in evt.client.views() {
+            if !view.is_descendant_of(self) {
+                view.disable();
+            } else {
+                view.enable();
+            }
         }
-    }
 
-    @OnKeyboardEvent[MODAL_HOOK_INDEX] {
-        intercept;
+        let buttons = self.get_descendants(view => view is Button(button) && button);
+
+        if buttons.len() == 1 {
+            buttons[0].focus();
+        }
     }
 }
 

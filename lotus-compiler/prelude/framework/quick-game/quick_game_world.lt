@@ -6,15 +6,13 @@ export class QuickGameWorld {
     }
 
     @OnUserConnect {
-        evt.user.messages.push(QuickGameMessage {
-            kind: MessageKind::Error,
-            content: "Welcome!"
-        });
+        
     }
 
     @OnUserDisconnect {
         check evt.user.name;
 
+        @dbg("DISCONNECT")
         self.users.delete(evt.user.name);
     }
 

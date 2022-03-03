@@ -1,4 +1,11 @@
 export class QuickGameUser {
     name: string = none,
     messages: QuickGameMessage[] = [],
+
+    show_error(message: string) {
+        self.messages.push(QuickGameMessage {
+            content: message,
+            kind: MessageKind::Error
+        });
+    }
 }

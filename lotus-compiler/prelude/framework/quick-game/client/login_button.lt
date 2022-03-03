@@ -1,9 +1,14 @@
 pub class LoginButton extends Button {
-    self.on_click = send_login_request
     self.text = "Log in"
+    self.on_click = send_login_request
+    self.is_disabled = is_login_button_disabled
 }
 
 pub fn send_login_request(client: Client) {
+    if is_login_button_disabled(client) {
+        return;
+    }
+
     let username = client.local_data.ui.username.text;
 
     if (!username.is_empty()) {
@@ -11,4 +16,8 @@ pub fn send_login_request(client: Client) {
             username
         });
     }
+}
+
+pub fn is_login_button_disabled(client: Client) -> bool {
+    client.local_data.ui.username.text.is_empty()
 }

@@ -1,4 +1,4 @@
-[ ] Display error modal when necessary
-[ ] Find way to easily disable views
-[ ] Disable interface when a modal is shown
-[ ] Handle focus changes when a modal is shown
+[X] Display error modal when necessary
+[X] Find way to easily disable views
+[X] Disable interface when a modal is shown
+[X] Handle focus changes when a modal is shown

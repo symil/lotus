@@ -39,12 +39,12 @@ pub class Server {
                     self._websocket_id_to_user.set(event.websocket_id, user);
                     self._user_to_websocket_id.set(user, event.websocket_id);
 
-                    @emit(OnUserConnect { server: self, user }, [self._world]);
+                    @emit(OnUserConnect { server: self, world: self._world, user }, [self._world]);
                 },
                 NetworkEventKind::ConnectionClosed => {
                     let user = self._websocket_id_to_user.get(event.websocket_id);
 
-                    @emit(OnUserDisconnect { server: self, user }, [self._world]);
+                    @emit(OnUserDisconnect { server: self, world: self._world, user }, [self._world]);
 
                     self._websocket_id_to_user.delete(event.websocket_id);
                     self._user_to_websocket_id.delete(user);
@@ -54,7 +54,7 @@ pub class Server {
                     let request : Object = @deserialize(Buffer::from_array(event.payload));
 
                     if request {
-                        @emit(OnUserRequest { server: self, user, request }, [self._world]);
+                        @emit(OnUserRequest { server: self, world: self._world, user, request }, [self._world]);
                     }
                 }
             }

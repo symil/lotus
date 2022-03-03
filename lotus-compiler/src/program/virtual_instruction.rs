@@ -503,16 +503,18 @@ impl VirtualInstruction {
                     this_type: info.function.borrow().owner_type.as_ref().map(|type_wrapped| type_wrapped.borrow().self_type.resolve(type_index, context)),
                     function_parameters: info.parameters.iter().map(|ty| ty.resolve(type_index, context)).collect(),
                 };
+                let function_parameters = parameters.function_parameters.clone();
                 let function_instance = context.get_function_instance(parameters);
                 let function_index = function_instance.function_index.unwrap() as u32;
 
                 info.function.with_ref(|function_unwrapped| {
                     match &function_unwrapped.closure_details {
                         Some(details) => {
+                            let retain_function = details.retain_function.as_ref().unwrap().clone();
                             let retain_function_index = context.get_function_instance(FunctionInstanceParameters {
-                                function_blueprint: details.retain_function.as_ref().unwrap().clone(),
+                                function_blueprint: retain_function.clone(),
                                 this_type: None,
-                                function_parameters: vec![],
+                                function_parameters,
                             }).function_index.unwrap();
 
                             let ptr_type = context.pointer_type();

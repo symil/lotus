@@ -42,8 +42,8 @@ pub view TextBox {
             .focus_text_cursor_index(cursor_index)
     }
 
-    @OnDefineMouseInteractions {
-        for view in self.client().all_views {
+    @OnPostRender {
+        for view in self.client()._all_views {
             view.on_click(() => self.unfocus());
         }
 

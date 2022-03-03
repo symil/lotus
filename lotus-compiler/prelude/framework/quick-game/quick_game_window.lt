@@ -22,9 +22,8 @@ export view QuickGameWindow {
 
         self.layout()
             .push(lobby_screen)
-            .scale(0.3)
+            .scale(0.35)
             .move_center()
-            .move_by(0, 0.4)
             .use_fixed_positionning()
             .push_list(modals)
     }

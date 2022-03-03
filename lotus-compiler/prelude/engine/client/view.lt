@@ -1,10 +1,9 @@
 pub type MouseHandlerCallback = fn(Client);
 
 export class View {
-    _client: Client?,
-    _parent: View?,
-    _hovered: bool,
-    _focused: bool,
+    _client: Client = Client::get(),
+    _parent: View = none,
+    _disabled: bool,
     _rect: Rect,
     _graphics: Graphics,
     _hovered_graphics: Graphics?,
@@ -22,6 +21,35 @@ export class View {
 
     rect() -> Rect {
         self._rect
+    }
+
+    children() -> View[] {
+        self._children
+    }
+
+    get_descendants<T>(callback: fn(View)(T)) -> T[] {
+        let accumulator = CollectAccumulator<T> {
+            result: [],
+            callback
+        };
+
+        self._traverse(accumulator, (acc, view) => {
+            let mapped = (accumulator.callback)(view);
+
+            if mapped {
+                acc.result.push(mapped);
+            }
+        });
+
+        accumulator.result
+    }
+
+    _traverse<T>(acc: T, callback: fn(T, View)) {
+        callback(acc, self);
+
+        for child in self._children {
+            child._traverse(acc, callback);
+        }
     }
 
     add_child(view: View) {
@@ -48,36 +76,44 @@ export class View {
         view.is_ancestor_of(self)
     }
 
-    is_focused() -> bool {
-        self._focused
-    }
-
-    is_hovered() -> bool {
-        self._hovered
-    }
-
     layout() -> Layout {
         Layout::new(self)
     }
 
+    is_hovered() -> bool {
+        !self.is_disabled() && self._client.get_hovered_view() == self
+    }
+
+    is_focused() -> bool {
+        !self.is_disabled() && self._client.get_focused_view() == self
+    }
+
     focus() -> Self {
-        if self._client {
-            self._client.focus(self);
-        }
+        self._client.focus(self);
         self
     }
 
     unfocus() -> Self {
-        if self._client && self._focused {
+        if self.is_focused() {
             self._client.focus(none);
         }
         self
     }
 
+    is_disabled() -> bool {
+        self._disabled
+    }
+
+    disable() {
+        self._disabled = true;
+    }
+
+    enable() {
+        self._disabled = false;
+    }
+
     add_to_focus_chain() -> Self {
-        if self._client {
-            self._client.add_to_focus_chain(self)
-        }
+        self._client.add_to_focus_chain(self)
         self
     }
 
@@ -151,6 +187,13 @@ export class View {
         self._focused_graphics
     }
 
+    _disabled_graphics() -> Graphics {
+        if !self._disabled_graphics {
+            self._disabled_graphics = Graphics::empty();
+        }
+        self._disabled_graphics
+    }
+
     hover_shape(shape: Shape) -> Self { self._hovered_graphics().set_shape(self, shape) }
     hover_border_radius(border_radius: DisplaySize) -> Self { self._hovered_graphics().set_border_radius(self, border_radius) }
     hover_border_width(border_width: DisplaySize) -> Self { self._hovered_graphics().set_border_width(self, border_width) }
@@ -216,6 +259,39 @@ export class View {
     focus_text_cursor_index(text_cursor_index: int) -> Self { self._focused_graphics().set_text_cursor_index(self, text_cursor_index) }
     focus_detectable(detectable: bool) -> Self { self._focused_graphics().set_detectable(self, detectable) }
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().set_cursor(self, cursor) }
+
+    disabled_shape(shape: Shape) -> Self { self._disabled_graphics().set_shape(self, shape) }
+    disabled_border_radius(border_radius: DisplaySize) -> Self { self._disabled_graphics().set_border_radius(self, border_radius) }
+    disabled_border_width(border_width: DisplaySize) -> Self { self._disabled_graphics().set_border_width(self, border_width) }
+    disabled_border_dash_length(border_dash_length: DisplaySize) -> Self { self._disabled_graphics().set_border_dash_length(self, border_dash_length) }
+    disabled_border_gap_length(border_gap_length: DisplaySize) -> Self { self._disabled_graphics().set_border_gap_length(self, border_gap_length) }
+    disabled_border_color(border_color: Color) -> Self { self._disabled_graphics().set_border_color(self, border_color) }
+    disabled_border_alpha(border_alpha: float) -> Self { self._disabled_graphics().set_border_alpha(self, border_alpha) }
+    disabled_background_color(background_color: Color) -> Self { self._disabled_graphics().set_background_color(self, background_color) }
+    disabled_background_alpha(background_alpha: float) -> Self { self._disabled_graphics().set_background_alpha(self, background_alpha) }
+    disabled_overlay_color(overlay_color: Color) -> Self { self._disabled_graphics().set_overlay_color(self, overlay_color) }
+    disabled_overlay_alpha(overlay_alpha: float) -> Self { self._disabled_graphics().set_overlay_alpha(self, overlay_alpha) }
+    disabled_image_url(image_url: string) -> Self { self._disabled_graphics().set_image_url(self, image_url) }
+    disabled_image_scale(image_scale: float) -> Self { self._disabled_graphics().set_image_scale(self, image_scale) }
+    disabled_text(text: string) -> Self { self._disabled_graphics().set_text(self, text) }
+    disabled_text_font(text_font: Font) -> Self { self._disabled_graphics().set_text_font(self, text_font) }
+    disabled_text_size(text_size: DisplaySize) -> Self { self._disabled_graphics().set_text_size(self, text_size) }
+    disabled_text_color(text_color: Color) -> Self { self._disabled_graphics().set_text_color(self, text_color) }
+    disabled_text_alpha(text_alpha: float) -> Self { self._disabled_graphics().set_text_alpha(self, text_alpha) }
+    disabled_text_margin(text_margin: DisplaySize) -> Self { self._disabled_graphics().set_text_margin(self, text_margin) }
+    disabled_text_max_width(text_max_width: DisplaySize) -> Self { self._disabled_graphics().set_text_max_width(self, text_max_width) }
+    disabled_text_max_height(text_max_height: DisplaySize) -> Self { self._disabled_graphics().set_text_max_height(self, text_max_height) }
+    disabled_text_background_color(text_background_color: Color) -> Self { self._disabled_graphics().set_text_background_color(self, text_background_color) }
+    disabled_text_background_alpha(text_background_alpha: float) -> Self { self._disabled_graphics().set_text_background_alpha(self, text_background_alpha) }
+    disabled_text_border_color(text_border_color: Color) -> Self { self._disabled_graphics().set_text_border_color(self, text_border_color) }
+    disabled_text_border_alpha(text_border_alpha: float) -> Self { self._disabled_graphics().set_text_border_alpha(self, text_border_alpha) }
+    disabled_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._disabled_graphics().set_text_horizontal_align(self, text_horizontal_align) }
+    disabled_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._disabled_graphics().set_text_vertical_align(self, text_vertical_align) }
+    disabled_text_bold(text_bold: bool) -> Self { self._disabled_graphics().set_text_bold(self, text_bold) }
+    disabled_text_italic(text_italic: bool) -> Self { self._disabled_graphics().set_text_italic(self, text_italic) }
+    disabled_text_cursor_index(text_cursor_index: int) -> Self { self._disabled_graphics().set_text_cursor_index(self, text_cursor_index) }
+    disabled_detectable(detectable: bool) -> Self { self._disabled_graphics().set_detectable(self, detectable) }
+    disabled_cursor(cursor: Cursor) -> Self { self._disabled_graphics().set_cursor(self, cursor) }
 }
 
 fn push_callback<S, T>(owner: S, array: T[], value: T?) -> S {
@@ -224,4 +300,9 @@ fn push_callback<S, T>(owner: S, array: T[], value: T?) -> S {
     }
 
     owner
+}
+
+class CollectAccumulator<T> {
+    result: T[],
+    callback: fn(View)(T)
 }

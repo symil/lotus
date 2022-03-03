@@ -1,1 +1,2 @@
 pub const MODAL_HOOK_INDEX = -1;
+pub const MODAL_POST_RENDER_INDEX = 1;

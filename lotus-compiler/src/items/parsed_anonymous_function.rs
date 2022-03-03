@@ -70,7 +70,7 @@ impl ParsedAnonymousFunction {
         let function_wrapped = context.functions.insert(FunctionBlueprint {
             name: Identifier::new(ANONYMOUS_FUNCTION_NAME, Some(self)),
             visibility: Visibility::None,
-            parameters,
+            parameters: parameters.clone(),
             argument_names,
             signature: signature.clone(),
             argument_variables: vec![],
@@ -112,6 +112,7 @@ impl ParsedAnonymousFunction {
                 let mut retain_vasm = context.vasm();
 
                 function.argument_variables = vec![closure_args_var.clone()];
+                function.parameters = parameters;
 
                 for arg in &closure_details.variables {
                     let map_type = context.get_builtin_type(BuiltinType::Map, vec![context.int_type(), context.int_type()]);

@@ -218,6 +218,7 @@
 [ ] Split prelude into multiple packages (core and framework)
 [ ] Parsable: add way to forbid new lines after a field
 [ ] Extension: do a bulk validation after a symbol renaming
+[ ] Add `-` unary operator
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev
