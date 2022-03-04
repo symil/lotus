@@ -59,6 +59,8 @@ export view Modal {
         if buttons.len() == 1 {
             buttons[0].focus();
         }
+
+        intercept;
     }
 }
 
