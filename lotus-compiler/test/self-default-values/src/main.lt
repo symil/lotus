@@ -1,7 +1,7 @@
 class Foo {
     a: float = 1,
     b: string = "foo",
-    c: string?,
+    c: string = none,
 }
 
 class Bar extends Foo {
@@ -12,7 +12,7 @@ class Bar extends Foo {
 
 class Baz extends Bar {
     e: int = 8,
-    f: int,
+    f: int = 0,
 
     self.b = "bar"
     self.f = 4

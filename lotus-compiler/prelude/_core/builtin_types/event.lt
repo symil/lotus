@@ -17,8 +17,8 @@ export class Event extends Object {
 }
 
 export class EventOutput {
-    intercepted: bool,
-    yielded: Object[]
+    intercepted: bool = false,
+    yielded: Object[] = [],
 }
 
 sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_type_id: int, callback: EventCallback) {

@@ -3,17 +3,17 @@ pub type MouseHandlerCallback = fn(Client);
 export class View {
     _client: Client = Client::get(),
     _parent: View = none,
-    _disabled: bool,
-    _rect: Rect,
-    _graphics: Graphics,
-    _hovered_graphics: Graphics?,
-    _focused_graphics: Graphics?,
-    _disabled_graphics: Graphics?,
-    _children: View[],
-    _on_click_callbacks: MouseHandlerCallback[],
-    _on_down_callbacks: MouseHandlerCallback[],
-    _on_up_callbacks: MouseHandlerCallback[],
-    _on_drag_callbacks: MouseHandlerCallback[],
+    _disabled: bool = false,
+    _rect: Rect = none,
+    _graphics: Graphics = Graphics,
+    _hovered_graphics: Graphics? = none,
+    _focused_graphics: Graphics? = none,
+    _disabled_graphics: Graphics? = none,
+    _children: View[] = [],
+    _on_click_callbacks: MouseHandlerCallback[] = [],
+    _on_down_callbacks: MouseHandlerCallback[] = [],
+    _on_up_callbacks: MouseHandlerCallback[] = [],
+    _on_drag_callbacks: MouseHandlerCallback[] = [],
 
     client() -> Client? {
         self._client

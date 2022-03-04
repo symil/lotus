@@ -53,7 +53,8 @@ pub struct FieldInfo {
     pub ty: Type,
     pub visibility: FieldVisibility,
     pub offset: usize,
-    pub default_value: Vasm
+    pub default_value: Vasm,
+    pub is_required: bool
 }
 
 #[derive(Debug)]

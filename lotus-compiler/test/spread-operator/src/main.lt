@@ -1,27 +1,27 @@
 class Target {
-    a: int,
-    b: float,
-    c: string
+    a: int = 0,
+    b: float = 0,
+    c: string = ""
 }
 
 class Foo {
-    a: int,
-    b: int
+    a: int = 0,
+    b: int = 0
 }
 
 class Bar {
-    b: float,
-    d: string
+    b: float = 0,
+    d: string = ""
 }
 
 class WithPrivate1 {
-    _a: int,
-    a: int
+    _a: int = 0,
+    a: int = 0
 }
 
 class WithPrivate2 {
-    _a: int,
-    a: int
+    _a: int = 0,
+    a: int = 0
 }
 
 export fn main() {

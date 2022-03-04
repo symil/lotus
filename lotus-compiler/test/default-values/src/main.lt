@@ -1,10 +1,10 @@
 class Foo {
     a: int = 7,
     b: string = some_string(),
-    c: float,
+    c: float = 0,
     d: Bar = Bar { a: 8 },
-    e: Bar,
-    f: Bar?
+    e: Bar = Bar,
+    f: Bar? = none
 }
 
 class Bar {

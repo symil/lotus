@@ -1,7 +1,7 @@
 pub class Layout {
     parent_view: View,
-    transform: Transform2D,
     target: Rect,
+    transform: Transform2D = Transform2D,
     last: Rect = none,
     outer_margin: float = 0,
     inner_margin: float = 0,

@@ -6,9 +6,9 @@ export class Rect {
     width: float,
     height: float,
     // Used to determine which rectangle is on top of the other
-    z: float,
+    z: float = 0,
     // Angle of the rectangle
-    angle: float,
+    angle: float = 0,
 
     static empty() -> Self {
         Self { x: 0, y: 0, width: 0, height: 0 }

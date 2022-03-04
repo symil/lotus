@@ -1,7 +1,7 @@
 use parsable::{ItemLocation, parsable};
 use colored::*;
 use crate::{items::{ParsedObjectLiteral, ParsedTypeSingle, ParsedTypeWithoutSuffix, ParsedValueType, ParsedTypeArguments, process_field_access, process_function_call, process_method_call}, program::{AccessType, AnonymousFunctionCallDetails, BuiltinInterface, FieldKind, FunctionCall, NamedFunctionCallDetails, ProgramContext, SELF_VAR_NAME, Type, VariableKind, Vasm, TypeContent}};
-use super::{ParsedArgumentList, ParsedFieldOrMethodAccess, ParsedType, Identifier, ParsedVarPrefixToken, ParsedVarPrefix, ParsedIdentifierWrapper};
+use super::{ParsedArgumentList, ParsedFieldOrMethodAccess, ParsedType, Identifier, ParsedVarPrefixToken, ParsedVarPrefix, ParsedIdentifierWrapper, instanciate_object};
 
 #[parsable]
 pub struct ParsedVarRef {
@@ -15,7 +15,9 @@ impl ParsedVarRef {
     }
 
     pub fn collect_instancied_type_names(&self, list: &mut Vec<String>) {
-        
+        if let ParsedIdentifierWrapper::Identifier(identifier) = &self.name {
+            list.push(identifier.to_string());
+        }
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
@@ -92,16 +94,15 @@ impl ParsedVarRef {
                     None => match context.types.get_by_identifier(&var_name) {
                         Some(type_wrapped) => match type_wrapped.borrow().parameters.is_empty() && type_wrapped.borrow().is_class() {
                             true => {
-                                let type_arguments = ParsedTypeArguments::default();
+                                let location = var_name.location.clone();
                                 let mut parsed_type_value = ParsedValueType::default();
                                 parsed_type_value.name = var_name.into_owned();
-                                parsed_type_value.location = parsed_type_value.name.location.clone();
+                                parsed_type_value.location = location.clone();
                                 let mut parsed_type = ParsedType::default();
                                 parsed_type.parsed_type = ParsedTypeWithoutSuffix::Single(ParsedTypeSingle::Value(parsed_type_value));
-                                let mut object_literal = ParsedObjectLiteral::default();
-                                object_literal.object_type = parsed_type;
+                                parsed_type.location = location;
 
-                                object_literal.process(context)
+                                instanciate_object(&parsed_type, &[], context)
                             },
                             false => {
                                 context.errors.generic(&var_name, format!("undefined variable `{}`", var_name.as_str().bold()));

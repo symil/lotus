@@ -1,5 +1,5 @@
 class Foo {
-    value: string,
+    value: string = "",
 
     static hello() {
         log_string(self.value);

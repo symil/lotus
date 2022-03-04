@@ -2,7 +2,9 @@ export class DataStore {
     _map: Map<string, Object>,
 
     static new() -> Self {
-        Self {}
+        Self {
+            _map: Map<string, Object>::new()
+        }
     }
 
     get<T : Object>(key: string) -> T? {

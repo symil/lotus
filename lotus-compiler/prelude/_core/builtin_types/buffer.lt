@@ -1,14 +1,14 @@
 export class Buffer {
-    data: ptr,
-    size: int,
-    capacity: int,
-    read_index: int,
-    serialized_strings: Set<string>,
-    remote_addr_to_local_string: Map<int, string>,
-    serialized_objects: Set<Object>,
-    remote_addr_to_local_object: Map<int, Object>,
-    local_object_to_remote_addr: Map<Object, int>
-    context: Object?
+    data: ptr = none,
+    size: int = 0,
+    capacity: int = 0,
+    read_index: int = 0,
+    serialized_strings: Set<string> = Set<string>::new(),
+    remote_addr_to_local_string: Map<int, string> = Map<int, string>::new(),
+    serialized_objects: Set<Object> = Set<Object>::new(),
+    remote_addr_to_local_object: Map<int, Object> = Map<int, Object>::new(),
+    local_object_to_remote_addr: Map<Object, int> = Map<Object, int>::new(),
+    context: Object? = none,
 
     static new() -> Buffer {
         Buffer

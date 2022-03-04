@@ -148,6 +148,8 @@
 [X] Allocate color literals a single time
 [X] Make sure server objects can be referenced by address from the client
 [X] Add declarative statements that specify the main types (window, world, user, local data)
+[ ] Force fields that don't have a default value to be specified
+[ ] Add `fill class fields` code action
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -198,7 +200,6 @@
 [ ] Method `or` on `any` type
 [ ] Regular expressions
 [ ] Function default arguments
-[ ] Add `fill class fields` code action
 [ ] `parsable` macro: use global attributes to specify whether to implement `Debug` and `location` by default or not
 [ ] Improve schema serialization to keep info about the object class (use class name as key?)
 [ ] Compute string hash during string creation
@@ -214,7 +215,6 @@
 [ ] Completion: order items by type relevance (put items that have an expected type first)
 [ ] Use `DisplaySize` to specify margins in `Layout`
 [ ] Display `(a, b)` instead of `Pair<a, b>`
-[ ] Force fields that don't have a default value to be specified
 [ ] Split prelude into multiple packages (core and framework)
 [ ] Parsable: add way to forbid new lines after a field
 [ ] Extension: do a bulk validation after a symbol renaming

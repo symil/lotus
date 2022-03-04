@@ -3,12 +3,12 @@ class Foo<T> {
 }
 
 class Bar {
-    a: Bar?,
-    b: Bar?,
-    c: string,
-    d: string,
-    e: int[],
-    f: int[]
+    a: Bar? = none,
+    b: Bar? = none,
+    c: string = "",
+    d: string = "",
+    e: int[] = [],
+    f: int[] = []
 }
 
 export fn main() {

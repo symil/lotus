@@ -337,7 +337,8 @@ impl ParsedTypeDeclaration {
                                 name: field_info.name.clone(),
                                 visibility: field_info.visibility.clone(),
                                 offset,
-                                default_value: context.vasm()
+                                default_value: context.vasm(),
+                                is_required: field_info.is_required
                             });
 
                             offset += 1;
@@ -371,7 +372,8 @@ impl ParsedTypeDeclaration {
                                     name: field.name.clone(),
                                     visibility: FieldVisibility::from_name(field.name.as_str()),
                                     offset,
-                                    default_value: context.vasm()
+                                    default_value: context.vasm(),
+                                    is_required: field.default_value.is_none()
                                 });
 
                                 offset += 1;
@@ -472,6 +474,7 @@ impl ParsedTypeDeclaration {
             }
             
             let mut default_values = HashMap::new();
+            let mut overriden_default_values = HashSet::new();
 
             type_wrapped.with_ref(|type_unwrapped| {
                 if let Some(parent) = &type_unwrapped.parent {
@@ -529,8 +532,12 @@ impl ParsedTypeDeclaration {
                 }
 
                 for super_field in self.get_super_fields_default_values() {
+                    if let Some(field_name) = &super_field.name {
+                        overriden_default_values.insert(field_name.to_string());
+                    }
+
                     if let Some((name, vasm)) = super_field.process(&type_unwrapped.self_type, context) {
-                        default_values.insert(name, vasm);
+                        default_values.insert(name.clone(), vasm);
                     }
                 }
             });
@@ -540,6 +547,12 @@ impl ParsedTypeDeclaration {
                     let mut field_info = Rc::get_mut(type_unwrapped.fields.get_mut(&name).unwrap()).unwrap();
 
                     field_info.default_value = default_value;
+                }
+
+                for name in overriden_default_values {
+                    let mut field_info = Rc::get_mut(type_unwrapped.fields.get_mut(&name).unwrap()).unwrap();
+
+                    field_info.is_required = false;
                 }
             });
         });

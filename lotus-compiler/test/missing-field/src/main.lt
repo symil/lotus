@@ -1,0 +1,15 @@
+class Foo {
+    a: int,
+    b: int,
+    c: int = 2,
+}
+
+class Bar extends Foo {
+    self.b = 1
+}
+
+export fn main() {
+    let bar = Bar;
+
+    @dbg(bar);
+}

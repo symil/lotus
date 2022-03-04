@@ -4,31 +4,30 @@ const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
 export class Client {
-    user: #USER_TYPE,
-    local_data: #LOCAL_DATA_TYPE,
+    user: #USER_TYPE = #USER_TYPE::__default(),
+    local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
 
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _local_object_to_remote_addr: Map<Object, int> = none,
-    _websocket_id: int,
-    _layout: Layout,
-    _draw_primitives: DrawPrimitive[],
-    _network_events: OnNetworkEvent[],
-    _window_events: OnWindowEvent[],
+    _websocket_id: int = none,
+    _draw_primitives: DrawPrimitive[] = [],
+    _network_events: OnNetworkEvent[] = [],
+    _window_events: OnWindowEvent[] = [],
     _is_connected: bool = false,
     _wait_until: fn(Client)(bool) = none,
 
-    _hovered_view: View?,
-    _focus_chain: View[],
-    _focused_index: int?,
-    _focused_view: View?,
-    _all_views: View[],
-    _real_width: float,
-    _real_height: float,
+    _hovered_view: View? = none,
+    _focus_chain: View[] = [],
+    _focused_index: int? = none,
+    _focused_view: View? = none,
+    _all_views: View[] = [],
+    _real_width: float = none,
+    _real_height: float = none,
     _virtual_width: float = VIRTUAL_WIDTH,
     _virtual_height: float = VIRTUAL_HEIGHT,
-    _virtual_to_real_ratio: float,
-    _cursor_x: float,
-    _cursor_y: float,
+    _virtual_to_real_ratio: float = none,
+    _cursor_x: float = 0,
+    _cursor_y: float = 0,
 
     static get() -> Self {
         CLIENT

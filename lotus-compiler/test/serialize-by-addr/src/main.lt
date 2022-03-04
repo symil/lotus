@@ -3,9 +3,9 @@ class B extends A { b: float }
 class C extends B { c: string }
 
 class Test {
-    list: Object[],
-    link: Object?,
-    other: Object?
+    list: Object[] = [],
+    link: Object? = none,
+    other: Object? = none
 }
 
 export fn main() {

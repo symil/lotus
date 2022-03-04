@@ -3,14 +3,14 @@ const SERVER : Server = none;
 pub class Server {
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _world: #WORLD_TYPE = none,
-    _websocket_server_id: int,
-    _user_to_websocket_id: Map<#USER_TYPE, int>,
-    _websocket_id_to_user: Map<int, #USER_TYPE>,
-    _websocket_id_counter: Counter,
+    _websocket_server_id: int = none,
+    _user_to_websocket_id: Map<#USER_TYPE, int> = Map<#USER_TYPE, int>::new(),
+    _websocket_id_to_user: Map<int, #USER_TYPE> = Map<int, #USER_TYPE>::new(),
+    _websocket_id_counter: Counter = Counter,
 
     _start() {
         self._websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
-        self._world = #WORLD_TYPE;
+        self._world = #WORLD_TYPE::__default();
 
         @emit(OnWorldInit { server: self, world: self._world }, [self._world]);
     }

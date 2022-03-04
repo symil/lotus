@@ -37,6 +37,8 @@ export view Grid {
 
         let parent_rect = self.rect();
         let item_rect = Rect {
+            x: 0,
+            y: 0,
             width: parent_rect.width / row_size,
             height: parent_rect.height / column_size
         }.strip_to_match_aspect_ratio(self.item_aspect_ratio);
@@ -57,6 +59,8 @@ export view Grid {
         let y_start = parent_rect.y1();
 
         item_rect = Rect {
+            x: 0,
+            y: 0,
             width: max_item_width,
             height: max_item_height
         }.strip_to_match_aspect_ratio(self.item_aspect_ratio);
