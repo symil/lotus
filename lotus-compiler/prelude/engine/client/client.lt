@@ -330,15 +330,17 @@ export class Client {
     set_local_storage_item<T>(key: string, data: T) {
         self._buffer.reset();
         T::__serialize_with_schema(self._buffer, data);
-
         wasm_set_local_storage_item(key, self._buffer.data, self._buffer.size);
+    }
+
+    remove_local_storage_item(key: string) {
+        wasm_remove_local_storage_item(key);
     }
 
     get_local_storage_item<T>(key: string) -> T? {
         self._buffer.reset();
         self._buffer.size = wasm_get_local_storage_item(key, self._buffer.data, self._buffer.capacity);
-
-        @deserialize(self._buffer)
+        T::__deserialize_with_schema(self._buffer)
     }
 
     clear_local_storage() {

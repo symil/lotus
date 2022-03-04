@@ -150,6 +150,8 @@
 [X] Add declarative statements that specify the main types (window, world, user, local data)
 [X] Force fields that don't have a default value to be specified
 [X] Add `fill class fields` code action
+[X] Use `DisplaySize` to specify margins in `Layout`
+[ ] Add callback function after request is fullfilled
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -171,7 +173,7 @@
 [ ] Add stack trace somehow
 [ ] Re-use temporary wasm variables when possible
 [ ] Detect unreachable path and adapt the return type of a block
-[ ] Add a way to specify a `_init` method for objects, that will be run after an object is constructed
+[ ] Add a way to specify a `_init` method for objects, that will be run after an object is constructed (not too sure about that actually)
 [ ] `if let` expression
 [ ] Merge the way fields and methods are processed
 [ ] Possibility to specify fields in interface
@@ -213,7 +215,6 @@
 [ ] Fix `class`/`enum`/etc keywords completion when they are inserted in the middle of a file
 [ ] Use `QuickGame*` as default for main type values
 [ ] Completion: order items by type relevance (put items that have an expected type first)
-[ ] Use `DisplaySize` to specify margins in `Layout`
 [ ] Display `(a, b)` instead of `Pair<a, b>`
 [ ] Split prelude into multiple packages (core and framework)
 [ ] Parsable: add way to forbid new lines after a field

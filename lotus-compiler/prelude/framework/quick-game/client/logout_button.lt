@@ -1,0 +1,9 @@
+pub class LogoutButton extends Button {
+    self.text = "Log out"
+    self.on_click = send_logout_request
+}
+
+fn send_logout_request(client: Client) {
+    client.remove_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);
+    client.send_request(LogoutRequest);
+}

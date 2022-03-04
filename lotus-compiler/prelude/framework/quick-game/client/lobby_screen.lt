@@ -1,4 +1,4 @@
-const TITLE_BAR_HEIGHT = .15;
+const TITLE_BAR_HEIGHT = .15h;
 const TITLE_TEXT_SIZE = .8h;
 const USERNAME_TEXT_SIZE = .5h;
 
@@ -10,8 +10,8 @@ export view LobbyScreen {
 
     _displayLoginPanel() {
         self.layout()
-            .move_to(0.5, 0.5)
-            .resize_from_height(0.1, 5)
+            .move_center()
+            .resize_from_height(0.1h, 5)
             .towards_bottom()
             .inner_margin(20)
             .push(UsernameTextBox)
@@ -29,6 +29,10 @@ export view LobbyScreen {
             .move_top_right()
             .resize_from_height(TITLE_BAR_HEIGHT, 2)
             .push(username_label)
+            .move_bottom_right()
+            .resize_from_height(0.07h, 3)
+            .margin(.5h)
+            .push(LogoutButton)
     }
 
     @OnRender {
@@ -42,14 +46,13 @@ export view LobbyScreen {
 
         self.background_color(self.background_color);
         self.layout()
-            .move_to(0.5, 0)
+            .move_top()
             .towards_bottom()
-            .scale_height(TITLE_BAR_HEIGHT)
+            .set_height(TITLE_BAR_HEIGHT)
             .push(title_label)
         
         if is_user_logged {
             self._displayUserInfo(evt.client.user);
-            self._displayLoginPanel();
         } else {
             self._displayLoginPanel();
         }

@@ -78,6 +78,10 @@ pub fn wasm_set_local_storage_item(key: string, buffer_addr: ptr, buffer_size: i
     import env.set_local_storage_item
 ]
 
+pub fn wasm_remove_local_storage_item(key: string) [
+    import env.remove_local_storage_item
+]
+
 pub fn wasm_get_local_storage_item(key: string, buffer_addr: ptr, buffer_capacity: int) -> int [
     import env.get_local_storage_item
 ]

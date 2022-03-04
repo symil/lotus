@@ -12,6 +12,7 @@ pub fn send_login_request(client: Client) {
     let username = client.local_data.ui.username.text;
 
     if (!username.is_empty()) {
+        client.set_local_storage_item(USERNAME_LOCAL_STORAGE_KEY, username);
         client.send_request(LoginRequest {
             username
         });

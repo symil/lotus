@@ -51,3 +51,50 @@ export function stringToArray(string) {
 
     return array;
 }
+
+const VALID_CHAR_RANGE_START = 33;
+const VALID_CHAR_RANGE_END = 126;
+const CHARACTER_COUNT = VALID_CHAR_RANGE_END - VALID_CHAR_RANGE_START + 1;
+const L = Math.log(CHARACTER_COUNT);
+
+export function encodeUint32ArrayToString(array) {
+    let result = '';
+
+    for (let n of array) {
+        let required_count = Math.max(0, Math.ceil(Math.log(n) / L));
+
+        result += required_count;
+
+        for (let i = 0; i < required_count; ++i) {
+            let c = n % CHARACTER_COUNT;
+            result += String.fromCharCode(VALID_CHAR_RANGE_START + c);
+            n /= CHARACTER_COUNT;
+        }
+    }
+
+    return result;
+}
+
+export function decodeStringToUint32Array(string) {
+    let result = [];
+    let i = 0;
+
+    while (i < string.length) {
+        let required_count = +string[i];
+        let end = i + required_count + 1;
+        let power = 0;
+        let n = 0;
+
+        i += 1;
+
+        while (i < end) {
+            n += (string.charCodeAt(i) - VALID_CHAR_RANGE_START) * CHARACTER_COUNT ** power;
+            i += 1;
+            power += 1;
+        }
+
+        result.push(n);
+    }
+
+    return Uint32Array.from(result);
+}

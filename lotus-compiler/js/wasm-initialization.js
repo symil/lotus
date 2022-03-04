@@ -3,6 +3,7 @@ import { readStringFromMemory, writeNetworkEventToBuffer, writeWindowEventToBuff
 import { MemoryBuffer } from './memory-buffer';
 import { NetworkManager } from './network-manager';
 import { Renderer } from './renderer';
+import { decodeStringToUint32Array, encodeUint32ArrayToString } from './utils';
 import { WindowManager } from './window-manager';
 
 export async function initializeWasm(wasm, userEnv) {
@@ -174,11 +175,17 @@ function getWasmImportsObject(env) {
             set_local_storage_item(keyAddr, bufferAddr, bufferSize) {
                 let key = readStringFromMemory(env.getMemory(), keyAddr);
                 let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferSize);
-                let bytes = buffer.toInt32Buffer();
-                let base64 = btoa(String.fromCharCode(...bytes));
+                let encoded = encodeUint32ArrayToString(buffer.toUint32Array());
                 let localStorage = env.getWindow().localStorage;
 
-                localStorage.setItem(key, base64);
+                localStorage.setItem(key, encoded);
+            },
+
+            remove_local_storage_item(keyAddr) {
+                let key = readStringFromMemory(env.getMemory(), keyAddr);
+                let localStorage = env.getWindow().localStorage;
+
+                localStorage.removeItem(key);
             },
 
             get_local_storage_item(keyAddr, bufferAddr, bufferCapacity) {
@@ -186,12 +193,11 @@ function getWasmImportsObject(env) {
                 let buffer = new MemoryBuffer(env.getMemory(), bufferAddr, bufferCapacity);
                 let localStorage = env.getWindow().localStorage;
                 let item = localStorage.getItem(key) || '';
-                let decoded = atob(item);
+                let decoded = decodeStringToUint32Array(item);
+                let decodedAsIntArray = new Int32Array(decoded.buffer);
 
-                for (let i = 0; i < decoded.length; ++i) {
-                    let code = decoded.charCodeAt(i);
-
-                    buffer.write(code);
+                for (let n of decodedAsIntArray) {
+                    buffer.write(n);
                 }
 
                 return buffer.getSize();

@@ -43,6 +43,10 @@ export function writeNetworkEventToBuffer(event, buffer) {
 }
 
 export function readStringFromMemory(memoryAsInt32Array, stringAddr) {
+    if (!stringAddr) {
+        return null;
+    }
+
     let length = memoryAsInt32Array[stringAddr];
     let codes = new Array(length);
 
