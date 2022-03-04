@@ -1,6 +1,6 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::{HashMap, HashSet}, rc::Rc, iter::FromIterator};
 use colored::Colorize;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use parsable::{parsable, ItemLocation};
 use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
 use super::{ParsedExpression, Identifier, ParsedObjectInitializationItem, ParsedType, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket};
@@ -30,14 +30,45 @@ impl ParsedObjectLiteral {
             let first_half_location = self.opening_bracket.location.until(&self.body);
             let second_half_location = self.body.location.until(&self.closing_bracket);
 
-            context.completion_provider.add_field_completion(&first_half_location, &object_type, None);
-            context.completion_provider.add_field_completion(&second_half_location, &object_type, None);
+            let fill_required_fields = || fill_class_fields(&object_type, &self.body.items, true);
+            let fill_all_fields = || fill_class_fields(&object_type, &self.body.items, false);
+
+            for location in &[first_half_location, second_half_location] {
+                context.completion_provider.add_field_completion(&location, &object_type, None);
+                context.code_actions_provider.add_replace_action(&location, "Fill required fields", None, fill_required_fields);
+                context.code_actions_provider.add_replace_action(&location, "Fill all fields", None, fill_all_fields);
+            }
 
             result = instanciate_object(&self.object_type, &self.body.items, context);
         }
 
         result
     }
+}
+
+fn fill_class_fields(ty: &Type, initialization_items: &[ParsedObjectInitializationItem], exclude_non_required: bool) -> Option<String> {
+    let mut fields = ty.get_all_fields();
+    let mut field_names : IndexSet<&str> = match exclude_non_required {
+        true => IndexSet::from_iter(fields.iter().filter(|field_info| field_info.is_required).map(|field_info| field_info.name.as_str())),
+        false => IndexSet::from_iter(fields.iter().map(|field_info| field_info.name.as_str())),
+    };
+    let mut result = None;
+
+    for field in initialization_items {
+        if let ParsedObjectInitializationItem::FieldInitialization(field_initialization) = field {
+            field_names.remove(field_initialization.name.as_str());
+        }
+    }
+
+    if !field_names.is_empty() {
+        result = Some(field_names.iter()
+            .map(|name| format!("{}: none,", name))
+            .collect::<Vec<String>>()
+            .join("\n")
+        );
+    }
+
+    result
 }
 
 pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items: &[ParsedObjectInitializationItem], context: &mut ProgramContext) -> Option<Vasm> {
