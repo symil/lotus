@@ -137,6 +137,13 @@ impl Type {
         self.is_builtin_type(BuiltinType::Bool)
     }
 
+    pub fn to_type_hint(&self) -> Option<&Self> {
+        match self.is_undefined() {
+            true => None,
+            false => Some(self),
+        }
+    }
+
     pub fn inherits_from(&self, parent_name: &str) -> bool {
         match self.content() {
             TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {

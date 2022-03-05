@@ -815,7 +815,7 @@ impl ProgramContext {
 
         timer.trigger("interface methods");
         for interface_declaration in &interfaces {
-            interface_declaration.process_methods(self);
+            interface_declaration.process_method_signatures(self);
         }
 
         // types.sort_by_cached_key(|type_declaration| {
@@ -885,6 +885,11 @@ impl ProgramContext {
         timer.trigger("type field default values");
         for type_declaration in &types {
             type_declaration.process_fields_default_values(self);
+        }
+
+        timer.trigger("interface method bodies");
+        for interface_declaration in &interfaces {
+            interface_declaration.process_method_bodies(self);
         }
 
         timer.trigger("type method bodies");

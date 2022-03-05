@@ -135,6 +135,8 @@ impl ParsedFunctionOrMethodContent {
 
         let is_raw_wasm = body.is_raw_wasm();
         let return_type = function_wrapped.borrow().signature.return_type.clone();
+
+        set_function_argument_default_values(&function_wrapped, &self.signature, context);
         
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 
@@ -153,4 +155,29 @@ impl ParsedFunctionOrMethodContent {
 
         context.pop_scope();
     }
+}
+
+pub fn set_function_argument_default_values(function_wrapped: &Link<FunctionBlueprint>, parsed_signature: &ParsedFunctionSignature, context: &mut ProgramContext) {
+    let arg_types : Vec<Type> = function_wrapped.borrow().arguments.iter().map(|arg| arg.ty.clone()).collect();
+    let mut arg_default_values = vec![];
+
+    for (parsed_arg, arg_type) in parsed_signature.arguments.iter().zip(arg_types.iter()) {
+        let mut vasm = None;
+
+        if let Some(assignment) = &parsed_arg.default_value {
+            if let Some(expression) = &assignment.expression {
+                vasm = expression.process(arg_type.to_type_hint(), context);
+            }
+        }
+
+        arg_default_values.push(vasm);
+    }
+
+    function_wrapped.with_mut(|mut function_unwrapped| {
+        for (default_vasm, arg_info) in arg_default_values.into_iter().zip(function_unwrapped.arguments.iter_mut()) {
+            if let Some(vasm) = default_vasm {
+                arg_info.default_value = vasm;
+            }
+        }
+    });
 }

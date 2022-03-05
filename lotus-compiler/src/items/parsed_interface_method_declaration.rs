@@ -1,19 +1,18 @@
 use indexmap::IndexMap;
 use parsable::parsable;
 use crate::{program::{FieldKind, ProgramContext, Type, FunctionBlueprint, MethodQualifier, Visibility, Signature, MethodDetails, Vasm, FunctionBody, FieldVisibility}, utils::Link};
-use super::{ParsedMethodQualifier, ParsedFunctionSignature, Identifier};
+use super::{ParsedMethodQualifier, ParsedFunctionSignature, Identifier, ParsedSemicolonToken, set_function_argument_default_values};
 
 #[parsable]
 pub struct ParsedInterfaceMethodDeclaration {
     pub qualifier: Option<ParsedMethodQualifier>,
     pub name: Identifier,
     pub signature: ParsedFunctionSignature,
-    #[parsable(value=";")]
-    pub semicolon: String,
+    pub semicolon: Option<ParsedSemicolonToken>,
 }
 
 impl ParsedInterfaceMethodDeclaration {
-    pub fn process(&self, context: &mut ProgramContext) -> FunctionBlueprint {
+    pub fn process_signature(&self, context: &mut ProgramContext) -> Link<FunctionBlueprint> {
         let interface = context.get_current_interface().unwrap();
         let qualifier = self.qualifier.as_ref().map(|keyword| keyword.process()).unwrap_or(MethodQualifier::None);
         let (arguments, return_type) = self.signature.process(context);
@@ -29,7 +28,7 @@ impl ParsedInterfaceMethodDeclaration {
             return_type.unwrap_or(context.void_type())
         );
 
-        FunctionBlueprint {
+        let function_blueprint = FunctionBlueprint {
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
@@ -48,6 +47,14 @@ impl ParsedInterfaceMethodDeclaration {
                 is_autogen: false,
             }),
             body: FunctionBody::Empty
-        }
+        };
+
+        context.functions.insert(function_blueprint, None)
+    }
+
+    pub fn process_body(&self, context: &mut ProgramContext) {
+        let function_wrapped = context.functions.get_by_location(&self.name, None);
+
+        set_function_argument_default_values(&function_wrapped, &self.signature, context);
     }
 }

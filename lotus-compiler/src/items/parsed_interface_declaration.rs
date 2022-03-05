@@ -90,40 +90,50 @@ impl ParsedInterfaceDeclaration {
         });
     }
 
-    pub fn process_methods(&self, context: &mut ProgramContext) {
+    pub fn process_method_signatures(&self, context: &mut ProgramContext) {
         self.process(context, |interface_wrapped, context| {
             let mut regular_methods = IndexMap::new();
             let mut static_methods = IndexMap::new();
 
             for method in self.get_methods() {
-                let function_blueprint = method.process(context);
-                let name = function_blueprint.name.clone();
-                let method_kind = function_blueprint.method_details.as_ref().unwrap().qualifier.to_field_kind();
-                let index_map = match method_kind {
-                    FieldKind::Static => &mut static_methods,
-                    FieldKind::Regular => &mut regular_methods
-                };
+                let function_wrapped = method.process_signature(context);
+                
+                function_wrapped.with_ref(|function_unwrapped| {
+                    let name = function_unwrapped.name.clone();
+                    let method_kind = function_unwrapped.method_details.as_ref().unwrap().qualifier.to_field_kind();
+                    let index_map = match method_kind {
+                        FieldKind::Static => &mut static_methods,
+                        FieldKind::Regular => &mut regular_methods
+                    };
 
-                let function_type = Type::function(&function_blueprint.signature);
+                    let func_ref = FuncRef {
+                        function: function_wrapped.clone(),
+                        this_type: Type::this(interface_wrapped.clone()),
+                    };
 
-                let func_ref = FuncRef {
-                    function: Link::new(function_blueprint),
-                    this_type: Type::this(interface_wrapped.clone()),
-                };
+                    if index_map.insert(name.to_string(), func_ref).is_some() {
+                        context.errors.generic(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
+                    }
 
-                context.rename_provider.add_occurence(&method.name, &method.name);
-                context.push_scope(ScopeKind::Function(func_ref.function.clone()));
+                    context.rename_provider.add_occurence(&method.name, &method.name);
+                });
+
+                context.push_scope(ScopeKind::Function(function_wrapped.clone()));
                 context.pop_scope();
-
-                if index_map.insert(name.to_string(), func_ref).is_some() {
-                    context.errors.generic(method, format!("duplicate {}method `{}`", method_kind.get_qualifier(), &name));
-                }
             }
 
             interface_wrapped.with_mut(|mut interface_unwrapped| {
                 interface_unwrapped.regular_methods = regular_methods;
                 interface_unwrapped.static_methods = static_methods;
             });
+        });
+    }
+
+    pub fn process_method_bodies(&self, context: &mut ProgramContext) {
+        self.process(context, |interface_wrapped, context| {
+            for method in self.get_methods() {
+                method.process_body(context);
+            }
         });
     }
 }
