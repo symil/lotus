@@ -16,15 +16,21 @@ impl ParsedGlobalVarDeclaration {
                 context.errors.generic(self, format!("cannot declare global variabels as tuples"));
             }
 
+            let var_info = var_list.first().unwrap().clone();
+            let visibility = ParsedVisibility::process_or(&self.visibility, Visibility::Private);
             let global_var_blueprint = GlobalVarBlueprint {
                 var_id: self.location.get_hash(),
                 name: var_list.first().unwrap().name().clone(),
-                visibility: ParsedVisibility::process_or(&self.visibility, Visibility::Private),
-                var_info: var_list.first().unwrap().clone(),
+                visibility,
+                var_info: var_info.clone(),
                 init_vasm,
             };
 
-            let var_name = var_list[0].name().clone();
+            let var_name = var_info.name().clone();
+
+            if visibility.is_system() {
+                var_info.with_mut(|mut var_content| var_content.wasm_name = var_name.to_string());
+            }
 
             if context.global_vars.get_by_identifier(&var_name).is_some() {
                 context.errors.generic(&var_name, format!("duplicate global variable declaration: `{}`", var_name));

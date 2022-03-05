@@ -3,15 +3,6 @@ use super::FieldKind;
 // TODO: split this file into multiple files
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Visibility {
-    None,
-    Private,
-    Public,
-    Export,
-    System,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EventCallbackQualifier {
     Standard,
     TargetSelf

@@ -1,3 +1,5 @@
+sys const EMPTY_STRING = "";
+
 export type(i32) string {
     type Item = char;
 
@@ -15,11 +17,12 @@ export type(i32) string {
     }
 
     static __none() -> string {{
-        (i32.const 0)
+        (global.get $EMPTY_STRING)
     }}
 
     __is_none() -> bool {{
-        (i32.eqz)
+        (global.get $EMPTY_STRING)
+        i32.eq
     }}
 
     _header() -> ptr {
@@ -105,10 +108,6 @@ export type(i32) string {
     }
 
     __to_debug_string(set: Set<ptr>) -> string {
-        if self.__is_none() {
-            return "none";
-        }
-
         let result = string::__create(self.len() + 2);
 
         result.__set_char(0, '"');
@@ -120,7 +119,7 @@ export type(i32) string {
     }
 
     is_empty() -> bool {
-        !self || self.len() == 0
+        self.len() == 0
     }
 
     pad_start(c: char, target_length: int) -> string {

@@ -151,7 +151,7 @@
 [X] Force fields that don't have a default value to be specified
 [X] Add `fill class fields` code action
 [X] Use `DisplaySize` to specify margins in `Layout`
-[ ] Make so the empty string is `none`
+[X] Make so the empty string is `none`
 [ ] Add default function arguments
 [ ] Add callback function to `Client.send_request`
 [ ] Add tags system
