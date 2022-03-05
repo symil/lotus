@@ -1,7 +1,7 @@
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, ItemLocation};
-use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility}, utils::Link, wat};
+use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo}, utils::Link, wat};
 use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken};
 
 #[parsable]
@@ -60,22 +60,31 @@ impl ParsedEventCallbackDeclaration {
             None => context.vasm().int(qualifier.get_default_priority())
         };
 
+        let event_argument = ArgumentInfo {
+            name: Identifier::new(EVENT_VAR_NAME, None),
+            ty: event_type.borrow().self_type.clone(),
+            is_optional: false,
+            default_value: context.vasm()
+        };
+        let output_argument = ArgumentInfo {
+            name: Identifier::new(EVENT_OUTPUT_VAR_NAME, None),
+            ty: context.get_builtin_type(BuiltinType::EventOutput, vec![]),
+            is_optional: false,
+            default_value: context.vasm()
+        };
+        let arguments = vec![ event_argument, output_argument ];
+        let signature = Signature::create(
+            Some(this_type.borrow().self_type.clone()),
+            arguments.iter().map(|arg| arg.ty.clone()).collect(),
+            context.void_type()
+        );
+
         let function_blueprint = FunctionBlueprint {
             name: name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
-            argument_names: vec![
-                Identifier::new(EVENT_VAR_NAME, None),
-                Identifier::new(EVENT_OUTPUT_VAR_NAME, None),
-            ],
-            signature: Signature::create(
-                Some(this_type.borrow().self_type.clone()),
-                vec![
-                    event_type.borrow().self_type.clone(),
-                    context.get_builtin_type(BuiltinType::EventOutput, vec![])
-                ],
-                context.void_type()
-            ),
+            arguments,
+            signature,
             argument_variables: vec![],
             owner_type: Some(this_type.clone()),
             owner_interface: None,

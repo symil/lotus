@@ -2,14 +2,14 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, ParsedMethodQualifier, Identifier, ParsedVisibilityToken}, program::{VariableKind, Wat}, utils::Link};
-use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody, FieldVisibility};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
     pub name: Identifier,
     pub visibility: Visibility,
     pub parameters: IndexMap<String, Rc<ParameterTypeInfo>>,
-    pub argument_names: Vec<Identifier>,
+    pub arguments: Vec<ArgumentInfo>,
     pub signature: Signature,
     pub argument_variables: Vec<VariableInfo>,
     pub owner_type: Option<Link<TypeBlueprint>>,
@@ -49,7 +49,7 @@ impl FunctionBlueprint {
             name: name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
-            argument_names: vec![],
+            arguments: vec![],
             signature: Signature::void(context),
             argument_variables: vec![],
             owner_type: None,
@@ -132,7 +132,7 @@ impl FunctionBlueprint {
         }
 
         self.parameters.clear();
-        self.argument_names.clear();
+        self.arguments.clear();
         self.signature = Signature::undefined();
         self.argument_variables.clear();
         self.owner_type = None;

@@ -46,7 +46,7 @@ impl ParsedFunctionOrMethodContent {
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters,
-            argument_names: vec![],
+            arguments: vec![],
             signature: Signature::undefined(),
             argument_variables: vec![],
             owner_type: current_type.clone(),
@@ -107,13 +107,15 @@ impl ParsedFunctionOrMethodContent {
             false => current_type.map(|t| t.borrow().self_type.clone()),
         };
 
+        let signature = Signature::create(
+            signature_this_type,
+            arguments.iter().map(|arg| arg.ty.clone()).collect(),
+            return_type.unwrap_or(context.void_type())
+        );
+
         function_wrapped.with_mut(|mut function_unwrapped| {
-            function_unwrapped.argument_names = arguments.iter().map(|(name, ty)| name.clone()).collect();
-            function_unwrapped.signature = Signature::create(
-                signature_this_type,
-                arguments.iter().map(|(name, ty)| ty.clone()).collect(),
-                return_type.unwrap_or(context.void_type())
-            );
+            function_unwrapped.arguments = arguments;
+            function_unwrapped.signature = signature;
 
             context.rename_provider.add_occurence(&self.name, &self.name);
         });

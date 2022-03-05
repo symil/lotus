@@ -500,7 +500,7 @@ impl ParsedTypeDeclaration {
                                         name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
                                         visibility: Visibility::None,
                                         parameters: IndexMap::new(),
-                                        argument_names: vec![],
+                                        arguments: vec![],
                                         signature: Signature::create(None, vec![], field_info.ty.clone()),
                                         argument_variables: vec![],
                                         owner_type: Some(type_wrapped.clone()),

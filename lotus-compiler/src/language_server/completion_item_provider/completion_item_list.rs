@@ -148,10 +148,10 @@ impl CompletionItemList {
                 true => {
                     let mut text = format!("{}(", function_name);
 
-                    for (i, arg) in function_unwrapped.argument_names.iter().enumerate() {
-                        text.push_str(&format!("${{{}:{}}}", i + 1, arg.as_str()));
+                    for (i, arg) in function_unwrapped.arguments.iter().enumerate() {
+                        text.push_str(&format!("${{{}:{}}}", i + 1, arg.name.as_str()));
 
-                        if i != function_unwrapped.argument_names.len() - 1 {
+                        if i != function_unwrapped.arguments.len() - 1 {
                             text.push_str(", ");
                         }
                     }
@@ -162,7 +162,7 @@ impl CompletionItemList {
                 false => function_name.to_string(),
             };
 
-            let has_arguments = !function_unwrapped.argument_names.is_empty();
+            let has_arguments = !function_unwrapped.arguments.is_empty();
             let parenthesis_content = match has_arguments {
                 true => "…",
                 false => "",

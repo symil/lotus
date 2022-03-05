@@ -1,25 +1,24 @@
 use parsable::parsable;
-use crate::program::{ProgramContext, Type};
-use super::{Identifier, ParsedType};
+use crate::program::{ProgramContext, Type, ArgumentInfo};
+use super::{Identifier, ParsedType, ParsedVarTypeDeclaration, ParsedDefaultValueAssignment, ParsedCommaToken, unwrap_item};
 
 #[parsable]
 pub struct ParsedFunctionArgument {
     pub name: Identifier,
-    #[parsable(prefix=":")]
-    pub ty: Option<ParsedType>,
+    pub ty: Option<ParsedVarTypeDeclaration>,
+    pub default_value: Option<ParsedDefaultValueAssignment>,
 }
 
 impl ParsedFunctionArgument {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<(Identifier, Type)> {
-        match &self.ty {
-            Some(parsed_type) => match parsed_type.process(false, context) {
-                Some(ty) => Some((self.name.clone(), ty)),
-                None => None
-            },
-            None => {
-                context.errors.expected_identifier(self);
-                None
-            }
-        }
+    pub fn process(&self, context: &mut ProgramContext) -> Option<ArgumentInfo> {
+        let parsed_type = unwrap_item(&self.ty, &self.name, context)?;
+        let ty = parsed_type.process(context)?;
+
+        Some(ArgumentInfo {
+            name: self.name.clone(),
+            ty,
+            is_optional: self.default_value.is_some(),
+            default_value: context.vasm(),
+        })
     }
 }

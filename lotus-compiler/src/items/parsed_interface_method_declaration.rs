@@ -23,16 +23,18 @@ impl ParsedInterfaceMethodDeclaration {
             FieldKind::Static => None,
         };
 
+        let signature = Signature::create(
+            this_type,
+            arguments.iter().map(|arg| arg.ty.clone()).collect(),
+            return_type.unwrap_or(context.void_type())
+        );
+
         FunctionBlueprint {
             name: self.name.clone(),
             visibility: Visibility::None,
             parameters: IndexMap::new(),
-            argument_names: arguments.iter().map(|(name, ty)| name.clone()).collect(),
-            signature: Signature::create(
-                this_type,
-                arguments.iter().map(|(name, ty)| ty.clone()).collect(),
-                return_type.unwrap_or(context.void_type())
-            ),
+            arguments,
+            signature,
             argument_variables: vec![],
             owner_type: None,
             owner_interface: Some(interface.clone()),

@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{ItemLocation, parsable};
-use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody, ANONYMOUS_FUNCTION_NAME}, utils::Link};
+use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody, ANONYMOUS_FUNCTION_NAME, ArgumentInfo}, utils::Link};
 use super::{ParsedBlockExpression, ParsedExpression, ParsedAnonymousFunctionArguments, ParsedAnonymousFunctionBody, Identifier};
 
 #[parsable]
@@ -22,8 +22,8 @@ const EMPTY_TYPE_LIST : [Type; 0] = [];
 impl ParsedAnonymousFunction {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
-        let arguments = self.arguments.process(type_hint, context);
-        let provided_argument_count = arguments.len();
+        let specified_arguments = self.arguments.process(type_hint, context);
+        let provided_argument_count = specified_arguments.len();
         let void_type = context.void_type();
         let return_type_hint = match type_hint.map(|t| t.content()) {
             Some(TypeContent::Function(signature)) => Some(signature.return_type.clone()),
@@ -34,10 +34,9 @@ impl ParsedAnonymousFunction {
             _ => (EMPTY_TYPE_LIST.as_slice(), &void_type)
         };
 
-        let mut argument_names = vec![];
-        let mut argument_types = vec![];
+        let mut arguments = vec![];
 
-        for (i, (name, typt_opt)) in arguments.into_iter().enumerate() {
+        for (i, (name, typt_opt)) in specified_arguments.into_iter().enumerate() {
             let arg_type = match typt_opt {
                 Some(ty) => ty,
                 None => match expected_arg_types.get(i) {
@@ -49,14 +48,22 @@ impl ParsedAnonymousFunction {
                 },
             };
 
-            argument_names.push(name.clone());
-            argument_types.push(arg_type);
+            arguments.push(ArgumentInfo {
+                name: name.clone(),
+                ty: arg_type,
+                is_optional: false,
+                default_value: context.vasm(),
+            });
         }
 
         if expected_arg_types.len() > provided_argument_count {
             for (i, ty) in expected_arg_types[provided_argument_count..].iter().enumerate() {
-                argument_names.push(Identifier::unlocated(&format!("__unused_arg_{}", i + provided_argument_count)));
-                argument_types.push(ty.clone());
+                arguments.push(ArgumentInfo {
+                    name: Identifier::unlocated(&format!("__unused_arg_{}", i + provided_argument_count)),
+                    ty: ty.clone(),
+                    is_optional: true,
+                    default_value: context.vasm(),
+                });
             }
         }
 
@@ -66,12 +73,17 @@ impl ParsedAnonymousFunction {
         };
         let parameter_types : Vec<Type> = parameters.values().map(|parameter_type_info| Type::function_parameter(parameter_type_info)).collect();
 
-        let mut signature = Signature::create(None, argument_types, expected_return_type.clone());
+        let mut signature = Signature::create(
+            None,
+            arguments.iter().map(|arg| arg.ty.clone()).collect(),
+            expected_return_type.clone()
+        );
+
         let function_wrapped = context.functions.insert(FunctionBlueprint {
             name: Identifier::new(ANONYMOUS_FUNCTION_NAME, Some(self)),
             visibility: Visibility::None,
             parameters: parameters.clone(),
-            argument_names,
+            arguments,
             signature: signature.clone(),
             argument_variables: vec![],
             owner_type: context.get_current_type(),

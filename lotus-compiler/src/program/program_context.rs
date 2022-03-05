@@ -481,8 +481,8 @@ impl ProgramContext {
                 variables.push(var_info);
             }
 
-            for (arg_name, arg_type) in function_unwrapped.argument_names.iter().zip(function_unwrapped.signature.argument_types.iter()) {
-                let var_info = VariableInfo::create(arg_name.clone(), arg_type.clone(), VariableKind::Argument, self.get_function_level(), None);
+            for arg_info in &function_unwrapped.arguments {
+                let var_info = VariableInfo::create(arg_info.name.clone(), arg_info.ty.clone(), VariableKind::Argument, self.get_function_level(), None);
 
                 self.push_var(&var_info);
                 variables.push(var_info);
