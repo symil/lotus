@@ -14,7 +14,8 @@ export event OnUserRequest {
     server: Server,
     world: #WORLD_TYPE,
     user: #USER_TYPE,
-    request: Object
+    request: Object,
+    success: bool = false
 }
 
 export event OnWorldInit {

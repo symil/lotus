@@ -8,6 +8,10 @@ pub class Server {
     _websocket_id_to_user: Map<int, #USER_TYPE> = Map<int, #USER_TYPE>::new(),
     _websocket_id_counter: Counter = Counter,
 
+    static get() -> Self {
+        SERVER
+    }
+
     _start() {
         self._websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
         self._world = #WORLD_TYPE::__default();
@@ -49,7 +53,7 @@ pub class Server {
                     self._websocket_id_to_user.delete(event.websocket_id);
                     self._user_to_websocket_id.delete(user);
                 },
-                NetworkEventKind::Message => {
+                NetworkEventKind::StateUpdate => {
                     let user = self._websocket_id_to_user.get(event.websocket_id);
                     let request : Object = @deserialize(Buffer::from_array(event.payload));
 
@@ -69,6 +73,8 @@ pub class Server {
             if user {
                 self._buffer.reset();
                 self._buffer.context = user;
+
+                // TODO: append resolved request ids to buffer
 
                 @serialize(user, self._buffer)
                 wasm_send_message(websocket_id, self._buffer.data, self._buffer.size);

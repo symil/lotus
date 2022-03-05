@@ -113,7 +113,7 @@ export class Client {
     _process_network_events() {
         let last_event = self._network_events.last();
 
-        if last_event && last_event.kind == NetworkEventKind::Message {
+        if last_event && last_event.kind == NetworkEventKind::StateUpdate {
             let buffer = Buffer::from_array(last_event.payload);
 
             self.user = @deserialize(buffer);

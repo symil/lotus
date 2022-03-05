@@ -51,6 +51,8 @@ impl ParsedMatchBranchTypeItem {
 
                         match ty.get_variant(name.as_str()) {
                             Some(variant_info) => {
+                                context.rename_provider.add_occurence(name, &variant_info.name);
+
                                 Some((
                                     ty.clone(),
                                     context.vasm()
