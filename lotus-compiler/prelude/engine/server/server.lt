@@ -33,35 +33,45 @@ pub class Server {
         self._buffer.reset();
         self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
-        while !self._buffer.is_finished() {
-            let event = decode_network_event_from_buffer(self._buffer);
+        let events_to_emit : Event[] = [];
 
-            match event.kind {
+        while !self._buffer.is_finished() {
+            let websocket_id = self._buffer.read();
+            let event_kind = NetworkEventKind::__from_int(self._buffer.read());
+
+            match event_kind {
                 NetworkEventKind::ConnectionOpen => {
                     let user = #USER_TYPE::__default();
 
-                    self._websocket_id_to_user.set(event.websocket_id, user);
-                    self._user_to_websocket_id.set(user, event.websocket_id);
+                    self._websocket_id_to_user.set(websocket_id, user);
+                    self._user_to_websocket_id.set(user, websocket_id);
 
-                    @emit(OnUserConnect { server: self, world: self._world, user }, [self._world]);
+                    events_to_emit.push(OnUserConnect { server: self, world: self._world, user });
                 },
                 NetworkEventKind::ConnectionClosed => {
-                    let user = self._websocket_id_to_user.get(event.websocket_id);
+                    let user = self._websocket_id_to_user.get(websocket_id);
 
-                    @emit(OnUserDisconnect { server: self, world: self._world, user }, [self._world]);
-
-                    self._websocket_id_to_user.delete(event.websocket_id);
+                    self._websocket_id_to_user.delete(websocket_id);
                     self._user_to_websocket_id.delete(user);
+
+                    events_to_emit.push(OnUserDisconnect { server: self, world: self._world, user });
                 },
-                NetworkEventKind::StateUpdate => {
-                    let user = self._websocket_id_to_user.get(event.websocket_id);
-                    let request : Object = @deserialize(Buffer::from_array(event.payload));
+                NetworkEventKind::Message => {
+                    self._buffer.reset_serialization_utility();
+
+                    let user = self._websocket_id_to_user.get(websocket_id);
+                    let payload_size = self._buffer.read();
+                    let request : Object = @deserialize(self._buffer);
 
                     if request {
-                        @emit(OnUserRequest { server: self, world: self._world, user, request }, [self._world]);
+                        events_to_emit.push(OnUserRequest { server: self, world: self._world, user, request });
                     }
                 }
             }
+        }
+
+        for event in events_to_emit {
+            @emit(event, [self._world]);
         }
     }
 
@@ -74,9 +84,7 @@ pub class Server {
                 self._buffer.reset();
                 self._buffer.context = user;
 
-                // TODO: append resolved request ids to buffer
-
-                @serialize(user, self._buffer)
+                @serialize(user, self._buffer);
                 wasm_send_message(websocket_id, self._buffer.data, self._buffer.size);
             }
         }

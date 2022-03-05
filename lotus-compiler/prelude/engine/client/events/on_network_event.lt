@@ -1,20 +1,19 @@
 pub event OnNetworkEvent {
     websocket_id: int,
     kind: NetworkEventKind,
-    payload: int[]
+    payload: Buffer
 }
 
 pub enum NetworkEventKind {
     ConnectionOpen,
     ConnectionClosed,
-    StateUpdate,
-    RequestAnswer
+    Message,
 }
 
-pub fn decode_network_event_from_buffer(buffer: Buffer) -> OnNetworkEvent {
-    OnNetworkEvent {
-        websocket_id: buffer.read_unchecked(),
-        kind: buffer.read_unchecked(),
-        payload: buffer.read_buffer_unchecked()
-    }
-}
+// pub fn decode_network_event_from_buffer(buffer: Buffer) -> OnNetworkEvent {
+//     OnNetworkEvent {
+//         websocket_id: buffer.read_unchecked(),
+//         kind: buffer.read_unchecked(),
+//         payload: buffer.read_buffer_unchecked()
+//     }
+// }

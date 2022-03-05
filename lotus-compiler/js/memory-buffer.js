@@ -83,7 +83,6 @@ export class MemoryBuffer {
      */
     writeBuffer(buffer) {
         if (!buffer) {
-            this.write(0);
             return;
         }
         

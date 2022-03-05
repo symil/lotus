@@ -46,9 +46,8 @@ export class Client {
     }
 
     _update() {
-        self._collect_network_events();
         self._collect_window_events();
-        self._process_network_events();
+        self._collect_and_process_network_events();
         check self._should_continue_frame();
         self._create_views();
         self._draw_frame();
@@ -67,16 +66,6 @@ export class Client {
         }
 
         ok
-    }
-
-    _collect_network_events() {
-        self._network_events.clear();
-        self._buffer.reset();
-        self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
-
-        while !self._buffer.is_finished() {
-            self._network_events.push(decode_network_event_from_buffer(self._buffer));
-        }
     }
 
     _collect_window_events() {
@@ -110,15 +99,23 @@ export class Client {
         }
     }
 
-    _process_network_events() {
-        let last_event = self._network_events.last();
+    _collect_and_process_network_events() {
+        self._buffer.reset();
+        self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
-        if last_event && last_event.kind == NetworkEventKind::StateUpdate {
-            let buffer = Buffer::from_array(last_event.payload);
+        while !self._buffer.is_finished() {
+            let websocket_id = self._buffer.read();
+            let event_kind = NetworkEventKind::__from_int(self._buffer.read());
 
-            self.user = @deserialize(buffer);
-            self._local_object_to_remote_addr = buffer.get_local_object_to_remote_addr_map().clone();
-            self._is_connected = true;
+            if event_kind == NetworkEventKind::Message {
+                let payload_size = self._buffer.read();
+
+                self._buffer.reset_serialization_utility();
+
+                self.user = @deserialize(self._buffer);
+                self._local_object_to_remote_addr = self._buffer.get_local_object_to_remote_addr_map().clone();
+                self._is_connected = true;
+            }
         }
     }
 

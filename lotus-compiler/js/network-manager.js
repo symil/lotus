@@ -7,6 +7,8 @@ export class NetworkManager {
         this._webSocketServerIdCounter = 1;
         this._webSocketServers = new Map();
         this._events = [];
+
+        this._stateUpdateMessageIndex = -1;
     }
 
     createWebSocket(url) {
@@ -56,6 +58,7 @@ export class NetworkManager {
         let result = this._events;
 
         this._events = [];
+        this._stateUpdateMessageIndex = -1;
 
         return result;
     }
@@ -71,10 +74,12 @@ export class NetworkManager {
             messagePayload
         });
 
-        if (this._events.length > 100) {
-            // avoid storing an infinite amount of events
-            // TODO: find a better solution
-            this._events = this._events.slice(100);
+        if (messageType === 'message') {
+            if (this._stateUpdateMessageIndex !== -1) {
+                this._events.splice(this._stateUpdateMessageIndex, 1);
+            }
+
+            this._stateUpdateMessageIndex = this._events.length - 1;
         }
     }
 

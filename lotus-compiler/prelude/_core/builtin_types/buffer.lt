@@ -43,6 +43,10 @@ export class Buffer {
     reset() {
         self.size = 0;
         self.read_index = 0;
+        self.reset_serialization_utility();
+    }
+
+    reset_serialization_utility() {
         self.serialized_strings.clear();
         self.serialized_objects.clear();
         self.remote_addr_to_local_object.clear();
@@ -119,15 +123,15 @@ export class Buffer {
         result
     }
 
-    read_buffer_unchecked() -> int[] {
-        let length : int = self.read_unchecked();
-        let pointer = @alloc(length);
+    // read_buffer_unchecked() -> int[] {
+    //     let length : int = self.read_unchecked();
+    //     let pointer = @alloc(length);
 
-        self.data.add(self.read_index).copy_to(pointer, length);
-        self.read_index += length;
+    //     self.data.add(self.read_index).copy_to(pointer, length);
+    //     self.read_index += length;
 
-        Array<int>::from_raw_parts(pointer, length, length)
-    }
+    //     Array<int>::from_raw_parts(pointer, length, length)
+    // }
 
     has_read_overflow() -> bool {
         self.read_index > self.size
