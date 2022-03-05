@@ -151,7 +151,17 @@
 [X] Force fields that don't have a default value to be specified
 [X] Add `fill class fields` code action
 [X] Use `DisplaySize` to specify margins in `Layout`
-[ ] Add callback function after request is fullfilled
+[ ] Make so the empty string is `none`
+[ ] Add default function arguments
+[ ] Add callback function to `Client.send_request`
+[ ] Add tags system
+[ ] Add tag to remove main type restriction
+[ ] Add completion for dynamic method names
+[ ] Add random number generator
+[ ] Do not copy draw primitives when passing them to the javascript
+[ ] Add way to display only part of an image
+[ ] Allow multiple instances of the language server to be running at the same time
+[ ] Add support for a `lotus.toml` file to indicate the project's root
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -201,13 +211,11 @@
 [ ] Display error when number literal is invalid
 [ ] Method `or` on `any` type
 [ ] Regular expressions
-[ ] Function default arguments
 [ ] `parsable` macro: use global attributes to specify whether to implement `Debug` and `location` by default or not
 [ ] Improve schema serialization to keep info about the object class (use class name as key?)
 [ ] Compute string hash during string creation
 [ ] Fix serialization with schema for arrays/objects (what happens when an array field becomes a non-array field? or vice-versa)
 [ ] Fix interaction when A defines a dyn autogen method, and B inherits from A and redefines the same autogen dyn method
-[ ] Add completion for dynamic method names
 [ ] Add completion for type parameters
 [ ] Signature help: correctly infer type parameters (`Array<int>.push()` should display `int` instead of `T`)
 [ ] Fix structure of compiler/cli (merge them?)
@@ -221,6 +229,7 @@
 [ ] Extension: do a bulk validation after a symbol renaming
 [ ] Add `-` unary operator
 [ ] Make so `reverse` and `sort` first clone the array
+[ ] Add `Vector` type
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

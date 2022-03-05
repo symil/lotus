@@ -94,6 +94,10 @@ sys type(void) system {
     emit(event: Event, targets: Object[]) {
         event.emit(targets);
     }
+
+    get_current_time() -> int {
+        wasm_get_current_time()
+    }
 }
 
 fn trap() {{
