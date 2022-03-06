@@ -4,8 +4,17 @@ use parsable::StringReader;
 use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache, language_server::LanguageServerCommand};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters};
 
-const PORT : u16 = 9609;
+const PORT : u16 = 31657;
 const BUFFER_SIZE : usize = 65536;
+
+fn bind_tcp_listener(port: u16) -> (TcpListener, u16) {
+    let addr = format!("127.0.0.1:{}", port);
+
+    match TcpListener::bind(addr) {
+        Ok(listener) => (listener, port),
+        Err(_) => bind_tcp_listener(port + 1),
+    }
+}
 
 pub fn start_language_server(test_command: &Option<String>) {
     let mut buffer = [0 as u8; BUFFER_SIZE];
@@ -21,12 +30,11 @@ pub fn start_language_server(test_command: &Option<String>) {
         return;
     }
 
-    let addr = format!("127.0.0.1:{}", PORT);
-    let listener = TcpListener::bind(addr).unwrap();
+    let (listener, port) = bind_tcp_listener(PORT);
 
     listener.set_nonblocking(true).unwrap();
 
-    println!("{} server open on port {}", "info:".bold(), PORT.to_string().bold());
+    println!("{} server open on port {}", "info:".bold(), port.to_string().bold());
 
     loop {
         match listener.accept() {
