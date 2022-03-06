@@ -156,9 +156,9 @@
 [X] Add callback function to `Client.send_request`
 [X] Add tags system
 [X] Add tag to remove main type restriction
-[ ] Add completion for dynamic method names
+[X] Add completion for dynamic method names
 [ ] Add random number generator
-[ ] Do not copy draw primitives when passing them to the javascript
+[ ] Do not copy draw primitives when passing them to javascript
 [ ] Add way to display only part of an image
 [ ] Allow multiple instances of the language server to be running at the same time
 [ ] Add support for a `lotus.toml` file to indicate the project's root

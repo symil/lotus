@@ -15,8 +15,10 @@ impl ParsedFieldDeclaration {
         if self.comma.is_none() && self.ty.is_none() {
             if let Some(ty) = parent_type {
                 context.completion_provider.add_field_completion(&self.name, ty, Some(&FieldCompletionOptions {
+                    show_fields: true,
                     show_methods: false,
                     insert_arguments: false,
+                    insert_dynamic_methods: true,
                     hide_private: true,
                     prefix: "self.",
                     suffix: " = "

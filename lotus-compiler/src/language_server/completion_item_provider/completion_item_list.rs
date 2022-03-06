@@ -210,6 +210,37 @@ impl CompletionItemList {
         self.add_function_or_method(method, insert_arguments, show_owner, show_internals);
     }
 
+    pub fn add_dynamic_method_body(&mut self, method: Link<FunctionBlueprint>, show_internals: bool) {
+        method.with_ref(|function_unwrapped| {
+            let function_name = function_unwrapped.name.as_str();
+            let visibility = CompletionItemVisibility::from_str(function_name);
+
+            if visibility.is_internal() && !show_internals {
+                return;
+            }
+
+            let content = match function_unwrapped.arguments.is_empty() {
+                true => "",
+                false => "…",
+            };
+            let arguments : Vec<String> = function_unwrapped.arguments.iter().map(|arg| format!("{}: {}", arg.name.as_str(), &arg.ty)).collect();
+            let return_type = match function_unwrapped.signature.return_type.is_void() {
+                true => String::new(),
+                false => format!(" -> {}", &function_unwrapped.signature.return_type)
+            };
+            let label = format!("dyn {}({}) {{}}", function_name, content);
+            let insert_text = format!("dyn {}({}){}{{\n\t$0\n}}", function_name, arguments.join(", "), return_type);
+
+            self
+                .add(label)
+                .position(CompletionItemPosition::from_visibility(visibility, true))
+                .kind(CompletionItemKind::Method)
+                .description(function_unwrapped.get_self_type().to_string())
+                .insert_text(insert_text)
+                .filter_text(function_name.to_string());
+        });
+    }
+
     pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
         let mut label = event_type.to_string();
         let mut insert_text = label.clone();

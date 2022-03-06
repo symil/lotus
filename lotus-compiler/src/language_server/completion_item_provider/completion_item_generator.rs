@@ -86,6 +86,18 @@ impl CompletionItemGenerator {
                             items.add_method(method_info, details.options.insert_arguments, false, show_internals);
                         }
                     }
+                } else if details.options.insert_dynamic_methods {
+                    for method_wrapped in details.parent_type.get_all_methods(FieldKind::Regular) {
+                        method_wrapped.with_ref(|method_unwrapped| {
+                            let method_details = method_unwrapped.method_details.as_ref().unwrap();
+                            let is_dynamic = method_unwrapped.is_dynamic();
+                            let defined_by_parent = true;
+
+                            if defined_by_parent && is_dynamic && (!details.options.hide_private || !method_details.visibility.is_private()) {
+                                items.add_dynamic_method_body(method_wrapped.clone(), show_internals);
+                            }
+                        });
+                    }
                 }
             },
             Self::StaticFieldOrMethod(details) => {
