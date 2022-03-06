@@ -12,6 +12,10 @@ impl MainTypeIndex {
         }
     }
 
+    pub fn set_unchecked(&mut self, main_type: MainType, ty: Type) {
+        self.map.insert(main_type, ty);
+    }
+
     pub fn set(&mut self, main_type: MainType, ty: Type) -> Result<(), Type> {
         if let Some(previous_type) = self.map.get(&main_type) {
             if !ty.is_assignable_to(previous_type) {

@@ -154,8 +154,8 @@
 [X] Make so the empty string is `none`
 [X] Add default function arguments
 [X] Add callback function to `Client.send_request`
-[ ] Add tags system
-[ ] Add tag to remove main type restriction
+[X] Add tags system
+[X] Add tag to remove main type restriction
 [ ] Add completion for dynamic method names
 [ ] Add random number generator
 [ ] Do not copy draw primitives when passing them to the javascript

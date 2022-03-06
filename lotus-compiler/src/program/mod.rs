@@ -61,6 +61,7 @@ mod type_category;
 mod main_type_index;
 mod visibility;
 mod argument_info;
+mod root_tags;
 
 pub use program_context::*;
 pub use utils::*;
@@ -124,3 +125,4 @@ pub use type_category::*;
 pub use main_type_index::*;
 pub use visibility::*;
 pub use argument_info::*;
+pub use root_tags::*;

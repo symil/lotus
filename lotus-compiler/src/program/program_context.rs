@@ -5,7 +5,7 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal, init_color_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectoryDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex, RootTags};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
@@ -13,9 +13,9 @@ pub struct ProgramContext {
     pub source_file_list: Vec<SourceFileDetails>,
     pub parsed_source_files: Vec<Rc<ParsedSourceFile>>,
     pub errors: CompilationErrorList,
+    pub root_tags: RootTags,
 
     pub default_interfaces: InterfaceList,
-
     pub types: GlobalItemIndex<TypeBlueprint>,
     pub typedefs: GlobalItemIndex<TypedefBlueprint>,
     pub interfaces: GlobalItemIndex<InterfaceBlueprint>,
@@ -68,6 +68,7 @@ impl ProgramContext {
             source_file_list: vec![],
             parsed_source_files: vec![],
             errors: Default::default(),
+            root_tags: RootTags::new(),
             default_interfaces: Default::default(),
             types: Default::default(),
             typedefs: Default::default(),
@@ -709,18 +710,20 @@ impl ProgramContext {
 
     pub fn process_source_files(&mut self) {
         let mut timer = PerfTimer::new();
+        let mut root_tags_declarations = vec![];
+        let mut main_type_declarations = vec![];
         let mut interfaces = vec![];
         let mut types = vec![];
         let mut typedefs = vec![];
         let mut functions = vec![];
         let mut global_vars = vec![];
-        let mut main_type_declarations = vec![];
 
         let parsed_source_files = take(&mut self.parsed_source_files);
 
         for file in &parsed_source_files {
             for block in &file.blocks {
                 match block {
+                    ParsedTopLevelBlock::RootTagDeclaration(root_tag_declaration) => root_tags_declarations.push(root_tag_declaration),
                     ParsedTopLevelBlock::MainTypeDeclaration(main_type_declaration) => main_type_declarations.push(main_type_declaration),
                     ParsedTopLevelBlock::InterfaceDeclaration(interface_declaration) => interfaces.push(interface_declaration),
                     ParsedTopLevelBlock::TypeDeclaration(struct_declaration) => types.push(struct_declaration),
@@ -730,6 +733,11 @@ impl ProgramContext {
                     ParsedTopLevelBlock::InProgress(block) => block.process(self),
                 }
             }
+        }
+
+        timer.trigger("root tags");
+        for root_tag_declaration in &root_tags_declarations {
+            root_tag_declaration.process(self);
         }
 
         timer.trigger("interface names");

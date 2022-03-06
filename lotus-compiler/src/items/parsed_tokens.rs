@@ -16,6 +16,7 @@ pub type ParsedWildcardToken = Token<"_">;
 pub type ParsedDoubleDotToken = Token<"..">;
 pub type ParsedEqualToken = Token<"=">;
 pub type ParsedHashToken = Token<"#">;
+pub type ParsedAtToken = Token<"@">;
 
 pub type ParsedOpeningRoundBracket = Token<"(">;
 pub type ParsedClosingRoundBracket = Token<")">;
