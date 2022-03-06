@@ -14,8 +14,8 @@ impl ParsedPrefixedVarRef {
         self.arguments.is_some()
     }
 
-    pub fn collect_instancied_type_names(&self, list: &mut Vec<Identifier>) {
-
+    pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
+        list.push("system".to_string());
     }
 
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {

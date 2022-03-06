@@ -54,6 +54,10 @@ export class Renderer {
         let imageUrl = primitive.readString();
         let imageWidth = primitive.readFloat();
         let imageHeight = primitive.readFloat();
+        let imageSx = primitive.readFloat();
+        let imageSy = primitive.readFloat();
+        let imageSw = primitive.readFloat();
+        let imageSh = primitive.readFloat();
         let text = primitive.readString();
         let textFont = primitive.readEnum(FONTS);
         let textSize = primitive.readFloat();
@@ -103,13 +107,32 @@ export class Renderer {
         }
 
         if (imageUrl) {
-            let image = this._getImageFromCache(imageUrl, Math.round(imageWidth), Math.round(imageHeight));
+            let targetWidth = Math.round(imageWidth / imageSw);
+            let targetHeight = Math.round(imageHeight / imageSh);
+            let image = this._getImageFromCache(imageUrl, targetWidth, targetHeight);
 
             if (image) {
-                let imageX = Math.floor(x - image.width / 2);
-                let imageY = Math.floor(y - image.height / 2);
+                let sx = Math.round(imageSx * targetWidth);
+                let sy = Math.round(imageSy * targetHeight);
+                let sw = Math.round(imageSw * targetWidth);
+                let sh = Math.round(imageSh * targetHeight);
+                let imageX = Math.floor(x - sw / 2);
+                let imageY = Math.floor(y - sh / 2);
 
-                this._ctx.drawImage(image, imageX, imageY);
+                this._ctx.drawImage(image, sx, sy, sw, sh, imageX, imageY, sw, sh);
+
+                // if (!window.TOTAL) {
+                //     window.TOTAL = 0;
+                //     window.COUNT = 0;
+                //     window.GET_AVERAGE = () => console.log(`${window.TOTAL / window.COUNT}ms`);
+                // }
+                // let now = performance.now();
+                // for (let i = 0; i < 10000; ++i) {
+                //     this._ctx.drawImage(image, sx, sy, sw, sh, imageX, imageY, sw, sh);
+                //     // this._ctx.drawImage(image, imageX, imageY);
+                // }
+                // window.COUNT += 10000;
+                // window.TOTAL += performance.now() - now;
             }
         }
 
@@ -188,14 +211,14 @@ export class Renderer {
         return image;
     }
 
-    _getImageFromCache(url, width, height) {
+    _getImageFromCache(url, targetWidth, targetHeight) {
         let urlHash = this._getStringHash(url);
-        let id = hashNumberList([urlHash, width, height]);
+        let id = hashNumberList([urlHash, targetWidth, targetHeight]);
         let image = this._cachedImages.get(id);
 
         if (!image) {
             image = this._imageLoader.get(url);
-            image = resizeImage(image, width, height);
+            image = resizeImage(image, targetWidth, targetHeight);
 
             this._cachedImages.set(id, image);
         }

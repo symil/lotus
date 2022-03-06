@@ -17,6 +17,7 @@ export class Client {
     _frozen: bool = false,
     _request_id_counter: Counter = Counter::new(),
     _request_id_to_info: Map<int, RequestInfo> = Map<int, RequestInfo>::new(),
+    _start_time: int = @get_current_time(),
 
     _hovered_view: View? = none,
     _focus_chain: View[] = [],
@@ -373,6 +374,10 @@ export class Client {
 
     unfreeze() {
         self._frozen = false;
+    }
+
+    get_current_time() -> float {
+        (@get_current_time() - self._start_time).to_float() / 1000f
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

@@ -26,6 +26,8 @@ export view QuickGameWindow {
             .move_center()
             .use_fixed_positionning()
             .push_list(modals)
+        
+        self.add_child(TestImage, Rect::new(250, 500, 300, 300));
     }
 
     @OnClientStart {

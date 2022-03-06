@@ -18,6 +18,12 @@ export class Graphics {
     overlay_alpha: float = 1,
     image_url: string = none,
     image_scale: float = 1,
+    image_sprite_count_per_row: int = 1,
+    image_sprite_count_per_column: int = 1,
+    image_sprite_index: int = 0,
+    animation_start_time: float = none,
+    animation_current_time: float = none,
+    animation_duration: float = none,
     text: string = none,
     text_font: Font = Font::Arial,
     text_size: DisplaySize = none,
@@ -64,8 +70,30 @@ export class Graphics {
         let real_rect = rect.multiply(virtual_to_real_ratio);
         let width = real_rect.width;
         let height = real_rect.height;
+        let image_sw = 1f;
+        let image_sh = 1f;
+        let image_sx = 0f;
+        let image_sy = 0f;
+        let image_url = self.image_url;
+        let image_sprite_index = self.image_sprite_index;
 
-        // @dbg(self);
+        if image_url {
+            let sprite_count = self.image_sprite_count_per_row * self.image_sprite_count_per_column;
+
+            if self.animation_duration {
+                let progress = (self.animation_current_time - self.animation_start_time) / self.animation_duration;
+                image_sprite_index = (progress * sprite_count.to_float()).floor().to_int();
+            }
+
+            if image_sprite_index < 0 || image_sprite_index >= sprite_count {
+                image_url = none;
+            } else {
+                image_sw = 1f / self.image_sprite_count_per_row.to_float();
+                image_sh = 1f / self.image_sprite_count_per_column.to_float();
+                image_sx = (image_sprite_index % self.image_sprite_count_per_row).to_float() * image_sw;
+                image_sy = (image_sprite_index / self.image_sprite_count_per_row).to_float() * image_sh;
+            }
+        }
 
         DrawPrimitive {
             x: real_rect.x,
@@ -82,9 +110,13 @@ export class Graphics {
             border_gap_length: self.border_gap_length.resolve(width, height, virtual_to_real_ratio),
             background_color: self.background_color.mult_alpha(self.background_alpha),
             overlay_color: self.overlay_color.mult_alpha(self.overlay_alpha),
-            image_url: self.image_url,
+            image_url,
             image_width: width * self.image_scale,
             image_height: height * self.image_scale,
+            image_sw,
+            image_sh,
+            image_sx,
+            image_sy,
             text: self.text,
             text_font: self.text_font,
             text_size: self.text_size.resolve(width, height, virtual_to_real_ratio),
@@ -101,37 +133,4 @@ export class Graphics {
             text_cursor_index: self.text_cursor_index,
         }
     }
-
-    set_shape<T>(owner: T, shape: Shape) -> T { self.shape = shape; owner }
-    set_border_radius<T>(owner: T, border_radius: DisplaySize) -> T { self.border_radius = border_radius; owner }
-    set_border_width<T>(owner: T, border_width: DisplaySize) -> T { self.border_width = border_width; owner }
-    set_border_dash_length<T>(owner: T, border_dash_length: DisplaySize) -> T { self.border_dash_length = border_dash_length; owner }
-    set_border_gap_length<T>(owner: T, border_gap_length: DisplaySize) -> T { self.border_gap_length = border_gap_length; owner }
-    set_border_color<T>(owner: T, border_color: Color) -> T { self.border_color = border_color; owner }
-    set_border_alpha<T>(owner: T, border_alpha: float) -> T { self.border_alpha = border_alpha; owner }
-    set_background_color<T>(owner: T, background_color: Color) -> T { self.background_color = background_color; owner }
-    set_background_alpha<T>(owner: T, background_alpha: float) -> T { self.background_alpha = background_alpha; owner }
-    set_overlay_color<T>(owner: T, overlay_color: Color) -> T { self.overlay_color = overlay_color; owner }
-    set_overlay_alpha<T>(owner: T, overlay_alpha: float) -> T { self.overlay_alpha = overlay_alpha; owner }
-    set_image_url<T>(owner: T, image_url: string) -> T { self.image_url = image_url; owner }
-    set_image_scale<T>(owner: T, image_scale: float) -> T { self.image_scale = image_scale; owner }
-    set_text<T>(owner: T, text: string) -> T { self.text = text; owner }
-    set_text_font<T>(owner: T, text_font: Font) -> T { self.text_font = text_font; owner }
-    set_text_size<T>(owner: T, text_size: DisplaySize) -> T { self.text_size = text_size; owner }
-    set_text_color<T>(owner: T, text_color: Color) -> T { self.text_color = text_color; owner }
-    set_text_alpha<T>(owner: T, text_alpha: float) -> T { self.text_alpha = text_alpha; owner }
-    set_text_margin<T>(owner: T, text_margin: DisplaySize) -> T { self.text_margin = text_margin; owner }
-    set_text_max_width<T>(owner: T, text_max_width: DisplaySize) -> T { self.text_max_width = text_max_width; owner }
-    set_text_max_height<T>(owner: T, text_max_height: DisplaySize) -> T { self.text_max_height = text_max_height; owner }
-    set_text_background_color<T>(owner: T, text_background_color: Color) -> T { self.text_background_color = text_background_color; owner }
-    set_text_background_alpha<T>(owner: T, text_background_alpha: float) -> T { self.text_background_alpha = text_background_alpha; owner }
-    set_text_border_color<T>(owner: T, text_border_color: Color) -> T { self.text_border_color = text_border_color; owner }
-    set_text_border_alpha<T>(owner: T, text_border_alpha: float) -> T { self.text_border_alpha = text_border_alpha; owner }
-    set_text_horizontal_align<T>(owner: T, text_horizontal_align: HorizontalAlign) -> T { self.text_horizontal_align = text_horizontal_align; owner }
-    set_text_vertical_align<T>(owner: T, text_vertical_align: VerticalAlign) -> T { self.text_vertical_align = text_vertical_align; owner }
-    set_text_bold<T>(owner: T, text_bold: bool) -> T { self.text_bold = text_bold; owner }
-    set_text_italic<T>(owner: T, text_italic: bool) -> T { self.text_italic = text_italic; owner }
-    set_text_cursor_index<T>(owner: T, text_cursor_index: int) -> T { self.text_cursor_index = text_cursor_index; owner }
-    set_detectable<T>(owner: T, detectable: bool) -> T { self.detectable = detectable; owner }
-    set_cursor<T>(owner: T, cursor: Cursor) -> T { self.cursor = cursor; owner }
 }

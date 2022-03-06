@@ -63,11 +63,11 @@ export class MemoryBuffer {
         return values[this.read()] || null;
     }
 
-    readObject() {
+    readObject(defaultValue) {
         let addr = this.read();
 
         if (!addr) {
-            return null;
+            return defaultValue;
         }
 
         return new MemoryBuffer(this._memoryAsInt, addr + 1);
