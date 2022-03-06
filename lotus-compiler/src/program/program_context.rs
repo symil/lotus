@@ -887,9 +887,24 @@ impl ProgramContext {
             type_declaration.process_fields_default_values(self);
         }
 
-        timer.trigger("interface method bodies");
+        timer.trigger("interface method default arguments");
         for interface_declaration in &interfaces {
-            interface_declaration.process_method_bodies(self);
+            interface_declaration.process_method_default_arguments(self);
+        }
+
+        timer.trigger("type method default arguments");
+        for type_declaration in &types {
+            type_declaration.process_method_default_arguments(self);
+        }
+
+        timer.trigger("type method autogen default arguments");
+        for type_declaration in &types {
+            type_declaration.process_autogen_method_default_arguments(self);
+        }
+
+        timer.trigger("function default arguments");
+        for function_declaration in &functions {
+            function_declaration.process_default_arguments(self);
         }
 
         timer.trigger("type method bodies");

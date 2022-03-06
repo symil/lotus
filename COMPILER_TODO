@@ -152,7 +152,7 @@
 [X] Add `fill class fields` code action
 [X] Use `DisplaySize` to specify margins in `Layout`
 [X] Make so the empty string is `none`
-[ ] Add default function arguments
+[X] Add default function arguments
 [ ] Add callback function to `Client.send_request`
 [ ] Add tags system
 [ ] Add tag to remove main type restriction

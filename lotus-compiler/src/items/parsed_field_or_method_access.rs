@@ -198,7 +198,7 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
         context.signature_help_provider.add_argument_location(&arguments.location, i, arguments.get_location_including_separator(i + 1));
     }
 
-    let arg_vasms : Vec<Vasm> = arguments.into_iter().enumerate().map(|(i, arg)| {
+    let mut arg_vasms : Vec<Vasm> = arguments.into_iter().enumerate().map(|(i, arg)| {
         let hint = match signature.argument_types.get(i) {
             Some(ty) => match is_var_call {
                 true => Some(ty.clone()),
@@ -223,6 +223,18 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
         arg_vasm
     }).collect();
 
+    if let FunctionCall::Named(details) = &function_call {
+        details.function.with_ref(|function_unwrapped| {
+            for i in arg_vasms.len()..function_unwrapped.arguments.len() {
+                let arg = &function_unwrapped.arguments[i];
+
+                if arg.is_optional {
+                    arg_vasms.push(arg.default_value.clone());
+                }
+            }
+        });
+    }
+
     for i in remaining_param_indexes_to_infer.into_iter() {
         if function_name == "todo" {
             // TODO: improve default type parameters
@@ -240,7 +252,9 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
         });
     }
 
-    match arguments.len() == signature.argument_types.len() {
+
+
+    match arg_vasms.len() == signature.argument_types.len() {
         true => {
             for (i, (arg_type, arg_vasm)) in signature.argument_types.iter().zip(arg_vasms.iter()).enumerate() {
                 let expected_type = match is_var_call {

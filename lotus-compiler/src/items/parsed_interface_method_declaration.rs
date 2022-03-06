@@ -52,7 +52,7 @@ impl ParsedInterfaceMethodDeclaration {
         context.functions.insert(function_blueprint, None)
     }
 
-    pub fn process_body(&self, context: &mut ProgramContext) {
+    pub fn process_default_arguments(&self, context: &mut ProgramContext) {
         let function_wrapped = context.functions.get_by_location(&self.name, None);
 
         set_function_argument_default_values(&function_wrapped, &self.signature, context);

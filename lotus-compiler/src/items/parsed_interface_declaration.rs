@@ -129,10 +129,10 @@ impl ParsedInterfaceDeclaration {
         });
     }
 
-    pub fn process_method_bodies(&self, context: &mut ProgramContext) {
+    pub fn process_method_default_arguments(&self, context: &mut ProgramContext) {
         self.process(context, |interface_wrapped, context| {
             for method in self.get_methods() {
-                method.process_body(context);
+                method.process_default_arguments(context);
             }
         });
     }

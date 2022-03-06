@@ -600,6 +600,32 @@ impl ParsedTypeDeclaration {
         });
     }
 
+    pub fn process_method_default_arguments(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            for method in self.get_methods().iter().filter(|method| !method.is_autogen()) {
+                method.process_default_arguments(context);
+            }
+        });
+    }
+
+    pub fn process_autogen_method_default_arguments(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let children = type_wrapped.borrow().descendants.clone();
+
+            context.autogen_type = Some(type_wrapped);
+
+            for method in self.get_methods().iter().filter(|method| method.is_autogen()) {
+                for child in &children {
+                    context.push_scope(ScopeKind::Type(child.clone()));
+                    method.process_default_arguments(context);
+                    context.pop_scope();
+                }
+            }
+
+            context.autogen_type = None;
+        });
+    }
+
     pub fn process_method_bodies(&self, context: &mut ProgramContext) {
         self.process(context, |type_wrapped, context| {
             for method in self.get_methods().iter().filter(|method| !method.is_autogen()) {

@@ -125,6 +125,13 @@ impl ParsedFunctionOrMethodContent {
         function_wrapped
     }
 
+    pub fn process_default_arguments(&self, context: &mut ProgramContext) {
+        let type_id = context.get_current_type().map(|t| t.borrow().type_id);
+        let function_wrapped = context.functions.get_by_location(&self.name, type_id);
+
+        set_function_argument_default_values(&function_wrapped, &self.signature, context);
+    }
+
     pub fn process_body(&self, context: &mut ProgramContext) {
         let type_id = context.get_current_type().map(|t| t.borrow().type_id);
         let function_wrapped = context.functions.get_by_location(&self.name, type_id);
@@ -135,8 +142,6 @@ impl ParsedFunctionOrMethodContent {
 
         let is_raw_wasm = body.is_raw_wasm();
         let return_type = function_wrapped.borrow().signature.return_type.clone();
-
-        set_function_argument_default_values(&function_wrapped, &self.signature, context);
         
         context.push_scope(ScopeKind::Function(function_wrapped.clone()));
 

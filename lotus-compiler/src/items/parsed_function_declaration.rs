@@ -38,6 +38,10 @@ impl ParsedFunctionDeclaration {
         });
     }
 
+    pub fn process_default_arguments(&self, context: &mut ProgramContext) {
+        self.content.process_default_arguments(context);
+    }
+
     pub fn process_body(&self, context: &mut ProgramContext) {
         self.content.process_body(context);
     }

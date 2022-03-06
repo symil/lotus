@@ -1,0 +1,35 @@
+export fn main() {
+    let foo = Foo;
+
+    test(1, 2, 3);
+    test(1, 2);
+    test(1);
+    foo.test(1, 2, 3);
+    foo.test(1, 2);
+    foo.test(1);
+    test_interface(foo);
+}
+
+fn test(a: int, b: int = 5, c: int = 10) {
+    let result = a + b + c;
+
+    @log(result);
+}
+
+class Foo {
+    test(a: int, b: int = 5, c: int = 10) {
+        let result = a + b + c;
+
+        @log(result);
+    }
+}
+
+interface Test {
+    test(a: int, b: int = 4, c: int = 8);
+}
+
+fn test_interface<T : Test>(value: T) {
+    value.test(1, 2, 3);
+    value.test(1, 2);
+    value.test(1);
+}
