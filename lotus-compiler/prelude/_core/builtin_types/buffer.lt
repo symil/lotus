@@ -49,6 +49,7 @@ export class Buffer {
     reset_serialization_utility() {
         self.serialized_strings.clear();
         self.serialized_objects.clear();
+        self.remote_addr_to_local_string.clear();
         self.remote_addr_to_local_object.clear();
         self.local_object_to_remote_addr.clear();
         self.context = none;

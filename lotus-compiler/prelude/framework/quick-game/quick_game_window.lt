@@ -32,10 +32,10 @@ export view QuickGameWindow {
         let local_storage_username : string = evt.client.get_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);
 
         if !local_storage_username.is_empty() {
+            evt.client.freeze();
             evt.client.send_request(LoginRequest {
                 username: local_storage_username
-            });
-            evt.client.wait_until(client => !!client.user.name || !client.user.messages.is_empty());
+            }, () => evt.client.unfreeze());
         }
     }
 }

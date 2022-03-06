@@ -1,9 +1,13 @@
 pub class Counter {
-    next_value: int = 1,
+    _next_value: int = 1,
 
-    increment() -> int {
-        let result = self.next_value;
-        self.next_value += 1;
+    static new() -> Self {
+        Counter
+    }
+
+    next() -> int {
+        let result = self._next_value;
+        self._next_value += 1;
         
         result
     }

@@ -1,0 +1,9 @@
+pub class UserMetadata {
+    websocket_id: int,
+    processed_requests: RequestResult[] = []
+}
+
+pub class RequestResult {
+    request_id: int,
+    success: bool
+}

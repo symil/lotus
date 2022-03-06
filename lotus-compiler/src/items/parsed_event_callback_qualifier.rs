@@ -12,14 +12,14 @@ pub struct ParsedEventCallbackQualifierKeyword {
 #[derive(PartialEq, Hash, Eq, Clone, Copy)]
 pub enum ParsedEventCallbackQualifierKeywordToken {
     Standard = "@",
-    TargetSelf = "$",
+    // TargetSelf = "$",
 }
 
 impl ParsedEventCallbackQualifierKeyword {
     pub fn process(&self) -> EventCallbackQualifier {
         match &self.token {
             ParsedEventCallbackQualifierKeywordToken::Standard => EventCallbackQualifier::Standard,
-            ParsedEventCallbackQualifierKeywordToken::TargetSelf => EventCallbackQualifier::TargetSelf,
+            // ParsedEventCallbackQualifierKeywordToken::TargetSelf => EventCallbackQualifier::TargetSelf,
         }
     }
 }

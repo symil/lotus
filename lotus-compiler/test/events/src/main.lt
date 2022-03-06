@@ -4,6 +4,7 @@ event OnDealDamages {
     amount: int,
 
     @OnDealDamages {
+        @log(`DEAL ${evt.amount} DAMAGES`);
         self.target.health -= self.amount;
     }
 }
@@ -24,13 +25,17 @@ class Character {
     total_damages_received: int = 0,
     total_damages_dealt: int = 0
 
-    $OnDealDamages {
+    @OnDealDamages {
+        check evt.target == self;
+
+        @log(`${evt.target.name}: RECEIVE ${evt.amount} DAMAGES`);
         self.total_damages_received += evt.amount;
     }
 
     @OnDealDamages[50] {
         check evt.source == self;
 
+        @log(`${evt.source.name}: DEAL ${evt.amount} DAMAGES`);
         self.total_damages_dealt += evt.amount;
     }
 }
@@ -39,6 +44,7 @@ class Attacker extends Character {
     @OnDealDamages[-1] {
         check evt.source == self;
 
+        @log(`${evt.source.name}: DOUBLE DAMAGES`);
         evt.amount *= 2;
     }
 }
@@ -61,6 +67,7 @@ export fn main() {
     evt1.emit(entities);
     evt2.emit(entities);
 
+    @log("---");
     @dbg(attacker);
     @dbg(defender);
 }

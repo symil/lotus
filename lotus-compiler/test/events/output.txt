@@ -1,7 +1,15 @@
 attacker prepares to deal 10 damages to defender
+attacker: DOUBLE DAMAGES
+defender: RECEIVE 20 DAMAGES
+DEAL 20 DAMAGES
+attacker: DEAL 20 DAMAGES
 attacker has dealt 20 damages to defender
 defender prepares to deal 5 damages to attacker
+attacker: RECEIVE 5 DAMAGES
+DEAL 5 DAMAGES
+defender: DEAL 5 DAMAGES
 defender has dealt 5 damages to attacker
+---
 Attacker {
   name: "attacker",
   health: 95,

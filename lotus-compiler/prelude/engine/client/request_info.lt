@@ -1,0 +1,7 @@
+export type RequestCallback = fn(bool, Client);
+
+pub class RequestInfo {
+    request: Object,
+    callback: RequestCallback,
+    success: bool = false
+}

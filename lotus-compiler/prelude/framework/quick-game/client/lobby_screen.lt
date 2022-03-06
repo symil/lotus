@@ -52,6 +52,7 @@ export view LobbyScreen {
             .push(title_label)
         
         if is_user_logged {
+            self._displayLoginPanel();
             self._displayUserInfo(evt.client.user);
         } else {
             self._displayLoginPanel();

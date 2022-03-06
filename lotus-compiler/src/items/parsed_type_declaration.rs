@@ -550,9 +550,11 @@ impl ParsedTypeDeclaration {
                 }
 
                 for name in overriden_default_values {
-                    let mut field_info = Rc::get_mut(type_unwrapped.fields.get_mut(&name).unwrap()).unwrap();
+                    if let Some(rc) = type_unwrapped.fields.get_mut(&name) {
+                        let mut field_info = Rc::get_mut(rc).unwrap();
 
-                    field_info.is_required = false;
+                        field_info.is_required = false;
+                    }
                 }
             });
         });

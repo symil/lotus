@@ -15,7 +15,11 @@ export event OnUserRequest {
     world: #WORLD_TYPE,
     user: #USER_TYPE,
     request: Object,
-    success: bool = false
+    success: bool = false,
+
+    ok() {
+        self.success = true;
+    }
 }
 
 export event OnWorldInit {

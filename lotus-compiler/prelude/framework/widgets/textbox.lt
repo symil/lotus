@@ -1,6 +1,11 @@
 pub class TextBoxData {
     text: string = "",
-    cursor_index: int = 0
+    cursor_index: int = 0,
+
+    clear() {
+        self.text = "";
+        self.cursor_index = 0;
+    }
 }
 
 pub view TextBox {

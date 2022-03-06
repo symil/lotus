@@ -1,6 +1,6 @@
 export class QuickGameUser {
-    name: string = none,
     messages: QuickGameMessage[] = [],
+    name: string = none,
 
     show_error(message: string) {
         self.messages.push(QuickGameMessage {

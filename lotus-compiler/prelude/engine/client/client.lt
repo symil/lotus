@@ -14,7 +14,9 @@ export class Client {
     _network_events: OnNetworkEvent[] = [],
     _window_events: OnWindowEvent[] = [],
     _is_connected: bool = false,
-    _wait_until: fn(Client)(bool) = none,
+    _frozen: bool = false,
+    _request_id_counter: Counter = Counter::new(),
+    _request_id_to_info: Map<int, RequestInfo> = Map<int, RequestInfo>::new(),
 
     _hovered_view: View? = none,
     _focus_chain: View[] = [],
@@ -55,17 +57,7 @@ export class Client {
     }
 
     _should_continue_frame() -> bool {
-        let ok = true;
-
-        if self._wait_until {
-            ok = (self._wait_until)(self);
-
-            if ok {
-                self._wait_until = none;
-            }
-        }
-
-        ok
+        !self._frozen
     }
 
     _collect_window_events() {
@@ -100,6 +92,8 @@ export class Client {
     }
 
     _collect_and_process_network_events() {
+        let processed_requests : RequestInfo[] = [];
+
         self._buffer.reset();
         self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
@@ -109,13 +103,31 @@ export class Client {
 
             if event_kind == NetworkEventKind::Message {
                 let payload_size = self._buffer.read();
+                let processed_request_count = self._buffer.read();
 
-                self._buffer.reset_serialization_utility();
+                if processed_request_count == 0 {
+                    self._buffer.reset_serialization_utility();
 
-                self.user = @deserialize(self._buffer);
-                self._local_object_to_remote_addr = self._buffer.get_local_object_to_remote_addr_map().clone();
-                self._is_connected = true;
+                    self.user = @deserialize(self._buffer);
+                    self._local_object_to_remote_addr = self._buffer.get_local_object_to_remote_addr_map().clone();
+                    self._is_connected = true;
+                } else {
+                    for i in 0..processed_request_count {
+                        let request_id = self._buffer.read();
+                        let success = self._buffer.read().to_bool();
+                        let info = self._request_id_to_info.delete(request_id);
+
+                        if info {
+                            info.success = success;
+                            processed_requests.push(info);
+                        }
+                    }
+                }
             }
+        }
+
+        for info in processed_requests {
+            (info.callback)(info.success, self);
         }
     }
 
@@ -248,10 +260,20 @@ export class Client {
         }
     }
 
-    send_request<T>(value: T) {
+    send_request<T>(request: T, callback: RequestCallback = none) {
+        let request_id = self._request_id_counter.next();
+
         self._buffer.reset();
+        self._buffer.write(request_id);
         self._buffer.set_local_object_to_remote_addr_map(self._local_object_to_remote_addr);
-        @serialize(value, self._buffer);
+        @serialize(request, self._buffer);
+
+        if callback {
+            self._request_id_to_info.set(request_id, RequestInfo {
+                request,
+                callback,
+            });
+        }
 
         wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
     }
@@ -348,8 +370,12 @@ export class Client {
         wasm_set_window_title(title);
     }
 
-    wait_until(predicate: fn(Client)(bool)) {
-        self._wait_until = predicate;
+    freeze() {
+        self._frozen = true;
+    }
+
+    unfreeze() {
+        self._frozen = false;
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

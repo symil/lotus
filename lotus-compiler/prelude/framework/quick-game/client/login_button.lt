@@ -15,7 +15,14 @@ pub fn send_login_request(client: Client) {
         client.set_local_storage_item(USERNAME_LOCAL_STORAGE_KEY, username);
         client.send_request(LoginRequest {
             username
-        });
+        }, login_request_callback);
+    }
+}
+
+fn login_request_callback(success: bool, client: Client) {
+    if success {
+        client.local_data.ui.username.clear();
+        client.focus(none);
     }
 }
 

@@ -20,10 +20,9 @@ export type(i32) string {
         (global.get $EMPTY_STRING)
     }}
 
-    __is_none() -> bool {{
-        (global.get $EMPTY_STRING)
-        i32.eq
-    }}
+    __is_none() -> bool {
+        (self as ptr)[0] == 0
+    }
 
     _header() -> ptr {
         self as ptr

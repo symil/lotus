@@ -11,6 +11,7 @@ export class LoginRequest {
         } else {
             evt.user.name = self.username;
             evt.world.users.set(self.username, evt.user);
+            evt.ok();
         }
     }
 }

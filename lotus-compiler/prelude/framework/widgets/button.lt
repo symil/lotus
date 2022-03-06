@@ -26,6 +26,7 @@ export view Button {
             .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
+            .focus_background_color(Color::orange())
     }
 
     @OnPostRender {

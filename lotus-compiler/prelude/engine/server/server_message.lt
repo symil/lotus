@@ -1,4 +1,0 @@
-pub class ServerMessage {
-    user: #USER_TYPE,
-    events: Object[]
-}

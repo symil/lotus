@@ -46,8 +46,10 @@ export class NetworkManager {
                 webSocket.addEventListener('open', () => {
                     webSocket.send(message);
                 });
-            } else {
+            } else if (webSocket.readyState === 1) {
                 webSocket.send(message);
+            } else {
+                console.log(`error: cannot send message through websocket #${webSocketId} because it is closed`);
             }
         } else {
             throw new Error(`cannot send message: websocket is closed`);
@@ -74,13 +76,18 @@ export class NetworkManager {
             messagePayload
         });
 
-        if (messageType === 'message') {
+        if (messageType === 'message' && this._isStateUpdatePayload(messagePayload)) {
             if (this._stateUpdateMessageIndex !== -1) {
                 this._events.splice(this._stateUpdateMessageIndex, 1);
             }
 
             this._stateUpdateMessageIndex = this._events.length - 1;
         }
+    }
+
+    _isStateUpdatePayload(buffer) {
+        // First int32 must be 0
+        return buffer[0] === 0 && buffer[1] === 0 && buffer[2] === 0 && buffer[3] === 0;
     }
 
     _initWebSocket(webSocket) {
