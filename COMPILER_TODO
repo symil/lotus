@@ -157,7 +157,7 @@
 [X] Add tags system
 [X] Add tag to remove main type restriction
 [X] Add completion for dynamic method names
-[ ] Add random number generator
+[X] Add random number generator
 [ ] Do not copy draw primitives when passing them to javascript
 [ ] Add way to display only part of an image
 [ ] Allow multiple instances of the language server to be running at the same time

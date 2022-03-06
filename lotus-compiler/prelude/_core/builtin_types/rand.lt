@@ -1,0 +1,55 @@
+// https://prng.di.unimi.it/xoshiro128plusplus.c
+
+const DEFAULT_RNG = Rng::new();
+
+export class Rng {
+    _state: ptr,
+
+    static new() -> Self {
+        Self::with_seed(@get_current_time())
+    }
+
+    static with_seed(seed: int) -> Self {
+        let state = @alloc(4);
+
+        state[0] = seed;
+        state[1] = seed;
+        state[2] = seed;
+        state[3] = seed;
+
+        Self {
+            _state: state,
+        }
+    }
+
+    _next() -> int {
+        let s = self._state;
+        let result = rotl(s[0] + s[3], 7) + s[0];
+        let t = s[1] << 9;
+
+        s[2] ^= s[0];
+        s[3] ^= s[1];
+        s[1] ^= s[2];
+        s[0] ^= s[3];
+
+        s[2] ^= t;
+        s[3] = rotl(s[3], 11);
+
+        result
+    }
+
+    next(min: int, max: int) -> int {
+        let range = max - min;
+        let n = self._next().__mod_u(range);
+
+        min + n
+    }
+    
+    int(min: int, max: int) -> int {
+        DEFAULT_RNG.next(min, max)
+    }
+}
+
+fn rotl(x: int, k: int) -> int {
+    (x << k) | (x >> (32 - k))
+}

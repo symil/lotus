@@ -1,0 +1,7 @@
+export fn main() {
+    let rng = Rng::with_seed(23871);
+
+    for i in 0..20 {
+        @log(rng.next(0, 1000));
+    }
+}
