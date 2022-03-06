@@ -158,7 +158,7 @@
 [X] Add tag to remove main type restriction
 [X] Add completion for dynamic method names
 [X] Add random number generator
-[ ] Do not copy draw primitives when passing them to javascript
+[X] Do not copy draw primitives when passing them to javascript
 [ ] Add way to display only part of an image
 [ ] Allow multiple instances of the language server to be running at the same time
 [ ] Add support for a `lotus.toml` file to indicate the project's root

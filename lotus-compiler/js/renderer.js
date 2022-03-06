@@ -25,47 +25,49 @@ export class Renderer {
 
     drawFrameFromBuffer(buffer) {
         let cursor = buffer.readEnum(CURSORS);
+        let drawPrimitiveCount = buffer.read();
 
         this._window.clear();
         this._window.setCursor(cursor);
 
-        while (!buffer.isFinished()) {
+        for (let i = 0; i < drawPrimitiveCount; ++i) {
             this._drawPrimitiveFromBuffer(buffer);
         }
     }
 
     _drawPrimitiveFromBuffer(buffer) {
-        let x = buffer.readFloat();
-        let y = buffer.readFloat();
-        let z = buffer.readFloat();
-        let width = buffer.readFloat();
-        let height = buffer.readFloat();
-        let angle = buffer.readFloat();
-        let shape = buffer.readEnum(SHAPES);
-        let borderColor = buffer.readColor();
-        let borderWidth = buffer.readFloat();
-        let borderRadius = buffer.readFloat();
-        let borderDashLength = buffer.readFloat();
-        let borderGapLength = buffer.readFloat();
-        let backgroundColor = buffer.readColor();
-        let overlayColor = buffer.readColor();
-        let imageUrl = buffer.readString();
-        let imageWidth = buffer.readFloat();
-        let imageHeight = buffer.readFloat();
-        let text = buffer.readString();
-        let textFont = buffer.readEnum(FONTS);
-        let textSize = buffer.readFloat();
-        let textColor = buffer.readColor();
-        let textMargin = buffer.readFloat();
-        let textMaxWidth = buffer.readFloat();
-        let textMaxHeight = buffer.readFloat();
-        let textBackgroundColor = buffer.readColor();
-        let textBorderColor = buffer.readColor();
-        let textHorizontalAlign = buffer.readEnum(HORIZONTAL_ALIGNS);
-        let textVerticalAlign = buffer.readEnum(VERTICAL_ALIGNS);
-        let textBold = buffer.read();
-        let textItalic = buffer.read();
-        let textCursorIndex = buffer.read();
+        let primitive = buffer.readObject();
+        let x = primitive.readFloat();
+        let y = primitive.readFloat();
+        let z = primitive.readFloat();
+        let width = primitive.readFloat();
+        let height = primitive.readFloat();
+        let angle = primitive.readFloat();
+        let shape = primitive.readEnum(SHAPES);
+        let borderColor = primitive.readColor();
+        let borderWidth = primitive.readFloat();
+        let borderRadius = primitive.readFloat();
+        let borderDashLength = primitive.readFloat();
+        let borderGapLength = primitive.readFloat();
+        let backgroundColor = primitive.readColor();
+        let overlayColor = primitive.readColor();
+        let imageUrl = primitive.readString();
+        let imageWidth = primitive.readFloat();
+        let imageHeight = primitive.readFloat();
+        let text = primitive.readString();
+        let textFont = primitive.readEnum(FONTS);
+        let textSize = primitive.readFloat();
+        let textColor = primitive.readColor();
+        let textMargin = primitive.readFloat();
+        let textMaxWidth = primitive.readFloat();
+        let textMaxHeight = primitive.readFloat();
+        let textBackgroundColor = primitive.readColor();
+        let textBorderColor = primitive.readColor();
+        let textHorizontalAlign = primitive.readEnum(HORIZONTAL_ALIGNS);
+        let textVerticalAlign = primitive.readEnum(VERTICAL_ALIGNS);
+        let textBold = primitive.read();
+        let textItalic = primitive.read();
+        let textCursorIndex = primitive.read();
 
         // let primitive = { x, y, z, shape, width, height, angle, borderColor, borderWidth, borderRadius, borderDashLength, borderGapLength, backgroundColor, overlayColor, imageUrl, imageWidth, imageHeight, text, textFont, textSize, textColor, textMargin, textMaxWidth, textMaxHeight, textBackgroundColor, textBorderColor, textHorizontalAlign, textVerticalAlign, textBold, textItalic, textCursorIndex };
         // console.log(primitive);

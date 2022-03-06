@@ -213,17 +213,14 @@ export class Client {
             let draw_primitive = view._graphics.__to_draw_primitive(view._rect, self._virtual_to_real_ratio);
 
             self._draw_primitives.push(draw_primitive);
-
-            // if view.graphics.text {
-            //     @dbg(draw_primitive);
-            // }
         }
 
         self._buffer.reset();
         self._buffer.write_unchecked(cursor);
+        self._buffer.write_unchecked(self._draw_primitives.len());
 
         for primitive in self._draw_primitives {
-            primitive.write_to_buffer(self._buffer);
+            self._buffer.write_unchecked(primitive as int);
         }
 
         wasm_draw_frame(self._buffer.data, self._buffer.size);
