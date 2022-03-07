@@ -3,24 +3,23 @@ import fs from 'fs';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { initializeWasm } from './wasm-initialization';
-import { SERVER_CONFIG_FILE_NAME } from '../../lotus-cli/src/constants';
+import { SERVER_ENTRY_PATH } from './constants';
+
+const { HOME, OUTPOST_PORT, OUTPOST_CLIENT_DIR, OUTPOST_PROJECT_ID } = process.env;
 
 async function main() {
-    let serverDirectory = path.dirname(process.argv[1]);
-    let httpPort = parseInt(process.argv[2]);
-    let clientDirectory = path.resolve(process.argv[3]);
+    let httpPort = parseInt(OUTPOST_PORT);
+    let clientDirectory = OUTPOST_CLIENT_DIR;
+    let fileSystemRootPath = path.join(HOME, '.lotus-server-data', OUTPOST_PROJECT_ID);
 
     let wasmPath = path.join(clientDirectory, 'module.wasm');
-    let configPath = path.join(serverDirectory, SERVER_CONFIG_FILE_NAME);
-    let config = JSON.parse(fs.readFileSync(configPath));
-    let fileSystemRootPath = path.join(process.env.HOME, '.cache', 'lotus', config.name);
     let wasmEnv = makeWasmEnv({ fileSystemRootPath });
     let wasmBytes = fs.readFileSync(wasmPath, null);
     let wasmInstance = await initializeWasm(wasmBytes, wasmEnv);
     let httpServer = express();
 
     wasmInstance.exports.start_server();
-    setInterval(() => wasmInstance.exports.update_server(), 10);
+    setInterval(() => wasmInstance.exports.update_server(), SERVER_ENTRY_PATH);
     
     httpServer.use(express.static(clientDirectory));
     httpServer.listen(httpPort, () => {

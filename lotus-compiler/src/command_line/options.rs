@@ -1,5 +1,5 @@
 use std::{path::{PathBuf, Path}};
-use crate::{program::{SourceDirectoryDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerCommandKind};
+use crate::{program::{PackageDetails, PRELUDE_NAMESPACE, SELF_NAMESPACE}, language_server::LanguageServerCommandKind};
 use super::{LogLevel, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME, infer_root_directory};
 
 #[derive(Debug)]

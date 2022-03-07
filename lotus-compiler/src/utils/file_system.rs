@@ -1,6 +1,6 @@
 use std::path::{PathBuf, Path};
 
-pub fn read_directory_recursively(directory_path: &str) -> Vec<PathBuf> {
+pub fn read_directory_recursively(directory_path: &Path) -> Vec<PathBuf> {
     let mut result = vec![];
     let path = Path::new(directory_path);
 
@@ -10,7 +10,7 @@ pub fn read_directory_recursively(directory_path: &str) -> Vec<PathBuf> {
         if let Ok(entries) = path.read_dir() {
             for entry in entries {
                 if let Ok(entry) = entry {
-                    result.append(&mut read_directory_recursively(entry.path().to_str().unwrap()));
+                    result.append(&mut read_directory_recursively(&entry.path()));
                 }
             }
         }

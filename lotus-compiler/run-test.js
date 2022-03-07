@@ -6,7 +6,7 @@ import assert from 'assert';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
-import { initializeWasm } from './js/wasm-initialization';
+import { initializeWasm } from './javascript/wasm-initialization';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
