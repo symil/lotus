@@ -382,15 +382,19 @@ export class Client {
 
     prompt(message: string) -> string {
         self._buffer.reset();
-        
         wasm_prompt(message, self._buffer);
-
         self._buffer.read_string()
     }
 
     get_key_value(key: KeyCode) -> string {
         self._buffer.reset();
         wasm_get_key_value(key, self._buffer);
+        self._buffer.read_string()
+    }
+
+    get_href() -> string {
+        self._buffer.reset();
+        wasm_get_href(self._buffer);
         self._buffer.read_string()
     }
 

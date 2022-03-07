@@ -101,3 +101,7 @@ pub fn wasm_prompt(message: string, buffer: Buffer) [
 pub fn wasm_get_key_value(key: KeyCode, buffer: Buffer) [
     import env.get_key_value
 ]
+
+pub fn wasm_get_href(buffer: Buffer) [
+    import env.get_href
+]

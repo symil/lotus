@@ -16,11 +16,12 @@ pub view TestImage {
         check evt.action == KeyboardAction::Down;
 
         if evt.code == KeyCode::KeyF {
-            START_TIME = evt.client.get_current_time();
+            // START_TIME = evt.client.get_current_time();
+            @log(evt.client.get_href());
         } else if evt.code == KeyCode::KeyP {
             @log(evt.client.prompt("enter something"));
         }
 
-        @log(evt.client.get_key_value(evt.code));
+        // @log(evt.client.get_key_value(evt.code));
     }
 }

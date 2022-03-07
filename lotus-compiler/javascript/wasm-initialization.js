@@ -224,6 +224,13 @@ async function getWasmImportsObject(env) {
 
                 buffer.writeString(result);
             },
+            
+            get_href(bufferAddr) {
+                let window = env.getWindow();
+                let buffer = memoryManager.readBuffer(bufferAddr);
+
+                buffer.writeString(window.location.href);
+            },
 
             get_key_value(keyValue, bufferAddr) {
                 let key = KEYBOARD_CODES[keyValue];
