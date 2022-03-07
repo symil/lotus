@@ -64,7 +64,7 @@ pub struct VariableCompletionDetails {
 
 impl CompletionItemGenerator {
     pub fn generate(&self, source_location: &ItemLocation) -> Vec<CompletionItem> {
-        let show_internals = source_location.file.package_root_path.ends_with("prelude"); // TODO do this more properly
+        let show_internals = source_location.file.package_root_path.ends_with("prelude/src"); // TODO do this more properly
         let mut items = CompletionItemList::new();
 
         match self {
