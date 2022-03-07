@@ -166,6 +166,7 @@
 [X] Merge compiler and cli directories
 [X] Add function that maps to `window.prompt`
 [X] Add function to get key name from key code
+[ ] Implement debug dual window
 
 -- LATER --
 [ ] Allow manually specifying function parameters

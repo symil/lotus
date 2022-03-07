@@ -1,3 +1,5 @@
+#!/usr/bin/env node --enable-source-maps --experimental-specifier-resolution=node
+
 import path from 'path';
 import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, HTML_ENTRY_PATH, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
 import { execSync } from 'child_process';

@@ -668,7 +668,7 @@ impl ProgramContext {
             for file_path in path_list {
                 self.source_file_list.push(SourceFileDetails {
                     file_path,
-                    root_directory_path: details.src_path.to_str().unwrap().to_string(),
+                    root_directory_path: details.root_path.to_str().unwrap().to_string(),
                 });
             }
         }

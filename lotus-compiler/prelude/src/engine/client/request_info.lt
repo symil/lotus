@@ -1,4 +1,4 @@
-export type RequestCallback = fn(bool, Client);
+pub type RequestCallback = fn(bool, Client);
 
 pub class RequestInfo {
     request: Object,

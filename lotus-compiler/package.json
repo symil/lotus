@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "type": "module",
+  "bin": {
+    "lotus-cli": "./scripts/run-cli.js"
+  },
   "scripts": {
     "test": "node --experimental-specifier-resolution=node run-test.js all"
   },
@@ -20,8 +23,8 @@
     "mocha": "^9.0.3"
   },
   "dependencies": {
-    "toml": "^3.0.0",
     "chalk": "^4.1.2",
-    "fs-extra": "^10.0.0"
+    "fs-extra": "^10.0.0",
+    "toml": "^3.0.0"
   }
 }

@@ -140,6 +140,11 @@ export class View {
         self
     }
 
+    set_rect(x: float, y: float, width: float, height: float) -> Self {
+        self._rect = Rect::new(x, y, width, height);
+        self
+    }
+
     _hovered_graphics() -> Graphics {
         if !self._hovered_graphics {
             self._hovered_graphics = Graphics::empty();
