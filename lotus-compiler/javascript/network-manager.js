@@ -39,6 +39,7 @@ export class NetworkManager {
     }
 
     sendMessage(webSocketId, message) {
+        let closed = false;
         let webSocket = this._webSockets.get(webSocketId);
         
         if (webSocket) {
@@ -49,10 +50,14 @@ export class NetworkManager {
             } else if (webSocket.readyState === 1) {
                 webSocket.send(message);
             } else {
-                console.log(`error: cannot send message through websocket #${webSocketId} because it is closed`);
+                closed = true;
             }
         } else {
-            throw new Error(`cannot send message: websocket is closed`);
+            closed = true;
+        }
+
+        if (closed) {
+            console.log(`error: cannot send message through websocket #${webSocketId} because it is closed`);
         }
     }
 

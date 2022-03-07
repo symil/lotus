@@ -164,7 +164,8 @@
 [X] Add support for a `lotus.toml` file to indicate the project's root
 [X] Outpost: pass port & client directory name through environment variables
 [X] Merge compiler and cli directories
-[ ] Add function that maps to `window.prompt`
+[X] Add function that maps to `window.prompt`
+[X] Add function to get key name from key code
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -234,6 +235,7 @@
 [ ] Add `Vector` type
 [ ] When doing `fill class fields`, insert `field_name` instead of `field_name: none` if a variable `field_name` exists
 [ ] Properly show typedef function types (e.g `type MyCallback = fn(string)` should properly show `MyCallback` in completion suggestions when relevant)
+[ ] Add utility methods for `string` (implement those from javascript)
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev

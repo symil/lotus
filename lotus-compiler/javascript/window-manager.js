@@ -3,9 +3,10 @@ const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
 const CLICK_DISTANCE_THRESHOLD = 5;
 
 export class WindowManager {
-    constructor(window, aspectRatio) {
-        this._window = window;
-        this._aspectRatio = aspectRatio;
+    constructor({ getWindow }) {
+        this._getWindow = getWindow;
+        this._window = null;
+        this._aspectRatio = null;
         this._zIndexToCanvas = new Map();
         this._canvaxX = 0;
         this._canvasY = 0;
@@ -22,12 +23,12 @@ export class WindowManager {
         };
     }
 
-    _init() {
+    init(aspectRatio) {
         if (this._initialized) {
             return;
         }
 
-        let window = this._window;
+        let window = this._getWindow();
         let document = window.document;
 
         window.addEventListener('resize', () => this._onResize());
@@ -41,12 +42,10 @@ export class WindowManager {
         // document.addEventListener('visibilitychange', () => this._resetKeys());
         document.addEventListener('contextmenu', evt => evt.preventDefault());
 
+        this._window = window;
+        this._aspectRatio = aspectRatio;
         this._initialized = true;
         this._onResize();
-    }
-
-    start() {
-        this._init();
     }
 
     pollEvents() {

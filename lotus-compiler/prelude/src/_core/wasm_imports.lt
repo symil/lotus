@@ -93,3 +93,11 @@ pub fn wasm_clear_local_storage() -> int [
 pub fn wasm_process_exit(code: int) [
     import env.process_exit
 ]
+
+pub fn wasm_prompt(message: string, buffer: Buffer) [
+    import env.prompt
+]
+
+pub fn wasm_get_key_value(key: KeyCode, buffer: Buffer) [
+    import env.get_key_value
+]

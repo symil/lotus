@@ -1,6 +1,8 @@
 import { FileSystemManager } from './file-system-manager';
-import { readStringFromMemory, writeNetworkEventToBuffer, writeWindowEventToBuffer } from './js-wasm-communication';
+import { KEYBOARD_CODES, readStringFromMemory, writeNetworkEventToBuffer, writeWindowEventToBuffer } from './js-wasm-communication';
+import { KeyboardManager } from './keyboard-manager';
 import { MemoryBuffer } from './memory-buffer';
+import { MemoryManager } from './memory-manager';
 import { NetworkManager } from './network-manager';
 import { Renderer } from './renderer';
 import { decodeStringToUint32Array, encodeUint32ArrayToString } from './utils';
@@ -10,7 +12,7 @@ export async function initializeWasm(wasm, userEnv) {
     let instance = null;
     let getMemory = () => new Int32Array(instance.exports.memory.buffer);
     let env = { ...userEnv, getMemory };
-    let imports = getWasmImportsObject(env);
+    let imports = await getWasmImportsObject(env);
 
     if (WebAssembly.instantiateStreaming) {
         instance = (await WebAssembly.instantiateStreaming(wasm, imports)).instance;
@@ -35,11 +37,13 @@ export async function initializeWasm(wasm, userEnv) {
     - `getFileSystemModule()`: return the `fs` module of Node.js
     - `getFileSystemRootPath()`: return the path of the root directory where files should be stored
 */
-function getWasmImportsObject(env) {
-    let windowManager = null;
-    let renderer = null;
+async function getWasmImportsObject(env) {
+    let memoryManager = new MemoryManager(env);
+    let windowManager = new WindowManager(env);
+    let renderer = new Renderer(windowManager);
     let networkManager = new NetworkManager(env);
     let fileSystemManager = new FileSystemManager(env);
+    let keyboardManager = await KeyboardManager.new(env);
 
     return {
         utils: {
@@ -75,10 +79,7 @@ function getWasmImportsObject(env) {
             },
             
             init_window(aspectRatio) {
-                windowManager = new WindowManager(env.getWindow(), aspectRatio);
-                renderer = new Renderer(windowManager);
-
-                windowManager.start();
+                windowManager.init(aspectRatio);
             },
 
             get_window_width() {
@@ -214,6 +215,23 @@ function getWasmImportsObject(env) {
                     env.getProcess().exit(code);
                 }
             },
+
+            prompt(messageAddr, bufferAddr) {
+                let window = env.getWindow();
+                let message = memoryManager.readString(messageAddr);
+                let buffer = memoryManager.readBuffer(bufferAddr);
+                let result = window.prompt(message) || '';
+
+                buffer.writeString(result);
+            },
+
+            get_key_value(keyValue, bufferAddr) {
+                let key = KEYBOARD_CODES[keyValue];
+                let buffer = memoryManager.readBuffer(bufferAddr);
+                let name = keyboardManager.getKeyValue(key).toUpperCase();
+
+                buffer.writeString(name);
+            }
         }
     };
 }

@@ -6,15 +6,21 @@ pub view TestImage {
 
         self
             .image_url("https://img.pokemondb.net/artwork/vector/ninetales-alolan.png")
-            .image_layout(2, 2)
-            .animation_start_time(START_TIME)
-            .animation_current_time(evt.client.get_current_time())
-            .animation_duration(2)
+            // .image_layout(2, 2)
+            // .animation_start_time(START_TIME)
+            // .animation_current_time(evt.client.get_current_time())
+            // .animation_duration(2)
     }
 
     @OnKeyboardEvent {
-        if evt.action == KeyboardAction::Down && evt.code == KeyCode::KeyF {
+        check evt.action == KeyboardAction::Down;
+
+        if evt.code == KeyCode::KeyF {
             START_TIME = evt.client.get_current_time();
+        } else if evt.code == KeyCode::KeyP {
+            @log(evt.client.prompt("enter something"));
         }
+
+        @log(evt.client.get_key_value(evt.code));
     }
 }

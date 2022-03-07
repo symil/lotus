@@ -380,6 +380,20 @@ export class Client {
         (@get_current_time() - self._start_time).to_float() / 1000f
     }
 
+    prompt(message: string) -> string {
+        self._buffer.reset();
+        
+        wasm_prompt(message, self._buffer);
+
+        self._buffer.read_string()
+    }
+
+    get_key_value(key: KeyCode) -> string {
+        self._buffer.reset();
+        wasm_get_key_value(key, self._buffer);
+        self._buffer.read_string()
+    }
+
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         false
     }

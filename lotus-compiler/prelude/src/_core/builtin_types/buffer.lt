@@ -1,4 +1,5 @@
 export class Buffer {
+    // IMPORTANT: fields `data`, `size` and `capacity` must not be moved as the javascript side depend on them
     data: ptr = none,
     size: int = 0,
     capacity: int = 0,
@@ -144,5 +145,19 @@ export class Buffer {
 
     consume() -> int[] {
         Array<int>::from_raw_parts(self.data, self.size, self.capacity)
+    }
+
+    _content() -> ptr {
+        self.data.add(self.read_index)
+    }
+
+    read_string() -> string {
+        let length = self.read();
+        let result = string::__create(length);
+
+        self._content().copy_to(result._content() as ptr, length);
+        self.read_index += length;
+
+        result
     }
 }
