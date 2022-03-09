@@ -31,6 +31,7 @@ export class Client {
     _virtual_to_real_ratio: float = none,
     _cursor_x: float = 0,
     _cursor_y: float = 0,
+    _local_storage_key_prefix: string = "",
 
     static get() -> Self {
         CLIENT
@@ -344,17 +345,24 @@ export class Client {
         self._focus_next_or_prev(-1);
     }
 
+    set_local_storage_key_prefix(prefix: string) {
+        self._local_storage_key_prefix = prefix;
+    }
+
     set_local_storage_item<T>(key: string, data: T) {
+        key = self._local_storage_key_prefix + key;
         self._buffer.reset();
         T::__serialize_with_schema(self._buffer, data);
         wasm_set_local_storage_item(key, self._buffer.data, self._buffer.size);
     }
 
     remove_local_storage_item(key: string) {
+        key = self._local_storage_key_prefix + key;
         wasm_remove_local_storage_item(key);
     }
 
     get_local_storage_item<T>(key: string) -> T? {
+        key = self._local_storage_key_prefix + key;
         self._buffer.reset();
         self._buffer.size = wasm_get_local_storage_item(key, self._buffer.data, self._buffer.capacity);
         T::__deserialize_with_schema(self._buffer)

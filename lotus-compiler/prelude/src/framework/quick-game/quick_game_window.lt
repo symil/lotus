@@ -18,8 +18,6 @@ export view QuickGameWindow {
             }]
         });
 
-        evt.client.set_window_title(self.title);
-
         self.layout()
             .push(lobby_screen)
             .scale(0.35)
@@ -31,6 +29,9 @@ export view QuickGameWindow {
     }
 
     @OnClientStart {
+        evt.client.set_local_storage_key_prefix(self.title + ":");
+        evt.client.set_window_title(self.title);
+
         let local_storage_username : string = evt.client.get_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);
 
         if !local_storage_username.is_empty() {

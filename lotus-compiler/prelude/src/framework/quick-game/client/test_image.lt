@@ -12,7 +12,7 @@ pub view TestImage {
             // .animation_duration(2)
     }
 
-    @OnKeyboardEvent {
+    @OnKeyboardEvent[1] {
         check evt.action == KeyboardAction::Down;
 
         if evt.code == KeyCode::KeyF {

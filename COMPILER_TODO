@@ -239,6 +239,7 @@
 [ ] Properly show typedef function types (e.g `type MyCallback = fn(string)` should properly show `MyCallback` in completion suggestions when relevant)
 [ ] Add utility methods for `string` (implement those from javascript)
 [ ] Implement debug dual window
+[ ] Add function to wait until the specified images are loaded
 
 -- COMMON ITERATOR METHODS --
 enumerate, zip, rev
