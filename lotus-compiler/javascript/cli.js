@@ -16,6 +16,7 @@ async function main() {
     let remoteHost = process.argv.find(arg => arg.includes('@')) || '';
     let port = +process.argv.find(arg => +arg > 0) || DEFAULT_HTTP_PORT;
 
+    let windowTitle = `'${config.title}'`;
     let inputPath = path.join(rootPath, 'src');
     let buildPath = path.join(rootPath, BUILD_DIRECTORY_NAME);
     let watFilePath = path.join(buildPath, 'client', OUTPUT_WAT_FILE_NAME);
@@ -26,6 +27,7 @@ async function main() {
     let command = [
         'outpost', port, remoteHost,
         '-i', projectId,
+        '-t', windowTitle,
         '-n', ...REQUIRED_NODE_PACKAGES,
         '-z', lotusToWatCommand, watToWasmCommand,
         '-h', HTML_ENTRY_PATH,

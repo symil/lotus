@@ -10,7 +10,8 @@ const BOOL_TYPE = { check: x => typeof x === 'boolean', name: 'boolean' };
 
 const FIELDS = {
     name: [STRING_TYPE, root => path.basename(root)],
-    framework: [BOOL_TYPE, false]
+    framework: [BOOL_TYPE, false],
+    title: [STRING_TYPE, '']
 }
 
 export function readPackageDetails(packageRootPath) {
