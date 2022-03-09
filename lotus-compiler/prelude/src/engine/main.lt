@@ -1,0 +1,4 @@
+#USER_TYPE = Object
+#WORLD_TYPE = Object
+#WINDOW_TYPE = View
+#LOCAL_DATA_TYPE = Object

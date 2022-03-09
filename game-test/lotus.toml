@@ -1,1 +1,2 @@
 name = "some-game"
+framework = true

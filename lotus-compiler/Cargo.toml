@@ -7,4 +7,5 @@ edition = "2018"
 colored = "2"
 indexmap = "1.7"
 enum-iterator = "*"
+toml = "*"
 parsable = { path = "../parsable" }

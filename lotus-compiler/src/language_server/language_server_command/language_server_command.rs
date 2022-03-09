@@ -1,6 +1,6 @@
 use std::{mem::take, time::Instant, fmt::format, path::Path};
 use parsable::ParseError;
-use crate::{command_line::{infer_root_directory, bundle_with_prelude, time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation}, utils::{FileSystemCache, PerfTimer}, items::ParsedSourceFile};
+use crate::{command_line::{time_function}, program::{ProgramContext, ProgramContextOptions, CursorLocation, ProgramContextMode}, utils::{FileSystemCache, PerfTimer}, items::ParsedSourceFile, package::Package};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters, LanguageServerCommandOutput, LanguageServerCommandReload};
 
 pub const COMMAND_OUTPUT_ITEM_LINE_START : &'static str = "\n#?!#";
@@ -9,7 +9,7 @@ pub const COMMAND_SEPARATOR : &'static str = "##";
 pub struct LanguageServerCommand {
     pub id: u32,
     pub kind: LanguageServerCommandKind,
-    pub root_directory_path: String,
+    pub package: Package,
     pub file_path: String,
     pub cursor_index: usize,
     pub file_content: String,
@@ -25,7 +25,7 @@ impl LanguageServerCommand {
         let cursor_index = arguments.next().and_then(|str| str.parse::<usize>().ok()).unwrap_or(usize::MAX);
         let file_content = arguments.next().and_then(|str| Some(str.to_string())).unwrap_or_default();
         let new_name = arguments.next().and_then(|str| Some(str.to_string())).unwrap_or_default();
-        let root_directory_path = infer_root_directory(&file_path).unwrap_or_default();
+        let package = Package::from_path(&file_path);
 
         let duration = 0;
         let parameters = LanguageServerCommandParameters {
@@ -35,7 +35,7 @@ impl LanguageServerCommand {
         Some(Self {
             id,
             kind,
-            root_directory_path,
+            package,
             file_path,
             cursor_index,
             file_content,
@@ -45,8 +45,13 @@ impl LanguageServerCommand {
 
     pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> String {
         let callback = self.kind.get_callback();
+        let options = ProgramContextOptions {
+            mode: ProgramContextMode::Validate,
+            cursor_location: Some(CursorLocation::new(&self.package.src_path, &self.file_path, self.cursor_index)),
+        };
+        let source_directories = self.package.get_source_directories();
         let mut timer = PerfTimer::new();
-        let mut context = ProgramContext::new(ProgramContextOptions::language_server(&self.root_directory_path, &self.file_path, self.cursor_index));
+        let mut context = ProgramContext::new(options);
         let mut output = LanguageServerCommandOutput::new(self.id);
 
         if let Some(cache) = &mut cache {
@@ -58,7 +63,7 @@ impl LanguageServerCommand {
         }
 
         timer.trigger("parsing");
-        context.parse_source_files(&bundle_with_prelude(&self.root_directory_path), cache);
+        context.parse_source_files(&source_directories, cache);
 
         timer.trigger("processing");
         if !context.has_errors() {

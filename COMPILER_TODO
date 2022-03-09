@@ -167,6 +167,7 @@
 [X] Add function that maps to `window.prompt`
 [X] Add function to get key name from key code
 [X] Add function to get `window.location.href`
+[X] Add option to not include framework
 
 -- LATER --
 [ ] Allow manually specifying function parameters

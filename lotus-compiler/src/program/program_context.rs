@@ -1,11 +1,11 @@
 use core::panic;
-use std::{collections::{HashMap, HashSet}, hash::{Hasher}, mem::{take}, rc::{Rc}, fs::{DirBuilder, File}, path::Path, io::Write};
+use std::{collections::{HashMap, HashSet}, hash::{Hasher}, mem::{take}, rc::{Rc}, fs::{DirBuilder, File}, path::Path, io::Write, process};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal, init_color_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EXPORTED_FUNCTIONS, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, PackageDetails, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex, RootTags};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectory, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex, RootTags};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
@@ -648,18 +648,34 @@ impl ProgramContext {
     }
 
     pub fn vasm(&self) -> Vasm {
-        Vasm::new(self.options.mode == ProgramContextMode::Compiler)
+        Vasm::new(self.options.mode == ProgramContextMode::Compile)
     }
 
-    pub fn parse_source_files(&mut self, directories: &[PackageDetails], provided_cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) {
+    pub fn parse_source_files(&mut self, directories: &[SourceDirectory], provided_cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) {
         for details in directories {
             let mut path_list = vec![];
+            let exclude = details.exclude.clone().unwrap_or_default();
 
-            for file_path in read_directory_recursively(&details.src_path) {
+            for file_path in read_directory_recursively(Path::new(&details.root_path)) {
+                let mut ok = false;
+
                 if let Some(extension) = file_path.extension() {
                     if extension == SOURCE_FILE_EXTENSION {
-                        path_list.push(file_path.to_str().unwrap().to_string());
+                        ok = true;
                     }
+                }
+
+                if ok {
+                    let base = file_path.strip_prefix(&details.root_path).unwrap();
+                    let first = base.components().next().unwrap().as_os_str().to_str().unwrap();
+                    
+                    if first == exclude {
+                        ok = false;
+                    }
+                }
+
+                if ok {
+                    path_list.push(file_path.to_string_lossy().to_string());
                 }
             }
 
@@ -668,7 +684,7 @@ impl ProgramContext {
             for file_path in path_list {
                 self.source_file_list.push(SourceFileDetails {
                     file_path,
-                    root_directory_path: details.src_path.to_str().unwrap().to_string(),
+                    root_directory_path: details.root_path.clone(),
                 });
             }
         }

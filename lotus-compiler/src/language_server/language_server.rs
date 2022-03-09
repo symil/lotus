@@ -1,7 +1,7 @@
 use std::{str, net::TcpListener, io::{Read, Write}, collections::HashMap, thread::sleep, time::{Duration, Instant}};
 use colored::Colorize;
 use parsable::StringReader;
-use crate::{program::{ProgramContext, ProgramContextOptions}, command_line::{infer_root_directory, bundle_with_prelude}, utils::FileSystemCache, language_server::LanguageServerCommand};
+use crate::{program::{ProgramContext, ProgramContextOptions}, utils::FileSystemCache, language_server::LanguageServerCommand};
 use super::{LanguageServerCommandKind, LanguageServerCommandParameters};
 
 const PORT : u16 = 31657;

@@ -3,13 +3,15 @@ import path from 'path';
 import toml from 'toml';
 import { PACKAGE_CONFIG_FILE_NAME } from './constants';
 
-const FIELDS = {
-    name: ['string', root => path.basename(root)]
-}
+const FRAMEWORKS = ['none', 'quick-game'];
 
-const TYPES = {
-    string: x => typeof x === 'string'
-};
+const STRING_TYPE = { check: x => typeof x === 'string', name: 'string' };
+const BOOL_TYPE = { check: x => typeof x === 'boolean', name: 'boolean' };
+
+const FIELDS = {
+    name: [STRING_TYPE, root => path.basename(root)],
+    framework: [BOOL_TYPE, false]
+}
 
 export function readPackageDetails(packageRootPath) {
     let packageConfigFilePath = path.join(packageRootPath, PACKAGE_CONFIG_FILE_NAME);
@@ -40,12 +42,15 @@ function formatConfiguration(config, packageRootPath) {
             fieldEntry = [fieldEntry, undefined];
         }
 
-        let [ typeName, defaultValue ] = fieldEntry;
-        let checkFunction = TYPES[typeName];
+        let [ type, defaultValue ] = fieldEntry;
         let value = config[fieldName];
 
-        if (value !== undefined && !checkFunction(value)) {
-            errors.push(`field \`${fieldName}\`: expected ${typeName}, got ${JSON.stringify(value)}`);
+        if (Array.isArray(type)) {
+            type = makeEnum(type);
+        }
+
+        if (value !== undefined && !type.check(value)) {
+            errors.push(`field \`${fieldName}\`: expected ${type.name}, got ${JSON.stringify(value)}`);
             value = undefined;
         }
 
@@ -61,4 +66,11 @@ function formatConfiguration(config, packageRootPath) {
     }
 
     return errors;
+}
+
+function makeEnum(values) {
+    return {
+        check: value => values.includes(value),
+        name: `one of ${values.map(x => JSON.stringify(x)).join(', ')}`
+    };
 }

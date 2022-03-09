@@ -5,9 +5,10 @@
 #![allow(unused)]
 use std::{env, process};
 use colored::*;
-use command_line::{CommandLineOptions, LogLevel, PROGRAM_NAME, Timer, ProgramStep, infer_root_directory, bundle_with_prelude};
+use command_line::{CommandLineOptions, LogLevel, Timer, ProgramStep};
 use indexmap::IndexSet;
 use language_server::start_language_server;
+use package::Package;
 use program::{ProgramContext, ProgramContextOptions};
 use utils::FileSystemCache;
 
@@ -17,23 +18,26 @@ mod utils;
 mod program;
 mod items;
 mod command_line;
+mod package;
 mod language_server;
+
+const PROGRAM_NAME : &'static str = "lotus-compiler";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let options = CommandLineOptions::parse_from_args(args);
 
     if options.run_benchmark {
-        let root_directory = infer_root_directory(options.input_path.as_ref().unwrap()).unwrap();
-        let source_directories = bundle_with_prelude(&root_directory);
+        let package = Package::from_path(options.input_path.as_ref().unwrap());
+        let source_directories = package.get_source_directories();
         let mut cache = FileSystemCache::new();
-        let mut context = ProgramContext::new(ProgramContextOptions::compiler());
+        let mut context = ProgramContext::new(ProgramContextOptions::compile());
         let mut timer = Timer::new();
 
         for i in 0..3 {
             let duration = timer.time(ProgramStep::Total, || {
                 context = ProgramContext::new(ProgramContextOptions {
-                    mode: ProgramContextMode::LanguageServer,
+                    mode: ProgramContextMode::Validate,
                     cursor_location: None,
                 });
                 context.parse_source_files(&source_directories, Some(&mut cache));
@@ -48,14 +52,18 @@ fn main() {
     } else {
         // dbg!(&options);
         if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {
-            let root_directory = infer_root_directory(input_path).unwrap();
-            let source_directories = bundle_with_prelude(&root_directory);
+            let package = Package::from_path(input_path);
+            let source_directories = package.get_source_directories();
+            let program_options = match options.validate {
+                true => ProgramContextOptions::validate(),
+                false => ProgramContextOptions::compile(),
+            };
             let mut timer = Timer::new();
-            let mut context = ProgramContext::new(ProgramContextOptions::compiler());
+            let mut context = ProgramContext::new(program_options);
 
             timer.time(ProgramStep::Parse, || context.parse_source_files(&source_directories, None));
 
-            if !context.has_errors() {
+            if !options.validate && !context.has_errors() {
                 timer.time(ProgramStep::Process, || context.process_source_files());
             }
 
@@ -76,9 +84,11 @@ fn main() {
                     process::exit(1);
                 },
                 None => {
-                    timer.time(ProgramStep::Resolve, || context.resolve_wat());
-                    timer.time(ProgramStep::Stringify, || context.generate_output_file());
-                    timer.time(ProgramStep::Write, || context.write_output_file(output_path));
+                    if !options.validate {
+                        timer.time(ProgramStep::Resolve, || context.resolve_wat());
+                        timer.time(ProgramStep::Stringify, || context.generate_output_file());
+                        timer.time(ProgramStep::Write, || context.write_output_file(output_path));
+                    }
 
                     match options.log_level {
                         LogLevel::Silent => {},
