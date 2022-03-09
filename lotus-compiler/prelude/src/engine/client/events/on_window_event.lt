@@ -27,6 +27,7 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> OnWind
             ctrl_key: buffer.read_unchecked(),
             shift_key: buffer.read_unchecked(),
             alt_key: buffer.read_unchecked(),
+            repeat: buffer.read_unchecked(),
         },
         WindowEventType::Wheel => OnWheelEvent {
             client,

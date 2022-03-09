@@ -409,6 +409,10 @@ export class Client {
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         false
     }
+
+    dyn __to_debug_string_dyn(set: Set<Pointer<int>>) -> string{
+        "<CLIENT>"
+    }
 }
 
 sys fn start_client() {

@@ -240,6 +240,6 @@
 [ ] Add utility methods for `string` (implement those from javascript)
 [ ] Implement debug dual window
 [ ] Add function to wait until the specified images are loaded
-
--- COMMON ITERATOR METHODS --
-enumerate, zip, rev
+[ ] Add array destructuration (`let [a, b] = some_array`)
+[ ] Add object destructuration (`let { a, b } = some_object`)
+[ ] Add iterator methods on arrays

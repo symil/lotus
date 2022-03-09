@@ -8,9 +8,18 @@ pub class Server {
     _websocket_id_to_user: Map<int, #USER_TYPE> = Map<int, #USER_TYPE>::new(),
     _websocket_id_counter: Counter = Counter,
     _request_to_request_id: Map<Object, int> = Map<Object, int>::new(),
+    _start_time: int = @get_current_time(),
 
     static get() -> Self {
         SERVER
+    }
+
+    users() -> #USER_TYPE[] {
+        self._user_to_metadata.keys()
+    }
+
+    get_current_time() -> float {
+        (@get_current_time() - self._start_time).to_float() / 1000f
     }
 
     _start() {

@@ -5,12 +5,13 @@ pub const TYPE_ID_TO_ANCESTOR_IDS = Map<int, Set<int>>::with_capacity(TYPE_CAPAC
 
 export class Object extends any {
     autogen static __init() {
-        // @log("INIT: " + #TYPE_NAME);
         let ancestor_set = Set<int>::new();
 
         iter_ancestors {
             ancestor_set.add(#ANCESTOR_ID);
         }
+
+        // @log(`${#TYPE_NAME}: ${#TYPE_ID}`);
 
         TYPE_ID_TO_FIELD_COUNT.set(#TYPE_ID, #FIELD_COUNT);
         TYPE_ID_TO_ANCESTOR_IDS.set(#TYPE_ID, ancestor_set);

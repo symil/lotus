@@ -44,6 +44,30 @@ export type(f32) float {
         }
     }
 
+    min_abs(other: float) -> float {
+        if self.abs() <= other.abs() {
+            self
+        } else {
+            other
+        }
+    }
+
+    max_abs(other: float) -> float {
+        if self.abs() >= other.abs() {
+            self
+        } else {
+            other
+        }
+    }
+
+    in_range(min: float, max: float) -> bool {
+        self >= min && self <= max
+    }
+
+    is_zero() -> bool {
+        self < 0.00000001
+    }
+
     static __default() -> float {{
         (f32.const 0)
     }}

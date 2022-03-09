@@ -45,8 +45,13 @@ export class Rng {
         min + n
     }
     
-    int(min: int, max: int) -> int {
+    static int(min: int, max: int) -> int {
         DEFAULT_RNG.next(min, max)
+    }
+
+    static float(min: float, max: float) -> float {
+        // TODO: fix this
+        DEFAULT_RNG.next((min * 1000).to_int(), (max * 1000).to_int()).to_float() / 1000
     }
 }
 

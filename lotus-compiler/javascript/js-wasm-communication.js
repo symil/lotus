@@ -19,6 +19,7 @@ export function writeWindowEventToBuffer(event, buffer) {
         buffer.write(payload.ctrlKey);
         buffer.write(payload.shiftKey);
         buffer.write(payload.altKey);
+        buffer.write(+payload.repeat);
     } else if (type == 'mouse') {
         buffer.write(eventTypeId);
         buffer.writeEnum(payload.action, MOUSE_ACTIONS);

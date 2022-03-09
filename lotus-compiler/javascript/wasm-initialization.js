@@ -136,7 +136,7 @@ async function getWasmImportsObject(env) {
             },
 
             send_message(webSocketId, messageAddr, messageSize) {
-                let message = new Uint32Array(env.getMemory().buffer, messageAddr * 4, messageSize);
+                let message = new Int32Array(env.getMemory().buffer, messageAddr * 4, messageSize);
 
                 networkManager.sendMessage(webSocketId, message);
             },

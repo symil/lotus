@@ -223,7 +223,8 @@ export class WindowManager {
             text: getText(evt),
             ctrlKey: evt.ctrlKey,
             shiftKey: evt.shiftKey,
-            altKey: evt.altKey
+            altKey: evt.altKey,
+            repeat: evt.repeat
         });
     }
 
@@ -234,7 +235,8 @@ export class WindowManager {
             text: getText(evt),
             ctrlKey: evt.ctrlKey,
             shiftKey: evt.shiftKey,
-            altKey: evt.altKey
+            altKey: evt.altKey,
+            repeat: evt.repeat
         });
     }
 

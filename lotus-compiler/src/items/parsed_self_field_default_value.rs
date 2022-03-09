@@ -24,7 +24,10 @@ impl ParsedSuperFieldDefaultValue {
         let equal = unwrap_item(&self.equal, self, context)?;
         let expression = unwrap_item(&self.expression, self, context)?;
         let field_type = match self_type.get_field(name.as_str()) {
-            Some(field_info) => field_info.ty.clone(),
+            Some(field_info) => {
+                context.rename_provider.add_occurence(name, &field_info.name);
+                field_info.ty.clone()
+            },
             None => {
                 context.errors.generic(name, format!("type `{}` has no field `{}`", self_type, name.as_str()));
                 return None;

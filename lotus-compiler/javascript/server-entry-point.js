@@ -3,7 +3,7 @@ import fs from 'fs';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { initializeWasm } from './wasm-initialization';
-import { SERVER_ENTRY_PATH } from './constants';
+import { SERVER_REFRESH_RATE } from './constants';
 
 const { HOME, OUTPOST_PORT, OUTPOST_CLIENT_DIR, OUTPOST_PROJECT_ID } = process.env;
 
@@ -19,7 +19,7 @@ async function main() {
     let httpServer = express();
 
     wasmInstance.exports.start_server();
-    setInterval(() => wasmInstance.exports.update_server(), SERVER_ENTRY_PATH);
+    setInterval(() => wasmInstance.exports.update_server(), SERVER_REFRESH_RATE);
     
     httpServer.use(express.static(clientDirectory));
     httpServer.listen(httpPort, () => {

@@ -44,8 +44,10 @@ export class NetworkManager {
         
         if (webSocket) {
             if (webSocket.readyState === 0) {
+                let copy = message.slice();
+
                 webSocket.addEventListener('open', () => {
-                    webSocket.send(message);
+                    webSocket.send(copy);
                 });
             } else if (webSocket.readyState === 1) {
                 webSocket.send(message);
@@ -81,7 +83,7 @@ export class NetworkManager {
             messagePayload
         });
 
-        if (messageType === 'message' && this._isStateUpdatePayload(messagePayload)) {
+        if (typeof window === 'object' && messageType === 'message' && this._isStateUpdatePayload(messagePayload)) {
             if (this._stateUpdateMessageIndex !== -1) {
                 this._events.splice(this._stateUpdateMessageIndex, 1);
             }

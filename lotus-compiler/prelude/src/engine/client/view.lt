@@ -52,8 +52,10 @@ export class View {
         }
     }
 
-    add_child(view: View, rect: Rect) {
-        view._rect = rect.clone();
+    add_child(view: View, rect: Rect = none) {
+        if rect {
+            view._rect = rect.clone();
+        }
         view._parent = self;
         self._children.push(view);
     }

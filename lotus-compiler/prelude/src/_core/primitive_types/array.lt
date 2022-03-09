@@ -324,6 +324,10 @@ export class Array<T> {
         self
     }
 
+    get_random() -> T {
+        self[Rng::int(0, self.len())]
+    }
+
     dyn __retain_dyn() {
         Pointer<T>::__retain(self._body);
 
