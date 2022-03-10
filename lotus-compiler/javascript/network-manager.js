@@ -1,5 +1,8 @@
 export class NetworkManager {
-    constructor({ createWebSocket, createWebSocketServer }) {
+    constructor({ getPathModule, getFileSystemModule, getHttpsModule, createWebSocket, createWebSocketServer }) {
+        this._getFsModule = getFileSystemModule;
+        this._getPathModule = getPathModule;
+        this._getHttpsModule = getHttpsModule;
         this._createWebSocket = createWebSocket;
         this._createWebSocketServer = createWebSocketServer;
         this._webSocketIdCounter = 1;
@@ -23,8 +26,8 @@ export class NetworkManager {
         return this._webSockets.get(webSocketId)?.readyState;
     }
 
-    createWebSocketServer(port) {
-        let webSocketServer = this._createWebSocketServer({ port });
+    createWebSocketServer() {
+        let webSocketServer = this._createWebSocketServer();
         let id = this._webSocketServerIdCounter++;
 
         webSocketServer.on('connection', (webSocket) => {

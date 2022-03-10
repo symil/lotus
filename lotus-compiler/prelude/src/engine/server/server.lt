@@ -23,7 +23,7 @@ pub class Server {
     }
 
     _start() {
-        self._websocket_server_id = wasm_create_websocket_server(WEBSOCKET_PORT);
+        self._websocket_server_id = wasm_create_websocket_server();
         self._world = #WORLD_TYPE::__default();
 
         @emit(OnWorldInit { server: self, world: self._world }, [self._world]);

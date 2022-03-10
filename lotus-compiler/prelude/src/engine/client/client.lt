@@ -39,7 +39,7 @@ export class Client {
 
     _start() {
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
-        self._websocket_id = wasm_create_websocket(`ws://localhost:${WEBSOCKET_PORT}`);
+        self._websocket_id = wasm_create_websocket();
 
         let window = #WINDOW_TYPE::__default();
         let event = OnClientStart {
@@ -402,10 +402,22 @@ export class Client {
         self._buffer.read_string()
     }
 
-    get_href() -> string {
+    _get_string_from_js(call: fn(Buffer)) -> string {
         self._buffer.reset();
-        wasm_get_href(self._buffer);
+        call(self._buffer);
         self._buffer.read_string()
+    }
+
+    get_href() -> string {
+        self._get_string_from_js(buffer => wasm_get_href(buffer))
+    }
+
+    get_hostname() -> string {
+        self._get_string_from_js(buffer => wasm_get_hostname(buffer))
+    }
+
+    get_protocol() -> string {
+        self._get_string_from_js(buffer => wasm_get_protocol(buffer))
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

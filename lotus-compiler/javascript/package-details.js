@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import toml from 'toml';
 import { DEFAULT_HTTP_PORT, PACKAGE_CONFIG_FILE_NAME } from './constants';
-import { camelToKebabCase, kebabToCamelCase } from './utils';
+import { camelToKebabCase } from './utils';
 
 const STRING_TYPE = { check: x => typeof x === 'string', name: 'string' };
 const BOOL_TYPE = { check: x => typeof x === 'boolean', name: 'boolean' };

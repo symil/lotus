@@ -163,7 +163,7 @@ export type(i32) string {
         !!self.find(str, 0)
     }
 
-    starts_with(str: string, index: int) -> bool {
+    starts_with(str: string, index: int = 0) -> bool {
         if index + str.len() > self.len() {
             false
         } else {

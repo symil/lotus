@@ -46,11 +46,11 @@ pub fn wasm_clear_renderer_cache() [
     import env.clear_renderer_cache
 ]
 
-pub fn wasm_create_websocket(url: string) -> int [
+pub fn wasm_create_websocket() -> int [
     import env.create_websocket
 ]
 
-pub fn wasm_create_websocket_server(port: int) -> int [
+pub fn wasm_create_websocket_server() -> int [
     import env.create_websocket_server
 ]
 
@@ -102,10 +102,18 @@ pub fn wasm_get_key_value(key: KeyCode, buffer: Buffer) [
     import env.get_key_value
 ]
 
+pub fn wasm_trace(message: string) [
+    import env.trace
+]
+
 pub fn wasm_get_href(buffer: Buffer) [
     import env.get_href
 ]
 
-pub fn wasm_trace(message: string) [
-    import env.trace
+pub fn wasm_get_hostname(buffer: Buffer) [
+    import env.get_hostname
+]
+
+pub fn wasm_get_protocol(buffer: Buffer) [
+    import env.get_protocol
 ]

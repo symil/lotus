@@ -19,8 +19,8 @@ function makeWasmEnv() {
         getWindow() {
             return window;
         },
-        createWebSocket(url) {
-            return new WebSocket(url);
+        createWebSocket(url, options) {
+            return new WebSocket(url, options);
         },
         log(string) {
             return console.log(string);

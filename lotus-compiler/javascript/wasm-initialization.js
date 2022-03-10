@@ -121,8 +121,22 @@ async function getWasmImportsObject(env) {
                 renderer.clearCache();
             },
 
-            create_websocket(urlAddr) {
-                let url = readStringFromMemory(env.getMemory(), urlAddr);
+            create_websocket() {
+                let window = env.getWindow();
+                let protocol = 'ws';
+                let port = window.location.port || 80;
+                let hostname = window.location.hostname;
+
+                if (+port === 8080) {
+                    port = window.OUTPOST_PORT;
+                }
+
+                if (window.location.protocol === 'https:') {
+                    protocol = 'wss';
+                    port = 443;
+                }
+
+                let url = `${protocol}://${hostname}:${port}/ws`;
 
                 return networkManager.createWebSocket(url);
             },
@@ -131,8 +145,8 @@ async function getWasmImportsObject(env) {
                 return networkManager.getWebSocketState(webSocketId);
             },
 
-            create_websocket_server(port) {
-                return networkManager.createWebSocketServer(port);
+            create_websocket_server() {
+                return networkManager.createWebSocketServer();
             },
 
             send_message(webSocketId, messageAddr, messageSize) {
@@ -230,6 +244,20 @@ async function getWasmImportsObject(env) {
                 let buffer = memoryManager.readBuffer(bufferAddr);
 
                 buffer.writeString(window.location.href);
+            },
+
+            get_hostname(bufferAddr) {
+                let window = env.getWindow();
+                let buffer = memoryManager.readBuffer(bufferAddr);
+
+                buffer.writeString(window.location.hostname);
+            },
+
+            get_protocol(bufferAddr) {
+                let window = env.getWindow();
+                let buffer = memoryManager.readBuffer(bufferAddr);
+
+                buffer.writeString(window.location.protocol);
             },
 
             get_key_value(keyValue, bufferAddr) {
