@@ -234,6 +234,8 @@ export class Client {
         for event in self._window_events {
             match event {
                 OnMouseEvent(e) => {
+                    event.emit(views);
+
                     let view = self._detect_view_at(e.x, e.y);
 
                     if view && !view.is_disabled() {

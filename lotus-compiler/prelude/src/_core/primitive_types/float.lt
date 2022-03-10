@@ -65,7 +65,7 @@ export type(f32) float {
     }
 
     is_zero() -> bool {
-        self < 0.00000001
+        self.abs() < 0.00000001
     }
 
     static __default() -> float {{

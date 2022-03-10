@@ -21,9 +21,9 @@ export class Graphics {
     image_sprite_count_per_row: int = 1,
     image_sprite_count_per_column: int = 1,
     image_sprite_index: int = 0,
-    animation_start_time: float = none,
+    animation_start_time: float = 0,
     animation_current_time: float = none,
-    animation_duration: float = none,
+    animation_duration: float = 1,
     text: string = none,
     text_font: Font = Font::Arial,
     text_size: DisplaySize = none,
@@ -80,7 +80,7 @@ export class Graphics {
         if image_url {
             let sprite_count = self.image_sprite_count_per_row * self.image_sprite_count_per_column;
 
-            if self.animation_duration {
+            if self.animation_current_time {
                 let progress = (self.animation_current_time - self.animation_start_time) / self.animation_duration;
                 image_sprite_index = (progress * sprite_count.to_float()).floor().to_int();
             }

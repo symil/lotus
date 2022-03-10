@@ -121,6 +121,12 @@ export class Array<T> {
         self._length = 0;
     }
 
+    extend(other: Self) {
+        for item in other {
+            self.push(item);
+        }
+    }
+
     index_of(searched_item: T) -> int? {
         for [i, item] in self {
             if item == searched_item {

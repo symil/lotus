@@ -129,10 +129,16 @@ pub fn process_method_call(caller_type: &Type, field_kind: FieldKind, method_nam
         let caller_type = func_ref.this_type.replace_parameters(Some(caller_type), &[]);
         let function_call = func_ref.function.with_ref(|function_unwrapped| {
             match function_unwrapped.get_dynamic_index() {
-                Some(dynamic_index) => FunctionCall::Anonymous(AnonymousFunctionCallDetails {
-                    signature: function_unwrapped.signature.replace_parameters(Some(&caller_type), &[]),
-                    function_offset: dynamic_index,
-                }),
+                Some(dynamic_index) => {
+                    context.rename_provider.add_occurence(method_name, &function_unwrapped.name);
+                    context.definition_provider.set_definition(method_name, &function_unwrapped.name);
+                    context.hover_provider.set_type(method_name, &function_unwrapped.get_self_type());
+
+                    FunctionCall::Anonymous(AnonymousFunctionCallDetails {
+                        signature: function_unwrapped.signature.replace_parameters(Some(&caller_type), &[]),
+                        function_offset: dynamic_index,
+                    })
+                },
                 None => FunctionCall::Named(NamedFunctionCallDetails {
                     caller_type: Some(caller_type),
                     function: func_ref.function.clone(),
