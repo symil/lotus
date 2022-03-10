@@ -1,3 +1,5 @@
 name = "some-game"
 framework = true
 title = "Some game"
+port = 33902
+remote = "az@ytawo.eu:221"

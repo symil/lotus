@@ -31,7 +31,7 @@ export type(i32) Pointer<T> {
         i32.ne
     }}
 
-    add(offset: int) -> Self {
+    add(offset: int) -> Self { // TODO: inline
         ((self as int) + offset) as Self
     }
 

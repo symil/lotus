@@ -25,6 +25,19 @@ export class Color {
         }
     }
 
+    static from_hash(hash: int, opaque: bool) -> Self {
+        let r = hash >> 24;
+        let g = (hash >> 16) % 256;
+        let b = (hash >> 8) % 256;
+        let a = hash % 256;
+
+        if opaque {
+            a = 255;
+        }
+
+        Self { r, g, b, a }
+    }
+
     mult_alpha(alpha: float) -> Color {
         if !self {
             return none;

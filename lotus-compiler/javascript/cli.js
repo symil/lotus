@@ -1,7 +1,7 @@
 #!/usr/bin/env node --enable-source-maps --experimental-specifier-resolution=node
 
 import path from 'path';
-import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, DEFAULT_HTTP_PORT, HTML_ENTRY_PATH, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_CONFIG_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
+import { CLIENT_ENTRY_PATH, COMPILER_BINARY_PATH, HTML_ENTRY_PATH, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_ENTRY_PATH, WAT2WASM_BINARY_PATH, WAT2WASM_OPTIONS } from './constants';
 import { execSync } from 'child_process';
 import { readPackageDetails } from './package-details';
 
@@ -13,9 +13,9 @@ async function main() {
     let config = readPackageDetails(process.cwd());
     let rootPath = config.packageRootPath;
     let projectId = config.name;
-    let remoteHost = process.argv.find(arg => arg.includes('@')) || '';
-    let port = +process.argv.find(arg => +arg > 0) || DEFAULT_HTTP_PORT;
-
+    let remoteHost = config.remote;
+    let port = config.port;
+    let clientFiles = config.clientFiles.map(name => path.join(rootPath, name));
     let windowTitle = `'${config.title}'`;
     let inputPath = path.join(rootPath, 'src');
     let buildPath = path.join(rootPath, BUILD_DIRECTORY_NAME);
@@ -33,7 +33,8 @@ async function main() {
         '-h', HTML_ENTRY_PATH,
         '-c', CLIENT_ENTRY_PATH,
         '-s', SERVER_ENTRY_PATH,
-        '-o', buildPath
+        '-o', buildPath,
+        '-cf', ...clientFiles
     ];
 
     for (let option of FORWARDED_OPTIONS) {

@@ -10,4 +10,4 @@ fi
 
 cd $TEST_GAME_PATH
 # node --enable-source-maps --experimental-specifier-resolution=node $SCRIPT_DIR/lotus-compiler/javascript/cli.js 33902 az@ytawo.eu:221 $@
-lotus-cli 33902 az@ytawo.eu:221 $@
+lotus-cli $@

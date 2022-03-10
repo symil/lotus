@@ -243,3 +243,4 @@
 [ ] Add array destructuration (`let [a, b] = some_array`)
 [ ] Add object destructuration (`let { a, b } = some_object`)
 [ ] Add iterator methods on arrays
+[ ] Take new lines into consideration when computing errors (e.g `let \nself.something = 8;` should properly show "ecpected identifier" after `let`)

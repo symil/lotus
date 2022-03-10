@@ -1,17 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 import toml from 'toml';
-import { PACKAGE_CONFIG_FILE_NAME } from './constants';
-
-const FRAMEWORKS = ['none', 'quick-game'];
+import { DEFAULT_HTTP_PORT, PACKAGE_CONFIG_FILE_NAME } from './constants';
+import { camelToKebabCase, kebabToCamelCase } from './utils';
 
 const STRING_TYPE = { check: x => typeof x === 'string', name: 'string' };
 const BOOL_TYPE = { check: x => typeof x === 'boolean', name: 'boolean' };
+const POSITIVE_INT = { check: x => typeof x === 'number' && x >= 0 && x % 1 === 0, name: 'positive integer' };
+const STRING_ARRAY = { check: x => Array.isArray(x) && x.every(item => typeof item === 'string' && item), name: 'string array' };
 
 const FIELDS = {
     name: [STRING_TYPE, root => path.basename(root)],
     framework: [BOOL_TYPE, false],
-    title: [STRING_TYPE, '']
+    title: [STRING_TYPE, ''],
+    port: [POSITIVE_INT, DEFAULT_HTTP_PORT],
+    remote: [STRING_TYPE, ''],
+    clientFiles: [STRING_ARRAY, []]
 }
 
 export function readPackageDetails(packageRootPath) {
@@ -24,9 +28,9 @@ export function readPackageDetails(packageRootPath) {
         result = toml.parse(content);
     }
 
-    let errors = formatConfiguration(result, packageRootPath);
+    result = formatConfiguration(result, packageRootPath);
 
-    for (let error of errors) {
+    for (let error of result._errors) {
         console.error(`${PACKAGE_CONFIG_FILE_NAME}: ${error}`);
     }
 
@@ -35,7 +39,8 @@ export function readPackageDetails(packageRootPath) {
     return result;
 }
 
-function formatConfiguration(config, packageRootPath) {
+function formatConfiguration(tomlConfig, packageRootPath) {
+    let result = {};
     let errors = [];
 
     for (let [fieldName, fieldEntry] of Object.entries(FIELDS)) {
@@ -43,15 +48,16 @@ function formatConfiguration(config, packageRootPath) {
             fieldEntry = [fieldEntry, undefined];
         }
 
+        let tomlKey = camelToKebabCase(fieldName);
         let [ type, defaultValue ] = fieldEntry;
-        let value = config[fieldName];
+        let value = tomlConfig[tomlKey];
 
         if (Array.isArray(type)) {
             type = makeEnum(type);
         }
 
         if (value !== undefined && !type.check(value)) {
-            errors.push(`field \`${fieldName}\`: expected ${type.name}, got ${JSON.stringify(value)}`);
+            errors.push(`field \`${tomlKey}\`: expected ${type.name}, got ${JSON.stringify(value)}`);
             value = undefined;
         }
 
@@ -63,10 +69,12 @@ function formatConfiguration(config, packageRootPath) {
             }
         }
 
-        config[fieldName] = value;
+        result[fieldName] = value;
     }
 
-    return errors;
+    result._errors = errors;
+
+    return result;
 }
 
 function makeEnum(values) {

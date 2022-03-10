@@ -18,10 +18,12 @@ export class Array<T> {
     }
 
     static with_capacity(capacity: int) -> Self {
+        capacity = capacity.next_power_of_4();
+
         Self {
             _body: @alloc(capacity) as Pointer<T>,
             _length: 0,
-            _capacity: capacity.next_power_of_4()
+            _capacity: capacity
         }
     }
 
@@ -95,9 +97,10 @@ export class Array<T> {
     }
 
     clone() -> Self {
-        let result : Self = [];
+        let result : Self = Self::with_capacity(self._length);
 
-        result.extend(self);
+        result._length = self._length;
+        self._body.copy_to(result._body, self._length);
 
         result
     }
@@ -149,7 +152,6 @@ export class Array<T> {
 
     _add_length(additional_length: int) -> int {
         let current_length = self._length;
-        let current_length = self._length;
         let new_length = current_length + additional_length;
 
         if new_length > self._capacity {
@@ -181,34 +183,21 @@ export class Array<T> {
         self._length += 1;
     }
 
+    push_unique(value: T) -> bool {
+        if !self.includes(value) {
+            self.push(value);
+            true
+        } else {
+            false
+        }
+    }
+
     pop() -> Self {
         if self._length > 0 {
             self._length -= 1;
         }
 
         self
-    }
-
-    extend(other: Self) {
-        let length = self._add_length(other.len());
-        let body = self._body;
-
-        for [i, item] in other {
-            body[length + i] = item;
-        }
-    }
-
-    extend_at(index: int, other: Self) {
-        if other.is_empty() {
-            return;
-        }
-
-        self.insert_none(index, other.len());
-        let body = self._body;
-        
-        for [i, item] in other {
-            body[index + i] = item;
-        }
     }
 
     insert_at(index: int, item: T) {
@@ -349,10 +338,12 @@ export class Array<T> {
 
         self._body = @alloc(length) as Pointer<T>;
         self._length = 0;
-        self._capacity = length.next_power_of_4();
+        self._capacity = length;
 
         for i in 0..length {
-            self.push_unchecked(T::__deserialize(buffer));
+            let item = T::__deserialize(buffer);
+
+            self.push_unchecked(item);
         }
     }
 

@@ -81,7 +81,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
         return block_ptr.add(2);
     }
 
-    let result = 0 as ptr;
+    let pointer = 0 as ptr;
     let block_size_index = block_size.log4() - 1;
     let list_start_addr = MEMORY_METADATA_ADDR_START + block_size_index * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
     let list_end_addr = list_start_addr + MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
@@ -96,10 +96,9 @@ sys fn alloc_memory(block_size: int) -> ptr {
 
             let round_block_size = block_size.next_power_of_4();
             let full_block_size = round_block_size + POINTER_METADATA_SIZE;
-            let block_count = (VIRTUAL_PAGE_SIZE - VIRTUAL_PAGE_METADATA_SIZE) / (round_block_size + 1 + POINTER_METADATA_SIZE);
-            let stack_start_addr = (page_ptr as int) + VIRTUAL_PAGE_METADATA_SIZE;
-            let block_list_start_addr = stack_start_addr + block_count;
-            let last_block_addr = block_list_start_addr + (block_count * full_block_size) - round_block_size;
+            let block_count = (VIRTUAL_PAGE_SIZE - VIRTUAL_PAGE_METADATA_SIZE) / (full_block_size + 1);
+            let block_list_start_addr = (page_ptr as int) + VIRTUAL_PAGE_METADATA_SIZE + block_count;
+            let last_block_addr = block_list_start_addr + (block_count * full_block_size) - full_block_size;
 
             page_ptr[0] = block_count;
             page_ptr[1] = block_list_start_addr;
@@ -107,7 +106,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
             page_ptr[3] = block_count;
 
             for j in 0..block_count {
-                MEMORY[stack_start_addr + j] = last_block_addr - (j * full_block_size);
+                page_ptr[VIRTUAL_PAGE_METADATA_SIZE + j] = last_block_addr - (j * full_block_size);
             }
         }
 
@@ -115,37 +114,32 @@ sys fn alloc_memory(block_size: int) -> ptr {
 
         if offset != 0 {
             offset -= 1;
-            result = page_ptr[offset + VIRTUAL_PAGE_METADATA_SIZE] as ptr;
+            page_ptr[0] = offset;
 
-            if (result[-1] == 0) {
+            pointer = page_ptr[VIRTUAL_PAGE_METADATA_SIZE + offset] as ptr;
+
+            if (pointer[0] == 0) {
                 // If the pointer is allocated for the first time, assign a random version to it
-                result[-1] = get_random_version() << 2;
+                pointer[0] = get_random_version() << 2;
             }
 
-            result[-1] = set_pointer_state(result[-1] + 4, PointerState::Allocated);
-            page_ptr[0] = offset;
-            break;
+            pointer[0] = set_pointer_state(pointer[0] + 4, PointerState::Allocated);
+
+            return pointer.add(1);
         }
     }
 
-    result
-}
-
-// TODO: inline these
-fn set_pointer_state(metadata: int, state: PointerState) -> int {
-    (metadata & 0xfffffffc) + (state as int)
-}
-
-fn get_pointer_state(metadata: int) -> PointerState {
-    (metadata & 0x3) as PointerState
+    pointer
 }
 
 sys fn trigger_garbage_collection() {
     wasm_retain_globals();
 
     for i in 0..BLOCK_SIZE_COUNT {
+        let offset = MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE;
+
         for j in 0..MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE {
-            let page_addr = MEMORY[MEMORY_METADATA_ADDR_START + i * MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE + j];
+            let page_addr = MEMORY[offset + j];
 
             if page_addr == 0 {
                 break;
@@ -157,18 +151,18 @@ sys fn trigger_garbage_collection() {
             let block_count = page_ptr[3];
 
             for k in 0..block_count {
-                let metadata_ptr = (block_list_start_addr + (full_block_size * k)) as ptr;
-                let metadata = metadata_ptr[0];
+                let pointer = (block_list_start_addr + (full_block_size * k)) as ptr;
+                let metadata = pointer[0];
                 let state = get_pointer_state(metadata);
 
                 if state == PointerState::Allocated {
                     let avilable_block_count = page_ptr[0];
 
-                    metadata_ptr[0] = set_pointer_state(metadata, PointerState::Unallocated);
-                    page_ptr[avilable_block_count + VIRTUAL_PAGE_METADATA_SIZE] = (metadata_ptr as int) + 1;
+                    pointer[0] = set_pointer_state(metadata, PointerState::Unallocated);
+                    page_ptr[VIRTUAL_PAGE_METADATA_SIZE + avilable_block_count] = (pointer as int);
                     page_ptr[0] = avilable_block_count + 1;
                 } else if state == PointerState::Retained {
-                    metadata_ptr[0] = set_pointer_state(metadata, PointerState::Allocated);
+                    pointer[0] = set_pointer_state(metadata, PointerState::Allocated);
                 }
             }
         }
@@ -243,6 +237,15 @@ sys fn get_memory_usage() -> int {
     }
 
     count * MEMORY_CELL_BYTE_SIZE
+}
+
+// TODO: inline these
+fn set_pointer_state(metadata: int, state: PointerState) -> int {
+    (metadata & 0xfffffffc) + (state as int)
+}
+
+fn get_pointer_state(metadata: int) -> PointerState {
+    (metadata & 0x3) as PointerState
 }
 
 fn alloc_page() -> ptr {

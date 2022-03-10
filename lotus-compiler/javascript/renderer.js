@@ -111,7 +111,7 @@ export class Renderer {
             let targetHeight = Math.round(imageHeight / imageSh);
             let image = this._getImageFromCache(imageUrl, targetWidth, targetHeight);
 
-            if (image) {
+            if (image && targetWidth && targetHeight) {
                 let sx = Math.round(imageSx * targetWidth);
                 let sy = Math.round(imageSy * targetHeight);
                 let sw = Math.round(imageSw * targetWidth);

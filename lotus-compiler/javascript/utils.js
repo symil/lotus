@@ -2,6 +2,14 @@ export function toSnakeCase(string) {
     return string.replace(/[a-z][A-Z]/g, str => str[0] + '_' + str[1]).toLowerCase();
 }
 
+export function camelToKebabCase(string) {
+    return string.replace(/[a-z][A-Z]/g, str => str[0] + '-' + str[1]).toLowerCase();
+}
+
+export function kebabToCamelCase(string) {
+    return string.replace(/-\w/g, str => str[1].toUpperCase());
+}
+
 export function hashNumbers(a, b) {
     let h = ((a << 5) - a) + b;
 

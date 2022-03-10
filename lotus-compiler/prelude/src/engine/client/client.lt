@@ -416,6 +416,7 @@ export class Client {
 }
 
 sys fn start_client() {
+    set_pointer_version_seed(wasm_get_current_time());
     CLIENT = Client;
     CLIENT._start();
 }

@@ -215,7 +215,10 @@ pub class Layout {
     }
 
     _flush() {
-        self.fixed_views.extend(self.dynamic_views);
+        for view in self.dynamic_views {
+            self.fixed_views.push(view);
+        }
+
         self.dynamic_views.clear();
     }
 

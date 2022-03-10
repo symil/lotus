@@ -92,14 +92,14 @@ export class Buffer {
     write(value: int) {
         if self.size == self.capacity {
             let new_capacity = (self.capacity + 1).next_power_of_4();
-            let new_buffer = @alloc(new_capacity);
+            let new_data = @alloc(new_capacity);
 
             if !self.data.is_null() {
-                self.data.copy_to(new_buffer, self.size);
+                self.data.copy_to(new_data, self.size);
             }
 
             self.capacity = new_capacity;
-            self.data = new_buffer;
+            self.data = new_data;
         }
 
         self.write_unchecked(value)

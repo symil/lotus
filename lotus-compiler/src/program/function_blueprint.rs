@@ -96,6 +96,10 @@ impl FunctionBlueprint {
         self.closure_details.is_some()
     }
 
+    pub fn is_event(&self) -> bool {
+        self.method_details.as_ref().map(|d| d.event_callback_details.is_some()).unwrap_or(false)
+    }
+
     pub fn check_type_parameters(&self, context: &mut ProgramContext) {
         self.signature.check_type_parameters(context);
     }

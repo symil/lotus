@@ -43,6 +43,10 @@ sys type(void) system {
         wasm_log_int(value);
     }
 
+    trace(message: string) {
+        wasm_trace(message);
+    }
+
     get_debug_string<T>(value: T) -> string {
         value.__to_debug_string(Set<ptr>::new())
     }

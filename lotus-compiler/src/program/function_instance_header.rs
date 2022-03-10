@@ -44,8 +44,10 @@ impl FunctionInstanceHeader {
                     }
                 });
             }
-            
-            function_index = Some(context.reserve_next_function_index());
+
+            if function_unwrapped.method_details.is_none() || function_unwrapped.is_event() {
+                function_index = Some(context.reserve_next_function_index());
+            }
 
             for parameter in function_unwrapped.parameters.values() {
                 let p = &parameters.function_parameters[parameter.index];

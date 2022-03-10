@@ -238,6 +238,12 @@ async function getWasmImportsObject(env) {
                 let name = keyboardManager.getKeyValue(key).toUpperCase();
 
                 buffer.writeString(name);
+            },
+
+            trace(messageAddr) {
+                let message = memoryManager.readString(messageAddr);
+
+                console.trace(message);
             }
         }
     };

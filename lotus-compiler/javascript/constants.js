@@ -21,4 +21,4 @@ export const DEFAULT_HTTP_PORT = 8000;
 export const PACKAGE_CONFIG_FILE_NAME = 'lotus.toml';
 export const SERVER_CONFIG_FILE_NAME = 'lotus.json';
 
-export const SERVER_REFRESH_RATE = 10;
+export const SERVER_REFRESH_RATE = 20;
