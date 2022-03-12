@@ -31,8 +31,16 @@ export view LobbyScreen {
             .push(username_label)
             .move_bottom_right()
             .resize_from_height(0.07h, 3)
-            .margin(.5h)
+            .margin(.02h)
             .push(LogoutButton)
+    }
+
+    _displayMatchmakingButton() {
+        self.layout()
+            .move_bottom()
+            .resize_from_width(.2w, 4)
+            .margin(0.02h)
+            .push(MatchmakingButton)
     }
 
     @OnRender {
@@ -52,8 +60,9 @@ export view LobbyScreen {
             .push(title_label)
         
         if is_user_logged {
-            self._displayLoginPanel();
+            // self._displayLoginPanel();
             self._displayUserInfo(evt.client.user);
+            self._displayMatchmakingButton();
         } else {
             self._displayLoginPanel();
         }

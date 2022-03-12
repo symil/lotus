@@ -52,10 +52,7 @@ export class View {
         }
     }
 
-    add_child(view: View, rect: Rect = none) {
-        if rect {
-            view._rect = rect.clone();
-        }
+    add_child(view: View) {
         view._parent = self;
         self._children.push(view);
     }
@@ -142,8 +139,8 @@ export class View {
         self
     }
 
-    set_rect(x: float, y: float, width: float, height: float) -> Self {
-        self._rect = Rect::new(x, y, width, height);
+    set_rect(rect: Rect) -> Self {
+        self._rect = rect.clone();
         self
     }
 

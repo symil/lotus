@@ -1,0 +1,26 @@
+export view MatchmakingButton {
+    @OnRender {
+        let button = match evt.client.user.is_searching_for_game {
+            true => Button {
+                text: "Cancel search",
+                on_click: cancel_search
+            },
+            false => Button {
+                text: "Search for game",
+                on_click: search_for_game
+            },
+        };
+
+        button.text_size = .5h;
+
+        self.layout().push(button);
+    }
+}
+
+fn search_for_game(client: Client) {
+    client.send_request(MatchmakingRequest { start: true });
+}
+
+fn cancel_search(client: Client) {
+    client.send_request(MatchmakingRequest { start: false });
+}

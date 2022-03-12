@@ -10,8 +10,7 @@ export view Button {
     is_disabled: fn(Client)(bool) = none
 
     @OnRender {
-        self
-            .add_to_focus_chain()
+        self.add_to_focus_chain()
             .background_color(self.background_color)
             .text(self.text)
             .text_color(self.text_color)

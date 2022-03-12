@@ -34,7 +34,7 @@ impl ParsedObjectLiteral {
             let fill_all_fields = || fill_class_fields(&object_type, &self.body.items, false);
 
             for location in &[first_half_location, second_half_location] {
-                context.completion_provider.add_field_completion(&location, &object_type, None);
+                context.completion_provider.add_field_completion(&location, &object_type, None, None);
                 context.code_actions_provider.add_replace_action(&location, "Fill required fields", None, fill_required_fields);
                 context.code_actions_provider.add_replace_action(&location, "Fill all fields", None, fill_all_fields);
             }

@@ -82,7 +82,8 @@ export view Grid {
             item_rect.x = x_start + horizontal_outer_margin + x_index.to_float() * (horizontal_inner_margin + final_item_width) + (final_item_width / 2);
             item_rect.y = y_start + vertical_outer_margin + y_index.to_float() * (vertical_inner_margin + final_item_height) + (final_item_height / 2);
 
-            self.add_child(item, item_rect);
+            item.set_rect(item_rect);
+            self.add_child(item);
         }
     }
 }

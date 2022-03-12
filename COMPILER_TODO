@@ -244,3 +244,4 @@
 [ ] Add object destructuration (`let { a, b } = some_object`)
 [ ] Add iterator methods on arrays
 [ ] Take new lines into consideration when computing errors (e.g `let \nself.something = 8;` should properly show "ecpected identifier" after `let`)
+[ ] Fix non-ascii characters in string literals

@@ -18,7 +18,7 @@ impl ParsedFieldOrMethodAccess {
     }
 
     pub fn process(&self, parent_type: &Type, field_kind: FieldKind, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
-        context.completion_provider.add_field_completion(&self.dot, parent_type, Some(&FieldCompletionOptions {
+        context.completion_provider.add_field_completion(&self.dot, parent_type, type_hint, Some(&FieldCompletionOptions {
             show_methods: true,
             insert_arguments: self.arguments.is_none(),
             ..Default::default()
@@ -28,7 +28,7 @@ impl ParsedFieldOrMethodAccess {
             Some(identifier) => {
                 match identifier.process(context) {
                     Some(name) => {
-                        context.completion_provider.add_field_completion(&name.location, parent_type, Some(&FieldCompletionOptions {
+                        context.completion_provider.add_field_completion(&name.location, parent_type, type_hint, Some(&FieldCompletionOptions {
                             show_methods: true,
                             insert_arguments: self.arguments.is_none(),
                             ..Default::default()

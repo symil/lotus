@@ -14,7 +14,7 @@ impl ParsedStaticFieldOrMethod {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         match self.ty.process(true, context) {
             Some(ty) => {
-                context.completion_provider.add_static_field_completion(&self.double_colon, &ty, Some(&FieldCompletionOptions {
+                context.completion_provider.add_static_field_completion(&self.double_colon, &ty, type_hint, Some(&FieldCompletionOptions {
                     show_methods: true,
                     insert_arguments: self.arguments.is_none(),
                     ..Default::default()
@@ -22,7 +22,7 @@ impl ParsedStaticFieldOrMethod {
 
                 match &self.name {
                     Some(name) => {
-                        context.completion_provider.add_static_field_completion(name, &ty, Some(&FieldCompletionOptions {
+                        context.completion_provider.add_static_field_completion(name, &ty, type_hint, Some(&FieldCompletionOptions {
                             show_methods: true,
                             insert_arguments: self.arguments.is_none(),
                             ..Default::default()

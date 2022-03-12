@@ -388,7 +388,7 @@ impl ProgramContext {
         self.completion_provider = index;
     }
 
-    pub fn add_type_completion_area(&mut self, location: &ItemLocation) {
+    pub fn add_type_completion_area(&mut self, location: &ItemLocation, type_hint: Option<&Type>) {
         let mut index = take(&mut self.completion_provider);
 
         index.add_completion(location, || {
@@ -407,6 +407,7 @@ impl ProgramContext {
             CompletionItemGenerator::Type(TypeCompletionDetails {
                 available_types,
                 self_type,
+                expected_type: type_hint.cloned(),
             })
         });
 

@@ -60,17 +60,17 @@ pub class Layout {
     }
 
     outer_margin(value: DisplaySize) -> Self {
-        self.outer_margin = value.resolve_from_rect(self.target);
+        self.outer_margin = value.resolve_from_rect(self.parent_view.rect());
         self
     }
 
     inner_margin(value: DisplaySize) -> Self {
-        self.inner_margin = value.resolve_from_rect(self.target);
+        self.inner_margin = value.resolve_from_rect(self.parent_view.rect());
         self
     }
 
     margin(value: DisplaySize) -> Self {
-        let margin = value.resolve_from_rect(self.target);
+        let margin = value.resolve_from_rect(self.parent_view.rect());
 
         self.outer_margin = margin;
         self.inner_margin = margin;
@@ -99,6 +99,12 @@ pub class Layout {
     }
 
     set_height(height: DisplaySize) -> Self {
+        self.target.height = height.resolve_from_rect(self.parent_view.rect());
+        self
+    }
+
+    set_size(width: DisplaySize, height: DisplaySize) -> Self {
+        self.target.width = width.resolve_from_rect(self.parent_view.rect());
         self.target.height = height.resolve_from_rect(self.parent_view.rect());
         self
     }
@@ -154,8 +160,10 @@ pub class Layout {
         self.target.y += dy;
         self.last = self.target.clone();
 
+        view.set_rect(self.target);
+
         self.dynamic_views.push(view);
-        self.parent_view.add_child(view, self.target);
+        self.parent_view.add_child(view);
 
         self
     }

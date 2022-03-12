@@ -1,5 +1,6 @@
 export class QuickGameWorld {
     users: Map<string, QuickGameUser>,
+    matchmaking_queue: QuickGameUser[],
 
     @OnWorldInit {
         @log("WORLD INIT");
@@ -18,5 +19,15 @@ export class QuickGameWorld {
 
     @OnUserRequest {
         evt.emit([evt.request])
+    }
+
+    add_to_matchmaking(user: QuickGameUser) {
+        user.is_searching_for_game = true;
+        self.matchmaking_queue.push_unique(user);
+    }
+
+    remove_from_matchmaking(user: QuickGameUser) {
+        user.is_searching_for_game = false;
+        self.matchmaking_queue.remove(user);
     }
 }

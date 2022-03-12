@@ -21,7 +21,7 @@ impl ParsedPrefixedVarRef {
     pub fn process(&self, type_hint: Option<&Type>, access_type: AccessType, context: &mut ProgramContext) -> Option<Vasm> {
         let mut vasm = self.prefix.process(context);
 
-        context.completion_provider.add_field_completion(&self.prefix, &vasm.ty, Some(&FieldCompletionOptions {
+        context.completion_provider.add_field_completion(&self.prefix, &vasm.ty, type_hint, Some(&FieldCompletionOptions {
             show_methods: true,
             insert_arguments: self.arguments.is_none(),
             ..Default::default()
@@ -29,7 +29,7 @@ impl ParsedPrefixedVarRef {
 
         let name = unwrap_item(&self.name, &self.prefix, context)?;
         
-        context.completion_provider.add_field_completion(name, &vasm.ty, Some(&FieldCompletionOptions {
+        context.completion_provider.add_field_completion(name, &vasm.ty, type_hint, Some(&FieldCompletionOptions {
             show_methods: true,
             insert_arguments: self.arguments.is_none(),
             ..Default::default()

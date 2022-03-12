@@ -1,6 +1,8 @@
 export class QuickGameUser {
-    messages: QuickGameMessage[] = [],
     name: string = none,
+    messages: QuickGameMessage[] = [],
+    is_searching_for_game: bool = false,
+    game: bool, // TODO
 
     show_error(message: string) {
         self.messages.push(QuickGameMessage {

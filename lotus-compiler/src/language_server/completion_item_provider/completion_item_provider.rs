@@ -43,20 +43,22 @@ impl CompletionItemProvider {
         })
     }
 
-    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, options: Option<&FieldCompletionOptions>) {
+    pub fn add_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, type_hint: Option<&Type>, options: Option<&FieldCompletionOptions>) {
         self.add_completion(location, || {
             CompletionItemGenerator::FieldOrMethod(FieldCompletionDetails {
                 parent_type: parent_type.clone(),
-                options: options.cloned().unwrap_or_default()
+                options: options.cloned().unwrap_or_default(),
+                expected_type: type_hint.cloned(),
             })
         })
     }
 
-    pub fn add_static_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, options: Option<&FieldCompletionOptions>) {
+    pub fn add_static_field_completion(&mut self, location: &ItemLocation, parent_type: &Type, type_hint: Option<&Type>, options: Option<&FieldCompletionOptions>) {
         self.add_completion(location, || {
             CompletionItemGenerator::StaticFieldOrMethod(FieldCompletionDetails {
                 parent_type: parent_type.clone(),
-                options: options.cloned().unwrap_or_default()
+                options: options.cloned().unwrap_or_default(),
+                expected_type: type_hint.cloned(),
             })
         })
     }

@@ -77,25 +77,43 @@ impl CompletionItemList {
         self.list
     }
 
-    pub fn add_variable(&mut self, variable: VariableInfo) {
+    pub fn add_variable(&mut self, variable: VariableInfo, expected_type: Option<&Type>) {
         let variable_name = variable.name().as_str().to_string();
+        let mut position = CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(&variable_name), false);
+
+        if position == CompletionItemPosition::PublicVariable {
+            if let Some(ty) = expected_type {
+                if !ty.is_void() && variable.ty().is_assignable_to(ty) {
+                    position = CompletionItemPosition::PublicVariableMatchingHint;
+                }
+            }
+        }
 
         self
             .add(&variable_name)
-            .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(&variable_name), false))
+            .position(position)
             .kind(CompletionItemKind::Variable)
             .description(variable.ty().to_string());
     }
 
-    pub fn add_field(&mut self, field: Rc<FieldInfo>, prefix: &'static str, suffix: &'static str) {
+    pub fn add_field(&mut self, field: Rc<FieldInfo>, expected_type: Option<&Type>, prefix: &'static str, suffix: &'static str) {
         let field_name = field.name.as_str();
         let label = format!("{}{}", prefix, field_name);
         let insert_text = format!("{}{}", label, suffix);
+        let mut position = CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(field_name), false);
+
+        if position == CompletionItemPosition::PublicVariable {
+            if let Some(ty) = expected_type {
+                if !ty.is_void() && field.ty.is_assignable_to(ty) {
+                    position = CompletionItemPosition::PublicVariableMatchingHint;
+                }
+            }
+        }
 
         self
             .add(label)
             .insert_text(insert_text)
-            .position(CompletionItemPosition::from_visibility(CompletionItemVisibility::from_str(field_name), false))
+            .position(position)
             .kind(CompletionItemKind::Field)
             .description(field.ty.to_string());
     }
@@ -130,7 +148,7 @@ impl CompletionItemList {
             .kind(CompletionItemKind::Keyword);
     }
 
-    fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
+    fn add_function_or_method(&mut self, function: Link<FunctionBlueprint>, expected_type: Option<&Type>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
         function.with_ref(|function_unwrapped| {
             let function_name = function_unwrapped.name.as_str();
             let visibility = CompletionItemVisibility::from_str(function_name);
@@ -188,9 +206,19 @@ impl CompletionItemList {
                 }
             }
 
+            let mut position = CompletionItemPosition::from_visibility(visibility, true);
+
+            if position == CompletionItemPosition::PublicFunction {
+                if let Some(ty) = expected_type {
+                    if !ty.is_void() && function_unwrapped.signature.return_type.is_assignable_to(ty) {
+                        position = CompletionItemPosition::PublicFunctionMatchingHint;
+                    }
+                }
+            }
+
             self
                 .add(label)
-                .position(CompletionItemPosition::from_visibility(visibility, true))
+                .position(position)
                 .kind(kind)
                 .description(function_unwrapped.get_self_type().to_string())
                 .insert_text(insert_text)
@@ -202,12 +230,12 @@ impl CompletionItemList {
         });
     }
 
-    pub fn add_function(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool) {
-        self.add_function_or_method(method, insert_arguments, false, false);
+    pub fn add_function(&mut self, method: Link<FunctionBlueprint>, expected_type: Option<&Type>, insert_arguments: bool) {
+        self.add_function_or_method(method, expected_type, insert_arguments, false, false);
     }
 
-    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
-        self.add_function_or_method(method, insert_arguments, show_owner, show_internals);
+    pub fn add_method(&mut self, method: Link<FunctionBlueprint>, expected_type: Option<&Type>, insert_arguments: bool, show_owner: bool, show_internals: bool) {
+        self.add_function_or_method(method, expected_type, insert_arguments, show_owner, show_internals);
     }
 
     pub fn add_dynamic_method_body(&mut self, method: Link<FunctionBlueprint>, show_internals: bool) {
@@ -256,7 +284,7 @@ impl CompletionItemList {
             .insert_text(insert_text);
     }
 
-    pub fn add_type(&mut self, ty: Type, custom_type_name: Option<&str>, insert_double_colon_if_enum: bool) {
+    pub fn add_type(&mut self, ty: Type, expected_type: Option<&Type>, custom_type_name: Option<&str>, insert_double_colon_if_enum: bool) {
         let parameters = ty.get_parameters();
         let has_parameters = !parameters.is_empty();
         let type_name = replace_string(&ty.to_string(), '<', '>', "");
@@ -287,15 +315,22 @@ impl CompletionItemList {
         }
 
         let mut command = CompletionItemCommand::None;
+        let mut position = CompletionItemPosition::PublicType;
 
         if ty.is_enum() && insert_double_colon_if_enum {
             insert_text.push_str("::");
             command = CompletionItemCommand::TriggerCompletion;
         }
 
+        if let Some(type_hint) = expected_type {
+            if !ty.is_void() && ty.is_assignable_to(type_hint) {
+                position = CompletionItemPosition::PublicTypeMatchingHint;
+            }
+        }
+
         self
             .add(format!("{}", label))
-            .position(CompletionItemPosition::PublicType)
+            .position(position)
             .kind(CompletionItemKind::Class)
             .description(format!("(type) {}", &type_name))
             .insert_text(insert_text)

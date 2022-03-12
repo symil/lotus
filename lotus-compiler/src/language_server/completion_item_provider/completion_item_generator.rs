@@ -41,12 +41,14 @@ pub struct EventCompletionDetails {
 #[derive(Debug)]
 pub struct FieldCompletionDetails {
     pub parent_type: Type,
+    pub expected_type: Option<Type>,
     pub options: FieldCompletionOptions
 }
 
 #[derive(Debug)]
 pub struct TypeCompletionDetails {
     pub available_types: Vec<Type>,
+    pub expected_type: Option<Type>,
     pub self_type: Option<Type>
 }
 
@@ -76,14 +78,14 @@ impl CompletionItemGenerator {
             Self::FieldOrMethod(details) => {
                 for field_info in details.parent_type.get_all_fields() {
                     if !details.options.hide_private || !field_info.visibility.is_private() {
-                        items.add_field(field_info, details.options.prefix, details.options.suffix);
+                        items.add_field(field_info, details.expected_type.as_ref(), details.options.prefix, details.options.suffix);
                     }
                 }
 
                 if details.options.show_methods {
                     for method_info in details.parent_type.get_all_methods(FieldKind::Regular) {
                         if !details.options.hide_private || !method_info.borrow().method_details.as_ref().unwrap().visibility.is_private() {
-                            items.add_method(method_info, details.options.insert_arguments, false, show_internals);
+                            items.add_method(method_info, details.expected_type.as_ref(), details.options.insert_arguments, false, show_internals);
                         }
                     }
                 } else if details.options.insert_dynamic_methods {
@@ -107,17 +109,17 @@ impl CompletionItemGenerator {
 
                 if details.options.show_methods {
                     for method_info in details.parent_type.get_all_methods(FieldKind::Static) {
-                        items.add_method(method_info, details.options.insert_arguments, false, show_internals);
+                        items.add_method(method_info, details.expected_type.as_ref(), details.options.insert_arguments, false, show_internals);
                     }
                 }
             },
             Self::Type(details) => {
                 for ty in &details.available_types {
-                    items.add_type(ty.clone(), None, false);
+                    items.add_type(ty.clone(), details.expected_type.as_ref(), None, false);
                 }
 
                 if let Some(ty) = &details.self_type {
-                    items.add_type(ty.clone(), Some(SELF_TYPE_NAME), false);
+                    items.add_type(ty.clone(), details.expected_type.as_ref(), Some(SELF_TYPE_NAME), false);
                 }
             },
             Self::Event(details) => {
@@ -134,29 +136,29 @@ impl CompletionItemGenerator {
             },
             Self::Variable(details) => {
                 for var_info in &details.available_variables {
-                    items.add_variable(var_info.clone());
+                    items.add_variable(var_info.clone(), details.expected_type.as_ref());
                 }
 
                 for constant_wrapped in &details.available_globals {
-                    items.add_variable(constant_wrapped.borrow().var_info.clone());
+                    items.add_variable(constant_wrapped.borrow().var_info.clone(), details.expected_type.as_ref());
                 }
 
                 for function_wrapped in &details.available_functions {
                     let is_expected_function = details.expected_type.as_ref().map(|ty| ty.is_function()).unwrap_or(false);
 
-                    items.add_function(function_wrapped.clone(), details.insert_arguments && !is_expected_function);
+                    items.add_function(function_wrapped.clone(), details.expected_type.as_ref(), details.insert_arguments && !is_expected_function);
                 }
 
                 for type_wrapped in &details.available_types {
-                    items.add_type(type_wrapped.borrow().self_type.clone(), None, false);
+                    items.add_type(type_wrapped.borrow().self_type.clone(), details.expected_type.as_ref(), None, false);
                 }
 
                 for typedef_wrapped in &details.available_typedefs {
-                    items.add_type(typedef_wrapped.borrow().target.clone(), None, false);
+                    items.add_type(typedef_wrapped.borrow().target.clone(), details.expected_type.as_ref(), None, false);
                 }
 
                 if let Some(type_blueprint) = &details.self_type {
-                    items.add_type(type_blueprint.borrow().self_type.clone(), Some(SELF_TYPE_NAME), false);
+                    items.add_type(type_blueprint.borrow().self_type.clone(), details.expected_type.as_ref(), Some(SELF_TYPE_NAME), false);
                 }
 
                 if let Some(ty) = &details.expected_type {
@@ -172,7 +174,7 @@ impl CompletionItemGenerator {
                         method.with_ref(|method_blueprint| {
                             if method_blueprint.parameters.is_empty() {
                                 if method_blueprint.signature.return_type.replace_parameters(Some(ty), &[]).is_assignable_to(ty) {
-                                    items.add_method(method.clone(), details.insert_arguments, true, show_internals);
+                                    items.add_method(method.clone(), details.expected_type.as_ref(), details.insert_arguments, true, show_internals);
                                 }
                             }
                         });
@@ -201,7 +203,7 @@ impl CompletionItemGenerator {
                     }
                 } else if details.matched_type.is_object() {
                     for ty in &details.available_types {
-                        items.add_type(ty.clone(), None, false);
+                        items.add_type(ty.clone(), Some(&details.matched_type), None, false);
                     }
                 } else if details.matched_type.is_enum() {
                     details.matched_type.get_type_blueprint().with_ref(|type_blueprint| {

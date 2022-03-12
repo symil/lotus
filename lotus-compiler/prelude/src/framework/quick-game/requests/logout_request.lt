@@ -2,6 +2,7 @@ export class LogoutRequest {
     @OnUserRequest {
         if evt.user.name {
             evt.world.users.delete(evt.user.name);
+            evt.world.remove_from_matchmaking(evt.user);
             evt.user.name = none;
         } else {
             evt.user.messages.push(QuickGameMessage {

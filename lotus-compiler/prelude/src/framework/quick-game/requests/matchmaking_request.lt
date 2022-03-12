@@ -1,0 +1,21 @@
+export class MatchmakingRequest {
+    start: bool,
+
+    @OnUserRequest {
+        if evt.user.game {
+            evt.user.show_error(`Already in game.`);
+        } else if self.start {
+             if evt.user.is_searching_for_game {
+                evt.user.show_error(`Already in queue.`);
+            } else {
+                evt.world.add_to_matchmaking(evt.user);
+            }
+        } else {
+            if !evt.user.is_searching_for_game {
+                evt.user.show_error(`Not in queue.`);
+            } else {
+                evt.world.remove_from_matchmaking(evt.user);
+            }
+        }
+    }
+}
