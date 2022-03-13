@@ -1,3 +1,4 @@
 export event OnRender {
     client: Client,
+    user: #USER_TYPE,
 }

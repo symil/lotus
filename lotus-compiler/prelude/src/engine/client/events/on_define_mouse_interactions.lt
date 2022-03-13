@@ -1,3 +1,4 @@
 export event OnPostRender {
-    client: Client
+    client: Client,
+    user: #USER_TYPE,
 }

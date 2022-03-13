@@ -14,7 +14,7 @@ impl ParsedAssociatedTypeDeclaration {
     pub fn process(&self, context: &mut ProgramContext) -> (Identifier, Type) {
         (
             self.name.clone(),
-            self.value.process(false, context).unwrap_or(Type::undefined())
+            self.value.process(false, None, context).unwrap_or(Type::undefined())
         )
     }
 }

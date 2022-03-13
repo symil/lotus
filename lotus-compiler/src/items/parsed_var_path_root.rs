@@ -94,7 +94,7 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::ColorLiteral(color_literal) => color_literal.process(context),
             ParsedVarPathRoot::TemplateString(template_string) => template_string.process(context),
             ParsedVarPathRoot::ArrayLiteral(array_literal) => array_literal.process(type_hint, context),
-            ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.process(context),
+            ParsedVarPathRoot::ObjectLiteral(object_literal) => object_literal.process(type_hint, context),
             ParsedVarPathRoot::StaticFieldOrMethod(static_field_or_method) => static_field_or_method.process(type_hint, context),
             ParsedVarPathRoot::VarDeclaration(var_declaration) => var_declaration.process(context).map(|(_, vasm)| vasm),
             ParsedVarPathRoot::Action(action) => action.process(context),

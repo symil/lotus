@@ -1,0 +1,7 @@
+export class GameItemCategory {
+    name: string = "",
+    description: string = "",
+    items: GameItem[] = [],
+    required_selected_item_count: int = 1,
+    max_selection_count_per_item: int = 1
+}

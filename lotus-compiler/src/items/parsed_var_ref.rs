@@ -92,7 +92,7 @@ impl ParsedVarRef {
                         }
                     }),
                     None => match context.types.get_by_identifier(&var_name) {
-                        Some(type_wrapped) => match type_wrapped.borrow().parameters.is_empty() && type_wrapped.borrow().is_class() {
+                        Some(type_wrapped) => match type_wrapped.borrow().is_class() {
                             true => {
                                 let location = var_name.location.clone();
                                 let mut parsed_type_value = ParsedValueType::default();
@@ -102,7 +102,7 @@ impl ParsedVarRef {
                                 parsed_type.parsed_type = ParsedTypeWithoutSuffix::Single(ParsedTypeSingle::Value(parsed_type_value));
                                 parsed_type.location = location;
 
-                                instanciate_object(&parsed_type, &[], context)
+                                instanciate_object(&parsed_type, &[], type_hint, context)
                             },
                             false => {
                                 context.errors.generic(&var_name, format!("undefined variable `{}`", var_name.as_str().bold()));

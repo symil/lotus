@@ -17,7 +17,7 @@ pub struct ParsedAsKeyword {
 impl ParsedAsOperation {
     pub fn process(&self, source_type: &Type, context: &mut ProgramContext) -> Option<Vasm> {
         let target_type = match &self.ty {
-            Some(parsed_type) => match parsed_type.process(true, context) {
+            Some(parsed_type) => match parsed_type.process(true, None, context) {
                 Some(ty) => ty,
                 None => {
                     return None;

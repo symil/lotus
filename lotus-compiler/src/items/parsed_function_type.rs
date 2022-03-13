@@ -19,7 +19,7 @@ impl ParsedFunctionType {
         let mut return_type = context.void_type();
 
         for parsed_type in &self.arguments {
-            if let Some(ty) = parsed_type.process(check_interfaces, context) {
+            if let Some(ty) = parsed_type.process(check_interfaces, None, context) {
                 argument_types.push(ty);
             } else {
                 ok = false;
@@ -27,7 +27,7 @@ impl ParsedFunctionType {
         }
 
         if let Some(parsed_type) = &self.return_type {
-            if let Some(ty) = parsed_type.process(check_interfaces, context) {
+            if let Some(ty) = parsed_type.process(check_interfaces, None, context) {
                 return_type = ty;
             } else {
                 ok = false;

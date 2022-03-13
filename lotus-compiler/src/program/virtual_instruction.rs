@@ -687,4 +687,66 @@ impl VirtualInstruction {
             VirtualInstruction::IfThenElse(_) => None,
         }
     }
+
+    pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Self {
+        match self {
+            VirtualInstruction::None => VirtualInstruction::None,
+            VirtualInstruction::Eqz => VirtualInstruction::Eqz,
+            VirtualInstruction::Raw(details) => VirtualInstruction::Raw(details.clone()),
+            VirtualInstruction::Drop(ty) => VirtualInstruction::Drop(ty.replace_parameters(this_type, function_parameters)),
+            VirtualInstruction::Placeholder(details) => VirtualInstruction::Placeholder(details.clone()),
+            VirtualInstruction::Return(vasm) => VirtualInstruction::Return(vasm.replace_parameters(this_type, function_parameters)),
+            VirtualInstruction::IntConstant(value) => VirtualInstruction::IntConstant(*value),
+            VirtualInstruction::FloatConstant(value) => VirtualInstruction::FloatConstant(*value),
+            VirtualInstruction::TypeId(ty) => VirtualInstruction::TypeId(ty.replace_parameters(this_type, function_parameters)),
+            VirtualInstruction::TypeName(details) => VirtualInstruction::TypeName(TypeNameDetails {
+                ty: details.ty.replace_parameters(this_type, function_parameters),
+                include_package: details.include_package,
+            }),
+            VirtualInstruction::InitVariable(details) => VirtualInstruction::InitVariable(VirtualInitVariableInfo {
+                var_info: details.var_info.clone(), // TODO
+            }),
+            VirtualInstruction::VariableAccess(details) => VirtualInstruction::VariableAccess(VirtualVariableAccessInfo {
+                var_info: details.var_info.clone(), // TODO
+                access_kind: details.access_kind,
+                access_level: details.access_level,
+                value: details.value.as_ref().map(|vasm| vasm.replace_parameters(this_type, function_parameters)),
+            }),
+            VirtualInstruction::FieldAccess(details) => VirtualInstruction::FieldAccess(VirtualAccessFieldInfo {
+                acess_kind: details.acess_kind,
+                field_type: details.field_type.replace_parameters(this_type, function_parameters),
+                field_offset: details.field_offset,
+                value: details.value.as_ref().map(|vasm| vasm.replace_parameters(this_type, function_parameters)),
+            }),
+            VirtualInstruction::FunctionCall(details) => VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
+                call: details.call.replace_parameters(this_type, function_parameters),
+                function_index_var: details.function_index_var.clone(), // TODO
+                arguments: details.arguments.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
+            }),
+            VirtualInstruction::FunctionIndex(details) => VirtualInstruction::FunctionIndex(VirtualFunctionIndexInfo {
+                function: details.function.clone(),
+                parameters: details.parameters.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
+            }),
+            VirtualInstruction::Loop(details) => VirtualInstruction::Loop(VirtualLoopInfo {
+                content: details.content.replace_parameters(this_type, function_parameters),
+            }),
+            VirtualInstruction::Block(details) => VirtualInstruction::Block(VirtualBlockInfo {
+                result: details.result.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
+                content: details.content.replace_parameters(this_type, function_parameters),
+            }),
+            VirtualInstruction::Jump(details) => VirtualInstruction::Jump(VirtualJumpInfo {
+                depth: details.depth,
+            }),
+            VirtualInstruction::JumpIf(details) => VirtualInstruction::JumpIf(VirtualJumpIfInfo {
+                depth: details.depth,
+                condition: details.condition.as_ref().map(|ty| ty.replace_parameters(this_type, function_parameters)),
+            }),
+            VirtualInstruction::IfThenElse(details) => VirtualInstruction::IfThenElse(IfThenElseInfo {
+                return_type: details.return_type.as_ref().map(|ty| ty.replace_parameters(this_type, function_parameters)),
+                condition: details.condition.replace_parameters(this_type, function_parameters),
+                then_branch: details.then_branch.replace_parameters(this_type, function_parameters),
+                else_branch: details.else_branch.replace_parameters(this_type, function_parameters),
+            }),
+        }
+    }
 }

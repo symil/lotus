@@ -26,7 +26,7 @@ impl ParsedValueType {
         // self.arguments.collect_instancied_type_names(list);
     }
 
-    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, check_interfaces: bool, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Type> {
         let mut result = Type::undefined();
         let mut must_not_take_parameters = false;
         let mut param_count_error = false;
@@ -74,10 +74,21 @@ impl ParsedValueType {
         }
 
         if result.is_undefined() {
-            let parameter_list = parameters;
+            let mut parameter_list = parameters;
 
             if let Some(type_blueprint) = context.types.get_by_identifier(&self.name) {
                 let parameters = &type_blueprint.borrow().parameters;
+
+                // If no parameter is provided but we know what type to expect, infer parameters
+                if parameter_list.is_empty() {
+                    if let Some(expected) = type_hint {
+                        if let Some(content) = expected.as_actual() {
+                            if content.type_blueprint == type_blueprint {
+                                parameter_list = content.parameters.clone();
+                            }
+                        }
+                    }
+                }
 
                 if parameter_list.len() != parameters.len() {
                     context.errors.generic(&self.name, format!("type `{}`: expected {} parameters, got {}", &self.name.as_str().bold(), parameters.len(), parameter_list.len()));

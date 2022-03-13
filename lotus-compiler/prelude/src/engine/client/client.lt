@@ -154,6 +154,7 @@ export class Client {
     _render_view(view: View) {
         let event = OnRender {
             client: self,
+            user: self.user,
         };
 
         view._client = self;
@@ -181,7 +182,8 @@ export class Client {
 
     _define_interactions() {
         let event = OnPostRender {
-            client: self
+            client: self,
+            user: self.user
         };
         let views = self._all_views.clone().reverse();
 

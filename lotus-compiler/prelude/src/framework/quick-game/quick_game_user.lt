@@ -2,6 +2,8 @@ export class QuickGameUser {
     name: string = none,
     messages: QuickGameMessage[] = [],
     is_searching_for_game: bool = false,
+    available_game_items: GameItemCategory[],
+    selected_game_items: Map<GameItem, int>,
     game: bool, // TODO
 
     show_error(message: string) {

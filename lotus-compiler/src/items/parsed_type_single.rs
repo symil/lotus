@@ -23,9 +23,9 @@ impl ParsedTypeSingle {
         }
     }
 
-    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, check_interfaces: bool, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Type> {
         match self {
-            ParsedTypeSingle::Value(value_type) => value_type.process(check_interfaces, context),
+            ParsedTypeSingle::Value(value_type) => value_type.process(check_interfaces, type_hint, context),
             ParsedTypeSingle::Function(function_type) => function_type.process(check_interfaces, context),
         }
     }

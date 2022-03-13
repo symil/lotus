@@ -23,10 +23,10 @@ impl ParsedObjectLiteral {
         self.object_type.collect_instancied_type_names(list, context);
     }
 
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
+    pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = None;
 
-        if let Some(object_type) = self.object_type.process(true, context) {
+        if let Some(object_type) = self.object_type.process(true, type_hint, context) {
             let first_half_location = self.opening_bracket.location.until(&self.body);
             let second_half_location = self.body.location.until(&self.closing_bracket);
 
@@ -39,7 +39,7 @@ impl ParsedObjectLiteral {
                 context.code_actions_provider.add_replace_action(&location, "Fill all fields", None, fill_all_fields);
             }
 
-            result = instanciate_object(&self.object_type, &self.body.items, context);
+            result = instanciate_object(&self.object_type, &self.body.items, type_hint, context);
         }
 
         result
@@ -71,8 +71,8 @@ fn fill_class_fields(ty: &Type, initialization_items: &[ParsedObjectInitializati
     result
 }
 
-pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items: &[ParsedObjectInitializationItem], context: &mut ProgramContext) -> Option<Vasm> {
-    let object_type = parsed_object_type.process(true, context)?;
+pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items: &[ParsedObjectInitializationItem], type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
+    let object_type = parsed_object_type.process(true, type_hint, context)?;
 
     let mut result = context.vasm()
         .set_type(&object_type);
@@ -109,7 +109,7 @@ pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items:
                 let is_value_specified = specified_value.is_some();
                 let init_vasm = match specified_value {
                     Some(field_vasm) => field_vasm,
-                    None => field_info.default_value.clone(),
+                    None => field_info.default_value.replace_parameters(Some(&object_type), &[])
                 };
 
                 if field_info.is_required && !is_value_specified {

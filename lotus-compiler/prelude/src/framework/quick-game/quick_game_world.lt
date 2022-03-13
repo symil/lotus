@@ -1,19 +1,19 @@
 export class QuickGameWorld {
     users: Map<string, QuickGameUser>,
     matchmaking_queue: QuickGameUser[],
+    game_items: GameItemCategory[],
 
     @OnWorldInit {
         @log("WORLD INIT");
     }
 
     @OnUserConnect {
-        
+        evt.user.available_game_items = self.game_items;
     }
 
     @OnUserDisconnect {
         check evt.user.name;
 
-        @dbg("DISCONNECT")
         self.users.delete(evt.user.name);
     }
 

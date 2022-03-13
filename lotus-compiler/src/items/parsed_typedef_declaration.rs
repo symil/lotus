@@ -17,7 +17,7 @@ impl ParsedTypedefDeclaration {
         let mut result = None;
         let target = unwrap_item(&self.target, &self.equal, context)?;
 
-        if let Some(ty) = target.process(true, context) {
+        if let Some(ty) = target.process(true, None, context) {
             context.rename_provider.add_occurence(&self.name, &self.name);
 
             let typedef_blueprint = TypedefBlueprint {

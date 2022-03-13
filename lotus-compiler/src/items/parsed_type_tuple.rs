@@ -26,7 +26,7 @@ impl ParsedTypeTuple {
         let mut types = vec![];
 
         for parsed_type in &self.type_list {
-            if let Some(ty) = parsed_type.process(check_interfaces, context) {
+            if let Some(ty) = parsed_type.process(check_interfaces, None, context) {
                 types.push(ty);
             }
         }

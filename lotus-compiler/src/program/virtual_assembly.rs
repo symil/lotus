@@ -383,4 +383,18 @@ impl VirtualAssembly {
             None => None,
         }
     }
+
+    pub fn replace_parameters(&self, this_type: Option<&Type>, function_parameters: &[Type]) -> Self {
+        let ty = self.ty.replace_parameters(this_type, function_parameters);
+        let mut content = None;
+
+        if let Some(self_content) = &self.content {
+            content = Some(VirtualAssemblyContent {
+                variables: self_content.variables.clone(), // TODO: replace variable parameters
+                instructions: self_content.instructions.iter().map(|inst| inst.replace_parameters(this_type, function_parameters)).collect(),
+            });
+        }
+
+        Self { ty, content }
+    }
 }

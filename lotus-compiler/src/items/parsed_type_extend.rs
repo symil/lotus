@@ -19,6 +19,6 @@ impl ParsedTypeExtend {
         let keyword = self.extends.process(context)?;
         let ty = unwrap_item(&self.ty, self, context)?;
 
-        ty.process(false, context)
+        ty.process(false, None, context)
     }
 }

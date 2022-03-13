@@ -12,6 +12,6 @@ impl ParsedVarTypeDeclaration {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Type> {
         let ty = unwrap_item(&self.ty, self, context)?;
 
-        ty.process(context.get_current_function().is_some(), context)
+        ty.process(context.get_current_function().is_some(), None, context)
     }
 }

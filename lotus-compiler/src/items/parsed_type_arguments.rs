@@ -21,7 +21,7 @@ impl ParsedTypeArguments {
         let mut type_list = vec![];
 
         for arg in &self.list {
-            let arg_type = match arg.process(check_interfaces, context) {
+            let arg_type = match arg.process(check_interfaces, None, context) {
                 Some(ty) => ty,
                 None => Type::undefined(),
             };

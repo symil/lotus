@@ -28,7 +28,7 @@ impl ParsedFunctionSignature {
         }
 
         if let Some(ret) = &self.return_type {
-            if let Some(ret_type) = ret.process(false, context) {
+            if let Some(ret_type) = ret.process(false, None, context) {
                 return_type = Some(ret_type);
             }
         }

@@ -83,6 +83,13 @@ impl Type {
         Self::new(TypeContent::Function(signature.borrow().clone()))
     }
 
+    pub fn as_actual(&self) -> Option<&ActualTypeContent> {
+        match self.content() {
+            TypeContent::Actual(content) => Some(content),
+            _ => None
+        }
+    }
+
     pub fn is_undefined(&self) -> bool {
         match self.content() {
             TypeContent::Undefined => true,

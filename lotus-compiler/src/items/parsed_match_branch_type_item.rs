@@ -16,7 +16,7 @@ pub struct ParsedEnumVariantName {
 
 impl ParsedMatchBranchTypeItem {
     pub fn process(&self, tested_value: Vasm, context: &mut ProgramContext) -> Option<(Type, Vasm)> {
-        let ty = self.ty.process(true, context)?;
+        let ty = self.ty.process(true, None, context)?;
 
         if tested_value.ty.is_object() {
             if !ty.is_object() {

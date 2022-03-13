@@ -26,10 +26,10 @@ impl ParsedTypeWithoutSuffix {
         }
     }
 
-    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
+    pub fn process(&self, check_interfaces: bool, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Type> {
         match self {
             ParsedTypeWithoutSuffix::Macro(mac) => mac.process(context),
-            ParsedTypeWithoutSuffix::Single(single) => single.process(check_interfaces, context),
+            ParsedTypeWithoutSuffix::Single(single) => single.process(check_interfaces, type_hint, context),
             ParsedTypeWithoutSuffix::Tuple(tuple) => tuple.process(check_interfaces, context),
         }
     }

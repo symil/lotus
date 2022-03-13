@@ -31,8 +31,8 @@ impl ParsedType {
         }
     }
 
-    pub fn process(&self, check_interfaces: bool, context: &mut ProgramContext) -> Option<Type> {
-        if let Some(mut final_type) = self.parsed_type.process(check_interfaces, context) {
+    pub fn process(&self, check_interfaces: bool, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Type> {
+        if let Some(mut final_type) = self.parsed_type.process(check_interfaces, type_hint, context) {
             for suffix in &self.suffix {
                 final_type = suffix.process(final_type, context);
             }

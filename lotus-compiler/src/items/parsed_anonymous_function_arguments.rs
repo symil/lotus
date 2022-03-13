@@ -28,7 +28,7 @@ impl ParsedAnonymousFunctionArguments {
             ParsedAnonymousFunctionArguments::Multiple(arguments) => {
                 for arg in arguments {
                     let name = &arg.name;
-                    let ty = arg.ty.as_ref().and_then(|ty| ty.process(true, context));
+                    let ty = arg.ty.as_ref().and_then(|ty| ty.process(true, None, context));
 
                     result.push((name, ty));
                 }

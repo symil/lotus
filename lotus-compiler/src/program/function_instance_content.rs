@@ -33,6 +33,8 @@ impl FunctionInstanceContent {
                     wat_body.extend(context.vasm().init_var(arg_var).resolve(&type_index, context));
                 }
 
+                // println!("{}", &function_unwrapped.name);
+                // function_unwrapped.signature.return_type.print();
                 if let Some(wasm_type) = function_unwrapped.signature.return_type.resolve(&type_index, context).wasm_type {
                     wat_ret.push(wasm_type);
                 }

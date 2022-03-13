@@ -12,7 +12,7 @@ pub struct ParsedStaticFieldOrMethod {
 
 impl ParsedStaticFieldOrMethod {
     pub fn process(&self, type_hint: Option<&Type>, context: &mut ProgramContext) -> Option<Vasm> {
-        match self.ty.process(true, context) {
+        match self.ty.process(true, type_hint, context) {
             Some(ty) => {
                 context.completion_provider.add_static_field_completion(&self.double_colon, &ty, type_hint, Some(&FieldCompletionOptions {
                     show_methods: true,
