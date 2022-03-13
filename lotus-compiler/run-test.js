@@ -14,6 +14,7 @@ const ROOT_DIR = path.join(__dirname);
 const TEST_DIR = path.join(ROOT_DIR, 'test');
 const WORKSHOP_DIR = path.join(ROOT_DIR, 'workshop');
 const BUILD_DIR = path.join(WORKSHOP_DIR, 'build');
+const SRC_DIR = path.join(WORKSHOP_DIR, 'src');
 
 const WAT2WASM_BINARY_PATH = 'wat2wasm';
 const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
@@ -127,7 +128,7 @@ async function main() {
         }
 
         fse.mkdirSync(testDirSrcPath, { recursive: true });
-        fse.copySync(WORKSHOP_DIR, testDirSrcPath);
+        fse.copySync(SRC_DIR, testDirSrcPath);
 
         let outputFilePath = path.join(testDirPath, OUTPUT_FILE_NAME);
         let outputFileContent = await runTest(testDirSrcPath, testDirPath, testOptions);

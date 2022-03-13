@@ -1,0 +1,13 @@
+Foo<int, string>
+Foo {
+  a: 0,
+  b: "",
+}
+Foo {
+  a: 0,
+  b: "",
+}
+Foo {
+  a: 8,
+  b: "eight",
+}

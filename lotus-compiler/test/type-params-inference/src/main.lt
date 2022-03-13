@@ -1,0 +1,23 @@
+class Foo<A, B> {
+    a: A = A::__default(),
+    b: B = B::__default(),
+
+    static new() -> Self {
+        Self { }
+    }
+}
+
+export fn main() {
+    let foo : Foo<int, string> = Foo::new();
+    @__type(foo);
+    @dbg(foo);
+
+    foo = Foo;
+    @dbg(foo);
+
+    foo = Foo {
+        a: 8,
+        b: "eight"
+    };
+    @dbg(foo);
+}
