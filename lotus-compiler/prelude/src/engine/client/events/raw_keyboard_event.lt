@@ -1,7 +1,4 @@
-export event OnKeyboardEvent {
-    client: Client,
-    user: #USER_TYPE,
-    local_data: #LOCAL_DATA_TYPE,
+pub event RawKeyboardEvent {
     action: KeyboardAction,
     code: KeyCode,
     text: char?,
@@ -9,10 +6,6 @@ export event OnKeyboardEvent {
     shift_key: bool,
     alt_key: bool,
     repeat: bool,
-
-    has_no_modifier() -> bool {
-        !self.ctrl_key && !self.shift_key && !self.alt_key
-    }
 }
 
 export enum KeyboardAction {

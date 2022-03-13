@@ -1,6 +1,5 @@
 const BUTTON_TO_STRING = ['left', 'middle', 'right'];
 const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
-const CLICK_DISTANCE_THRESHOLD = 1;
 
 export class WindowManager {
     constructor({ getWindow }) {
@@ -234,7 +233,11 @@ export class WindowManager {
     }
 
     _onWheel(evt) {
+        let { x, y } = this._parseMouseEvent('wheel', evt);
+
         this._emit('wheel', {
+            x,
+            y,
             deltaX: evt.deltaX,
             deltaY: evt.deltaY,
             deltaZ: evt.deltaZ,

@@ -1,0 +1,13 @@
+pub event ClientKeyboardEvent extends ClientEvent {
+    action: KeyboardAction,
+    code: KeyCode,
+    text: char?,
+    ctrl_key: bool,
+    shift_key: bool,
+    alt_key: bool,
+    repeat: bool,
+
+    has_no_modifier() -> bool {
+        !self.ctrl_key && !self.shift_key && !self.alt_key
+    }
+}

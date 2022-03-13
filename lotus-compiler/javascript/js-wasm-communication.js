@@ -28,6 +28,8 @@ export function writeWindowEventToBuffer(event, buffer) {
         buffer.writeFloat(payload.y);
     } else if (type == 'wheel') {
         buffer.write(eventTypeId);
+        buffer.writeFloat(payload.x);
+        buffer.writeFloat(payload.y);
         buffer.writeFloat(payload.deltaX);
         buffer.writeFloat(payload.deltaY);
         buffer.writeFloat(payload.deltaZ);

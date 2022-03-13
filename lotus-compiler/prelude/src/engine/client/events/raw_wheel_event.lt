@@ -1,7 +1,6 @@
-export event OnWheelEvent {
-    client: Client,
-    user: #USER_TYPE,
-    local_data: #LOCAL_DATA_TYPE,
+pub event RawWheelEvent {
+    x: float,
+    y: float,
     delta_x: float,
     delta_y: float,
     delta_z: float,

@@ -1,4 +1,4 @@
-export view MatchmakingButton {
+pub view MatchmakingButton {
     @OnRender {
         let button = match evt.client.user().is_searching_for_game {
             true => Button {

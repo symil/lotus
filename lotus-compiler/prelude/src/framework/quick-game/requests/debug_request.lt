@@ -1,0 +1,10 @@
+pub class DebugRequest {
+    message: string = "",
+
+    @OnUserRequest {
+        evt.user.messages.push(QuickGameMessage {
+            kind: MessageKind::Info,
+            content: self.message,
+        })
+    }
+}

@@ -28,9 +28,7 @@ export view LobbyScreen {
             .push(footer)
     }
 
-    @OnKeyboardEvent {
-        check evt.action == KeyboardAction::Down;
-
+    @OnKeyDown {
         if evt.code == KeyCode::Tab {
             if evt.shift_key {
                 self.client().focus_prev();

@@ -1,0 +1,7 @@
+pub event ClientMouseEvent extends ClientEvent {
+    view: View,
+    action: MouseAction,
+    button: MouseButton,
+    x: float,
+    y: float,
+}

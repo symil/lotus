@@ -13,27 +13,23 @@ pub view GameItemView {
             .image_url(self.item.image_url)
             .border_color(border_color)
             .border_width(.04h)
+            .hover_overlay_color(Color::black())
+            .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
+            .hover_cursor(Cursor::Pointer)
         
         // TODO: display selected count
     }
 
-    @OnPostRender {
-        self.hover_overlay_color(Color::black())
-            .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
-            .hover_cursor(Cursor::Pointer)
-            .on_click(client => toggle_item_selection(client, self.item))
+    @OnClick {
+        let is_selected = (evt.user.selected_game_items.get(self.item) || 0) > 0;
+        let count = match is_selected {
+            true => 0,
+            false => 1,
+        };
+
+        evt.client.send_request(SelectItemRequest {
+            item: self.item,
+            count,
+        });
     }
-}
-
-fn toggle_item_selection(client: Client, item: GameItem) {
-    let is_selected = (client.user().selected_game_items.get(item) || 0) > 0;
-    let count = match is_selected {
-        true => 0,
-        false => 1,
-    };
-
-    client.send_request(SelectItemRequest {
-        item,
-        count,
-    });
 }

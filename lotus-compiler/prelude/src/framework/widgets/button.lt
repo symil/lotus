@@ -6,7 +6,7 @@ export view Button {
     background_color : Color = DEFAULT_BACKGROUND_COLOR,
     border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
     border_radius: DisplaySize = DEFAULT_BORDER_RADIUS,
-    on_click: MouseHandlerCallback = none,
+    on_click: fn(Client) = none,
     is_disabled: fn(Client)(bool) = none
 
     @OnRender {
@@ -26,24 +26,24 @@ export view Button {
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
             .focus_background_color(Color::orange())
+            .set_disabled(self.is_disabled && (self.is_disabled)(evt.client))
     }
 
-    @OnPostRender {
-        self.on_click(self.on_click);
+    @OnMouseDown {
+        evt.focus = false;
+    }
 
-        if self.is_disabled && (self.is_disabled)(evt.client) {
-            self.disable();
+    @OnClick {
+        if self.on_click {
+            (self.on_click)(evt.client)
         }
     }
 
-    @OnKeyboardEvent {
+    @OnKeyDown {
         check self.is_focused();
-        check evt.action == KeyboardAction::Down;
-        check self.on_click;
 
-        if evt.code == KeyCode::Enter {
-            let callback = self.on_click;
-            callback(evt.client);
+        if evt.code == KeyCode::Enter && self.on_click {
+            (self.on_click)(evt.client);
         }
     }
 }

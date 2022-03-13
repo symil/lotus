@@ -15,7 +15,7 @@ pub view TextBox {
     text_font: Font = DEFAULT_FONT,
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
-    on_enter: MouseHandlerCallback = none,
+    on_enter: fn(Client) = none,
 
     _get_data() -> TextBoxData {
         (self.get_data)(self.client().local_data())
@@ -49,16 +49,7 @@ pub view TextBox {
             .focus_text_cursor_index(cursor_index)
     }
 
-    @OnPostRender {
-        for view in self.client()._all_views {
-            view.on_click(() => self.unfocus());
-        }
-
-        self.on_click(() => self.focus());
-    }
-
-    @OnKeyboardEvent {
-        check evt.action == KeyboardAction::Down;
+    @OnKeyDown {
         check self.is_focused();
 
         let data = self._get_data();

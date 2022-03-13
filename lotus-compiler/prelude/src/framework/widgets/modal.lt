@@ -47,11 +47,7 @@ export view Modal {
 
     @OnPostRender[MODAL_POST_RENDER_INDEX] {
         for view in evt.client.views() {
-            if !view.is_descendant_of(self) {
-                view.disable();
-            } else {
-                view.enable();
-            }
+            view.set_disabled(!view.is_descendant_of(self));
         }
 
         let buttons = self.get_descendants(view => view is Button(button) && button);

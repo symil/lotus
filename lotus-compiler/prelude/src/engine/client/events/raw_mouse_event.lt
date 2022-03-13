@@ -1,11 +1,8 @@
-export event OnMouseEvent {
-    client: Client,
-    user: #USER_TYPE,
-    local_data: #LOCAL_DATA_TYPE,
+pub event RawMouseEvent {
     action: MouseAction,
     button: MouseButton,
     x: float,
-    y: float
+    y: float,
 }
 
 export enum MouseAction {

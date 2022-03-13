@@ -1,0 +1,3 @@
+export event OnMouseDown extends ClientMouseEvent {
+    focus: bool = true
+}

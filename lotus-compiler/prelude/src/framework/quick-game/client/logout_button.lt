@@ -2,7 +2,7 @@ pub view LogoutButton {
     @OnRender {
         let button = Button {
             text: "Log out",
-            on_click: send_login_request
+            on_click: send_logout_request
         };
 
         self.layout()

@@ -4,23 +4,17 @@ enum WindowEventType {
     Wheel
 }
 
-pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Event {
+pub fn decode_window_event_from_buffer(buffer: Buffer) -> Event {
     let event_type : WindowEventType = buffer.read_unchecked();
 
     match event_type {
-        WindowEventType::Mouse => OnMouseEvent {
-            client,
-            user: client._user,
-            local_data: client._local_data,
+        WindowEventType::Mouse => RawMouseEvent {
             action: buffer.read_unchecked(),
             button: buffer.read_unchecked(),
             x: buffer.read_unchecked(),
             y: buffer.read_unchecked(),
         },
-        WindowEventType::Keyboard => OnKeyboardEvent {
-            client,
-            user: client._user,
-            local_data: client._local_data,
+        WindowEventType::Keyboard => RawKeyboardEvent {
             action: buffer.read_unchecked(),
             code: buffer.read_unchecked(),
             text: buffer.read_unchecked(),
@@ -29,10 +23,9 @@ pub fn decode_window_event_from_buffer(buffer: Buffer, client: Client) -> Event 
             alt_key: buffer.read_unchecked(),
             repeat: buffer.read_unchecked(),
         },
-        WindowEventType::Wheel => OnWheelEvent {
-            client,
-            user: client._user,
-            local_data: client._local_data,
+        WindowEventType::Wheel => RawWheelEvent {
+            x: buffer.read_unchecked(),
+            y: buffer.read_unchecked(),
             delta_x: buffer.read_unchecked(),
             delta_y: buffer.read_unchecked(),
             delta_z: buffer.read_unchecked(),

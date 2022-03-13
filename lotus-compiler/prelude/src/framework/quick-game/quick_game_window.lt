@@ -32,15 +32,19 @@ export view QuickGameWindow {
 
         if !local_storage_username.is_empty() {
             evt.client.freeze();
-            evt.client.send_request(LoginRequest {
+            evt.client.send_request_with_callback(LoginRequest {
                 username: local_storage_username
             }, () => evt.client.unfreeze());
         }
     }
 
-    @OnKeyboardEvent[-1] {
-        check evt.action == KeyboardAction::Down && evt.code == KeyCode::KeyC && evt.alt_key;
-
-        evt.client.clear_local_storage();
+    @OnKeyDown[-1] {
+        check evt.alt_key;
+        
+        if evt.code == KeyCode::KeyC {
+            evt.client.clear_local_storage();
+        } else if evt.code == KeyCode::KeyV {
+            evt.client.send_request(DebugRequest { message: "debug message" });
+        }
     }
 }

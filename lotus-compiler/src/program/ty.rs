@@ -97,6 +97,10 @@ impl Type {
         }
     }
 
+    pub fn is_undefined_or_void(&self) -> bool {
+        self.is_undefined() || self.is_void()
+    }
+
     pub fn is_any(&self) -> bool {
         match self.content() {
             TypeContent::Any => true,
