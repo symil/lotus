@@ -143,7 +143,7 @@ impl ParsedMatchBlock {
 
             if !variant_set.is_empty() {
                 result = Some(variant_set.iter()
-                    .map(|variant| format!("{} => @todo(),", variant))
+                    .map(|variant| format!("{} => none,", variant))
                     .collect::<Vec<String>>()
                     .join("\n")
                 );

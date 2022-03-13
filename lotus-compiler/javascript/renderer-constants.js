@@ -1,6 +1,6 @@
 export const CURSORS = ['default', 'pointer', 'text'];
 export const SHAPES = ['rectangle', 'circle', 'line'];
-export const FONTS = ['arial'];
+export const FONTS = ['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'];
 export const HORIZONTAL_ALIGNS = ['left', 'center', 'right'];
 export const VERTICAL_ALIGNS = ['top', 'middle', 'bottom'];
 

@@ -12,6 +12,7 @@ export view Grid {
     vertical_outer_margin: DisplaySize = none,
     horizontal_inner_margin: DisplaySize = none,
     vertical_inner_margin: DisplaySize = none,
+    background_color: Color = none,
 
     @OnRender {
         let row_size = self.item_count_per_row && self.item_count_per_row.to_float();
@@ -85,6 +86,8 @@ export view Grid {
             item.set_rect(item_rect);
             self.add_child(item);
         }
+
+        self.background_color(self.background_color)
     }
 }
 

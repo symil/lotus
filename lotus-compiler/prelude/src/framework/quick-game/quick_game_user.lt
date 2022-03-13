@@ -1,10 +1,14 @@
 export class QuickGameUser {
-    name: string = none,
+    name: string = "",
     messages: QuickGameMessage[] = [],
     is_searching_for_game: bool = false,
     available_game_items: GameItemCategory[],
-    selected_game_items: Map<GameItem, int>,
+    selected_game_items: Map<GameItem, int> = Map::new(),
     game: bool, // TODO
+
+    is_logged() -> bool {
+        !self.name.is_empty()
+    }
 
     show_error(message: string) {
         self.messages.push(QuickGameMessage {

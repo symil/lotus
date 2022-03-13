@@ -1,5 +1,7 @@
 export class GameItem {
+    name: string = "",
     background_color : Color = Color::transparent(),
     image_url: string = "",
-    description0: string = "",
+    description: string = "",
+    max_duplicate_count: int = 1,
 }

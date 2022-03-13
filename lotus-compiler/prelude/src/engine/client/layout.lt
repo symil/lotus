@@ -7,19 +7,19 @@ pub class Layout {
     inner_margin: float = 0,
     dx: float = 0,
     dy: float = 1,
-    dynamic: bool = false,
+    dynamic: bool = true,
     fixed_views: View[] = [],
     dynamic_views: View[] = [],
 
     static new(parent_view: View) -> Self {
-        let target = parent_view._rect.clone();
+        let target = parent_view.rect().clone();
 
         Self { parent_view, target }
     }
 
     resey() -> Self {
         self._flush();
-        self.target = self.parent_view._rect.clone();
+        self.target = self.parent_view.rect().clone();
         self.towards_bottom();
         self
     }
@@ -80,8 +80,8 @@ pub class Layout {
     move_to(x: DisplaySize, y: DisplaySize) -> Self {
         self._flush();
         self.last = none;
-        self.target.x = x.resolve_from_rect(self.parent_view.rect());
-        self.target.y = y.resolve_from_rect(self.parent_view.rect());
+        self.target.x = self.parent_view.rect().x1() + x.resolve_from_rect(self.parent_view.rect());
+        self.target.y = self.parent_view.rect().y1() + y.resolve_from_rect(self.parent_view.rect());
         self
     }
 
@@ -109,15 +109,17 @@ pub class Layout {
         self
     }
 
-    resize_from_width(width: DisplaySize, aspect_ratio: float) -> Self {
-        self.target.width =  width.resolve_from_rect(self.parent_view.rect());
-        self.target.height = self.target.width / aspect_ratio;
+    set_width_from_aspect_ratio(aspect_ratio: float) -> Self {
+        if aspect_ratio {
+            self.target.width = self.target.height * aspect_ratio;
+        }
         self
     }
 
-    resize_from_height(height: DisplaySize, aspect_ratio: float) -> Self {
-        self.target.height = height.resolve_from_rect(self.parent_view.rect());
-        self.target.width = self.target.height * aspect_ratio;
+    set_height_from_aspect_ratio(aspect_ratio: float) -> Self {
+        if aspect_ratio {
+            self.target.height = self.target.width / aspect_ratio;
+        }
         self
     }
 

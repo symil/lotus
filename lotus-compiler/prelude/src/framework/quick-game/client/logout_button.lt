@@ -1,6 +1,13 @@
-pub class LogoutButton extends Button {
-    self.text = "Log out"
-    self.on_click = send_logout_request
+pub view LogoutButton {
+    @OnRender {
+        let button = Button {
+            text: "Log out",
+            on_click: send_login_request
+        };
+
+        self.layout()
+            .push(button)
+    }
 }
 
 fn send_logout_request(client: Client) {

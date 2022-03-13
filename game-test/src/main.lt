@@ -1,7 +1,30 @@
 #WINDOW_TYPE = Window
+#WORLD_TYPE = World
 
 view Window extends QuickGameWindow {
     self.background_color = Color::light_green()
     self.title = "Some game"
     self.title_color = Color::red()
+}
+
+class World extends QuickGameWorld {
+    self.game_items = GAME_ITEMS
+}
+
+const CATEGORY_1 = ["Item1", "Item2", "Item3"];
+const CATEGORY_2 = ["Item4", "Item5", "Item6"];
+
+const GAME_ITEMS = [
+    format_category("Fisrt category", CATEGORY_1),
+    format_category("Second category", CATEGORY_2),
+];
+
+fn format_category(name: string, items: string[]) -> GameItemCategory {
+    GameItemCategory {
+        name,
+        items: items.map(name => GameItem {
+            name,
+            background_color: Color::from_hash(name.hash(), false),
+        })
+    }
 }

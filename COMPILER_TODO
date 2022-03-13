@@ -168,6 +168,7 @@
 [X] Add function to get key name from key code
 [X] Add function to get `window.location.href`
 [X] Add option to not include framework
+[ ] Fix `Map` serializtion
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -235,7 +236,8 @@
 [ ] Add `-` unary operator
 [ ] Make so `reverse` and `sort` first clone the array
 [ ] Add `Vector` type
-[ ] When doing `fill class fields`, insert `field_name` instead of `field_name: none` if a variable `field_name` exists
+[ ] When doing `fill * fields`, insert `field_name` instead of `field_name: none` if a variable `field_name` exists
+[ ] Action `fill all fields`: do not insert private fields
 [ ] Properly show typedef function types (e.g `type MyCallback = fn(string)` should properly show `MyCallback` in completion suggestions when relevant)
 [ ] Add utility methods for `string` (implement those from javascript)
 [ ] Implement debug dual window
@@ -245,3 +247,4 @@
 [ ] Add iterator methods on arrays
 [ ] Take new lines into consideration when computing errors (e.g `let \nself.something = 8;` should properly show "ecpected identifier" after `let`)
 [ ] Fix non-ascii characters in string literals
+[ ] Prevent classes not declared with `view` from inheriting a view

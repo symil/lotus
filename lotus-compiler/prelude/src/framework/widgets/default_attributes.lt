@@ -1,3 +1,4 @@
+pub const DEFAULT_FONT = Font::SansSerif;
 pub const DEFAULT_TEXT_COLOR = Color::black();
 pub const DEFAULT_BACKGROUND_COLOR = Color::white();
 pub const DEFAULT_BORDER_RADIUS = .15h;

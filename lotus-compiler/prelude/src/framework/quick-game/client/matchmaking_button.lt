@@ -13,7 +13,8 @@ export view MatchmakingButton {
 
         button.text_size = .5h;
 
-        self.layout().push(button);
+        self.layout()
+            .push(button);
     }
 }
 

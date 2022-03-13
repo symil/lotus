@@ -1,0 +1,17 @@
+pub class SelectItemRequest {
+    item: GameItem,
+    count: int,
+
+    @OnUserRequest {
+        // check evt.world.valid_game_items.has(self.item);
+
+        if !evt.world.valid_game_items.has(self.item) {
+            evt.user.show_error("invalid game item");
+            return;
+        }
+
+        if self.count >= 0 && self.count <= self.item.max_duplicate_count {
+            evt.user.selected_game_items.set(self.item, self.count);
+        }
+    }
+}

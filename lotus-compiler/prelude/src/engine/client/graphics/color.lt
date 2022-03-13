@@ -25,13 +25,13 @@ export class Color {
         }
     }
 
-    static from_hash(hash: int, opaque: bool) -> Self {
+    static from_hash(hash: int, alpha: bool = false) -> Self {
         let r = hash >> 24;
         let g = (hash >> 16) % 256;
         let b = (hash >> 8) % 256;
         let a = hash % 256;
 
-        if opaque {
+        if !alpha {
             a = 255;
         }
 

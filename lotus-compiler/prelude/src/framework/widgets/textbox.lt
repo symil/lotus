@@ -12,6 +12,7 @@ pub view TextBox {
     get_data: fn(#LOCAL_DATA_TYPE)(TextBoxData),
     placeholder: string = "",
     text_color: Color = Color::black(),
+    text_font: Font = DEFAULT_FONT,
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
     on_enter: MouseHandlerCallback = none,
@@ -38,10 +39,11 @@ pub view TextBox {
             .border_color(self.text_color)
             .border_radius(DEFAULT_BORDER_RADIUS)
             .border_width(DEFAULT_BORDER_WIDTH)
-            .text_horizontal_align(HorizontalAlign::Left)
+            .text(text)
+            .text_font(self.text_font)
             .text_size(.5h)
             .text_color(color)
-            .text(text)
+            .text_horizontal_align(HorizontalAlign::Left)
             .cursor(Cursor::Text)
             .focus_border_width(border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .focus_text_cursor_index(cursor_index)

@@ -1,0 +1,18 @@
+pub view LobbyFooter {
+    @OnRender {
+        self.background_color(Color::green());
+        check evt.user.is_logged();
+        
+        self.layout()
+            .move_center()
+            .set_height(0.8h)
+            .set_width_from_aspect_ratio(4)
+            .push(MatchmakingButton)
+            .move_bottom_right()
+            .towards_left()
+            .set_height(0.5h)
+            .set_width_from_aspect_ratio(3)
+            .margin(.1h)
+            .push(LogoutButton)
+    }
+}

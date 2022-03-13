@@ -1,0 +1,15 @@
+const USERNAME_TEXT_SIZE = .5h;
+
+pub view UsernameLabel {
+    @OnRender {
+        check evt.user.is_logged();
+
+        let label = Label {
+            text: evt.user.name,
+            text_size: USERNAME_TEXT_SIZE,
+            background_color: Color::blue(),
+        };
+
+        self.layout().push(label)
+    }
+}

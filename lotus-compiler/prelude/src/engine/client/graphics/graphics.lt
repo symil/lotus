@@ -1,5 +1,5 @@
 export enum Shape { Rectangle, Circle, Line }
-export enum Font { Arial }
+export enum Font { Serif, SansSerif, Monospace, Cursive, Fantasy }
 export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }
@@ -25,7 +25,7 @@ export class Graphics {
     animation_current_time: float = none,
     animation_duration: float = 1,
     text: string = none,
-    text_font: Font = Font::Arial,
+    text_font: Font = Font::SansSerif,
     text_size: DisplaySize = none,
     text_color: Color = Color::black(),
     text_alpha: float = 1,

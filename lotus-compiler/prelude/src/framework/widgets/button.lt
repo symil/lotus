@@ -2,7 +2,7 @@ export view Button {
     text: string = "",
     text_color: Color = Color::black(),
     text_size: DisplaySize = DEFAULT_BUTTON_TEXT_SIZE,
-    text_font: Font = Font::Arial,
+    text_font: Font = DEFAULT_FONT,
     background_color : Color = DEFAULT_BACKGROUND_COLOR,
     border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
     border_radius: DisplaySize = DEFAULT_BORDER_RADIUS,

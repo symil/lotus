@@ -1,6 +1,5 @@
-const TITLE_BAR_HEIGHT = .15h;
-const TITLE_TEXT_SIZE = .8h;
-const USERNAME_TEXT_SIZE = .5h;
+const HEADER_SIZE = .15h;
+const FOOTER_SIZE = .15h;
 
 export view LobbyScreen {
     title: string,
@@ -8,70 +7,29 @@ export view LobbyScreen {
     text_font: Font,
     title_color : Color,
 
-    _displayLoginPanel() {
-        self.layout()
-            .move_center()
-            .resize_from_height(0.1h, 5)
-            .towards_bottom()
-            .inner_margin(20)
-            .push(UsernameTextBox)
-            .push(LoginButton)
-    }
-
-    _displayUserInfo(user: QuickGameUser) {
-        let username_label = Label {
-            text: user.name,
-            text_size: USERNAME_TEXT_SIZE,
-            background_color: Color::blue(),
-        };
-
-        self.layout()
-            .move_top_right()
-            .resize_from_height(TITLE_BAR_HEIGHT, 2)
-            .push(username_label)
-            .move_bottom_right()
-            .resize_from_height(0.07h, 3)
-            .margin(.02h)
-            .push(LogoutButton)
-    }
-
-    _displayMatchmakingButton() {
-        self.layout()
-            .move_bottom()
-            .resize_from_width(.2w, 4)
-            .margin(0.02h)
-            .push(MatchmakingButton)
-    }
-
     @OnRender {
-        let is_user_logged = !!evt.client.user.name;
-        let title_label = Label {
-            text: self.title,
-            text_color: self.title_color,
-            text_font: self.text_font,
-            background_color: Color::orange()
+        let header = LobbyHeader { ..self };
+        let footer = LobbyFooter;
+        let middle_panel = match evt.user.is_logged() {
+            true => GameItemSelectionPanel,
+            false => LoginPanel,
         };
 
         self.background_color(self.background_color);
+
         self.layout()
             .move_top()
             .towards_bottom()
-            .set_height(TITLE_BAR_HEIGHT)
-            .push(title_label)
-        
-        if is_user_logged {
-            // self._displayLoginPanel();
-            self._displayUserInfo(evt.client.user);
-            self._displayMatchmakingButton();
-        } else {
-            self._displayLoginPanel();
-        }
+            .set_height(HEADER_SIZE)
+            .push(header)
+            .set_height(DisplaySize::scaled_from_height(1f - HEADER_SIZE.value - FOOTER_SIZE.value))
+            .push(middle_panel)
+            .set_height(FOOTER_SIZE)
+            .push(footer)
     }
 
     @OnKeyboardEvent {
-        if evt.action != KeyboardAction::Down {
-            return;
-        }
+        check evt.action == KeyboardAction::Down;
 
         if evt.code == KeyCode::Tab {
             if evt.shift_key {
@@ -82,9 +40,4 @@ export view LobbyScreen {
             intercept;
         }
     }
-}
-
-fn log<T>(value: T) -> bool {
-    @dbg(value);
-    true
 }

@@ -1,5 +1,18 @@
 pub view GameItemSelectionPanel {
     @OnRender {
-        
+        let grids = evt.user.available_game_items.map(category => {
+            Grid {
+                items: category.items.map(item => GameItemView { item }),
+                background_color: Color::from_hash(category.name.hash(), false),
+                margin: .25h
+            }
+        });
+        let master_grid = Grid {
+            items: grids,
+            item_count_per_column: 1,
+        };
+
+        self.background_color(Color::gray());
+        self.layout().push(master_grid);
     }
 }

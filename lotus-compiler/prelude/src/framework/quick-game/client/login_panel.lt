@@ -1,0 +1,14 @@
+pub view LoginPanel {
+    @OnRender {
+        self.background_color(Color::hot_pink())
+        
+        self.layout()
+            .move_center()
+            .set_height(.15h)
+            .set_width_from_aspect_ratio(5)
+            .towards_bottom()
+            .inner_margin(20)
+            .push(UsernameTextBox)
+            .push(LoginButton)
+    }
+}
