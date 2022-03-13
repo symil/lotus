@@ -61,9 +61,9 @@ export class NetworkManager {
             closed = true;
         }
 
-        if (closed) {
-            console.log(`error: cannot send message through websocket #${webSocketId} because it is closed`);
-        }
+        // if (closed) {
+        //     console.log(`error: cannot send message through websocket #${webSocketId} because it is closed`);
+        // }
     }
 
     pollEvents() {
