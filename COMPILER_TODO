@@ -168,7 +168,9 @@
 [X] Add function to get key name from key code
 [X] Add function to get `window.location.href`
 [X] Add option to not include framework
-[ ] Fix `Map` serializtion
+[X] Fix `Map` serializtion
+[X] Fix click event
+[ ] Add `OnDragStart` and `OnDragEnd` events
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -248,3 +250,4 @@
 [ ] Take new lines into consideration when computing errors (e.g `let \nself.something = 8;` should properly show "ecpected identifier" after `let`)
 [ ] Fix non-ascii characters in string literals
 [ ] Prevent classes not declared with `view` from inheriting a view
+[ ] Add way to inline functions/methods

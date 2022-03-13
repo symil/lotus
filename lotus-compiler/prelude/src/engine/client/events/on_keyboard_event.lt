@@ -1,4 +1,7 @@
-export event OnKeyboardEvent extends OnWindowEvent {
+export event OnKeyboardEvent {
+    client: Client,
+    user: #USER_TYPE,
+    local_data: #LOCAL_DATA_TYPE,
     action: KeyboardAction,
     code: KeyCode,
     text: char?,

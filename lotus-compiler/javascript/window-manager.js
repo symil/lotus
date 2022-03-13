@@ -1,6 +1,6 @@
 const BUTTON_TO_STRING = ['left', 'middle', 'right'];
 const DELTA_MODE_TO_STRING = ['pixel', 'line', 'page'];
-const CLICK_DISTANCE_THRESHOLD = 5;
+const CLICK_DISTANCE_THRESHOLD = 1;
 
 export class WindowManager {
     constructor({ getWindow }) {
@@ -201,14 +201,7 @@ export class WindowManager {
     _onMouseUp(evt) {
         let { action, button, x, y } = this._parseMouseEvent('up', evt);
 
-        if (this._pressLocation[button]) {
-            if (distance(this._pressLocation[button], { x, y }) < CLICK_DISTANCE_THRESHOLD) {
-                this._emit('mouse', { action: 'click', button, x, y });
-            }
-
-            this._pressLocation[button] = null;
-        }
-
+        this._pressLocation[button] = null;
         this._emit('mouse', { action, button, x, y });
     }
 

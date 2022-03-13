@@ -1,6 +1,6 @@
 export view MatchmakingButton {
     @OnRender {
-        let button = match evt.client.user.is_searching_for_game {
+        let button = match evt.client.user().is_searching_for_game {
             true => Button {
                 text: "Cancel search",
                 on_click: cancel_search

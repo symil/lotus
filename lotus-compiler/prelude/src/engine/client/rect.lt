@@ -10,6 +10,14 @@ export class Rect {
     // Angle of the rectangle
     angle: float = 0,
 
+    __eq(other: Self) -> bool {
+        self.x == other.x && self.y == other.y && self.width == other.width && self.height == other.height && self.z == other.z && self.angle == other.angle
+    }
+
+    __ne(other: Self) -> bool {
+        !self.__eq(other)
+    }
+
     static empty() -> Self {
         Self { x: 0, y: 0, width: 0, height: 0 }
     }

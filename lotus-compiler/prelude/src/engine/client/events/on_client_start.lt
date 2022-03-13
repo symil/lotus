@@ -1,3 +1,4 @@
 export event OnClientStart {
-    client: Client
+    client: Client,
+    local_data: #LOCAL_DATA_TYPE,
 }

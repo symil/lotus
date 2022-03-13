@@ -18,7 +18,7 @@ pub view TextBox {
     on_enter: MouseHandlerCallback = none,
 
     _get_data() -> TextBoxData {
-        (self.get_data)(self.client().local_data)
+        (self.get_data)(self.client().local_data())
     }
 
     @OnRender {

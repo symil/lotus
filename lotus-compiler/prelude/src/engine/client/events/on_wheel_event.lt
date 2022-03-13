@@ -1,4 +1,7 @@
-export event OnWheelEvent extends OnWindowEvent {
+export event OnWheelEvent {
+    client: Client,
+    user: #USER_TYPE,
+    local_data: #LOCAL_DATA_TYPE,
     delta_x: float,
     delta_y: float,
     delta_z: float,

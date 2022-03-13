@@ -4,15 +4,14 @@ const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
 export class Client {
-    user: #USER_TYPE = #USER_TYPE::__default(),
-    local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
-
+    _user: #USER_TYPE = #USER_TYPE::__default(),
+    _local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _local_object_to_remote_addr: Map<Object, int> = none,
     _websocket_id: int = none,
     _draw_primitives: DrawPrimitive[] = [],
     _network_events: OnNetworkEvent[] = [],
-    _window_events: OnWindowEvent[] = [],
+    _window_events: Event[] = [],
     _is_connected: bool = false,
     _frozen: bool = false,
     _request_id_counter: Counter = Counter::new(),
@@ -32,9 +31,18 @@ export class Client {
     _cursor_x: float = 0,
     _cursor_y: float = 0,
     _local_storage_key_prefix: string = "",
+    _click_hitbox: Rect = none,
 
     static get() -> Self {
         CLIENT
+    }
+
+    user() -> #USER_TYPE {
+        self._user
+    }
+
+    local_data() -> #LOCAL_DATA_TYPE {
+        self._local_data
     }
 
     _start() {
@@ -43,7 +51,8 @@ export class Client {
 
         let window = #WINDOW_TYPE::__default();
         let event = OnClientStart {
-            client: self
+            client: self,
+            local_data: self._local_data,
         };
 
         event.emit([window]);
@@ -110,7 +119,7 @@ export class Client {
                 if processed_request_count == 0 {
                     self._buffer.reset_serialization_utility();
 
-                    self.user = @deserialize(self._buffer);
+                    self._user = @deserialize(self._buffer);
                     self._local_object_to_remote_addr = self._buffer.get_local_object_to_remote_addr_map().clone();
                     self._is_connected = true;
                 } else {
@@ -154,7 +163,8 @@ export class Client {
     _render_view(view: View) {
         let event = OnRender {
             client: self,
-            user: self.user,
+            user: self._user,
+            local_data: self._local_data
         };
 
         view._client = self;
@@ -183,7 +193,8 @@ export class Client {
     _define_interactions() {
         let event = OnPostRender {
             client: self,
-            user: self.user
+            user: self._user,
+            local_data: self._local_data,
         };
         let views = self._all_views.clone().reverse();
 
@@ -243,13 +254,23 @@ export class Client {
                     if view && !view.is_disabled() {
                         let callback_list = match e.action {
                             MouseAction::Down => view._on_down_callbacks,
-                            MouseAction::Click => view._on_click_callbacks,
                             MouseAction::Up => view._on_up_callbacks,
-                            MouseAction::Drag => view._on_drag_callbacks
                         };
 
                         for callback in callback_list {
                             callback(self);
+                        }
+
+                        if e.action == MouseAction::Down {
+                            self._click_hitbox = view.rect().clone();
+                        } else if e.action == MouseAction::Up && self._click_hitbox {
+                            if self._click_hitbox.contains(e.x, e.y) && view.rect() == self._click_hitbox {
+                                for callback in view._on_click_callbacks {
+                                    callback(self);
+                                }
+                            }
+
+                            self._click_hitbox = none;
                         }
                     }
                 },

@@ -26,7 +26,7 @@ pub view GameItemView {
 }
 
 fn toggle_item_selection(client: Client, item: GameItem) {
-    let is_selected = (client.user.selected_game_items.get(item) || 0) > 0;
+    let is_selected = (client.user().selected_game_items.get(item) || 0) > 0;
     let count = match is_selected {
         true => 0,
         false => 1,

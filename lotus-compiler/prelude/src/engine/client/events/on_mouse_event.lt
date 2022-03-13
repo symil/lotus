@@ -1,4 +1,7 @@
-export event OnMouseEvent extends OnWindowEvent {
+export event OnMouseEvent {
+    client: Client,
+    user: #USER_TYPE,
+    local_data: #LOCAL_DATA_TYPE,
     action: MouseAction,
     button: MouseButton,
     x: float,
@@ -8,9 +11,7 @@ export event OnMouseEvent extends OnWindowEvent {
 export enum MouseAction {
     Move,
     Down,
-    Click,
     Up,
-    Drag
 }
 
 export enum MouseButton {

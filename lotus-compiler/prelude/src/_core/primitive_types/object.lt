@@ -65,7 +65,7 @@ export class Object extends any {
     }}
 
     __hash() -> int {
-        (self as int).__hash()
+        self.__as_ptr().__get_version()
     }
 
     __as_ptr() -> ptr {
