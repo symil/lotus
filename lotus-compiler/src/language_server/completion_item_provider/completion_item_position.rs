@@ -2,6 +2,7 @@ use super::CompletionItemVisibility;
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum CompletionItemPosition {
+    EnumMemberMatchingHint,
     PublicVariableMatchingHint,
     PublicFunctionMatchingHint,
     PublicTypeMatchingHint,

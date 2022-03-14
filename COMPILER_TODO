@@ -171,7 +171,7 @@
 [X] Fix `Map` serializtion
 [X] Fix click event
 [X] Improve mouse & keyboard events
-[ ] Fix completion for enum variants that match expected type
+[X] Fix completion for enum variants that match expected type
 
 -- LATER --
 [ ] Allow manually specifying function parameters

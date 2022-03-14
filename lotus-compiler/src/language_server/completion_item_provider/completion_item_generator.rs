@@ -104,7 +104,7 @@ impl CompletionItemGenerator {
             },
             Self::StaticFieldOrMethod(details) => {
                 for variant in details.parent_type.get_all_variants() {
-                    items.add_enum_variant(variant, false);
+                    items.add_enum_variant(variant, details.expected_type.as_ref(), false);
                 }
 
                 if details.options.show_methods {
@@ -165,7 +165,7 @@ impl CompletionItemGenerator {
                     if ty.is_enum() {
                         ty.get_type_blueprint().with_ref(|type_blueprint| {
                             for variant in type_blueprint.enum_variants.values() {
-                                items.add_enum_variant(variant.clone(), true)
+                                items.add_enum_variant(variant.clone(), details.expected_type.as_ref(), true)
                             }
                         });
                     }
@@ -208,7 +208,7 @@ impl CompletionItemGenerator {
                 } else if details.matched_type.is_enum() {
                     details.matched_type.get_type_blueprint().with_ref(|type_blueprint| {
                         for variant in type_blueprint.enum_variants.values() {
-                            items.add_enum_variant(variant.clone(), true)
+                            items.add_enum_variant(variant.clone(), Some(&details.matched_type), true)
                         }
                     });
                 }
@@ -217,7 +217,7 @@ impl CompletionItemGenerator {
             },
             Self::Enum(enum_type) => {
                 for variant in enum_type.get_all_variants() {
-                    items.add_enum_variant(variant.clone(), false)
+                    items.add_enum_variant(variant.clone(), None, false)
                 }
             }
         }

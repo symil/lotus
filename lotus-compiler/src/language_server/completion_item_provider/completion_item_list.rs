@@ -118,17 +118,26 @@ impl CompletionItemList {
             .description(field.ty.to_string());
     }
 
-    pub fn add_enum_variant(&mut self, variant: Rc<EnumVariantInfo>, show_owner: bool) {
+    pub fn add_enum_variant(&mut self, variant: Rc<EnumVariantInfo>, expected_type: Option<&Type>, show_owner: bool) {
         let variant_name = variant.name.as_str();
         let owner_type = variant.owner.borrow().self_type.clone();
         let label = match show_owner {
             true => format!("{}::{}", owner_type.to_string(), variant_name),
             false => variant_name.to_string(),
         };
+        let mut position = CompletionItemPosition::EnumMember;
+
+        if let Some(ty) = expected_type {
+            if let Some(content) = ty.as_actual() {
+                if content.type_blueprint == variant.owner {
+                    position = CompletionItemPosition::EnumMemberMatchingHint;
+                }
+            }
+        }
 
         self
             .add(label)
-            .position(CompletionItemPosition::EnumMember)
+            .position(position)
             .kind(CompletionItemKind::EnumMember)
             .description(owner_type.to_string())
             .filter_text(variant_name.to_string());
