@@ -15,7 +15,8 @@ const FIELDS = {
     title: [STRING_TYPE, ''],
     port: [POSITIVE_INT, DEFAULT_HTTP_PORT],
     remote: [STRING_TYPE, ''],
-    clientFiles: [STRING_ARRAY, []]
+    clientFiles: [STRING_ARRAY, []],
+    spreadsheetUrl: [STRING_TYPE, '']
 }
 
 export function readPackageDetails(packageRootPath) {
