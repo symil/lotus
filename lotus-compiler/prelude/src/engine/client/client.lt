@@ -1,4 +1,4 @@
-const CLIENT : Client = none;
+const CLIENT : Object = none;
 
 const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
@@ -36,8 +36,25 @@ export class Client {
     _drag_start_y: float = 0,
     _view_data_store: ViewDataStore = ViewDataStore,
 
+    static start() {
+        if !CLIENT {
+            set_pointer_version_seed(wasm_get_current_time());
+            let client = Client;
+            client._start();
+            CLIENT = client;
+        }
+    }
+
     static get() -> Self {
-        CLIENT
+        CLIENT as Self
+    }
+
+    static udpate() {
+        let client = Client::get();
+
+        client._update();
+        @retain(client);
+        @trigger_garbage_collection();
     }
 
     user() -> #USER_TYPE {
@@ -506,14 +523,9 @@ export class Client {
 }
 
 sys fn start_client() {
-    set_pointer_version_seed(wasm_get_current_time());
-    CLIENT = Client;
-    CLIENT._start();
+    Client::start()
 }
 
 sys fn update_client() {
-    CLIENT._update();
-    // @log(`memory used: ${get_memory_usage() / 1024} KB`);
-    @retain(CLIENT);
-    @trigger_garbage_collection();
+    Client::udpate()
 }

@@ -46,10 +46,10 @@ impl LanguageServerCommand {
     pub fn run(mut self, mut cache: Option<&mut FileSystemCache<ParsedSourceFile, ParseError>>) -> String {
         let callback = self.kind.get_callback();
         let options = ProgramContextOptions {
+            package: self.package.clone(),
             mode: ProgramContextMode::Validate,
             cursor_location: Some(CursorLocation::new(&self.package.src_path, &self.file_path, self.cursor_index)),
         };
-        let source_directories = self.package.get_source_directories();
         let mut timer = PerfTimer::new();
         let mut context = ProgramContext::new(options);
         let mut output = LanguageServerCommandOutput::new(self.id);
@@ -63,7 +63,7 @@ impl LanguageServerCommand {
         }
 
         timer.trigger("parsing");
-        context.parse_source_files(&source_directories, cache);
+        context.parse_source_files(cache);
 
         timer.trigger("processing");
         if !context.has_errors() {

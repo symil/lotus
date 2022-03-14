@@ -23,7 +23,7 @@ async function main() {
     let watFilePath = path.join(buildPath, 'client', OUTPUT_WAT_FILE_NAME);
     let wasmFilePath = path.join(buildPath, 'client', OUTPUT_WASM_FILE_NAME);
     let loadSpreadsheetCommand = '';
-    let lotusToWatCommand = `'${COMPILER_BINARY_PATH} ${inputPath} ${watFilePath} --silent'`;
+    let lotusToWatCommand = `'${COMPILER_BINARY_PATH} ${inputPath} ${watFilePath} --app --silent'`;
     let watToWasmCommand = `'${WAT2WASM_BINARY_PATH} ${WAT2WASM_OPTIONS.join(' ')} ${watFilePath} -o ${wasmFilePath}'`;
 
     if (config.spreadsheetUrl && process.argv.includes(FETCH_SPREADSHEET_OPTION)) {

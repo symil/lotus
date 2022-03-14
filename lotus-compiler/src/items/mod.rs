@@ -118,6 +118,7 @@ mod parsed_main_type_declaration;
 mod parsed_main_type_name;
 mod parsed_root_tag_declaration;
 mod parsed_root_tag_name;
+mod parsed_load_directive;
 
 pub use utils::*;
 pub use word::*;
@@ -240,3 +241,4 @@ pub use parsed_main_type_declaration::*;
 pub use parsed_main_type_name::*;
 pub use parsed_root_tag_declaration::*;
 pub use parsed_root_tag_name::*;
+pub use parsed_load_directive::*;
