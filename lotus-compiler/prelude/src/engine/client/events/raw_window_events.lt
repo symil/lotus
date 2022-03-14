@@ -16,7 +16,7 @@ pub fn decode_window_event_from_buffer(buffer: Buffer) -> Event {
         },
         WindowEventType::Keyboard => RawKeyboardEvent {
             action: buffer.read_unchecked(),
-            code: buffer.read_unchecked(),
+            key: buffer.read_unchecked(),
             text: buffer.read_unchecked(),
             ctrl_key: buffer.read_unchecked(),
             shift_key: buffer.read_unchecked(),

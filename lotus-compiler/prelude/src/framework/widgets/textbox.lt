@@ -13,6 +13,7 @@ pub view TextBox {
     placeholder: string = "",
     text_color: Color = Color::black(),
     text_font: Font = DEFAULT_FONT,
+    text_size: DisplaySize = DEFAULT_TEXTBOX_TEXT_SIZE,
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
     on_enter: fn(Client) = none,
@@ -41,7 +42,7 @@ pub view TextBox {
             .border_width(DEFAULT_BORDER_WIDTH)
             .text(text)
             .text_font(self.text_font)
-            .text_size(.5h)
+            .text_size(self.text_size)
             .text_color(color)
             .text_horizontal_align(HorizontalAlign::Left)
             .cursor(Cursor::Text)
@@ -55,10 +56,10 @@ pub view TextBox {
         let data = self._get_data();
         let ctrl = evt.ctrl_key;
 
-        if evt.code == KeyCode::Escape {
+        if evt.key == Key::Escape {
             self.unfocus();
             intercept;
-        } else if evt.code == KeyCode::Enter {
+        } else if evt.key == Key::Enter {
             if self.on_enter {
                 let callback = (self.on_enter);
                 callback(evt.client);
@@ -71,8 +72,8 @@ pub view TextBox {
 
             cursor_index = cursor_index.clamp(0, text.len());
 
-            match evt.code {
-                KeyCode::Backspace => {
+            match evt.key {
+                Key::Backspace => {
                     if ctrl {
                         text = text.substring(cursor_index, none);
                         cursor_index = 0;
@@ -81,27 +82,27 @@ pub view TextBox {
                         cursor_index -= 1;
                     }
                 },
-                KeyCode::Delete => {
+                Key::Delete => {
                     if (ctrl) {
                         text = text.substring(0, cursor_index);
                     } else {
                         text = text.substring(0, cursor_index) + text.substring(cursor_index + 1, none);
                     }
                 },
-                KeyCode::Home => {
+                Key::Home => {
                     cursor_index = 0;
                 },
-                KeyCode::End => {
+                Key::End => {
                     cursor_index = text.len();
                 },
-                KeyCode::ArrowLeft => {
+                Key::ArrowLeft => {
                     if ctrl {
                         cursor_index = 0;
                     } else {
                         cursor_index -= 1;
                     }
                 },
-                KeyCode::ArrowRight => {
+                Key::ArrowRight => {
                     if ctrl {
                         cursor_index = text.len();
                     } else {

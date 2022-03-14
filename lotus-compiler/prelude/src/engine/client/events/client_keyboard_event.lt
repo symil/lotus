@@ -1,6 +1,6 @@
 pub event ClientKeyboardEvent extends ClientEvent {
     action: KeyboardAction,
-    code: KeyCode,
+    key: Key,
     text: char?,
     ctrl_key: bool,
     shift_key: bool,

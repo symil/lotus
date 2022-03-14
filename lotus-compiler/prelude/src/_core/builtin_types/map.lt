@@ -77,7 +77,7 @@ export class Map<K, V> {
             entry = self.data_table[entry_index];
             entry_index = entry.next_entry_index;
 
-            if entry.key == key {
+            if entry.hash == hash {
                 return entry;
             }
         }
@@ -177,6 +177,7 @@ export class Map<K, V> {
             entry.value = value;
         } else {
             entry = MapEntry<K, V> {
+                hash: key.__hash(),
                 key: key,
                 value: value,
                 next_entry_index: none
@@ -234,6 +235,7 @@ export class Map<K, V> {
 }
 
 class MapEntry<K, V> {
+    hash: int,
     key: K?,
     value: V?,
     next_entry_index: int?,

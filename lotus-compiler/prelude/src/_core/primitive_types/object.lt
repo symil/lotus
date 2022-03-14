@@ -65,7 +65,11 @@ export class Object extends any {
     }}
 
     __hash() -> int {
-        self.__as_ptr().__get_version()
+        if !self {
+            0
+        } else {
+            self.__as_ptr().__get_version()
+        }
     }
 
     __as_ptr() -> ptr {

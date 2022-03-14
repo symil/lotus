@@ -21,6 +21,14 @@ export class View {
         self._children
     }
 
+    enabled_or_none() -> View {
+        if !self || self.is_disabled() {
+            none
+        } else {
+            self
+        }
+    }
+
     get_descendants<T>(callback: fn(View)(T)) -> T[] {
         let accumulator = CollectAccumulator<T> {
             result: [],
@@ -36,6 +44,18 @@ export class View {
         });
 
         accumulator.result
+    }
+
+    get_ancestors() -> View[] {
+        let result : View[] = [];
+        let current = self;
+
+        while current {
+            result.push(current);
+            current = current._parent;
+        }
+
+        result
     }
 
     _traverse<T>(acc: T, callback: fn(T, View)) {

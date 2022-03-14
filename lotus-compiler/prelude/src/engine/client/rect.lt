@@ -18,6 +18,20 @@ export class Rect {
         !self.__eq(other)
     }
 
+    __hash() -> int {
+        if !self {
+            return 0;
+        }
+
+        let h = 0;
+
+        iter_fields {
+            h = h.hash_from(self.#FIELD_NAME.as_int());
+        }
+
+        h
+    }
+
     static empty() -> Self {
         Self { x: 0, y: 0, width: 0, height: 0 }
     }
@@ -63,6 +77,22 @@ export class Rect {
 
     y2() -> float {
         self.y + self.height / 2f
+    }
+
+    set_x1(x1: float) {
+        self.x = x1 + self.width / 2;
+    }
+
+    set_y1(y1: float) {
+        self.y = y1 + self.height / 2;
+    }
+
+    set_x2(x2: float) {
+        self.x = x2 - self.width / 2;
+    }
+
+    set_y2(y2: float) {
+        self.y = y2 - self.height / 2;
     }
 
     aspect_ratio() -> float {
@@ -234,8 +264,8 @@ export class Rect {
     strip_from_sides(top: float, right: float, bottom: float, left: float) -> Self {
         Self {
             ..self,
-            x: self.x + (right - left) / 2f,
-            y: self.y + (bottom - top) / 2f,
+            x: self.x + (left - right) / 2f,
+            y: self.y + (top - bottom) / 2f,
             width: self.width - left - right,
             height: self.height - top - bottom,
         }

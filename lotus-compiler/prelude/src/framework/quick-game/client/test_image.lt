@@ -13,10 +13,10 @@ pub view TestImage {
     }
 
     @OnKeyDown[1] {
-        if evt.code == KeyCode::KeyF {
+        if evt.key == Key::KeyF {
             // START_TIME = evt.client.get_current_time();
             @log(evt.client.get_href());
-        } else if evt.code == KeyCode::KeyP {
+        } else if evt.key == Key::KeyP {
             @log(evt.client.prompt("enter something"));
         }
 

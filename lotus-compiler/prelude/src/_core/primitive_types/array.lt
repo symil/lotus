@@ -35,6 +35,16 @@ export class Array<T> {
         }
     }
 
+    static from_fill_function(size: int, callback: fn(int)(T)) -> Self {
+        let result = Self::with_capacity(size);
+
+        for i in 0..size {
+            result.push_unchecked(callback(i));
+        }
+
+        result
+    }
+
     body() -> Pointer<T> {
         self._body
     }
@@ -237,6 +247,19 @@ export class Array<T> {
         }
 
         new_array
+    }
+
+    slice(start: int = 0, end: int = none) -> Self {
+        let start_index = (start || 0).clamp(0, self._length);
+        let end_index = (end || self._length).clamp(0, self._length);
+        let length = end_index - start_index;
+        let result = Self::with_capacity(length);
+
+        for i in start_index..end_index {
+            result.push_unchecked(self._body[i]);
+        }
+
+        result
     }
 
     join(separator: string) -> string {

@@ -25,15 +25,11 @@ export class Color {
         }
     }
 
-    static from_hash(hash: int, alpha: bool = false) -> Self {
-        let r = hash >> 24;
-        let g = (hash >> 16) % 256;
-        let b = (hash >> 8) % 256;
-        let a = hash % 256;
-
-        if !alpha {
-            a = 255;
-        }
+    static from_hash(hash: int) -> Self {
+        let r = (hash >> 16) % 256;
+        let g = (hash >> 8) % 256;
+        let b = (hash >> 0) % 256;
+        let a = 255;
 
         Self { r, g, b, a }
     }

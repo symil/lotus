@@ -17,7 +17,6 @@ export class Client {
     _request_id_counter: Counter = Counter::new(),
     _request_id_to_info: Map<int, RequestInfo> = Map<int, RequestInfo>::new(),
     _start_time: int = @get_current_time(),
-
     _hovered_view: View? = none,
     _focus_chain: View[] = [],
     _focused_index: int? = none,
@@ -33,6 +32,9 @@ export class Client {
     _local_storage_key_prefix: string = "",
     _pressed_view: View = none,
     _dragged_view: View = none,
+    _drag_start_x: float = 0,
+    _drag_start_y: float = 0,
+    _view_data_store: ViewDataStore = ViewDataStore,
 
     static get() -> Self {
         CLIENT
@@ -91,15 +93,12 @@ export class Client {
             if window_event is RawMouseEvent(mouse_event) {
                 mouse_event.x /= self._virtual_to_real_ratio;
                 mouse_event.y /= self._virtual_to_real_ratio;
-
-                self._cursor_x = mouse_event.x;
-                self._cursor_y = mouse_event.y;
             } else if window_event is RawWheelEvent(wheel_event) {
                 wheel_event.x /= self._virtual_to_real_ratio
                 wheel_event.y /= self._virtual_to_real_ratio
-                wheel_event.delta_x /= self._virtual_to_real_ratio
-                wheel_event.delta_y /= self._virtual_to_real_ratio
-                wheel_event.delta_z /= self._virtual_to_real_ratio
+                // wheel_event.delta_x /= self._virtual_to_real_ratio
+                // wheel_event.delta_y /= self._virtual_to_real_ratio
+                // wheel_event.delta_z /= self._virtual_to_real_ratio
             }
 
             self._window_events.push(window_event);
@@ -156,7 +155,8 @@ export class Client {
         // TODO: clear focused & hovered view?
         self._render_view(root_view);
         self._hovered_view = self._detect_view_at(self._cursor_x, self._cursor_y);
-        self._define_interactions();
+        self._post_render();
+        self._hovered_view = self._detect_view_at(self._cursor_x, self._cursor_y);
         self._focused_view = self._focus_chain.get(self._focused_index);
 
         if !self._focused_view {
@@ -194,7 +194,7 @@ export class Client {
         current
     }
 
-    _define_interactions() {
+    _post_render() {
         let event = OnPostRender {
             client: self,
             user: self._user,
@@ -256,41 +256,57 @@ export class Client {
         for event in self._window_events {
             match event {
                 RawMouseEvent(mouse_event) => {
-                    let view = self._detect_view_at(mouse_event.x, mouse_event.y);
+                    let hovered_view = self._detect_view_at(mouse_event.x, mouse_event.y).enabled_or_none()
+                    let dragged_view = self._dragged_view.enabled_or_none();
+                    let pressed_view = self._pressed_view.enabled_or_none();
 
-                    if mouse_event.action == MouseAction::Down && self._focused_view && view != self._focused_view {
-                        self.focus(none);
-                    }
+                    if mouse_event.action == MouseAction::Down {
+                        if self._focused_view && hovered_view != self._focused_view {
+                            self.focus(none);
+                        }
 
-                    if view && !view.is_disabled() {
-                        if mouse_event.action == MouseAction::Down {
-                            self._pressed_view = view;
+                        if hovered_view {
+                            self._pressed_view = hovered_view;
 
-                            let event = OnMouseDown { ..client_event, ..mouse_event, view };
-                            event.emit([view]);
+                            let event = OnMouseDown { ..client_event, ..mouse_event, hovered_view };
+                            event.emit([hovered_view]);
 
                             if event.focus {
-                                view.focus();
-                            }
-
-                        } else if mouse_event.action == MouseAction::Move {
-                            if self._dragged_view {
-                                // drag progress
-                            } else if self._pressed_view {
-                                self._dragged_view = self._pressed_view;
-
-                                OnDragStart { ..client_event, ..mouse_event, view }.emit([view]);
-                            }
-                        } else if mouse_event.action == MouseAction::Up {
-                            if self._pressed_view && self._pressed_view.rect().contains(mouse_event.x, mouse_event.y) {
-                                OnClick { ..client_event, ..mouse_event, view }.emit([view]);
-                            }
-
-                            if self._dragged_view {
-                                OnDragEnd { ..client_event, ..mouse_event, view }.emit([view]);
+                                hovered_view.focus();
                             }
                         }
+                    } else if mouse_event.action == MouseAction::Move {
+                        if dragged_view {
+                            let dx = mouse_event.x - self._drag_start_x;
+                            let dy = mouse_event.y - self._drag_start_y;
+
+                            OnDragProgress { ..client_event, ..mouse_event, hovered_view, dx, dy }.emit([dragged_view]);
+                        } else if pressed_view {
+                            self._dragged_view = pressed_view;
+                            self._drag_start_x = self._cursor_x;
+                            self._drag_start_y = self._cursor_y;
+
+                            OnDragStart { ..client_event, ..mouse_event, hovered_view }.emit([pressed_view]);
+                        }
+                    } else if mouse_event.action == MouseAction::Up {
+                        if dragged_view {
+                            OnDragEnd { ..client_event, ..mouse_event, hovered_view }.emit([dragged_view]);
+                        }
+
+                        if pressed_view && pressed_view.rect().contains(mouse_event.x, mouse_event.y) {
+                            OnClick { ..client_event, ..mouse_event, hovered_view }.emit([pressed_view]);
+                        }
+
+                        if hovered_view {
+                            OnMouseUp { ..client_event, ..mouse_event, hovered_view }.emit([hovered_view]);
+                        }
+
+                        self._dragged_view = none;
+                        self._pressed_view = none;
                     }
+
+                    self._cursor_x = mouse_event.x;
+                    self._cursor_y = mouse_event.y;
                 },
                 RawKeyboardEvent(keyboard_event) => {
                     if keyboard_event.action == KeyboardAction::Down {
@@ -302,7 +318,11 @@ export class Client {
                 RawWheelEvent(wheel_event) => {
                     let view = self._detect_view_at(wheel_event.x, wheel_event.y);
 
-                    OnScroll { ..client_event, ..wheel_event, view }.emit(views)
+                    if view {
+                        let scrolled_views = view.get_ancestors().filter(view => !view.is_disabled());
+
+                        OnScroll { ..client_event, ..wheel_event }.emit(scrolled_views)
+                    }
                 }
             }
         }
@@ -448,7 +468,7 @@ export class Client {
         self._buffer.read_string()
     }
 
-    get_key_value(key: KeyCode) -> string {
+    get_key_value(key: Key) -> string {
         self._buffer.reset();
         wasm_get_key_value(key, self._buffer);
         self._buffer.read_string()
@@ -470,6 +490,10 @@ export class Client {
 
     get_protocol() -> string {
         self._get_string_from_js(buffer => wasm_get_protocol(buffer))
+    }
+
+    get_view_local_data<T : Object>(view: View) -> T {
+        self._view_data_store.get(view)
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {

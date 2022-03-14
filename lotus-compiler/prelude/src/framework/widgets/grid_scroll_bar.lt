@@ -1,0 +1,60 @@
+pub view GridScrollBar {
+    grid_data: GridLocalData,
+    direction: GridDirection,
+    step_size: int,
+    displayed_item_count: int,
+    total_item_count: int,
+    round: bool,
+    _step_pixel_size: float = 0,
+    _start_scroll: int = 0
+
+    @OnRender {
+        let step = self.step_size.to_float();
+        let rounded_total_item_count = (self.total_item_count.to_float() / step).ceil() * step;
+        let displayed_ratio = self.displayed_item_count.to_float() / rounded_total_item_count;
+        let offset_ratio = self.grid_data.scroll.to_float() / self.grid_data.max_scroll.to_float();
+        let parent_rect = self.rect();
+        let bar_rect = parent_rect.clone();
+
+        if self.direction == GridDirection::TopToBottom {
+            let empty_size = parent_rect.height * (1f - displayed_ratio);
+
+            bar_rect.height = parent_rect.height * displayed_ratio;
+            bar_rect.set_y1(parent_rect.y1() + empty_size * offset_ratio);
+
+            self._step_pixel_size = step / rounded_total_item_count * parent_rect.height;
+        }
+
+        self.set_rect(bar_rect)
+            .background_color(Color::black())
+        
+        if self.round {
+            self.border_radius(.5m);
+        }
+
+        self._start_scroll = self.grid_data.scroll;
+    }
+
+    @OnPostRender {
+        check self.grid_data.scrolling;
+
+        for view in evt.client.views() {
+            view.detectable(false);
+        }
+    }
+
+    @OnDragStart {
+        self._start_scroll = self.grid_data.scroll;
+        self.grid_data.scrolling = true;
+    }
+
+    @OnDragProgress {
+        let dy = (evt.dy / self._step_pixel_size).round().to_int();
+
+        self.grid_data.scroll = (self._start_scroll + dy).clamp(0, self.grid_data.max_scroll);
+    }
+
+    @OnDragEnd {
+        self.grid_data.scrolling = false;
+    }
+}

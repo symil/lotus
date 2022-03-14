@@ -41,9 +41,9 @@ export view QuickGameWindow {
     @OnKeyDown[-1] {
         check evt.alt_key;
         
-        if evt.code == KeyCode::KeyC {
+        if evt.key == Key::KeyC {
             evt.client.clear_local_storage();
-        } else if evt.code == KeyCode::KeyV {
+        } else if evt.key == Key::KeyV {
             evt.client.send_request(DebugRequest { message: "debug message" });
         }
     }

@@ -11,12 +11,14 @@ class World extends QuickGameWorld {
     self.game_items = GAME_ITEMS
 }
 
-const CATEGORY_1 = ["Item1", "Item2", "Item3"];
-const CATEGORY_2 = ["Item4", "Item5", "Item6"];
+const CATEGORY_1 = ["Item1"];
+const CATEGORY_2 = ["Item4", "Item5", "Item6", "Item41"];
+const CATEGORY_3 = string[]::from_fill_function(20, i => `item: ${i}`);
 
 const GAME_ITEMS = [
-    format_category("Fisrt category", CATEGORY_1),
+    format_category("First category", CATEGORY_1),
     format_category("Second category", CATEGORY_2),
+    format_category("Third category", CATEGORY_3),
 ];
 
 fn format_category(name: string, items: string[]) -> GameItemCategory {
@@ -24,7 +26,7 @@ fn format_category(name: string, items: string[]) -> GameItemCategory {
         name,
         items: items.map(name => GameItem {
             name,
-            background_color: Color::from_hash(name.hash(), false),
+            background_color: Color::from_hash(name.hash()),
         })
     }
 }

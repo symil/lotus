@@ -29,7 +29,7 @@ export view LobbyScreen {
     }
 
     @OnKeyDown {
-        if evt.code == KeyCode::Tab {
+        if evt.key == Key::Tab {
             if evt.shift_key {
                 self.client().focus_prev();
             } else {

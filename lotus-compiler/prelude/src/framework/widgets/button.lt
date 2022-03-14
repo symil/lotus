@@ -42,7 +42,7 @@ export view Button {
     @OnKeyDown {
         check self.is_focused();
 
-        if evt.code == KeyCode::Enter && self.on_click {
+        if evt.key == Key::Enter && self.on_click {
             (self.on_click)(evt.client);
         }
     }

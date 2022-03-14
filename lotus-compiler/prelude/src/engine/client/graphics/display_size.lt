@@ -31,7 +31,7 @@ export class DisplaySize {
         self.scale(1f / ratio.to_float())
     }
 
-    resolve(virtual_width: float, virtual_height: float, virtual_to_real_ratio: float) -> float {
+    resolve(rect: Rect, virtual_to_real_ratio: float = 1) -> float {
         if self.__is_none() {
             return 0;
         }
@@ -39,13 +39,9 @@ export class DisplaySize {
         match self.kind {
             DisplaySizeKind::Real => self.value,
             DisplaySizeKind::Virtual => self.value * virtual_to_real_ratio,
-            DisplaySizeKind::ScaledFromContainerWidth => self.value * virtual_width * virtual_to_real_ratio,
-            DisplaySizeKind::ScaledFromContainerHeight => self.value * virtual_height * virtual_to_real_ratio,
-            DisplaySizeKind::ScaledFromContainerMin => self.value * virtual_width.min(virtual_height) * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerWidth => self.value * rect.width * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerHeight => self.value * rect.height * virtual_to_real_ratio,
+            DisplaySizeKind::ScaledFromContainerMin => self.value * rect.width.min(rect.height) * virtual_to_real_ratio,
         }
-    }
-
-    resolve_from_rect(rect: Rect) -> float {
-        self.resolve(rect.width, rect.height, 1)
     }
 }

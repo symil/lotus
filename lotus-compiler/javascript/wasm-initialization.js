@@ -272,6 +272,14 @@ async function getWasmImportsObject(env) {
                 let message = memoryManager.readString(messageAddr);
 
                 console.trace(message);
+            },
+
+            time_start(labelAddr) {
+                console.time(memoryManager.readString(labelAddr));
+            },
+
+            time_end(labelAddr) {
+                console.timeEnd(memoryManager.readString(labelAddr));
             }
         }
     };

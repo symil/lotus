@@ -1,5 +1,16 @@
 const EPSILON = 0.000001;
 
+pub class GridLocalData {
+    scroll: int = 0,
+    max_scroll: int = 0,
+    scrolling: bool = false
+}
+
+export enum GridDirection {
+    TopToBottom,
+    LeftToRight,
+}
+
 export view Grid {
     items: View[] = [],
     item_count_per_row: int = none,
@@ -12,9 +23,24 @@ export view Grid {
     vertical_outer_margin: DisplaySize = none,
     horizontal_inner_margin: DisplaySize = none,
     vertical_inner_margin: DisplaySize = none,
+    title: string = none,
+    title_size: DisplaySize = 0.2h,
+    title_color: Color = Color::black(),
+    title_font: Font = DEFAULT_FONT,
+    direction: GridDirection = GridDirection::TopToBottom,
+    allow_scroll: bool = true,
+    scroll_bar_size: DisplaySize = .03m,
     background_color: Color = none,
+    border_color: Color = none,
+    border_width: DisplaySize = none,
+    border_radius: DisplaySize = none
+
+    _get_local_data() -> GridLocalData {
+        self.client().get_view_local_data(self)
+    }
 
     @OnRender {
+        let grid_data = self._get_local_data();
         let row_size = self.item_count_per_row && self.item_count_per_row.to_float();
         let column_size = self.item_count_per_column && self.item_count_per_column.to_float();
         let item_count = self.items.len().max(1).to_float();
@@ -36,12 +62,52 @@ export view Grid {
             row_size = (item_count / column_size).ceil();
         }
 
+        let displayed_item_count = (row_size * column_size).to_int();
         let parent_rect = self.rect();
+        let title_size = self.title_size.resolve(parent_rect);
+        let (title_rect, grid_rect) = parent_rect.split_vertically(title_size);
+
+        if self.title {
+            let title = View
+                .set_rect(title_rect)
+                .text(self.title)
+                .text_font(self.title_font)
+                .text_color(self.title_color)
+                .text_size(.5h)
+                .background_color(Color::rebecca_purple())
+            
+            self.add_child(title);
+        } else {
+            grid_rect = parent_rect;
+        }
+
+        let item_count_per_row = row_size.to_int();
+        let item_count_per_column = column_size.to_int();
+        let item_count_per_step = match self.direction {
+            GridDirection::TopToBottom => item_count_per_row,
+            GridDirection::LeftToRight => item_count_per_column,
+        };
+
+        if self.allow_scroll && displayed_item_count < self.items.len() {
+            let scroll_bar_width = self.scroll_bar_size.resolve(parent_rect);
+            let scroll_bar_rect = grid_rect.strip_from_sides(0, 0, 0, grid_rect.width - scroll_bar_width);
+            let scroll_bar = GridScrollBar {
+                grid_data,
+                direction: self.direction,
+                step_size: item_count_per_step,
+                displayed_item_count,
+                total_item_count: self.items.len(),
+                round: true
+            }.set_rect(scroll_bar_rect);
+
+            self.add_child(scroll_bar);
+        }
+
         let item_rect = Rect {
             x: 0,
             y: 0,
-            width: parent_rect.width / row_size,
-            height: parent_rect.height / column_size
+            width: grid_rect.width / row_size,
+            height: grid_rect.height / column_size
         }.strip_to_match_aspect_ratio(self.item_aspect_ratio);
 
         let input_horizontal_outer_margin = self.horizontal_outer_margin || self.outer_margin || self.margin;
@@ -49,15 +115,15 @@ export view Grid {
         let input_horizontal_inner_margin = self.horizontal_inner_margin || self.inner_margin || self.margin;
         let input_vertical_inner_margin = self.vertical_inner_margin || self.inner_margin || self.margin;
 
-        let horizontal_outer_margin = input_horizontal_outer_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
-        let vertical_outer_margin = input_vertical_outer_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
-        let horizontal_inner_margin = input_horizontal_inner_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
-        let vertical_inner_margin = input_vertical_inner_margin.resolve(item_rect.width, item_rect.height, 1) + EPSILON;
+        let horizontal_outer_margin = input_horizontal_outer_margin.resolve(item_rect) + EPSILON;
+        let vertical_outer_margin = input_vertical_outer_margin.resolve(item_rect) + EPSILON;
+        let horizontal_inner_margin = input_horizontal_inner_margin.resolve(item_rect) + EPSILON;
+        let vertical_inner_margin = input_vertical_inner_margin.resolve(item_rect) + EPSILON;
 
-        let max_item_width = (parent_rect.width - (2f * horizontal_outer_margin) - ((row_size - 1) * horizontal_inner_margin)) / row_size;
-        let max_item_height = (parent_rect.height - (2f * vertical_outer_margin) - ((column_size - 1) * vertical_inner_margin)) / column_size;
-        let x_start = parent_rect.x1();
-        let y_start = parent_rect.y1();
+        let max_item_width = (grid_rect.width - (2f * horizontal_outer_margin) - ((row_size - 1) * horizontal_inner_margin)) / row_size;
+        let max_item_height = (grid_rect.height - (2f * vertical_outer_margin) - ((column_size - 1) * vertical_inner_margin)) / column_size;
+        let x_start = grid_rect.x1();
+        let y_start = grid_rect.y1();
 
         item_rect = Rect {
             x: 0,
@@ -76,9 +142,21 @@ export view Grid {
         vertical_outer_margin += additional_vertical_outer_margin;
         vertical_inner_margin += additional_vertical_inner_margin;
 
-        for [i, item] in self.items {
-            let x_index = i % row_size.to_int();
-            let y_index = i / row_size.to_int();
+        let horizontal = self.direction == GridDirection::LeftToRight;
+        let start_index = item_count_per_step * grid_data.scroll;
+        let items_to_display = self.items.slice(start_index, start_index + displayed_item_count);
+
+        grid_data.max_scroll = ((self.items.len() - displayed_item_count).to_float() / item_count_per_step.to_float()).ceil().to_int();
+
+        for [i, item] in items_to_display {
+            let x_index = i % item_count_per_step;
+            let y_index = i / item_count_per_step;
+
+            if horizontal {
+                let tmp = x_index;
+                x_index = y_index;
+                y_index = tmp;
+            }
 
             item_rect.x = x_start + horizontal_outer_margin + x_index.to_float() * (horizontal_inner_margin + final_item_width) + (final_item_width / 2);
             item_rect.y = y_start + vertical_outer_margin + y_index.to_float() * (vertical_inner_margin + final_item_height) + (final_item_height / 2);
@@ -88,6 +166,19 @@ export view Grid {
         }
 
         self.background_color(self.background_color)
+            .border_color(self.border_color)
+            .border_width(self.border_width)
+            .border_radius(self.border_radius)
+    }
+
+    @OnScroll {
+        check self.allow_scroll;
+
+        let local_data = self._get_local_data();
+        let dy = evt.delta_y.sign();
+
+        local_data.scroll = (local_data.scroll + dy).clamp(0, local_data.max_scroll);
+        intercept;
     }
 }
 

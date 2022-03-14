@@ -132,6 +132,12 @@ export type(i32) int {
         result
     }
 
+    hash_from(value: int) -> int {
+        let h = ((self << 5) - self) + value;
+
+        h & h
+    }
+
     // https://github.com/nodejs/node/blob/238104c531219db05e3421521c305404ce0c0cce/deps/v8/src/utils/utils.h#L213
     __hash() -> int {
         let hash = self;

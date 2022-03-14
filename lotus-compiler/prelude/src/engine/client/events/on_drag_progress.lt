@@ -1,0 +1,4 @@
+export event OnDragProgress extends ClientMouseEvent {
+    dx: float,
+    dy: float
+}

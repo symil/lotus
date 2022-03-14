@@ -1,5 +1,4 @@
 export event OnScroll extends ClientEvent {
-    view: View,
     x: float,
     y: float,
     delta_x: float,

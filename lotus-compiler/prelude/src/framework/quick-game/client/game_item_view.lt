@@ -13,9 +13,14 @@ pub view GameItemView {
             .image_url(self.item.image_url)
             .border_color(border_color)
             .border_width(.04h)
-            .hover_overlay_color(Color::black())
-            .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
+            .border_radius(0.1m)
+            // .hover_overlay_color(Color::black())
+            // .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
+            .text(self.item.name)
+            .text_size(0.2h)
+            // .add_to_focus_chain()
+            // .focus_background_color(Color::orange())
         
         // TODO: display selected count
     }
@@ -31,5 +36,9 @@ pub view GameItemView {
             item: self.item,
             count,
         });
+    }
+
+    @OnMouseDown {
+        evt.focus = false;
     }
 }

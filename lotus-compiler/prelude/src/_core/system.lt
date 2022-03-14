@@ -102,6 +102,14 @@ sys type(void) system {
     get_current_time() -> int {
         wasm_get_current_time()
     }
+
+    time_start(label: string) {
+        wasm_time_start(label);
+    }
+    
+    time_end(label: string) {
+        wasm_time_end(label);
+    }
 }
 
 fn trap() {{

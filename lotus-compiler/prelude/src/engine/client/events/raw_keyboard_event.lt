@@ -1,6 +1,6 @@
 pub event RawKeyboardEvent {
     action: KeyboardAction,
-    code: KeyCode,
+    key: Key,
     text: char?,
     ctrl_key: bool,
     shift_key: bool,
@@ -13,7 +13,7 @@ export enum KeyboardAction {
     Up,
 }
 
-export enum KeyCode {
+export enum Key {
     Escape,
     F1,
     F2,

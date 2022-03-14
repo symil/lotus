@@ -60,17 +60,17 @@ pub class Layout {
     }
 
     outer_margin(value: DisplaySize) -> Self {
-        self.outer_margin = value.resolve_from_rect(self.parent_view.rect());
+        self.outer_margin = value.resolve(self.parent_view.rect());
         self
     }
 
     inner_margin(value: DisplaySize) -> Self {
-        self.inner_margin = value.resolve_from_rect(self.parent_view.rect());
+        self.inner_margin = value.resolve(self.parent_view.rect());
         self
     }
 
     margin(value: DisplaySize) -> Self {
-        let margin = value.resolve_from_rect(self.parent_view.rect());
+        let margin = value.resolve(self.parent_view.rect());
 
         self.outer_margin = margin;
         self.inner_margin = margin;
@@ -80,32 +80,32 @@ pub class Layout {
     move_to(x: DisplaySize, y: DisplaySize) -> Self {
         self._flush();
         self.last = none;
-        self.target.x = self.parent_view.rect().x1() + x.resolve_from_rect(self.parent_view.rect());
-        self.target.y = self.parent_view.rect().y1() + y.resolve_from_rect(self.parent_view.rect());
+        self.target.x = self.parent_view.rect().x1() + x.resolve(self.parent_view.rect());
+        self.target.y = self.parent_view.rect().y1() + y.resolve(self.parent_view.rect());
         self
     }
 
     move_by(dx: DisplaySize, dy: DisplaySize) -> Self {
         self._flush();
         self.last = none;
-        self.target.x += dx.resolve_from_rect(self.parent_view.rect());
-        self.target.y += dy.resolve_from_rect(self.parent_view.rect());
+        self.target.x += dx.resolve(self.parent_view.rect());
+        self.target.y += dy.resolve(self.parent_view.rect());
         self
     }
 
     set_width(width: DisplaySize) -> Self {
-        self.target.width = width.resolve_from_rect(self.parent_view.rect());
+        self.target.width = width.resolve(self.parent_view.rect());
         self
     }
 
     set_height(height: DisplaySize) -> Self {
-        self.target.height = height.resolve_from_rect(self.parent_view.rect());
+        self.target.height = height.resolve(self.parent_view.rect());
         self
     }
 
     set_size(width: DisplaySize, height: DisplaySize) -> Self {
-        self.target.width = width.resolve_from_rect(self.parent_view.rect());
-        self.target.height = height.resolve_from_rect(self.parent_view.rect());
+        self.target.width = width.resolve(self.parent_view.rect());
+        self.target.height = height.resolve(self.parent_view.rect());
         self
     }
 

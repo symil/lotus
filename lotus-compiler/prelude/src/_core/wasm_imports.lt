@@ -98,7 +98,7 @@ pub fn wasm_prompt(message: string, buffer: Buffer) [
     import env.prompt
 ]
 
-pub fn wasm_get_key_value(key: KeyCode, buffer: Buffer) [
+pub fn wasm_get_key_value(key: Key, buffer: Buffer) [
     import env.get_key_value
 ]
 
@@ -116,4 +116,12 @@ pub fn wasm_get_hostname(buffer: Buffer) [
 
 pub fn wasm_get_protocol(buffer: Buffer) [
     import env.get_protocol
+]
+
+pub fn wasm_time_start(label: string) [
+    import env.time_start
+]
+
+pub fn wasm_time_end(label: string) [
+    import env.time_end
 ]

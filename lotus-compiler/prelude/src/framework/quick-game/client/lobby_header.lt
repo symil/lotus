@@ -1,4 +1,4 @@
-const TITLE_TEXT_SIZE = .8h;
+const TITLE_TEXT_SIZE = .7h;
 
 pub view LobbyHeader {
     title: string,

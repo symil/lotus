@@ -3,8 +3,11 @@ pub view GameItemSelectionPanel {
         let grids = evt.user.available_game_items.map(category => {
             Grid {
                 items: category.items.map(item => GameItemView { item }),
-                background_color: Color::from_hash(category.name.hash(), false),
-                margin: .25h
+                background_color: Color::from_hash(category.name.hash()),
+                margin: .25h,
+                title: category.name,
+                item_count_per_row: 3,
+                item_count_per_column: 3
             }
         });
         let master_grid = Grid {

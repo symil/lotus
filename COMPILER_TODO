@@ -171,6 +171,7 @@
 [X] Fix `Map` serializtion
 [X] Fix click event
 [X] Improve mouse & keyboard events
+[ ] Fix completion for enum variants that match expected type
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -252,3 +253,6 @@
 [ ] Prevent classes not declared with `view` from inheriting a view
 [ ] Add way to inline functions/methods
 [ ] Fix definition provider for functions as variables
+[ ] Add option to reduce text size to fit parent rectangle
+[ ] Cache views (wasm side? lotus side?)
+[ ] Think about using WebGL to speed up graphics
