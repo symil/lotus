@@ -7,6 +7,7 @@ pub struct CommandLineOptions {
     pub input_path: Option<String>,
     pub output_path: Option<String>,
     pub framework: Option<String>,
+    pub app_mode: bool,
     pub log_level: LogLevel,
     pub validate: bool,
     pub run_as_server: bool,
@@ -20,6 +21,7 @@ impl CommandLineOptions {
             input_path: None,
             output_path: None,
             framework: None,
+            app_mode: false,
             log_level: LogLevel::Short,
             validate: false,
             run_as_server: false,
@@ -32,6 +34,8 @@ impl CommandLineOptions {
                 true => {
                     if let Some(log_level) = LogLevel::from_command_line_arg(arg) {
                         options.log_level = log_level;
+                    } else if arg == "--app" {
+                        options.app_mode = true;
                     } else if arg == "--validate" || arg == "-v" {
                         options.validate = true;
                     } else if arg == "--benchmark" {

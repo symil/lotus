@@ -3,7 +3,7 @@ use toml::Value;
 use crate::program::SourceDirectory;
 use super::{CONFIG_FILE_NAME, SRC_DIR_NAME, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     pub root_path: String,
     pub src_path: String,

@@ -114,8 +114,8 @@ pub const FUNCTION_DECLARATION_KEYWORDS : &'static[&'static str] = &[ FN_KEYWORD
 pub const TYPE_DECLARATION_KEYWORDS : &'static[&'static str] = &[ INTERFACE_KEYWORD, TYPE_KEYWORD, CLASS_KEYWORD, ENUM_KEYWORD, EVENT_KEYWORD, VIEW_KEYWORD ];
 pub const STACK_TYPE_KEYWORDS : &'static[&'static str] = &[ I32_KEYWORD, F32_KEYWORD, VOID_KEYWORD ];
 
-pub const EXPORTED_FUNCTIONS : &'static [&'static str] = &[
-    "main",
+pub const CLI_EXPORTED_FUNCTION_NAME : &'static str = "main";
+pub const APP_EXPORTED_FUNCTION_NAMES : &'static [&'static str] = &[
     "start_client",
     "update_client",
     "start_server",

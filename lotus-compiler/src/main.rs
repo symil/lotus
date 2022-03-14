@@ -3,13 +3,13 @@
 #![feature(array_methods)]
 #![feature(adt_const_params)]
 #![allow(unused)]
-use std::{env, process};
+use std::{env, process, fmt::Binary};
 use colored::*;
 use command_line::{CommandLineOptions, LogLevel, Timer, ProgramStep};
 use indexmap::IndexSet;
 use language_server::start_language_server;
 use package::Package;
-use program::{ProgramContext, ProgramContextOptions};
+use program::{ProgramContext, ProgramContextOptions, BinaryKind};
 use utils::FileSystemCache;
 
 use crate::program::ProgramContextMode;
@@ -29,18 +29,17 @@ fn main() {
 
     if options.run_benchmark {
         let package = Package::from_path(options.input_path.as_ref().unwrap());
-        let source_directories = package.get_source_directories();
         let mut cache = FileSystemCache::new();
-        let mut context = ProgramContext::new(ProgramContextOptions::compile());
         let mut timer = Timer::new();
 
         for i in 0..3 {
             let duration = timer.time(ProgramStep::Total, || {
-                context = ProgramContext::new(ProgramContextOptions {
+                let mut context = ProgramContext::new(ProgramContextOptions {
+                    package: package.clone(),
                     mode: ProgramContextMode::Validate,
                     cursor_location: None,
                 });
-                context.parse_source_files(&source_directories, Some(&mut cache));
+                context.parse_source_files(Some(&mut cache));
                 context.process_source_files();
             });
 
@@ -54,14 +53,23 @@ fn main() {
         if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {
             let package = Package::from_path(input_path);
             let source_directories = package.get_source_directories();
-            let program_options = match options.validate {
-                true => ProgramContextOptions::validate(),
-                false => ProgramContextOptions::compile(),
+            let binary_kind = match options.app_mode {
+                true => BinaryKind::App,
+                false => BinaryKind::Cli,
+            };
+            let mode = match options.validate {
+                true => ProgramContextMode::Validate,
+                false => ProgramContextMode::Compile(binary_kind)
+            };
+            let program_options = ProgramContextOptions {
+                package,
+                mode,
+                cursor_location: None,
             };
             let mut timer = Timer::new();
             let mut context = ProgramContext::new(program_options);
 
-            timer.time(ProgramStep::Parse, || context.parse_source_files(&source_directories, None));
+            timer.time(ProgramStep::Parse, || context.parse_source_files(None));
 
             if !options.validate && !context.has_errors() {
                 timer.time(ProgramStep::Process, || context.process_source_files());

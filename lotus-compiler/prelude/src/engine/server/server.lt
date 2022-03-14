@@ -1,4 +1,4 @@
-const SERVER : Server = none;
+const SERVER : Object = none;
 
 pub class Server {
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
@@ -10,8 +10,25 @@ pub class Server {
     _request_to_request_id: Map<Object, int> = Map<Object, int>::new(),
     _start_time: int = @get_current_time(),
 
+    static start() {
+        if !SERVER {
+            set_pointer_version_seed(wasm_get_current_time());
+            let server = Server;
+            server._start();
+            SERVER = server;
+        }
+    }
+
     static get() -> Self {
-        SERVER
+        SERVER as Server
+    }
+
+    static update() {
+        let server = Server::get();
+
+        server._update();
+        @retain(server);
+        @trigger_garbage_collection();
     }
 
     users() -> #USER_TYPE[] {
@@ -159,14 +176,9 @@ pub class Server {
 }
 
 sys fn start_server() {
-    set_pointer_version_seed(wasm_get_current_time());
-    SERVER = Server;
-    SERVER._start();
+    Server::start()
 }
 
 sys fn update_server() {
-    SERVER._update();
-    // @log(`memory used: ${get_memory_usage() / 1024} KB`);
-    @retain(SERVER);
-    @trigger_garbage_collection();
+    Server::update();
 }
