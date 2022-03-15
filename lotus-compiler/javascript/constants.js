@@ -22,6 +22,6 @@ export const OUTPUT_WASM_FILE_NAME = 'module.wasm';
 
 export const DEFAULT_HTTP_PORT = 8000;
 export const PACKAGE_CONFIG_FILE_NAME = 'lotus.toml';
-export const CACHE_DIR_NAME = '.lotus';
+export const CACHE_DIR_NAME = '.cache';
 
 export const SERVER_REFRESH_RATE = 10;

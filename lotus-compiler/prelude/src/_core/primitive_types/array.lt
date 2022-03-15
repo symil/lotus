@@ -17,6 +17,10 @@ export class Array<T> {
         Self::with_capacity(4)
     }
 
+    static new() -> Self {
+        Self::with_capacity(4)
+    }
+
     static with_capacity(capacity: int) -> Self {
         capacity = capacity.next_power_of_4();
 

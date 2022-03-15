@@ -53,6 +53,7 @@ export class Client {
         let client = Client::get();
 
         client._update();
+        // @log(`Memory usage: ${get_memory_usage()/1000}KB`);
         @retain(client);
         @trigger_garbage_collection();
     }

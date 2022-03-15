@@ -92,7 +92,7 @@ async function generateNewToken(oAuth2Client, tokenPath) {
             scope: SCOPES,
         });
 
-        console.log('Authorize this app by visiting this url: ', authUrl);
+        console.log('Authorize this app by visiting this url:', authUrl);
 
         let rl = readline.createInterface({
             input: process.stdin,

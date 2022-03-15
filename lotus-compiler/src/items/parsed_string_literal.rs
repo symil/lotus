@@ -16,6 +16,10 @@ impl ParsedStringLiteral {
             )
         }
     }
+
+    pub fn value(&self) -> &str {
+        &self.token[1..self.token.len() - 1]
+    }
 }
 
 pub fn make_string_value_from_literal(location: &ItemLocation, literal: &str, context: &mut ProgramContext) -> Option<Vasm> {

@@ -144,6 +144,14 @@ impl Type {
         self.is_builtin_type(BuiltinType::Int)
     }
 
+    pub fn is_float(&self) -> bool {
+        self.is_builtin_type(BuiltinType::Float)
+    }
+
+    pub fn is_string(&self) -> bool {
+        self.is_builtin_type(BuiltinType::String)
+    }
+
     pub fn is_bool(&self) -> bool {
         self.is_builtin_type(BuiltinType::Bool)
     }

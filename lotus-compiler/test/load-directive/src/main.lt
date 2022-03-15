@@ -1,0 +1,12 @@
+class Creature {
+    name: string,
+    cost: int,
+    legendary: bool,
+    description: string
+}
+
+const CARDS = #LOAD(Creature, "Creatures");
+
+export fn main() {
+    @dbg(CARDS);
+}
