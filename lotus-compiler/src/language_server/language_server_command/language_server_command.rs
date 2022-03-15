@@ -48,7 +48,7 @@ impl LanguageServerCommand {
         let options = ProgramContextOptions {
             package: self.package.clone(),
             mode: ProgramContextMode::Validate,
-            cursor_location: Some(CursorLocation::new(&self.package.src_path, &self.file_path, self.cursor_index)),
+            cursor_location: Some(CursorLocation::new(self.package.src_path.to_str().unwrap(), &self.file_path, self.cursor_index)),
         };
         let mut timer = PerfTimer::new();
         let mut context = ProgramContext::new(options);

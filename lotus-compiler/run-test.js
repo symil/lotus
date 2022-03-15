@@ -44,6 +44,7 @@ async function main() {
     let displayMemory = hasOption('--memory', '-m');
     let serverMode = hasOption('--server', '-s');
     let clean = hasOption('--clean');
+    let fetchSpreadsheet = hasOption('-l');
     let onlyCompileWat = false;
     let testOptions = { inheritStdio, displayMemory, onlyCompileWat, showDetails, mode, validate, benchmark };
 

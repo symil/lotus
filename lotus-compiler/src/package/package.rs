@@ -1,12 +1,14 @@
 use std::{path::{Path, PathBuf}, fs};
 use toml::Value;
 use crate::program::SourceDirectory;
-use super::{CONFIG_FILE_NAME, SRC_DIR_NAME, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME};
+use super::{CONFIG_FILE_NAME, SRC_DIR_NAME, CARGO_MANIFEST_DIR_PATH, PRELUDE_DIR_NAME, CACHE_DIR_NAME, DATA_DIR_NAME};
 
 #[derive(Debug, Clone)]
 pub struct Package {
-    pub root_path: String,
-    pub src_path: String,
+    pub root_path: PathBuf,
+    pub src_path: PathBuf,
+    pub cache_path: PathBuf,
+    pub data_path: PathBuf,
     pub exclude_framework: bool
 }
 
@@ -15,10 +17,14 @@ impl Package {
         let root_path = infer_root_directory(Path::new(path)).unwrap();
         let src_path = root_path.join(SRC_DIR_NAME);
         let config_path = root_path.join(CONFIG_FILE_NAME);
+        let cache_path = root_path.join(CACHE_DIR_NAME);
+        let data_path = cache_path.join(DATA_DIR_NAME);
 
         let mut result = Self {
-            root_path: root_path.to_string_lossy().to_string(),
-            src_path: src_path.to_string_lossy().to_string(),
+            root_path,
+            src_path,
+            cache_path,
+            data_path,
             exclude_framework: false,
         };
 
@@ -47,9 +53,9 @@ impl Package {
 
         result.push(prelude_source_directory);
 
-        if self.root_path != prelude_path.to_str().unwrap() {
+        if self.root_path != prelude_path {
             result.push(SourceDirectory {
-                root_path: self.src_path.clone(),
+                root_path: self.src_path.to_string_lossy().to_string(),
                 exclude: None,
             });
         }

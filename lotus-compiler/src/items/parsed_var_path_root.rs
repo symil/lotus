@@ -1,9 +1,10 @@
 use parsable::{ItemLocation, parsable};
 use crate::{program::{AccessType, ProgramContext, Type, VariableKind, Vasm}};
-use super::{ParsedAction, ParsedArrayLiteral, ParsedOperandBody, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug, ParsedColorLiteral};
+use super::{ParsedAction, ParsedArrayLiteral, ParsedOperandBody, ParsedBlockExpression, ParsedBooleanLiteral, ParsedCharLiteral, ParsedExpression, ParsedFieldOrMethodAccess, ParsedForBlock, ParsedAnonymousFunction, Identifier, ParsedIfBlock, ParsedIterAncestorsBlock, ParsedIterFieldsBlock, ParsedIterVariantsBlock, ParsedMatchBlock, ParsedNoneLiteral, ParsedNumberLiteral, ParsedObjectLiteral, ParsedParenthesizedExpression, ParsedStaticFieldOrMethod, ParsedStringLiteral, ParsedTemplateString, ParsedVarDeclaration, ParsedVarRef, ParsedWhileBlock, ParsedMacroExpression, ParsedPrefixedVarRef, ParsedMacroDebug, ParsedColorLiteral, ParsedLoadDirective};
 
 #[parsable]
 pub enum ParsedVarPathRoot {
+    LoadDirective(ParsedLoadDirective),
     Macro(ParsedMacroExpression),
     DebugMacro(ParsedMacroDebug),
     VarDeclaration(ParsedVarDeclaration),
@@ -46,6 +47,7 @@ impl ParsedVarPathRoot {
 
     pub fn collect_instancied_type_names(&self, list: &mut Vec<String>, context: &mut ProgramContext) {
         match self {
+            ParsedVarPathRoot::LoadDirective(_) => {},
             ParsedVarPathRoot::Macro(_) => {},
             ParsedVarPathRoot::DebugMacro(_) => {},
             ParsedVarPathRoot::NoneLiteral(_) => {},
@@ -84,6 +86,7 @@ impl ParsedVarPathRoot {
         }
 
         match self {
+            ParsedVarPathRoot::LoadDirective(load_directive) => load_directive.process(context),
             ParsedVarPathRoot::Macro(mac) => mac.process(context),
             ParsedVarPathRoot::DebugMacro(mac) => mac.process(context),
             ParsedVarPathRoot::NoneLiteral(none_literal) => none_literal.process(type_hint, context),

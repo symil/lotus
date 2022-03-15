@@ -4,3 +4,5 @@ pub const SRC_DIR_NAME : &'static str = "src";
 pub const CONFIG_FILE_NAME : &'static str = "lotus.toml";
 pub const CORE_DIR_NAMES : &'static [&'static str] = &["_core", "engine"];
 pub const FRAMEWORK_DIR_NAME : &'static str = "framework";
+pub const CACHE_DIR_NAME : &'static str = ".cache";
+pub const DATA_DIR_NAME : &'static str = "data";

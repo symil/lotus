@@ -1,0 +1,21 @@
+[
+  Creature {
+    name: "Void walker",
+    cost: 1,
+    legendary: false,
+    description: "",
+  },
+  Creature {
+    name: "Pit lord",
+    cost: 4,
+    legendary: false,
+    description: "",
+  },
+  Creature {
+    name: "Lord Jaraxxus",
+    cost: 9,
+    legendary: true,
+    description: "Battlecry:
+    Destroy your hero and replace it with Jaraxxus.",
+  }
+]
