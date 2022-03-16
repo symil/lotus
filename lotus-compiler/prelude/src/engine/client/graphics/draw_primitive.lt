@@ -5,6 +5,7 @@ pub class DrawPrimitive {
     width: float,
     height: float,
     angle: float,
+    anchor: Anchor,
     shape: Shape,
     border_color: Color,
     border_width: float,
@@ -25,15 +26,12 @@ pub class DrawPrimitive {
     text_size: float,
     text_color: Color,
     text_margin: float,
-    text_max_width: float,
-    text_max_height: float,
-    text_background_color: Color,
-    text_border_color: Color,
     text_horizontal_align: HorizontalAlign,
     text_vertical_align: VerticalAlign,
     text_bold: bool,
     text_italic: bool,
     text_cursor_index: int,
+    shrink_to_fit_text: bool,
 
     write_to_buffer(buffer: Buffer) {
         iter_fields {

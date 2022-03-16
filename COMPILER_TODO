@@ -172,6 +172,8 @@
 [X] Fix click event
 [X] Improve mouse & keyboard events
 [X] Fix completion for enum variants that match expected type
+[ ] Allow images to be created and referenced from wasm
+[ ] Add tooltip
 
 -- LATER --
 [ ] Allow manually specifying function parameters

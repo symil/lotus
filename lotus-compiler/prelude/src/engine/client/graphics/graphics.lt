@@ -3,9 +3,11 @@ export enum Font { Serif, SansSerif, Monospace, Cursive, Fantasy }
 export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }
+export enum Anchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight }
 
 export class Graphics {
     shape: Shape = Shape::Rectangle,
+    anchor: Anchor = Anchor::Center,
     border_radius: DisplaySize = none,
     border_width: DisplaySize = none,
     border_dash_length: DisplaySize = none,
@@ -32,15 +34,12 @@ export class Graphics {
     text_margin: DisplaySize = none,
     text_max_width: DisplaySize = none,
     text_max_height: DisplaySize = none,
-    text_background_color: Color = none,
-    text_background_alpha: float = 1,
-    text_border_color: Color = none,
-    text_border_alpha: float = 1,
     text_horizontal_align: HorizontalAlign = HorizontalAlign::Center,
     text_vertical_align: VerticalAlign = VerticalAlign::Middle,
     text_bold: bool = false,
     text_italic: bool = false,
     text_cursor_index: int = none,
+    shrink_to_fit_text: bool = false,
     detectable: bool = true,
     cursor: Cursor = Cursor::Default,
 
@@ -102,6 +101,7 @@ export class Graphics {
             width: width,
             height: height,
             angle: real_rect.angle,
+            anchor: self.anchor,
             shape: self.shape,
             border_color: self.border_color.mult_alpha(self.border_alpha),
             border_width: self.border_width.resolve(rect, virtual_to_real_ratio),
@@ -122,15 +122,12 @@ export class Graphics {
             text_size: self.text_size.resolve(rect, virtual_to_real_ratio),
             text_color: self.text_color.mult_alpha(self.text_alpha),
             text_margin: self.text_margin.resolve(rect, virtual_to_real_ratio),
-            text_max_width: self.text_max_width.resolve(rect, virtual_to_real_ratio),
-            text_max_height: self.text_max_height.resolve(rect, virtual_to_real_ratio),
-            text_background_color: self.text_background_color.mult_alpha(self.text_background_alpha),
-            text_border_color: self.text_border_color.mult_alpha(self.text_border_alpha),
             text_horizontal_align: self.text_horizontal_align,
             text_vertical_align: self.text_vertical_align,
             text_bold: self.text_bold,
             text_italic: self.text_italic,
             text_cursor_index: self.text_cursor_index,
+            shrink_to_fit_text: self.shrink_to_fit_text,
         }
     }
 }

@@ -1,5 +1,5 @@
 import { ImageLoader } from './image-loader';
-import { TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS, SHAPES, HORIZONTAL_ALIGNS, VERTICAL_ALIGNS, CURSORS, FONTS } from './renderer-constants';
+import { TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS, SHAPES, HORIZONTAL_ALIGNS, VERTICAL_ALIGNS, CURSORS, FONTS, ANCHORS } from './renderer-constants';
 import { formatText } from './text-formatting';
 import { colorToString, colorToU32, hashNumberList, hashString } from './utils';
 
@@ -43,6 +43,7 @@ export class Renderer {
         let width = primitive.readFloat();
         let height = primitive.readFloat();
         let angle = primitive.readFloat();
+        let anchor = primitive.readEnum(ANCHORS);
         let shape = primitive.readEnum(SHAPES);
         let borderColor = primitive.readColor();
         let borderWidth = primitive.readFloat();
@@ -63,23 +64,48 @@ export class Renderer {
         let textSize = primitive.readFloat();
         let textColor = primitive.readColor();
         let textMargin = primitive.readFloat();
-        let textMaxWidth = primitive.readFloat();
-        let textMaxHeight = primitive.readFloat();
-        let textBackgroundColor = primitive.readColor();
-        let textBorderColor = primitive.readColor();
         let textHorizontalAlign = primitive.readEnum(HORIZONTAL_ALIGNS);
         let textVerticalAlign = primitive.readEnum(VERTICAL_ALIGNS);
         let textBold = primitive.read();
         let textItalic = primitive.read();
         let textCursorIndex = primitive.read();
+        let shrinkToFixText = primitive.read();
 
         // let primitive = { x, y, z, shape, width, height, angle, borderColor, borderWidth, borderRadius, borderDashLength, borderGapLength, backgroundColor, overlayColor, imageUrl, imageWidth, imageHeight, text, textFont, textSize, textColor, textMargin, textMaxWidth, textMaxHeight, textBackgroundColor, textBorderColor, textHorizontalAlign, textVerticalAlign, textBold, textItalic, textCursorIndex };
         // console.log(primitive);
 
-        let x1 = x - width / 2;
-        let y1 = y - height / 2;
-        let x2 = x + width / 2;
-        let y2 = y + height / 2;
+        let textImage = null;
+
+        if (text) {
+            let textPadding = Math.max(borderRadius, textMargin);
+            let textMaxWidth = shrinkToFixText ? width : 0;
+            textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex);
+
+            if (shrinkToFixText) {
+                width = Math.min(width, textImage.width);
+                height = Math.min(height, textImage.height);
+            }
+        }
+
+        let w = width / 2;
+        let h = height / 2;
+
+        if (anchor.includes('left')) {
+            x += w;
+        } else if (anchor.includes('right')) {
+            x -= w;
+        }
+
+        if (anchor.includes('top')) {
+            y += h;
+        } else if (anchor.includes('bottom')) {
+            y -= h
+        }
+
+        let x1 = x - w;
+        let y1 = y - h;
+        let x2 = x + w;
+        let y2 = y + h;
 
         if (x2 < 0 || x1 > this._window.getWidth() || y2 < 0 || y1 > this._window.getHeight()) {
             return;
@@ -136,9 +162,7 @@ export class Renderer {
             }
         }
 
-        if (text) {
-            let textPadding = Math.max(borderRadius, textMargin);
-            let textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, textBackgroundColor, textBorderColor);
+        if (textImage) {
             let textX = x - textImage.width / 2;
             let textY = y - textImage.height / 2;
             let dx = (width - textImage.width) / 2;
@@ -197,14 +221,14 @@ export class Renderer {
         return hash;
     }
 
-    _getTextImageFromCache(text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor) {
+    _getTextImageFromCache(text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex) {
         let textHash = this._getStringHash(text);
         let textFontHash = this._getStringHash(textFont);
-        let hash = hashNumberList([textHash, maxWidth, padding, textSize, colorToU32(textColor), textFontHash, textCursorIndex, colorToU32(backgroundColor), colorToU32(borderColor)]);
+        let hash = hashNumberList([textHash, maxWidth, padding, textSize, colorToU32(textColor), textFontHash, textCursorIndex ]);
         let image = this._cachedTexts.get(hash);
 
         if (!image) {
-            image = formatText({ text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex, backgroundColor, borderColor });
+            image = formatText({ text, maxWidth, padding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex });
             this._cachedTexts.set(hash, image);
         }
 

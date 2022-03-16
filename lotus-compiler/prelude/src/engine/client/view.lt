@@ -128,6 +128,11 @@ export class View {
         self
     }
 
+    z_index(z_index: float) -> Self {
+        self._rect.z = z_index;
+        self
+    }
+
     scale(ratio: float) -> Self {
         self._rect = self._rect.scale(ratio);
         self
@@ -171,6 +176,7 @@ export class View {
     // GENERATION START
 
     shape(shape: Shape) -> Self { self._graphics.shape = shape; self }
+    anchor(anchor: Anchor) -> Self { self._graphics.anchor = anchor; self }
     border_radius(border_radius: DisplaySize) -> Self { self._graphics.border_radius = border_radius; self }
     border_width(border_width: DisplaySize) -> Self { self._graphics.border_width = border_width; self }
     border_dash_length(border_dash_length: DisplaySize) -> Self { self._graphics.border_dash_length = border_dash_length; self }
@@ -198,21 +204,17 @@ export class View {
     text_color(text_color: Color) -> Self { self._graphics.text_color = text_color; self }
     text_alpha(text_alpha: float) -> Self { self._graphics.text_alpha = text_alpha; self }
     text_margin(text_margin: DisplaySize) -> Self { self._graphics.text_margin = text_margin; self }
-    text_max_width(text_max_width: DisplaySize) -> Self { self._graphics.text_max_width = text_max_width; self }
-    text_max_height(text_max_height: DisplaySize) -> Self { self._graphics.text_max_height = text_max_height; self }
-    text_background_color(text_background_color: Color) -> Self { self._graphics.text_background_color = text_background_color; self }
-    text_background_alpha(text_background_alpha: float) -> Self { self._graphics.text_background_alpha = text_background_alpha; self }
-    text_border_color(text_border_color: Color) -> Self { self._graphics.text_border_color = text_border_color; self }
-    text_border_alpha(text_border_alpha: float) -> Self { self._graphics.text_border_alpha = text_border_alpha; self }
     text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._graphics.text_horizontal_align = text_horizontal_align; self }
     text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._graphics.text_vertical_align = text_vertical_align; self }
     text_bold(text_bold: bool) -> Self { self._graphics.text_bold = text_bold; self }
     text_italic(text_italic: bool) -> Self { self._graphics.text_italic = text_italic; self }
     text_cursor_index(text_cursor_index: int) -> Self { self._graphics.text_cursor_index = text_cursor_index; self }
+    shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._graphics.shrink_to_fit_text = shrink_to_fit_text; self }
     detectable(detectable: bool) -> Self { self._graphics.detectable = detectable; self }
     cursor(cursor: Cursor) -> Self { self._graphics.cursor = cursor; self }
 
     hover_shape(shape: Shape) -> Self { self._hovered_graphics().shape = shape; self }
+    hover_anchor(anchor: Anchor) -> Self { self._hovered_graphics().anchor = anchor; self }
     hover_border_radius(border_radius: DisplaySize) -> Self { self._hovered_graphics().border_radius = border_radius; self }
     hover_border_width(border_width: DisplaySize) -> Self { self._hovered_graphics().border_width = border_width; self }
     hover_border_dash_length(border_dash_length: DisplaySize) -> Self { self._hovered_graphics().border_dash_length = border_dash_length; self }
@@ -240,21 +242,17 @@ export class View {
     hover_text_color(text_color: Color) -> Self { self._hovered_graphics().text_color = text_color; self }
     hover_text_alpha(text_alpha: float) -> Self { self._hovered_graphics().text_alpha = text_alpha; self }
     hover_text_margin(text_margin: DisplaySize) -> Self { self._hovered_graphics().text_margin = text_margin; self }
-    hover_text_max_width(text_max_width: DisplaySize) -> Self { self._hovered_graphics().text_max_width = text_max_width; self }
-    hover_text_max_height(text_max_height: DisplaySize) -> Self { self._hovered_graphics().text_max_height = text_max_height; self }
-    hover_text_background_color(text_background_color: Color) -> Self { self._hovered_graphics().text_background_color = text_background_color; self }
-    hover_text_background_alpha(text_background_alpha: float) -> Self { self._hovered_graphics().text_background_alpha = text_background_alpha; self }
-    hover_text_border_color(text_border_color: Color) -> Self { self._hovered_graphics().text_border_color = text_border_color; self }
-    hover_text_border_alpha(text_border_alpha: float) -> Self { self._hovered_graphics().text_border_alpha = text_border_alpha; self }
     hover_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._hovered_graphics().text_horizontal_align = text_horizontal_align; self }
     hover_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._hovered_graphics().text_vertical_align = text_vertical_align; self }
     hover_text_bold(text_bold: bool) -> Self { self._hovered_graphics().text_bold = text_bold; self }
     hover_text_italic(text_italic: bool) -> Self { self._hovered_graphics().text_italic = text_italic; self }
     hover_text_cursor_index(text_cursor_index: int) -> Self { self._hovered_graphics().text_cursor_index = text_cursor_index; self }
+    hover_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._hovered_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     hover_detectable(detectable: bool) -> Self { self._hovered_graphics().detectable = detectable; self }
     hover_cursor(cursor: Cursor) -> Self { self._hovered_graphics().cursor = cursor; self }
 
     focus_shape(shape: Shape) -> Self { self._focused_graphics().shape = shape; self }
+    focus_anchor(anchor: Anchor) -> Self { self._focused_graphics().anchor = anchor; self }
     focus_border_radius(border_radius: DisplaySize) -> Self { self._focused_graphics().border_radius = border_radius; self }
     focus_border_width(border_width: DisplaySize) -> Self { self._focused_graphics().border_width = border_width; self }
     focus_border_dash_length(border_dash_length: DisplaySize) -> Self { self._focused_graphics().border_dash_length = border_dash_length; self }
@@ -282,21 +280,17 @@ export class View {
     focus_text_color(text_color: Color) -> Self { self._focused_graphics().text_color = text_color; self }
     focus_text_alpha(text_alpha: float) -> Self { self._focused_graphics().text_alpha = text_alpha; self }
     focus_text_margin(text_margin: DisplaySize) -> Self { self._focused_graphics().text_margin = text_margin; self }
-    focus_text_max_width(text_max_width: DisplaySize) -> Self { self._focused_graphics().text_max_width = text_max_width; self }
-    focus_text_max_height(text_max_height: DisplaySize) -> Self { self._focused_graphics().text_max_height = text_max_height; self }
-    focus_text_background_color(text_background_color: Color) -> Self { self._focused_graphics().text_background_color = text_background_color; self }
-    focus_text_background_alpha(text_background_alpha: float) -> Self { self._focused_graphics().text_background_alpha = text_background_alpha; self }
-    focus_text_border_color(text_border_color: Color) -> Self { self._focused_graphics().text_border_color = text_border_color; self }
-    focus_text_border_alpha(text_border_alpha: float) -> Self { self._focused_graphics().text_border_alpha = text_border_alpha; self }
     focus_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._focused_graphics().text_horizontal_align = text_horizontal_align; self }
     focus_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._focused_graphics().text_vertical_align = text_vertical_align; self }
     focus_text_bold(text_bold: bool) -> Self { self._focused_graphics().text_bold = text_bold; self }
     focus_text_italic(text_italic: bool) -> Self { self._focused_graphics().text_italic = text_italic; self }
     focus_text_cursor_index(text_cursor_index: int) -> Self { self._focused_graphics().text_cursor_index = text_cursor_index; self }
+    focus_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._focused_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     focus_detectable(detectable: bool) -> Self { self._focused_graphics().detectable = detectable; self }
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().cursor = cursor; self }
 
     disabled_shape(shape: Shape) -> Self { self._disabled_graphics().shape = shape; self }
+    disabled_anchor(anchor: Anchor) -> Self { self._disabled_graphics().anchor = anchor; self }
     disabled_border_radius(border_radius: DisplaySize) -> Self { self._disabled_graphics().border_radius = border_radius; self }
     disabled_border_width(border_width: DisplaySize) -> Self { self._disabled_graphics().border_width = border_width; self }
     disabled_border_dash_length(border_dash_length: DisplaySize) -> Self { self._disabled_graphics().border_dash_length = border_dash_length; self }
@@ -324,17 +318,12 @@ export class View {
     disabled_text_color(text_color: Color) -> Self { self._disabled_graphics().text_color = text_color; self }
     disabled_text_alpha(text_alpha: float) -> Self { self._disabled_graphics().text_alpha = text_alpha; self }
     disabled_text_margin(text_margin: DisplaySize) -> Self { self._disabled_graphics().text_margin = text_margin; self }
-    disabled_text_max_width(text_max_width: DisplaySize) -> Self { self._disabled_graphics().text_max_width = text_max_width; self }
-    disabled_text_max_height(text_max_height: DisplaySize) -> Self { self._disabled_graphics().text_max_height = text_max_height; self }
-    disabled_text_background_color(text_background_color: Color) -> Self { self._disabled_graphics().text_background_color = text_background_color; self }
-    disabled_text_background_alpha(text_background_alpha: float) -> Self { self._disabled_graphics().text_background_alpha = text_background_alpha; self }
-    disabled_text_border_color(text_border_color: Color) -> Self { self._disabled_graphics().text_border_color = text_border_color; self }
-    disabled_text_border_alpha(text_border_alpha: float) -> Self { self._disabled_graphics().text_border_alpha = text_border_alpha; self }
     disabled_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._disabled_graphics().text_horizontal_align = text_horizontal_align; self }
     disabled_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._disabled_graphics().text_vertical_align = text_vertical_align; self }
     disabled_text_bold(text_bold: bool) -> Self { self._disabled_graphics().text_bold = text_bold; self }
     disabled_text_italic(text_italic: bool) -> Self { self._disabled_graphics().text_italic = text_italic; self }
     disabled_text_cursor_index(text_cursor_index: int) -> Self { self._disabled_graphics().text_cursor_index = text_cursor_index; self }
+    disabled_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._disabled_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     disabled_detectable(detectable: bool) -> Self { self._disabled_graphics().detectable = detectable; self }
     disabled_cursor(cursor: Cursor) -> Self { self._disabled_graphics().cursor = cursor; self }
 

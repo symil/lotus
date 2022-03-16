@@ -1,0 +1,29 @@
+export view Tooltip {
+    target: View,
+    title: string = "",
+    body: string = "",
+    font: Font = DEFAULT_FONT
+
+    @OnRender {
+        let fragments : string[] = [];
+
+        if self.title {
+            fragments.push(`|@2{${self.title}}`);
+        }
+
+        if self.body {
+            fragments.push(self.body);
+        }
+
+        let text = fragments.join("\n\n");
+
+        self.background_color(Color::white())
+            .border_color(Color::black())
+            .border_width(2r)
+            .text(text)
+            .text_font(DEFAULT_FONT)
+            .text_size(20)
+            .z_index(1)
+            .set_rect(self.target.rect().clone())
+    }
+}
