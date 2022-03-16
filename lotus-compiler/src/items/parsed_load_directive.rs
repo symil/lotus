@@ -14,6 +14,9 @@ pub struct ParsedLoadDirective {
     pub closing_bracket: Option<ParsedClosingRoundBracket>,
 }
 
+const DEFAULT_INT_VALUE : i32 = 0;
+const DEFAULT_FLOAT_VALUE : f32 = 0.;
+
 impl ParsedLoadDirective {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let opening_bracket = unwrap_item(&self.opening_bracket, &self.load_keyword, context)?;
@@ -23,8 +26,8 @@ impl ParsedLoadDirective {
         let closing_bracket = unwrap_item(&self.closing_bracket, self, context)?;
         let object_type = type_name.process(true, None, context)?;
 
-        if object_type.as_actual().is_none() {
-            context.errors.generic(type_name, format!("expected non-generic type, got {}", &object_type));
+        if !object_type.is_object() {
+            context.errors.expected_class_type(type_name, &object_type);
             return None;
         }
 
@@ -67,7 +70,7 @@ impl ParsedLoadDirective {
                             match i32::from_str_radix(string, 10) {
                                 Ok(value) => Some(context.vasm().int(value)),
                                 Err(_) => match string.is_empty() {
-                                    true => Some(context.vasm().int(0i32)),
+                                    true => Some(context.vasm().int(DEFAULT_INT_VALUE)),
                                     false => None,
                                 },
                             }
@@ -75,7 +78,7 @@ impl ParsedLoadDirective {
                             match string.parse::<f32>() {
                                 Ok(value) => Some(context.vasm().float(value)),
                                 Err(_) => match string.is_empty() {
-                                    true => Some(context.vasm().float(0f32)),
+                                    true => Some(context.vasm().float(DEFAULT_FLOAT_VALUE)),
                                     false => None,
                                 },
                             }
@@ -88,6 +91,7 @@ impl ParsedLoadDirective {
                                 _ => None
                             }
                         } else if field.ty.is_string() {
+                            // TODO: should probably not be unchecked
                             Some(make_string_value_from_literal_unchecked(string, context))
                         } else {
                             None

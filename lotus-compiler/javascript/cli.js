@@ -66,7 +66,7 @@ async function main() {
         }
     }
 
-    exec(command.join('\n'));
+    exec(command.join(' '));
 }
 
 function exec(commands) {

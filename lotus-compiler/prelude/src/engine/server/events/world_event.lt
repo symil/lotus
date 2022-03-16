@@ -1,0 +1,4 @@
+pub event WorldEvent {
+    server: Server,
+    world: #WORLD_TYPE,
+}

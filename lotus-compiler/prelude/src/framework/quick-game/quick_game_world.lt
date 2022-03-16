@@ -4,7 +4,7 @@ export class QuickGameWorld {
     game_items: GameItemCategory[],
     valid_game_items: Set<GameItem>,
 
-    @OnWorldInit {
+    @OnWorldOpen {
         for category in self.game_items {
             for item in category.items {
                 self.valid_game_items.add(item);
