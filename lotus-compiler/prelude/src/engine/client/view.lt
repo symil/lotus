@@ -148,6 +148,11 @@ export class View {
         self
     }
 
+    set_size(width: float, height: float) -> Self {
+        self._rect = Rect::from_size(width, height);
+        self
+    }
+
     has_same_rect(other: View) {
         self._rect == other._rect
     }

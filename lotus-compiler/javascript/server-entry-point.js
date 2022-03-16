@@ -42,7 +42,13 @@ async function main() {
     });
 
     wasmInstance.exports.start_server();
-    setInterval(() => wasmInstance.exports.update_server(), SERVER_REFRESH_RATE);
+
+    let update = () => {
+        wasmInstance.exports.update_server();
+        setTimeout(update, SERVER_REFRESH_RATE);
+    };
+
+    update();
     
     server.listen(port, () => {
         console.log(`=> server listening on port ${port}...`);
