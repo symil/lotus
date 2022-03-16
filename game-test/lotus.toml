@@ -1,6 +1,0 @@
-name = "some-game"
-framework = true
-title = "Some game"
-port = 33902
-remote = "az@ytawo.eu:221"
-spreadsheet-url = "https://docs.google.com/spreadsheets/d/1rhdJpMTqJoVy5nU6hv0dAwvjFUvQjjijS4oa_OeTRII"
