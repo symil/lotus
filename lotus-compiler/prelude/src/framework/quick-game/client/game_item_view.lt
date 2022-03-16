@@ -25,6 +25,12 @@ pub view GameItemView {
         // TODO: display selected count
     }
 
+    @OnPostRender {
+        if self.is_hovered() {
+            
+        }
+    }
+
     @OnClick {
         let is_selected = (evt.user.selected_game_items.get(self.item) || 0) > 0;
         let count = match is_selected {

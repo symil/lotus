@@ -4,9 +4,10 @@ const path = require('path');
 const fs = require('fs');
 
 const TAB = '    ';
-const VIEW_SOURCE_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'engine', 'client', 'view.lt');
+const VIEW_SOURCE_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src', 'engine', 'client', 'view.lt');
 const FIELDS = {
     shape: 'Shape',
+    anchor: 'Anchor',
     border_radius: 'DisplaySize',
     border_width: 'DisplaySize',
     border_dash_length: 'DisplaySize',
@@ -33,17 +34,12 @@ const FIELDS = {
     text_color: 'Color',
     text_alpha: 'float',
     text_margin: 'DisplaySize',
-    text_max_width: 'DisplaySize',
-    text_max_height: 'DisplaySize',
-    text_background_color: 'Color',
-    text_background_alpha: 'float',
-    text_border_color: 'Color',
-    text_border_alpha: 'float',
     text_horizontal_align: 'HorizontalAlign',
     text_vertical_align: 'VerticalAlign',
     text_bold: 'bool',
     text_italic: 'bool',
     text_cursor_index: 'int',
+    shrink_to_fit_text: 'bool',
     detectable: 'bool',
     cursor: 'Cursor',
 };

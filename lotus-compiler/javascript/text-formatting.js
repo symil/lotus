@@ -12,13 +12,9 @@ export function formatText(parameters) {
         textBold,
         textItalic,
         textCursorIndex,
-        backgroundColor,
-        borderColor
     } = parameters;
 
     textColor = colorToString(textColor);
-    backgroundColor = backgroundColor.a ? colorToString(backgroundColor) : null;
-    borderColor = borderColor.a ? colorToString(borderColor) : null;
 
     let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d');
@@ -127,16 +123,16 @@ export function formatText(parameters) {
     canvas.width = totalWidth;
     canvas.height = totalHeight;
 
-    if (backgroundColor) {
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, totalWidth, totalHeight);
-    }
+    // if (backgroundColor) {
+    //     ctx.fillStyle = backgroundColor;
+    //     ctx.fillRect(0, 0, totalWidth, totalHeight);
+    // }
 
-    if (borderColor) {
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = borderColor;
-        ctx.strokeRect(0, 0, totalWidth, totalHeight);
-    }
+    // if (borderColor) {
+    //     ctx.lineWidth = 2;
+    //     ctx.strokeStyle = borderColor;
+    //     ctx.strokeRect(0, 0, totalWidth, totalHeight);
+    // }
 
     ctx.textBaseline = 'bottom';
 
