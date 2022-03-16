@@ -45,7 +45,10 @@ pub view GameItemView {
     }
 
     @OnMakeTooltip {
-        evt.title = self.item.name;
-        evt.body = self.item.description;
+        evt.emit([self.item]);
+        
+        evt.view = View
+            .background_color(Color::white())
+            .set_size(400, 400);
     }
 }

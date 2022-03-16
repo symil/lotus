@@ -25,6 +25,7 @@ async function main() {
 function writeSpreadsheetDataToCache(data, cacheDirectoryPath) {
     let dataDirPath = path.join(cacheDirectoryPath, DATA_DIR_NAME);
 
+    fs.rmSync(dataDirPath, { recursive: true, force: true });
     fs.mkdirSync(dataDirPath, { recursive: true });
 
     for (let { title, rows } of data.sheets) {

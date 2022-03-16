@@ -1,47 +1,33 @@
-const TOOLTIP_TEXT_SIZE = 20v;
-const TOOLTIP_PADDING = 13v;
 const TOOLTIP_MARGIN = 10f;
-const MAX_TOOLTIP_WIDTH = 550f;
-const MAX_TOOLTIP_HEIGHT = 900f;
 
 export view Tooltip {
     @OnRender {
         let target = evt.client.hovered_view();
         check target;
 
-        let content = OnMakeTooltip;
-        content.emit([target]);
+        let event = OnMakeTooltip;
+        event.emit([target]);
+        let tooltip = event.view;
 
-        let fragments : string[] = [];
+        check tooltip;
 
-        if content.title {
-            fragments.push(`|@2{${content.title}}`);
-        }
-
-        if content.body {
-            fragments.push(content.body);
-        }
-
-        check !fragments.is_empty();
-
-        let text = fragments.join("\n\n");
         let target_rect = target.rect();
-        let dx = target_rect.half_width() + TOOLTIP_MARGIN;
-        let dy = target_rect.half_height() + TOOLTIP_MARGIN;
-        let rect = target_rect.resize(MAX_TOOLTIP_WIDTH, MAX_TOOLTIP_HEIGHT)
-            .translate(dx, 0)
+        let tooltip_rect = tooltip.rect();
+        let total_tooltip_width = tooltip_rect.width + TOOLTIP_MARGIN;
+        let total_tooltip_height = tooltip_rect.height + TOOLTIP_MARGIN;
+        let dx = target_rect.half_width() + TOOLTIP_MARGIN + tooltip_rect.half_width();
+        let y = target_rect.y;
 
-        self.background_color(Color::white())
-            .border_color(Color::black())
-            .border_width(2r)
-            .text(text)
-            .text_font(DEFAULT_FONT)
-            .text_size(TOOLTIP_TEXT_SIZE)
-            .text_padding(TOOLTIP_PADDING)
-            .z_index(1)
-            .anchor(Anchor::Right)
-            .set_rect(rect)
-            .detectable(false)
-            .shrink_to_fit_text(true)
+        if target_rect.x2() + total_tooltip_width > evt.client.window_with() {
+            dx *= -1;
+        }
+
+        y = y.max(total_tooltip_height / 2);
+        y = y.min(evt.client.window_height() - total_tooltip_height / 2);
+
+        tooltip_rect.x = target_rect.x + dx;
+        tooltip_rect.y = y;
+
+        self.add_child(tooltip);
     }
 }
