@@ -33,7 +33,7 @@ const FIELDS = {
     text_size: 'DisplaySize',
     text_color: 'Color',
     text_alpha: 'float',
-    text_margin: 'DisplaySize',
+    text_padding: 'DisplaySize',
     text_horizontal_align: 'HorizontalAlign',
     text_vertical_align: 'VerticalAlign',
     text_bold: 'bool',

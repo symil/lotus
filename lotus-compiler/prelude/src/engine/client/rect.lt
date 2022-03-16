@@ -79,6 +79,14 @@ export class Rect {
         self.y + self.height / 2f
     }
 
+    half_width() -> float {
+        self.width / 2
+    }
+
+    half_height() -> float {
+        self.height / 2
+    }
+
     set_x1(x1: float) {
         self.x = x1 + self.width / 2;
     }

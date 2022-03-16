@@ -95,7 +95,7 @@ export class View {
     }
 
     is_hovered() -> bool {
-        !self.is_disabled() && self._client.get_hovered_view() == self
+        !self.is_disabled() && self._client.hovered_view() == self
     }
 
     is_focused() -> bool {
@@ -203,7 +203,7 @@ export class View {
     text_size(text_size: DisplaySize) -> Self { self._graphics.text_size = text_size; self }
     text_color(text_color: Color) -> Self { self._graphics.text_color = text_color; self }
     text_alpha(text_alpha: float) -> Self { self._graphics.text_alpha = text_alpha; self }
-    text_margin(text_margin: DisplaySize) -> Self { self._graphics.text_margin = text_margin; self }
+    text_padding(text_padding: DisplaySize) -> Self { self._graphics.text_padding = text_padding; self }
     text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._graphics.text_horizontal_align = text_horizontal_align; self }
     text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._graphics.text_vertical_align = text_vertical_align; self }
     text_bold(text_bold: bool) -> Self { self._graphics.text_bold = text_bold; self }
@@ -241,7 +241,7 @@ export class View {
     hover_text_size(text_size: DisplaySize) -> Self { self._hovered_graphics().text_size = text_size; self }
     hover_text_color(text_color: Color) -> Self { self._hovered_graphics().text_color = text_color; self }
     hover_text_alpha(text_alpha: float) -> Self { self._hovered_graphics().text_alpha = text_alpha; self }
-    hover_text_margin(text_margin: DisplaySize) -> Self { self._hovered_graphics().text_margin = text_margin; self }
+    hover_text_padding(text_padding: DisplaySize) -> Self { self._hovered_graphics().text_padding = text_padding; self }
     hover_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._hovered_graphics().text_horizontal_align = text_horizontal_align; self }
     hover_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._hovered_graphics().text_vertical_align = text_vertical_align; self }
     hover_text_bold(text_bold: bool) -> Self { self._hovered_graphics().text_bold = text_bold; self }
@@ -279,7 +279,7 @@ export class View {
     focus_text_size(text_size: DisplaySize) -> Self { self._focused_graphics().text_size = text_size; self }
     focus_text_color(text_color: Color) -> Self { self._focused_graphics().text_color = text_color; self }
     focus_text_alpha(text_alpha: float) -> Self { self._focused_graphics().text_alpha = text_alpha; self }
-    focus_text_margin(text_margin: DisplaySize) -> Self { self._focused_graphics().text_margin = text_margin; self }
+    focus_text_padding(text_padding: DisplaySize) -> Self { self._focused_graphics().text_padding = text_padding; self }
     focus_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._focused_graphics().text_horizontal_align = text_horizontal_align; self }
     focus_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._focused_graphics().text_vertical_align = text_vertical_align; self }
     focus_text_bold(text_bold: bool) -> Self { self._focused_graphics().text_bold = text_bold; self }
@@ -317,7 +317,7 @@ export class View {
     disabled_text_size(text_size: DisplaySize) -> Self { self._disabled_graphics().text_size = text_size; self }
     disabled_text_color(text_color: Color) -> Self { self._disabled_graphics().text_color = text_color; self }
     disabled_text_alpha(text_alpha: float) -> Self { self._disabled_graphics().text_alpha = text_alpha; self }
-    disabled_text_margin(text_margin: DisplaySize) -> Self { self._disabled_graphics().text_margin = text_margin; self }
+    disabled_text_padding(text_padding: DisplaySize) -> Self { self._disabled_graphics().text_padding = text_padding; self }
     disabled_text_horizontal_align(text_horizontal_align: HorizontalAlign) -> Self { self._disabled_graphics().text_horizontal_align = text_horizontal_align; self }
     disabled_text_vertical_align(text_vertical_align: VerticalAlign) -> Self { self._disabled_graphics().text_vertical_align = text_vertical_align; self }
     disabled_text_bold(text_bold: bool) -> Self { self._disabled_graphics().text_bold = text_bold; self }

@@ -22,6 +22,8 @@ export view QuickGameWindow {
             .use_fixed_positionning()
             .push_list(modals)
         
+        self.add_child(Tooltip);
+        
         // self.add_child(TestImage.set_rect(Rect::new(250, 500, 300, 300)));
     }
 

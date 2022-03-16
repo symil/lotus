@@ -1,5 +1,5 @@
-const HEADER_SIZE = .15h;
-const FOOTER_SIZE = .15h;
+const HEADER_SIZE = .12h;
+const FOOTER_SIZE = .12h;
 
 export view LobbyScreen {
     title: string,
@@ -22,7 +22,7 @@ export view LobbyScreen {
             .towards_bottom()
             .set_height(HEADER_SIZE)
             .push(header)
-            .set_height(DisplaySize::scaled_from_height(1f - HEADER_SIZE.value - FOOTER_SIZE.value))
+            .set_height(1h - HEADER_SIZE - FOOTER_SIZE)
             .push(middle_panel)
             .set_height(FOOTER_SIZE)
             .push(footer)
@@ -31,9 +31,9 @@ export view LobbyScreen {
     @OnKeyDown {
         if evt.key == Key::Tab {
             if evt.shift_key {
-                self.client().focus_prev();
+                evt.client.focus_prev();
             } else {
-                self.client().focus_next();
+                evt.client.focus_next();
             }
             intercept;
         }
