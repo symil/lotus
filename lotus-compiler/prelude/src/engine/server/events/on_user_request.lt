@@ -1,0 +1,8 @@
+export event OnUserRequest extends UserEvent {
+    request: Object,
+    success: bool = false,
+
+    mark_as_success() {
+        self.success = true;
+    }
+}

@@ -1,0 +1,5 @@
+pub event UserEvent {
+    server: Server,
+    world: #WORLD_TYPE,
+    user: #USER_TYPE
+}

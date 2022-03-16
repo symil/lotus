@@ -43,7 +43,7 @@ pub class Server {
         self._websocket_server_id = wasm_create_websocket_server();
         self._world = #WORLD_TYPE::__default();
 
-        @emit(OnWorldInit { server: self, world: self._world }, [self._world]);
+        @emit(OnWorldOpen { server: self, world: self._world }, [self._world]);
     }
 
     _update() {
