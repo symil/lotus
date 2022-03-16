@@ -1,4 +1,0 @@
-export event OnTooltip {
-    client: Client,
-    target: View,
-}

@@ -15,6 +15,8 @@ const CATEGORY_1 = ["Item1"];
 const CATEGORY_2 = ["Item4", "Item5", "Item6", "Item41"];
 const CATEGORY_3 = string[]::from_fill_function(20, i => `item: ${i}`);
 
+const DESCRIPTION = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris enim tellus, consequat at egestas ut, euismod vitae leo. Fusce magna magna, blandit vel aliquet ut, ornare eu justo. Nullam sodales elit ipsum, vel finibus risus porta in. Maecenas accumsan elit at leo bibendum malesuada. Donec condimentum ligula varius tortor condimentum porttitor. Mauris tellus ex, viverra a magna quis, aliquet commodo ex. Nulla suscipit non enim in euismod. Aenean cursus elementum arcu. Maecenas eu mauris luctus, rhoncus augue malesuada, pretium risus. Proin venenatis neque justo. Vivamus sed volutpat purus, vitae porta elit.";
+
 const GAME_ITEMS = [
     format_category("First category", CATEGORY_1),
     format_category("Second category", CATEGORY_2),
@@ -27,6 +29,7 @@ fn format_category(name: string, items: string[]) -> GameItemCategory {
         items: items.map(name => GameItem {
             name,
             background_color: Color::from_hash(name.hash()),
+            description: DESCRIPTION,
         })
     }
 }

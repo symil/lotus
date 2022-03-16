@@ -25,13 +25,9 @@ pub view GameItemView {
         // TODO: display selected count
     }
 
-    @OnPostRender {
-        if self.is_hovered() {
-            
-        }
-    }
-
     @OnClick {
+        check evt.button == MouseButton::Left;
+        
         let is_selected = (evt.user.selected_game_items.get(self.item) || 0) > 0;
         let count = match is_selected {
             true => 0,
@@ -46,5 +42,10 @@ pub view GameItemView {
 
     @OnMouseDown {
         evt.focus = false;
+    }
+
+    @OnMakeTooltip {
+        evt.title = self.item.name;
+        evt.body = self.item.description;
     }
 }

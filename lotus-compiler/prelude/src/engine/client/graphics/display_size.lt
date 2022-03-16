@@ -20,6 +20,20 @@ export class DisplaySize {
     static scaled_from_height(value: float) -> Self { Self::new(DisplaySizeKind::ScaledFromContainerHeight, value) }
     static scaled_from_min(value: float) -> Self { Self::new(DisplaySizeKind::ScaledFromContainerMin, value) }
 
+    __add(other: Self) -> Self {
+        Self {
+            kind: self.kind,
+            value: self.value + other.value
+        }
+    }
+
+    __sub(other: Self) -> Self {
+        Self {
+            kind: self.kind,
+            value: self.value - other.value
+        }
+    }
+
     scale<F : Number>(ratio: F) -> Self {
         Self {
             kind: self.kind,

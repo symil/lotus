@@ -63,7 +63,7 @@ export class Renderer {
         let textFont = primitive.readEnum(FONTS);
         let textSize = primitive.readFloat();
         let textColor = primitive.readColor();
-        let textMargin = primitive.readFloat();
+        let textPadding = primitive.readFloat();
         let textHorizontalAlign = primitive.readEnum(HORIZONTAL_ALIGNS);
         let textVerticalAlign = primitive.readEnum(VERTICAL_ALIGNS);
         let textBold = primitive.read();
@@ -77,7 +77,7 @@ export class Renderer {
         let textImage = null;
 
         if (text) {
-            let textPadding = Math.max(borderRadius, textMargin);
+            textPadding = Math.max(borderRadius, textPadding);
             let textMaxWidth = shrinkToFixText ? width : 0;
             textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex);
 
@@ -91,15 +91,15 @@ export class Renderer {
         let h = height / 2;
 
         if (anchor.includes('left')) {
-            x += w;
-        } else if (anchor.includes('right')) {
             x -= w;
+        } else if (anchor.includes('right')) {
+            x += w;
         }
 
         if (anchor.includes('top')) {
-            y += h;
+            y -= h;
         } else if (anchor.includes('bottom')) {
-            y -= h
+            y += h
         }
 
         let x1 = x - w;

@@ -70,6 +70,14 @@ export class Client {
         self._all_views
     }
 
+    window_with() -> float {
+        self._virtual_width
+    }
+
+    window_height() -> float {
+        self._virtual_height
+    }
+
     _start() {
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
         self._websocket_id = wasm_create_websocket();
@@ -368,7 +376,7 @@ export class Client {
         wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
     }
 
-    get_hovered_view() -> View? {
+    hovered_view() -> View? {
         self._hovered_view
     }
 

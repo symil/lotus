@@ -13,6 +13,6 @@ export view Label {
             .text_size(self.text_size)
             .text_font(self.text_font)
             .text_horizontal_align(self.text_align)
-            .text_margin(.2h)
+            .text_padding(.2h)
     }
 }
