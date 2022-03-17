@@ -40,6 +40,11 @@ impl ParsedLoadDirective {
         })?;
 
         let array_type = context.get_builtin_type(BuiltinType::Array, vec![object_type.clone()]);
+
+        if !context.options.is_compile_mode() {
+            return Some(context.vasm().set_type(&array_type));
+        }
+
         let object_var = VariableInfo::tmp("object", context.int_type());
         let mut array_vasm = context.vasm()
             .declare_variable(&object_var)

@@ -7,8 +7,9 @@ type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>>::new();
 
 export class Event extends Object {
-    emit(targets: Object[]) {
+    autogen emit(targets: Object[]) -> Self {
         emit_event(self, targets);
+        self
     }
 
     dyn __yield(object: Object) {
