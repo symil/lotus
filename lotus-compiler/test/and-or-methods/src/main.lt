@@ -1,0 +1,32 @@
+class Foo {
+    number: int,
+    literal: string
+}
+
+export fn main() {
+    let a : Foo = none;
+    let b = Foo { number: 1, literal: "one" };
+    let c = Foo { number: 2, literal: "two" };
+
+    let a1 = a.and(b);
+    let a2 = b.and(a);
+    let c1 = b.and(c);
+    let yes = b.and(1.5f);
+    let no = a.and_then(foo => foo.literal);
+    let one = b.and_then(foo => foo.literal);
+
+    let b1 = b.or(a);
+    let b2 = a.or(b);
+    let c2 = a.or_else(() => c);
+
+    @dbg(a1);
+    @dbg(a2);
+    @dbg(c1);
+    @dbg(yes);
+    @dbg(no);
+    @dbg(one);
+
+    @dbg(b1);
+    @dbg(b2);
+    @dbg(c2);
+}

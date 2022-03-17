@@ -1,0 +1,21 @@
+none
+none
+Foo {
+  number: 2,
+  literal: "two",
+}
+1.5
+""
+"one"
+Foo {
+  number: 1,
+  literal: "one",
+}
+Foo {
+  number: 1,
+  literal: "one",
+}
+Foo {
+  number: 2,
+  literal: "two",
+}

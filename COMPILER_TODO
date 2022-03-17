@@ -172,6 +172,7 @@
 [X] Fix click event
 [X] Improve mouse & keyboard events
 [X] Fix completion for enum variants that match expected type
+[X] Methods `and` & `or` on `any` type
 [ ] Add icon support in text
 
 -- LATER --
@@ -220,7 +221,6 @@
 [ ] Replace references to constants with their actual value when possible
 [ ] Introduce variables immutability
 [ ] Display error when number literal is invalid
-[ ] Method `or` on `any` type
 [ ] Regular expressions
 [ ] `parsable` macro: use global attributes to specify whether to implement `Debug` and `location` by default or not
 [ ] Improve schema serialization to keep info about the object class (use class name as key?)
