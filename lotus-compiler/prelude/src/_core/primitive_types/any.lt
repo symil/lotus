@@ -17,4 +17,20 @@ export type(i32) any {
     autogen static __deserialize(buffer: Buffer) -> Self? { Self::__none() }
     autogen static __serialize_with_schema(buffer: Buffer, value: Self) { }
     autogen static __deserialize_with_schema(buffer: Buffer) -> Self? { Self::__none() }
+
+    autogen and<T>(other: T) -> T {
+        self && other
+    }
+
+    autogen and_then<T>(callback: fn(Self)(T)) -> T {
+        self && callback(self)
+    }
+
+    autogen or(other: Self) -> Self {
+        self || other
+    }
+
+    autogen or_else(callback: fn()(Self)) -> Self {
+        self || callback()
+    }
 }
