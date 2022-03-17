@@ -172,8 +172,7 @@
 [X] Fix click event
 [X] Improve mouse & keyboard events
 [X] Fix completion for enum variants that match expected type
-[ ] Allow images to be created and referenced from wasm
-[ ] Add tooltip
+[ ] Add icon support in text
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -258,3 +257,4 @@
 [ ] Add option to reduce text size to fit parent rectangle
 [ ] Cache views (wasm side? lotus side?)
 [ ] Think about using WebGL to speed up graphics
+[ ] Allow images to be created and referenced from wasm

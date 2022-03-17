@@ -1,0 +1,4 @@
+export event OnMakeIcon {
+    card: Card = Card,
+    aspect_ratio: float = 1
+}

@@ -4,7 +4,11 @@ const path = require('path');
 const fs = require('fs');
 
 const TAB = '    ';
-const VIEW_SOURCE_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src', 'engine', 'client', 'view.lt');
+const GENERATION_START_MARKER = '// GENERATION START';
+const GENERATION_END_MARKER = '// GENERATION STOP';
+
+const SRC_DIR_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src');
+const VIEW_SOURCE_PATH = path.join(SRC_DIR_PATH, 'engine', 'client', 'view.lt');
 const FIELDS = {
     shape: 'Shape',
     anchor: 'Anchor',
@@ -50,9 +54,6 @@ const GROUPS = [
     ['focus_', '_focused_graphics()'],
     ['disabled_', '_disabled_graphics()'],
 ];
-
-const GENERATION_START_MARKER = '// GENERATION START';
-const GENERATION_END_MARKER = '// GENERATION STOP';
 
 function main() {
     let content = fs.readFileSync(VIEW_SOURCE_PATH, 'utf8');

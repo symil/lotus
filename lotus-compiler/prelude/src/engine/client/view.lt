@@ -4,9 +4,9 @@ export class View {
     _disabled: bool = false,
     _rect: Rect = none,
     _graphics: Graphics = Graphics,
-    _hovered_graphics: Graphics? = none,
-    _focused_graphics: Graphics? = none,
-    _disabled_graphics: Graphics? = none,
+    _hovered_graphics: Graphics = none,
+    _focused_graphics: Graphics = none,
+    _disabled_graphics: Graphics = none,
     _children: View[] = [],
 
     client() -> Client? {

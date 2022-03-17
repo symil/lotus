@@ -360,7 +360,7 @@ impl ParsedTypeDeclaration {
                             }
 
                             if fields.contains_key(field.name.as_str()) {
-                                context.errors.generic(&field.name, format!("duplicate field `{}`", self.name.as_str().bold()));
+                                context.errors.generic(&field.name, format!("duplicate field `{}`", field.name.as_str()));
                             }
 
                             if let Some(field_type) = ty.process(context) {

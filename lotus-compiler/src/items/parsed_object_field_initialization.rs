@@ -52,11 +52,17 @@ impl ParsedObjectFieldInitialization {
                         }
                     },
                     None => match context.access_var(&self.name) {
-                        Some(var_info) => {
-                            Some(context.vasm()
-                                .get_var(&var_info, Some(context.get_function_level()))
-                                .set_type(field_type)
-                            )
+                        Some(var_info) => match var_info.ty().is_assignable_to(&field_type) {
+                            true => {
+                                Some(context.vasm()
+                                    .get_var(&var_info, Some(context.get_function_level()))
+                                    .set_type(field_type)
+                                )
+                            },
+                            false => {
+                                context.errors.type_mismatch(&self.name, &field_type, &var_info.ty());
+                                None
+                            },
                         },
                         None => {
                             context.errors.generic(&self.name, format!("undefined variable `{}`", &self.name.as_str().bold()));

@@ -354,11 +354,11 @@ export class Client {
         }
     }
 
-    send_request<T>(request: T) {
+    send_request(request: Object) {
         self.send_request_with_callback(request, none);
     }
 
-    send_request_with_callback<T>(request: T, callback: RequestCallback = none) {
+    send_request_with_callback(request: Object, callback: RequestCallback = none) {
         let request_id = self._request_id_counter.next();
 
         self._buffer.reset();
