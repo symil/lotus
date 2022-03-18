@@ -11,10 +11,11 @@ pub struct ParsedWhileBlock {
 impl ParsedWhileBlock {
     pub fn process(&self, context: &mut ProgramContext) -> Option<Vasm> {
         let mut result = context.vasm().set_void(context);
+        let void_type = context.void_type();
 
         context.push_scope(ScopeKind::Loop);
 
-        if let (Some(condition_vasm), Some(block_vasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(None, context)) {
+        if let (Some(condition_vasm), Some(block_vasm)) = (self.while_branch.process_condition(context), self.while_branch.process_body(Some(&void_type), context)) {
             if !block_vasm.ty.is_void() {
                 context.errors.generic(&self, format!("expected `{}`, got `{}`", context.void_type(), &block_vasm.ty));
             }

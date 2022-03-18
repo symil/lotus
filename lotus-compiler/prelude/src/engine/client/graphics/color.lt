@@ -34,6 +34,10 @@ export class Color {
         Self { r, g, b, a }
     }
 
+    static from_string_hash(str: string) -> Self {
+        Self::from_hash(str.hash())
+    }
+
     mult_alpha(alpha: float) -> Color {
         if !self {
             return none;

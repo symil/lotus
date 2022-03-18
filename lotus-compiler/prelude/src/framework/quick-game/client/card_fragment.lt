@@ -6,6 +6,10 @@ pub class CardFragment {
     vertical_margin: DisplaySize = 0,
     horizontal_margin: DisplaySize = 0,
     children: CardFragment[] = [],
+
+    compute_view() -> View {
+        View
+    }
 }
 
 pub enum Direction {

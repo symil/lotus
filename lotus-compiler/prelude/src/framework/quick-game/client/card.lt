@@ -6,6 +6,10 @@ export view Card {
         self._background || self._selected
     }
 
+    @OnRender {
+
+    }
+
     next_line() -> Self {
         if !self._background {
             self._background = self._selected;

@@ -4,15 +4,12 @@ pub view LobbyFooter {
         check evt.user.is_logged();
         
         self.layout()
-            .move_center()
-            .set_height(0.8h)
-            .set_width_from_aspect_ratio(4)
+            .outer_margin(.1h)
             .push(MatchmakingButton)
-            .move_bottom_right()
-            .towards_left()
-            .set_height(0.5h)
-            .set_width_from_aspect_ratio(3)
-            .margin(.1h)
+            .aspect_ratio(4)
+            .bottom_right_to_left()
             .push(LogoutButton)
+            .height(0.5h)
+            .aspect_ratio(3)
     }
 }

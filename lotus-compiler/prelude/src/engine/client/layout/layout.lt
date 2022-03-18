@@ -1,0 +1,223 @@
+pub class Layout {
+    view: View,
+    _root_list: LayoutItem[] = [],
+    _split: bool = false,
+    _pushed: bool = false,
+    _root: LayoutItem = none,
+
+    _flush() {
+        if self._root {
+            self._root_list.push(self._root);
+        }
+
+        self._root = none;
+        self._pushed = false;
+        self._split = false;
+    }
+
+    _init_root() {
+        let outer_margin = self._root_list.last().and_then(root => root.outer_margin).or(0f);
+
+        self._root = LayoutItem {
+            view: self.view,
+            outer_margin
+        };
+    }
+
+    _get_root() -> LayoutItem {
+        if !self._root {
+            self._init_root();
+        }
+
+        self._root
+    }
+
+    _get_last_container() -> LayoutItem {
+        let root = self._get_root();
+
+        match self._split {
+            true => root.children.last().or(root),
+            false => root,
+        }
+    }
+
+    _get_last_item() -> LayoutItem {
+        let container = self._get_last_container();
+
+        container.children.last() || container
+    }
+
+    _get_last_view() -> View {
+        let item = self._get_last_item();
+
+        if !item.view {
+            item.view = View;
+        }
+
+        item.view
+    }
+
+    _get_root_rect() -> Rect {
+        self.view.rect()
+    }
+
+    process() {
+        self._flush();
+
+        for root in self._root_list {
+            root.layout(self.view.rect(), self.view);
+        }
+    }
+
+    push(view: View) -> Self {
+        let container = self._get_last_container();
+        let last_item = container.children.last();
+        let force = (last_item && last_item.force) || 1f;
+        let aspect_ratio = last_item && last_item.aspect_ratio;
+        let width = last_item && last_item.width;
+        let height = last_item && last_item.height;
+
+        container.children.push(LayoutItem {
+            view,
+            force,
+            aspect_ratio,
+            width,
+            height
+        });
+
+        self._pushed = true;
+
+        self
+    }
+
+    split() -> Self {
+        check !self._split && !self._pushed;
+
+        self._split = true;
+        self
+    }
+
+    next() -> Self {
+        check self._split;
+
+        let last_container = self._root.children.last();
+        let new_container = LayoutItem;
+
+        if last_container {
+            new_container.direction = last_container.direction;
+            new_container.alignment = last_container.alignment;
+            new_container.inner_margin = last_container.inner_margin;
+        }
+
+        self._root.children.push(new_container);
+        self
+    }
+
+    direction(direction: LayoutDirection) -> Self {
+        self._get_last_item().direction = direction;
+        self
+    }
+
+    alignment(alignment: float) -> Self {
+        self._get_last_item().alignment = alignment;
+        self
+    }
+
+    sub_alignment(sub_alignment: float) -> Self {
+        self._get_last_item().sub_alignment = sub_alignment;
+        self
+    }
+
+    width(width: DisplaySize) -> Self {
+        self._get_last_item().width = width.resolve(self._get_root_rect());
+        self
+    }
+
+    height(height: DisplaySize) -> Self {
+        self._get_last_item().height = height.resolve(self._get_root_rect());
+        self
+    }
+
+    aspect_ratio(aspect_ratio: float) -> Self {
+        self._get_last_item().aspect_ratio = aspect_ratio;
+        // TODO: unset width or height
+        self
+    }
+
+    force(force: float) -> Self {
+        let item = self._get_last_item();
+
+        item.force = force;
+        item.aspect_ratio = none;
+        item.width = none;
+        item.height = none;
+        self
+    }
+
+    inner_margin(inner_margin: DisplaySize) -> Self {
+        self._get_last_container().inner_margin = inner_margin.resolve(self._get_root_rect());
+        self
+    }
+
+    outer_margin(outer_margin: DisplaySize) -> Self {
+        self._get_root().outer_margin = outer_margin.resolve(self._get_root_rect());
+        self
+    }
+
+    margin(margin: DisplaySize) -> Self {
+        self
+            .inner_margin(margin)
+            .outer_margin(margin)
+    }
+
+    reset() -> Self {
+        self._flush();
+        self
+    }
+
+    _bulk_config(direction: LayoutDirection, alignment: float, sub_alignment: float) -> Self {
+        if !self._split {
+            self._flush();
+        }
+
+        let root = self._get_last_item();
+
+        root.direction = direction;
+        root.alignment = alignment;
+        root.sub_alignment = sub_alignment;
+
+        self
+    }
+
+    _bulk_split_config(direction: LayoutDirection) -> Self {
+        self._flush();
+        self.split();
+        self.direction(direction)
+    }
+
+    center_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0.5, 0.5) }
+    center_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0.5, 0.5) }
+    center_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0.5, 0.5) }
+    center_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0.5, 0.5) }
+
+    left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 0.5) }
+    right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 0.5) }
+    top_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 0.5) }
+    bottom_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 0.5) }
+
+    top_left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 0) }
+    bottom_left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 1) }
+    top_right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 0) }
+    bottom_right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 1) }
+    top_left_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 0) }
+    top_right_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 1) }
+    bottom_left_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 0) }
+    bottom_right_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 1) }
+
+    split_left_to_right() -> Self { self._bulk_split_config(LayoutDirection::LeftToRight) }
+    split_right_to_left() -> Self { self._bulk_split_config(LayoutDirection::RightToLeft) }
+    split_top_to_bottom() -> Self { self._bulk_split_config(LayoutDirection::TopToBottom) }
+    split_bottom_to_top() -> Self { self._bulk_split_config(LayoutDirection::BottomToTop) }
+
+    background_color(color: Color) -> Self { self._get_last_view().background_color(color); self }
+}

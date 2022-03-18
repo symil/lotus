@@ -3,14 +3,19 @@ pub view GameItemSelectionPanel {
         let grids : Grid[] = [];
 
         for category in evt.user.available_game_items {
-            let items = category.items.map(item => {
-                OnMakeIcon.emit([item]).card
-            });
-            let item_aspect_ratio = items.first().get_background().aspect_ratio;
+            let grid_item_aspect_ratio : float = none;
+            let grid_items : View[] = [];
+
+            for item in category.items {
+                let event = OnMakeIcon.emit([item]);
+
+                grid_item_aspect_ratio = event.aspect_ratio;
+                grid_items.push(GameItemView { item });
+            }
 
             grids.push(Grid {
-                items,
-                item_aspect_ratio,
+                items: grid_items,
+                item_aspect_ratio: grid_item_aspect_ratio,
                 background_color: Color::from_hash(category.name.hash()),
                 margin: .25h,
                 title: category.name,

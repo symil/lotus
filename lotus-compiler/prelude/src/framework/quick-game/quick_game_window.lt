@@ -15,14 +15,23 @@ export view QuickGameWindow {
             }]
         });
 
-        self.layout()
-            .push(lobby_screen)
-            .scale(0.35)
-            .move_center()
-            .use_fixed_positionning()
-            .push_list(modals)
+        self.layout().push(lobby_screen);
+
+        for message in evt.user.messages {
+            let modal = Modal {
+                kind: message.kind,
+                content: message.content,
+                buttons: [ModalButton {
+                    content: "Ok",
+                    on_click: (client) => client.send_request(AcknowledgeRequest { message })
+                }]
+            };
+
+            self.add_child(modal, self.rect().scale(0.35));
+        }
         
         self.add_child(Tooltip);
+        self.background_color(Color::white());
         
         // self.add_child(TestImage.set_rect(Rect::new(250, 500, 300, 300)));
     }

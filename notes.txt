@@ -1,0 +1,1 @@
+- We often have the case where a game object wants to render itself, sometimes in different ways (e.g icon vs full model in game)

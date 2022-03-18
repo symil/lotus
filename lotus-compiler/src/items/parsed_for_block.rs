@@ -26,6 +26,7 @@ impl ParsedForBlock {
         context.push_scope(ScopeKind::Loop);
 
         let mut result = None;
+        let void_type = context.void_type();
         let range_start_vasm_opt = range_start.process(None, context);
         let range_end_vasm_opt = self.range_end.as_ref().and_then(|expr| expr.process(None, context));
         let current_function_level = Some(context.get_function_level());
@@ -50,7 +51,7 @@ impl ParsedForBlock {
 
                 if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
                     if let Some(body) = unwrap_item(&self.body, range_end, context) {
-                        if let Some(block_vasm) = body.process(None, context) {
+                        if let Some(block_vasm) = body.process(Some(&void_type), context) {
                             if !block_vasm.ty.is_void() {
                                 context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
                             }
@@ -110,7 +111,7 @@ impl ParsedForBlock {
             if let Some((item_variables, init_vasm)) = item_var_names.process(None, iteration_vasm, Some(range_start), context) {
                 if iterable_vasm.ty.check_match_interface(&required_interface_wrapped, range_start, context) {
                     if let Some(body) = unwrap_item(&self.body, range_start, context) {
-                        if let Some(block_vasm) = body.process(None, context) {
+                        if let Some(block_vasm) = body.process(Some(&void_type), context) {
                             if !block_vasm.ty.is_void() {
                                 context.errors.type_mismatch(body, &context.void_type(), &block_vasm.ty);
                             }
