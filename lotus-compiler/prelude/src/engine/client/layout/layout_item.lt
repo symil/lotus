@@ -12,11 +12,11 @@ pub class LayoutItem {
     sub_alignment: float = 0.5,
     children: LayoutItem[] = [],
 
-    layout(rect: Rect, root_view: View) {
+    layout(rect: Rect) {
         self.rect = rect;
 
         if self.view {
-            root_view.add_child(self.view, rect);
+            self.view.set_rect(rect);
         }
 
         rect = rect.strip(self.outer_margin * 2, self.outer_margin * 2);
@@ -110,7 +110,7 @@ pub class LayoutItem {
 
             let item_rect = Rect::from_top_left(item_x1, item_y1, item.width, item.height);
 
-            item.layout(item_rect, root_view);
+            item.layout(item_rect);
         }
     }
 

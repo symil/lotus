@@ -67,12 +67,8 @@ export class View {
         }
     }
 
-    add_child(view: View, rect: Rect = none) {
+    add_child(view: View) {
         check view != self;
-
-        if rect {
-            view._rect = rect.clone();
-        }
 
         view._parent = self;
         self._children.push(view);
