@@ -52,6 +52,7 @@ pub class Layout {
 
         if !item.view {
             item.view = View;
+            self.view.add_child(item.view);
         }
 
         item.view
@@ -65,7 +66,7 @@ pub class Layout {
         self._flush();
 
         for root in self._root_list {
-            root.layout(self.view.rect(), self.view);
+            root.layout(self.view.rect());
         }
     }
 
@@ -85,6 +86,7 @@ pub class Layout {
             height
         });
 
+        self.view.add_child(view);
         self._pushed = true;
 
         self

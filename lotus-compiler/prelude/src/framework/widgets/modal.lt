@@ -17,12 +17,12 @@ export view Modal {
         let message = Label {
             text: self.content,
             text_color,
-            text_size: .15h,
+            text_size: .1h,
         };
         let buttons = self.buttons.map(button => Button {
             text: button.content,
             on_click: button.on_click,
-            text_size: .7h,
+            text_size: .5h,
             border_width: 1r
         });
         let button_grid = Grid {

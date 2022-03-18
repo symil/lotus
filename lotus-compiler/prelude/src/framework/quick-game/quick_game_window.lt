@@ -17,6 +17,8 @@ export view QuickGameWindow {
 
         self.layout().push(lobby_screen);
 
+        let modal_rect = self.rect().scale(0.35);
+
         for message in evt.user.messages {
             let modal = Modal {
                 kind: message.kind,
@@ -27,7 +29,9 @@ export view QuickGameWindow {
                 }]
             };
 
-            self.add_child(modal, self.rect().scale(0.35));
+            modal.set_rect(modal_rect);
+
+            self.add_child(modal);
         }
         
         self.add_child(Tooltip);
