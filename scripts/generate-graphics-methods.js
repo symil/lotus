@@ -9,6 +9,7 @@ const GENERATION_END_MARKER = '// GENERATION STOP';
 
 const SRC_DIR_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src');
 const VIEW_SOURCE_PATH = path.join(SRC_DIR_PATH, 'engine', 'client', 'view.lt');
+const LAYOUT_SOURCE_PATH = path.join(SRC_DIR_PATH, 'engine', 'client', 'layout', 'layout.lt');
 const FIELDS = {
     shape: 'Shape',
     anchor: 'Anchor',
@@ -55,32 +56,64 @@ const GROUPS = [
     ['disabled_', '_disabled_graphics()'],
 ];
 
-function main() {
-    let content = fs.readFileSync(VIEW_SOURCE_PATH, 'utf8');
-    let generated = GROUPS.map(([prefix, graphics]) => {
-        return Object.entries(FIELDS).map(([methodName, fields]) => {
+function generateCode(sourceFilePath, generateLinesFunctions) {
+    if (typeof generateLinesFunctions === 'function') {
+        generateLinesFunctions = { '': generateLinesFunctions };
+    }
+
+    let content = fs.readFileSync(sourceFilePath, 'utf8');
+    let blocks = [];
+
+    for (let [prefix, generateLines] of Object.entries(generateLinesFunctions)) {
+        let block = [];
+
+        for (let [methodName, fields] of Object.entries(FIELDS)) {
             let start = `\n${TAB}${TAB}`;
             let end = `\n${TAB}`;
             let separator = `\n${TAB}${TAB}`
             if (typeof fields === 'string') {
                 fields = { [methodName] : fields};
+            }
+            let entries = Object.entries(fields);
+            let args = entries.map(([name, type]) => `${name}: ${type}`);
+            let argNames = entries.map(([name]) => name);
+            let lines = generateLines(argNames, methodName);
+
+            if (!Array.isArray(lines)) {
+                lines = [lines];
+            }
+
+            if (lines.length <= 1) {
                 start = ' ';
                 end = ' ';
                 separator = ' ';
             }
-            let args = Object.entries(fields).map(([name, type]) => `${name}: ${type}`);
-            let lines = Object.entries(fields).map(([name, type]) => `self.${graphics}.${name} = ${name};`);
+
             lines.push('self');
 
-            return `${TAB}${prefix}${methodName}(${args.join(', ')}) -> Self {${start}${lines.join(separator)}${end}}`;
-        }).join('\n');
-    }).join('\n\n');
+            block.push(`${TAB}${prefix}${methodName}(${args.join(', ')}) -> Self {${start}${lines.join(separator)}${end}}`);
+        }
 
+        blocks.push(block.join('\n'));
+    }
+
+    let generated = blocks.join('\n\n');
     let startIndex = content.indexOf(GENERATION_START_MARKER) + GENERATION_START_MARKER.length;
     let endIndex = content.indexOf(GENERATION_END_MARKER);
     let output = content.substring(0, startIndex) + '\n\n' + generated + '\n\n' + TAB + content.substring(endIndex);
 
-    fs.writeFileSync(VIEW_SOURCE_PATH, output, 'utf8');
+    fs.writeFileSync(sourceFilePath, output, 'utf8');
+}
+
+function main() {
+    generateCode(VIEW_SOURCE_PATH, {
+        '': args => args.map(name => `self._graphics.${name} = ${name};`),
+        'hover_': args => args.map(name => `self._hovered_graphics().${name} = ${name};`),
+        'focus_': args => args.map(name => `self._focused_graphics().${name} = ${name};`),
+        'disabled_': args => args.map(name => `self._disabled_graphics().${name} = ${name};`),
+    });
+
+    generateCode(LAYOUT_SOURCE_PATH, (args, method) => `self._get_last_view().${method}(${args.join(', ')});`);
 }
 
 main();
