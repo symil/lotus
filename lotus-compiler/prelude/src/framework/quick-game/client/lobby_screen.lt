@@ -16,16 +16,14 @@ export view LobbyScreen {
         };
 
         self.background_color(self.background_color);
-
         self.layout()
-            .move_top()
-            .towards_bottom()
-            .set_height(HEADER_SIZE)
+            .top_to_bottom()
             .push(header)
-            .set_height(1h - HEADER_SIZE - FOOTER_SIZE)
+            .height(HEADER_SIZE)
             .push(middle_panel)
-            .set_height(FOOTER_SIZE)
+            .force(1)
             .push(footer)
+            .height(FOOTER_SIZE)
     }
 
     @OnKeyDown {

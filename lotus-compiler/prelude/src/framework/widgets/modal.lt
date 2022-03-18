@@ -32,12 +32,11 @@ export view Modal {
         };
 
         self.layout()
-            .set_height(0.8h)
-            .move_top()
-            .towards_bottom()
+            .top_to_bottom()
             .push(message)
-            .set_height(0.2h)
+            .force(4)
             .push(button_grid)
+            .force(1)
         
         self.background_color(background_color)
             .border_radius(10v)

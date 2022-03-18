@@ -8,6 +8,7 @@ export class View {
     _focused_graphics: Graphics = none,
     _disabled_graphics: Graphics = none,
     _children: View[] = [],
+    _layouts: Layout[] = []
 
     client() -> Client? {
         self._client
@@ -66,7 +67,13 @@ export class View {
         }
     }
 
-    add_child(view: View) {
+    add_child(view: View, rect: Rect = none) {
+        check view != self;
+
+        if rect {
+            view._rect = rect.clone();
+        }
+
         view._parent = self;
         self._children.push(view);
     }
@@ -91,7 +98,17 @@ export class View {
     }
 
     layout() -> Layout {
-        Layout::new(self)
+        let layout = Layout {
+            view: self
+        };
+        self._layouts.push(layout);
+        layout
+    }
+
+    process_layouts() {
+        for layout in self._layouts {
+            layout.process();
+        }
     }
 
     is_hovered() -> bool {
@@ -333,6 +350,10 @@ export class View {
     disabled_cursor(cursor: Cursor) -> Self { self._disabled_graphics().cursor = cursor; self }
 
     // GENERATION STOP
+
+    dyn __to_debug_string_dyn(set: Set<Pointer<int>>) -> string{
+        "<VIEW>"
+    }
 }
 
 fn push_callback<S, T>(owner: S, array: T[], value: T?) -> S {

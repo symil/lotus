@@ -1,4 +1,4 @@
-const USERNAME_TEXT_SIZE = .4h;
+const USERNAME_TEXT_SIZE = .35h;
 
 pub view UsernameLabel {
     @OnRender {
