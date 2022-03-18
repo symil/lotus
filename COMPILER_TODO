@@ -260,3 +260,4 @@
 [ ] Allow images to be created and referenced from wasm
 [ ] Make so `none` is assignable to tuples
 [ ] Add function argument default values in signature help provider
+[ ] Add text selection

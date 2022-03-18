@@ -8,9 +8,11 @@ const GENERATION_START_MARKER = '// GENERATION START';
 const GENERATION_END_MARKER = '// GENERATION STOP';
 
 const SRC_DIR_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src');
-const VIEW_SOURCE_PATH = path.join(SRC_DIR_PATH, 'engine', 'client', 'view.lt');
-const LAYOUT_SOURCE_PATH = path.join(SRC_DIR_PATH, 'engine', 'client', 'layout', 'layout.lt');
-const FIELDS = {
+const CLIENT_SRC_SIR_PATH = path.join(SRC_DIR_PATH, 'engine', 'client');
+const VIEW_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'view.lt');
+const LAYOUT_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'layout', 'layout.lt');
+
+const VIEW_METHODS = {
     shape: 'Shape',
     anchor: 'Anchor',
     border_radius: 'DisplaySize',
@@ -49,13 +51,6 @@ const FIELDS = {
     cursor: 'Cursor',
 };
 
-const GROUPS = [
-    ['', '_graphics'],
-    ['hover_', '_hovered_graphics()'],
-    ['focus_', '_focused_graphics()'],
-    ['disabled_', '_disabled_graphics()'],
-];
-
 function generateCode(sourceFilePath, generateLinesFunctions) {
     if (typeof generateLinesFunctions === 'function') {
         generateLinesFunctions = { '': generateLinesFunctions };
@@ -67,7 +62,7 @@ function generateCode(sourceFilePath, generateLinesFunctions) {
     for (let [prefix, generateLines] of Object.entries(generateLinesFunctions)) {
         let block = [];
 
-        for (let [methodName, fields] of Object.entries(FIELDS)) {
+        for (let [methodName, fields] of Object.entries(VIEW_METHODS)) {
             let start = `\n${TAB}${TAB}`;
             let end = `\n${TAB}`;
             let separator = `\n${TAB}${TAB}`
