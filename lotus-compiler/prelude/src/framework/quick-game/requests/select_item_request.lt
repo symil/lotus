@@ -16,6 +16,8 @@ pub class SelectItemRequest {
             } else {
                 evt.user.selected_game_items.remove(self.item);
             }
+
+            
         }
     }
 }

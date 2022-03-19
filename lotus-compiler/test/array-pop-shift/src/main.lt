@@ -1,0 +1,39 @@
+export fn main() {
+    test_pop();
+    @log("---");
+    test_shift();
+}
+
+fn test_pop() {
+    let empty : int[] = [];
+    let array = [1, 2, 3, 4];
+
+    @dbg(empty.pop());
+    @dbg(array.pop());
+    @dbg(array);
+    @dbg(array.pop());
+    @dbg(array);
+
+    for i in 0..10 {
+        array.pop();
+    }
+
+    @dbg(array);
+}
+
+fn test_shift() {
+    let empty : int[] = [];
+    let array = [1, 2, 3, 4];
+
+    @dbg(empty.shift());
+    @dbg(array.shift());
+    @dbg(array);
+    @dbg(array.shift());
+    @dbg(array);
+
+    for i in 0..10 {
+        array.shift();
+    }
+
+    @dbg(array);
+}
