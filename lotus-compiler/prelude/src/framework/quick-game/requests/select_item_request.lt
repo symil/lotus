@@ -11,7 +11,11 @@ pub class SelectItemRequest {
         }
 
         if self.count >= 0 && self.count <= self.item.max_duplicate_count {
-            evt.user.selected_game_items.set(self.item, self.count);
+            if self.count > 0 {
+                evt.user.selected_game_items.push(self.item);
+            } else {
+                evt.user.selected_game_items.remove(self.item);
+            }
         }
     }
 }

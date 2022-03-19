@@ -52,24 +52,28 @@ export class Object extends any {
         (i32.const 0)
     }}
 
-    __eq(other: Self) -> bool {{
-        i32.eq
-    }}
+    // __eq(other: Self) -> bool {{
+    //     i32.eq
+    // }}
 
-    __ne(other: Self) -> bool {{
-        i32.ne
-    }}
+    // __ne(other: Self) -> bool {{
+    //     i32.ne
+    // }}
+
+    __eq(other: Self) -> bool {
+        self.__hash() == other.__hash()
+    }
+
+    __ne(other: Self) -> bool {
+        !self.__eq(other)
+    }
 
     __is_none() -> bool {{
         (i32.eqz)
     }}
 
     __hash() -> int {
-        if !self {
-            0
-        } else {
-            self.__as_ptr().__get_version()
-        }
+        ((self as int).max(1) as ptr).__get_version()
     }
 
     __as_ptr() -> ptr {

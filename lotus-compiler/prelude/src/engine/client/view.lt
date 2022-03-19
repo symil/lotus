@@ -101,9 +101,9 @@ export class View {
         layout
     }
 
-    process_layouts() {
+    finish_layouts() {
         for layout in self._layouts {
-            layout.process();
+            layout.finish();
         }
     }
 

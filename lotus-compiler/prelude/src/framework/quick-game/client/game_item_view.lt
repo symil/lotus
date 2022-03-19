@@ -2,8 +2,7 @@ pub view GameItemView {
     item: GameItem,
 
     @OnRender {
-        let selected_count = evt.user.selected_game_items.get(self.item) || 0;
-        let is_selected = selected_count > 0;
+        let is_selected = evt.user.selected_game_items.includes(self.item);
         let border_color = match is_selected {
             true => Color::red(),
             false => Color::black(),
@@ -28,7 +27,7 @@ pub view GameItemView {
     @OnClick {
         check evt.button == MouseButton::Left;
         
-        let is_selected = (evt.user.selected_game_items.get(self.item) || 0) > 0;
+        let is_selected = evt.user.selected_game_items.includes(self.item);
         let count = match is_selected {
             true => 0,
             false => 1,
@@ -48,7 +47,7 @@ pub view GameItemView {
         evt.emit([self.item]);
         
         evt.view = View
-            .background_color(Color::white())
-            .set_size(400, 400);
+            // .background_color(Color::white())
+            // .set_size(400, 400);
     }
 }

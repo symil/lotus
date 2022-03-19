@@ -62,7 +62,7 @@ pub class Layout {
         self.view.rect()
     }
 
-    process() {
+    finish() {
         self._flush();
 
         for root in self._root_list {
@@ -89,6 +89,14 @@ pub class Layout {
         self.view.add_child(view);
         self._pushed = true;
 
+        self
+    }
+
+    push_list(views: View[]) -> Self {
+        for view in views {
+            self.push(view)
+        }
+        
         self
     }
 
