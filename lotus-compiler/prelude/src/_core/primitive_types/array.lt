@@ -170,6 +170,19 @@ export class Array<T> {
         !!index
     }
 
+    shift() -> T {
+        if self.is_empty() {
+            return none;
+        }
+
+        let result = self._body[0];
+
+        self._length -= 1;
+        self._body.add(1).copy_to(self._body, self._length);
+
+        result
+    }
+
     _add_length(additional_length: int) -> int {
         let current_length = self._length;
         let new_length = current_length + additional_length;
@@ -212,12 +225,13 @@ export class Array<T> {
         }
     }
 
-    pop() -> Self {
-        if self._length > 0 {
-            self._length -= 1;
+    pop() -> T {
+        if self.is_empty() {
+            return none;
         }
 
-        self
+        self._length -= 1;        
+        self._body[self._length]
     }
 
     insert_at(index: int, item: T) {
