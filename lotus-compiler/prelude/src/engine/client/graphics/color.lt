@@ -4,12 +4,8 @@ export class Color {
     b: int,
     a: int,
 
-    __eq(other: Self) -> bool {
-        self.r == other.r && self.g == other.g && self.b == other.b && self.a == other.a
-    }
-
-    __ne(other: Self) -> bool {
-        self.r != other.r || self.g != other.g || self.b != other.b || self.a != other.a
+    __hash() -> int {
+        3624736.hash_from(self.r).hash_from(self.g).hash_from(self.b).hash_from(self.a)
     }
 
     static new(r: int, g: int, b: int, a: int) -> Self {

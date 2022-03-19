@@ -65,7 +65,7 @@ export class Object extends any {
     }
 
     __ne(other: Self) -> bool {
-        !self.__eq(other)
+        self.__hash() != other.__hash()
     }
 
     __is_none() -> bool {{
