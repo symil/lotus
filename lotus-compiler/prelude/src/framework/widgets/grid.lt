@@ -23,8 +23,9 @@ export view Grid {
     vertical_outer_margin: DisplaySize = none,
     horizontal_inner_margin: DisplaySize = none,
     vertical_inner_margin: DisplaySize = none,
+    header_size: DisplaySize = 0.2h,
     title: string = none,
-    title_size: DisplaySize = 0.2h,
+    title_size: DisplaySize = 0.5h,
     title_color: Color = Color::black(),
     title_font: Font = DEFAULT_FONT,
     direction: GridDirection = GridDirection::TopToBottom,
@@ -64,7 +65,7 @@ export view Grid {
 
         let displayed_item_count = (row_size * column_size).to_int();
         let parent_rect = self.rect();
-        let title_size = self.title_size.resolve(parent_rect);
+        let title_size = self.header_size.resolve(parent_rect);
         let (title_rect, grid_rect) = parent_rect.split_vertically(title_size);
 
         if self.title {
@@ -73,7 +74,7 @@ export view Grid {
                 .text(self.title)
                 .text_font(self.title_font)
                 .text_color(self.title_color)
-                .text_size(.5h)
+                .text_size(self.title_size)
                 .background_color(Color::rebecca_purple())
             
             self.add_child(title);
