@@ -25,7 +25,8 @@ export function formatText(parameters) {
         color: textColor,
         bold: textBold,
         italic: textItalic,
-        horizontalAlign: 'left'
+        horizontalAlign: 'left',
+        verticalAlign: 'middle'
     };
     let lines = [];
     let maxLineWidth = maxWidth ? maxWidth - padding * 2 : Infinity;
@@ -110,10 +111,15 @@ export function formatText(parameters) {
         }
 
         for (let token of line.tokens) {
-            let dy = (lineHeight - token.size) * 0.3;
+            let dif = (lineHeight - token.size);
+            let m = 0.3;
+
+            if (token.verticalAlign === 'bottom') {
+                m = -0.1;
+            }
 
             token.x += offsetX;
-            token.y -= dy;
+            token.y -= dif * m;
         }
     }
 
@@ -122,6 +128,8 @@ export function formatText(parameters) {
 
     canvas.width = totalWidth;
     canvas.height = totalHeight;
+
+    // ctx.fillStyle = 'white'; ctx.fillRect(0, 0, totalWidth, totalHeight);
 
     // if (backgroundColor) {
     //     ctx.fillStyle = backgroundColor;
@@ -198,6 +206,9 @@ function makeToken(content, textParams, rules) {
             token.size *= 0.75;
         } else if (rule === 'big') {
             token.size *= 1.6;
+        } else if (rule === 'sub') {
+            token.size *= 0.5;
+            token.verticalAlign = 'bottom';
         } else {
             token.color = rule;
         }
