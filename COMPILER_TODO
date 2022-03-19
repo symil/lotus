@@ -264,3 +264,5 @@
 [ ] Add text selection
 [ ] Notify client when connection with server is lost
 [ ] Introduce `===` operator to compare objects by address instead of hash
+[ ] Trigger garbage collector over a longer period of time (process page by page)
+[ ] Implement a better pointer version generator instead of relying on a random number generator (most likely just use a regular counter with starting value random)

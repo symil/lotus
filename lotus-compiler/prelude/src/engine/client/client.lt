@@ -3,6 +3,8 @@ const CLIENT : Object = none;
 const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
+let COUNT = 0;
+
 export class Client {
     _user: #USER_TYPE = #USER_TYPE::__default(),
     _local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
@@ -172,9 +174,10 @@ export class Client {
     }
 
     _create_views() {
+        COUNT = 0;
         let root_view = #WINDOW_TYPE::__default();
 
-        root_view._rect = Rect::from_size(self._virtual_width, self._virtual_height)
+        root_view.set_rect(Rect::from_size(self._virtual_width, self._virtual_height));
 
         self._all_views.clear();
         self._focus_chain.clear();
@@ -188,6 +191,8 @@ export class Client {
         if !self._focused_view {
             self._focused_index = none;
         }
+
+        // @log(`wasm: ${COUNT}`);
     }
 
     _render_view(view: View) {
@@ -527,7 +532,7 @@ export class Client {
         false
     }
 
-    dyn __to_debug_string_dyn(set: Set<Pointer<int>>) -> string{
+    dyn __to_debug_string_dyn(set: Set<int>) -> string{
         "<CLIENT>"
     }
 }

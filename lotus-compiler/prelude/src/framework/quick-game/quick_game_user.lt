@@ -2,8 +2,7 @@ export class QuickGameUser {
     name: string = "",
     messages: QuickGameMessage[] = [],
     is_searching_for_game: bool = false,
-    available_game_items: GameItemCategory[],
-    selected_game_items: GameItem[],
+    selected_game_items: Map<GameItemCategory, GameItem[]> = Map::new(),
     game: bool, // TODO
 
     is_logged() -> bool {

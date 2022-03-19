@@ -1,15 +1,19 @@
 pub view GameItemView {
+    category: GameItemCategory,
     item: GameItem,
 
+    _is_selected(user: QuickGameUser) -> bool {
+        user.selected_game_items.get(self.category).includes(self.item)
+    }
+
     @OnRender {
-        let is_selected = evt.user.selected_game_items.includes(self.item);
+        let is_selected = self._is_selected(evt.user);
         let border_color = match is_selected {
             true => Color::red(),
             false => Color::black(),
         };
 
-        self.background_color(self.item.background_color)
-            .image_url(self.item.image_url)
+        self.background_color(Color::from_string_hash(self.item.name))
             .border_color(border_color)
             .border_width(.04h)
             .border_radius(0.1m)
@@ -27,7 +31,7 @@ pub view GameItemView {
     @OnClick {
         check evt.button == MouseButton::Left;
         
-        let is_selected = evt.user.selected_game_items.includes(self.item);
+        let is_selected = self._is_selected(evt.user);
         let count = match is_selected {
             true => 0,
             false => 1,

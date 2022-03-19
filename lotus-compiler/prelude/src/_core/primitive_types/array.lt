@@ -281,25 +281,32 @@ export class Array<T> {
     }
 
     join(separator: string) -> string {
-        let str = "";
-        let length = self._length;
+        if self.is_empty() {
+            return "";
+        }
 
-        if length > 0 {
-            let last_index = length - 1;
-            let i = 0;
+        let item_count = self.len();
+        let strings = self.map(item => item.to_string());
+        let result_length = strings.reduce(0, (acc, str) => acc + str.len()) + (item_count - 1) * separator.len();
+        let result = string::__create(result_length);
 
-            for item in self {
-                str += item.to_string();
+        let separator_content = separator._content();
+        let separator_length = separator.len();
+        let target = result._content();
 
-                if i != last_index {
-                    str += separator;
-                }
+        for [i, str] in strings {
+            let length = str.len();
+            str._content().copy_to(target, length);
 
-                i += 1;
+            target = target.add(length);
+
+            if i != item_count - 1 {
+                separator_content.copy_to(target, separator_length);
+                target = target.add(separator_length);
             }
         }
 
-        str
+        result
     }
 
     filter(callback: fn(T, int)(bool)) -> T[] {
@@ -345,6 +352,18 @@ export class Array<T> {
             result = callback(result, item, i);
         }
         
+        result
+    }
+
+    count(predicate: fn(T, int)(bool)) -> int {
+        let result = 0;
+
+        for [i, item] in self {
+            if predicate(item, i) {
+                result += 1;
+            }
+        }
+
         result
     }
 

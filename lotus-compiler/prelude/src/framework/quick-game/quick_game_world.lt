@@ -1,19 +1,21 @@
 export class QuickGameWorld {
-    users: Map<string, QuickGameUser>,
-    matchmaking_queue: QuickGameUser[],
-    game_items: GameItemCategory[],
-    valid_game_items: Set<GameItem>,
+    users: Map<string, QuickGameUser> = Map::new(),
+    matchmaking_queue: QuickGameUser[] = [],
+    game_items: GameItemCategory[] = [],
+    valid_game_items: Map<GameItem, GameItemCategory> = Map::new(),
 
     @OnWorldOpen {
         for category in self.game_items {
             for item in category.items {
-                self.valid_game_items.add(item);
+                self.valid_game_items.set(item, category);
             }
         }
     }
 
     @OnUserConnect {
-        evt.user.available_game_items = self.game_items;
+        for category in self.game_items {
+            evt.user.selected_game_items.set(category, []);
+        }
     }
 
     @OnUserDisconnect {
