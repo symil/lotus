@@ -172,8 +172,10 @@
 [X] Fix click event
 [X] Improve mouse & keyboard events
 [X] Fix completion for enum variants that match expected type
+[X] Add type parameter inference (e.g `let a : Map<int, string> = Map::new()` should work)
 [X] Methods `and` & `or` on `any` type
 [ ] Add icon support in text
+[ ] Add badge support in layout api
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -181,7 +183,6 @@
 [ ] Avoid recomputing the full path when using operation-assigment operators (e.g `a.b.c.d += 4` should not compute `a.b.c` twice)
 [ ] Compute constants value at compile time when possible
 [ ] Make `self` available in field default values
-[ ] Add type parameter inference (e.g `let a : Map<int, string> = Map::new()` should work)
 [ ] Improve variable type inference according to their first use
 [ ] Change the `?` suffix operator to return `none` if the expression it is applied to is `none`
 [ ] Optimize `&&` and `||` when applied to boolean operands
@@ -261,3 +262,5 @@
 [ ] Make so `none` is assignable to tuples
 [ ] Add function argument default values in signature help provider
 [ ] Add text selection
+[ ] Notify client when connection with server is lost
+[ ] Introduce `===` operator to compare objects by address instead of hash

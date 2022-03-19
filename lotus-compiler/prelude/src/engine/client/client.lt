@@ -199,7 +199,7 @@ export class Client {
 
         view._client = self;
         event.emit([view]);
-        view.process_layouts();
+        view.finish_layouts();
         self._all_views.push(view);
 
         for child in view._children {
