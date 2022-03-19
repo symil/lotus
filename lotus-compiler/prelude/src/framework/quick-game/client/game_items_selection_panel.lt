@@ -2,7 +2,7 @@ pub view GameItemSelectionPanel {
     @OnRender {
         let grids : Grid[] = [];
 
-        for category in evt.user.available_game_items {
+        for category in evt.user.selected_game_items.keys() {
             let grid_item_aspect_ratio : float = none;
             let grid_items : View[] = [];
 
@@ -10,7 +10,7 @@ pub view GameItemSelectionPanel {
                 let event = OnMakeIcon.emit([item]);
 
                 grid_item_aspect_ratio = event.aspect_ratio;
-                grid_items.push(GameItemView { item });
+                grid_items.push(GameItemView { category, item });
             }
 
             grids.push(Grid {

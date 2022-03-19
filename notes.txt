@@ -1,1 +1,2 @@
 - We often have the case where a game object wants to render itself, sometimes in different ways (e.g icon vs full model in game)
+- Bad idea to increment a random number instead of generating a new one, especially when the values are supposed to be unique

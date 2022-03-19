@@ -4,9 +4,10 @@ async function main() {
     let env = makeWasmEnv();
     let instance = await initializeWasm(fetch('./module.wasm'), env);
     let update = () => {
-        // console.time('frame');
+        let now = performance.now();
         instance.exports.update_client();
-        // console.timeEnd('frame');
+        let elapsed = performance.now() - now;
+
         window.requestAnimationFrame(update);
     };
 

@@ -5,19 +5,25 @@ pub class SelectItemRequest {
     @OnUserRequest {
         // check evt.world.valid_game_items.has(self.item);
 
-        if !evt.world.valid_game_items.has(self.item) {
+        let category = evt.world.valid_game_items.get(self.item);
+
+        if !category {
             evt.user.show_error("invalid game item");
             return;
         }
 
         if self.count >= 0 && self.count <= self.item.max_duplicate_count {
+            let list = evt.user.selected_game_items.get(category);
+
             if self.count > 0 {
-                evt.user.selected_game_items.push(self.item);
+                list.push_unique(self.item);
             } else {
-                evt.user.selected_game_items.remove(self.item);
+                list.remove(self.item);
             }
 
-            
+            if list.len() > category.required_selected_item_count {
+                list.shift();
+            }
         }
     }
 }

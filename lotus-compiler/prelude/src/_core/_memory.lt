@@ -50,7 +50,7 @@ pub fn set_pointer_version_seed(seed: int) {
 fn get_random_version() -> int {
     SEED = (1103515245 * SEED + 12345).__mod_u(0x7fffffff);
 
-    SEED & 0x3fffffff
+    (SEED & 0x3fffffff) << 2
 }
 
 pub fn init_memory() {
@@ -73,7 +73,7 @@ sys fn alloc_memory(block_size: int) -> ptr {
         let block_ptr = (wasm_memory_grow(rounded_block_size / WASM_PAGE_SIZE) * WASM_PAGE_BYTE_SIZE / MEMORY_CELL_BYTE_SIZE) as ptr;
 
         block_ptr[0] = rounded_block_size;
-        block_ptr[1] = set_pointer_state(get_random_version() << 2, PointerState::Allocated);
+        block_ptr[1] = set_pointer_state(get_random_version(), PointerState::Allocated);
 
         MEMORY[BIG_BLOCKS_METADATA_START + BIG_BLOCK_COUNT] = block_ptr as int;
         BIG_BLOCK_COUNT += 1;
@@ -117,13 +117,8 @@ sys fn alloc_memory(block_size: int) -> ptr {
             page_ptr[0] = offset;
 
             pointer = page_ptr[VIRTUAL_PAGE_METADATA_SIZE + offset] as ptr;
-
-            if (pointer[0] == 0) {
-                // If the pointer is allocated for the first time, assign a random version to it
-                pointer[0] = get_random_version() << 2;
-            }
-
-            pointer[0] = set_pointer_state(pointer[0] + 4, PointerState::Allocated);
+            
+            pointer[0] = set_pointer_state(get_random_version(), PointerState::Allocated);
 
             return pointer.add(1);
         }

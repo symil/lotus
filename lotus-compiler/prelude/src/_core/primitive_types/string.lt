@@ -130,17 +130,19 @@ export type(i32) string {
     }
 
     pad_start(c: char, target_length: int) -> string {
-        match self.len() >= target_length {
+        let length = self.len();
+        
+        match length >= target_length {
             true => self,
             false => {
                 let result = string::__create(target_length);
-                let start = target_length - self.len();
+                let start = target_length - length;
 
                 for i in 0..start {
                     result.__set_char(i, c);
                 }
 
-                self._content().copy_to(result._content().add(start), self.len());
+                self._content().copy_to(result._content().add(start), length);
 
                 result
             }

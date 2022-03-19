@@ -34,7 +34,7 @@ export view QuickGameWindow {
             self.add_child(modal);
         }
         
-        self.add_child(Tooltip);
+        // self.add_child(Tooltip);
         self.background_color(Color::white());
         
         // self.add_child(TestImage.set_rect(Rect::new(250, 500, 300, 300)));

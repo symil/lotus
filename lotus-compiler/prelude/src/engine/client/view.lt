@@ -68,6 +68,9 @@ export class View {
     }
 
     add_child(view: View) {
+        if view == self {
+            @log("wtf");
+        }
         check view != self;
 
         view._parent = self;
@@ -347,7 +350,7 @@ export class View {
 
     // GENERATION STOP
 
-    dyn __to_debug_string_dyn(set: Set<Pointer<int>>) -> string{
+    dyn __to_debug_string_dyn(set: Set<int>) -> string{
         "<VIEW>"
     }
 }
