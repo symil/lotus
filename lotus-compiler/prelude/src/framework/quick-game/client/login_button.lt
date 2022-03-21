@@ -1,7 +1,11 @@
-pub class LoginButton extends Button {
-    self.text = "Log in"
-    self.on_click = send_login_request
-    self.is_disabled = is_login_button_disabled
+pub view LoginButton {
+    @OnRender {
+        self.add_child(Button {
+            text: "Log int",
+            disabled: is_login_button_disabled(evt.client),
+            on_click: send_login_request,
+        });
+    }
 }
 
 pub fn send_login_request(client: Client) {
