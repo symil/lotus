@@ -372,11 +372,12 @@ export class Client {
                         if hovered_view {
                             self._set_pressed_view(hovered_view);
 
+                            let will_be_focused = hovered_view;
                             let event = OnMouseDown { ..client_event, ..mouse_event, hovered_view };
-                            event.emit([hovered_view]);
+                            hovered_view.emit_event(event);
 
-                            if event.focus {
-                                hovered_view.focus();
+                            if event.will_be_focused {
+                                event.will_be_focused.focus();
                             }
                         }
                     } else if mouse_event.action == MouseAction::Move {
@@ -384,25 +385,25 @@ export class Client {
                             let dx = mouse_event.x - self._drag_start_x;
                             let dy = mouse_event.y - self._drag_start_y;
 
-                            OnDragProgress { ..client_event, ..mouse_event, hovered_view, dx, dy }.emit([dragged_view]);
+                            dragged_view.emit_event(OnDragProgress { ..client_event, ..mouse_event, hovered_view, dx, dy });
                         } else if pressed_view {
                             self._set_dragged_view(pressed_view);
                             self._drag_start_x = self._cursor_x;
                             self._drag_start_y = self._cursor_y;
 
-                            OnDragStart { ..client_event, ..mouse_event, hovered_view }.emit([pressed_view]);
+                            pressed_view.emit_event(OnDragStart { ..client_event, ..mouse_event, hovered_view });
                         }
                     } else if mouse_event.action == MouseAction::Up {
                         if dragged_view {
-                            OnDragEnd { ..client_event, ..mouse_event, hovered_view }.emit([dragged_view]);
+                            dragged_view.emit_event(OnDragEnd { ..client_event, ..mouse_event, hovered_view });
                         }
 
                         if pressed_view && pressed_view.rect().contains(mouse_event.x, mouse_event.y) {
-                            OnClick { ..client_event, ..mouse_event, hovered_view }.emit([pressed_view]);
+                            pressed_view.emit_event(OnClick { ..client_event, ..mouse_event, hovered_view })
                         }
 
                         if hovered_view {
-                            OnMouseUp { ..client_event, ..mouse_event, hovered_view }.emit([hovered_view]);
+                            hovered_view.emit_event(OnMouseUp { ..client_event, ..mouse_event, hovered_view });
                         }
 
                         self._set_dragged_view(none);
@@ -422,11 +423,7 @@ export class Client {
                 RawWheelEvent(wheel_event) => {
                     let view = self._detect_view_at(wheel_event.x, wheel_event.y);
 
-                    if view {
-                        let scrolled_views = view.get_ancestors().filter(view => !view.is_disabled());
-
-                        OnScroll { ..client_event, ..wheel_event }.emit(scrolled_views)
-                    }
+                    view.emit_event(OnScroll { ..client_event, ..wheel_event });
                 }
             }
         }

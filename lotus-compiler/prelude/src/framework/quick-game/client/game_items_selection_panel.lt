@@ -8,9 +8,10 @@ pub view GameItemSelectionPanel {
 
             for item in category.items {
                 let event = OnMakeIcon.emit([item]);
+                let icon = event.icon;
 
                 grid_item_aspect_ratio = event.aspect_ratio;
-                grid_items.push(GameItemView { category, item });
+                grid_items.push(GameItemSelectionIcon { icon, category, item });
             }
 
             grids.push(Grid {

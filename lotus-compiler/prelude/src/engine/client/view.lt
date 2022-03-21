@@ -35,6 +35,10 @@ export class View {
         self._children
     }
 
+    emit_event(event: Event) {
+        event.emit(self.get_enabled_stack());
+    }
+
     enabled_or_none() -> View {
         if !self || self.is_disabled() {
             none
@@ -72,6 +76,14 @@ export class View {
         result
     }
 
+    get_enabled_stack() -> View[] {
+        if !self {
+            return [];
+        }
+
+        self.get_ancestors().filter(view => !view.is_disabled())
+    }
+
     _traverse<T>(acc: T, callback: fn(T, View)) {
         callback(acc, self);
 
@@ -80,7 +92,7 @@ export class View {
         }
     }
 
-    add_child(view: View) {
+    add_child(view: View) -> Self {
         check view != self;
 
         if !view._rect {
@@ -89,6 +101,7 @@ export class View {
 
         view._parent = self;
         self._children.push(view);
+        self
     }
 
     is_ancestor_of(view: View) -> bool {

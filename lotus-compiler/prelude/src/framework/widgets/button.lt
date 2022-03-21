@@ -30,7 +30,7 @@ export view Button {
     }
 
     @OnMouseDown {
-        evt.focus = false;
+        evt.will_be_focused = none;
     }
 
     @OnClick {
