@@ -6,8 +6,8 @@ export view Button {
     background_color : Color = DEFAULT_BACKGROUND_COLOR,
     border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
     border_radius: DisplaySize = DEFAULT_BORDER_RADIUS,
+    disabled: bool = false,
     on_click: fn(Client) = none,
-    is_disabled: fn(Client)(bool) = none
 
     @OnRender {
         self.add_to_focus_chain()
@@ -26,7 +26,7 @@ export view Button {
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
             .focus_background_color(Color::orange())
-            .set_disabled(self.is_disabled && (self.is_disabled)(evt.client))
+            .set_disabled(self.disabled)
     }
 
     @OnMouseDown {

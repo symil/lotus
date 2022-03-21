@@ -1,4 +1,4 @@
-true
+false
 Test {
   list: [
     A {
@@ -38,7 +38,7 @@ Test {
   other: none,
 }
 ---
-true
+false
 Test {
   list: [
     A {

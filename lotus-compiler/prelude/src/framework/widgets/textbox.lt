@@ -9,7 +9,7 @@ pub class TextBoxData {
 }
 
 pub view TextBox {
-    get_data: fn(#LOCAL_DATA_TYPE)(TextBoxData),
+    local_data: TextBoxData = none,
     placeholder: string = "",
     text_color: Color = Color::black(),
     text_font: Font = DEFAULT_FONT,
@@ -19,7 +19,7 @@ pub view TextBox {
     on_enter: fn(Client) = none,
 
     _get_data() -> TextBoxData {
-        (self.get_data)(self.client().local_data())
+        self.local_data.or_else(() => self.client().get_view_local_data(self))
     }
 
     @OnRender {

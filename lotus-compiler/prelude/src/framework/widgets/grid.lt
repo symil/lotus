@@ -12,6 +12,7 @@ export enum GridDirection {
 }
 
 export view Grid {
+    local_data: GridLocalData = none,
     items: View[] = [],
     item_count_per_row: int = none,
     item_count_per_column: int = none,
@@ -37,7 +38,7 @@ export view Grid {
     border_radius: DisplaySize = none
 
     _get_local_data() -> GridLocalData {
-        self.client().get_view_local_data(self)
+        self.local_data.or_else(() => self.client().get_view_local_data(self))
     }
 
     @OnRender {

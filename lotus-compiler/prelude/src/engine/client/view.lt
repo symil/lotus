@@ -10,6 +10,19 @@ export class View {
     _children: View[] = [],
     _layouts: Layout[] = []
 
+    get_approximate_hash() -> int {
+        let rect = self._rect;
+        let graphics = self._graphics;
+
+        let hash = self.__get_type_id()
+            .hash_from(rect.x.as_int())
+            .hash_from(rect.y.as_int())
+            .hash_from(rect.width.as_int())
+            .hash_from(rect.height.as_int())
+            
+        hash
+    }
+
     client() -> Client? {
         self._client
     }
@@ -68,10 +81,11 @@ export class View {
     }
 
     add_child(view: View) {
-        if view == self {
-            @log("wtf");
-        }
         check view != self;
+
+        if !view._rect {
+            view._rect = self._rect.clone();
+        }
 
         view._parent = self;
         self._children.push(view);
@@ -115,7 +129,7 @@ export class View {
     }
 
     is_focused() -> bool {
-        !self.is_disabled() && self._client.get_focused_view() == self
+        !self.is_disabled() && self._client.focused_view() == self
     }
 
     focus() -> Self {

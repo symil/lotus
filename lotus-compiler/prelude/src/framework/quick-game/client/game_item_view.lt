@@ -30,7 +30,7 @@ pub view GameItemView {
 
     @OnClick {
         check evt.button == MouseButton::Left;
-        
+
         let is_selected = self._is_selected(evt.user);
         let count = match is_selected {
             true => 0,

@@ -184,7 +184,7 @@ function isBlank(token) {
 function setCanvasPropertiesFromToken(ctx, token) {
     let { font, size, bold, italic, color } = token;
 
-    ctx.font = `${bold ? 'bold ' : ''}${italic ? 'italic ' : ''}${Math.round(size)}px "${font}`;
+    ctx.font = `${bold ? 'bold ' : ''}${italic ? 'italic ' : ''}${Math.round(size)}px "${font}"`;
     ctx.fillStyle = color;
 }
 

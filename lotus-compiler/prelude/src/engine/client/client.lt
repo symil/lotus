@@ -9,21 +9,18 @@ export class Client {
     _user: #USER_TYPE = #USER_TYPE::__default(),
     _local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
-    _local_object_to_remote_addr: Map<Object, int> = none,
-    _websocket_id: int = none,
-    _draw_primitives: DrawPrimitive[] = [],
+
+    // Network stuff
     _network_events: RawNetworkEvent[] = [],
-    _window_events: Event[] = [],
+    _websocket_id: int = none,
     _is_connected: bool = false,
-    _frozen: bool = false,
+    _local_object_to_remote_addr: Map<Object, int> = none,
     _request_id_counter: Counter = Counter::new(),
-    _request_id_to_info: Map<int, RequestInfo> = Map<int, RequestInfo>::new(),
-    _start_time: int = @get_current_time(),
-    _hovered_view: View? = none,
-    _focus_chain: View[] = [],
-    _focused_index: int? = none,
-    _focused_view: View? = none,
-    _all_views: View[] = [],
+    _request_id_to_info: Map<int, RequestInfo> = Map::new(),
+
+    // Rendering stuff
+    _draw_primitives: DrawPrimitive[] = [],
+    _window_events: Event[] = [],
     _real_width: float = none,
     _real_height: float = none,
     _virtual_width: float = VIRTUAL_WIDTH,
@@ -31,12 +28,26 @@ export class Client {
     _virtual_to_real_ratio: float = none,
     _cursor_x: float = 0,
     _cursor_y: float = 0,
+    _all_views: View[] = [],
+
+    // General stuff
+    _frozen: bool = false,
+    _start_time: int = @get_current_time(),
     _local_storage_key_prefix: string = "",
+    _view_data_store: ViewDataStore = ViewDataStore,
+
+    // Interaction stuff
+    _hash_to_view: Map<int, View> = Map::new(),
+    _focused_view_hash: int = none,
+    _pressed_view_hash: int = none,
+    _dragged_view_hash: int = none,
+    _focus_chain: View[] = [],
+    _hovered_view: View = none,
+    _focused_view: View = none,
     _pressed_view: View = none,
     _dragged_view: View = none,
     _drag_start_x: float = 0,
     _drag_start_y: float = 0,
-    _view_data_store: ViewDataStore = ViewDataStore,
 
     static start() {
         if !CLIENT {
@@ -180,19 +191,80 @@ export class Client {
         root_view.set_rect(Rect::from_size(self._virtual_width, self._virtual_height));
 
         self._all_views.clear();
-        self._focus_chain.clear();
-        // TODO: clear focused & hovered view?
+        self._reset_interactive_views();
         self._render_view(root_view);
-        self._hovered_view = self._detect_view_at(self._cursor_x, self._cursor_y);
+        self._detect_hovered_view();
+        self._infer_interactive_views();
         self._post_render();
-        self._hovered_view = self._detect_view_at(self._cursor_x, self._cursor_y);
-        self._focused_view = self._focus_chain.get(self._focused_index);
-
-        if !self._focused_view {
-            self._focused_index = none;
-        }
+        self._detect_hovered_view();
 
         // @log(`wasm: ${COUNT}`);
+    }
+
+    _reset_interactive_views() {
+        self._focus_chain.clear();
+        self._hovered_view = none;
+        self._focused_view = none;
+        self._pressed_view = none;
+        self._dragged_view = none;
+    }
+
+    _detect_hovered_view() {
+        self._hovered_view = self._detect_view_at(self._cursor_x, self._cursor_y);
+    }
+
+    _infer_interactive_views() {
+        for view in self._all_views {
+            let hash = view.get_approximate_hash();
+
+            if hash == self._focused_view_hash {
+                self._focused_view = view;
+            }
+
+            if hash == self._pressed_view_hash {
+                self._pressed_view = view;
+            }
+
+            if hash == self._dragged_view_hash {
+                self._dragged_view = view;
+            }
+        }
+
+        if !self._focused_view || self._focused_view.is_disabled() {
+            self._focused_view_hash = none;
+            self._focused_view = none;
+        }
+
+        if !self._pressed_view || self._pressed_view.is_disabled() {
+            self._pressed_view_hash = none;
+            self._pressed_view = none;
+        }
+
+        if !self._dragged_view || self._dragged_view.is_disabled() {
+            self._dragged_view_hash = none;
+            self._dragged_view = none;
+        }
+    }
+
+    _set_focused_view(view: View) {
+        let hash = view && view.get_approximate_hash();
+
+        self._focused_view_hash = hash;
+        self._focused_view = view;
+    }
+
+    _set_pressed_view(view: View) {
+        let hash = view && view.get_approximate_hash();
+
+        self._pressed_view_hash = hash;
+        self._pressed_view = view;
+    }
+
+    _set_dragged_view(view: View) {
+        let hash = view && view.get_approximate_hash();
+
+        self._dragged_view_hash = hash;
+        self._dragged_view = view;
     }
 
     _render_view(view: View) {
@@ -298,7 +370,7 @@ export class Client {
                         }
 
                         if hovered_view {
-                            self._pressed_view = hovered_view;
+                            self._set_pressed_view(hovered_view);
 
                             let event = OnMouseDown { ..client_event, ..mouse_event, hovered_view };
                             event.emit([hovered_view]);
@@ -314,7 +386,7 @@ export class Client {
 
                             OnDragProgress { ..client_event, ..mouse_event, hovered_view, dx, dy }.emit([dragged_view]);
                         } else if pressed_view {
-                            self._dragged_view = pressed_view;
+                            self._set_dragged_view(pressed_view);
                             self._drag_start_x = self._cursor_x;
                             self._drag_start_y = self._cursor_y;
 
@@ -333,8 +405,8 @@ export class Client {
                             OnMouseUp { ..client_event, ..mouse_event, hovered_view }.emit([hovered_view]);
                         }
 
-                        self._dragged_view = none;
-                        self._pressed_view = none;
+                        self._set_dragged_view(none);
+                        self._set_pressed_view(none);
                     }
 
                     self._cursor_x = mouse_event.x;
@@ -408,28 +480,25 @@ export class Client {
             return;
         }
 
-        if (view) {
-            self._focused_index = self._focus_chain.index_of(view);
+        self._set_focused_view(view);
 
+        if (view) {
             OnFocus {
                 client: self,
                 user: self._user,
                 local_data: self._local_data,
                 view
             }.emit([view]);
-        } else {
-            self._focused_index = none;
         }
-
-        self._focused_view = view;
     }
 
-    get_focused_view() -> View? {
+    focused_view() -> View? {
         self._focused_view
     }
 
     _focus_next_or_prev(d: int) {
-        let start_index = self._focused_index || (d * -1);
+        let current_index = self._focus_chain.index_of(self._focused_view);
+        let start_index = current_index || (d * -1);
         let chain_length = self._focus_chain.len();
 
         for i in 0..chain_length {
