@@ -18,9 +18,10 @@ pub view GameItemSelectionIcon {
             .border_color(border_color)
             .border_width(.04h)
             .border_radius(0.1m)
-            .hover_cursor(Cursor::Pointer)
+            .cursor(Cursor::Pointer)
 
         self.add_child(self.icon)
+            .z_index(1)
         
         // TODO: display selected count
     }

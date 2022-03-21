@@ -41,7 +41,7 @@ export class Graphics {
     text_cursor_index: int = none,
     shrink_to_fit_text: bool = false,
     detectable: bool = true,
-    cursor: Cursor = Cursor::Default,
+    cursor: Cursor = none,
 
     static empty() -> Self {
         let graphics = Self::__create();

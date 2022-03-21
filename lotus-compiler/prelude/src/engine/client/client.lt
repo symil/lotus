@@ -318,7 +318,9 @@ export class Client {
             let is_disabled = view.is_disabled();
 
             if !is_disabled {
-                if self._hovered_view == view {
+                let is_hovered = view._graphics.detectable && view._rect.contains(self._cursor_x, self._cursor_y);
+
+                if is_hovered {
                     view._graphics.set(view._hovered_graphics);
                 }
 
@@ -326,7 +328,7 @@ export class Client {
                     view._graphics.set(view._focused_graphics);
                 }
 
-                if self._hovered_view == view {
+                if is_hovered && view._graphics.cursor {
                     cursor = view._graphics.cursor;
                 }
             } else {
