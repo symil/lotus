@@ -2,7 +2,7 @@ export class QuickGameWorld {
     users: Map<string, QuickGameUser> = Map::new(),
     matchmaking_queue: QuickGameUser[] = [],
     game_items: GameItemCategory[] = [],
-    valid_game_items: Map<GameItem, GameItemCategory> = Map::new(),
+    valid_game_items: Map<Object, GameItemCategory> = Map::new(),
 
     @OnWorldOpen {
         for category in self.game_items {

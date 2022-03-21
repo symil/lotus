@@ -1,6 +1,6 @@
 export class GameItemCategory {
     name: string = "",
     description: string = "",
-    items: GameItem[] = [],
+    items: Object[] = [],
     required_selected_item_count: int = 1,
 }

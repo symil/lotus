@@ -1,5 +1,0 @@
-export class GameItem {
-    name: string = "",
-    description: string = "",
-    max_duplicate_count: int = 1,
-}
