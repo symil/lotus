@@ -1,16 +1,17 @@
-export class QuickGameUser {
+export class BlazeUser {
     name: string = "",
-    messages: QuickGameMessage[] = [],
+    messages: BlazeMessage[] = [],
+    is_connected: bool = false,
     is_searching_for_game: bool = false,
     selected_game_items: Map<GameItemCategory, Object[]> = Map::new(),
-    game: bool, // TODO
+    game: #GAME_INSTANCE_TYPE = none,
 
     is_logged() -> bool {
         !self.name.is_empty()
     }
 
     show_error(message: string) {
-        self.messages.push(QuickGameMessage {
+        self.messages.push(BlazeMessage {
             content: message,
             kind: MessageKind::Error
         });

@@ -3,7 +3,7 @@ pub view GameItemSelectionIcon {
     category: GameItemCategory,
     item: Object,
 
-    _is_selected(user: QuickGameUser) -> bool {
+    _is_selected(user: BlazeUser) -> bool {
         user.selected_game_items.get(self.category).includes(self.item)
     }
 
@@ -39,10 +39,6 @@ pub view GameItemSelectionIcon {
             item: self.item,
             count,
         });
-    }
-
-    @OnMouseDown {
-        evt.will_be_focused = none;
     }
 
     @OnMakeTooltip {

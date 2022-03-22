@@ -1,0 +1,71 @@
+export class BlazeWorld {
+    users: Map<string, BlazeUser> = Map::new(),
+    matchmaking_queue: BlazeUser[] = [],
+    game_items: GameItemCategory[] = [],
+    valid_game_items: Map<Object, GameItemCategory> = Map::new(),
+    games: BlazeGameInstance[],
+    last_update_time: float = 0,
+
+    @OnWorldOpen {
+        for category in self.game_items {
+            for item in category.items {
+                self.valid_game_items.set(item, category);
+            }
+        }
+
+        self.last_update_time = evt.server.get_current_time();
+    }
+
+    @OnWorldUpdate {
+        let current_time = evt.server.get_current_time();
+        let elapsed = current_time - self.last_update_time;
+
+        while self.matchmaking_queue.len() > 2 {
+            let players = [self.matchmaking_queue.shift(), self.matchmaking_queue.shift()];
+            let game = BlazeGameInstance {
+                players
+            };
+
+            OnGameStart { game, players }.emit([game]);
+            self.games.push(game);
+
+            for player in players {
+                player.game = game;
+                player.is_searching_for_game = false;
+            }
+        }
+
+        for game in self.games {
+            OnGameUpdate { game, elapsed }.emit([game]);
+        }
+
+        self.games = self.games.filter(game => !game.is_finished);
+        self.last_update_time = current_time;
+    }
+
+    @OnUserConnect {
+        for category in self.game_items {
+            evt.user.selected_game_items.set(category, []);
+        }
+
+        evt.user.is_connected = true;
+    }
+
+    @OnUserDisconnect {
+        evt.user.is_connected = false;
+    }
+
+    @OnUserRequest {
+        evt.emit([evt.request])
+    }
+
+    add_to_matchmaking(user: BlazeUser) {
+        user.is_searching_for_game = true;
+        self.matchmaking_queue.push_unique(user);
+    }
+
+    remove_from_matchmaking(user: BlazeUser) {
+        user.is_searching_for_game = false;
+        self.matchmaking_queue.remove(user);
+    }
+}

@@ -93,6 +93,7 @@ impl Type {
     pub fn is_undefined(&self) -> bool {
         match self.content() {
             TypeContent::Undefined => true,
+            TypeContent::Any => true,
             _ => false
         }
     }
@@ -784,7 +785,7 @@ impl Type {
     pub fn to_string(&self) -> String {
         match self.content() {
             TypeContent::Undefined => format!("{{undefined}}"),
-            TypeContent::Any => format!("any"),
+            TypeContent::Any => format!("{{any}}"),
             TypeContent::This(_) => format!("{}", SELF_TYPE_NAME),
             TypeContent::Actual(info) => {
                 match info.parameters.is_empty() {

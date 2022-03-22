@@ -1,11 +1,11 @@
 export class LogoutRequest {
     @OnUserRequest {
         if evt.user.name {
-            evt.world.users.delete(evt.user.name);
             evt.world.remove_from_matchmaking(evt.user);
-            evt.user.name = none;
+            evt.user.is_connected = false;
+            evt.user = #USER_TYPE::__default();
         } else {
-            evt.user.messages.push(QuickGameMessage {
+            evt.user.messages.push(BlazeMessage {
                 kind: MessageKind::Error,
                 content: `Cannot log out because you are not logged in.`
             });

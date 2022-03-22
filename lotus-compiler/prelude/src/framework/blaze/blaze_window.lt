@@ -1,4 +1,4 @@
-export view QuickGameWindow {
+export view BlazeWindow {
     background_color : Color = Color::white(),
     title: string = "Game",
     title_color : Color = Color::black(),

@@ -50,6 +50,10 @@ pub view TextBox {
             .focus_text_cursor_index(cursor_index)
     }
 
+    @OnMouseDown {
+        evt.will_be_focused = self;
+    }
+
     @OnKeyDown {
         check self.is_focused();
 

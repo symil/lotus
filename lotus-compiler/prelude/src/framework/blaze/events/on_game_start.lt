@@ -1,0 +1,4 @@
+export event OnGameStart {
+    game: #GAME_INSTANCE_TYPE,
+    players: #USER_TYPE[]
+}

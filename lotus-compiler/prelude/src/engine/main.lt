@@ -2,3 +2,4 @@
 #WORLD_TYPE = Object
 #WINDOW_TYPE = View
 #LOCAL_DATA_TYPE = Object
+#GAME_INSTANCE_TYPE = Object

@@ -4,10 +4,10 @@ pub class Server {
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
     _world: #WORLD_TYPE = none,
     _websocket_server_id: int = none,
-    _user_to_metadata: Map<#USER_TYPE, UserMetadata> = Map<#USER_TYPE, UserMetadata>::new(),
-    _websocket_id_to_user: Map<int, #USER_TYPE> = Map<int, #USER_TYPE>::new(),
+    _user_to_metadata: Map<#USER_TYPE, UserMetadata> = Map::new(),
+    _websocket_id_to_user: Map<int, #USER_TYPE> = Map::new(),
     _websocket_id_counter: Counter = Counter,
-    _request_to_request_id: Map<Object, int> = Map<Object, int>::new(),
+    _request_to_request_id: Map<Object, int> = Map::new(),
     _start_time: int = @get_current_time(),
 
     static start() {
@@ -60,7 +60,7 @@ pub class Server {
         self._buffer.reset();
         self._buffer.size = wasm_poll_network_events(self._buffer.data, self._buffer.capacity);
 
-        let events_to_emit : Event[] = [];
+        let events_to_emit : UserEvent[] = [];
 
         while !self._buffer.is_finished() {
             let websocket_id = self._buffer.read();
@@ -103,7 +103,19 @@ pub class Server {
         }
 
         for event in events_to_emit {
+            let initial_user = event.user;
+
             @emit(event, [self._world]);
+
+            let new_user = event.user;
+
+            if initial_user != new_user {
+                let metadata = self._user_to_metadata.get(initial_user);
+
+                self._user_to_metadata.set(new_user, metadata);
+                self._user_to_metadata.delete(initial_user);
+                self._websocket_id_to_user.set(metadata.websocket_id, new_user);
+            }
 
             if event is OnUserRequest(on_user_request) {
                 let request_id = self._request_to_request_id.delete(on_user_request.request);
