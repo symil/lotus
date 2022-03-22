@@ -1,0 +1,7 @@
+export class BlazeLocalData {
+    ui: BlazeUiLocalData
+}
+
+export class BlazeUiLocalData {
+    username: TextBoxData,
+}

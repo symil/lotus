@@ -29,10 +29,6 @@ export view Button {
             .set_disabled(self.disabled)
     }
 
-    @OnMouseDown {
-        evt.will_be_focused = none;
-    }
-
     @OnClick {
         if self.on_click {
             (self.on_click)(evt.client)

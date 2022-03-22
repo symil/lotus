@@ -367,21 +367,18 @@ export class Client {
                     let pressed_view = self._pressed_view.enabled_or_none();
 
                     if mouse_event.action == MouseAction::Down {
-                        if self._focused_view && hovered_view != self._focused_view {
-                            self.focus(none);
-                        }
+                        let will_be_focused : View = none;
 
                         if hovered_view {
                             self._set_pressed_view(hovered_view);
 
-                            let will_be_focused = hovered_view;
                             let event = OnMouseDown { ..client_event, ..mouse_event, hovered_view };
                             hovered_view.emit_event(event);
 
-                            if event.will_be_focused {
-                                event.will_be_focused.focus();
-                            }
+                            will_be_focused = event.will_be_focused;
                         }
+
+                        self.focus(will_be_focused);
                     } else if mouse_event.action == MouseAction::Move {
                         if dragged_view {
                             let dx = mouse_event.x - self._drag_start_x;

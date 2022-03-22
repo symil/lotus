@@ -98,12 +98,6 @@ impl ParsedTypeDeclaration {
             dynamic_methods: vec![],
             event_callbacks: HashMap::new(),
         };
-
-        for main_type in MainType::into_enum_iter() {
-            if self.name.as_str() == main_type.get_name() {
-                type_unwrapped.visibility = Visibility::Export;
-            }
-        }
         
         if context.types.get_by_identifier(&self.name).is_some() {
             context.errors.generic(&self.name, format!("duplicate type declaration: `{}`", &self.name));
@@ -486,7 +480,7 @@ impl ParsedTypeDeclaration {
                 }
 
                 for field in self.get_fields() {
-                    if field.ty.is_none() {
+                    if field.ty.as_ref().and_then(|ty| ty.ty.as_ref()).is_none() {
                         continue;
                     }
 

@@ -1,0 +1,29 @@
+export class LoginRequest {
+    username: string,
+
+    @OnUserRequest {
+        check !self.username.is_empty();
+
+        if evt.user.name {
+            evt.user.show_error(`You are already logged as "${evt.user.name}".`);
+        } else {
+            let user = evt.world.users.get(self.username);
+
+            if user {
+                if user.is_connected {
+                    evt.user.show_error(`Name "${self.username}"" is already used.`);
+                    return;
+                }
+
+                evt.user = user;
+            } else {
+                evt.user.name = self.username;
+                evt.world.users.set(self.username, evt.user);
+            }
+
+            evt.user.is_connected = true;
+
+            evt.mark_as_success();
+        }
+    }
+}

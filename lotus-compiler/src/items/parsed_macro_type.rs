@@ -14,7 +14,8 @@ pub enum MacroTypeToken {
     WorldType = "WORLD_TYPE",
     UserType = "USER_TYPE",
     WindowType = "WINDOW_TYPE",
-    LocalDataType = "LOCAL_DATA_TYPE"
+    LocalDataType = "LOCAL_DATA_TYPE",
+    GameInstanceType = "GAME_INSTANCE_TYPE",
 }
 
 impl ParsedMacroType {
@@ -29,6 +30,7 @@ impl ParsedMacroType {
             MacroTypeToken::UserType => Some(context.get_main_type(MainType::User)),
             MacroTypeToken::WindowType => Some(context.get_main_type(MainType::Window)),
             MacroTypeToken::LocalDataType => Some(context.get_main_type(MainType::LocalData)),
+            MacroTypeToken::GameInstanceType => Some(context.get_main_type(MainType::GameInstance)),
         }
     }
 

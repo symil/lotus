@@ -3,7 +3,7 @@ use parsable::{parsable, ItemLocation};
 use crate::program::ProgramContext;
 use super::{ParsedVarDeclarationNames, ParsedOpeningSquareBracket, Identifier, ParsedCommaToken, ParsedClosingSquareBracket, unwrap_item};
 
-#[parsable]
+#[parsable(name = "identifier")]
 pub enum ParsedForIterator {
     Item(ParsedVarDeclarationNames),
     IndexAndItem(ParsedIndexAndItem)

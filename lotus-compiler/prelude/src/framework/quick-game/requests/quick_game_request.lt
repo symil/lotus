@@ -1,5 +1,0 @@
-export class QuickGameRequest {
-    dyn process(world: QuickGameWorld, server: Server) {
-        
-    }
-}

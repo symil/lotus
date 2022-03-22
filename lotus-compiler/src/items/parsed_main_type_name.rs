@@ -7,6 +7,7 @@ pub enum ParsedMainTypeName {
     World = "WORLD_TYPE",
     Window = "WINDOW_TYPE",
     LocalData = "LOCAL_DATA_TYPE",
+    GameInstance = "GAME_INSTANCE_TYPE"
 }
 
 impl ParsedMainTypeName {
@@ -16,6 +17,7 @@ impl ParsedMainTypeName {
             ParsedMainTypeName::World => MainType::World,
             ParsedMainTypeName::Window => MainType::Window,
             ParsedMainTypeName::LocalData => MainType::LocalData,
+            ParsedMainTypeName::GameInstance => MainType::GameInstance,
         }
     }
 }

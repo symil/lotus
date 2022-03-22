@@ -1,5 +1,5 @@
 export class AcknowledgeRequest {
-    message: QuickGameMessage,
+    message: BlazeMessage,
 
     @OnUserRequest {
         evt.user.messages.remove(self.message);

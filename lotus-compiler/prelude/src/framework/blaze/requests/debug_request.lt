@@ -2,7 +2,7 @@ pub class DebugRequest {
     message: string = "",
 
     @OnUserRequest {
-        evt.user.messages.push(QuickGameMessage {
+        evt.user.messages.push(BlazeMessage {
             kind: MessageKind::Info,
             content: self.message,
         })

@@ -1,0 +1,4 @@
+export event OnGameUpdate {
+    game: #GAME_INSTANCE_TYPE,
+    elapsed: float,
+}

@@ -1,4 +1,5 @@
-#USER_TYPE = QuickGameUser
-#WORLD_TYPE = QuickGameWorld
-#WINDOW_TYPE = QuickGameWindow
-#LOCAL_DATA_TYPE = QuickGameLocalData
+#USER_TYPE = BlazeUser
+#WORLD_TYPE = BlazeWorld
+#WINDOW_TYPE = BlazeWindow
+#LOCAL_DATA_TYPE = BlazeLocalData
+#GAME_INSTANCE_TYPE = BlazeGameInstance
