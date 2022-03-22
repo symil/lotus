@@ -93,6 +93,7 @@ export class Client {
 
     _start() {
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
+
         self._websocket_id = wasm_create_websocket();
 
         let window = #WINDOW_TYPE::__default();
@@ -432,7 +433,7 @@ export class Client {
         self.send_request_with_callback(request, none);
     }
 
-    send_request_with_callback(request: Object, callback: RequestCallback = none) {
+    send_request_with_callback(request: Object, callback: RequestCallback) {
         let request_id = self._request_id_counter.next();
 
         self._buffer.reset();
