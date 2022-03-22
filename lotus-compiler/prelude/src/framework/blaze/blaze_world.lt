@@ -3,7 +3,7 @@ export class BlazeWorld {
     matchmaking_queue: BlazeUser[] = [],
     game_items: GameItemCategory[] = [],
     valid_game_items: Map<Object, GameItemCategory> = Map::new(),
-    games: BlazeGameInstance[],
+    games: #GAME_INSTANCE_TYPE[],
     last_update_time: float = 0,
 
     @OnWorldOpen {
@@ -20,9 +20,9 @@ export class BlazeWorld {
         let current_time = evt.server.get_current_time();
         let elapsed = current_time - self.last_update_time;
 
-        while self.matchmaking_queue.len() > 2 {
+        while self.matchmaking_queue.len() >= 2 {
             let players = [self.matchmaking_queue.shift(), self.matchmaking_queue.shift()];
-            let game = BlazeGameInstance {
+            let game = #GAME_INSTANCE_TYPE {
                 players
             };
 

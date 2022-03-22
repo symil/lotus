@@ -182,6 +182,20 @@ pub class Server {
         @deserialize(self._buffer)
     }
 
+    connect_dummy_user(requests: Object[] = []) -> #USER_TYPE {
+        let server = self;
+        let world = self._world;
+        let user = #USER_TYPE::__default();
+
+        OnUserConnect { server, world, user }.emit([world]);
+
+        for request in requests {
+            OnUserRequest { server, world, user, request }.emit([world]);
+        }
+
+        user
+    }
+
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
         false
     }
