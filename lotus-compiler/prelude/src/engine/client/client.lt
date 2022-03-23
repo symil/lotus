@@ -399,7 +399,7 @@ export class Client {
                         }
 
                         if pressed_view && pressed_view.rect().contains(mouse_event.x, mouse_event.y) {
-                            pressed_view.emit_event(OnClick { ..client_event, ..mouse_event, hovered_view })
+                            pressed_view.emit_event(OnClick { ..client_event, ..mouse_event, hovered_view });
                         }
 
                         if hovered_view {

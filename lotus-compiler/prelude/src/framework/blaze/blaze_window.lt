@@ -5,37 +5,15 @@ export view BlazeWindow {
     text_font: Font = DEFAULT_FONT,
 
     @OnRender {
-        let lobby_screen = LobbyScreen { ..self };
-        let modals = evt.user.messages.map(message => Modal {
-            kind: message.kind,
-            content: message.content,
-            buttons: [ModalButton {
-                content: "Ok",
-                on_click: (client) => client.send_request(AcknowledgeRequest { message })
-            }]
-        });
+        let screen = match !!evt.user.game {
+            true => GameScreen,
+            false => LobbyScreen { ..self },
+        };
 
-        self.layout().push(lobby_screen);
-
-        let modal_rect = self.rect().scale(0.35);
-
-        for message in evt.user.messages {
-            let modal = Modal {
-                kind: message.kind,
-                content: message.content,
-                buttons: [ModalButton {
-                    content: "Ok",
-                    on_click: (client) => client.send_request(AcknowledgeRequest { message })
-                }]
-            };
-
-            modal.set_rect(modal_rect);
-
-            self.add_child(modal);
-        }
-        
-        // self.add_child(Tooltip);
-        self.background_color(Color::white());
+        self.background_color(Color::white())
+            .add_child(screen)
+            .add_child(ModalList)
+            .add_child(Tooltip)
         
         // self.add_child(TestImage.set_rect(Rect::new(250, 500, 300, 300)));
     }

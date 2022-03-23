@@ -2,6 +2,8 @@ const TOOLTIP_MARGIN = 10f;
 
 export view Tooltip {
     @OnRender {
+        self.detectable(false);
+        
         let target = evt.client.hovered_view();
         check target;
 
