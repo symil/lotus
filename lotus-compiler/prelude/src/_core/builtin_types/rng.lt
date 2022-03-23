@@ -53,6 +53,10 @@ export class Rng {
         // TODO: fix this
         DEFAULT_RNG.next((min * 1000).to_int(), (max * 1000).to_int()).to_float() / 1000
     }
+
+    static default() -> Rng {
+        DEFAULT_RNG
+    }
 }
 
 fn rotl(x: int, k: int) -> int {

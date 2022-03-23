@@ -42,7 +42,14 @@ impl ParsedNumberLiteral {
                     } else if number.contains(".") {
                         Number::Float(number.parse().unwrap())
                     } else {
-                        Number::Int(i32::from_str_radix(s, 10).unwrap())
+                        match i32::from_str_radix(s, 10) {
+                            Ok(n) => Number::Int(n),
+                            Err(err) => {
+                                context.errors.generic(self, format!("number too big"));
+                                
+                                Number::Int(0)
+                            },
+                        }
                     }
                 } else {
                     let value : f32 = number.parse().unwrap();

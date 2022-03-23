@@ -120,15 +120,36 @@ export class Array<T> {
     }
 
     reverse() -> Self {
-        for i in 0..(self._length / 2) {
-            let i2 = self._length - i - 1;
-            let tmp = self._body[i];
+        let length = self._length;
+        let result = Self::with_capacity(length);
+        let body = result._body;
+        result._length = length;
 
-            self._body[i] = self._body[i2];
-            self._body[i2] = tmp;
+        for [i, item] in self {
+            body[length - i - 1] = item;
         }
 
-        self
+        result
+    }
+
+    // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+    shuffle(rng: Rng = Rng::default()) -> Self {
+        let length = self._length;
+        let result = self.clone();
+        let body = result._body;
+
+        let current_index = length;
+
+        while current_index > 0 {
+            let random_index = rng.next(0, current_index);
+            current_index -= 1;
+
+            let tmp = body[current_index];
+            body[current_index] = body[random_index];
+            body[random_index] = tmp;
+        }
+
+        result
     }
 
     clear() {
@@ -368,15 +389,16 @@ export class Array<T> {
     }
 
     sort(compare: fn(T, T)(int)) -> Self {
+        let result = self.clone();
         let secondary_keys = @alloc(self._length);
 
         for i in 0..self._length {
             secondary_keys[i] = i;
         }
 
-        quick_sort(self._body, 0, self._length - 1, compare, secondary_keys);
+        quick_sort(result._body, 0, result._length - 1, compare, secondary_keys);
 
-        self
+        result
     }
 
     get_random() -> T {

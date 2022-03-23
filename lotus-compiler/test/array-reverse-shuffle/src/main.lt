@@ -1,0 +1,22 @@
+export fn main() {
+    let a = [1, 2, 3, 4, 5];
+    let b = a.reverse();
+    let c : int[] = [];
+    let d = c.reverse();
+
+    @dbg(a);
+    @dbg(b);
+    @dbg(d);
+
+    @log("---");
+
+    let a = [1, 2, 3, 4, 5];
+    let rng = Rng::with_seed(123987);
+    let b = a.shuffle(rng);
+    let c : int[] = [];
+    let d = d.shuffle();
+
+    @dbg(a);
+    @dbg(b);
+    @dbg(d);
+}
