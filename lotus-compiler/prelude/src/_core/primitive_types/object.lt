@@ -97,6 +97,10 @@ export class Object extends any {
         }
     }
 
+    autogen dyn __type_name() -> string {
+        Self::__type_name()
+    }
+
     autogen dyn __to_string_dyn() -> string {
         "[" + #TYPE_SHORT_NAME + " " + (self as int).to_hexa_string() + "]"
     }

@@ -93,7 +93,7 @@ export class View {
     }
 
     add_child(view: View) -> Self {
-        check view != self;
+        check view && view != self;
 
         if !view._rect {
             view._rect = self._rect.clone();
