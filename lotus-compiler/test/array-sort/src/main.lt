@@ -52,12 +52,12 @@ export fn main() {
         foos.push(foo(i, value));
     }
 
-    foos.sort((foo, bar) => foo.value - bar.value);
+    foos = foos.sort((foo, bar) => foo.value - bar.value);
     @dbg(foos.map(foo => foo.key));
 }
 
 fn sort_foo_list(array: Foo[]) {
-    array.sort((foo, bar) => foo.value - bar.value);
+    array = array.sort((foo, bar) => foo.value - bar.value);
 
     @dbg(array.map(foo => foo.key));
 }

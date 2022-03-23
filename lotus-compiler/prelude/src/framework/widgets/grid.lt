@@ -16,6 +16,8 @@ export view Grid {
     items: View[] = [],
     item_count_per_row: int = none,
     item_count_per_column: int = none,
+    item_min_count_per_row: int = none,
+    item_min_count_per_column: int = none,
     item_aspect_ratio: float = 1,
     margin: DisplaySize = none,
     outer_margin: DisplaySize = none,
@@ -60,8 +62,16 @@ export view Grid {
             }
         } else if !column_size {
             column_size = (item_count / row_size).ceil();
+
+            if self.item_min_count_per_column {
+                column_size = column_size.max(self.item_min_count_per_column.to_float());
+            }
         } else if !row_size {
             row_size = (item_count / column_size).ceil();
+
+            if self.item_min_count_per_row {
+                row_size = row_size.max(self.item_min_count_per_row.to_float());
+            }
         }
 
         let displayed_item_count = (row_size * column_size).to_int();

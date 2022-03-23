@@ -305,7 +305,7 @@ export class Client {
             user: self._user,
             local_data: self._local_data,
         };
-        let views = self._all_views.clone().reverse();
+        let views = self._all_views.reverse();
 
         event.emit(views);
     }
@@ -353,7 +353,7 @@ export class Client {
     }
 
     _process_window_events() {
-        let views = self._all_views.clone().reverse();
+        let views = self._all_views.reverse();
         let client_event = ClientEvent {
             client: self,
             user: self._user,
