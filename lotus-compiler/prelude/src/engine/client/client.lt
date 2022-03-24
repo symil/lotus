@@ -3,8 +3,6 @@ const CLIENT : Object = none;
 const VIRTUAL_WIDTH = 1600f;
 const VIRTUAL_HEIGHT = 900f;
 
-let COUNT = 0;
-
 export class Client {
     _user: #USER_TYPE = #USER_TYPE::__default(),
     _local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
@@ -109,9 +107,17 @@ export class Client {
         self._collect_window_events();
         self._collect_and_process_network_events();
         check self._should_continue_frame();
+        self._trigger_client_update();
+        check self._should_continue_frame();
         self._create_views();
         self._draw_frame();
         self._process_window_events();
+    }
+
+    _trigger_client_update() {
+        let window = #WINDOW_TYPE::__default();
+
+        OnClientUpdate { client: self, user: self._user, local_data: self._local_data }.emit([window])
     }
 
     _should_continue_frame() -> bool {
@@ -164,7 +170,13 @@ export class Client {
 
                     self._user = @deserialize(self._buffer);
                     self._local_object_to_remote_addr = self._buffer.get_local_object_to_remote_addr_map().clone();
-                    self._is_connected = true;
+
+                    if !self._is_connected {
+                        self._is_connected = true;
+                        // let window = #WINDOW_TYPE::__default();
+                        // OnClientConnect { client: self, user: self._user, local_data: self._local_data }.emit([window]);
+                    }
+
                 } else {
                     for i in 0..processed_request_count {
                         let request_id = self._buffer.read();
@@ -186,10 +198,11 @@ export class Client {
     }
 
     _create_views() {
-        COUNT = 0;
         let root_view = #WINDOW_TYPE::__default();
 
         root_view.set_rect(Rect::from_size(self._virtual_width, self._virtual_height));
+
+
 
         self._all_views.clear();
         self._reset_interactive_views();
@@ -272,10 +285,10 @@ export class Client {
         let event = OnRender {
             client: self,
             user: self._user,
-            local_data: self._local_data
+            local_data: self._local_data,
+            view
         };
 
-        view._client = self;
         event.emit([view]);
         view.finish_layouts();
         self._all_views.push(view);

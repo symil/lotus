@@ -19,6 +19,7 @@ export view BlazeWindow {
     }
 
     @OnClientStart {
+        // evt.client.clear_local_storage();
         evt.client.set_local_storage_key_prefix(self.title + ":");
 
         let local_storage_username : string = evt.client.get_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);

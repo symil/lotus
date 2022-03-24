@@ -1,4 +1,4 @@
-pub enum LayoutDirection {
+export enum LayoutDirection {
     LeftToRight,
     RightToLeft,
     TopToBottom,

@@ -1,6 +1,8 @@
 pub view GameScreen {
     @OnRender {
-        let view = OnMakeView.emit([evt.user.game]).view;
+        let view = View.set_rect(self.rect());
+
+        view = OnMakeView { ..evt, view }.emit([evt.user.game]).view;
 
         self.add_child(view);
     }

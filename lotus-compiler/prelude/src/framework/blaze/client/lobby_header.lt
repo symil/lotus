@@ -16,6 +16,7 @@ pub view LobbyHeader {
 
         self.layout()
             .push(title_label)
+            .reset()
             .right_to_left()
             .push(UsernameLabel)
             .width(.15w)
