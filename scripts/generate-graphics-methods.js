@@ -51,6 +51,17 @@ const VIEW_METHODS = {
     cursor: 'Cursor',
 };
 
+function main() {
+    generateCode(VIEW_SOURCE_PATH, {
+        '': args => args.map(name => `self._graphics.${name} = ${name};`),
+        'hover_': args => args.map(name => `self._hovered_graphics().${name} = ${name};`),
+        'focus_': args => args.map(name => `self._focused_graphics().${name} = ${name};`),
+        'disabled_': args => args.map(name => `self._disabled_graphics().${name} = ${name};`),
+    });
+
+    generateCode(LAYOUT_SOURCE_PATH, (args, method) => `self._get_last_view().${method}(${args.join(', ')});`);
+}
+
 function generateCode(sourceFilePath, generateLinesFunctions) {
     if (typeof generateLinesFunctions === 'function') {
         generateLinesFunctions = { '': generateLinesFunctions };
@@ -98,17 +109,6 @@ function generateCode(sourceFilePath, generateLinesFunctions) {
     let output = content.substring(0, startIndex) + '\n\n' + generated + '\n\n' + TAB + content.substring(endIndex);
 
     fs.writeFileSync(sourceFilePath, output, 'utf8');
-}
-
-function main() {
-    generateCode(VIEW_SOURCE_PATH, {
-        '': args => args.map(name => `self._graphics.${name} = ${name};`),
-        'hover_': args => args.map(name => `self._hovered_graphics().${name} = ${name};`),
-        'focus_': args => args.map(name => `self._focused_graphics().${name} = ${name};`),
-        'disabled_': args => args.map(name => `self._disabled_graphics().${name} = ${name};`),
-    });
-
-    generateCode(LAYOUT_SOURCE_PATH, (args, method) => `self._get_last_view().${method}(${args.join(', ')});`);
 }
 
 main();

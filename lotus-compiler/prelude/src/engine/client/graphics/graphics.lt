@@ -5,6 +5,8 @@ export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text }
 export enum Anchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight }
 
+const DEFAULT_TEXT_SIZE = 1h;
+
 export class Graphics {
     shape: Shape = Shape::Rectangle,
     anchor: Anchor = Anchor::Center,
@@ -28,7 +30,7 @@ export class Graphics {
     animation_duration: float = 1,
     text: string = none,
     text_font: Font = Font::SansSerif,
-    text_size: DisplaySize = none,
+    text_size: DisplaySize = DEFAULT_TEXT_SIZE,
     text_color: Color = Color::black(),
     text_alpha: float = 1,
     text_padding: DisplaySize = none,

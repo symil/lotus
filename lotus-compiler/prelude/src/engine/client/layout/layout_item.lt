@@ -1,4 +1,5 @@
 pub class LayoutItem {
+    parent: LayoutItem,
     view: View = none,
     rect: Rect = none,
     width: float = none,
@@ -7,7 +8,7 @@ pub class LayoutItem {
     force: float = 1,
     inner_margin: float = 0,
     outer_margin: float = 0,
-    direction: LayoutDirection = LayoutDirection::LeftToRight,
+    direction: LayoutDirection = none,
     alignment: float = 0.5,
     sub_alignment: float = 0.5,
     children: LayoutItem[] = [],
@@ -18,6 +19,8 @@ pub class LayoutItem {
         if self.view {
             self.view.set_rect(rect);
         }
+
+        check self.direction;
 
         rect = rect.strip(self.outer_margin * 2, self.outer_margin * 2);
 

@@ -1,6 +1,6 @@
 export class BlazeWorld {
-    users: Map<string, BlazeUser> = Map::new(),
-    matchmaking_queue: BlazeUser[] = [],
+    users: Map<string, #USER_TYPE> = Map::new(),
+    matchmaking_queue: #USER_TYPE[] = [],
     game_items: GameItemCategory[] = [],
     valid_game_items: Map<Object, GameItemCategory> = Map::new(),
     games: #GAME_INSTANCE_TYPE[],
@@ -59,12 +59,12 @@ export class BlazeWorld {
         evt.emit([evt.request])
     }
 
-    add_to_matchmaking(user: BlazeUser) {
+    add_to_matchmaking(user: #USER_TYPE) {
         user.is_searching_for_game = true;
         self.matchmaking_queue.push_unique(user);
     }
 
-    remove_from_matchmaking(user: BlazeUser) {
+    remove_from_matchmaking(user: #USER_TYPE) {
         user.is_searching_for_game = false;
         self.matchmaking_queue.remove(user);
     }
