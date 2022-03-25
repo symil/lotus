@@ -1,0 +1,4 @@
+pub class FocusedViewStack extends ViewStack {
+    self.on_add = view => view.focused = true
+    self.on_remove = view => view.focused = false
+}

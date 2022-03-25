@@ -47,7 +47,6 @@ const VIEW_METHODS = {
     text_italic: 'bool',
     text_cursor_index: 'int',
     shrink_to_fit_text: 'bool',
-    detectable: 'bool',
     cursor: 'Cursor',
 };
 

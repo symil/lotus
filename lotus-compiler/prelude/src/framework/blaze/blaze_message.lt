@@ -1,7 +1,7 @@
 pub class BlazeMessage {
     kind: MessageKind = MessageKind::Info,
     content: string = "",
-    ok_button: BlazeMessageOkButton = none,
+    ok_button: BlazeMessageOkButton = BlazeMessageOkButton { message: self },
 }
 
 pub class BlazeMessageOkButton {

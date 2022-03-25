@@ -1,9 +1,12 @@
 export class View {
-    _data: Object = none,
+    rect: Rect = none,
+    data: Object = none,
+    hovered: bool = false,
+    focused: bool = false,
+    disabled: bool = false,
+    detectable: bool = true,
     _client: Client = Client::get(),
     _parent: View = none,
-    _disabled: bool = false,
-    _rect: Rect = none,
     _graphics: Graphics = Graphics,
     _hovered_graphics: Graphics = none,
     _focused_graphics: Graphics = none,
@@ -12,7 +15,7 @@ export class View {
     _layouts: Layout[] = []
 
     get_approximate_hash() -> int {
-        let rect = self._rect;
+        let rect = self.rect;
         let graphics = self._graphics;
 
         let hash = self.__get_type_id()
@@ -29,7 +32,7 @@ export class View {
     }
 
     rect() -> Rect {
-        self._rect
+        self.rect
     }
 
     children() -> View[] {
@@ -96,8 +99,8 @@ export class View {
     add_child(view: View) -> Self {
         check view && view != self;
 
-        if !view._rect {
-            view._rect = self._rect.clone();
+        if !view.rect {
+            view.rect = self.rect.clone();
         }
 
         view._parent = self;
@@ -142,28 +145,12 @@ export class View {
         !self.is_disabled() && self._client.hovered_view() == self
     }
 
-    is_focused() -> bool {
-        !self.is_disabled() && self._client.focused_view() == self
-    }
-
-    focus() -> Self {
-        self._client.focus(self);
-        self
-    }
-
-    unfocus() -> Self {
-        if self.is_focused() {
-            self._client.focus(none);
-        }
-        self
-    }
-
     is_disabled() -> bool {
-        self._disabled
+        !self || self.disabled
     }
 
     set_disabled(value: bool) -> Self {
-        self._disabled = value;
+        self.disabled = value;
         self
     }
 
@@ -173,32 +160,32 @@ export class View {
     }
 
     z_index(z_index: float) -> Self {
-        self._rect.z = z_index;
+        self.rect.z = z_index;
         self
     }
 
     scale(ratio: float) -> Self {
-        self._rect = self._rect.scale(ratio);
+        self.rect = self.rect.scale(ratio);
         self
     }
 
     strip_to_match_aspect_ratio(aspect_ratio: float) -> Self {
-        self._rect = self._rect.strip_to_match_aspect_ratio(aspect_ratio);
+        self.rect = self.rect.strip_to_match_aspect_ratio(aspect_ratio);
         self
     }
 
     set_rect(rect: Rect) -> Self {
-        self._rect = rect.clone();
+        self.rect = rect.clone();
         self
     }
 
     set_size(width: float, height: float) -> Self {
-        self._rect = Rect::from_size(width, height);
+        self.rect = Rect::from_size(width, height);
         self
     }
 
     has_same_rect(other: View) {
-        self._rect == other._rect
+        self.rect == other.rect
     }
 
     _hovered_graphics() -> Graphics {
@@ -259,7 +246,6 @@ export class View {
     text_italic(text_italic: bool) -> Self { self._graphics.text_italic = text_italic; self }
     text_cursor_index(text_cursor_index: int) -> Self { self._graphics.text_cursor_index = text_cursor_index; self }
     shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._graphics.shrink_to_fit_text = shrink_to_fit_text; self }
-    detectable(detectable: bool) -> Self { self._graphics.detectable = detectable; self }
     cursor(cursor: Cursor) -> Self { self._graphics.cursor = cursor; self }
 
     hover_shape(shape: Shape) -> Self { self._hovered_graphics().shape = shape; self }
@@ -297,7 +283,6 @@ export class View {
     hover_text_italic(text_italic: bool) -> Self { self._hovered_graphics().text_italic = text_italic; self }
     hover_text_cursor_index(text_cursor_index: int) -> Self { self._hovered_graphics().text_cursor_index = text_cursor_index; self }
     hover_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._hovered_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
-    hover_detectable(detectable: bool) -> Self { self._hovered_graphics().detectable = detectable; self }
     hover_cursor(cursor: Cursor) -> Self { self._hovered_graphics().cursor = cursor; self }
 
     focus_shape(shape: Shape) -> Self { self._focused_graphics().shape = shape; self }
@@ -335,7 +320,6 @@ export class View {
     focus_text_italic(text_italic: bool) -> Self { self._focused_graphics().text_italic = text_italic; self }
     focus_text_cursor_index(text_cursor_index: int) -> Self { self._focused_graphics().text_cursor_index = text_cursor_index; self }
     focus_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._focused_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
-    focus_detectable(detectable: bool) -> Self { self._focused_graphics().detectable = detectable; self }
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().cursor = cursor; self }
 
     disabled_shape(shape: Shape) -> Self { self._disabled_graphics().shape = shape; self }
@@ -373,7 +357,6 @@ export class View {
     disabled_text_italic(text_italic: bool) -> Self { self._disabled_graphics().text_italic = text_italic; self }
     disabled_text_cursor_index(text_cursor_index: int) -> Self { self._disabled_graphics().text_cursor_index = text_cursor_index; self }
     disabled_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._disabled_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
-    disabled_detectable(detectable: bool) -> Self { self._disabled_graphics().detectable = detectable; self }
     disabled_cursor(cursor: Cursor) -> Self { self._disabled_graphics().cursor = cursor; self }
 
     // GENERATION STOP

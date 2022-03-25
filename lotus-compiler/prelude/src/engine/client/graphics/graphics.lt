@@ -42,7 +42,6 @@ export class Graphics {
     text_italic: bool = false,
     text_cursor_index: int = none,
     shrink_to_fit_text: bool = false,
-    detectable: bool = true,
     cursor: Cursor = none,
 
     static empty() -> Self {

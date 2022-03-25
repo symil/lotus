@@ -1,0 +1,3 @@
+pub class DraggedViewStack extends ViewStack {
+    
+}

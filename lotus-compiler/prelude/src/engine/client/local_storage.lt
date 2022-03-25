@@ -1,0 +1,31 @@
+export class LocalStorage {
+    _key_prefix: string = "",
+    _buffer: Buffer = Buffer::with_capacity(LOCAL_STORAGE_BUFFER_CAPACITY),
+
+    set_key_prefix(prefix: string) {
+        self._key_prefix = prefix;
+    }
+
+    get_item<T>(key: string) -> T? {
+        key = self._key_prefix + key;
+        self._buffer.reset();
+        self._buffer.size = wasm_get_local_storage_item(key, self._buffer.data, self._buffer.capacity);
+        T::__deserialize_with_schema(self._buffer)
+    }
+
+    set_item<T>(key: string, data: T) {
+        key = self._key_prefix + key;
+        self._buffer.reset();
+        T::__serialize_with_schema(self._buffer, data);
+        wasm_set_local_storage_item(key, self._buffer.data, self._buffer.size);
+    }
+
+    remove_item(key: string) {
+        key = self._key_prefix + key;
+        wasm_remove_local_storage_item(key);
+    }
+
+    clear() {
+        wasm_clear_local_storage();
+    }
+}
