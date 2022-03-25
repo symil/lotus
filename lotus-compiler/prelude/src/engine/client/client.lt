@@ -6,6 +6,7 @@ const VIRTUAL_HEIGHT = 900f;
 export class Client {
     _user: #USER_TYPE = #USER_TYPE::__default(),
     _local_data: #LOCAL_DATA_TYPE = #LOCAL_DATA_TYPE::__default(),
+    _window: #WINDOW_TYPE = #WINDOW_TYPE::__default(),
     _buffer: Buffer = Buffer::with_capacity(BIG_BUFFER_SIZE),
 
     // Network stuff
@@ -94,13 +95,12 @@ export class Client {
 
         self._websocket_id = wasm_create_websocket();
 
-        let window = #WINDOW_TYPE::__default();
         let event = OnClientStart {
             client: self,
             local_data: self._local_data,
         };
 
-        event.emit([window]);
+        event.emit([self._window]);
     }
 
     _update() {
@@ -115,9 +115,7 @@ export class Client {
     }
 
     _trigger_client_update() {
-        let window = #WINDOW_TYPE::__default();
-
-        OnClientUpdate { client: self, user: self._user, local_data: self._local_data }.emit([window])
+        OnClientUpdate { client: self, user: self._user, local_data: self._local_data }.emit([self._window])
     }
 
     _should_continue_frame() -> bool {
@@ -198,15 +196,13 @@ export class Client {
     }
 
     _create_views() {
-        let root_view = #WINDOW_TYPE::__default();
+        self._window = #WINDOW_TYPE::__default();
 
-        root_view.set_rect(Rect::from_size(self._virtual_width, self._virtual_height));
-
-
+        self._window.set_rect(Rect::from_size(self._virtual_width, self._virtual_height));
 
         self._all_views.clear();
         self._reset_interactive_views();
-        self._render_view(root_view);
+        self._render_view(self._window);
         self._detect_hovered_view();
         self._infer_interactive_views();
         self._post_render();
@@ -440,6 +436,22 @@ export class Client {
                 }
             }
         }
+    }
+
+    render(object: Object) {
+        let render_event = OnRender {
+            client: self,
+            user: self._user,
+            local_data: self._local_data,
+            view: View
+        };
+
+        let view = render_event.emit([object]).view;
+
+        view.finish_layouts();
+        view._data = object;
+
+        self._all_views.push(view);
     }
 
     send_request(request: Object) {

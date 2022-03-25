@@ -1,5 +1,40 @@
 pub class BlazeMessage {
     kind: MessageKind = MessageKind::Info,
-    content: string = ""
+    content: string = "",
+    ok_button: BlazeMessageOkButton = none,
 }
 
+pub class BlazeMessageOkButton {
+    message: BlazeMessage,
+
+    @OnRender {
+        evt.view.add_to_focus_chain()
+            .background_color(DEFAULT_BACKGROUND_COLOR)
+            .text("Ok")
+            .text_color(DEFAULT_TEXT_COLOR)
+            .text_size(DEFAULT_BUTTON_TEXT_SIZE)
+            .text_font(DEFAULT_TEXT_FONT)
+            .border_color(DEFAULT_TEXT_COLOR)
+            .border_width(DEFAULT_BORDER_WIDTH)
+            .border_radius(DEFAULT_BORDER_RADIUS)
+            .focus_border_width(DEFAULT_BORDER_WIDTH.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
+            .disabled_overlay_color(DEFAULT_DISABLED_OVERLAY_COLOR)
+            .disabled_overlay_alpha(DEFAULT_DISABLED_OVERLAY_ALPHA)
+            .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
+            .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
+            .hover_cursor(Cursor::Pointer)
+            .focus_background_color(Color::orange())
+    }
+
+    @OnClick {
+        evt.client.send_request(AcknowledgeRequest { message: self.message })
+    }
+}
+
+pub class BlazeMessageAcknowledgeRequest {
+    message: BlazeMessage,
+
+    @OnUserRequest {
+        evt.user.messages.remove(self.message);
+    }
+}

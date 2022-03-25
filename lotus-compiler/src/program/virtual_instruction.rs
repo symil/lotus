@@ -389,7 +389,9 @@ impl VirtualInstruction {
                                 match ty.get_method(kind, name) {
                                     Some(function) => function,
                                     None => {
-                                        // panic!("type `{}` has no method {:?} `{}`", &ty.name, kind, name);
+                                        if !function_unwrapped.is_default_function {
+                                            panic!("type `{}` has no method {:?} `{}`", &ty.name, kind, name);
+                                        }
                                         details.function.clone()
                                     },
                                 }

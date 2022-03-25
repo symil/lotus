@@ -1,7 +1,7 @@
 #WINDOW_TYPE = Hello
 
-view Hello extends BlazeWindow {
-    self.background_color = Color::light_green()
+view Hello {
+    background_color: Color = Color::light_green()
 }
 
 export fn main() {

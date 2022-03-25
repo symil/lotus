@@ -53,6 +53,7 @@ impl ParsedFunctionOrMethodContent {
             owner_interface: None,
             closure_details: None,
             method_details: None,
+            is_default_function: false,
             body: FunctionBody::Empty,
         };
 

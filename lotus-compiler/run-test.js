@@ -38,7 +38,7 @@ async function main() {
     let writeTest = overwrite || hasOption('--write', '-w');
     let forceRelease = hasOption('--release', '-r');
     let mode = ((forceRelease || benchmark || runAll || (!isMocha && commandLineNames.length > 1)) && !writeTest) ? 'release' : 'debug';
-    let overwriteExpectedOutput = hasOption('--overwrite-output', '-ow');
+    let overwriteExpectedOutput = hasOption('--overwrite-output', '-oo');
     let validate = hasOption('--validate', '-v');
     let inheritStdio = !writeTest;
     let displayMemory = hasOption('--memory', '-m');
@@ -61,7 +61,7 @@ async function main() {
         }
 
         describe('Lotus', function() {
-            this.timeout(5000);
+            this.timeout(10000);
 
             for (let dirName of testsToRun) {
                 let testName = dirName;

@@ -25,7 +25,7 @@ impl Package {
             src_path,
             cache_path,
             data_path,
-            exclude_framework: false,
+            exclude_framework: true,
         };
 
         if let Ok(content) = fs::read_to_string(config_path) {

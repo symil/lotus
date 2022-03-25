@@ -12,7 +12,7 @@ pub view TextBox {
     local_data: TextBoxData = none,
     placeholder: string = "",
     text_color: Color = Color::black(),
-    text_font: Font = DEFAULT_FONT,
+    text_font: Font = DEFAULT_TEXT_FONT,
     text_size: DisplaySize = DEFAULT_TEXTBOX_TEXT_SIZE,
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),

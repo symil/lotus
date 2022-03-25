@@ -4,12 +4,18 @@ class Foo {
     c: float = 0,
     d: Bar = Bar { a: 8 },
     e: Bar = Bar,
-    f: Bar? = none
+    f: Bar = none
 }
 
 class Bar {
     a: int = 15,
     b: float = 1.2f
+}
+
+class Baz {
+    a: Bar = Bar,
+    b: Bar = self.a,
+    c: Bar
 }
 
 fn some_string() -> string {
@@ -32,4 +38,16 @@ export fn main() {
     let foo2 = Foo {};
 
     @log((foo.d as int) != (foo2.d as int));
+
+    @log("---");
+
+    let foo3 = Foo::__default();
+    @dbg(foo3);
+
+    @log("---");
+
+    let baz = Baz::__default();
+    @dbg(baz.b);
+    @log(baz.a == baz.b);
+    @dbg(baz);
 }

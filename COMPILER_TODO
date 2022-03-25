@@ -175,6 +175,7 @@
 [X] Add type parameter inference (e.g `let a : Map<int, string> = Map::new()` should work)
 [X] Methods `and` & `or` on `any` type
 [X] Allow generic types to inherit from other types
+[X] Make `self` available in field default values
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 
@@ -183,7 +184,6 @@
 [ ] One-liner methods
 [ ] Avoid recomputing the full path when using operation-assigment operators (e.g `a.b.c.d += 4` should not compute `a.b.c` twice)
 [ ] Compute constants value at compile time when possible
-[ ] Make `self` available in field default values
 [ ] Improve variable type inference according to their first use
 [ ] Change the `?` suffix operator to return `none` if the expression it is applied to is `none`
 [ ] Optimize `&&` and `||` when applied to boolean operands

@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility, ANY_TYPE_NAME}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility, ANY_TYPE_NAME, ArgumentInfo}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
@@ -331,7 +331,7 @@ impl ParsedTypeDeclaration {
                                 name: field_info.name.clone(),
                                 visibility: field_info.visibility.clone(),
                                 offset,
-                                default_value: context.vasm(),
+                                default_value: None,
                                 is_required: field_info.is_required
                             });
 
@@ -366,7 +366,7 @@ impl ParsedTypeDeclaration {
                                     name: field.name.clone(),
                                     visibility: FieldVisibility::from_name(field.name.as_str()),
                                     offset,
-                                    default_value: context.vasm(),
+                                    default_value: None,
                                     is_required: field.default_value.is_none()
                                 });
 
@@ -479,60 +479,89 @@ impl ParsedTypeDeclaration {
                     });
                 }
 
+                let self_type = type_unwrapped.self_type.clone();
+                let self_argument = ArgumentInfo {
+                    name: Identifier::unlocated("self"),
+                    ty: self_type.clone(),
+                    is_optional: false,
+                    default_value: context.vasm(),
+                };
+
                 for field in self.get_fields() {
                     if field.ty.as_ref().and_then(|ty| ty.ty.as_ref()).is_none() {
                         continue;
                     }
 
                     if let Some(field_info) = type_unwrapped.fields.get(field.name.as_str()) {
-                        let mut default_value_vasm = context.vasm();
+                        let mut default_value = None;
 
-                        if let Some(default_value) = &field.default_value {
-                            if let Some(vasm) = default_value.process(Some(&field_info.ty), context) {
+                        if let Some(parsed_default_value) = &field.default_value {
+                            let function_blueprint = FunctionBlueprint {
+                                name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
+                                visibility: Visibility::None,
+                                parameters: IndexMap::new(),
+                                arguments: vec![self_argument.clone()],
+                                signature: Signature::create(None, vec![self_type.clone()], field_info.ty.clone()),
+                                argument_variables: vec![],
+                                owner_type: Some(type_wrapped.clone()),
+                                owner_interface: None,
+                                closure_details: None,
+                                method_details: None,
+                                is_default_function: true,
+                                body: FunctionBody::Empty,
+                            };
+                            let function_wrapped = context.functions.insert(function_blueprint, None);
+
+                            context.push_scope(ScopeKind::Function(function_wrapped.clone()));
+
+                            if let Some(vasm) = parsed_default_value.process(Some(&field_info.ty), context) {
                                 if vasm.ty.is_assignable_to(&field_info.ty) {
-                                    let function_blueprint = FunctionBlueprint {
-                                        name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
-                                        visibility: Visibility::None,
-                                        parameters: IndexMap::new(),
-                                        arguments: vec![],
-                                        signature: Signature::create(None, vec![], field_info.ty.clone()),
-                                        argument_variables: vec![],
-                                        owner_type: Some(type_wrapped.clone()),
-                                        owner_interface: None,
-                                        closure_details: None,
-                                        method_details: None,
-                                        body: FunctionBody::Vasm(vasm),
-                                    };
-
-                                    let function_wrapped = context.functions.insert(function_blueprint, None);
-
-                                    default_value_vasm = context.vasm()
-                                        .call_function_named(Some(&type_unwrapped.self_type), &function_wrapped, &[], vec![]);
-                                        // .call_function_named(None, &function_wrapped, &[], vec![]);
-
+                                    function_wrapped.borrow_mut().body = FunctionBody::Vasm(vasm);
+                                    default_value = Some(function_wrapped.clone());
                                 } else {
-                                    context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);
+                                    context.errors.type_mismatch(parsed_default_value, &field_info.ty, &vasm.ty);
                                 }
                             }
-                        } else if field.ty.as_ref().unwrap().ty.as_ref().unwrap().is_option() {
-                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, NONE_METHOD_NAME, &[], vec![], context);
+
+                            context.pop_scope();
                         } else {
-                            default_value_vasm = context.vasm().call_static_method(&field_info.ty, DEFAULT_METHOD_NAME, &[], vec![], context);
+                            default_value = None;
                         }
 
-                        default_value_vasm.ty = field_info.ty.clone();
-
-                        default_values.insert(field_info.name.to_string(), default_value_vasm);
+                        default_values.insert(field_info.name.to_string(), default_value);
                     }
                 }
 
                 for super_field in self.get_super_fields_default_values() {
                     if let Some(field_name) = &super_field.name {
-                        overriden_default_values.insert(field_name.to_string());
-                    }
+                        if let Some(field_info) = type_unwrapped.fields.get(field_name.as_str()) {
+                            overriden_default_values.insert(field_name.to_string());
+                            
+                            let function_blueprint = FunctionBlueprint {
+                                name: Identifier::unique(&format!("{}_{}_default", self.name.as_str(), field_info.name.as_str())),
+                                visibility: Visibility::None,
+                                parameters: IndexMap::new(),
+                                arguments: vec![self_argument.clone()],
+                                signature: Signature::create(None, vec![self_type.clone()], field_info.ty.clone()),
+                                argument_variables: vec![],
+                                owner_type: Some(type_wrapped.clone()),
+                                owner_interface: None,
+                                closure_details: None,
+                                method_details: None,
+                                is_default_function: true,
+                                body: FunctionBody::Empty,
+                            };
+                            let function_wrapped = context.functions.insert(function_blueprint, None);
 
-                    if let Some((name, vasm)) = super_field.process(&type_unwrapped.self_type, context) {
-                        default_values.insert(name.clone(), vasm);
+                            context.push_scope(ScopeKind::Function(function_wrapped.clone()));
+
+                            if let Some((name, vasm)) = super_field.process(&type_unwrapped.self_type, context) {
+                                function_wrapped.borrow_mut().body = FunctionBody::Vasm(vasm);
+                                default_values.insert(name.clone(), Some(function_wrapped.clone()));
+                            }
+
+                            context.pop_scope();
+                        }
                     }
                 }
             });
