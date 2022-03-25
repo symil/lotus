@@ -266,3 +266,4 @@
 [ ] Notify client when connection with server is lost
 [ ] Trigger garbage collector over a longer period of time (process page by page)
 [ ] Make so views with no graphics are not detectable
+[ ] Make so a field cannot be default initialized from a field that is initialized after it (e.g `class Foo { a: int = self.b, b: int = 2 }` should not work)
