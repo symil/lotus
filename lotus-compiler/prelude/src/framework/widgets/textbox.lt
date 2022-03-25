@@ -1,31 +1,17 @@
-pub class TextBoxData {
+pub class TextBox {
     text: string = "",
     cursor_index: int = 0,
-
-    clear() {
-        self.text = "";
-        self.cursor_index = 0;
-    }
-}
-
-pub view TextBox {
-    local_data: TextBoxData = none,
     placeholder: string = "",
     text_color: Color = Color::black(),
     text_font: Font = DEFAULT_TEXT_FONT,
     text_size: DisplaySize = DEFAULT_TEXTBOX_TEXT_SIZE,
     placeholder_color: Color = Color::gray(),
     background_color: Color = Color::white(),
-    on_enter: fn(Client) = none,
-
-    _get_data() -> TextBoxData {
-        self.local_data.or_else(() => self.client().get_view_local_data(self))
-    }
+    enter_target: Object = none,
 
     @OnRender {
-        let data = self._get_data();
-        let text = data.text;
-        let cursor_index = data.cursor_index;
+        let text = self.text;
+        let cursor_index = self.cursor_index;
         let color = self.text_color;
         let border_width = DEFAULT_BORDER_WIDTH;
 
@@ -35,7 +21,7 @@ pub view TextBox {
             color = self.placeholder_color;
         }
 
-        self.add_to_focus_chain()
+        evt.view.add_to_focus_chain()
             .background_color(self.background_color)
             .border_color(self.text_color)
             .border_radius(DEFAULT_BORDER_RADIUS)
@@ -55,24 +41,30 @@ pub view TextBox {
     }
 
     @OnKeyDown {
-        check self.is_focused();
+        check evt.client.is_focused(self);
 
-        let data = self._get_data();
         let ctrl = evt.ctrl_key;
 
         if evt.key == Key::Escape {
-            self.unfocus();
+            evt.client.clear_focus();
             intercept;
         } else if evt.key == Key::Enter {
-            if self.on_enter {
-                let callback = (self.on_enter);
-                callback(evt.client);
+            if self.enter_target {
+                let view = evt.client.get_view(self);
+
+                OnClick {
+                    ..evt,
+                    action: MouseAction::Down,
+                    button: MouseButton::Left,
+                    x: view.rect.x,
+                    y: view.rect.y,
+                }.emit([self.enter_target]);
             }
             intercept;
         } else {
             let valid = true;
-            let text = data.text;
-            let cursor_index = data.cursor_index;
+            let text = self.text;
+            let cursor_index = self.cursor_index;
 
             cursor_index = cursor_index.clamp(0, text.len());
 
@@ -125,8 +117,8 @@ pub view TextBox {
 
             if (valid) {
                 cursor_index = cursor_index.clamp(0, text.len());
-                data.text = text;
-                data.cursor_index = cursor_index;
+                self.text = text;
+                self.cursor_index = cursor_index;
                 intercept;
             }
         }

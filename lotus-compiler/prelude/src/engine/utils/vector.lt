@@ -1,0 +1,31 @@
+export class Vector {
+    type First = float;
+    type Second = float;
+
+    x: float = 0,
+    y: float = 0,
+
+    first() -> float {
+        self.x
+    }
+
+    second() -> float {
+        self.y
+    }
+
+    set(x: float, y: float) {
+        self.x = x;
+        self.y = y;
+    }
+
+    clone() -> Self {
+        Self { ..self }
+    }
+
+    __sub(other: Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}

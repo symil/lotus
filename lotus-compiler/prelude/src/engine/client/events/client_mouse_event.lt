@@ -1,5 +1,4 @@
 pub event ClientMouseEvent extends ClientEvent {
-    hovered_view: View,
     action: MouseAction,
     button: MouseButton,
     x: float,

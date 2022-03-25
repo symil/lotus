@@ -119,6 +119,22 @@ export class Array<T> {
         result
     }
 
+    reverse_in_place() -> Self {
+        let length = self._length;
+        let body = self._body;
+        let max = self._length / 2;
+        
+        for i in 0..max {
+            let j = length - i - 1;
+            let tmp = body[i];
+
+            body[i] = body[j];
+            body[j] = tmp;
+        }
+
+        self
+    }
+
     reverse() -> Self {
         let length = self._length;
         let result = Self::with_capacity(length);
@@ -172,8 +188,8 @@ export class Array<T> {
         none
     }
 
-    includes(searched_item: T) -> bool {
-        !!self.index_of(searched_item)
+    includes(item: T) -> bool {
+        !!self.index_of(item)
     }
 
     remove(item: T) -> bool {
@@ -228,6 +244,14 @@ export class Array<T> {
         let length = self._add_length(1);
 
         self._body[length] = value;
+
+        self
+    }
+
+    push_if_not_none(value: T) -> Self {
+        if value {
+            self.push(value);
+        }
 
         self
     }
@@ -395,7 +419,7 @@ export class Array<T> {
         result
     }
 
-    sort_in_place(compare: fn(T, T)(int)) {
+    sort_in_place(compare: fn(T, T)(int)) -> Self {
         let secondary_keys = @alloc(self._length);
 
         for i in 0..self._length {
@@ -403,6 +427,8 @@ export class Array<T> {
         }
 
         quick_sort(self._body, 0, self._length - 1, compare, secondary_keys);
+
+        self
     }
 
     get_random() -> T {
