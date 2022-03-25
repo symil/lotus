@@ -23,7 +23,6 @@ pub enum BuiltinInterface {
     Unwrap,
     Builtin,
     Tuple,
-    Object,
     Range
 }
 
@@ -57,7 +56,6 @@ impl BuiltinInterface {
             BuiltinInterface::Unwrap => "Unwrap",
             BuiltinInterface::Builtin => "Builtin",
             BuiltinInterface::Tuple => "Tuple",
-            BuiltinInterface::Object => "Object",
             BuiltinInterface::Range => "Range",
         }
     }

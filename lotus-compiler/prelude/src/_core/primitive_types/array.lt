@@ -390,15 +390,19 @@ export class Array<T> {
 
     sort(compare: fn(T, T)(int)) -> Self {
         let result = self.clone();
+
+        result.sort_in_place(compare)
+        result
+    }
+
+    sort_in_place(compare: fn(T, T)(int)) {
         let secondary_keys = @alloc(self._length);
 
         for i in 0..self._length {
             secondary_keys[i] = i;
         }
 
-        quick_sort(result._body, 0, result._length - 1, compare, secondary_keys);
-
-        result
+        quick_sort(self._body, 0, self._length - 1, compare, secondary_keys);
     }
 
     get_random() -> T {

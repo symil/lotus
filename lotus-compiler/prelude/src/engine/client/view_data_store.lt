@@ -1,7 +1,7 @@
 export class ViewDataStore {
     _map: Map<int, Object> = Map::new(),
 
-    get<T : Object>(view: View) -> T? {
+    get<T : Object>(view: View) -> T {
         let hash = view.rect().__hash();
         let value = self._map.get(hash);
 
@@ -10,7 +10,7 @@ export class ViewDataStore {
         }
 
         let result = T::__default();
-        self._map.set(hash, result as Object);
+        self._map.set(hash, result);
 
         result
     }

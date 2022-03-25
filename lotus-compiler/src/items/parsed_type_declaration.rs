@@ -508,6 +508,7 @@ impl ParsedTypeDeclaration {
 
                                     default_value_vasm = context.vasm()
                                         .call_function_named(Some(&type_unwrapped.self_type), &function_wrapped, &[], vec![]);
+                                        // .call_function_named(None, &function_wrapped, &[], vec![]);
 
                                 } else {
                                     context.errors.type_mismatch(default_value, &field_info.ty, &vasm.ty);

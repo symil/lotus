@@ -108,10 +108,6 @@ export interface Tuple {
     second() -> Second;
 }
 
-export interface Object {
-    static __is(object: Object) -> bool;
-}
-
 sys interface Builtin {
     __eq(other: Self) -> bool;
     __ne(other: Self) -> bool;
