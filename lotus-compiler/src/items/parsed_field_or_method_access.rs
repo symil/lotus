@@ -253,7 +253,9 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
     if let FunctionCall::Named(details) = &mut function_call {
         details.function.with_ref(|function_unwrapped| {
             for (expected_param, actual_param) in function_unwrapped.parameters.values().zip(function_parameters.iter()) {
-                actual_param.check_match_interface_list(&expected_param.required_interfaces, function_identifier.as_ref().unwrap(), context);
+                let location = function_identifier.as_ref().unwrap();
+
+                actual_param.check_match_param(expected_param, location, context);
             }
         });
     }

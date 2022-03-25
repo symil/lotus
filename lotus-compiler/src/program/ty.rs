@@ -112,6 +112,7 @@ impl Type {
     pub fn is_object(&self) -> bool {
         match self.content() {
             TypeContent::Actual(info) => info.type_blueprint.borrow().is_class(),
+            TypeContent::FunctionParameter(info) | TypeContent::TypeParameter(info) => info.inherited_type.as_ref().map(|ty| ty.is_object()).unwrap_or(false),
             _ => false
         }
     }
@@ -321,6 +322,12 @@ impl Type {
                     None => false,
                 },
             },
+            (TypeContent::TypeParameter(self_info) | TypeContent::FunctionParameter(self_info), TypeContent::Actual(_)) => {
+                match &self_info.inherited_type {
+                    Some(ty) => ty.is_assignable_to(target),
+                    None => false,
+                }
+            },
             (TypeContent::TypeParameter(self_info), TypeContent::TypeParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (TypeContent::FunctionParameter(self_info), TypeContent::FunctionParameter(target_info)) => Rc::ptr_eq(self_info, target_info),
             (TypeContent::Associated(self_info), TypeContent::Associated(target_info)) => self_info == target_info,
@@ -422,6 +429,12 @@ impl Type {
                                         ok = false;
                                     }
                                 }
+
+                                if let Some(inherited_type) = &expected.inherited_type {
+                                    if !actual.is_assignable_to(inherited_type) {
+                                        ok = false;
+                                    }
+                                }
                             },
                             false => {
                                 ok = false;
@@ -444,10 +457,17 @@ impl Type {
         result
     }
 
-    pub fn check_match_interface_list(&self, interface_list: &InterfaceList, location: &ItemLocation, context: &mut ProgramContext) -> bool {
+    pub fn check_match_param(&self, expected_param: &ParameterTypeInfo, location: &ItemLocation, context: &mut ProgramContext) -> bool {
         let mut ok = true;
-        
-        for interface in interface_list.list.iter() {
+
+        if let Some(inherited_type) = &expected_param.inherited_type {
+            if !self.is_assignable_to(inherited_type) {
+                context.errors.generic(location, format!("{}: expected `{}`, got `{}`", expected_param.name.as_str(), inherited_type, self));
+                ok = false;
+            }
+        }
+
+        for interface in expected_param.required_interfaces.list.iter() {
             if !self.check_match_interface(interface, location, context) {
                 ok = false;
             }
@@ -596,8 +616,12 @@ impl Type {
             TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.get(name).cloned()
             }),
-            TypeContent::TypeParameter(info) => None,
-            TypeContent::FunctionParameter(info) => None,
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                match &info.inherited_type {
+                    Some(ty) => ty.get_field(name),
+                    None => None,
+                }
+            },
             TypeContent::Associated(info) => None,
             TypeContent::Function(_) => None,
         }
@@ -611,8 +635,12 @@ impl Type {
             TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.fields.values().map(|field_info| field_info.clone()).collect()
             }),
-            TypeContent::TypeParameter(_) => vec![],
-            TypeContent::FunctionParameter(_) => vec![],
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                match &info.inherited_type {
+                    Some(ty) => ty.get_all_fields(),
+                    None => vec![],
+                }
+            },
             TypeContent::Associated(_) => vec![],
             TypeContent::Function(_) => vec![],
         }
@@ -632,8 +660,12 @@ impl Type {
 
                 None
             }),
-            TypeContent::TypeParameter(_) => None,
-            TypeContent::FunctionParameter(_) => None,
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                match &info.inherited_type {
+                    Some(ty) => ty.get_variant(name),
+                    None => None,
+                }
+            },
             TypeContent::Associated(_) => None,
             TypeContent::Function(_) => None,
         }
@@ -647,8 +679,12 @@ impl Type {
             TypeContent::Actual(info) => info.type_blueprint.with_ref(|type_unwrapped| {
                 type_unwrapped.enum_variants.values().map(|variant_info| variant_info.clone()).collect()
             }),
-            TypeContent::TypeParameter(_) => vec![],
-            TypeContent::FunctionParameter(_) => vec![],
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                match &info.inherited_type {
+                    Some(ty) => ty.get_all_variants(),
+                    None => vec![],
+                }
+            },
             TypeContent::Associated(_) => vec![],
             TypeContent::Function(_) => vec![],
         }
@@ -665,6 +701,10 @@ impl Type {
                 type_unwrapped.methods(kind).values().map(|func_ref| func_ref.function.clone()).collect()
             }),
             TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
+                if let Some(inherited_type) = &info.inherited_type {
+                    return inherited_type.get_all_methods(kind);
+                }
+
                 let mut result = vec![];
 
                 for interface in &info.required_interfaces.list {
@@ -702,13 +742,10 @@ impl Type {
                     index_map.get(name).cloned()
                 })
             },
-            TypeContent::TypeParameter(info) => {
+            TypeContent::TypeParameter(info) | TypeContent::FunctionParameter(info) => {
                 info.required_interfaces.get_method(is_static, name)
                     .or_else(|| context.default_interfaces.get_method(is_static, name))
-            },
-            TypeContent::FunctionParameter(info) => {
-                info.required_interfaces.get_method(is_static, name)
-                    .or_else(|| context.default_interfaces.get_method(is_static, name))
+                    .or_else(|| info.inherited_type.as_ref().and_then(|ty| ty.get_method(kind, name, context)))
             },
             TypeContent::Associated(info) => info.associated.required_interfaces.get_method(is_static, name),
             TypeContent::Function(_) => context.function_type().get_method(kind, name, context),

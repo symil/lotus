@@ -32,8 +32,8 @@ impl ParsedIsOperation {
         };
 
         let var_name = unwrap_item(&self.var_name, self, context)?;
-        let is_source_object = source_type.match_builtin_interface(BuiltinInterface::Object, context);
-        let is_target_object = target_type.match_builtin_interface(BuiltinInterface::Object, context);
+        let is_source_object = source_type.is_object();
+        let is_target_object = target_type.is_object();
         let both_object = is_source_object && is_target_object;
 
         let tmp_var_info = VariableInfo::tmp("is_tmp", source_type.clone());

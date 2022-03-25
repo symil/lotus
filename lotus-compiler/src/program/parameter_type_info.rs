@@ -7,6 +7,7 @@ pub struct ParameterTypeInfo {
     pub name: Identifier,
     pub index: usize,
     pub required_interfaces: InterfaceList,
+    pub inherited_type: Option<Type>,
     pub wasm_pattern: String
 }
 

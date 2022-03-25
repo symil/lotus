@@ -26,12 +26,15 @@ impl ParsedTypeParameters {
         for parameter in &self.list {
             let name = parameter.name.clone(); 
             let mut required_interfaces = vec![];
+            let mut inherited_type = None;
 
             for interface_name in &parameter.required_interfaces {
                 context.add_interface_completion_area(interface_name);
 
                 if let Some(interface) = context.interfaces.get_by_identifier(interface_name) {
                     required_interfaces.push(interface.clone());
+                } else if let Some(type_wrapped) = context.types.get_by_identifier(interface_name) {
+                    inherited_type = Some(type_wrapped.borrow().self_type.clone());
                 } else {
                     context.errors.generic(&parameter.name, format!("undefined interface `{}`", interface_name));
                 }
@@ -43,6 +46,7 @@ impl ParsedTypeParameters {
                 name,
                 index,
                 required_interfaces: InterfaceList::new(required_interfaces),
+                inherited_type,
                 wasm_pattern
             });
 

@@ -221,7 +221,7 @@ export class Map<K, V> {
         let new_map = Self::with_capacity(self.capacity);
         let entries = self.entries();
 
-        entries.sort((e1, e2) => compare(e1.first, e2.first));
+        entries.sort_in_place((e1, e2) => compare(e1.first, e2.first));
 
         for entry in entries {
             new_map.set(entry.first, entry.second);

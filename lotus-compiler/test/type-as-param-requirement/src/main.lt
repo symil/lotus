@@ -1,0 +1,20 @@
+class Foo {
+    a: int = 1
+}
+
+class Bar extends Foo {
+    b: int = 2
+}
+
+export fn main() {
+    let bar = Bar;
+    let result = dummy(bar);
+
+    @log(result.b);
+}
+
+fn dummy<T : Foo>(value: T) -> T {
+    @log(value.a);
+
+    value
+}
