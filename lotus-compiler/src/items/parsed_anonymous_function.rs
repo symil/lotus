@@ -90,6 +90,7 @@ impl ParsedAnonymousFunction {
             owner_interface: context.get_current_interface(),
             closure_details: None,
             method_details: None,
+            is_default_function: false,
             body: FunctionBody::Empty,
         }, None);
 

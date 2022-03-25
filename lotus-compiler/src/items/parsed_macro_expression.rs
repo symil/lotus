@@ -1,6 +1,6 @@
 use parsable::{ItemLocation, parsable};
-use crate::program::{ProgramContext, Vasm, MacroContext, BuiltinType};
-use super::{make_string_value_from_literal_unchecked};
+use crate::program::{ProgramContext, Vasm, MacroContext, BuiltinType, SELF_VAR_NAME};
+use super::{make_string_value_from_literal_unchecked, Identifier};
 
 #[parsable]
 pub struct ParsedMacroExpression {
@@ -63,7 +63,9 @@ impl ParsedMacroExpression {
                 make_string_value_from_literal_unchecked(field_info.name.as_str(), context)
             }, context),
             MacroExpressionToken::FieldDefaultExpression => m.access_current_field(|field_info, context| {
-                field_info.default_value.clone()
+                let self_var = context.access_var(&Identifier::unlocated("result")).unwrap();
+
+                field_info.get_default_vasm(&self_var, context)
             }, context),
             MacroExpressionToken::VariantCount => m.access_current_type(|type_unwrapped, context| {
                 context.vasm()

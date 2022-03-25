@@ -2,7 +2,7 @@ use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher},
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility, TypeCategory};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility, TypeCategory, VariableInfo, NONE_METHOD_NAME};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -53,7 +53,7 @@ pub struct FieldInfo {
     pub ty: Type,
     pub visibility: FieldVisibility,
     pub offset: usize,
-    pub default_value: Vasm,
+    pub default_value: Option<Link<FunctionBlueprint>>,
     pub is_required: bool
 }
 
@@ -119,6 +119,22 @@ impl TypeBlueprint {
         self.static_methods.clear();
         self.dynamic_methods.clear();
         self.event_callbacks.clear();
+    }
+}
+
+impl FieldInfo {
+    pub fn get_default_vasm(&self, object_var: &VariableInfo, context: &ProgramContext) -> Vasm {
+        let object_type = &object_var.ty();
+        let field_type = self.ty.replace_parameters(Some(&object_type), &[]);
+        let mut vasm = match &self.default_value {
+            Some(function_wrapped) => context.vasm().call_function_named(Some(&object_type), function_wrapped, &[], vec![
+                context.vasm().get_tmp_var(&object_var)
+            ]),
+            None => context.vasm().call_static_method(&field_type, NONE_METHOD_NAME, &[], vec![], context),
+        };
+
+        vasm = vasm.set_type(field_type);
+        vasm
     }
 }
 

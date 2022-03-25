@@ -30,7 +30,7 @@ export view Grid {
     title: string = none,
     title_size: DisplaySize = 0.5h,
     title_color: Color = Color::black(),
-    title_font: Font = DEFAULT_FONT,
+    title_font: Font = DEFAULT_TEXT_FONT,
     direction: GridDirection = GridDirection::TopToBottom,
     allow_scroll: bool = true,
     scroll_bar_size: DisplaySize = .03m,

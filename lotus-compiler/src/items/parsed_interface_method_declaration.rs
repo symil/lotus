@@ -46,6 +46,7 @@ impl ParsedInterfaceMethodDeclaration {
                 dynamic_index: None,
                 is_autogen: false,
             }),
+            is_default_function: false,
             body: FunctionBody::Empty
         };
 

@@ -107,7 +107,7 @@ impl ParsedLoadDirective {
                             context.errors.generic(self, format!("missing field `{}`", field.name.as_str()));
                         }
 
-                        Some(field.default_value.clone())
+                        Some(field.get_default_vasm(&object_var, context))
                     },
                 };
 

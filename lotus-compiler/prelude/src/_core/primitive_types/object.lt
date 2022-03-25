@@ -39,13 +39,15 @@ export class Object extends any {
     }
 
     autogen static __default() -> Self {
-        let obj = Self::__create();
+        // IMPORTANT: THE NAME OF THE `result` VARIABLE MUST NOT BE CHANGED
+        // IT IS USED INTERNALLY BY THE COMPILER TO MAKE THIS SPECIFIC FUNCTION WORK
+        let result = Self::__create();
 
         iter_fields {
-            obj.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
+            result.#FIELD_NAME = #FIELD_DEFAULT_EXPRESSION;
         }
 
-        obj
+        result
     }
 
     autogen static __none() -> Self {{

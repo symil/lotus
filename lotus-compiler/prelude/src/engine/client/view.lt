@@ -1,4 +1,5 @@
 export class View {
+    _data: Object = none,
     _client: Client = Client::get(),
     _parent: View = none,
     _disabled: bool = false,

@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, rc::Rc, iter::FromIterator};
 use colored::Colorize;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{parsable, ItemLocation};
-use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent}};
+use crate::{items::ParsedTypeQualifier, program::{OBJECT_CREATE_METHOD_NAME, ProgramContext, Type, VariableInfo, VariableKind, Vasm, TypeContent, NONE_METHOD_NAME}};
 use super::{ParsedExpression, Identifier, ParsedObjectInitializationItem, ParsedType, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket};
 
 #[parsable]
@@ -78,7 +78,7 @@ pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items:
         .set_type(&object_type);
 
     if let TypeContent::Actual(info) = object_type.content() {
-        let object_var = VariableInfo::tmp("object", context.int_type());
+        let object_var = VariableInfo::tmp("object", object_type.clone());
         let type_unwrapped = info.type_blueprint.borrow();
 
         if type_unwrapped.is_class() {
@@ -109,7 +109,7 @@ pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items:
                 let is_value_specified = specified_value.is_some();
                 let init_vasm = match specified_value {
                     Some(field_vasm) => field_vasm,
-                    None => field_info.default_value.replace_parameters(Some(&object_type), &[])
+                    None => field_info.get_default_vasm(&object_var, context)
                 };
 
                 if field_info.is_required && !is_value_specified {

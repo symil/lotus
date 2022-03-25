@@ -16,6 +16,7 @@ pub struct FunctionBlueprint {
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub closure_details: Option<ClosureDetails>,
     pub method_details: Option<MethodDetails>,
+    pub is_default_function: bool,
     pub body: FunctionBody
 }
 
@@ -56,6 +57,7 @@ impl FunctionBlueprint {
             owner_interface: None,
             closure_details: None,
             method_details: None,
+            is_default_function: false,
             body: FunctionBody::Empty
         }
     }
