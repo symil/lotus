@@ -1,45 +1,32 @@
-export view Button {
-    text: string = "",
-    text_color: Color = Color::black(),
-    text_size: DisplaySize = DEFAULT_BUTTON_TEXT_SIZE,
-    text_font: Font = DEFAULT_TEXT_FONT,
-    background_color : Color = DEFAULT_BACKGROUND_COLOR,
-    border_width : DisplaySize = DEFAULT_BORDER_WIDTH,
-    border_radius: DisplaySize = DEFAULT_BORDER_RADIUS,
-    disabled: bool = false,
-    on_click: fn(Client) = none,
-
+export class Button {
     @OnRender {
-        self.add_to_focus_chain()
-            .background_color(self.background_color)
-            .text(self.text)
-            .text_color(self.text_color)
-            .text_size(self.text_size)
-            .text_font(self.text_font)
-            .border_color(self.text_color)
-            .border_width(self.border_width)
-            .border_radius(self.border_radius)
-            .focus_border_width(self.border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
+        evt.view
+            .add_to_focus_chain()
+            .background_color(DEFAULT_BACKGROUND_COLOR)
+            .text_color(DEFAULT_TEXT_COLOR)
+            .text_size(DEFAULT_BUTTON_TEXT_SIZE)
+            .text_font(DEFAULT_TEXT_FONT)
+            .border_color(DEFAULT_TEXT_COLOR)
+            .border_width(DEFAULT_BORDER_WIDTH)
+            .border_radius(DEFAULT_BORDER_RADIUS)
+            .focus_border_width(DEFAULT_BORDER_WIDTH.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .disabled_overlay_color(DEFAULT_DISABLED_OVERLAY_COLOR)
             .disabled_overlay_alpha(DEFAULT_DISABLED_OVERLAY_ALPHA)
             .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
             .focus_background_color(Color::orange())
-            .set_disabled(self.disabled)
-    }
-
-    @OnClick {
-        if self.on_click {
-            (self.on_click)(evt.client)
-        }
     }
 
     @OnKeyDown {
-        check self.is_focused();
-
-        if evt.key == Key::Enter && self.on_click {
-            (self.on_click)(evt.client);
+        if evt.view._focused && evt.key == Key::Enter && evt.has_no_modifier() {
+            OnClick {
+                ..evt,
+                action: MouseAction::Down,
+                button: MouseButton::Left,
+                x: evt.view._rect.x,
+                y: evt.view._rect.y,
+            }.emit([self]);
         }
     }
 }

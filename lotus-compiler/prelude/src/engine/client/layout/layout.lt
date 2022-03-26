@@ -235,7 +235,6 @@ pub class Layout {
     text_italic(text_italic: bool) -> Self { self._get_last_view().text_italic(text_italic); self }
     text_cursor_index(text_cursor_index: int) -> Self { self._get_last_view().text_cursor_index(text_cursor_index); self }
     shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._get_last_view().shrink_to_fit_text(shrink_to_fit_text); self }
-    detectable(detectable: bool) -> Self { self._get_last_view().detectable(detectable); self }
     cursor(cursor: Cursor) -> Self { self._get_last_view().cursor(cursor); self }
 
     // GENERATION STOP

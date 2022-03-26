@@ -354,6 +354,26 @@ export class Array<T> {
         result
     }
 
+    find(predicate: fn(T)(bool)) -> T {
+        for item in self {
+            if predicate(item) {
+                return item;
+            }
+        }
+
+        none
+    }
+
+    find_index(predicate: fn(T)(bool)) -> int {
+        for [i, item] in self {
+            if predicate(item) {
+                return i;
+            }
+        }
+
+        none
+    }
+
     filter(callback: fn(T, int)(bool)) -> T[] {
         let result : T[] = [];
 

@@ -1,0 +1,47 @@
+pub class BlazeMessage {
+    kind: MessageKind = MessageKind::Info,
+    content: string = "",
+    ok_button: BlazeMessageOkButton = BlazeMessageOkButton { message: self },
+
+    @OnRender {
+        let (text_color, background_color) = get_colors_from_message_kind(self.kind);
+
+        evt.view.scale(0.35)
+            .layout()
+            .background_color(background_color)
+            .border_radius(10)
+            .border_color(text_color)
+            .border_width(1r)
+            .top_to_bottom()
+            .push(none)
+            .text(self.content)
+            .text_color(text_color)
+            .text_size(0.1h)
+            .force(4)
+            .push(self.ok_button)
+    }
+
+    @OnPostRender {
+        
+    }
+}
+
+pub class BlazeMessageOkButton {
+    message: BlazeMessage,
+
+    @OnRender {
+        evt.view.text("Ok")
+    }
+
+    @OnClick {
+        evt.client.send_request(AcknowledgeRequest { message: self.message });
+    }
+}
+
+pub class BlazeMessageAcknowledgeRequest {
+    message: BlazeMessage,
+
+    @OnUserRequest {
+        evt.user.messages.remove(self.message);
+    }
+}

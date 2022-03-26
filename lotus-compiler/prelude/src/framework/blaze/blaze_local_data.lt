@@ -3,5 +3,5 @@ export class BlazeLocalData {
 }
 
 export class BlazeUiLocalData {
-    username: TextBoxData,
+    username_textbox: TextBox,
 }

@@ -2,4 +2,5 @@ pub event ClientEvent {
     client: Client,
     user: #USER_TYPE,
     local_data: #LOCAL_DATA_TYPE,
+    view: View = none,
 }

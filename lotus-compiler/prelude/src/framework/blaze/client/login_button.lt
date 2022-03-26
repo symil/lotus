@@ -13,7 +13,7 @@ pub fn send_login_request(client: Client) {
         return;
     }
 
-    let username = client.local_data().ui.username.text;
+    let username = client.local_data().ui.username_textbox.text;
 
     if (!username.is_empty()) {
         client.set_local_storage_item(USERNAME_LOCAL_STORAGE_KEY, username);
@@ -25,11 +25,11 @@ pub fn send_login_request(client: Client) {
 
 fn login_request_callback(success: bool, client: Client) {
     if success {
-        client.local_data().ui.username.clear();
+        client.local_data().ui.username_textbox.clear();
         client.focus(none);
     }
 }
 
 pub fn is_login_button_disabled(client: Client) -> bool {
-    client.local_data().ui.username.text.is_empty()
+    client.local_data().ui.username_textbox.text.is_empty()
 }
