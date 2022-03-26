@@ -1,3 +1,2 @@
 export event OnFocus extends ClientEvent {
-    view: View,
 }

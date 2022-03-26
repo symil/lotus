@@ -36,12 +36,13 @@ export class Client {
     _local_storage: LocalStorage = LocalStorage,
 
     // Interaction stuff
-    _focus_chain: Object[] = [],
+    _focus_chain: View[] = [],
     _hash_to_view: Map<int, View> = Map::new(),
-    _hovered_view_stack: HoveredViewStack = HoveredViewStack,
-    _focused_view_stack: FocusedViewStack = FocusedViewStack,
-    _pressed_view_stack: PressedViewStack = PressedViewStack,
-    _dragged_view_stack: DraggedViewStack = DraggedViewStack,
+    _hovered_view_stack: ViewStack = ViewStack,
+    _focused_view_stack: ViewStack = ViewStack,
+    _pressed_view_stack: ViewStack = ViewStack,
+    _dragged_view_stack: ViewStack = ViewStack,
+    _enabled_view_stack: ViewStack = ViewStack,
     _press_position: Vector = none,
     _dragging: bool = false,
 
@@ -212,6 +213,7 @@ export class Client {
         self._focused_view_stack.clear();
         self._pressed_view_stack.clear();
         self._dragged_view_stack.clear();
+        self._enabled_view_stack.clear();
     }
 
     _detect_hovered_views() {
@@ -220,7 +222,7 @@ export class Client {
         let stack : View[] = [];
 
         for view in self._all_views {
-            let hovered = view.detectable && !view.disabled && view.rect.contains(x, y);
+            let hovered = view.is_pointer_visible() && !view.is_disabled() && view._rect.contains(x, y);
 
             if hovered {
                 stack.push(view);
@@ -228,7 +230,13 @@ export class Client {
         }
 
         stack.reverse_in_place()
-            .sort_in_place((a, b) => (a.rect.z - b.rect.z).to_int());
+            .sort_in_place((a, b) => (b.rect().z - a.rect().z).to_int());
+
+        let first_opaque_index = stack.find_index(view => view.is_pointer_opaque());
+
+        if first_opaque_index {
+            stack = stack.slice(0, first_opaque_index + 1);
+        }
         
         self._hovered_view_stack.set_from_array(stack);
     }
@@ -238,6 +246,7 @@ export class Client {
         self._focused_view_stack.fill_from_hashes(self._all_views);
         self._pressed_view_stack.fill_from_hashes(self._all_views);
         self._dragged_view_stack.fill_from_hashes(self._all_views);
+        self._enabled_view_stack.set_from_array(self._all_views.filter(view => !view.is_disabled()).reverse_in_place());
     }
 
     _post_render() {
@@ -257,15 +266,15 @@ export class Client {
         let cursor = Cursor::Default;
 
         for view in self._all_views {
-            if view.disabled {
+            if view.is_disabled() {
                 view._graphics.set(view._disabled_graphics);
             }
 
-            if view.focused {
+            if view.is_focused() {
                 view._graphics.set(view._focused_graphics);
             }
 
-            if view.hovered {
+            if view.is_hovered() {
                 view._graphics.set(view._hovered_graphics);
 
                 if view._graphics.cursor {
@@ -273,7 +282,7 @@ export class Client {
                 }
             }
 
-            let draw_primitive = view._graphics.__to_draw_primitive(view.rect, self._virtual_to_real_ratio);
+            let draw_primitive = view._graphics.__to_draw_primitive(view._rect, self._virtual_to_real_ratio);
 
             self._draw_primitives.push(draw_primitive);
         }
@@ -300,37 +309,46 @@ export class Client {
         for event in self._window_events {
             match event {
                 RawMouseEvent(mouse_event) => {
-                    self._cursor_position.set(mouse_event.x, mouse_event.y)
+                    self._cursor_position.set(mouse_event.x, mouse_event.y);
                     self._detect_hovered_views();
 
                     if mouse_event.action == MouseAction::Down {
-                        let event = OnMouseDown { ..client_event, ..mouse_event };
+                        let mouse_down_event = OnMouseDown { ..client_event, ..mouse_event };
 
                         self._pressed_view_stack.set_from_stack(self._hovered_view_stack);
-                        event.emit(self._hovered_view_stack.list());
-                        self.focus(event.will_be_focused);
+                        self._hovered_view_stack.emit(mouse_down_event);
+
+                        self.focus(mouse_down_event.will_be_focused);
                     } else if mouse_event.action == MouseAction::Move {
                         if self._press_position {
                             if self._dragging {
                                 let (dx, dy) = self._cursor_position - self._press_position;
+                                let drag_progress_event = OnDragProgress { ..client_event, ..mouse_event, dx, dy };
 
-                                OnDragProgress { ..client_event, ..mouse_event, dx, dy }.emit(self._dragged_view_stack.list());
+                                self._dragged_view_stack.emit(drag_progress_event);
                             } else {
+                                let drag_start_event = OnDragStart { ..client_event, ..mouse_event };
+
                                 self._dragged_view_stack.set_from_stack(self._hovered_view_stack);
                                 self._press_position = self._cursor_position.clone();
 
-                                OnDragStart { ..client_event, ..mouse_event }.emit(self._dragged_view_stack.list())
+                                self._dragged_view_stack.emit(drag_start_event);
                             }
                         }
                     } else if mouse_event.action == MouseAction::Up {
                         if self._press_position && self._dragging {
-                            OnDragEnd { ..client_event, ..mouse_event }.emit(self._dragged_view_stack.list());
+                            let drag_end_event = OnDragEnd { ..client_event, ..mouse_event };
+                            
+                            self._dragged_view_stack.emit(drag_end_event);
                         }
 
-                        let clicked_views = self._pressed_view_stack.list().filter(view => view.rect.contains(mouse_event.x, mouse_event.y));
+                        let clicked_views = self._pressed_view_stack.list().filter(view => view._rect.contains(mouse_event.x, mouse_event.y));
+                        let clicked_view_stack = ViewStack.set_from_array(clicked_views);
+                        let click_event = OnClick { ..client_event, ..mouse_event };
+                        let mouse_up_event = OnMouseUp { ..client_event, ..mouse_event };
 
-                        OnClick { ..client_event, ..mouse_event }.emit(clicked_views);
-                        OnMouseUp { ..client_event, ..mouse_event }.emit(self._hovered_view_stack.list());
+                        clicked_view_stack.emit(click_event);
+                        self._hovered_view_stack.emit(mouse_up_event);
 
                         self._dragging = false;
                         self._press_position = none;
@@ -340,16 +358,21 @@ export class Client {
                 },
                 RawKeyboardEvent(keyboard_event) => {
                     if keyboard_event.action == KeyboardAction::Down {
-                        OnKeyDown { ..client_event, ..keyboard_event }.emit(views)
+                        let key_down_event = OnKeyDown { ..client_event, ..keyboard_event };
+
+                        self._enabled_view_stack.emit(key_down_event);
                     } else if keyboard_event.action == KeyboardAction::Up {
-                        OnKeyUp { ..client_event, ..keyboard_event }.emit(views)
+                        let key_up_event = OnKeyUp { ..client_event, ..keyboard_event };
+
+                        self._enabled_view_stack.emit(key_up_event);
                     }
                 },
                 RawWheelEvent(wheel_event) => {
+                    let scroll_event = OnScroll { ..client_event, ..wheel_event };
+
                     self._cursor_position.set(wheel_event.x, wheel_event.y);
                     self._detect_hovered_views();
-
-                    OnScroll { ..client_event, ..wheel_event }.emit(self._hovered_view_stack.list());
+                    self._hovered_view_stack.emit(scroll_event);
                 }
             }
         }
@@ -370,7 +393,7 @@ export class Client {
 
         if view {
             view.finish_layouts();
-            view.data = object;
+            view._data = object;
 
             self._object_to_view.set(object, view);
             self._all_views.push(view);
@@ -403,22 +426,27 @@ export class Client {
         wasm_send_message(self._websocket_id, self._buffer.data, self._buffer.size);
     }
 
+    hovered_views() -> View[] {
+        self._hovered_view_stack.list()
+    }
+
+    focused_view() -> View {
+        self._focused_view_stack.first()
+    }
+
     focus(object: Object) {
+        let current_focused_view = self._focused_view_stack.first();
         let view = self._object_to_view.get(object);
 
-        if self._focused_view == view {
-            return;
-        }
+        self._focused_view_stack.set_from_view(view);
 
-        self._set_focused_view(view);
-
-        if (view) {
+        if view && view != current_focused_view {
             OnFocus {
                 client: self,
                 user: self._user,
                 local_data: self._local_data,
                 view
-            }.emit([view.data]);
+            }.emit([view._data]);
         }
     }
 
@@ -426,23 +454,19 @@ export class Client {
         self.focus(none);
     }
 
-    focused_item() -> Object {
-        self._focused_view.and_then(view => view.data)
+    add_to_focus_chain(view: View) {
+        self._focus_chain.push_if_not_none(view);
     }
 
-    is_focused(item: Object) -> bool {
-        self.focused_item() == item
-    }
-
-    add_to_focus_chain(object: Object) {
-        self._focus_chain.push_if_not_none(object);
+    remove_from_focus_chain(view: View) {
+        self._focus_chain.remove(view);
     }
 
     clear_focus_chain() {
         self.set_focus_chain([]);
     }
 
-    set_focus_chain(chain: Object[]) {
+    set_focus_chain(chain: View[]) {
         self.focus(none);
         self._focus_chain = chain;
     }
@@ -452,7 +476,8 @@ export class Client {
     }
 
     _focus_next_or_prev(d: int) {
-        let current_index = self._focus_chain.index_of(self._focused_view);
+        let focused_view = self._focused_view_stack.first();
+        let current_index = self._focus_chain.index_of(focused_view);
         let start_index = current_index || (d * -1);
         let chain_length = self._focus_chain.len();
 
@@ -520,10 +545,6 @@ export class Client {
 
     get_protocol() -> string {
         self._get_string_from_js(buffer => wasm_get_protocol(buffer))
-    }
-
-    get_view_local_data<T : Object>(view: View) -> T {
-        self._view_data_store.get(view)
     }
 
     // LOCAL STORAGE API

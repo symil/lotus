@@ -1,11 +1,15 @@
+enum PointerBehavior {
+    None,
+    Visible,
+    Opaque
+}
+
 export class View {
-    rect: Rect = none,
-    data: Object = none,
-    hovered: bool = false,
-    focused: bool = false,
-    disabled: bool = false,
-    detectable: bool = true,
     _client: Client = Client::get(),
+    _data: Object = none,
+    _rect: Rect = none,
+    _disabled: bool = false,
+    _pointer_behavior: PointerBehavior = PointerBehavior::Visible,
     _parent: View = none,
     _graphics: Graphics = Graphics,
     _hovered_graphics: Graphics = none,
@@ -15,7 +19,7 @@ export class View {
     _layouts: Layout[] = []
 
     get_approximate_hash() -> int {
-        let rect = self.rect;
+        let rect = self._rect;
         let graphics = self._graphics;
 
         let hash = self.__get_type_id()
@@ -32,23 +36,11 @@ export class View {
     }
 
     rect() -> Rect {
-        self.rect
+        self._rect
     }
 
     children() -> View[] {
         self._children
-    }
-
-    emit_event(event: Event) {
-        event.emit(self.get_enabled_stack());
-    }
-
-    enabled_or_none() -> View {
-        if !self || self.is_disabled() {
-            none
-        } else {
-            self
-        }
     }
 
     get_descendants<T>(callback: fn(View)(T)) -> T[] {
@@ -80,14 +72,6 @@ export class View {
         result
     }
 
-    get_enabled_stack() -> View[] {
-        if !self {
-            return [];
-        }
-
-        self.get_ancestors().filter(view => !view.is_disabled())
-    }
-
     _traverse<T>(acc: T, callback: fn(T, View)) {
         callback(acc, self);
 
@@ -99,8 +83,8 @@ export class View {
     add_child(view: View) -> Self {
         check view && view != self;
 
-        if !view.rect {
-            view.rect = self.rect.clone();
+        if !view._rect {
+            view._rect = self._rect.clone();
         }
 
         view._parent = self;
@@ -142,16 +126,33 @@ export class View {
     }
 
     is_hovered() -> bool {
-        !self.is_disabled() && self._client.hovered_view() == self
+        self._client.hovered_views().includes(self)
+    }
+
+    is_focused() -> bool {
+        self._client.focused_view() == self
     }
 
     is_disabled() -> bool {
-        !self || self.disabled
+        self._disabled
     }
 
     set_disabled(value: bool) -> Self {
-        self.disabled = value;
+        self._disabled = value;
         self
+    }
+
+    set_pointer_behavior(value: PointerBehavior) -> Self {
+        self._pointer_behavior = value;
+        self
+    }
+
+    is_pointer_visible() -> bool {
+        self._pointer_behavior != PointerBehavior::None
+    }
+
+    is_pointer_opaque() -> bool {
+        self._pointer_behavior == PointerBehavior::Opaque
     }
 
     add_to_focus_chain() -> Self {
@@ -160,32 +161,32 @@ export class View {
     }
 
     z_index(z_index: float) -> Self {
-        self.rect.z = z_index;
+        self._rect.z = z_index;
         self
     }
 
     scale(ratio: float) -> Self {
-        self.rect = self.rect.scale(ratio);
+        self._rect = self._rect.scale(ratio);
         self
     }
 
     strip_to_match_aspect_ratio(aspect_ratio: float) -> Self {
-        self.rect = self.rect.strip_to_match_aspect_ratio(aspect_ratio);
+        self._rect = self._rect.strip_to_match_aspect_ratio(aspect_ratio);
         self
     }
 
     set_rect(rect: Rect) -> Self {
-        self.rect = rect.clone();
+        self._rect = rect.clone();
         self
     }
 
     set_size(width: float, height: float) -> Self {
-        self.rect = Rect::from_size(width, height);
+        self._rect = Rect::from_size(width, height);
         self
     }
 
     has_same_rect(other: View) {
-        self.rect == other.rect
+        self._rect == other._rect
     }
 
     _hovered_graphics() -> Graphics {

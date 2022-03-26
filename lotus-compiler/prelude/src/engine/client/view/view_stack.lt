@@ -36,7 +36,7 @@ pub class ViewStack {
         for view in all_views {
             let hash = view.get_approximate_hash();
 
-            if !view.disabled && self.hashes.includes(hash) {
+            if !view._disabled && self.hashes.includes(hash) {
                 hashes.push(hash);
                 views.push(view);
             }
@@ -59,13 +59,14 @@ pub class ViewStack {
         self._on_add_all();
     }
 
-    set_from_array(views: View[]) {
+    set_from_array(views: View[]) -> Self {
         self.clear();
 
         self.hashes = views.map(view => view.get_approximate_hash());
         self.views = views.clone();
 
         self._on_add_all();
+        self
     }
 
     set_from_view(view: View) {
@@ -80,4 +81,20 @@ pub class ViewStack {
     list() -> View[] {
         self.views
     }
+
+    first() -> View {
+        self.views.first()
+    }
+
+    includes(view: View) -> bool {
+        self.views.includes(view)
+    }
+
+    emit(event: ClientEvent) {
+        event.emit(self.views, set_event_view);
+    }
+}
+
+fn set_event_view(event: ClientEvent, target: Object) {
+    event.view = event.client.get_view(target);
 }

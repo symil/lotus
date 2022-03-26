@@ -41,7 +41,7 @@ pub class TextBox {
     }
 
     @OnKeyDown {
-        check evt.client.is_focused(self);
+        check evt.view._focused;
 
         let ctrl = evt.ctrl_key;
 
@@ -56,8 +56,8 @@ pub class TextBox {
                     ..evt,
                     action: MouseAction::Down,
                     button: MouseButton::Left,
-                    x: view.rect.x,
-                    y: view.rect.y,
+                    x: view._rect.x,
+                    y: view._rect.y,
                 }.emit([self.enter_target]);
             }
             intercept;

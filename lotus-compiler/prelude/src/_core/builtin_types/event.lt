@@ -7,8 +7,8 @@ type EventCallbackMap = Map<int, Map<int, EventCallback[]>>;
 sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>>::new();
 
 export class Event extends Object {
-    autogen emit(targets: Object[]) -> Self {
-        emit_event(self, targets);
+    autogen emit(targets: Object[], pre_process_callback: fn(Self, Object) = none) -> Self {
+        emit_event(self, targets, pre_process_callback);
         self
     }
 
@@ -40,7 +40,7 @@ sys fn sort_event_callbacks() {
     }
 }
 
-pub fn emit_event(event: Event, targets: Object[]) {
+pub fn emit_event<E : Event>(event: E, targets: Object[], pre_process_callback: fn(E, Object)) {
     let output = EventOutput;
     let event_type_id = event.__get_type_id();
     let event_map = EVENT_CALLBACKS.get(event_type_id);
@@ -53,18 +53,22 @@ pub fn emit_event(event: Event, targets: Object[]) {
         let callback_map = event_entry.value;
 
         for target in targets {
-            check trigger_event_callbacks(callback_map, event, target, output);
+            check trigger_event_callbacks(callback_map, event, target, output, pre_process_callback);
         }
 
-        check trigger_event_callbacks(callback_map, event, event, output);
+        check trigger_event_callbacks(callback_map, event, event, output, none);
     }
 }
 
-pub fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, output: EventOutput) -> bool {
+pub fn trigger_event_callbacks<E : Event>(callback_map: Map<TargetTypeId, EventCallback[]>, event: E, target: Object, output: EventOutput, pre_process_callback: fn(E, Object)) -> bool {
     let callback_list = callback_map.get(target.__get_type_id());
 
     if !callback_list {
         return true;
+    }
+
+    if pre_process_callback {
+        pre_process_callback(event, target);
     }
 
     for callback in callback_list {

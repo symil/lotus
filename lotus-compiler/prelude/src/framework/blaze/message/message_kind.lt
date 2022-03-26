@@ -1,0 +1,15 @@
+export enum MessageKind {
+    Info,
+    Success,
+    Warning,
+    Error,
+}
+
+pub fn get_colors_from_message_kind(kind: MessageKind) -> (Color, Color) {
+    match kind {
+        MessageKind::Info => (#00529B, #BDE5F8),
+        MessageKind::Success => (#4F8A10, #DFF2BF),
+        MessageKind::Warning => (#9F6000, #FEEFB3),
+        MessageKind::Error => (#D8000C, #FFD2D2),
+    }
+}

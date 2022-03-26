@@ -1,4 +1,0 @@
-pub class HoveredViewStack extends ViewStack {
-    self.on_add = view => view.hovered = true
-    self.on_remove = view => view.hovered = false
-}
