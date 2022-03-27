@@ -378,25 +378,33 @@ export class Client {
         }
     }
 
-    render(object: Object, rect: Rect = none) {
-        check object;
+    render(object: Object, rect: Rect = none, view: View = none) {
+        view = view.or_else(() => View);
+        rect = rect.or(self._window_rect);
 
-        let view = View.set_rect(rect || self._window_rect);
-        let render_event = OnRender {
-            client: self,
-            user: self._user,
-            local_data: self._local_data,
-            view: View
-        };
+        if object {
+            view.set_rect(rect);
+            view.set_data(object);
 
-        let view = render_event.emit([object]).view;
+            let render_event = OnRender {
+                client: self,
+                user: self._user,
+                local_data: self._local_data,
+                view
+            };
+
+            view = render_event.emit([object]).view;
+        }
 
         if view {
             view.finish_layouts();
-            view._data = object;
+            view.set_data(object);
 
-            self._object_to_view.set(object, view);
             self._all_views.push(view);
+            
+            if object {
+                self._object_to_view.set(object, view);
+            }
         }
     }
 
@@ -434,9 +442,8 @@ export class Client {
         self._focused_view_stack.first()
     }
 
-    focus(object: Object) {
+    focus(view: View) {
         let current_focused_view = self._focused_view_stack.first();
-        let view = self._object_to_view.get(object);
 
         self._focused_view_stack.set_from_view(view);
 

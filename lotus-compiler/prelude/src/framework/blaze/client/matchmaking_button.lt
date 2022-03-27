@@ -1,27 +1,18 @@
-pub view MatchmakingButton {
+pub class MatchmakingButton extends Button {
     @OnRender {
-        let button = match evt.client.user().is_searching_for_game {
-            true => Button {
-                text: "Cancel search",
-                on_click: cancel_search
-            },
-            false => Button {
-                text: "Search for game",
-                on_click: search_for_game
-            },
+        let text = match evt.user.is_searching_for_game {
+            true => "Cancel search",
+            false => "Search for game",
         };
 
-        button.text_size = .4h;
-
-        self.layout()
-            .push(button);
+        evt.view
+            .text(text)
+            .text_size(0.4h)
     }
-}
 
-fn search_for_game(client: Client) {
-    client.send_request(MatchmakingRequest { start: true });
-}
+    @OnClick {
+        let start = !evt.user.is_searching_for_game;
 
-fn cancel_search(client: Client) {
-    client.send_request(MatchmakingRequest { start: false });
+        evt.client.send_request(MatchmakingRequest { start });
+    }
 }

@@ -1,7 +1,7 @@
 const HEADER_SIZE = .12h;
 const FOOTER_SIZE = .12h;
 
-export view LobbyScreen {
+export class LobbyScreen {
     title: string,
     background_color : Color,
     text_font: Font,
@@ -15,8 +15,8 @@ export view LobbyScreen {
             false => LoginPanel,
         };
 
-        self.background_color(self.background_color);
-        self.layout()
+        evt.view.layout()
+            .background_color(self.background_color)
             .top_to_bottom()
             .push(header)
             .height(HEADER_SIZE)

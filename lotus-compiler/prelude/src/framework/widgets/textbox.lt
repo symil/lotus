@@ -9,6 +9,11 @@ pub class TextBox {
     background_color: Color = Color::white(),
     enter_target: Object = none,
 
+    clear() {
+        self.text = "";
+        self.cursor_index = 0;
+    }
+
     @OnRender {
         let text = self.text;
         let cursor_index = self.cursor_index;
@@ -41,7 +46,7 @@ pub class TextBox {
     }
 
     @OnKeyDown {
-        check evt.view._focused;
+        check evt.view.is_focused();
 
         let ctrl = evt.ctrl_key;
 

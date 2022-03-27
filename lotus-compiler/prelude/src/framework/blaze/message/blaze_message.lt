@@ -22,7 +22,7 @@ pub class BlazeMessage {
     }
 
     @OnPostRender {
-        
+        evt.client.focus(evt.view)
     }
 }
 

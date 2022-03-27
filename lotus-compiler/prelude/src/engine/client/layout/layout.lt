@@ -52,6 +52,8 @@ pub class Layout {
         for root in self._root_list {
             root.layout(self.view.rect());
         }
+
+        self._root_list.clear();
     }
 
     push(view: View) -> Self {

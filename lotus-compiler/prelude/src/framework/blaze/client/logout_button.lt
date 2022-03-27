@@ -1,16 +1,10 @@
-pub view LogoutButton {
+pub class LogoutButton extends Button {
     @OnRender {
-        let button = Button {
-            text: "Log out",
-            on_click: send_logout_request
-        };
-
-        self.layout()
-            .push(button)
+        evt.view.text("Log out");
     }
-}
 
-fn send_logout_request(client: Client) {
-    client.remove_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);
-    client.send_request(LogoutRequest);
+    @OnClick {
+        evt.client.remove_local_storage_item(USERNAME_LOCAL_STORAGE_KEY);
+        evt.client.send_request(LogoutRequest);
+    }
 }

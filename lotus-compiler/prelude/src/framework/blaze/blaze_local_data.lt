@@ -3,5 +3,7 @@ export class BlazeLocalData {
 }
 
 export class BlazeUiLocalData {
-    username_textbox: TextBox,
+    username_textbox: UsernameTextBox,
+    login_button: LoginButton,
+    logout_button: LogoutButton
 }

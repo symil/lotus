@@ -1,6 +1,6 @@
 const TOOLTIP_MARGIN = 10f;
 
-export view Tooltip {
+export class Tooltip {
     @OnRender {
         self.detectable(false);
         

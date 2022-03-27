@@ -43,6 +43,10 @@ export class View {
         self._children
     }
 
+    data() -> Object {
+        self._data
+    }
+
     get_descendants<T>(callback: fn(View)(T)) -> T[] {
         let accumulator = CollectAccumulator<T> {
             result: [],
@@ -123,6 +127,8 @@ export class View {
         for layout in self._layouts {
             layout.finish();
         }
+
+        self._layouts.clear();
     }
 
     is_hovered() -> bool {
@@ -135,6 +141,11 @@ export class View {
 
     is_disabled() -> bool {
         self._disabled
+    }
+
+    set_data(object: Object) -> Self {
+        self._data = object;
+        self
     }
 
     set_disabled(value: bool) -> Self {

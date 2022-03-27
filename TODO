@@ -177,6 +177,7 @@
 [X] Make so `reverse` and `sort` first clone the array
 [X] Allow generic types to inherit from other types
 [X] Make `self` available in field default values
+[ ] Add event emission options to specift pre-process callback & default interception behavior
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 

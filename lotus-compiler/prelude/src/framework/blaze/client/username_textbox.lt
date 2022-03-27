@@ -1,11 +1,7 @@
-pub view UsernameTextBox {
-    @OnRender {
-        let textbox = TextBox {
-            local_data: evt.local_data.ui.username,
-            placeholder: "Username",
-            on_enter: send_login_request
-        };
+pub class UsernameTextBox extends TextBox {
+    self.placeholder = "Username"
 
-        self.add_child(textbox);
+    @OnRender {
+        self.enter_target = evt.local_data.ui.login_button;
     }
 }

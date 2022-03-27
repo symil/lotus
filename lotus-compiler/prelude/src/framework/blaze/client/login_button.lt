@@ -1,35 +1,29 @@
-pub view LoginButton {
+pub class LoginButton extends Button {
     @OnRender {
-        self.add_child(Button {
-            text: "Log int",
-            disabled: is_login_button_disabled(evt.client),
-            on_click: send_login_request,
-        });
-    }
-}
-
-pub fn send_login_request(client: Client) {
-    if is_login_button_disabled(client) {
-        return;
+        evt.view
+            .text("Log in")
+            .set_disabled(is_login_button_disabled(evt.client));
     }
 
-    let username = client.local_data().ui.username_textbox.text;
+    @OnClick {
+        let username = evt.client.local_data().ui.username_textbox.text;
 
-    if (!username.is_empty()) {
-        client.set_local_storage_item(USERNAME_LOCAL_STORAGE_KEY, username);
-        client.send_request_with_callback(LoginRequest {
-            username
-        }, login_request_callback);
+        if (!username.is_empty()) {
+            evt.client.set_local_storage_item(USERNAME_LOCAL_STORAGE_KEY, username);
+            evt.client.send_request_with_callback(LoginRequest {
+                username
+            }, login_request_callback);
+        }
     }
 }
 
 fn login_request_callback(success: bool, client: Client) {
     if success {
         client.local_data().ui.username_textbox.clear();
-        client.focus(none);
+        client.clear_focus()
     }
 }
 
-pub fn is_login_button_disabled(client: Client) -> bool {
+fn is_login_button_disabled(client: Client) -> bool {
     client.local_data().ui.username_textbox.text.is_empty()
 }
