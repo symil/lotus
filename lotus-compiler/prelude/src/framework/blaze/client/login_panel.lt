@@ -1,13 +1,12 @@
-pub view LoginPanel {
+pub class LoginPanel {
     @OnRender {
-        self.background_color(Color::hot_pink())
-
-        self.layout()
+        evt.view.layout()
+            .background_color(Color::hot_pink())
             .center_to_bottom()
             .inner_margin(20)
-            .push(UsernameTextBox)
+            .push(evt.local_data.ui.username_textbox)
             .height(.15h)
             .aspect_ratio(5)
-            .push(LoginButton)
+            .push(evt.local_data.ui.login_button)
     }
 }

@@ -91,7 +91,9 @@ pub class ViewStack {
     }
 
     emit(event: ClientEvent) {
-        event.emit(self.views, set_event_view);
+        let items = self.views.filter_map(view => view._data);
+
+        event.emit(items, set_event_view);
     }
 }
 
