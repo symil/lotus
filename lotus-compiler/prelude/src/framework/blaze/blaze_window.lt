@@ -1,19 +1,16 @@
-export view BlazeWindow {
-    background_color : Color = Color::white(),
+export class BlazeWindow {
     title: string = "Game",
-    title_color : Color = Color::black(),
-    text_font: Font = DEFAULT_TEXT_FONT,
 
     @OnRender {
-        let screen = match !!evt.user.game {
-            true => GameScreen,
-            false => LobbyScreen { ..self },
-        };
+        evt.local_data.game_name = self.title;
 
-        self.background_color(Color::white())
-            .add_child(screen)
-            .add_child(ModalList)
-            .add_child(Tooltip)
+        let screen = evt.user.game || LobbyScreen;
+
+        evt.view
+            .background_color(Color::white())
+            .render_child(screen)
+            .render_children(evt.user.messages)
+            // .render_child(Tooltip)
         
         // self.add_child(TestImage.set_rect(Rect::new(250, 500, 300, 300)));
     }

@@ -2,27 +2,20 @@ const HEADER_SIZE = .12h;
 const FOOTER_SIZE = .12h;
 
 export class LobbyScreen {
-    title: string,
-    background_color : Color,
-    text_font: Font,
-    title_color : Color,
-
     @OnRender {
-        let header = LobbyHeader { ..self };
-        let footer = LobbyFooter;
         let middle_panel = match evt.user.is_logged() {
             true => GameItemSelectionPanel,
             false => LoginPanel,
         };
 
         evt.view.layout()
-            .background_color(self.background_color)
+            .background_color(Color::light_green())
             .top_to_bottom()
-            .push(header)
+            .push(LobbyHeader)
             .height(HEADER_SIZE)
             .push(middle_panel)
             .force(1)
-            .push(footer)
+            .push(LobbyFooter)
             .height(FOOTER_SIZE)
     }
 

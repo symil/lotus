@@ -1,6 +1,6 @@
 pub class LayoutItem {
     parent: LayoutItem,
-    view: View = none,
+    view: View,
     rect: Rect = none,
     width: float = none,
     height: float = none,
@@ -13,11 +13,13 @@ pub class LayoutItem {
     sub_alignment: float = 0.5,
     children: LayoutItem[] = [],
 
-    layout(rect: Rect) {
+    render(rect: Rect) {
         self.rect = rect;
 
-        if self.view {
-            self.view.set_rect(rect);
+        if self.parent {
+            self.parent.view.render_child(self.view.data(), rect, self.view);
+        } else {
+            Client::get().render(self.view.data(), rect, self.view);
         }
 
         check self.direction;
@@ -113,7 +115,7 @@ pub class LayoutItem {
 
             let item_rect = Rect::from_top_left(item_x1, item_y1, item.width, item.height);
 
-            item.layout(item_rect);
+            item.render(item_rect);
         }
     }
 

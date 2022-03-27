@@ -32,31 +32,25 @@ pub class Layout {
 
     _get_last_view() -> View {
         self._init_root();
-        let item = self._current_item;
 
-        if !item.view {
-            item.view = View;
-            self.view.add_child(item.view);
-        }
-
-        item.view
+        self._current_item.view
     }
 
     _get_root_rect() -> Rect {
         self.view.rect()
     }
 
-    finish() {
+    render() {
         self._flush();
 
         for root in self._root_list {
-            root.layout(self.view.rect());
+            root.render(self.view.rect());
         }
 
         self._root_list.clear();
     }
 
-    push(view: View) -> Self {
+    push(object: Object) -> Self {
         self._init_root();
         check self._current_container;
 
@@ -66,8 +60,17 @@ pub class Layout {
         let aspect_ratio = last_item && last_item.aspect_ratio;
         let width = last_item && last_item.width;
         let height = last_item && last_item.height;
+        let view : View = none;
 
-        self.view.add_child(view);
+        if object is View(as_view) {
+            object = none;
+            view = as_view;
+        } else {
+            view = View;
+        }
+
+        view.set_data(object);
+
         self._current_item = LayoutItem {
             parent: container,
             view,

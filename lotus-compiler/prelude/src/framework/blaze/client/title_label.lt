@@ -1,0 +1,10 @@
+const TITLE_TEXT_SIZE = .7h;
+
+pub class TitleLabel extends Label {
+    @OnRender {
+        evt.view
+            .text(evt.local_data.game_name)
+            .text_size(TITLE_TEXT_SIZE)
+            .background_color(Color::orange())
+    }
+}

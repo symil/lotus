@@ -1,9 +1,9 @@
-pub view LobbyFooter {
+pub class LobbyFooter {
     @OnRender {
-        self.background_color(Color::green());
         check evt.user.is_logged();
         
-        self.layout()
+        evt.view.layout()
+            .background_color(Color::green())
             .outer_margin(.1h)
             .push(MatchmakingButton)
             .aspect_ratio(4)

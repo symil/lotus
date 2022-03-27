@@ -1,5 +1,4 @@
-pub view GameItemSelectionIcon {
-    icon: View,
+pub class GameItemSelectionIcon {
     category: GameItemCategory,
     item: Object,
 
@@ -14,14 +13,13 @@ pub view GameItemSelectionIcon {
             false => Color::black(),
         };
 
-        self.icon
+        evt.view
+            .render_child(self.item)
+            .last_child()
             .border_color(border_color)
             .border_width(.04h)
             .border_radius(0.1m)
             .cursor(Cursor::Pointer)
-
-        self.add_child(self.icon)
-            .z_index(1)
         
         // TODO: display selected count
     }

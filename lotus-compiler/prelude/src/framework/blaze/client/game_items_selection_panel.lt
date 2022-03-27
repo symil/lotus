@@ -1,29 +1,27 @@
-pub view GameItemSelectionPanel {
+pub class GameItemSelectionPanel {
     @OnRender {
-        let grids : Grid[] = [];
+        let grids = evt.local_data.ui.game_item_grids;
 
-        for category in evt.user.selected_game_items.keys() {
-            let grid_item_aspect_ratio : float = none;
-            let grid_items : View[] = [];
+        if !grids {
+            grids = [];
+            evt.local_data.ui.game_item_grids = grids;
 
-            for item in category.items {
-                let event = OnMakeIcon.emit([item]);
-                let icon = event.icon;
-
-                grid_item_aspect_ratio = event.aspect_ratio;
-                grid_items.push(GameItemSelectionIcon { icon, category, item });
+            for category in evt.user.selected_game_items.keys() {
+                grids.push(Grid {
+                    items: [],
+                    item_aspect_ratio: 1,
+                    background_color: Color::from_hash(category.name.hash()),
+                    margin: .25h,
+                    title: `${category.name} @sub{(pick one)}`,
+                    title_size: 0.4h,
+                    item_count_per_row: 3,
+                    item_count_per_column: 3
+                });
             }
+        }
 
-            grids.push(Grid {
-                items: grid_items,
-                item_aspect_ratio: grid_item_aspect_ratio,
-                background_color: Color::from_hash(category.name.hash()),
-                margin: .25h,
-                title: `${category.name} @sub{(pick one)}`,
-                title_size: 0.4h,
-                item_count_per_row: 3,
-                item_count_per_column: 3
-            });
+        for [i, category] in evt.user.selected_game_items.keys() {
+            grids[i].items = category.items.map(item => GameItemSelectionIcon { category, item });
         }
 
         let master_grid = Grid {
@@ -31,7 +29,8 @@ pub view GameItemSelectionPanel {
             item_count_per_column: 1,
         };
 
-        self.background_color(Color::gray());
-        self.layout().push(master_grid);
+        evt.view
+            .background_color(Color::gray())
+            .render_child(master_grid);
     }
 }

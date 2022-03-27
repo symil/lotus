@@ -1,5 +1,5 @@
 #USER_TYPE = Object
 #WORLD_TYPE = Object
-#WINDOW_TYPE = View
+#WINDOW_TYPE = Object
 #LOCAL_DATA_TYPE = Object
 #GAME_INSTANCE_TYPE = Object

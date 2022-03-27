@@ -1,29 +1,8 @@
 pub class ViewStack {
     hashes: int[] = [],
     views: View[] = [],
-    on_add: fn(View) = none,
-    on_remove: fn(View) = none
-
-    _on_add_all() {
-        if self.on_add {
-            for view in self.views {
-                (self.on_add)(view);
-            }
-        }
-    }
-
-    _on_remove_all() {
-        if self.on_remove {
-            for view in self.views {
-                (self.on_remove)(view);
-            }
-        }
-    }
 
     clear() {
-        self._on_remove_all();
-
-        self.hashes.clear();
         self.views.clear();
     }
 
@@ -46,8 +25,6 @@ pub class ViewStack {
 
         self.views = views;
         self.hashes = hashes;
-
-        self._on_add_all();
     }
 
     set_from_stack(stack: ViewStack) {
@@ -55,8 +32,6 @@ pub class ViewStack {
 
         self.hashes = stack.hashes.clone();
         self.views = stack.views.clone();
-
-        self._on_add_all();
     }
 
     set_from_array(views: View[]) -> Self {
@@ -64,8 +39,6 @@ pub class ViewStack {
 
         self.hashes = views.map(view => view.get_approximate_hash());
         self.views = views.clone();
-
-        self._on_add_all();
         self
     }
 

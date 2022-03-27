@@ -561,6 +561,8 @@ impl ParsedTypeDeclaration {
                             }
 
                             context.pop_scope();
+                        } else {
+                            context.errors.generic(field_name, format!("type `{}` has no field `{}`", &type_unwrapped.self_type, field_name.as_str()));
                         }
                     }
                 }

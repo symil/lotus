@@ -19,7 +19,7 @@ export class Object extends any {
     }
 
     autogen static __is(object: Object) -> bool {
-        if object.__is_none() {
+        if !object {
             return false;
         }
 

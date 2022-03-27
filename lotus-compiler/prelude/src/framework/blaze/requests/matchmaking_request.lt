@@ -2,6 +2,8 @@ export class MatchmakingRequest {
     start: bool,
 
     @OnUserRequest {
+        check evt.user.is_logged();
+
         if evt.user.game {
             evt.user.show_error(`Already in game.`);
         } else if self.start {
