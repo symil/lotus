@@ -1,3 +1,0 @@
-export event OnMakeView extends ClientEvent {
-    view: View = View,
-}

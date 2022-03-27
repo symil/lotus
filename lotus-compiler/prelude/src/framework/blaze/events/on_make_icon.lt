@@ -1,4 +1,0 @@
-export event OnMakeIcon {
-    icon: View = View,
-    aspect_ratio: float = 1
-}

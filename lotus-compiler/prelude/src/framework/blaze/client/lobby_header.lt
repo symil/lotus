@@ -1,21 +1,7 @@
-const TITLE_TEXT_SIZE = .7h;
-
-pub view LobbyHeader {
-    title: string,
-    title_color : Color,
-    text_font: Font,
-
+pub class LobbyHeader {
     @OnRender {
-        let title_label = Label {
-            text: self.title,
-            text_color: self.title_color,
-            text_font: self.text_font,
-            text_size: TITLE_TEXT_SIZE,
-            background_color: Color::orange()
-        };
-
-        self.layout()
-            .push(title_label)
+        evt.view.layout()
+            .push(TitleLabel)
             .reset()
             .right_to_left()
             .push(UsernameLabel)

@@ -1,4 +1,4 @@
-enum PointerBehavior {
+export enum PointerBehavior {
     None,
     Visible,
     Opaque
@@ -11,6 +11,7 @@ export class View {
     _disabled: bool = false,
     _pointer_behavior: PointerBehavior = PointerBehavior::Visible,
     _parent: View = none,
+    _rendered: bool = false,
     _graphics: Graphics = Graphics,
     _hovered_graphics: Graphics = none,
     _focused_graphics: Graphics = none,
@@ -84,16 +85,43 @@ export class View {
         }
     }
 
-    add_child(view: View) -> Self {
-        check view && view != self;
+    render_child(object: Object, rect: Rect = none, view: View = none) -> Self {
+        if object is View(as_view) {
+            view = as_view;
+            object = none;
+        }
 
-        if !view._rect {
-            view._rect = self._rect.clone();
+        view = view.or_else(() => View);
+
+        check view != self;
+
+        if rect {
+            view.set_rect(rect);
+        } else if !view.rect() {
+            view.set_rect(self._rect);
         }
 
         view._parent = self;
         self._children.push(view);
+        self._client.render(object, rect, view);
+
         self
+    }
+
+    render_children(objects: Object[], rect: Rect = none, view: View = none) -> Self {
+        for object in objects {
+            self.render_child(object, rect, view);
+        }
+
+        self
+    }
+
+    last_child() -> View {
+        self._children.last() || self
+    }
+
+    parent() -> View {
+        self._parent
     }
 
     is_ancestor_of(view: View) -> bool {
@@ -123,9 +151,9 @@ export class View {
         layout
     }
 
-    finish_layouts() {
+    render_layouts() {
         for layout in self._layouts {
-            layout.finish();
+            layout.render();
         }
 
         self._layouts.clear();
@@ -137,6 +165,11 @@ export class View {
 
     is_focused() -> bool {
         self._client.focused_view() == self
+    }
+
+    focus() -> Self {
+        self._client.focus(self);
+        self
     }
 
     is_disabled() -> bool {
@@ -198,6 +231,14 @@ export class View {
 
     has_same_rect(other: View) {
         self._rect == other._rect
+    }
+
+    mark_as_rendered() {
+        self._rendered = true;
+    }
+
+    has_been_rendered() -> bool {
+        self._rendered
     }
 
     _hovered_graphics() -> Graphics {

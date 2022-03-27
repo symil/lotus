@@ -1,9 +1,11 @@
 export class BlazeLocalData {
-    ui: BlazeUiLocalData
+    game_name: string = "Game",
+    ui: BlazeUiLocalData = BlazeUiLocalData
 }
 
 export class BlazeUiLocalData {
-    username_textbox: UsernameTextBox,
-    login_button: LoginButton,
-    logout_button: LogoutButton
+    username_textbox: UsernameTextBox = UsernameTextBox,
+    login_button: LoginButton = LoginButton,
+    logout_button: LogoutButton = LogoutButton,
+    game_item_grids: Grid[] = none
 }

@@ -42,7 +42,7 @@ pub class TextBox {
     }
 
     @OnMouseDown {
-        evt.will_be_focused = self;
+        evt.will_be_focused = evt.view;
     }
 
     @OnKeyDown {

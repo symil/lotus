@@ -2,13 +2,11 @@ const TOOLTIP_MARGIN = 10f;
 
 export class Tooltip {
     @OnRender {
-        self.detectable(false);
-        
-        let target = evt.client.hovered_view();
-        check target;
+        let target = evt.client.hovered_views().first();
+        check target && target.data();
 
         let event = OnMakeTooltip;
-        event.emit([target]);
+        event.emit([target.data()]);
         let tooltip = event.view;
 
         check tooltip;
@@ -30,6 +28,6 @@ export class Tooltip {
         tooltip_rect.x = target_rect.x + dx;
         tooltip_rect.y = y;
 
-        self.add_child(tooltip);
+        evt.view.render_child(tooltip, tooltip_rect);
     }
 }

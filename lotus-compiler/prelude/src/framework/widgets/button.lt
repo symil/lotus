@@ -19,7 +19,7 @@ export class Button {
     }
 
     @OnKeyDown {
-        if evt.view._focused && evt.key == Key::Enter && evt.has_no_modifier() {
+        if evt.view.is_focused() && evt.key == Key::Enter && evt.has_no_modifier() {
             OnClick {
                 ..evt,
                 action: MouseAction::Down,

@@ -250,14 +250,12 @@ export class Client {
     }
 
     _post_render() {
-        let event = OnPostRender {
+        let post_render_event = OnPostRender {
             client: self,
             user: self._user,
             local_data: self._local_data,
         };
-        let views = self._all_views.reverse();
-
-        event.emit(views);
+        self._enabled_view_stack.emit(post_render_event);
     }
 
     _draw_frame() {
@@ -380,32 +378,32 @@ export class Client {
 
     render(object: Object, rect: Rect = none, view: View = none) {
         view = view.or_else(() => View);
-        rect = rect.or(self._window_rect);
+
+        check !view.has_been_rendered();
+
+        if rect {
+            view.set_rect(rect);
+        } else if !view.rect() {
+            view.set_rect(self._window_rect);
+        }
+
+        self._all_views.push(view);
+
+        view.mark_as_rendered();
+        view.set_data(object);
 
         if object {
-            view.set_rect(rect);
-            view.set_data(object);
+            self._object_to_view.set(object, view);
 
-            let render_event = OnRender {
+            OnRender {
                 client: self,
                 user: self._user,
                 local_data: self._local_data,
                 view
-            };
-
-            view = render_event.emit([object]).view;
+            }.emit([object]);
         }
 
-        if view {
-            view.finish_layouts();
-            view.set_data(object);
-
-            self._all_views.push(view);
-            
-            if object {
-                self._object_to_view.set(object, view);
-            }
-        }
+        view.render_layouts();
     }
 
     get_view(item: Object) -> View {

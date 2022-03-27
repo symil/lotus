@@ -18,19 +18,25 @@ pub class BlazeMessage {
             .text_color(text_color)
             .text_size(0.1h)
             .force(4)
+            .push(none)
+            .force(1)
+            .center_to_right()
+            .outer_margin(.05h)
             .push(self.ok_button)
-    }
-
-    @OnPostRender {
-        evt.client.focus(evt.view)
+            .aspect_ratio(3)
     }
 }
 
-pub class BlazeMessageOkButton {
+pub class BlazeMessageOkButton extends Button {
     message: BlazeMessage,
 
     @OnRender {
         evt.view.text("Ok")
+    }
+
+    @OnPostRender {
+        evt.view.focus();
+        intercept;
     }
 
     @OnClick {
