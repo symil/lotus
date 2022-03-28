@@ -51,12 +51,18 @@ fn main() {
     } else {
         // dbg!(&options);
         if let (Some(input_path), Some(output_path)) = (&options.input_path, &options.output_path) {
-            let package = Package::from_path(input_path);
+            let mut package = Package::from_path(input_path);
             let source_directories = package.get_source_directories();
             let binary_kind = match options.app_mode {
                 true => BinaryKind::App,
                 false => BinaryKind::Cli,
             };
+
+            if !options.app_mode {
+                package.exclude_engine = true;
+                package.exclude_framework = true;
+            }
+
             let mode = match options.validate {
                 true => ProgramContextMode::Validate,
                 false => ProgramContextMode::Compile(binary_kind)

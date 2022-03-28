@@ -1,6 +1,6 @@
 #WINDOW_TYPE = Hello
 
-view Hello {
+class Hello {
     background_color: Color = Color::light_green()
 }
 

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, ops::RangeBounds};
 use parsable::ItemLocation;
 use crate::{items::{Identifier, ParsedVisibilityToken}, program::{RETAIN_METHOD_NAME, VariableKind}};
 use super::{GlobalItem, GlobalVarInstance, ProgramContext, TypeIndex, VariableInfo, Vasm, Visibility};
@@ -39,7 +39,7 @@ impl GlobalVarBlueprint {
         
         
         // TODO: do this more properly
-        let is_essential = self.name.location.file.path.ends_with("_memory.lt");
+        let is_essential = self.name.location.file.path.contains("_memory");
 
         GlobalVarInstance {
             wasm_name,

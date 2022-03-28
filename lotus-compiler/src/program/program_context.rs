@@ -178,8 +178,8 @@ impl ProgramContext {
 
     pub fn get_main_type(&self, main_type: MainType) -> Type {
         self.main_types.get(main_type)
-            .unwrap_or_else(|| panic!("main type \"{:?}\" is not defined", main_type))
-            // .unwrap_or_else(|| self.get_builtin_type(BuiltinType::Object, vec![]))
+            // .unwrap_or_else(|| panic!("main type \"{:?}\" is not defined", main_type))
+            .unwrap_or_else(|| self.get_builtin_type(BuiltinType::Object, vec![]))
     }
 
     pub fn get_this_type(&self) -> Type {
@@ -657,7 +657,7 @@ impl ProgramContext {
 
         for details in directories {
             let mut path_list = vec![];
-            let exclude = details.exclude.clone().unwrap_or_default();
+            let exclude = &details.exclude;
 
             for file_path in read_directory_recursively(Path::new(&details.root_path)) {
                 let mut ok = false;
@@ -672,7 +672,7 @@ impl ProgramContext {
                     let base = file_path.strip_prefix(&details.root_path).unwrap();
                     let first = base.components().next().unwrap().as_os_str().to_str().unwrap();
                     
-                    if first == exclude {
+                    if exclude.contains(&first) {
                         ok = false;
                     }
                 }
@@ -960,6 +960,8 @@ impl ProgramContext {
     }
 
     pub fn resolve_wat(&mut self) {
+        let no_alloc = self.options.package.no_alloc;
+
         let mut content = wat!["module"];
         let mut globals_declaration = vec![];
         let mut essential_globals_initialization = vec![];
@@ -1210,7 +1212,14 @@ impl ProgramContext {
             Wat::call(INIT_EVENTS_FUNC_NAME, vec![]),
         ];
 
-        globals_initialization.splice(0..0, essential_globals_initialization);
+        if no_alloc {
+            globals_initialization = essential_globals_initialization;
+            globals_retaining = vec![];
+            types_initialization = vec![];
+            events_initialization = vec![];
+        } else {
+            globals_initialization.splice(0..0, essential_globals_initialization);
+        }
 
         content.extend(globals_declaration);
         content.push(Wat::declare_function(INIT_GLOBALS_FUNC_NAME, None, vec![], vec![], wasm_locals, globals_initialization));

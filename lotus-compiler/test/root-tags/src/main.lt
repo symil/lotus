@@ -1,7 +1,0 @@
-@disable_main_type_checks
-
-#WINDOW_TYPE = View
-
-export fn main() {
-    @log("hello");
-}

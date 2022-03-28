@@ -18,7 +18,7 @@ sys type(void) system {
     }
 
     alloc(block_size: int) -> ptr {
-        alloc_memory(block_size)
+        allocate_memory(block_size)
     }
 
     retain<T>(value: T) {
@@ -29,8 +29,12 @@ sys type(void) system {
         trigger_garbage_collection();
     }
 
-    get_memory_usage() -> int {
-        get_memory_usage()
+    get_allocated_block_count() -> int {
+        get_allocated_block_count()
+    }
+
+    get_memory_footprint() -> int {
+        get_allocated_system_memory()
     }
 
     log<T>(value: T) {

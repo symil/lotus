@@ -98,7 +98,7 @@ pub fn wasm_prompt(message: string, buffer: Buffer) [
     import env.prompt
 ]
 
-pub fn wasm_get_key_value(key: Key, buffer: Buffer) [
+pub fn wasm_get_key_value(key: int, buffer: Buffer) [
     import env.get_key_value
 ]
 

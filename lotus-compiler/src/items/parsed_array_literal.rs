@@ -59,10 +59,11 @@ impl ParsedArrayLiteral {
             return None;
         }
 
+        let capacity = self.items.len().min(16);
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let mut result = context.vasm()
             .declare_variable(&array_var)
-            .call_static_method(&final_array_type, ARRAY_CREATE_METHOD_NAME, &[], vec![context.vasm().int(self.items.len())], context)
+            .call_static_method(&final_array_type, ARRAY_CREATE_METHOD_NAME, &[], vec![context.vasm().int(capacity)], context)
             .set_tmp_var(&array_var)
             .set_type(&final_array_type);
 

@@ -9,7 +9,9 @@ pub struct Package {
     pub src_path: PathBuf,
     pub cache_path: PathBuf,
     pub data_path: PathBuf,
-    pub exclude_framework: bool
+    pub exclude_framework: bool,
+    pub exclude_engine: bool,
+    pub no_alloc: bool,
 }
 
 impl Package {
@@ -26,6 +28,8 @@ impl Package {
             cache_path,
             data_path,
             exclude_framework: true,
+            exclude_engine: false,
+            no_alloc: false,
         };
 
         if let Ok(content) = fs::read_to_string(config_path) {
@@ -34,7 +38,25 @@ impl Package {
                     .and_then(|value| value.as_bool())
                     .map(|b| !b)
                     .unwrap_or(true);
+                
+                result.exclude_engine = config.get("engine")
+                    .and_then(|value| value.as_bool())
+                    .map(|b| !b)
+                    .unwrap_or(false);
+                
+                result.no_alloc = config.get("no-alloc")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or(false);
             }
+        }
+
+        if result.exclude_engine {
+            result.exclude_framework = true;
+        }
+
+        if result.no_alloc {
+            result.exclude_engine = true;
+            result.exclude_framework = true;
         }
 
         result
@@ -43,12 +65,19 @@ impl Package {
     pub fn get_source_directories(&self) -> Vec<SourceDirectory> {
         let mut result = vec![];
         let prelude_path = get_default_prelude_path();
+        let mut exclude = vec![];
+
+        if self.exclude_engine {
+            exclude.push("engine");
+        }
+
+        if self.exclude_framework {
+            exclude.push("framework");
+        }
+
         let prelude_source_directory = SourceDirectory {
             root_path: prelude_path.join(SRC_DIR_NAME).to_string_lossy().to_string(),
-            exclude: match self.exclude_framework {
-                true => Some("framework".to_string()),
-                false => None,
-            },
+            exclude,
         };
 
         result.push(prelude_source_directory);
@@ -56,7 +85,7 @@ impl Package {
         if self.root_path != prelude_path {
             result.push(SourceDirectory {
                 root_path: self.src_path.to_string_lossy().to_string(),
-                exclude: None,
+                exclude: vec![],
             });
         }
 

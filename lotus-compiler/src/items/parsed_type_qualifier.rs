@@ -7,7 +7,7 @@ pub enum ParsedTypeQualifier {
     Type = "type",
     Enum = "enum",
     Class = "class",
-    View = "view",
+    // View = "view",
     Event = "event"
 }
 
@@ -17,7 +17,7 @@ impl ParsedTypeQualifier {
             ParsedTypeQualifier::Type => TypeCategory::Type,
             ParsedTypeQualifier::Enum => TypeCategory::Enum,
             ParsedTypeQualifier::Class => TypeCategory::Class,
-            ParsedTypeQualifier::View => TypeCategory::Class,
+            // ParsedTypeQualifier::View => TypeCategory::Class,
             ParsedTypeQualifier::Event => TypeCategory::Class,
         }
     }
@@ -27,7 +27,7 @@ impl ParsedTypeQualifier {
             ParsedTypeQualifier::Type => Some(BuiltinType::Any),
             ParsedTypeQualifier::Enum => Some(BuiltinType::Enum),
             ParsedTypeQualifier::Class => Some(BuiltinType::Object),
-            ParsedTypeQualifier::View => Some(BuiltinType::View),
+            // ParsedTypeQualifier::View => Some(BuiltinType::View),
             ParsedTypeQualifier::Event => Some(BuiltinType::Event),
         }
     }
