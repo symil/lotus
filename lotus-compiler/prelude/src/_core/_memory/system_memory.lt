@@ -23,9 +23,9 @@ fn wasm_memory_grow(page_count: int) -> int {{
 }}
 
 pub fn get_allocated_system_memory() -> int {
-    allocated_size
+    allocated_size * 4
 }
 
 pub fn get_used_system_memory() -> int {
-    used_size
+    used_size * 4
 }

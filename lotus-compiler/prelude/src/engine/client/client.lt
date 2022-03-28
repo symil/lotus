@@ -63,8 +63,9 @@ export class Client {
         let client = Client::get();
 
         client._update();
-        // @log(`Memory usage: ${get_memory_usage()/1000}KB`);
-        @retain(client);
+        client._end_update();
+        // @log(`Memory usage: ${@get_memory_footprint()/1000}KB`);
+        // @log(`Block count: ${@get_allocated_block_count()}`);
         @trigger_garbage_collection();
     }
 
@@ -110,6 +111,13 @@ export class Client {
         self._create_views();
         self._draw_frame();
         self._process_window_events();
+    }
+
+    _end_update() {
+        self._window = none;
+        self._reset_views();
+        self._network_events.clear();
+        self._window_events.clear();
     }
 
     _trigger_client_update() {

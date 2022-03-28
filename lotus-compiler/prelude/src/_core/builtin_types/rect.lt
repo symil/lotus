@@ -1,0 +1,299 @@
+export class Rect {
+    // Center of the rectangle
+    x: float,
+    y: float,
+    // Dimensions of the rectangle
+    width: float,
+    height: float,
+    // Used to determine which rectangle is on top of the other
+    z: float = 0,
+    // Angle of the rectangle
+    angle: float = 0,
+
+    __eq(other: Self) -> bool {
+        self.x == other.x && self.y == other.y && self.width == other.width && self.height == other.height && self.z == other.z && self.angle == other.angle
+    }
+
+    __ne(other: Self) -> bool {
+        !self.__eq(other)
+    }
+
+    __hash() -> int {
+        if !self {
+            return 0;
+        }
+
+        let h = 0;
+
+        iter_fields {
+            h = h.hash_from(self.#FIELD_NAME.as_int());
+        }
+
+        h
+    }
+
+    static empty() -> Self {
+        Self { x: 0, y: 0, width: 0, height: 0 }
+    }
+
+    static new(x: float, y: float, width: float, height: float) -> Self {
+        Self { x, y, width, height }
+    }
+
+    static from_top_left(x1: float, y1: float, width: float, height: float) -> Self {
+        let x = x1 + width / 2.0;
+        let y = y1 + height / 2.0;
+
+        Self { x, y, width, height }
+    }
+
+    static from_size(width: float, height: float) -> Self {
+        let x = width / 2.0;
+        let y = height / 2.0;
+
+        Self { x, y, width, height }
+    }
+
+    static from_corners(x1: float, y1: float, x2: float, y2: float) -> Self {
+        let x = (x1 + x2) / 2.0;
+        let y = (y1 + y2) / 2.0;
+        let width = x2 - x1;
+        let height = y2 - y1;
+
+        Self { x, y, width, height }
+    }
+
+    x1() -> float {
+        self.x - self.width / 2f
+    }
+    
+    y1() -> float {
+        self.y - self.height / 2f
+    }
+
+    x2() -> float {
+        self.x + self.width / 2f
+    }
+
+    y2() -> float {
+        self.y + self.height / 2f
+    }
+
+    half_width() -> float {
+        self.width / 2
+    }
+
+    half_height() -> float {
+        self.height / 2
+    }
+
+    set_x1(x1: float) {
+        self.x = x1 + self.width / 2;
+    }
+
+    set_y1(y1: float) {
+        self.y = y1 + self.height / 2;
+    }
+
+    set_x2(x2: float) {
+        self.x = x2 - self.width / 2;
+    }
+
+    set_y2(y2: float) {
+        self.y = y2 - self.height / 2;
+    }
+
+    aspect_ratio() -> float {
+        self.width / self.height
+    }
+
+    contains(x: float, y: float) -> bool {
+        self && x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
+    }
+
+    clone() -> Self {
+        Self { ..self }
+    }
+
+    set(other: Self) {
+        iter_fields {
+            self.#FIELD_NAME = other.#FIELD_NAME;
+        }
+    }
+
+    round() -> Self {
+        // TODO: take angle into account
+        let x1 = self.x1().round();
+        let x2 = self.x2().round();
+        let y1 = self.y1().round();
+        let y2 = self.y2().round();
+
+        Self {
+            ..self,
+            x: (x1 + x2) / 2f,
+            y: (y1 + y2) / 2f,
+            width: x2 - x1,
+            height: y2 - y1,
+        }
+    }
+
+    elevate(z: float) -> Self {
+        Self { ..self, z }
+    }
+
+    recenter(x: float, y: float) -> Self {
+        Self { ..self, x, y }
+    }
+
+    resize(width: float, height: float) -> Self {
+        Self { ..self, width, height }
+    }
+
+    reorient(angle: float) -> Self {
+        Self { ..self, angle }
+    }
+
+    translate(tx: float, ty: float) -> Self {
+        Self {
+            ..self,
+            x: self.x + tx,
+            y: self.y + ty
+        }
+    }
+
+    scale(ratio: float) -> Self {
+        Self {
+            ..self,
+            width: self.width * ratio,
+            height: self.height * ratio,
+        }
+    }
+
+    scale_width(ratio: float) -> Self {
+        Self {
+            ..self,
+            width: self.width * ratio,
+        }
+    }
+
+    scale_height(ratio: float) -> Self {
+        Self {
+            ..self,
+            height: self.height * ratio,
+        }
+    }
+
+    rotate(angle: float) -> Self {
+        Self {
+            ..self,
+            angle: self.angle + angle
+        }
+    }
+
+    multiply(ratio: float) -> Self {
+        Self {
+            ..self,
+            x: self.x * ratio,
+            y: self.y * ratio,
+            width: self.width * ratio,
+            height: self.height * ratio,
+        }
+    }
+
+    pad(width: float, height: float) -> Self {
+        Self {
+            ..self,
+            width: self.width + width,
+            height: self.height + height,
+        }
+    }
+
+    strip(width: float, height: float) -> Self {
+        Self {
+            ..self,
+            width: self.width - width,
+            height: self.height - height,
+        }
+    }
+
+    pad_to_match_aspect_ratio(aspect_ratio: float?) -> Self {
+        if !aspect_ratio {
+            return self;
+        }
+
+        let width_from_height = self.height * aspect_ratio;
+        let height_from_width = self.width / aspect_ratio;
+        let width_to_pad = 0f;
+        let height_to_pad = 0f;
+
+        if self.width < width_from_height {
+            width_to_pad = width_from_height - self.width;
+        } else {
+            height_to_pad = height_from_width - self.height;
+        }
+
+        self.pad(width_to_pad, height_to_pad)
+    }
+
+    strip_to_match_aspect_ratio(aspect_ratio: float?) -> Self {
+        if !aspect_ratio {
+            return self;
+        }
+
+        let width_from_height = self.height * aspect_ratio;
+        let height_from_width = self.width / aspect_ratio;
+        let width_to_strip = 0f;
+        let height_to_strip = 0f;
+
+        if self.width > width_from_height {
+            width_to_strip = self.width - width_from_height;
+        } else {
+            height_to_strip = self.height - height_from_width;
+        }
+
+        self.strip(width_to_strip, height_to_strip)
+    }
+
+    mirror(cx: float, cy: float) -> Self {
+        Self {
+            ..self,
+            x: 2f * cx - self.x,
+            y: 2f * cy - self.y
+        }
+    }
+
+    // transform(transform: Transform2D) -> Self {
+    //     let (x, y) = transform.apply(self.x, self.y);
+    //     let (width, height) = transform.scale(self.width, self.height);
+
+    //     Self { ..self, x, y, width, height }
+    // }
+
+    strip_from_sides(top: float, right: float, bottom: float, left: float) -> Self {
+        Self {
+            ..self,
+            x: self.x + (left - right) / 2f,
+            y: self.y + (top - bottom) / 2f,
+            width: self.width - left - right,
+            height: self.height - top - bottom,
+        }
+    }
+
+    split_horizontally(left_width: float) -> (Self, Self) {
+        let right_width = self.width - left_width;
+
+        (
+            self.strip_from_sides(0, right_width, 0, 0),
+            self.strip_from_sides(0, 0, 0, left_width),
+        )
+    }
+
+    split_vertically(top_height: float) -> (Self, Self) {
+        let bottom_height = self.height - top_height;
+
+        (
+            self.strip_from_sides(0, 0, bottom_height, 0),
+            self.strip_from_sides(top_height, 0, 0, 0),
+        )
+    }
+}
