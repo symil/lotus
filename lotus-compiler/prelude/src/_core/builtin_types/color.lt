@@ -1,0 +1,212 @@
+export class Color {
+    r: int,
+    g: int,
+    b: int,
+    a: int,
+
+    __eq(other: Self) -> bool {
+        self.r == other.r && self.g == other.g && self.b == other.b && self.a == other.a
+    }
+
+    __ne(other: Self) -> bool {
+        self.r != other.r || self.g != other.g || self.b != other.b || self.a != other.a
+    }
+
+    __hash() -> int {
+        123.hash_from(self.r).hash_from(self.g).hash_from(self.b).hash_from(self.a)
+    }
+
+    static new(r: int, g: int, b: int, a: int) -> Self {
+        Self { r, g, b, a }
+    }
+
+    static from(components: int[]) -> Self {
+        Color {
+            r: (components[0] || 0),
+            g: (components[1] || 0),
+            b: (components[2] || 0),
+            a: (components[3] || 255),
+        }
+    }
+
+    static from_hash(hash: int) -> Self {
+        let r = (hash >> 16) % 256;
+        let g = (hash >> 8) % 256;
+        let b = (hash >> 0) % 256;
+        let a = 255;
+
+        Self { r, g, b, a }
+    }
+
+    static from_string_hash(str: string) -> Self {
+        Self::from_hash(str.hash())
+    }
+
+    mult_alpha(alpha: float) -> Color {
+        if !self {
+            return none;
+        }
+
+        let a = (self.a.to_float() * alpha).to_int();
+
+        Color { ..self, a }
+    }
+
+    get_components() -> int[] {
+        [ self.r, self.g, self.b, self.a ]
+    }
+
+    to_int() -> int {
+        (self.r << 24) + (self.g << 16) + (self.b << 8) + self.a
+    }
+
+    static transparent() -> Color { Color::new(0, 0, 0, 0) }
+    static alice_blue() -> Color { Color::new(240, 248, 255, 255) }
+    static antique_white() -> Color { Color::new(250, 235, 215, 255) }
+    static aqua() -> Color { Color::new(0, 255, 255, 255) }
+    static aquamarine() -> Color { Color::new(127, 255, 212, 255) }
+    static azure() -> Color { Color::new(240, 255, 255, 255) }
+    static beige() -> Color { Color::new(245, 245, 220, 255) }
+    static bisque() -> Color { Color::new(255, 228, 196, 255) }
+    static black() -> Color { Color::new(0, 0, 0, 255) }
+    static blanched_almond() -> Color { Color::new(255, 235, 205, 255) }
+    static blue() -> Color { Color::new(0, 0, 255, 255) }
+    static blue_violet() -> Color { Color::new(138, 43, 226, 255) }
+    static brown() -> Color { Color::new(165, 42, 42, 255) }
+    static burly_wood() -> Color { Color::new(222, 184, 135, 255) }
+    static cadet_blue() -> Color { Color::new(95, 158, 160, 255) }
+    static chartreuse() -> Color { Color::new(127, 255, 0, 255) }
+    static chocolate() -> Color { Color::new(210, 105, 30, 255) }
+    static coral() -> Color { Color::new(255, 127, 80, 255) }
+    static cornflower_blue() -> Color { Color::new(100, 149, 237, 255) }
+    static cornsilk() -> Color { Color::new(255, 248, 220, 255) }
+    static crimson() -> Color { Color::new(220, 20, 60, 255) }
+    static cyan() -> Color { Color::new(0, 255, 255, 255) }
+    static dark_blue() -> Color { Color::new(0, 0, 139, 255) }
+    static dark_cyan() -> Color { Color::new(0, 139, 139, 255) }
+    static dark_goldenrod() -> Color { Color::new(184, 134, 11, 255) }
+    static dark_gray() -> Color { Color::new(169, 169, 169, 255) }
+    static dark_grey() -> Color { Color::new(169, 169, 169, 255) }
+    static dark_green() -> Color { Color::new(0, 100, 0, 255) }
+    static dark_khaki() -> Color { Color::new(189, 183, 107, 255) }
+    static dark_magenta() -> Color { Color::new(139, 0, 139, 255) }
+    static dark_olivegreen() -> Color { Color::new(85, 107, 47, 255) }
+    static dark_orange() -> Color { Color::new(255, 140, 0, 255) }
+    static dark_orchid() -> Color { Color::new(153, 50, 204, 255) }
+    static dark_red() -> Color { Color::new(139, 0, 0, 255) }
+    static dark_salmon() -> Color { Color::new(233, 150, 122, 255) }
+    static dark_seagreen() -> Color { Color::new(143, 188, 143, 255) }
+    static dark_slateblue() -> Color { Color::new(72, 61, 139, 255) }
+    static dark_slategray() -> Color { Color::new(47, 79, 79, 255) }
+    static dark_slategrey() -> Color { Color::new(47, 79, 79, 255) }
+    static dark_turquoise() -> Color { Color::new(0, 206, 209, 255) }
+    static dark_violet() -> Color { Color::new(148, 0, 211, 255) }
+    static deep_pink() -> Color { Color::new(255, 20, 147, 255) }
+    static deep_skyblue() -> Color { Color::new(0, 191, 255, 255) }
+    static dim_gray() -> Color { Color::new(105, 105, 105, 255) }
+    static dim_grey() -> Color { Color::new(105, 105, 105, 255) }
+    static dodger_blue() -> Color { Color::new(30, 144, 255, 255) }
+    static fire_brick() -> Color { Color::new(178, 34, 34, 255) }
+    static floral_white() -> Color { Color::new(255, 250, 240, 255) }
+    static forest_green() -> Color { Color::new(34, 139, 34, 255) }
+    static fuchsia() -> Color { Color::new(255, 0, 255, 255) }
+    static gainsboro() -> Color { Color::new(220, 220, 220, 255) }
+    static ghost_white() -> Color { Color::new(248, 248, 255, 255) }
+    static gold() -> Color { Color::new(255, 215, 0, 255) }
+    static golden_rod() -> Color { Color::new(218, 165, 32, 255) }
+    static gray() -> Color { Color::new(128, 128, 128, 255) }
+    static grey() -> Color { Color::new(128, 128, 128, 255) }
+    static green() -> Color { Color::new(0, 128, 0, 255) }
+    static green_yellow() -> Color { Color::new(173, 255, 47, 255) }
+    static honey_dew() -> Color { Color::new(240, 255, 240, 255) }
+    static hot_pink() -> Color { Color::new(255, 105, 180, 255) }
+    static indian_red() -> Color { Color::new(205, 92, 92, 255) }
+    static indigo() -> Color { Color::new(75, 0, 130, 255) }
+    static ivory() -> Color { Color::new(255, 255, 240, 255) }
+    static khaki() -> Color { Color::new(240, 230, 140, 255) }
+    static lavender() -> Color { Color::new(230, 230, 250, 255) }
+    static lavender_blush() -> Color { Color::new(255, 240, 245, 255) }
+    static lawn_green() -> Color { Color::new(124, 252, 0, 255) }
+    static lemon_chiffon() -> Color { Color::new(255, 250, 205, 255) }
+    static light_blue() -> Color { Color::new(173, 216, 230, 255) }
+    static light_coral() -> Color { Color::new(240, 128, 128, 255) }
+    static light_cyan() -> Color { Color::new(224, 255, 255, 255) }
+    static light_goldenrodyellow() -> Color { Color::new(250, 250, 210, 255) }
+    static light_gray() -> Color { Color::new(211, 211, 211, 255) }
+    static light_grey() -> Color { Color::new(211, 211, 211, 255) }
+    static light_green() -> Color { Color::new(144, 238, 144, 255) }
+    static light_pink() -> Color { Color::new(255, 182, 193, 255) }
+    static light_salmon() -> Color { Color::new(255, 160, 122, 255) }
+    static light_seagreen() -> Color { Color::new(32, 178, 170, 255) }
+    static light_skyblue() -> Color { Color::new(135, 206, 250, 255) }
+    static light_slategray() -> Color { Color::new(119, 136, 153, 255) }
+    static light_slategrey() -> Color { Color::new(119, 136, 153, 255) }
+    static light_steelblue() -> Color { Color::new(176, 196, 222, 255) }
+    static light_yellow() -> Color { Color::new(255, 255, 224, 255) }
+    static lime() -> Color { Color::new(0, 255, 0, 255) }
+    static lime_green() -> Color { Color::new(50, 205, 50, 255) }
+    static linen() -> Color { Color::new(250, 240, 230, 255) }
+    static magenta() -> Color { Color::new(255, 0, 255, 255) }
+    static maroon() -> Color { Color::new(128, 0, 0, 255) }
+    static medium_aquamarine() -> Color { Color::new(102, 205, 170, 255) }
+    static medium_blue() -> Color { Color::new(0, 0, 205, 255) }
+    static medium_orchid() -> Color { Color::new(186, 85, 211, 255) }
+    static medium_purple() -> Color { Color::new(147, 112, 219, 255) }
+    static medium_seagreen() -> Color { Color::new(60, 179, 113, 255) }
+    static medium_slateblue() -> Color { Color::new(123, 104, 238, 255) }
+    static medium_springgreen() -> Color { Color::new(0, 250, 154, 255) }
+    static medium_turquoise() -> Color { Color::new(72, 209, 204, 255) }
+    static medium_violetred() -> Color { Color::new(199, 21, 133, 255) }
+    static midnight_blue() -> Color { Color::new(25, 25, 112, 255) }
+    static mint_cream() -> Color { Color::new(245, 255, 250, 255) }
+    static misty_rose() -> Color { Color::new(255, 228, 225, 255) }
+    static moccasin() -> Color { Color::new(255, 228, 181, 255) }
+    static navajo_white() -> Color { Color::new(255, 222, 173, 255) }
+    static navy() -> Color { Color::new(0, 0, 128, 255) }
+    static old_lace() -> Color { Color::new(253, 245, 230, 255) }
+    static olive() -> Color { Color::new(128, 128, 0, 255) }
+    static olive_drab() -> Color { Color::new(107, 142, 35, 255) }
+    static orange() -> Color { Color::new(255, 165, 0, 255) }
+    static orange_red() -> Color { Color::new(255, 69, 0, 255) }
+    static orchid() -> Color { Color::new(218, 112, 214, 255) }
+    static pale_goldenrod() -> Color { Color::new(238, 232, 170, 255) }
+    static pale_green() -> Color { Color::new(152, 251, 152, 255) }
+    static pale_turquoise() -> Color { Color::new(175, 238, 238, 255) }
+    static pale_violetred() -> Color { Color::new(219, 112, 147, 255) }
+    static papaya_whip() -> Color { Color::new(255, 239, 213, 255) }
+    static peach_puff() -> Color { Color::new(255, 218, 185, 255) }
+    static peru() -> Color { Color::new(205, 133, 63, 255) }
+    static pink() -> Color { Color::new(255, 192, 203, 255) }
+    static plum() -> Color { Color::new(221, 160, 221, 255) }
+    static powder_blue() -> Color { Color::new(176, 224, 230, 255) }
+    static purple() -> Color { Color::new(128, 0, 128, 255) }
+    static rebecca_purple() -> Color { Color::new(102, 51, 153, 255) }
+    static red() -> Color { Color::new(255, 0, 0, 255) }
+    static rosy_brown() -> Color { Color::new(188, 143, 143, 255) }
+    static royal_blue() -> Color { Color::new(65, 105, 225, 255) }
+    static saddle_brown() -> Color { Color::new(139, 69, 19, 255) }
+    static salmon() -> Color { Color::new(250, 128, 114, 255) }
+    static sandy_brown() -> Color { Color::new(244, 164, 96, 255) }
+    static sea_green() -> Color { Color::new(46, 139, 87, 255) }
+    static sea_shell() -> Color { Color::new(255, 245, 238, 255) }
+    static sienna() -> Color { Color::new(160, 82, 45, 255) }
+    static silver() -> Color { Color::new(192, 192, 192, 255) }
+    static sky_blue() -> Color { Color::new(135, 206, 235, 255) }
+    static slate_blue() -> Color { Color::new(106, 90, 205, 255) }
+    static slate_gray() -> Color { Color::new(112, 128, 144, 255) }
+    static slate_grey() -> Color { Color::new(112, 128, 144, 255) }
+    static snow() -> Color { Color::new(255, 250, 250, 255) }
+    static spring_green() -> Color { Color::new(0, 255, 127, 255) }
+    static steel_blue() -> Color { Color::new(70, 130, 180, 255) }
+    static tan() -> Color { Color::new(210, 180, 140, 255) }
+    static teal() -> Color { Color::new(0, 128, 128, 255) }
+    static thistle() -> Color { Color::new(216, 191, 216, 255) }
+    static tomato() -> Color { Color::new(255, 99, 71, 255) }
+    static turquoise() -> Color { Color::new(64, 224, 208, 255) }
+    static violet() -> Color { Color::new(238, 130, 238, 255) }
+    static wheat() -> Color { Color::new(245, 222, 179, 255) }
+    static white() -> Color { Color::new(255, 255, 255, 255) }
+    static white_smoke() -> Color { Color::new(245, 245, 245, 255) }
+    static yellow() -> Color { Color::new(255, 255, 0, 255) }
+    static yellow_green() -> Color { Color::new(154, 205, 50, 255) }
+}
