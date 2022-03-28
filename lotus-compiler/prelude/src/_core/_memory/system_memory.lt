@@ -21,3 +21,11 @@ pub fn allocate_system_memory(amount: int) -> ptr {
 fn wasm_memory_grow(page_count: int) -> int {{
     memory.grow
 }}
+
+pub fn get_allocated_system_memory() -> int {
+    allocated_size
+}
+
+pub fn get_used_system_memory() -> int {
+    used_size
+}

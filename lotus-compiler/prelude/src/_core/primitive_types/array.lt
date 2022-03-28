@@ -14,15 +14,15 @@ export class Array<T> {
     }}
 
     static __default() -> Self {
-        Self::with_capacity(4)
+        Self::with_capacity(16)
     }
 
     static new() -> Self {
-        Self::with_capacity(4)
+        Self::with_capacity(16)
     }
 
     static with_capacity(capacity: int) -> Self {
-        capacity = capacity.next_power_of_4();
+        capacity = capacity.next_power_of_2();
 
         Self {
             _body: @alloc(capacity) as Pointer<T>,
@@ -497,7 +497,7 @@ export class Array<T> {
     dyn __deserialize_with_schema_dyn(buffer: Buffer) {
         let item_count = buffer.read();
 
-        self._capacity = item_count.next_power_of_4();
+        self._capacity = item_count.next_power_of_2();
         self._body = @alloc(self._capacity) as Pointer<T>;
         self._length = item_count;
 

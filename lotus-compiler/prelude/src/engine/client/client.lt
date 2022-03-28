@@ -48,7 +48,7 @@ export class Client {
 
     static start() {
         if !CLIENT {
-            set_pointer_version_seed(wasm_get_current_time());
+            set_memory_block_version_seed(wasm_get_current_time());
             let client = Client;
             client._start();
             CLIENT = client;
@@ -530,7 +530,7 @@ export class Client {
 
     get_key_value(key: Key) -> string {
         self._buffer.reset();
-        wasm_get_key_value(key, self._buffer);
+        wasm_get_key_value(key as int, self._buffer);
         self._buffer.read_string()
     }
 

@@ -12,7 +12,7 @@ pub class Server {
 
     static start() {
         if !SERVER {
-            set_pointer_version_seed(wasm_get_current_time());
+            set_memory_block_version_seed(wasm_get_current_time());
             let server = Server;
             server._start();
             SERVER = server;
