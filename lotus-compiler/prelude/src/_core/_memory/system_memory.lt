@@ -1,0 +1,23 @@
+let allocated_size = WASM_PAGE_SIZE; // We start with 1 wasm page allocated
+let used_size = MEMORY_DATA_START_ADDR; // Only the null zone and the memory metadata are used at the beginning
+
+// TODO: crash if too much memory is allocated?
+
+pub fn allocate_system_memory(amount: int) -> ptr {
+    let result = used_size as ptr;
+    let available_size = allocated_size - used_size;
+
+    if available_size < amount {
+        let required_additional_wasm_page_count = ((amount - available_size + 1) / WASM_PAGE_SIZE) + 1;
+
+        wasm_memory_grow(required_additional_wasm_page_count);
+        allocated_size += required_additional_wasm_page_count * WASM_PAGE_SIZE;
+    }
+
+    used_size += amount;
+    result
+}
+
+fn wasm_memory_grow(page_count: int) -> int {{
+    memory.grow
+}}

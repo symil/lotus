@@ -177,7 +177,8 @@
 [X] Make so `reverse` and `sort` first clone the array
 [X] Allow generic types to inherit from other types
 [X] Make `self` available in field default values
-[ ] Add event emission options to specift pre-process callback & default interception behavior
+[ ] Rework memory management to allocate less memory when possible
+[ ] Add `Event.emit` options to specify pre-process callback & default interception behavior
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 
@@ -265,7 +266,6 @@
 [ ] Add function argument default values in signature help provider
 [ ] Add text selection
 [ ] Notify client when connection with server is lost
-[ ] Trigger garbage collector over a longer period of time (process page by page)
 [ ] Make so views with no graphics are not detectable
 [ ] Make so a field cannot be default initialized from a field that is initialized after it (e.g `class Foo { a: int = self.b, b: int = 2 }` should not work)
 [ ] Improve the `enum` types so they work like in Rust
