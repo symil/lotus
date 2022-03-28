@@ -1,0 +1,87 @@
+// Memory allocation manager
+
+// A virtual page containing X blocks of Y cells is layouted as followed:
+// - number of remaining available blocks in the page (starts at X)
+// - address of the next virtual page with blocks of the same size
+// - address of the first block of the page
+// - total number of blocks in the page
+// - size a single block (Y)
+// - X cells representing the stack of available block addresses
+// - X * Y cells representing the actual blocks that will be returned to the user
+
+// A block always 1 cell of metadata; if the user wants to allocate 4 cells, 5 will actually be allocated
+// The metadata cell has the follwing layout:
+// - the 30 most significant bits make a random value that is modified each time the block is allocates (called the "version" of the block)
+// - the 2 least significant bits indicate the state of the block
+
+enum PointerState {
+    Unallocated, // (= 0) the pointer is unallocated and may be returned by a future call of `alloc_memory`
+    Allocated,   // (= 1) the pointer is allocated but will be garbage collected the next time GC is triggered
+    Retained,    // (= 2) the pointer has been retained and will not be garbage collected the next time GC is triggered
+}
+
+// Triggering the garbage collection changes the state of all pointer from `Allocated` to `Unallocated` and from `Retained` to `Allocated`
+// Retaining a pointer changes its state from `Allocated` to `Retained`
+// In order for a pointer not to be unallocated by the garbage collector, it is necessary that it is retained before each GC call
+
+const MEMORY = 0 as ptr;
+
+fn allocate_memory(block_size: int) -> ptr {
+    let pointer_to_next_page = (MEMORY_DATA_START_ADDR + block_size.log2() - 1) as ptr;
+
+    while pointer_to_next_page[0] != 0 {
+        let page_ptr = pointer_to_next_page[0] as ptr;
+        let offset = page_ptr[0];
+
+        if offset != 0 {
+            offset -= 1;
+            page_ptr[0] = offset;
+
+            let block_ptr = page_ptr[VIRTUAL_PAGE_METADATA_SIZE + offset] as ptr;
+
+            block_ptr[0] = set_pointer_state(get_random_memory_block_version(), PointerState::Allocated);
+
+            return block_ptr.add(1);
+        }
+
+        pointer_to_next_page = page_ptr.add(1);
+    }
+
+    // If we get there, all virtual pages are full and we need to allocate a new one
+    let requested_block_size = block_size.next_power_of_2();
+    let block_count = 1;
+
+    if requested_block_size <= MAX_SMALL_BLOCK_SIZE {
+        block_count = APPROXIMATE_SMALL_BLOCK_PAGE_SIZE / requested_block_size;
+    }
+
+    let total_block_size = requested_block_size + 1;
+    let total_page_size = VIRTUAL_PAGE_METADATA_SIZE + block_count + total_block_size * block_count; // metadata, stack, blocks
+    let page_ptr = allocate_system_memory(total_page_size);
+    let block_list_start_addr = (page_ptr as int) + VIRTUAL_PAGE_METADATA_SIZE + block_count;
+
+    page_ptr[0] = block_count;
+    page_ptr[1] = 0;
+    page_ptr[2] = block_list_start_addr;
+    page_ptr[3] = block_count;
+    page_ptr[4] = total_block_size;
+
+    let last_block_addr = block_list_start_addr + (block_count * total_block_size) - total_block_size;
+
+    for j in 0..block_count {
+        page_ptr[VIRTUAL_PAGE_METADATA_SIZE + j] = last_block_addr - (j * total_block_size);
+    }
+
+    pointer_to_next_page[0] = page_ptr as int;
+
+    allocate_memory(block_size)
+}
+
+// TODO: inline these
+fn set_pointer_state(metadata: int, state: PointerState) -> int {
+    (metadata & 0xfffffffc) + (state as int)
+}
+
+fn get_pointer_state(metadata: int) -> PointerState {
+    (metadata & 0x3) as PointerState
+}

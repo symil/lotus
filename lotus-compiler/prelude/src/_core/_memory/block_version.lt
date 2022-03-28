@@ -1,0 +1,12 @@
+let block_version_seed = 0192837465;
+
+pub fn set_memory_block_version_seed(seed: int) {
+    block_version_seed = seed;
+}
+
+// https://en.wikipedia.org/wiki/Linear_congruential_generator
+pub fn get_random_memory_block_version() -> int {
+    block_version_seed = (1103515245 * block_version_seed + 12345).__mod_u(0x7fffffff);
+
+    (block_version_seed & 0x3fffffff) << 2
+}
