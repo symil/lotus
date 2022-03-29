@@ -108,9 +108,9 @@ export class View {
         self
     }
 
-    render_children(objects: Object[], rect: Rect = none, view: View = none) -> Self {
+    render_children(objects: Object[], rect: Rect = none) -> Self {
         for object in objects {
-            self.render_child(object, rect, view);
+            self.render_child(object, rect);
         }
 
         self

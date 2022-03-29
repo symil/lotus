@@ -420,6 +420,12 @@ impl ProgramContext {
         index.add_completion(location, || {
             let mut available_events = vec![];
 
+            let current_type = self.get_current_type().unwrap().borrow().self_type.clone();
+            let self_event_type = match current_type.inherits_from(BuiltinType::Event.get_name()) {
+                true => Some(current_type),
+                false => None,
+            };
+
             for type_wrapped in self.types.get_all_from_location(location) {
                 if type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
                     available_events.push(type_wrapped.borrow().self_type.clone());
@@ -427,6 +433,7 @@ impl ProgramContext {
             }
 
             CompletionItemGenerator::Event(EventCompletionDetails {
+                self_event_type,
                 available_events,
                 insert_brackets,
             })

@@ -34,6 +34,7 @@ pub struct MatchItemCompletionDetails {
 
 #[derive(Debug)]
 pub struct EventCompletionDetails {
+    pub self_event_type: Option<Type>,
     pub available_events: Vec<Type>,
     pub insert_brackets: bool
 }
@@ -123,9 +124,13 @@ impl CompletionItemGenerator {
                 }
             },
             Self::Event(details) => {
+                if let Some(self_event_type) = &details.self_event_type {
+                    items.add_event(self_event_type.clone(), details.insert_brackets, true);
+                }
+
                 for ty in &details.available_events {
                     if ty.get_type_blueprint().borrow().name.as_str() != BuiltinType::Event.get_name() {
-                        items.add_event(ty.clone(), details.insert_brackets);
+                        items.add_event(ty.clone(), details.insert_brackets, false);
                     }
                 }
             },

@@ -1,6 +1,6 @@
 use std::{mem::take, rc::Rc, fmt::format};
 use parsable::ItemLocation;
-use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL}, language_server::Range};
+use crate::{utils::Link, program::{FunctionBlueprint, VariableInfo, FieldInfo, EnumVariantInfo, Type, InterfaceBlueprint, NONE_LITERAL, SELF_TYPE_NAME}, language_server::Range};
 use super::{CompletionItem, CompletionItemKind, CompletionItemPosition, CompletionItemVisibility, CompletionItemCommand};
 
 pub struct CompletionItemList {
@@ -278,8 +278,15 @@ impl CompletionItemList {
         });
     }
 
-    pub fn add_event(&mut self, event_type: Type, insert_brackets: bool) {
-        let mut label = event_type.to_string();
+    pub fn add_event(&mut self, event_type: Type, insert_brackets: bool, is_self: bool) {
+        let mut label = match is_self {
+            true => SELF_TYPE_NAME.to_string(),
+            false => event_type.to_string(),
+        };
+        let position = match is_self {
+            true => CompletionItemPosition::PublicTypeMatchingHint,
+            false => CompletionItemPosition::PublicType,
+        };
         let mut insert_text = label.clone();
 
         if insert_brackets {
@@ -290,6 +297,7 @@ impl CompletionItemList {
         self
             .add(label)
             .kind(CompletionItemKind::Event)
+            .position(position)
             .insert_text(insert_text);
     }
 

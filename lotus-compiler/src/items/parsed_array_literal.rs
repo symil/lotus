@@ -59,7 +59,7 @@ impl ParsedArrayLiteral {
             return None;
         }
 
-        let capacity = self.items.len().min(16);
+        let capacity = self.items.len().max(16);
         let final_array_type = context.get_builtin_type(BuiltinType::Array, vec![final_item_type.clone()]);
         let mut result = context.vasm()
             .declare_variable(&array_var)
