@@ -1,0 +1,43 @@
+pub fn emit_event(event: Event, targets: Object[], options: EventOptions) {
+    let event_type_id = event.__get_type_id();
+    let event_map = EVENT_CALLBACKS.get(event_type_id);
+    let pre_process_callback = options.pre_process_callback;
+
+    if !event_map {
+        return;
+    }
+
+    for event_entry in event_map {
+        let callback_map = event_entry.value;
+
+        for target in targets {
+            check trigger_event_callbacks(callback_map, event, target, options);
+        }
+
+        options.pre_process_callback = none;
+        check trigger_event_callbacks(callback_map, event, event, options);
+        options.pre_process_callback = pre_process_callback;
+    }
+}
+
+fn trigger_event_callbacks<E : Event>(callback_map: Map<TargetTypeId, EventCallback[]>, event: E, target: Object, options: EventOptions) -> bool {
+    let callback_list = callback_map.get(target.__get_type_id());
+
+    if !callback_list {
+        return true;
+    }
+
+    if options.pre_process_callback {
+        (options.pre_process_callback)(event, target);
+    }
+
+    for details in callback_list {
+        (details.start_callback)(target, event, options);
+
+        if options.intercepted {
+            return false;
+        }
+    }
+
+    true
+}

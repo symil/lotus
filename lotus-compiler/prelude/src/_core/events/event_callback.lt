@@ -1,0 +1,5 @@
+export class EventCallback {
+    start_callback: EventCallbackFunction,
+    progress_callback: EventCallbackFunction,
+    end_callback: EventCallbackFunction,
+}

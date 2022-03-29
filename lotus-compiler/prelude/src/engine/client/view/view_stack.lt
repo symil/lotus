@@ -66,10 +66,14 @@ pub class ViewStack {
     emit(event: ClientEvent) {
         let items = self.views.filter_map(view => view._data);
 
-        event.emit(items, set_event_view);
+        event.emit(items, EventOptions {
+            pre_process_callback: set_event_view,
+        });
     }
 }
 
-fn set_event_view(event: ClientEvent, target: Object) {
-    event.view = event.client.get_view(target);
+fn set_event_view(event: Event, target: Object) {
+    let client_event = event as ClientEvent;
+
+    client_event.view = client_event.client.get_view(target);
 }

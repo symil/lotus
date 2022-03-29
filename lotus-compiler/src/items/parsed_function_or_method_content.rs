@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use colored::*;
 use parsable::parsable;
-use crate::{items::ParsedTypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, EventCallbackDetails, HAS_TARGET_METHOD_NAME, EVENT_OUTPUT_VAR_NAME, EVENT_VAR_NAME, CompilationError, SignatureContent, MethodMetaQualifier, MethodQualifier, Visibility, FunctionBody, FieldVisibility}, utils::Link, wat};
+use crate::{items::ParsedTypeQualifier, program::{BuiltinType, FunctionBlueprint, MethodDetails, ProgramContext, ScopeKind, Signature, SELF_VAR_NAME, Type, VariableInfo, VariableKind, Vasm, HAS_TARGET_METHOD_NAME, EVENT_OPTIONS_VAR_NAME, EVENT_VAR_NAME, CompilationError, SignatureContent, MethodMetaQualifier, MethodQualifier, Visibility, FunctionBody, FieldVisibility, FunctionKind}, utils::Link, wat};
 use super::{ParsedEventCallbackQualifierKeyword, ParsedFunctionBody, ParsedFunctionSignature, Identifier, ParsedMethodMetaQualifier, ParsedMethodQualifier, ParsedBlockExpression, ParsedTypeParameters, ParsedVisibilityToken, ParsedExpression};
 
 #[parsable]
@@ -53,7 +53,7 @@ impl ParsedFunctionOrMethodContent {
             owner_interface: None,
             closure_details: None,
             method_details: None,
-            is_default_function: false,
+            kind: FunctionKind::Standard,
             body: FunctionBody::Empty,
         };
 
@@ -79,7 +79,6 @@ impl ParsedFunctionOrMethodContent {
             function_blueprint.method_details = Some(MethodDetails {
                 qualifier,
                 visibility: FieldVisibility::from_name(self.name.as_str()),
-                event_callback_details: None,
                 first_declared_by: Some(type_wrapped.clone()),
                 dynamic_index,
                 is_autogen,
