@@ -76,7 +76,7 @@ pub const EQ_METHOD_NAME : &'static str = "__eq";
 pub const NE_METHOD_NAME : &'static str = "__ne";
 
 pub const EVENT_VAR_NAME : &'static str = "evt";
-pub const EVENT_OUTPUT_VAR_NAME : &'static str = "__output";
+pub const EVENT_OPTIONS_VAR_NAME : &'static str = "opt";
 pub const HAS_TARGET_METHOD_NAME : &'static str = "has_target";
 pub const TYPE_ID_TO_ANCESTOR_IDS_GLOBAL_NAME : &'static str = "TYPE_ID_TO_ANCESTOR_IDS";
 pub const EVENT_CALLBACKS_GLOBAL_NAME : &'static str = "EVENT_CALLBACKS";

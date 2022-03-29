@@ -49,7 +49,11 @@ impl FunctionInstanceContent {
                             VariableKind::Argument => &mut wat_args,
                         };
 
-                        array.push((var_info.get_wasm_name(), wasm_type))
+                        let var_name = var_info.get_wasm_name();
+
+                        if array.iter().find(|(name, ty)| name == &var_name).is_none() {
+                            array.push((var_name, wasm_type));
+                        }
                     }
                 }
 

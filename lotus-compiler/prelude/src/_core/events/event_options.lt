@@ -1,0 +1,4 @@
+export class EventOptions {
+    intercepted: bool = false,
+    pre_process_callback: fn(Event, Object) = none,
+}

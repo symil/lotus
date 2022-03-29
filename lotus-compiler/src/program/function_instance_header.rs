@@ -45,7 +45,7 @@ impl FunctionInstanceHeader {
                 });
             }
 
-            if function_unwrapped.method_details.is_none() || function_unwrapped.is_event() {
+            if function_unwrapped.method_details.is_none() || function_unwrapped.is_event_callback() {
                 function_index = Some(context.reserve_next_function_index());
             }
 

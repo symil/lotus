@@ -2,7 +2,7 @@ use std::{array, collections::HashSet, slice::from_ref};
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{ItemLocation, parsable};
-use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody, ANONYMOUS_FUNCTION_NAME, ArgumentInfo}, utils::Link};
+use crate::{items::{ParsedMethodQualifier, ParsedVisibilityToken}, program::{BuiltinType, FunctionBlueprint, ProgramContext, RETAIN_METHOD_NAME, ScopeKind, Signature, Type, VariableInfo, VariableKind, Vasm, SignatureContent, TypeContent, Visibility, GET_AT_INDEX_FUNC_NAME, FunctionBody, ANONYMOUS_FUNCTION_NAME, ArgumentInfo, FunctionKind}, utils::Link};
 use super::{ParsedBlockExpression, ParsedExpression, ParsedAnonymousFunctionArguments, ParsedAnonymousFunctionBody, Identifier};
 
 #[parsable]
@@ -90,7 +90,7 @@ impl ParsedAnonymousFunction {
             owner_interface: context.get_current_interface(),
             closure_details: None,
             method_details: None,
-            is_default_function: false,
+            kind: FunctionKind::Standard,
             body: FunctionBody::Empty,
         }, None);
 

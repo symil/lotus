@@ -1,0 +1,25 @@
+pub type EventTypeId = int;
+pub type TargetTypeId = int;
+pub type EventCallbackIndex = int;
+pub type EventCallbackFunction = fn(Object, Event, EventOptions);
+
+sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>>::new();
+
+sys fn insert_event_callback(event_type_id: int, callback_priority: int, target_type_id: int, start_callback: EventCallbackFunction, progress_callback: EventCallbackFunction, end_callback: EventCallbackFunction) {
+    let callback_indexes = EVENT_CALLBACKS.get_or_insert_with(event_type_id, () => Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>::new());
+    let target_callbacks = callback_indexes.get_or_insert_with(callback_priority, () => Map<TargetTypeId, EventCallback[]>::new());
+    let callback_list = target_callbacks.get_or_insert_with(target_type_id, () => []);
+    let event_callback = EventCallback {
+        start_callback,
+        progress_callback,
+        end_callback,
+    }
+
+    callback_list.push(event_callback);
+}
+
+sys fn sort_event_callbacks() {
+    for entry in EVENT_CALLBACKS {
+        entry.value.sort((a, b) => a - b);
+    }
+}

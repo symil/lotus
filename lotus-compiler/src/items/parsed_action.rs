@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 use parsable::parsable;
-use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, Vasm}, wat};
+use crate::{items::convert_to_bool, program::{BuiltinType, CompilationError, ProgramContext, ScopeKind, Type, Vasm, EVENT_OPTIONS_VAR_NAME}, wat};
 use super::{ParsedActionKeyword, ParsedActionKeywordToken, ParsedExpression};
 
 #[parsable]
@@ -134,8 +134,8 @@ impl ParsedAction {
                 match context.get_current_function() {
                     Some(function_wrapped) => match function_wrapped.borrow().is_event_callback() {
                         true => {
-                            let output_var = function_wrapped.borrow().argument_variables.iter().find(|var_info| var_info.name().as_str() == "__output").unwrap().clone();
-                            let event_output_type = context.get_builtin_type(BuiltinType::EventOutput, vec![]);
+                            let output_var = function_wrapped.borrow().argument_variables.iter().find(|var_info| var_info.name().as_str() == EVENT_OPTIONS_VAR_NAME).unwrap().clone();
+                            let event_output_type = context.get_builtin_type(BuiltinType::EventOptions, vec![]);
 
                             match &self.keyword.token {
                                 ParsedActionKeywordToken::Intercept => match &self.expression {

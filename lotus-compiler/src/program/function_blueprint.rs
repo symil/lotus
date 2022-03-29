@@ -2,7 +2,7 @@ use std::{collections::HashSet, rc::Rc};
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, ParsedMethodQualifier, Identifier, ParsedVisibilityToken}, program::{VariableKind, Wat}, utils::Link};
-use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo};
+use super::{FieldKind, FunctionInstanceContent, GlobalItem, InterfaceBlueprint, ParameterTypeInfo, ProgramContext, Signature, Type, TypeBlueprint, TypeIndex, TypeInstanceContent, VariableInfo, Vasm, VirtualInstruction, Visibility, EventCallbackQualifier, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo, FunctionKind};
 
 #[derive(Debug)]
 pub struct FunctionBlueprint {
@@ -16,7 +16,7 @@ pub struct FunctionBlueprint {
     pub owner_interface: Option<Link<InterfaceBlueprint>>,
     pub closure_details: Option<ClosureDetails>,
     pub method_details: Option<MethodDetails>,
-    pub is_default_function: bool,
+    pub kind: FunctionKind,
     pub body: FunctionBody
 }
 
@@ -31,17 +31,9 @@ pub struct ClosureDetails {
 pub struct MethodDetails {
     pub qualifier: MethodQualifier,
     pub visibility: FieldVisibility,
-    pub event_callback_details: Option<EventCallbackDetails>,
     pub first_declared_by: Option<Link<TypeBlueprint>>,
     pub dynamic_index: Option<i32>,
     pub is_autogen: bool
-}
-
-#[derive(Debug)]
-pub struct EventCallbackDetails {
-    pub event_type: Link<TypeBlueprint>,
-    pub qualifier: EventCallbackQualifier,
-    pub priority: Vasm,
 }
 
 impl FunctionBlueprint {
@@ -57,7 +49,7 @@ impl FunctionBlueprint {
             owner_interface: None,
             closure_details: None,
             method_details: None,
-            is_default_function: false,
+            kind: FunctionKind::Standard,
             body: FunctionBody::Empty
         }
     }
@@ -67,10 +59,7 @@ impl FunctionBlueprint {
     }
 
     pub fn is_event_callback(&self) -> bool {
-        match &self.method_details {
-            Some(details) => details.event_callback_details.is_some(),
-            None => false,
-        }
+        self.kind == FunctionKind::EventCallback
     }
 
     pub fn get_dynamic_index(&self) -> Option<usize> {
@@ -98,22 +87,8 @@ impl FunctionBlueprint {
         self.closure_details.is_some()
     }
 
-    pub fn is_event(&self) -> bool {
-        self.method_details.as_ref().map(|d| d.event_callback_details.is_some()).unwrap_or(false)
-    }
-
     pub fn check_type_parameters(&self, context: &mut ProgramContext) {
         self.signature.check_type_parameters(context);
-    }
-
-    pub fn get_event_callback_details(&self) -> Option<&EventCallbackDetails> {
-        match &self.method_details {
-            Some(method_details) => match &method_details.event_callback_details {
-                Some(details) => Some(details),
-                None => None,
-            },
-            None => None,
-        }
     }
 
     pub fn get_self_type(&self) -> Type {

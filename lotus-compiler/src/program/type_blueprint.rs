@@ -2,7 +2,7 @@ use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher},
 use indexmap::{IndexMap, IndexSet};
 use parsable::ItemLocation;
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedTypeQualifier, ParsedVisibilityToken}, utils::Link};
-use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility, TypeCategory, VariableInfo, NONE_METHOD_NAME};
+use super::{ActualTypeContent, AssociatedTypeInfo, FuncRef, FunctionBlueprint, GlobalItem, InterfaceBlueprint, LOAD_FUNC_NAME, ParameterTypeInfo, ProgramContext, STORE_FUNC_NAME, Type, TypeInstanceContent, TypeInstanceHeader, Vasm, Visibility, FieldKind, FieldVisibility, TypeCategory, VariableInfo, NONE_METHOD_NAME, EventCallback};
 
 #[derive(Debug)]
 pub struct TypeBlueprint {
@@ -23,7 +23,7 @@ pub struct TypeBlueprint {
     pub regular_methods: IndexMap<String, FuncRef>,
     pub static_methods: IndexMap<String, FuncRef>,
     pub dynamic_methods: Vec<FuncRef>,
-    pub event_callbacks: HashMap<Link<TypeBlueprint>, Vec<Link<FunctionBlueprint>>>,
+    pub event_callbacks: HashMap<Link<TypeBlueprint>, Vec<EventCallback>>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

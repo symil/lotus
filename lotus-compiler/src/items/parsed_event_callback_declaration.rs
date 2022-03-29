@@ -1,22 +1,24 @@
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, ItemLocation};
-use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo, SELF_TYPE_NAME}, utils::Link, wat};
-use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken, ParsedEventCallbackIndex};
+use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OPTIONS_VAR_NAME, Signature, BuiltinType, MethodDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo, SELF_TYPE_NAME, EventCallbackStep, FunctionKind, EventCallback}, utils::Link, wat};
+use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken, ParsedEventCallbackIndex, FlexPrefixedWordItem, ParsedColonToken, ParsedEventCallbackEventStep};
 
 #[parsable]
 pub struct ParsedEventCallbackDeclaration {
     pub event_callback_qualifier: ParsedEventCallbackQualifierKeyword,
     pub name: Option<Identifier>,
+    pub step: Option<FlexPrefixedWordItem<ParsedColonToken, ParsedEventCallbackEventStep>>,
     pub index: Option<ParsedEventCallbackIndex>,
     pub body: Option<ParsedBlockExpression>
 }
 
 impl ParsedEventCallbackDeclaration {
-    pub fn process(&self, context: &mut ProgramContext) -> Option<Link<FunctionBlueprint>> {
+    pub fn process(&self, context: &mut ProgramContext) -> Option<()> {
         let this_type = context.get_current_type().unwrap();
         let type_id = this_type.borrow().type_id;
         let qualifier = self.event_callback_qualifier.process();
+        let step = self.step.as_ref().and_then(|step| step.process(context)).map(|step| step.process()).unwrap_or(EventCallbackStep::Start);
 
         context.add_event_completion_area(&self.event_callback_qualifier, self.body.is_none());
 
@@ -73,8 +75,8 @@ impl ParsedEventCallbackDeclaration {
             default_value: context.vasm()
         };
         let output_argument = ArgumentInfo {
-            name: Identifier::new(EVENT_OUTPUT_VAR_NAME, None),
-            ty: context.get_builtin_type(BuiltinType::EventOutput, vec![]),
+            name: Identifier::new(EVENT_OPTIONS_VAR_NAME, None),
+            ty: context.get_builtin_type(BuiltinType::EventOptions, vec![]),
             is_optional: false,
             default_value: context.vasm()
         };
@@ -95,19 +97,8 @@ impl ParsedEventCallbackDeclaration {
             owner_type: Some(this_type.clone()),
             owner_interface: None,
             closure_details: None,
-            method_details: Some(MethodDetails {
-                qualifier: MethodQualifier::None,
-                visibility: FieldVisibility::Private,
-                event_callback_details: Some(EventCallbackDetails {
-                    event_type: event_type.clone(),
-                    qualifier: qualifier,
-                    priority: index_vasm,
-                }),
-                first_declared_by: Some(this_type.clone()),
-                dynamic_index: None,
-                is_autogen: false
-            }),
-            is_default_function: false,
+            method_details: None,
+            kind: FunctionKind::EventCallback,
             body: FunctionBody::Empty,
         };
 
@@ -166,6 +157,58 @@ impl ParsedEventCallbackDeclaration {
             context.errors.expected_function_body(self);
         }
 
-        Some(function_wrapped)
+        let event_type_name = event_type.borrow().name.to_string();
+
+        this_type.with_mut(|mut type_unwrapped| {
+            if step == EventCallbackStep::Start {
+                let event_callback = EventCallback {
+                    declarer: this_type.clone(),
+                    event_type: event_type.clone(),
+                    index_vasm,
+                    start: function_wrapped,
+                    progress: None,
+                    end: None,
+                };
+
+                type_unwrapped.event_callbacks
+                    .entry(event_type)
+                    .or_insert_with(|| vec![])
+                    .push(event_callback);
+            } else {
+                if let Some(index) = &self.index {
+                    context.errors.generic(index, format!("cannot specify index for an event callback with the `progress` or `end` step"));
+                }
+
+                let step_location = self.step.as_ref().unwrap();
+                let last_event_callback = type_unwrapped.event_callbacks
+                    .get_mut(&event_type)
+                    .and_then(|list| list.last_mut())
+                    .filter(|event_callback| event_callback.declarer == this_type);
+                
+                if let Some(mut event_callback) = last_event_callback {
+                    match step {
+                        EventCallbackStep::Start => unreachable!(),
+                        EventCallbackStep::Progress => {
+                            if event_callback.progress.is_none() {
+                                event_callback.progress = Some(function_wrapped);
+                            } else {
+                                context.errors.generic(step_location, format!("a `progress` step has already been declared for this event callback"));
+                            }
+                        },
+                        EventCallbackStep::End => {
+                            if event_callback.end.is_none() {
+                                event_callback.end = Some(function_wrapped);
+                            } else {
+                                context.errors.generic(step_location, format!("a `end` step has already been declared for this event callback"));
+                            }
+                        },
+                    }
+                } else {
+                    context.errors.generic(step_location, format!("no matching event callback for `{}` found", &event_type_name));
+                }
+            }
+        });
+
+        Some(())
     }
 }

@@ -3,7 +3,7 @@ use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::{IndexMap, IndexSet};
 use parsable::{ItemLocation, parsable};
-use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility, ANY_TYPE_NAME, ArgumentInfo}, utils::Link};
+use crate::{program::{ActualTypeContent, AssociatedTypeInfo, DEFAULT_METHOD_NAME, BuiltinType, DESERIALIZE_DYN_METHOD_NAME, DynamicMethodInfo, ENUM_TYPE_NAME, EVENT_CALLBACKS_GLOBAL_NAME, EnumVariantInfo, FieldInfo, FuncRef, FunctionBlueprint, FunctionCall, NONE_METHOD_NAME, NamedFunctionCallDetails, OBJECT_HEADER_SIZE, OBJECT_TYPE_NAME, ParentInfo, ProgramContext, ScopeKind, Signature, SELF_TYPE_NAME, Type, TypeBlueprint, TypeCategory, WasmStackType, hashmap_get_or_insert_with, MainType, TypeContent, Visibility, FunctionBody, SELF_VAR_NAME, FieldVisibility, ANY_TYPE_NAME, ArgumentInfo, FunctionKind}, utils::Link};
 use super::{ParsedAssociatedTypeDeclaration, ParsedEventCallbackQualifierKeyword, ParsedFieldDeclaration, ParsedType, Identifier, ParsedMethodDeclaration, ParsedTypeParameters, ParsedTypeQualifier, ParsedVisibilityToken, ParsedVisibility, ParsedEventCallbackDeclaration, ParsedSuperFieldDefaultValue, ParsedTypeExtend, ParsedStackTypeDeclaration};
 
 #[parsable]
@@ -507,7 +507,7 @@ impl ParsedTypeDeclaration {
                                 owner_interface: None,
                                 closure_details: None,
                                 method_details: None,
-                                is_default_function: true,
+                                kind: FunctionKind::DefaultValue,
                                 body: FunctionBody::Empty,
                             };
                             let function_wrapped = context.functions.insert(function_blueprint, None);
@@ -548,7 +548,7 @@ impl ParsedTypeDeclaration {
                                 owner_interface: None,
                                 closure_details: None,
                                 method_details: None,
-                                is_default_function: true,
+                                kind: FunctionKind::DefaultValue,
                                 body: FunctionBody::Empty,
                             };
                             let function_wrapped = context.functions.insert(function_blueprint, None);
@@ -690,8 +690,8 @@ impl ParsedTypeDeclaration {
                         for (event_type_wrapped, callback_list) in parent_unwrapped.event_callbacks.iter() {
                             let self_callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, event_type_wrapped, || vec![]);
 
-                            for callback in callback_list {
-                                self_callback_list.push(callback.clone());
+                            for event_callback in callback_list {
+                                self_callback_list.push(event_callback.clone());
                             }
                         }
                     });
@@ -699,14 +699,7 @@ impl ParsedTypeDeclaration {
             }
 
             for event_callback in self.get_event_callbacks() {
-                if let Some(function_wrapped) = event_callback.process(context) {
-                    type_wrapped.with_mut(|mut type_unwrapped| {
-                        let event_type = function_wrapped.borrow().get_event_callback_details().unwrap().event_type.clone();
-                        let callback_list = hashmap_get_or_insert_with(&mut type_unwrapped.event_callbacks, &event_type, || vec![]);
-
-                        callback_list.push(function_wrapped.clone());
-                    });
-                }
+                event_callback.process(context);
             }
         });
     }
