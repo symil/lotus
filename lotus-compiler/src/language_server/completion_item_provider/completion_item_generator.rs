@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use enum_iterator::IntoEnumIterator;
 use parsable::{ItemLocation, Parsable};
 use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL, EXPRESSION_KEYWORDS}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken}};
@@ -34,6 +36,7 @@ pub struct MatchItemCompletionDetails {
 
 #[derive(Debug)]
 pub struct EventCompletionDetails {
+    pub current_type: Type,
     pub self_event_type: Option<Type>,
     pub available_events: Vec<Type>,
     pub insert_brackets: bool
@@ -124,15 +127,38 @@ impl CompletionItemGenerator {
                 }
             },
             Self::Event(details) => {
-                if let Some(self_event_type) = &details.self_event_type {
-                    items.add_event(self_event_type.clone(), details.insert_brackets, true);
-                }
+                let type_wrapped = details.current_type.get_type_blueprint();
 
-                for ty in &details.available_events {
-                    if ty.get_type_blueprint().borrow().name.as_str() != BuiltinType::Event.get_name() {
-                        items.add_event(ty.clone(), details.insert_brackets, false);
+                type_wrapped.with_ref(|type_unwrapped| {
+                    let event_class_name = BuiltinType::Event.get_name();
+                    let event_list = details.self_event_type.iter()
+                        .chain(details.available_events.iter());
+
+                    for (i, ty) in event_list.enumerate() {
+                        let event_type_wrapped = ty.get_type_blueprint();
+
+                        if event_type_wrapped.borrow().name.as_str() == event_class_name {
+                            continue;
+                        }
+
+                        let is_self = i == 0 && details.self_event_type.is_some();
+                        let last_event_callback = type_unwrapped.event_callbacks.get(&event_type_wrapped)
+                            .and_then(|list| list.last())
+                            .filter(|callback| callback.declarer == type_wrapped);
+
+                        items.add_event(ty.clone(), details.insert_brackets, is_self, None, 0);
+
+                        if let Some(callback_details) = last_event_callback {
+                            if callback_details.progress.is_none() {
+                                items.add_event(ty.clone(), details.insert_brackets, is_self, Some(":progress"), 1);
+                            }
+
+                            if callback_details.end.is_none() {
+                                items.add_event(ty.clone(), details.insert_brackets, is_self, Some(":end"), 2);
+                            }
+                        }
                     }
-                }
+                });
             },
             Self::Interface(details) => {
                 for interface in &details.available_interfaces {
