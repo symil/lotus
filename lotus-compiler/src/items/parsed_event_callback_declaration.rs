@@ -2,14 +2,13 @@ use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, ItemLocation};
 use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo, SELF_TYPE_NAME}, utils::Link, wat};
-use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken};
+use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken, ParsedEventCallbackIndex};
 
 #[parsable]
 pub struct ParsedEventCallbackDeclaration {
     pub event_callback_qualifier: ParsedEventCallbackQualifierKeyword,
     pub name: Option<Identifier>,
-    #[parsable(brackets="[]")]
-    pub priority: Option<ParsedExpression>,
+    pub index: Option<ParsedEventCallbackIndex>,
     pub body: Option<ParsedBlockExpression>
 }
 
@@ -63,19 +62,9 @@ impl ParsedEventCallbackDeclaration {
         
         context.definition_provider.set_definition(name, &event_type.borrow().name);
 
-        let priority_vasm = match &self.priority {
-            Some(expression) => match expression.process(Some(&context.int_type()), context) {
-                Some(vasm) => {
-                    if !vasm.ty.is_int() {
-                        context.errors.type_mismatch(expression, &context.int_type(), &vasm.ty);
-                    }
-
-                    vasm
-                },
-                None => context.vasm(),
-            },
-            None => context.vasm().int(qualifier.get_default_priority())
-        };
+        let index_vasm = self.index.as_ref()
+            .and_then(|index| index.process(context))
+            .unwrap_or_else(|| context.vasm().int(qualifier.get_default_priority()));
 
         let event_argument = ArgumentInfo {
             name: Identifier::new(EVENT_VAR_NAME, None),
@@ -112,7 +101,7 @@ impl ParsedEventCallbackDeclaration {
                 event_callback_details: Some(EventCallbackDetails {
                     event_type: event_type.clone(),
                     qualifier: qualifier,
-                    priority: priority_vasm,
+                    priority: index_vasm,
                 }),
                 first_declared_by: Some(this_type.clone()),
                 dynamic_index: None,
