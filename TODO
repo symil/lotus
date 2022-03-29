@@ -180,7 +180,7 @@
 [X] Rework memory management to allocate less memory when possible
 [X] Allow splitting event callbacks in "start", "progress" and "end" blocks
 [X] Add `Event.emit` options to specify pre-process callback & default interception behavior
-[ ] Add completion for event callback step
+[X] Add completion for event callback step
 [ ] Add event chain concept to handle event emission over time
 [ ] Add icon support in text
 [ ] Add badge support in layout api

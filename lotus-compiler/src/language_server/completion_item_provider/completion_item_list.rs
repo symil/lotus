@@ -67,6 +67,10 @@ impl CompletionItemList {
         self.with_current(|item| item.filter_text = Some(filter_text))
     }
 
+    pub fn sort_text(&mut self, sort_text: String) -> &mut Self {
+        self.with_current(|item| item.sort_text = Some(sort_text))
+    }
+
     pub fn command(&mut self, command: CompletionItemCommand) -> &mut Self {
         self.with_current(|item| item.command = Some(command))
     }
@@ -278,7 +282,7 @@ impl CompletionItemList {
         });
     }
 
-    pub fn add_event(&mut self, event_type: Type, insert_brackets: bool, is_self: bool) {
+    pub fn add_event(&mut self, event_type: Type, insert_brackets: bool, is_self: bool, suffix: Option<&'static str>, index: usize) {
         let mut label = match is_self {
             true => SELF_TYPE_NAME.to_string(),
             false => event_type.to_string(),
@@ -287,6 +291,13 @@ impl CompletionItemList {
             true => CompletionItemPosition::PublicTypeMatchingHint,
             false => CompletionItemPosition::PublicType,
         };
+
+        let sort_text = format!("{}:{}", &label, index);
+
+        if let Some(string) = suffix {
+            label.push_str(string);
+        }
+
         let mut insert_text = label.clone();
 
         if insert_brackets {
@@ -298,7 +309,8 @@ impl CompletionItemList {
             .add(label)
             .kind(CompletionItemKind::Event)
             .position(position)
-            .insert_text(insert_text);
+            .insert_text(insert_text)
+            .sort_text(sort_text);
     }
 
     pub fn add_type(&mut self, ty: Type, expected_type: Option<&Type>, custom_type_name: Option<&str>, insert_double_colon_if_enum: bool) {

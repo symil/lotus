@@ -16,6 +16,7 @@ pub fn provide_completion_items(parameters: &LanguageServerCommandParameters, co
             .push_opt(item.documentation.as_ref())
             .push_opt(item.insert_text.as_ref())
             .push_opt(item.filter_text.as_ref())
+            .push_opt(item.sort_text.as_ref())
             .push_opt(item.command.as_ref());
     }
 }

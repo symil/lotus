@@ -422,7 +422,7 @@ impl ProgramContext {
 
             let current_type = self.get_current_type().unwrap().borrow().self_type.clone();
             let self_event_type = match current_type.inherits_from(BuiltinType::Event.get_name()) {
-                true => Some(current_type),
+                true => Some(current_type.clone()),
                 false => None,
             };
 
@@ -433,6 +433,7 @@ impl ProgramContext {
             }
 
             CompletionItemGenerator::Event(EventCompletionDetails {
+                current_type,
                 self_event_type,
                 available_events,
                 insert_brackets,
