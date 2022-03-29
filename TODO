@@ -177,7 +177,9 @@
 [X] Make so `reverse` and `sort` first clone the array
 [X] Allow generic types to inherit from other types
 [X] Make `self` available in field default values
-[ ] Rework memory management to allocate less memory when possible
+[X] Rework memory management to allocate less memory when possible
+[ ] Allow splitting event callbacks in "start", "progress" and "end" blocks
+[ ] Add event chain concept to handle event emission over time
 [ ] Add `Event.emit` options to specify pre-process callback & default interception behavior
 [ ] Add icon support in text
 [ ] Add badge support in layout api
