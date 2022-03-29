@@ -1,7 +1,7 @@
 use colored::Colorize;
 use indexmap::IndexMap;
 use parsable::{parsable, ItemLocation};
-use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo}, utils::Link, wat};
+use crate::{program::{FunctionBlueprint, ProgramContext, EVENT_VAR_NAME, EVENT_OUTPUT_VAR_NAME, Signature, BuiltinType, MethodDetails, EventCallbackDetails, Vasm, ScopeKind, SELF_VAR_NAME, Visibility, MethodQualifier, FunctionBody, FieldVisibility, ArgumentInfo, SELF_TYPE_NAME}, utils::Link, wat};
 use super::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedExpression, ParsedBlockExpression, ParsedVisibilityToken};
 
 #[parsable]
@@ -26,24 +26,41 @@ impl ParsedEventCallbackDeclaration {
         }
 
         let (name, event_type) = match &self.name {
-            Some(name) => match context.types.get_by_identifier(name) {
-                Some(event_type) => {
-                    let event_class_name = BuiltinType::Event.get_name();
-                    let is_valid_event = event_type.borrow().self_type.inherits_from(event_class_name);
+            Some(name) => {
+                let type_wrapped = match name.as_str() {
+                    SELF_TYPE_NAME => Some(this_type.clone()),
+                    _ => context.types.get_by_identifier(name)
+                };
 
-                    match is_valid_event {
-                        true => (name, event_type),
-                        false => {
-                            return context.errors.generic(name, format!("type `{}` does not inherit from `{}`", event_type.borrow().name.as_str(), event_class_name)).none();
-                        },
+                match type_wrapped {
+                    Some(event_type) => {
+                        let event_class_name = BuiltinType::Event.get_name();
+                        let is_valid_event = event_type.borrow().self_type.inherits_from(event_class_name);
+
+                        match is_valid_event {
+                            true => (name, event_type),
+                            false => {
+                                context.errors.generic(name, format!("type `{}` does not inherit from `{}`", event_type.borrow().name.as_str(), event_class_name));
+                                return None;
+                            },
+                        }
+                    },
+                    None => {
+                        context.errors.undefined_type(name);
+                        return None;
                     }
-                },
-                None => return context.errors.undefined_type(name).none()
+                }
             },
-            None => return context.errors.expected_identifier(&self.event_callback_qualifier).none()
+            None => {
+                context.errors.expected_identifier(&self.event_callback_qualifier);
+                return None;
+            }
         };
 
-        context.rename_provider.add_occurence(name, &event_type.borrow().name);
+        if name.as_str() != SELF_TYPE_NAME {
+            context.rename_provider.add_occurence(name, &event_type.borrow().name);
+        }
+        
         context.definition_provider.set_definition(name, &event_type.borrow().name);
 
         let priority_vasm = match &self.priority {

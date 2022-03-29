@@ -21,15 +21,15 @@ export class BlazeWorld {
         let elapsed = current_time - self.last_update_time;
 
         while self.matchmaking_queue.len() >= 2 {
-            let players = [self.matchmaking_queue.shift(), self.matchmaking_queue.shift()];
+            let users = [self.matchmaking_queue.shift(), self.matchmaking_queue.shift()];
             let game = #GAME_INSTANCE_TYPE {
-                players
+                users
             };
 
-            OnGameStart { game, players }.emit([game]);
+            OnGameStart { game, users }.emit([game]);
             self.games.push(game);
 
-            for player in players {
+            for player in users {
                 player.game = game;
                 player.is_searching_for_game = false;
             }

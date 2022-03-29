@@ -114,7 +114,6 @@ export class Client {
     }
 
     _end_update() {
-        self._window = none;
         self._reset_views();
         self._network_events.clear();
         self._window_events.clear();
@@ -398,9 +397,9 @@ export class Client {
         self._all_views.push(view);
 
         view.mark_as_rendered();
-        view.set_data(object);
 
         if object {
+            view.set_data(object);
             self._object_to_view.set(object, view);
 
             OnRender {
