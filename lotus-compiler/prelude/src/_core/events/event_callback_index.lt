@@ -1,7 +1,7 @@
 pub type EventTypeId = int;
 pub type TargetTypeId = int;
 pub type EventCallbackIndex = int;
-pub type EventCallbackFunction = fn(Object, Event, EventOptions);
+pub type EventCallbackFunction = fn(Object, Object, EventOptions); // target, event, options
 
 sys const EVENT_CALLBACKS = Map<EventTypeId, Map<EventCallbackIndex, Map<TargetTypeId, EventCallback[]>>>::new();
 

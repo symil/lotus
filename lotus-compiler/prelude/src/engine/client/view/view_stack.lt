@@ -72,7 +72,7 @@ pub class ViewStack {
     }
 }
 
-fn set_event_view(event: Event, target: Object) {
+fn set_event_view(event: Object, target: Object) {
     let client_event = event as ClientEvent;
 
     client_event.view = client_event.client.get_view(target);

@@ -1,4 +1,4 @@
-pub event ClientEvent {
+pub class ClientEvent {
     client: Client,
     user: #USER_TYPE,
     local_data: #LOCAL_DATA_TYPE,

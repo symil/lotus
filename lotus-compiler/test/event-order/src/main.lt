@@ -1,49 +1,51 @@
-event Foo {}
+class FooEvent {
+    
+}
 
 class A {
-    @Foo[-1] {
+    @FooEvent[-1] {
         @log("should be displayed #1");
     }
 
-    @Foo {
+    @FooEvent {
         @log("should be displayed #4");
     }
 
-    @Foo[1] {
+    @FooEvent[1] {
         @log("should be displayed #7");
     }
 }
 
 class B extends A {
-    @Foo {
+    @FooEvent {
         @log("should be displayed #5");
     }
 
-    @Foo[1] {
+    @FooEvent[1] {
         @log("should be displayed #8");
     }
 
-    @Foo[-1] {
+    @FooEvent[-1] {
         @log("should be displayed #2");
     }
 }
 
 class C extends B {
-    @Foo[1] {
+    @FooEvent[1] {
         @log("should be displayed #9");
     }
 
-    @Foo[-1] {
+    @FooEvent[-1] {
         @log("should be displayed #3");
     }
 
-    @Foo {
+    @FooEvent {
         @log("should be displayed #6");
     }
 }
 
 export fn main() {
-    let foo = Foo;
+    let foo = FooEvent;
     let object = C;
 
     foo.emit([object]);

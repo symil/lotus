@@ -1,6 +1,0 @@
-export class Event extends Object {
-    autogen emit(targets: Object[], options: EventOptions = EventOptions) -> Self {
-        emit_event(self, targets, options);
-        self
-    }
-}

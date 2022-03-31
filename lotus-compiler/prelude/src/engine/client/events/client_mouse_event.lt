@@ -1,4 +1,4 @@
-pub event ClientMouseEvent extends ClientEvent {
+pub class ClientMouseEvent extends ClientEvent {
     action: MouseAction,
     button: MouseButton,
     x: float,

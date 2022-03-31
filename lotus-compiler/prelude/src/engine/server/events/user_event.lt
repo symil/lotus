@@ -1,4 +1,4 @@
-pub event UserEvent {
+pub class UserEvent {
     server: Server,
     world: #WORLD_TYPE,
     user: #USER_TYPE

@@ -1,4 +1,4 @@
-event OnDealDamages {
+class OnDealDamages {
     source: Character,
     target: Character,
     amount: int,

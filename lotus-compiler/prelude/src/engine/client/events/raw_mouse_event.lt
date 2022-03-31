@@ -1,4 +1,4 @@
-pub event RawMouseEvent {
+pub class RawMouseEvent {
     action: MouseAction,
     button: MouseButton,
     x: float,

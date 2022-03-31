@@ -1,2 +1,2 @@
-export event OnFocus extends ClientEvent {
+export class OnFocus extends ClientEvent {
 }

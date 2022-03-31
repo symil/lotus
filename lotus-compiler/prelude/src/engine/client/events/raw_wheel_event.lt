@@ -1,4 +1,4 @@
-pub event RawWheelEvent {
+pub class RawWheelEvent {
     x: float,
     y: float,
     delta_x: float,

@@ -1,5 +1,5 @@
 export class EventOptions {
-    pre_process_callback: fn(Event, Object) = none,
+    pre_process_callback: fn(Object, Object) = none, // event, target
     intercepted: bool = false,
     duration: float = 0,
     ratio: float = 0,

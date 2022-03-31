@@ -1,4 +1,4 @@
-pub fn emit_event(event: Event, targets: Object[], options: EventOptions) {
+pub fn emit_event(event: Object, targets: Object[], options: EventOptions) {
     let event_type_id = event.__get_type_id();
     let event_map = EVENT_CALLBACKS.get(event_type_id);
     let pre_process_callback = options.pre_process_callback;
@@ -20,7 +20,7 @@ pub fn emit_event(event: Event, targets: Object[], options: EventOptions) {
     }
 }
 
-fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, options: EventOptions) -> bool {
+fn trigger_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Object, target: Object, options: EventOptions) -> bool {
     let callback_list = callback_map.get(target.__get_type_id());
 
     if !callback_list {

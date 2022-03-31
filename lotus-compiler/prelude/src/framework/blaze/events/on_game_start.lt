@@ -1,4 +1,4 @@
-export event OnGameStart {
+export class OnGameStart {
     game: #GAME_INSTANCE_TYPE,
     users: #USER_TYPE[]
 }
