@@ -1,4 +1,7 @@
 export class EventOptions {
-    intercepted: bool = false,
     pre_process_callback: fn(Event, Object) = none,
+    intercepted: bool = false,
+    duration: float = 0,
+    ratio: float = 0,
+    elapsed: float = 0,
 }
