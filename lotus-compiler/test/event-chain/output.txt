@@ -1,0 +1,53 @@
+=> TRIGGER: 0s
+attacker prepares to deal 10 damages to defender
+attacker: DOUBLE DAMAGES
+should be displayed before starting dealing damages
+start dealing 20 damages
+dealing 0 damages over 0 seconds
+=> TRIGGER: 0.5s
+dealing 5.555555820465088 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 5.555555820465088 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 5.555555820465088 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 3.3333325386047363 damages over 0.2999999225139618 seconds
+finish dealing 20 damages
+should be displayed after finishing dealing damages
+attacker: has dealt 20 damages
+defender: has received 20 damages
+attacker has dealt 20 damages to defender
+defender prepares to deal 5 damages to attacker
+should be displayed before starting dealing damages
+start dealing 5 damages
+dealing 0.5555557608604431 damages over 0.2000000774860382 seconds
+=> TRIGGER: 0.5s
+dealing 1.388888955116272 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 1.388888955116272 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 1.388888955116272 damages over 0.5 seconds
+=> TRIGGER: 0.5s
+dealing 0.2777773141860962 damages over 0.09999983012676239 seconds
+finish dealing 5 damages
+should be displayed after finishing dealing damages
+attacker: has received 5 damages
+defender: has dealt 5 damages
+defender has dealt 5 damages to attacker
+=> TRIGGER: 0.5s
+=> TRIGGER: 0.5s
+=> TRIGGER: 0.5s
+=> TRIGGER: 0.5s
+---
+Attacker {
+  name: "attacker",
+  health: 95.00000762939453,
+  total_damages_received: 5,
+  total_damages_dealt: 20,
+}
+Character {
+  name: "defender",
+  health: 79.99999237060547,
+  total_damages_received: 20,
+  total_damages_dealt: 5,
+}

@@ -181,7 +181,8 @@
 [X] Allow splitting event callbacks in "start", "progress" and "end" blocks
 [X] Add `Event.emit` options to specify pre-process callback & default interception behavior
 [X] Add completion for event callback step
-[ ] Add event chain concept to handle event emission over time
+[X] Add event chain concept to handle event emission over time
+[ ] Split `Layout` into `BaseLayout` and `ViewLayout`
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 

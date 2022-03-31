@@ -1,0 +1,101 @@
+event OnDealDamages {
+    source: Character,
+    target: Character,
+    amount: float,
+
+    @Self {
+        @log("should be displayed before starting dealing damages");
+    }
+
+    @Self {
+        @log(`start dealing ${evt.amount} damages`);
+        opt.duration = 1.8;
+    }
+
+    @Self:progress {
+        self.target.health -= self.amount * opt.elapsed;
+        @log(`dealing ${self.amount * opt.elapsed} damages over ${opt.elapsed * opt.duration} seconds`);
+    }
+
+    @Self:end {
+        @log(`finish dealing ${self.amount} damages`);
+    }
+
+    @Self {
+        @log("should be displayed after finishing dealing damages");
+    }
+}
+
+class Log {
+    @OnDealDamages[100] {
+        @log(`${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
+    }
+
+    @OnDealDamages[-100] {
+        @log(`${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
+    }
+}
+
+class Character {
+    name: string,
+    health: float = 100,
+    total_damages_received: float = 0,
+    total_damages_dealt: float = 0
+
+    @OnDealDamages[1] {
+        check evt.target == self;
+
+        @log(`${evt.target.name}: has received ${evt.amount} damages`);
+        self.total_damages_received += evt.amount;
+    }
+
+    @OnDealDamages[1] {
+        check evt.source == self;
+
+        @log(`${evt.source.name}: has dealt ${evt.amount} damages`);
+        self.total_damages_dealt += evt.amount;
+    }
+}
+
+class Attacker extends Character {
+    @OnDealDamages[-1] {
+        check evt.source == self;
+
+        @log(`${evt.source.name}: DOUBLE DAMAGES`);
+        evt.amount *= 2;
+    }
+}
+
+export fn main() {
+    let attacker = Attacker { name: "attacker" };
+    let defender = Character { name: "defender" };
+    let evt1 = OnDealDamages {
+        source: attacker,
+        target: defender,
+        amount: 10
+    };
+    let evt2 = OnDealDamages {
+        source: defender,
+        target: attacker,
+        amount: 5
+    };
+    let entities = [Log, attacker, defender];
+    let event_chain = EventCallbackChain;
+
+    event_chain
+        .append(evt1, entities)
+        .append(evt2, entities);
+
+
+    @log(`=> TRIGGER: 0s`);
+    event_chain.trigger(0);
+
+    for i in 0..12 {
+        @log(`=> TRIGGER: 0.5s`);
+        event_chain.trigger(0.5);
+    }
+
+    @log("---");
+    @dbg(attacker);
+    @dbg(defender);
+}

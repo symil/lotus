@@ -357,6 +357,11 @@ impl CompletionItemList {
             }
         }
 
+        if ty.is_function() {
+            // TODO: display functions if they are typedefs, and with their typedef name
+            return;
+        }
+
         self
             .add(format!("{}", label))
             .position(position)
