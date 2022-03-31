@@ -1,4 +1,4 @@
-export event OnDragProgress extends ClientMouseEvent {
+export class OnDragProgress extends ClientMouseEvent {
     dx: float,
     dy: float
 }

@@ -1,4 +1,4 @@
-pub event RawKeyboardEvent {
+pub class RawKeyboardEvent {
     action: KeyboardAction,
     key: Key,
     text: char?,

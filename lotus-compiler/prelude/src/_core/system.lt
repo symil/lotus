@@ -99,7 +99,7 @@ sys type(void) system {
         @log(T::__type_name());
     }
 
-    emit(event: Event, targets: Object[]) {
+    emit(event: Object, targets: Object[]) {
         event.emit(targets);
     }
 

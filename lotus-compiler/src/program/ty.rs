@@ -117,6 +117,10 @@ impl Type {
         }
     }
 
+    pub fn is_event(&self) -> bool {
+        self.is_object()
+    }
+
     pub fn is_function(&self) -> bool {
         match self.content() {
             TypeContent::Function(_) => true,

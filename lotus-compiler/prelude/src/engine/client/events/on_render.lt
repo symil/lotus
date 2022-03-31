@@ -1,2 +1,2 @@
-export event OnRender extends ClientEvent {
+export class OnRender extends ClientEvent {
 }

@@ -1,4 +1,4 @@
-export event OnUserRequest extends UserEvent {
+export class OnUserRequest extends UserEvent {
     request: Object,
     success: bool = false,
 

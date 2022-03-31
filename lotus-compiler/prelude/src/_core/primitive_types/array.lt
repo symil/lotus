@@ -110,7 +110,7 @@ export class Array<T> {
         self._length == 0
     }
 
-    clone() -> Self {
+    dyn clone() -> Self {
         let result : Self = Self::with_capacity(self._length);
 
         result._length = self._length;

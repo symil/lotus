@@ -35,13 +35,16 @@ impl ParsedEventCallbackDeclaration {
 
                 match type_wrapped {
                     Some(event_type) => {
-                        let event_class_name = BuiltinType::Event.get_name();
-                        let is_valid_event = event_type.borrow().self_type.inherits_from(event_class_name);
+                        // let event_class_name = BuiltinType::Event.get_name();
+                        // let is_valid_event = event_type.borrow().self_type.inherits_from(event_class_name);
 
-                        match is_valid_event {
+                        let ty = event_type.borrow().self_type.clone();
+
+                        match ty.is_object() {
                             true => (name, event_type),
                             false => {
-                                context.errors.generic(name, format!("type `{}` does not inherit from `{}`", event_type.borrow().name.as_str(), event_class_name));
+                                // context.errors.generic(name, format!("type `{}` does not inherit from `{}`", event_type.borrow().name.as_str(), event_class_name));
+                                context.errors.expected_class_type(name, &ty);
                                 return None;
                             },
                         }

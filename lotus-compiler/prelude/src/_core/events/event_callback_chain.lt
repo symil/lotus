@@ -1,5 +1,5 @@
 class EventCallbackChainEntry {
-    event: Event,
+    event: Object,
     target: Object,
     callback: EventCallback,
     options: EventOptions,
@@ -13,7 +13,7 @@ export class EventCallbackChain {
     current_index: int = 0,
     next_chain_id: int = 0,
 
-    append(event: Event, targets: Object[], options: EventOptions = EventOptions) -> Self {
+    append(event: Object, targets: Object[], options: EventOptions = EventOptions) -> Self {
         let event_type_id = event.__get_type_id();
         let event_map = EVENT_CALLBACKS.get(event_type_id);
         let pre_process_callback = options.pre_process_callback;
@@ -104,7 +104,7 @@ export class EventCallbackChain {
     }
 }
 
-fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, options: EventOptions, chain_id: int, chain: EventCallbackChainEntry[]) {
+fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Object, target: Object, options: EventOptions, chain_id: int, chain: EventCallbackChainEntry[]) {
     let callback_list = callback_map.get(target.__get_type_id());
 
     if !callback_list {

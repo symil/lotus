@@ -130,16 +130,16 @@ impl CompletionItemGenerator {
                 let type_wrapped = details.current_type.get_type_blueprint();
 
                 type_wrapped.with_ref(|type_unwrapped| {
-                    let event_class_name = BuiltinType::Event.get_name();
+                    // let event_class_name = BuiltinType::Event.get_name();
                     let event_list = details.self_event_type.iter()
                         .chain(details.available_events.iter());
 
                     for (i, ty) in event_list.enumerate() {
                         let event_type_wrapped = ty.get_type_blueprint();
 
-                        if event_type_wrapped.borrow().name.as_str() == event_class_name {
-                            continue;
-                        }
+                        // if event_type_wrapped.borrow().name.as_str() == event_class_name {
+                        //     continue;
+                        // }
 
                         let is_self = i == 0 && details.self_event_type.is_some();
                         let last_event_callback = type_unwrapped.event_callbacks.get(&event_type_wrapped)

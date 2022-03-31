@@ -1,4 +1,4 @@
-pub event ClientKeyboardEvent extends ClientEvent {
+pub class ClientKeyboardEvent extends ClientEvent {
     action: KeyboardAction,
     key: Key,
     text: char?,

@@ -92,11 +92,26 @@ export class Object extends any {
         (self as ptr)[0]
     }
 
+    autogen emit(targets: Object[], options: EventOptions = EventOptions) -> Self {
+        emit_event(self, targets, options);
+        self
+    }
+
     to_string() -> string {
         match self.__is_none() {
             true => "none",
             false => self.__to_string_dyn()
         }
+    }
+
+    autogen dyn clone() -> Self {
+        let clone = Self::__create();
+
+        iter_fields {
+            clone.#FIELD_NAME = self.#FIELD_NAME;
+        }
+
+        clone
     }
 
     autogen dyn __type_name() -> string {

@@ -1,4 +1,4 @@
-export event OnScroll extends ClientEvent {
+export class OnScroll extends ClientEvent {
     x: float,
     y: float,
     delta_x: float,

@@ -4,7 +4,7 @@ enum WindowEventType {
     Wheel
 }
 
-pub fn decode_window_event_from_buffer(buffer: Buffer) -> Event {
+pub fn decode_window_event_from_buffer(buffer: Buffer) -> Object {
     let event_type : WindowEventType = buffer.read_unchecked();
 
     match event_type {

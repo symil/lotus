@@ -1,4 +1,4 @@
-pub event RawNetworkEvent {
+pub class RawNetworkEvent {
     websocket_id: int,
     kind: NetworkEventKind,
     payload: Buffer

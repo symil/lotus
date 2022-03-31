@@ -183,6 +183,7 @@
 [X] Add completion for event callback step
 [X] Add event chain concept to handle event emission over time
 [X] Split `Layout` into `Layout` and `ViewLayout`
+[X] Remove the `Event` class
 [ ] Make `ViewLayout` use `Layout`
 [ ] Add icon support in text
 [ ] Add badge support in layout api
@@ -274,3 +275,4 @@
 [ ] Make so views with no graphics are not detectable
 [ ] Make so a field cannot be default initialized from a field that is initialized after it (e.g `class Foo { a: int = self.b, b: int = 2 }` should not work)
 [ ] Improve the `enum` types so they work like in Rust
+[ ] Remove the need for the `dyn` keyword

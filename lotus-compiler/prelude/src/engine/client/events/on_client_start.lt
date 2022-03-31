@@ -1,4 +1,4 @@
-export event OnClientStart {
+export class OnClientStart {
     client: Client,
     local_data: #LOCAL_DATA_TYPE,
 }

@@ -421,13 +421,13 @@ impl ProgramContext {
             let mut available_events = vec![];
 
             let current_type = self.get_current_type().unwrap().borrow().self_type.clone();
-            let self_event_type = match current_type.inherits_from(BuiltinType::Event.get_name()) {
+            let self_event_type = match current_type.is_event() {
                 true => Some(current_type.clone()),
                 false => None,
             };
 
             for type_wrapped in self.types.get_all_from_location(location) {
-                if type_wrapped.borrow().self_type.inherits_from(BuiltinType::Event.get_name()) {
+                if type_wrapped.borrow().self_type.is_event() {
                     available_events.push(type_wrapped.borrow().self_type.clone());
                 }
             }
