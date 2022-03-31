@@ -58,7 +58,7 @@ fn main() {
                 false => BinaryKind::Cli,
             };
 
-            if !options.app_mode {
+            if !options.app_mode && !package.package_file_exists {
                 package.exclude_engine = true;
                 package.exclude_framework = true;
             }

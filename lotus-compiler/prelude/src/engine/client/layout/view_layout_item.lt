@@ -1,6 +1,6 @@
-pub class LayoutItem<T> {
-    parent: Self,
-    data: T,
+pub class ViewLayoutItem {
+    parent: ViewLayoutItem,
+    view: View,
     rect: Rect = none,
     width: float = none,
     height: float = none,
@@ -11,13 +11,15 @@ pub class LayoutItem<T> {
     direction: LayoutDirection = none,
     alignment: float = 0.5,
     sub_alignment: float = 0.5,
-    children: Self[] = [],
+    children: ViewLayoutItem[] = [],
 
-    render(rect: Rect, render_callback: fn(T, Rect, Self)) {
+    render(rect: Rect) {
         self.rect = rect;
 
-        if self.data {
-            render_callback(self.data, rect.clone(), self);
+        if self.parent {
+            self.parent.view.render_child(self.view.data(), rect, self.view);
+        } else {
+            Client::get().render(self.view.data(), rect, self.view);
         }
 
         check self.direction;
@@ -113,7 +115,7 @@ pub class LayoutItem<T> {
 
             let item_rect = Rect::from_top_left(item_x1, item_y1, item.width, item.height);
 
-            item.render(item_rect, render_callback);
+            item.render(item_rect);
         }
     }
 

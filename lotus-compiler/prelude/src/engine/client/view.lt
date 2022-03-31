@@ -17,7 +17,7 @@ export class View {
     _focused_graphics: Graphics = none,
     _disabled_graphics: Graphics = none,
     _children: View[] = [],
-    _layouts: Layout[] = []
+    _layouts: ViewLayout[] = []
 
     get_approximate_hash() -> int {
         let rect = self._rect;
@@ -143,8 +143,8 @@ export class View {
         view.is_ancestor_of(self)
     }
 
-    layout() -> Layout {
-        let layout = Layout {
+    layout() -> ViewLayout {
+        let layout = ViewLayout {
             view: self
         };
         self._layouts.push(layout);

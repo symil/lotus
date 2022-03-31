@@ -9,6 +9,7 @@ pub struct Package {
     pub src_path: PathBuf,
     pub cache_path: PathBuf,
     pub data_path: PathBuf,
+    pub package_file_exists: bool,
     pub exclude_framework: bool,
     pub exclude_engine: bool,
     pub no_alloc: bool,
@@ -27,6 +28,7 @@ impl Package {
             src_path,
             cache_path,
             data_path,
+            package_file_exists: false,
             exclude_framework: true,
             exclude_engine: false,
             no_alloc: false,
@@ -34,6 +36,8 @@ impl Package {
 
         if let Ok(content) = fs::read_to_string(config_path) {
             if let Ok(config) = content.parse::<Value>() {
+                result.package_file_exists = true;
+
                 result.exclude_framework = config.get("framework")
                     .and_then(|value| value.as_bool())
                     .map(|b| !b)
