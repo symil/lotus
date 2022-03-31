@@ -30,7 +30,7 @@ impl ParsedFunctionDeclaration {
                 }
 
                 if function_unwrapped.visibility != Visibility::Export {
-                    context.errors.generic(self.visibility.as_ref().unwrap(), format!("main function must be declared with the `export` visibility"));
+                    context.errors.generic(&self.content.name, format!("main function must be declared with the `export` visibility"));
                 }
             }
 

@@ -1,0 +1,40 @@
+class Foo {
+    x: float = 0,
+    y: float = 0,
+    width: float = 0,
+    height: float = 0
+}
+
+export fn main() {
+    let layout = Layout<Foo> {
+        rect: Rect::from_size(1000, 500),
+        on_render: (foo, rect) => {
+            foo.x = rect.x;
+            foo.y = rect.y;
+            foo.width = rect.width;
+            foo.height = rect.height;
+        },
+        data: none,
+    };
+    let foo1 = Foo;
+    let foo2 = Foo;
+    let foo3 = Foo;
+
+    layout
+        .top_left_to_bottom()
+        .outer_margin(20)
+        .push(foo1)
+        .force(1)
+        .push(foo2)
+        .height(0.5h)
+        .push(foo3)
+        .height(.2h)
+        .width(.5w)
+        .push(none)
+        .force(1)
+        .render();
+    
+    @dbg(foo1);
+    @dbg(foo2);
+    @dbg(foo3);
+}

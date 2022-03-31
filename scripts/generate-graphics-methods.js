@@ -10,7 +10,7 @@ const GENERATION_END_MARKER = '// GENERATION STOP';
 const SRC_DIR_PATH = path.join(__dirname, '..', 'lotus-compiler', 'prelude', 'src');
 const CLIENT_SRC_SIR_PATH = path.join(SRC_DIR_PATH, 'engine', 'client');
 const VIEW_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'view.lt');
-const LAYOUT_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'layout', 'layout.lt');
+const LAYOUT_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'layout', 'view_layout.lt');
 
 const VIEW_METHODS = {
     shape: 'Shape',
