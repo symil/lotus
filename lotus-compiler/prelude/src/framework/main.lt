@@ -2,4 +2,3 @@
 #WORLD_TYPE = BlazeWorld
 #WINDOW_TYPE = BlazeWindow
 #LOCAL_DATA_TYPE = BlazeLocalData
-#GAME_INSTANCE_TYPE = BlazeGameInstance

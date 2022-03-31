@@ -1,5 +1,3 @@
-pub class UserEvent {
-    server: Server,
-    world: #WORLD_TYPE,
+pub class UserEvent extends ServerEvent {
     user: #USER_TYPE
 }

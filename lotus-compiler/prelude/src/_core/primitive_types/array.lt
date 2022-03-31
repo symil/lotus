@@ -149,10 +149,9 @@ export class Array<T> {
     }
 
     // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-    shuffle(rng: Rng = Rng::default()) -> Self {
+    shuffle_in_place(rng: Rng = Rng::default()) -> Self {
         let length = self._length;
-        let result = self.clone();
-        let body = result._body;
+        let body = self._body;
 
         let current_index = length;
 
@@ -165,7 +164,12 @@ export class Array<T> {
             body[random_index] = tmp;
         }
 
-        result
+        self
+    }
+
+
+    shuffle(rng: Rng = Rng::default()) -> Self {
+        self.clone().shuffle_in_place(rng)
     }
 
     clear() {
