@@ -1,6 +1,6 @@
 pub class LayoutItem<T> {
     parent: Self,
-    data: T,
+    item: T,
     rect: Rect = none,
     width: float = none,
     height: float = none,
@@ -16,8 +16,8 @@ pub class LayoutItem<T> {
     render(rect: Rect, render_callback: fn(T, Rect, Self)) {
         self.rect = rect;
 
-        if self.data {
-            render_callback(self.data, rect.clone(), self);
+        if self.item {
+            render_callback(self.item, rect.clone(), self);
         }
 
         check self.direction;

@@ -1,5 +1,6 @@
 => TRIGGER: 0s
-attacker prepares to deal 10 damages to defender
+---
+LOG: attacker prepares to deal 10 damages to defender
 attacker: DOUBLE DAMAGES
 should be displayed before starting dealing damages
 start dealing 20 damages
@@ -16,8 +17,9 @@ finish dealing 20 damages
 should be displayed after finishing dealing damages
 attacker: has dealt 20 damages
 defender: has received 20 damages
-attacker has dealt 20 damages to defender
-defender prepares to deal 5 damages to attacker
+LOG: attacker has dealt 20 damages to defender
+---
+LOG: defender prepares to deal 5 damages to attacker
 should be displayed before starting dealing damages
 start dealing 5 damages
 dealing 0.5555557608604431 damages over 0.2000000774860382 seconds
@@ -33,7 +35,11 @@ finish dealing 5 damages
 should be displayed after finishing dealing damages
 attacker: has received 5 damages
 defender: has dealt 5 damages
-defender has dealt 5 damages to attacker
+LOG: defender has dealt 5 damages to attacker
+---
+LOG: attacker prepares to deal 1000 damages to immune
+attacker: DOUBLE DAMAGES
+immune: PREVENT DAMAGES
 => TRIGGER: 0.5s
 => TRIGGER: 0.5s
 => TRIGGER: 0.5s
@@ -50,4 +56,10 @@ Character {
   health: 79.99999237060547,
   total_damages_received: 20,
   total_damages_dealt: 5,
+}
+Immune {
+  name: "immune",
+  health: 100,
+  total_damages_received: 0,
+  total_damages_dealt: 0,
 }
