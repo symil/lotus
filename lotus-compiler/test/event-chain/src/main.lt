@@ -28,11 +28,12 @@ event OnDealDamages {
 
 class Log {
     @OnDealDamages[100] {
-        @log(`${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
+        @log(`LOG: ${evt.source.name} has dealt ${evt.amount} damages to ${evt.target.name}`);
     }
 
     @OnDealDamages[-100] {
-        @log(`${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
+        @log("---");
+        @log(`LOG: ${evt.source.name} prepares to deal ${evt.amount} damages to ${evt.target.name}`);
     }
 }
 
@@ -58,17 +59,27 @@ class Character {
 }
 
 class Attacker extends Character {
-    @OnDealDamages[-1] {
+    @OnDealDamages[-3] {
         check evt.source == self;
 
-        @log(`${evt.source.name}: DOUBLE DAMAGES`);
+        @log(`${self.name}: DOUBLE DAMAGES`);
         evt.amount *= 2;
+    }
+}
+
+class Immune extends Character {
+    @OnDealDamages[-2] {
+        check evt.target == self;
+
+        @log(`${self.name}: PREVENT DAMAGES`);
+        intercept;
     }
 }
 
 export fn main() {
     let attacker = Attacker { name: "attacker" };
     let defender = Character { name: "defender" };
+    let immune = Immune { name: "immune" };
     let evt1 = OnDealDamages {
         source: attacker,
         target: defender,
@@ -79,13 +90,18 @@ export fn main() {
         target: attacker,
         amount: 5
     };
-    let entities = [Log, attacker, defender];
+    let evt3 = OnDealDamages {
+        source: attacker,
+        target: immune,
+        amount: 1000
+    };
+    let entities = [Log, attacker, defender, immune];
     let event_chain = EventCallbackChain;
 
     event_chain
         .append(evt1, entities)
-        .append(evt2, entities);
-
+        .append(evt2, entities)
+        .append(evt3, entities)
 
     @log(`=> TRIGGER: 0s`);
     event_chain.trigger(0);
@@ -98,4 +114,5 @@ export fn main() {
     @log("---");
     @dbg(attacker);
     @dbg(defender);
+    @dbg(immune);
 }

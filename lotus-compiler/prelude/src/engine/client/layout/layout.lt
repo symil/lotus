@@ -1,11 +1,12 @@
 export class Layout<T> {
     rect: Rect,
-    data: T,
+    item: T,
     on_render: fn(T, Rect, LayoutItem<T>),
     _root_list: LayoutItem<T>[] = [],
     _root: LayoutItem<T> = none,
     _current_container: LayoutItem<T> = none,
     _current_item: LayoutItem<T> = none,
+    _items: T[] = [],
 
     _flush() {
         if self._root {
@@ -23,7 +24,7 @@ export class Layout<T> {
         let outer_margin = self._root_list.last().and_then(root => root.outer_margin).or(0f);
 
         self._root = LayoutItem<T> {
-            data: self.data,
+            item: self.item,
             parent: none,
             direction: LayoutDirection::LeftToRight,
             outer_margin
@@ -46,7 +47,7 @@ export class Layout<T> {
         self._root_list.clear();
     }
 
-    push(data: T) -> Self {
+    push(item: T) -> Self {
         self._init_root();
         check self._current_container;
 
@@ -58,7 +59,7 @@ export class Layout<T> {
         let height = last_item && last_item.height;
 
         self._current_item = LayoutItem<T> {
-            data,
+            item,
             parent: container,
             force,
             aspect_ratio,
@@ -67,6 +68,10 @@ export class Layout<T> {
         };
 
         container.children.push(self._current_item);
+
+        if item {
+            self._items.push(item);
+        }
 
         self
     }
@@ -79,9 +84,9 @@ export class Layout<T> {
         self.push(none)
     }
 
-    push_list(data_list: T[]) -> Self {
-        for data in data_list {
-            self.push(data)
+    push_list(items: T[]) -> Self {
+        for item in items {
+            self.push(item)
         }
         
         self
@@ -165,6 +170,10 @@ export class Layout<T> {
     reset() -> Self {
         self._flush();
         self
+    }
+
+    collect() -> T[] {
+        self._items.clone()
     }
 
     _bulk_config(direction: LayoutDirection, alignment: float, sub_alignment: float) -> Self {

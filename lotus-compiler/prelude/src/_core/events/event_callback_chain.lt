@@ -3,32 +3,47 @@ class EventCallbackChainEntry {
     target: Object,
     callback: EventCallback,
     options: EventOptions,
-    start_triggered: bool = false,
+    chain_id: int,
+    started: bool = false,
 }
 
 export class EventCallbackChain {
     current_time: float = 0,
     chain: EventCallbackChainEntry[] = [],
     current_index: int = 0,
+    next_chain_id: int = 0,
 
     append(event: Event, targets: Object[], options: EventOptions = EventOptions) -> Self {
         let event_type_id = event.__get_type_id();
         let event_map = EVENT_CALLBACKS.get(event_type_id);
         let pre_process_callback = options.pre_process_callback;
+        let chain_id = self.next_chain_id;
+
+        self.next_chain_id += 1;
 
         if event_map {
             for event_entry in event_map {
                 let callback_map = event_entry.value;
 
                 for target in targets {
-                    collect_event_callbacks(callback_map, event, target, options, self.chain);
+                    collect_event_callbacks(callback_map, event, target, options, chain_id, self.chain);
                 }
 
-                collect_event_callbacks(callback_map, event, event, options, self.chain);
+                collect_event_callbacks(callback_map, event, event, options, chain_id, self.chain);
             }
         }
 
         self
+    }
+
+    _skip_current_chain() {
+        let current_entry = self.chain.get(self.current_index);
+        let chain_id = current_entry.chain_id;
+
+        while current_entry && current_entry.chain_id == chain_id {
+            self.current_index += 1;
+            current_entry = self.chain.get(self.current_index);
+        }
     }
 
     trigger(elapsed: float) -> Self {
@@ -37,6 +52,7 @@ export class EventCallbackChain {
         if !current_entry {
             self.chain.clear();
             self.current_index = 0;
+            self.next_chain_id = 0;
             return self;
         }
 
@@ -45,12 +61,12 @@ export class EventCallbackChain {
         let target = current_entry.target;
         let event = current_entry.event;
 
-        if !current_entry.start_triggered {
+        if !current_entry.started {
             options.elapsed = 0;
             options.ratio = 0;
             options.duration = 0;
             (callback.start_callback)(target, event, options);
-            current_entry.start_triggered = true;
+            current_entry.started = true;
         }
 
         let finished = false;
@@ -75,7 +91,12 @@ export class EventCallbackChain {
                 (callback.end_callback)(target, event, options);
             }
 
-            self.current_index += 1;
+            if options.intercepted {
+                self._skip_current_chain();
+            } else {
+                self.current_index += 1;
+            }
+
             self.trigger(elapsed);
         }
 
@@ -83,7 +104,7 @@ export class EventCallbackChain {
     }
 }
 
-fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, options: EventOptions, chain: EventCallbackChainEntry[]) {
+fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Event, target: Object, options: EventOptions, chain_id: int, chain: EventCallbackChainEntry[]) {
     let callback_list = callback_map.get(target.__get_type_id());
 
     if !callback_list {
@@ -95,7 +116,8 @@ fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, eve
             event,
             target,
             callback,
-            options
+            options,
+            chain_id,
         });
     }
 }
