@@ -1,5 +1,0 @@
-export class BlazeGameInstance {
-    users: #USER_TYPE[] = [],
-    is_finished: bool = false,
-    winner: #USER_TYPE = none
-}

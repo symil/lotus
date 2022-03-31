@@ -5,7 +5,7 @@ pub class SelectItemRequest {
     @OnUserRequest {
         // check evt.world.valid_game_items.has(self.item);
 
-        let category = evt.world.valid_game_items.get(self.item);
+        let category = evt.world._valid_game_items.get(self.item);
 
         if !category {
             evt.user.show_error("invalid game item");

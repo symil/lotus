@@ -9,6 +9,8 @@ pub class Server {
     _websocket_id_counter: Counter = Counter,
     _request_to_request_id: Map<Object, int> = Map::new(),
     _start_time: int = @get_current_time(),
+    _last_update_time: float = 0,
+    _objects_to_update: Set<Object> = Set::new(),
 
     static start() {
         if !SERVER {
@@ -40,6 +42,7 @@ pub class Server {
     }
 
     _start() {
+        self._last_update_time = self.get_current_time();
         self._websocket_server_id = wasm_create_websocket_server();
         self._world = #WORLD_TYPE::__default();
 
@@ -53,7 +56,16 @@ pub class Server {
     }
 
     _update_world() {
-        @emit(OnWorldUpdate { server: self, world: self._world }, [self._world]);
+        let current_time = self.get_current_time();
+        let elapsed = current_time - self._last_update_time;
+
+        OnWorldUpdate { server: self, world: self._world, elapsed }.emit([self._world]);
+
+        for object in self._objects_to_update.values() {
+            OnWorldUpdate { server: self, world: self._world, elapsed }.emit([object]);
+        }
+
+        self._last_update_time = current_time;
     }
 
     _process_network_events() {
@@ -194,6 +206,14 @@ pub class Server {
         }
 
         user
+    }
+
+    add_object_to_update(object: Object) {
+        self._objects_to_update.add(object);
+    }
+
+    remove_object_to_update(object: Object) {
+        self._objects_to_update.delete(object);
     }
 
     dyn __allows_network_serialization(user: #USER_TYPE) -> bool {
