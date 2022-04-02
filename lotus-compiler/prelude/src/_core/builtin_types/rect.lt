@@ -262,6 +262,14 @@ export class Rect {
         }
     }
 
+    mirror_if(cx: float, cy: float, condition: bool) -> Self {
+        if condition {
+            self.mirror(cx, cy)
+        } else {
+            self
+        }
+    }
+
     // transform(transform: Transform2D) -> Self {
     //     let (x, y) = transform.apply(self.x, self.y);
     //     let (width, height) = transform.scale(self.width, self.height);
