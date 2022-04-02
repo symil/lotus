@@ -13,6 +13,10 @@ export class EventCallbackChain {
     current_index: int = 0,
     next_chain_id: int = 0,
 
+    is_empty() -> bool {
+        self.chain.is_empty()
+    }
+
     append(event: Object, targets: Object[], options: EventOptions = EventOptions) -> Self {
         let event_type_id = event.__get_type_id();
         let event_map = EVENT_CALLBACKS.get(event_type_id);
