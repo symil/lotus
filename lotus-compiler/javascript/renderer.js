@@ -162,7 +162,7 @@ export class Renderer {
             }
         }
 
-        if (textImage) {
+        if (textImage && textImage.width && textImage.height) {
             let textX = x - textImage.width / 2;
             let textY = y - textImage.height / 2;
             let dx = (width - textImage.width) / 2;

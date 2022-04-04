@@ -3,19 +3,22 @@ pub class ViewStack {
     views: View[] = [],
 
     clear() {
+        self.hashes.clear();
+        self.views.clear();
+    }
+
+    soft_clear() {
         self.views.clear();
     }
 
     fill_from_hashes(all_views: View[]) {
-        self.clear();
-
         let views : View[] = [];
         let hashes : int[] = [];
 
         for view in all_views {
             let hash = view.get_approximate_hash();
 
-            if !view._disabled && self.hashes.includes(hash) {
+            if self.hashes.includes(hash) {
                 hashes.push(hash);
                 views.push(view);
             }
@@ -28,15 +31,11 @@ pub class ViewStack {
     }
 
     set_from_stack(stack: ViewStack) {
-        self.clear();
-
         self.hashes = stack.hashes.clone();
         self.views = stack.views.clone();
     }
 
     set_from_array(views: View[]) -> Self {
-        self.clear();
-
         self.hashes = views.map(view => view.get_approximate_hash());
         self.views = views.clone();
         self
@@ -64,7 +63,7 @@ pub class ViewStack {
     }
 
     emit(event: ClientEvent) {
-        let items = self.views.filter_map(view => view._data);
+        let items = self.views.filter_map(view => view.data());
 
         event.emit(items, EventOptions {
             pre_process_callback: set_event_view,

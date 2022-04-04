@@ -304,4 +304,13 @@ export class Rect {
             self.strip_from_sides(top_height, 0, 0, 0),
         )
     }
+
+    mix(other: Self, t: float) -> Self {
+        let x = self.x.mix(other.x, t);
+        let y = self.y.mix(other.y, t);
+        let width = self.width.mix(other.width, t);
+        let height = self.height.mix(other.height, t);
+
+        Self::new(x, y, width, height)
+    }
 }

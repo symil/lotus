@@ -2,7 +2,7 @@ export enum Shape { Rectangle, Circle, Line }
 export enum Font { Serif, SansSerif, Monospace, Cursive, Fantasy }
 export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
-export enum Cursor { Default, Pointer, Text }
+export enum Cursor { Default, Pointer, Text, Grab, Grabbing }
 export enum Anchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight }
 
 const DEFAULT_TEXT_SIZE = 1h;

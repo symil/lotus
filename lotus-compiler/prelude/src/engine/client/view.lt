@@ -144,9 +144,7 @@ export class View {
     }
 
     layout() -> ViewLayout {
-        let layout = ViewLayout {
-            view: self
-        };
+        let layout = ViewLayout::new(self);
         self._layouts.push(layout);
         layout
     }
@@ -165,6 +163,14 @@ export class View {
 
     is_focused() -> bool {
         self._client.focused_view() == self
+    }
+
+    is_dragged() -> bool {
+        self._client.dragged_views().includes(self)
+    }
+
+    is_pressed() -> bool {
+        self._client.pressed_views().includes(self)
     }
 
     focus() -> Self {

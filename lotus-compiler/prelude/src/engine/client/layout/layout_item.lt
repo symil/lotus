@@ -12,6 +12,10 @@ pub class LayoutItem<T> {
     alignment: float = 0.5,
     sub_alignment: float = 0.5,
     children: Self[] = [],
+    child_force: float = 1,
+    child_aspect_ratio: float = none,
+    child_width: float = none,
+    child_height: float = none,
 
     render(rect: Rect, render_callback: fn(T, Rect, Self)) {
         self.rect = rect;
