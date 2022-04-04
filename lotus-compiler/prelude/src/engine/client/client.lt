@@ -217,9 +217,9 @@ export class Client {
         self._object_to_view.clear();
         self._focus_chain.clear();
         self._hovered_view_stack.clear();
-        self._focused_view_stack.clear();
-        self._pressed_view_stack.clear();
-        self._dragged_view_stack.clear();
+        self._focused_view_stack.soft_clear();
+        self._pressed_view_stack.soft_clear();
+        self._dragged_view_stack.soft_clear();
         self._enabled_view_stack.clear();
     }
 
@@ -281,10 +281,10 @@ export class Client {
 
             if view.is_hovered() {
                 view._graphics.set(view._hovered_graphics);
+            }
 
-                if view._graphics.cursor {
-                    cursor = view._graphics.cursor;
-                }
+            if view._graphics.cursor {
+                cursor = view._graphics.cursor;
             }
 
             let draw_primitive = view._graphics.__to_draw_primitive(view._rect, self._virtual_to_real_ratio);
@@ -320,6 +320,7 @@ export class Client {
                     if mouse_event.action == MouseAction::Down {
                         let mouse_down_event = OnMouseDown { ..client_event, ..mouse_event };
 
+                        self._press_position = self._cursor_position.clone();
                         self._pressed_view_stack.set_from_stack(self._hovered_view_stack);
                         self._hovered_view_stack.emit(mouse_down_event);
 
@@ -335,9 +336,8 @@ export class Client {
                                 let drag_start_event = OnDragStart { ..client_event, ..mouse_event };
 
                                 self._dragged_view_stack.set_from_stack(self._hovered_view_stack);
-                                self._press_position = self._cursor_position.clone();
-
                                 self._dragged_view_stack.emit(drag_start_event);
+                                self._dragging = true;
                             }
                         }
                     } else if mouse_event.action == MouseAction::Up {
@@ -417,6 +417,25 @@ export class Client {
         self._object_to_view.get(item)
     }
 
+    disable_all_except(items: Object[]) -> View[] {
+        let result : View[] = [];
+
+        for view in self._all_views {
+            view.set_disabled(true);
+        }
+
+        for item in items {
+            let view = self.get_view(item);
+
+            if view {
+                result.push(view);
+                view.set_disabled(false);
+            }
+        }
+
+        result
+    }
+
     send_request(request: Object) {
         self.send_request_with_callback(request, none);
     }
@@ -445,6 +464,14 @@ export class Client {
 
     focused_view() -> View {
         self._focused_view_stack.first()
+    }
+
+    pressed_views() -> View[] {
+        self._pressed_view_stack.list()
+    }
+
+    dragged_views() -> View[] {
+        self._dragged_view_stack.list()
     }
 
     focus(view: View) {

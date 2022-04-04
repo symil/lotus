@@ -1,211 +1,76 @@
 pub class ViewLayout {
-    view: View,
-    _root_list: ViewLayoutItem[] = [],
-    _root: ViewLayoutItem = none,
-    _current_container: ViewLayoutItem = none,
-    _current_item: ViewLayoutItem = none,
+    _layout: Layout<View>,
 
-    _flush() {
-        if self._root {
-            self._root_list.push(self._root);
+    static new(view: View) -> Self {
+        let _layout = Layout<View> {
+            rect: view.rect(),
+            item: view,
+            on_render: (view, rect, layout_item) => {
+                if layout_item.parent {
+                    layout_item.parent.item.render_child(view.data(), rect, view);
+                }
+            }
+        };
+
+        Self { _layout }
+    }
+
+    push(item: Object = none) -> Self {
+        if item is View(view) {
+            self._layout.push(view);
+        } else {
+            self._layout.push(View.set_data(item))
         }
 
-        self._root = none;
-        self._current_container = none;
-        self._current_item = none;
+        self
     }
 
-    _init_root() {
-        check !self._root;
+    push_list(items: Object[]) -> Self {
+        for item in items {
+            self.push(item)
+        }
 
-        let outer_margin = self._root_list.last().and_then(root => root.outer_margin).or(0f);
-
-        self._root = ViewLayoutItem {
-            parent: none,
-            view: self.view,
-            direction: LayoutDirection::LeftToRight,
-            outer_margin
-        };
-        self._current_container = self._root;
-        self._current_item = self._root;
+        self
     }
+
+    render() -> Self { self._layout.render(); self }
+    back() -> Self  { self._layout.back(); self }
+    direction(direction: LayoutDirection) -> Self  { self._layout.direction(direction); self }
+    alignment(alignment: float) -> Self  { self._layout.alignment(alignment); self }
+    sub_alignment(sub_alignment: float) -> Self  { self._layout.sub_alignment(sub_alignment); self }
+    force(force: float) -> Self  { self._layout.force(force); self }
+    width(width: DisplaySize) -> Self  { self._layout.width(width); self }
+    height(height: DisplaySize) -> Self  { self._layout.height(height); self }
+    aspect_ratio(aspect_ratio: float) -> Self  { self._layout.aspect_ratio(aspect_ratio); self }
+    child_force(force: float) -> Self  { self._layout.child_force(force); self }
+    child_width(width: DisplaySize) -> Self  { self._layout.child_width(width); self }
+    child_height(height: DisplaySize) -> Self  { self._layout.child_height(height); self }
+    child_aspect_ratio(aspect_ratio: float) -> Self  { self._layout.child_aspect_ratio(aspect_ratio); self }
+    inner_margin(inner_margin: DisplaySize) -> Self  { self._layout.inner_margin(inner_margin); self }
+    outer_margin(outer_margin: DisplaySize) -> Self  { self._layout.outer_margin(outer_margin); self }
+    margin(margin: DisplaySize) -> Self  { self._layout.margin(margin); self }
+    reset() -> Self  { self._layout.reset(); self }
+    center_to_right() -> Self  { self._layout.center_to_right(); self }
+    center_to_left() -> Self  { self._layout.center_to_left(); self }
+    center_to_bottom() -> Self  { self._layout.center_to_bottom(); self }
+    center_to_top() -> Self  { self._layout.center_to_top(); self }
+    left_to_right() -> Self  { self._layout.left_to_right(); self }
+    right_to_left() -> Self  { self._layout.right_to_left(); self }
+    top_to_bottom() -> Self  { self._layout.top_to_bottom(); self }
+    bottom_to_top() -> Self  { self._layout.bottom_to_top(); self }
+    top_left_to_right() -> Self  { self._layout.top_left_to_right(); self }
+    bottom_left_to_right() -> Self  { self._layout.bottom_left_to_right(); self }
+    top_right_to_left() -> Self  { self._layout.top_right_to_left(); self }
+    bottom_right_to_left() -> Self  { self._layout.bottom_right_to_left(); self }
+    top_left_to_bottom() -> Self  { self._layout.top_left_to_bottom(); self }
+    top_right_to_bottom() -> Self  { self._layout.top_right_to_bottom(); self }
+    bottom_left_to_top() -> Self  { self._layout.bottom_left_to_top(); self }
+    bottom_right_to_top() -> Self  { self._layout.bottom_right_to_top(); self }
+
 
     _get_last_view() -> View {
-        self._init_root();
-
-        self._current_item.view
+        self._layout.get_current_item()
     }
-
-    _get_root_rect() -> Rect {
-        self.view.rect()
-    }
-
-    render() {
-        self._flush();
-
-        for root in self._root_list {
-            root.render(self.view.rect());
-        }
-
-        self._root_list.clear();
-    }
-
-    push(object: Object) -> Self {
-        self._init_root();
-        check self._current_container;
-
-        let container = self._current_container;
-        let last_item = container.children.last();
-        let force = (last_item && last_item.force) || 1f;
-        let aspect_ratio = last_item && last_item.aspect_ratio;
-        let width = last_item && last_item.width;
-        let height = last_item && last_item.height;
-        let view : View = none;
-
-        if object is View(as_view) {
-            object = none;
-            view = as_view;
-        } else {
-            view = View;
-        }
-
-        view.set_data(object);
-
-        self._current_item = ViewLayoutItem {
-            parent: container,
-            view,
-            force,
-            aspect_ratio,
-            width,
-            height
-        };
-
-        container.children.push(self._current_item);
-
-        self
-    }
-
-    push_separator() -> Self {
-        self.push(none)
-    }
-
-    push_container() -> Self {
-        self.push(none)
-    }
-
-    push_list(views: View[]) -> Self {
-        for view in views {
-            self.push(view)
-        }
-        
-        self
-    }
-
-    back() -> Self {
-        check self._current_container;
-
-        self._current_container = self._current_container.parent || self._current_container;
-        self
-    }
-
-    direction(direction: LayoutDirection) -> Self {
-        self._init_root();
-        self._current_container = self._current_item;
-
-        self._current_item.direction = direction;
-        self
-    }
-
-    alignment(alignment: float) -> Self {
-        self._init_root();
-        self._current_item.alignment = alignment;
-        self
-    }
-
-    sub_alignment(sub_alignment: float) -> Self {
-        self._init_root();
-        self._current_item.sub_alignment = sub_alignment;
-        self
-    }
-
-    width(width: DisplaySize) -> Self {
-        self._init_root();
-        self._current_item.width = width.resolve(self._get_root_rect());
-        self
-    }
-
-    height(height: DisplaySize) -> Self {
-        self._init_root();
-        self._current_item.height = height.resolve(self._get_root_rect());
-        self
-    }
-
-    aspect_ratio(aspect_ratio: float) -> Self {
-        self._init_root();
-        self._current_item.aspect_ratio = aspect_ratio;
-        // TODO: unset width or height
-        self
-    }
-
-    force(force: float) -> Self {
-        self._init_root();
-        let item = self._current_item;
-
-        item.force = force;
-        item.aspect_ratio = none;
-        item.width = none;
-        item.height = none;
-        self
-    }
-
-    inner_margin(inner_margin: DisplaySize) -> Self {
-        self._init_root();
-        self._current_item.inner_margin = inner_margin.resolve(self._get_root_rect());
-        self
-    }
-
-    outer_margin(outer_margin: DisplaySize) -> Self {
-        self._init_root();
-        self._current_item.outer_margin = outer_margin.resolve(self._get_root_rect());
-        self
-    }
-
-    margin(margin: DisplaySize) -> Self {
-        self
-            .inner_margin(margin)
-            .outer_margin(margin)
-    }
-
-    reset() -> Self {
-        self._flush();
-        self
-    }
-
-    _bulk_config(direction: LayoutDirection, alignment: float, sub_alignment: float) -> Self {
-        self
-            .direction(direction)
-            .alignment(alignment)
-            .sub_alignment(sub_alignment)
-    }
-
-    center_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0.5, 0.5) }
-    center_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0.5, 0.5) }
-    center_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0.5, 0.5) }
-    center_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0.5, 0.5) }
-
-    left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 0.5) }
-    right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 0.5) }
-    top_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 0.5) }
-    bottom_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 0.5) }
-
-    top_left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 0) }
-    bottom_left_to_right() -> Self { self._bulk_config(LayoutDirection::LeftToRight, 0, 1) }
-    top_right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 0) }
-    bottom_right_to_left() -> Self { self._bulk_config(LayoutDirection::RightToLeft, 0, 1) }
-    top_left_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 0) }
-    top_right_to_bottom() -> Self { self._bulk_config(LayoutDirection::TopToBottom, 0, 1) }
-    bottom_left_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 0) }
-    bottom_right_to_top() -> Self { self._bulk_config(LayoutDirection::BottomToTop, 0, 1) }
 
     // GENERATION START
 

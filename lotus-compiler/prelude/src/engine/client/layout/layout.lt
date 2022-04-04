@@ -6,7 +6,7 @@ export class Layout<T> {
     _root: LayoutItem<T> = none,
     _current_container: LayoutItem<T> = none,
     _current_item: LayoutItem<T> = none,
-    _items: T[] = [],
+    _pushed_items: LayoutItem<T>[] = [],
 
     _flush() {
         if self._root {
@@ -37,7 +37,13 @@ export class Layout<T> {
         self.rect
     }
 
-    render() {
+    get_current_item() -> T {
+        self._init_root();
+
+        self._current_item.item
+    }
+
+    render() -> Self {
         self._flush();
 
         for root in self._root_list {
@@ -45,6 +51,7 @@ export class Layout<T> {
         }
 
         self._root_list.clear();
+        self
     }
 
     push(item: T) -> Self {
@@ -52,25 +59,20 @@ export class Layout<T> {
         check self._current_container;
 
         let container = self._current_container;
-        let last_item = container.children.last();
-        let force = (last_item && last_item.force) || 1f;
-        let aspect_ratio = last_item && last_item.aspect_ratio;
-        let width = last_item && last_item.width;
-        let height = last_item && last_item.height;
 
         self._current_item = LayoutItem<T> {
             item,
             parent: container,
-            force,
-            aspect_ratio,
-            width,
-            height
+            force: container.child_force,
+            aspect_ratio: container.child_aspect_ratio,
+            width: container.child_width,
+            height: container.child_height
         };
 
         container.children.push(self._current_item);
 
         if item {
-            self._items.push(item);
+            self._pushed_items.push(self._current_item);
         }
 
         self
@@ -149,6 +151,36 @@ export class Layout<T> {
         self
     }
 
+    child_force(force: float) -> Self {
+        self._init_root();
+        let item = self._current_item;
+
+        item.child_force = force;
+        item.child_aspect_ratio = none;
+        item.child_width = none;
+        item.child_height = none;
+        self
+    }
+
+    child_width(width: DisplaySize) -> Self {
+        self._init_root();
+        self._current_item.child_width = width.resolve(self._get_root_rect());
+        self
+    }
+
+    child_height(height: DisplaySize) -> Self {
+        self._init_root();
+        self._current_item.child_height = height.resolve(self._get_root_rect());
+        self
+    }
+
+    child_aspect_ratio(aspect_ratio: float) -> Self {
+        self._init_root();
+        self._current_item.child_aspect_ratio = aspect_ratio;
+        // TODO: unset width or height
+        self
+    }
+
     inner_margin(inner_margin: DisplaySize) -> Self {
         self._init_root();
         self._current_item.inner_margin = inner_margin.resolve(self._get_root_rect());
@@ -173,7 +205,11 @@ export class Layout<T> {
     }
 
     collect() -> T[] {
-        self._items.clone()
+        self._pushed_items.map(layout_item => layout_item.item)
+    }
+
+    collect_rects() -> Rect[] {
+        self._pushed_items.map(layout_item => layout_item.rect)
     }
 
     _bulk_config(direction: LayoutDirection, alignment: float, sub_alignment: float) -> Self {

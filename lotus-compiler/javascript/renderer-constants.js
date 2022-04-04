@@ -1,4 +1,4 @@
-export const CURSORS = ['default', 'pointer', 'text'];
+export const CURSORS = ['default', 'pointer', 'text', 'grab', 'grabbing'];
 export const SHAPES = ['rectangle', 'circle', 'line'];
 export const FONTS = ['serif', 'Arial', 'monospace', 'cursive', 'fantasy'];
 export const HORIZONTAL_ALIGNS = ['left', 'center', 'right'];

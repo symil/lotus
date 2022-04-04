@@ -184,7 +184,9 @@
 [X] Add event chain concept to handle event emission over time
 [X] Split `Layout` into `Layout` and `ViewLayout`
 [X] Remove the `Event` class
-[ ] Make `ViewLayout` use `Layout`
+[X] Make `ViewLayout` use `Layout`
+[ ] Layout: reduce size of child items if their total size would exceed the container size
+[ ] Add animation easing option
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 

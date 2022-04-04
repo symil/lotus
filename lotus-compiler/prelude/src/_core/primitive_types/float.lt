@@ -68,6 +68,10 @@ export type(f32) float {
         self.abs() < 0.00000001
     }
 
+    mix(other: float, t: float) -> float {
+        self + (other - self) * t
+    }
+
     static __default() -> float {{
         (f32.const 0)
     }}
