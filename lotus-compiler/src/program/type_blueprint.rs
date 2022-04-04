@@ -73,7 +73,7 @@ impl TypeBlueprint {
         self.category == TypeCategory::Class
     }
 
-    pub fn get_wasm_type(&self, parameters: &[Rc<TypeInstanceHeader>]) -> Option<&'static str> {
+    pub fn get_wasm_type(&self, parameters: &HashMap<ItemLocation, Rc<TypeInstanceHeader>>) -> Option<&'static str> {
         match self.stack_type {
             WasmStackType::I32 => Some("i32"),
             WasmStackType::F32 => Some("f32"),

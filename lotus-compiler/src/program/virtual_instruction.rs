@@ -235,6 +235,11 @@ impl VirtualInstruction {
                 vasm.resolve(type_index, context)
             },
             VirtualInstruction::InitVariable(info) => {
+                // if let Some(ty) = &type_index.current_type_instance {
+                //     dbg!(info.var_info.ty().to_string());
+                //     dbg!(&ty.name);
+                //     dbg!(info.var_info.name());
+                // }
                 match info.var_info.ty().resolve(type_index, context).wasm_type {
                     Some(wasm_type) => info.var_info.with_ref(|var_info| {
                         match var_info.is_closure_arg {

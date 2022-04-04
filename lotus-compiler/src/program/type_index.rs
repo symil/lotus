@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use parsable::ItemLocation;
 use super::TypeInstanceHeader;
 
 pub struct TypeIndex {
@@ -7,9 +8,11 @@ pub struct TypeIndex {
 }
 
 impl TypeIndex {
-    pub fn get_current_type_parameter(&self, index: usize) -> Rc<TypeInstanceHeader> {
+    pub fn get_current_type_parameter(&self, key: &ItemLocation) -> Rc<TypeInstanceHeader> {
         match &self.current_type_instance {
-            Some(type_instance) => type_instance.parameters[index].clone(),
+            Some(type_instance) => {
+                type_instance.parameters.get(key).unwrap().clone()
+            },
             None => unreachable!(),
         }
     }

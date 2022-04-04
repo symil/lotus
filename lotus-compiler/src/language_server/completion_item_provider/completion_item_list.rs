@@ -371,20 +371,17 @@ impl CompletionItemList {
             .command(command);
     }
 
-    pub fn add_interface(&mut self, interface: Link<InterfaceBlueprint>) {
-        interface.with_ref(|interface_unwrapped| {
-            let interface_name = interface_unwrapped.name.as_str();
-            let visibility = CompletionItemVisibility::from_str(interface_name);
-            let should_display_internal = false;
+    pub fn add_interface(&mut self, interface_name: &str) {
+        let visibility = CompletionItemVisibility::from_str(interface_name);
+        let should_display_internal = false;
 
-            if visibility.is_internal() && !should_display_internal {
-                return;
-            }
+        if visibility.is_internal() && !should_display_internal {
+            return;
+        }
 
-            self
-                .add(format!("{}", interface_name))
-                .kind(CompletionItemKind::Interface);
-        });
+        self
+            .add(format!("{}", interface_name))
+            .kind(CompletionItemKind::Interface);
     }
 }
 

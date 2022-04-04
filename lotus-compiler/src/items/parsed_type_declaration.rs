@@ -104,10 +104,6 @@ impl ParsedTypeDeclaration {
         }
 
         let type_wrapped = context.types.insert(type_unwrapped, None);
-        let parameters = match &self.parameters {
-            Some(params) => params.process(context),
-            None => IndexMap::new()
-        };
 
         let stack_type = self.stack_type.as_ref()
             .and_then(|declaration| declaration.process(context))
@@ -115,14 +111,31 @@ impl ParsedTypeDeclaration {
         
         context.rename_provider.add_occurence(&self.name, &self.name);
 
-        for details in parameters.values() {
-            context.rename_provider.add_occurence(&details.name, &details.name);
-        }
-
         type_wrapped.with_mut(|mut type_unwrapped| {
-            type_unwrapped.self_type = Type::actual(&type_wrapped, parameters.values().map(|param| Type::type_parameter(param)).collect(), &self.name.location);
-            type_unwrapped.parameters = parameters;
             type_unwrapped.stack_type = stack_type;
+        });
+    }
+
+    pub fn process_parameters(&self, context: &mut ProgramContext) {
+        self.process(context, |type_wrapped, context| {
+            let parameters = match &self.parameters {
+                Some(params) => params.process(context),
+                None => IndexMap::new()
+            };
+
+            for details in parameters.values() {
+                context.rename_provider.add_occurence(&details.name, &details.name);
+            }
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.parameters = parameters.clone();
+            });
+
+            let self_type = Type::actual(&type_wrapped, parameters.values().map(|param| Type::type_parameter(param)).collect(), &self.name.location);
+
+            type_wrapped.with_mut(|mut type_unwrapped| {
+                type_unwrapped.self_type = self_type;
+            });
         });
     }
 
