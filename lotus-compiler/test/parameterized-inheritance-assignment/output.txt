@@ -1,0 +1,17 @@
+FooA {
+  value: 2,
+  items: [
+    A {
+      value: 2,
+      a: "a",
+    },
+    A {
+      value: 2,
+      a: "a",
+    },
+    A {
+      value: 2,
+      a: "a",
+    }
+  ],
+}

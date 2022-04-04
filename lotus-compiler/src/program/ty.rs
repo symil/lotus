@@ -363,24 +363,26 @@ impl Type {
         match (self.content(), target.content()) {
             (_, TypeContent::Any) => true,
             (TypeContent::This(_), TypeContent::This(_)) => true,
-            (TypeContent::Actual(self_info), TypeContent::Actual(target_info)) => match self_info.type_blueprint == target_info.type_blueprint {
-                true => {
-                    if self_info.parameters.len() != target_info.parameters.len() {
-                        return false;
-                    }
+            (TypeContent::Actual(self_info), TypeContent::Actual(target_info)) => {
+                let mut self_type = Some(self.clone());
 
-                    for (self_param, target_param) in self_info.parameters.iter().zip(target_info.parameters.iter()) {
-                        if !self_param.is_assignable_to(target_param) {
-                            return false;
+                while let Some(ty) = self_type {
+                    let self_type_info = ty.as_actual().unwrap();
+
+                    if self_type_info.type_blueprint == target_info.type_blueprint {
+                        for (self_param, target_param) in self_type_info.parameters.iter().zip(target_info.parameters.iter()) {
+                            if !self_param.is_assignable_to(target_param) {
+                                return false;
+                            }
                         }
+
+                        return true;
                     }
 
-                    true
-                },
-                false => match self.get_as(&target_info.type_blueprint) {
-                    Some(ty) => &ty == target,
-                    None => false,
-                },
+                    self_type = ty.get_parent();
+                }
+
+                false
             },
             (TypeContent::TypeParameter(self_info) | TypeContent::FunctionParameter(self_info), TypeContent::Actual(_)) => {
                 match &self_info.inherited_type {
