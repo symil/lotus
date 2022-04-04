@@ -9,7 +9,7 @@ pub struct TypeInstanceParameters {
     pub type_parameters: Vec<Rc<TypeInstanceHeader>>,
 }
 
-impl  TypeInstanceParameters {
+impl TypeInstanceParameters {
     pub fn get_id(&self) -> u64 {
         let mut state = DefaultHasher::new();
 

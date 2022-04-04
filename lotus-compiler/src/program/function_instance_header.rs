@@ -33,8 +33,9 @@ impl FunctionInstanceHeader {
 
             if let Some(this_type) = &parameters.this_type {
                 this_type.type_blueprint.with_ref(|type_unwrapped| {
+                    // dbg!(this_type.name.as_str());
                     for parameter in type_unwrapped.parameters.values() {
-                        let p = &this_type.parameters[parameter.index];
+                        let p = this_type.parameters.get(&parameter.key).unwrap();
 
                         if let Some(wasm_type) = p.type_blueprint.borrow().get_wasm_type(&p.parameters) {
                             for wat in &mut wasm_call {

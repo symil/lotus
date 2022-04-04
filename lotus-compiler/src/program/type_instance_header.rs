@@ -2,7 +2,7 @@ use std::{borrow::Borrow, collections::HashMap, hash::Hash, rc::Rc};
 use indexmap::IndexMap;
 use parsable::ItemLocation;
 use crate::utils::Link;
-use super::{ActualTypeContent, FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, Type, TypeBlueprint, TypeInstanceParameters};
+use super::{ActualTypeContent, FieldKind, FunctionBlueprint, ItemGenerator, OBJECT_HEADER_SIZE, ProgramContext, Type, TypeBlueprint, TypeInstanceParameters, TypeIndex};
 
 #[derive(Debug)]
 pub struct TypeInstanceHeader {
@@ -10,7 +10,7 @@ pub struct TypeInstanceHeader {
     pub name: String,
     pub ty: Type,
     pub type_blueprint: Link<TypeBlueprint>,
-    pub parameters: Vec<Rc<TypeInstanceHeader>>,
+    pub parameters: HashMap<ItemLocation, Rc<TypeInstanceHeader>>,
     pub wasm_type: Option<&'static str>,
     pub dynamic_method_table_offset: usize,
 }
@@ -32,11 +32,10 @@ impl TypeInstanceHeader {
         instance_parameters.type_blueprint.with_ref(|type_unwrapped| {
             let id = instance_parameters.get_id();
             let type_blueprint = instance_parameters.type_blueprint.clone();
-            let parameters = instance_parameters.type_parameters.clone();
-            let wasm_type = type_unwrapped.get_wasm_type(&instance_parameters.type_parameters);
             let dynamic_method_count = type_unwrapped.dynamic_methods.len();
             let dynamic_method_table_offset = context.reserve_next_function_index();
             let location = &ItemLocation::default();
+            let mut parameters = HashMap::new();
             let mut type_parameters = vec![];
             let mut name = type_unwrapped.name.to_string();
 
@@ -45,11 +44,36 @@ impl TypeInstanceHeader {
                 type_parameters.push(parameter.ty.clone());
             }
 
+            let ty = Type::actual(&type_blueprint, type_parameters, location);
+
+            if instance_parameters.type_parameters.len() != type_blueprint.borrow().parameters.len() {
+                panic!("type `{}`: expected {} parameters, got {}", type_blueprint.borrow().name.as_str(), type_blueprint.borrow().parameters.len(), instance_parameters.type_parameters.len());
+            }
+
             for _ in 1..dynamic_method_count {
                 context.reserve_next_function_index();
             }
 
-            let ty = Type::actual(&type_blueprint, type_parameters, location);
+            let mut current_type_opt = Some(ty.clone());
+            let empty_type_index = TypeIndex::empty();
+
+            while let Some(current_type) = current_type_opt {
+                let info = current_type.as_actual().unwrap();
+
+                info.type_blueprint.with_ref(|type_unwrapped| {
+                    for (param_info, ty) in type_unwrapped.parameters.values().zip(info.parameters.iter()) {
+                        let key = param_info.key.clone();
+                        // TODO: protect against cycles? (which should be invalid)
+                        let type_instance = ty.resolve(&empty_type_index, context);
+
+                        parameters.insert(key, type_instance);
+                    }
+                });
+
+                current_type_opt = current_type.get_parent();
+            }
+
+            let wasm_type = type_unwrapped.get_wasm_type(&parameters);
 
             Rc::new(TypeInstanceHeader {
                 id,

@@ -56,9 +56,13 @@ impl Type {
         Self::new(TypeContent::This(interface.borrow().clone()))
     }
 
-    pub fn actual<T : Borrow<Link<TypeBlueprint>>>(type_blueprint: T, parameters: Vec<Type>, location: &ItemLocation) -> Type {
+    pub fn actual(type_blueprint: &Link<TypeBlueprint>, parameters: Vec<Type>, location: &ItemLocation) -> Type {
+        if type_blueprint.borrow().parameters.len() != parameters.len() {
+            panic!("type `{}`: expected {} parameters, got {}", type_blueprint.borrow().name.as_str(), type_blueprint.borrow().parameters.len(), parameters.len());
+        }
+
         Self::new(TypeContent::Actual(ActualTypeContent {
-            type_blueprint: type_blueprint.borrow().clone(),
+            type_blueprint: type_blueprint.clone(),
             parameters,
             location: location.clone(),
         }))
@@ -162,6 +166,19 @@ impl Type {
         self.is_builtin_type(BuiltinType::Bool)
     }
 
+    pub fn has_parameters(&self) -> bool {
+        match self.content() {
+            TypeContent::Undefined => false,
+            TypeContent::Any => false,
+            TypeContent::This(_) => false,
+            TypeContent::Actual(info) => !info.parameters.is_empty(),
+            TypeContent::TypeParameter(_) => false,
+            TypeContent::FunctionParameter(_) => false,
+            TypeContent::Associated(_) => false,
+            TypeContent::Function(_) => false,
+        }
+    }
+
     pub fn to_type_hint(&self) -> Option<&Self> {
         match self.is_undefined() {
             true => None,
@@ -181,6 +198,26 @@ impl Type {
                 }
             }),
             _ => false
+        }
+    }
+
+    pub fn get_parent(&self) -> Option<Type> {
+        match self.content() {
+            TypeContent::Undefined => None,
+            TypeContent::Any => None,
+            TypeContent::This(_) => None,
+            TypeContent::Actual(info) => {
+                info.type_blueprint.with_ref(|type_unwrapped| {
+                    match &type_unwrapped.parent {
+                        Some(parent) => Some(parent.ty.replace_parameters(Some(self), &[])),
+                        None => None,
+                    }
+                })
+            },
+            TypeContent::TypeParameter(_) => None,
+            TypeContent::FunctionParameter(_) => None,
+            TypeContent::Associated(_) => None,
+            TypeContent::Function(_) => None,
         }
     }
 
@@ -228,27 +265,46 @@ impl Type {
         } else if other.is_assignable_to(self) {
             Some(self.clone())
         } else if let (TypeContent::Actual(self_info), TypeContent::Actual(other_info)) = (self.content(), other.content()) {
-            match self_info.parameters.is_empty() && other_info.parameters.is_empty() {
-                true => {
-                    let self_unwrapped = self_info.type_blueprint.borrow();
-                    let other_unwrapped = other_info.type_blueprint.borrow();
+            let self_unwrapped = self_info.type_blueprint.borrow();
+            let other_unwrapped = other_info.type_blueprint.borrow();
 
-                    for self_ancestor in &self_unwrapped.ancestors {
-                        let self_ancestor_wrapped = self_ancestor.get_type_blueprint();
+            for self_ancestor in &self_unwrapped.ancestors {
+                let self_ancestor_wrapped = self_ancestor.get_type_blueprint();
 
-                        for other_ancestor in &other_unwrapped.ancestors {
-                            let other_ancestor_wrapped = other_ancestor.get_type_blueprint();
+                for other_ancestor in &other_unwrapped.ancestors {
+                    let other_ancestor_wrapped = other_ancestor.get_type_blueprint();
 
-                            if self_ancestor_wrapped == other_ancestor_wrapped {
-                                return Some(Type::actual(&self_ancestor_wrapped, vec![], &ItemLocation::default()));
+                    if self_ancestor_wrapped == other_ancestor_wrapped {
+                        let common_ancestor = self_ancestor_wrapped;
+                        let mut matching_self_type = self.clone();
+                        let mut matching_other_type = other.clone();
+                        let mut parameters = vec![];
+
+                        while matching_self_type.get_type_blueprint() != common_ancestor {
+                            matching_self_type = matching_self_type.get_parent().unwrap();
+                        }
+
+                        while matching_other_type.get_type_blueprint() != common_ancestor {
+                            matching_other_type = matching_other_type.get_parent().unwrap();
+                        }
+
+                        let self_params = matching_self_type.get_parameters();
+                        let other_params = matching_other_type.get_parameters();
+
+                        for (self_param, other_param) in self_params.iter().zip(other_params.iter()) {
+                            if let Some(common_param) = self_param.get_common_type(other_param) {
+                                parameters.push(common_param);
+                            } else {
+                                return None;
                             }
                         }
-                    }
 
-                    None
-                },
-                false => None,
+                        return Some(Type::actual(&common_ancestor, parameters, &ItemLocation::default()));
+                    }
+                }
             }
+
+            None
         } else {
             None
         }
@@ -791,6 +847,40 @@ impl Type {
         self.get_method(FieldKind::Static, name, context)
     }
 
+    // pub fn resolve_with_type_fix(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
+    //     if let TypeContent::Actual(info) = self.content() {
+    //         if let Some(this_type) = &type_index.current_type_instance {
+    //             let mut this_type_to_resolve = self.clone();
+    //             let mut current_type_blueprint = this_type.type_blueprint.clone();
+
+    //             while current_type_blueprint != info.type_blueprint {
+    //                 current_type_blueprint.clone().with_ref(|type_unwrapped| {
+    //                     if let Some(parent) = &type_unwrapped.parent {
+    //                         current_type_blueprint = parent.ty.get_type_blueprint();
+    //                         this_type_to_resolve = parent.ty.replace_parameters(Some(&this_type_to_resolve), &[]);
+    //                     } else {
+    //                         panic!("error: trying to resolve `{}` against `{}`", self.to_string(), &this_type.name);
+    //                     }
+    //                 });
+    //             }
+
+    //             return this_type_to_resolve.resolve(type_index, context);
+    //         }
+    //     }
+
+    //     unreachable!()
+    // }
+
+    fn get_required_type_param_count(&self) -> usize {
+        self.as_actual().unwrap().parameters.iter().fold(0, |acc, ty| {
+            if let TypeContent::TypeParameter(param_info) = ty.content() {
+                acc.max(param_info.index + 1)
+            } else {
+                acc
+            }
+        })
+    }
+
     pub fn resolve(&self, type_index: &TypeIndex, context: &mut ProgramContext) -> Rc<TypeInstanceHeader> {
         match self.content() {
             TypeContent::Undefined => unreachable!(),
@@ -804,7 +894,7 @@ impl Type {
 
                 context.get_type_instance(parameters)
             },
-            TypeContent::TypeParameter(info) => type_index.get_current_type_parameter(info.index),
+            TypeContent::TypeParameter(info) => type_index.get_current_type_parameter(&info.key),
             TypeContent::FunctionParameter(info) => type_index.current_function_parameters[info.index].clone(),
             TypeContent::Associated(info) => {
                 let result = info.root.resolve(type_index, context);

@@ -1,0 +1,33 @@
+class Base {
+    value: int = 2,
+}
+
+class A extends Base {
+    a: string = "a"
+}
+
+class B extends Base {
+    b: float = 1.5
+}
+
+class Foo<T : Base> extends Base {
+    items: T[] = []
+}
+
+class FooA extends Foo<A> {
+
+}
+
+class FooB extends Foo<B> {
+
+}
+
+export fn main() {
+    let a_list = [A, A, A];
+    let b_list = [B, B, B];
+    let foo_a = FooA { items: a_list };
+    let foo_b = FooB { items: b_list };
+    let foo_list = [foo_a, foo_b];
+
+    @dbg(foo_list);
+}

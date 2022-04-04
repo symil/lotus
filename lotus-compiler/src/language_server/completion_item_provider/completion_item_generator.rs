@@ -25,7 +25,8 @@ pub struct KeywordCompletionDetails {
 
 #[derive(Debug)]
 pub struct InterfaceCompletionDetails {
-    pub available_interfaces: Vec<Link<InterfaceBlueprint>>
+    pub available_interfaces: Vec<Link<InterfaceBlueprint>>,
+    pub available_types: Vec<Type>,
 }
 
 #[derive(Debug)]
@@ -162,7 +163,11 @@ impl CompletionItemGenerator {
             },
             Self::Interface(details) => {
                 for interface in &details.available_interfaces {
-                    items.add_interface(interface.clone());
+                    items.add_interface(interface.borrow().name.as_str());
+                }
+
+                for ty in &details.available_types {
+                    items.add_interface(&ty.to_string());
                 }
             },
             Self::Variable(details) => {

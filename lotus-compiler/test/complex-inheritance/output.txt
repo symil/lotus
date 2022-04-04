@@ -1,0 +1,36 @@
+[
+  FooA {
+    value: 2,
+    items: [
+      A {
+        value: 2,
+        a: "a",
+      },
+      A {
+        value: 2,
+        a: "a",
+      },
+      A {
+        value: 2,
+        a: "a",
+      }
+    ],
+  },
+  FooB {
+    value: 2,
+    items: [
+      B {
+        value: 2,
+        b: 1.5,
+      },
+      B {
+        value: 2,
+        b: 1.5,
+      },
+      B {
+        value: 2,
+        b: 1.5,
+      }
+    ],
+  }
+]

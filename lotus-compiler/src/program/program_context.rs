@@ -448,13 +448,23 @@ impl ProgramContext {
 
         index.add_completion(location, || {
             let mut available_interfaces = vec![];
+            let mut available_types = vec![];
 
-            for type_wrapped in self.interfaces.get_all_from_location(location) {
-                available_interfaces.push(type_wrapped.clone());
+            for interface_wrapped in self.interfaces.get_all_from_location(location) {
+                available_interfaces.push(interface_wrapped.clone());
+            }
+
+            for type_wrapped in self.types.get_all_from_location(location) {
+                let ty = type_wrapped.borrow().self_type.clone();
+
+                if ty.is_object() && !ty.has_parameters() {
+                    available_types.push(ty);
+                }
             }
 
             CompletionItemGenerator::Interface(InterfaceCompletionDetails {
                 available_interfaces,
+                available_types,
             })
         });
 
@@ -775,6 +785,11 @@ impl ProgramContext {
         timer.trigger("type names");
         for (i, type_declaration) in types.iter().enumerate() {
             type_declaration.process_name(i, self);
+        }
+
+        timer.trigger("type parameters");
+        for type_declaration in &types {
+            type_declaration.process_parameters(self);
         }
 
         timer.trigger("index builtin types");

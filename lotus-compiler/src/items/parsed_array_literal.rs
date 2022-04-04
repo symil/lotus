@@ -38,6 +38,7 @@ impl ParsedArrayLiteral {
             };
 
             if let Some(item_vasm) = item.process(item_type_hint, context) {
+                // dbg!(&self.location);
                 if final_item_type.is_any() {
                     final_item_type = item_vasm.ty.clone();
                     item_ok = true;

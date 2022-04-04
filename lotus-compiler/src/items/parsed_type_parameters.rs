@@ -36,13 +36,14 @@ impl ParsedTypeParameters {
                 } else if let Some(type_wrapped) = context.types.get_by_identifier(interface_name) {
                     inherited_type = Some(type_wrapped.borrow().self_type.clone());
                 } else {
-                    context.errors.generic(&parameter.name, format!("undefined interface `{}`", interface_name));
+                    context.errors.generic(interface_name, format!("undefined interface or class `{}`", interface_name));
                 }
             }
 
             let index = result.len();
             let wasm_pattern = format!("<{}>", name.as_str());
             let item = Rc::new(ParameterTypeInfo {
+                key: name.location.clone(),
                 name,
                 index,
                 required_interfaces: InterfaceList::new(required_interfaces),
