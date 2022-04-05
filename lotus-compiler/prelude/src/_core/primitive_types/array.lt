@@ -317,8 +317,18 @@ export class Array<T> {
     }
 
     slice(start: int = 0, end: int = none) -> Self {
-        let start_index = (start || 0).clamp(0, self._length);
-        let end_index = (end || self._length).clamp(0, self._length);
+        let length = self._length;
+
+        if start && start < 0 {
+            start = length + start;
+        }
+
+        if end && end < 0 {
+            end = length + end;
+        }
+
+        let start_index = (start || 0).clamp(0, length);
+        let end_index = (end || self._length).clamp(0, length);
         let length = end_index - start_index;
         let result = Self::with_capacity(length);
 

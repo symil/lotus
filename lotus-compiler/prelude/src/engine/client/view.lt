@@ -271,6 +271,8 @@ export class View {
     // GENERATION START
 
     shape(shape: Shape) -> Self { self._graphics.shape = shape; self }
+    offset_x(offset_x: DisplaySize) -> Self { self._graphics.offset_x = offset_x; self }
+    offset_y(offset_y: DisplaySize) -> Self { self._graphics.offset_y = offset_y; self }
     anchor(anchor: Anchor) -> Self { self._graphics.anchor = anchor; self }
     border_radius(border_radius: DisplaySize) -> Self { self._graphics.border_radius = border_radius; self }
     border_width(border_width: DisplaySize) -> Self { self._graphics.border_width = border_width; self }
@@ -308,6 +310,8 @@ export class View {
     cursor(cursor: Cursor) -> Self { self._graphics.cursor = cursor; self }
 
     hover_shape(shape: Shape) -> Self { self._hovered_graphics().shape = shape; self }
+    hover_offset_x(offset_x: DisplaySize) -> Self { self._hovered_graphics().offset_x = offset_x; self }
+    hover_offset_y(offset_y: DisplaySize) -> Self { self._hovered_graphics().offset_y = offset_y; self }
     hover_anchor(anchor: Anchor) -> Self { self._hovered_graphics().anchor = anchor; self }
     hover_border_radius(border_radius: DisplaySize) -> Self { self._hovered_graphics().border_radius = border_radius; self }
     hover_border_width(border_width: DisplaySize) -> Self { self._hovered_graphics().border_width = border_width; self }
@@ -345,6 +349,8 @@ export class View {
     hover_cursor(cursor: Cursor) -> Self { self._hovered_graphics().cursor = cursor; self }
 
     focus_shape(shape: Shape) -> Self { self._focused_graphics().shape = shape; self }
+    focus_offset_x(offset_x: DisplaySize) -> Self { self._focused_graphics().offset_x = offset_x; self }
+    focus_offset_y(offset_y: DisplaySize) -> Self { self._focused_graphics().offset_y = offset_y; self }
     focus_anchor(anchor: Anchor) -> Self { self._focused_graphics().anchor = anchor; self }
     focus_border_radius(border_radius: DisplaySize) -> Self { self._focused_graphics().border_radius = border_radius; self }
     focus_border_width(border_width: DisplaySize) -> Self { self._focused_graphics().border_width = border_width; self }
@@ -382,6 +388,8 @@ export class View {
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().cursor = cursor; self }
 
     disabled_shape(shape: Shape) -> Self { self._disabled_graphics().shape = shape; self }
+    disabled_offset_x(offset_x: DisplaySize) -> Self { self._disabled_graphics().offset_x = offset_x; self }
+    disabled_offset_y(offset_y: DisplaySize) -> Self { self._disabled_graphics().offset_y = offset_y; self }
     disabled_anchor(anchor: Anchor) -> Self { self._disabled_graphics().anchor = anchor; self }
     disabled_border_radius(border_radius: DisplaySize) -> Self { self._disabled_graphics().border_radius = border_radius; self }
     disabled_border_width(border_width: DisplaySize) -> Self { self._disabled_graphics().border_width = border_width; self }

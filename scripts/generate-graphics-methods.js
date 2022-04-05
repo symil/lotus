@@ -14,6 +14,8 @@ const LAYOUT_SOURCE_PATH = path.join(CLIENT_SRC_SIR_PATH, 'layout', 'view_layout
 
 const VIEW_METHODS = {
     shape: 'Shape',
+    offset_x: 'DisplaySize',
+    offset_y: 'DisplaySize',
     anchor: 'Anchor',
     border_radius: 'DisplaySize',
     border_width: 'DisplaySize',
