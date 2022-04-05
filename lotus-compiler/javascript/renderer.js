@@ -265,8 +265,8 @@ export class Renderer {
             let y1 = Math.round(y - height / 2);
             let x2 = Math.round(x + width / 2);
             let y2 = Math.round(y + height / 2);
-            let w = x2 - x1;
-            let h = y2 - y1;
+            let w = Math.max(x2 - x1, 1);
+            let h = Math.max(y2 - y1, 1);
             let r = Math.round(borderRadius);
 
             if (r === 0) {

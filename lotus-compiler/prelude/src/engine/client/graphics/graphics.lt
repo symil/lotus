@@ -10,6 +10,8 @@ const DEFAULT_TEXT_SIZE = 1h;
 export class Graphics {
     shape: Shape = Shape::Rectangle,
     anchor: Anchor = Anchor::Center,
+    offset_x: DisplaySize = none,
+    offset_y: DisplaySize = none,
     border_radius: DisplaySize = none,
     border_width: DisplaySize = none,
     border_dash_length: DisplaySize = none,
@@ -95,9 +97,12 @@ export class Graphics {
             }
         }
 
+        let offset_x = self.offset_x.resolve(rect, virtual_to_real_ratio);
+        let offset_y = self.offset_y.resolve(rect, virtual_to_real_ratio);
+
         DrawPrimitive {
-            x: real_rect.x,
-            y: real_rect.y,
+            x: real_rect.x + offset_x,
+            y: real_rect.y + offset_y,
             z: real_rect.z,
             width: width,
             height: height,
