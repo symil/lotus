@@ -121,6 +121,17 @@ export class Layout<T> {
         self
     }
 
+    force(force: float) -> Self {
+        self._init_root();
+        let item = self._current_item;
+
+        item.force = force;
+        item.aspect_ratio = none;
+        item.width = none;
+        item.height = none;
+        self
+    }
+
     width(width: DisplaySize) -> Self {
         self._init_root();
         self._current_item.width = width.resolve(self._get_root_rect());
@@ -137,17 +148,6 @@ export class Layout<T> {
         self._init_root();
         self._current_item.aspect_ratio = aspect_ratio;
         // TODO: unset width or height
-        self
-    }
-
-    force(force: float) -> Self {
-        self._init_root();
-        let item = self._current_item;
-
-        item.force = force;
-        item.aspect_ratio = none;
-        item.width = none;
-        item.height = none;
         self
     }
 

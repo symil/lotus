@@ -89,6 +89,9 @@ export class View {
         if object is View(as_view) {
             view = as_view;
             object = none;
+        } else if object is ViewLayout(view_layout) {
+            view = view_layout.root_view();
+            object = none;
         }
 
         view = view.or_else(() => View);

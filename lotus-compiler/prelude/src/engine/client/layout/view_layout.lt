@@ -33,6 +33,10 @@ pub class ViewLayout {
         self
     }
 
+    root_view() -> View {
+        self._layout.item
+    }
+
     render() -> Self { self._layout.render(); self }
     back() -> Self  { self._layout.back(); self }
     direction(direction: LayoutDirection) -> Self  { self._layout.direction(direction); self }

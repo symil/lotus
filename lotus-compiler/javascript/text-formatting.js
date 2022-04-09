@@ -1,5 +1,7 @@
 import { colorToString } from './utils';
 
+const BOTTOM_CHARACTERS = new Set(['g', 'j', 'p', 'q', 'y']);
+
 export function formatText(parameters) {
     let {
         text,
@@ -120,6 +122,25 @@ export function formatText(parameters) {
 
             token.x += offsetX;
             token.y -= dif * m;
+        }
+    }
+
+    if (lines.length === 1) {
+        let line = lines[0];
+        let has_bottom_characters = false;
+
+        for (let token of line.tokens) {
+            for (let c of token.content) {
+                if (BOTTOM_CHARACTERS.has(c)) {
+                    has_bottom_characters = true;
+                }
+            }
+        }
+
+        if (!has_bottom_characters) {
+            for (let token of line.tokens) {
+                token.y += line.height * 0.12;
+            }
         }
     }
 

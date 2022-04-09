@@ -53,6 +53,8 @@ impl ParsedVarDeclarationNames {
             ParsedVarDeclarationNamesContent::Single(name) => {
                 let var_info = context.declare_local_variable(name.clone(), variable_type.clone());
 
+                context.hover_provider.set_type(name, &variable_type);
+
                 Some((
                     vec![var_info.clone()],
                     context.vasm()
@@ -73,10 +75,12 @@ impl ParsedVarDeclarationNames {
                     let var_2 = context.declare_local_variable(names[1].clone(), Type::undefined());
 
                     if let Some(first_type) = variable_type.get_associated_type(TUPLE_FIRST_ASSOCIATED_TYPE_NAME) {
+                        context.hover_provider.set_type(&names[0], &first_type);
                         var_1.set_type(first_type);
                     }
 
                     if let Some(second_type) = variable_type.get_associated_type(TUPLE_SECOND_ASSOCIATED_TYPE_NAME) {
+                        context.hover_provider.set_type(&names[1], &second_type);
                         var_2.set_type(second_type);
                     }
 

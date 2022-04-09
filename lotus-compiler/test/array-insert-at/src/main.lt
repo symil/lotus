@@ -1,0 +1,15 @@
+export fn main() {
+    let array : int[] = [];
+
+    insert_and_print(array, 0, 1);
+    insert_and_print(array, 0, 2);
+    insert_and_print(array, 0, 3);
+    insert_and_print(array, 1, 4);
+    insert_and_print(array, 34634, 5);
+    insert_and_print(array, -6, 6);
+}
+
+fn insert_and_print(array: int[], index: int, item: int) {
+    array.insert_at(index, item);
+    @dbg(array);
+}
