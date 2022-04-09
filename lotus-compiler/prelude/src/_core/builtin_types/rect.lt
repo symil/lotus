@@ -313,4 +313,36 @@ export class Rect {
 
         Self::new(x, y, width, height)
     }
+
+    _horizontal_neighbor(direction: float, width: DisplaySize, margin: DisplaySize) -> Self {
+        let w = width.resolve(self);
+        let m = margin.resolve(self);
+        let x = self.x + (self.width / 2 + w / 2 + m) * direction;
+
+        Self { ..self, x, width: w }
+    }
+
+    _vertical_neighbor(direction: float, height: DisplaySize, margin: DisplaySize) -> Self  {
+        let h = height.resolve(self);
+        let m = margin.resolve(self);
+        let y = self.y + (self.height / 2 + h / 2 + m) * direction;
+
+        Self { ..self, y, height: h }
+    }
+
+    left_neighbor(width: DisplaySize, margin: DisplaySize = 0) -> Self  {
+        self._horizontal_neighbor(-1, width, margin)
+    }
+
+    right_neighbor(width: DisplaySize, margin: DisplaySize = 0) -> Self  {
+        self._horizontal_neighbor(1, width, margin)
+    }
+
+    top_neighbor(height: DisplaySize, margin: DisplaySize = 0) -> Self  {
+        self._vertical_neighbor(-1, height, margin)
+    }
+
+    bottom_neighbor(height: DisplaySize, margin: DisplaySize = 0) -> Self  {
+        self._vertical_neighbor(1, height, margin)
+    }
 }

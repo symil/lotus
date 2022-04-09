@@ -177,9 +177,33 @@ export class Array<T> {
     }
 
     extend(other: Self) {
-        for item in other {
-            self.push(item);
-        }
+        self.extend_at(self.len(), other);
+    }
+
+    extend_at(index: int, other: Self) {
+        let other_length = other.len();
+
+        check other_length > 0;
+
+        let prev_body = self._body;
+        let prev_length = self._add_length(other_length);
+        let new_body = self._body;
+
+        index = index.clamp(0, prev_length);
+
+        let moved_length = prev_length - index;
+        new_body.add(index).copy_to(new_body.add(index + other_length), moved_length);
+        other.body().copy_to(new_body.add(index), other_length);
+    }
+
+    insert_at(index: int, item: T) {
+        let prev_length = self._add_length(1);
+        let body = self._body;
+        index = index.clamp(0, prev_length);
+        let moved_length = prev_length - index;
+
+        body.add(index).copy_to(body.add(index + 1), moved_length);
+        body[index] = item;
     }
 
     index_of(searched_item: T) -> int? {
@@ -281,25 +305,6 @@ export class Array<T> {
 
         self._length -= 1;        
         self._body[self._length]
-    }
-
-    insert_at(index: int, item: T) {
-        self.insert_none(index, 1);
-        self[index] = item;
-    }
-
-    insert_none(index: int, count: int) {
-        let length = self._add_length(count);
-        let body = self._body;
-
-        for i in 0..count {
-            let i2 = count - i - 1;
-            body[index + count + i2] = body[index + i2];
-        }
-
-        for i in 0..count {
-            body[index + i] = none;
-        }
     }
 
     concat(other: Self) -> Self {

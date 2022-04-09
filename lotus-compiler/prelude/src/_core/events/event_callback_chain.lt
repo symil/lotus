@@ -17,11 +17,20 @@ export class EventCallbackChain {
         self.chain.is_empty()
     }
 
+    prepend(event: Object, targets: Object[], options: EventOptions = EventOptions) -> Self {
+        self._insert(event, targets, options, true)
+    }
+
     append(event: Object, targets: Object[], options: EventOptions = EventOptions) -> Self {
+        self._insert(event, targets, options, false)
+    }
+
+    _insert(event: Object, targets: Object[], options: EventOptions, at_beginning: bool) -> Self {
         let event_type_id = event.__get_type_id();
         let event_map = EVENT_CALLBACKS.get(event_type_id);
         let pre_process_callback = options.pre_process_callback;
         let chain_id = self.next_chain_id;
+        let chain : EventCallbackChainEntry[] = [];
 
         self.next_chain_id += 1;
 
@@ -30,11 +39,17 @@ export class EventCallbackChain {
                 let callback_map = event_entry.value;
 
                 for target in targets {
-                    collect_event_callbacks(callback_map, event, target, options, chain_id, self.chain);
+                    collect_event_callbacks(callback_map, event, target, options, chain_id, chain);
                 }
 
-                collect_event_callbacks(callback_map, event, event, options, chain_id, self.chain);
+                collect_event_callbacks(callback_map, event, event, options, chain_id, chain);
             }
+        }
+
+        if at_beginning {
+            self.chain.extend_at(0, chain);
+        } else {
+            self.chain.extend(chain);
         }
 
         self
@@ -111,17 +126,15 @@ export class EventCallbackChain {
 fn collect_event_callbacks(callback_map: Map<TargetTypeId, EventCallback[]>, event: Object, target: Object, options: EventOptions, chain_id: int, chain: EventCallbackChainEntry[]) {
     let callback_list = callback_map.get(target.__get_type_id());
 
-    if !callback_list {
-        return;
-    }
-
-    for callback in callback_list {
-        chain.push(EventCallbackChainEntry {
-            event,
-            target,
-            callback,
-            options,
-            chain_id,
-        });
+    if callback_list {
+        for callback in callback_list {
+            chain.push(EventCallbackChainEntry {
+                event,
+                target,
+                callback,
+                options,
+                chain_id,
+            });
+        }
     }
 }

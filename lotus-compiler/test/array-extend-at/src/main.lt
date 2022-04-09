@@ -1,0 +1,15 @@
+export fn main() {
+    let array :int[] = [];
+
+    extend_and_print(array, 0, []);
+    extend_and_print(array, 0, [1, 2, 3]);
+    extend_and_print(array, 0, [4, 5]);
+    extend_and_print(array, 3, [6, 7]);
+    extend_and_print(array, 34634, [8, 9]);
+    extend_and_print(array, -6, [10]);
+}
+
+fn extend_and_print(array: int[], index: int, other: int[]) {
+    array.extend_at(index, other);
+    @dbg(array);
+}
