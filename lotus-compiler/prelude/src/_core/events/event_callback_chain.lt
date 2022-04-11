@@ -65,14 +65,15 @@ export class EventCallbackChain {
         }
     }
 
-    trigger(elapsed: float) -> Self {
+    trigger(elapsed: float) -> float {
         let current_entry = self.chain.get(self.current_index);
 
         if !current_entry {
             self.chain.clear();
             self.current_index = 0;
             self.next_chain_id = 0;
-            return self;
+
+            return elapsed;
         }
 
         let options = current_entry.options;
@@ -116,10 +117,14 @@ export class EventCallbackChain {
                 self.current_index += 1;
             }
 
-            self.trigger(elapsed);
+            elapsed = self.trigger(elapsed);
         }
 
-        self
+        elapsed
+    }
+
+    finish() {
+        self.trigger(float::infinity())
     }
 }
 
