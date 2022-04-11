@@ -12,10 +12,11 @@ export class MatchmakingRequest {
                 evt.user.show_error(`Already in queue.`);
             } else {
                 if self.bot_opponent {
-                    
+                    let opponent = evt.server.connect_bot(self.bot_opponent);
+                    evt.world.add_group_to_matchmaking([evt.user, opponent]);
+                } else {
+                    evt.world.add_to_matchmaking(evt.user);
                 }
-
-                evt.world.add_to_matchmaking(evt.user);
             }
         } else {
             if !evt.user.is_searching_for_game {
@@ -23,6 +24,8 @@ export class MatchmakingRequest {
             } else {
                 evt.world.remove_from_matchmaking(evt.user);
             }
+
+            // TODO: if the user has a bot opponent, also remove it
         }
     }
 }
