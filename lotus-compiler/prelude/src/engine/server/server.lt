@@ -194,10 +194,15 @@ pub class Server {
         @deserialize(self._buffer)
     }
 
-    connect_dummy_user(requests: Object[] = []) -> #USER_TYPE {
+    connect_bot(bot: Bot, requests: Object[] = []) -> #USER_TYPE {
+        check bot;
+
         let server = self;
         let world = self._world;
         let user = #USER_TYPE::__default();
+
+        user.bot = bot;
+        self._objects_to_update.add(bot);
 
         OnUserConnect { server, world, user }.emit([world]);
 
@@ -206,6 +211,17 @@ pub class Server {
         }
 
         user
+    }
+
+    disconnect_bot(user: #USER_TYPE) {
+        check user.bot;
+
+        let server = self;
+        let world = self._world;
+
+        OnUserDisconnect { server, world, user }.emit([world]);
+
+        self._objects_to_update.delete(user.bot);
     }
 
     add_object_to_update(object: Object) {
