@@ -139,7 +139,7 @@ export function formatText(parameters) {
 
         if (!has_bottom_characters) {
             for (let token of line.tokens) {
-                token.y += line.height * 0.12;
+                token.y += line.height * 0.09;
             }
         }
     }

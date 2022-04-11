@@ -103,12 +103,34 @@ export class Rect {
         self.y = y2 - self.height / 2;
     }
 
+    with_width(width: float) -> Self {
+        Self { ..self, width }
+    }
+
+    with_height(height: float) -> Self {
+        Self { ..self, height }
+    }
+
     aspect_ratio() -> float {
         self.width / self.height
     }
 
     contains(x: float, y: float) -> bool {
         self && x > self.x1() && x < self.x2() && y > self.y1() && y < self.y2()
+    }
+
+    horizontal_space_until(other: Self) -> float {
+        let dx1 = other.x1() - self.x2();
+        let dx2 = self.x1() - other.x2();
+
+        0f.max(dx1).max(dx2)
+    }
+
+    vertical_space_until(other: Self) -> float {
+        let dy1 = other.y1() - self.y2();
+        let dy2 = self.y1() - other.y2();
+
+        0f.max(dy1).max(dy2)
     }
 
     clone() -> Self {
@@ -314,35 +336,31 @@ export class Rect {
         Self::new(x, y, width, height)
     }
 
-    _horizontal_neighbor(direction: float, width: DisplaySize, margin: DisplaySize) -> Self {
-        let w = width.resolve(self);
-        let m = margin.resolve(self);
-        let x = self.x + (self.width / 2 + w / 2 + m) * direction;
+    _horizontal_neighbor(direction: float, width: float, margin: float) -> Self {
+        let x = self.x + (self.width / 2 + width / 2 + margin) * direction;
 
-        Self { ..self, x, width: w }
+        Self { ..self, x, width }
     }
 
-    _vertical_neighbor(direction: float, height: DisplaySize, margin: DisplaySize) -> Self  {
-        let h = height.resolve(self);
-        let m = margin.resolve(self);
-        let y = self.y + (self.height / 2 + h / 2 + m) * direction;
+    _vertical_neighbor(direction: float, height: float, margin: float) -> Self  {
+        let y = self.y + (self.height / 2 + height / 2 + margin) * direction;
 
-        Self { ..self, y, height: h }
+        Self { ..self, y, height }
     }
 
-    left_neighbor(width: DisplaySize, margin: DisplaySize = 0) -> Self  {
+    left_neighbor(width: float, margin: float = 0) -> Self  {
         self._horizontal_neighbor(-1, width, margin)
     }
 
-    right_neighbor(width: DisplaySize, margin: DisplaySize = 0) -> Self  {
+    right_neighbor(width: float, margin: float = 0) -> Self  {
         self._horizontal_neighbor(1, width, margin)
     }
 
-    top_neighbor(height: DisplaySize, margin: DisplaySize = 0) -> Self  {
+    top_neighbor(height: float, margin: float = 0) -> Self  {
         self._vertical_neighbor(-1, height, margin)
     }
 
-    bottom_neighbor(height: DisplaySize, margin: DisplaySize = 0) -> Self  {
+    bottom_neighbor(height: float, margin: float = 0) -> Self  {
         self._vertical_neighbor(1, height, margin)
     }
 }

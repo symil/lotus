@@ -1,5 +1,6 @@
 export class BlazeUser {
     name: string = "",
+    bot: Bot = none,
     messages: BlazeMessage[] = [],
     is_connected: bool = false,
     is_searching_for_game: bool = false,

@@ -1,5 +1,6 @@
 export class MatchmakingRequest {
     start: bool,
+    bot_opponent: Bot = none,
 
     @OnUserRequest {
         check evt.user.is_logged();
@@ -10,6 +11,10 @@ export class MatchmakingRequest {
              if evt.user.is_searching_for_game {
                 evt.user.show_error(`Already in queue.`);
             } else {
+                if self.bot_opponent {
+                    
+                }
+
                 evt.world.add_to_matchmaking(evt.user);
             }
         } else {

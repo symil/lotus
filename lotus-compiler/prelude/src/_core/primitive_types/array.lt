@@ -393,6 +393,16 @@ export class Array<T> {
         none
     }
 
+    all(predicate: fn(T, int)(bool)) -> bool {
+        for [i, item] in self {
+            if !predicate(item, i) {
+                return false;
+            }
+        }
+
+        true
+    }
+
     filter(callback: fn(T, int)(bool)) -> T[] {
         let result : T[] = [];
 

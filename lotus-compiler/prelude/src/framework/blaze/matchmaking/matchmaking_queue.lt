@@ -1,0 +1,37 @@
+class MatchmakingEntry {
+    required: int = 2,
+    users: #USER_TYPE[] = [],
+}
+
+pub class MatchmakingQueue {
+    entries: MatchmakingEntry[] = [],
+
+    add(users: #USER_TYPE[]) {
+        for entry in self.entries {
+            if entry.users.len() + users.len() <= entry.required {
+                entry.users.extend(users);
+                return;
+            }
+        }
+
+        self.entries.push(MatchmakingEntry {
+            users
+        });
+    }
+
+    extract_groups() -> #USER_TYPE[][] {
+        let result = self.entries.filter(entry => entry.users.len() >= entry.required).map(entry => entry.users);
+
+        if !result.is_empty() {
+            self.entries = self.entries.filter(entry => entry.users.len() < entry.required);
+        }
+
+        result
+    }
+
+    remove(user: #USER_TYPE) {
+        for entry in self.entries {
+            entry.users.remove(user);
+        }
+    }
+}

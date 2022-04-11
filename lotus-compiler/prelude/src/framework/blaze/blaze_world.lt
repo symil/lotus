@@ -1,7 +1,7 @@
 export class BlazeWorld {
     _game_items: GameItemCategory[] = [],
     _name_to_user: Map<string, #USER_TYPE> = Map::new(),
-    _matchmaking_queue: #USER_TYPE[] = [],
+    _matchmaking_queue: MatchmakingQueue = MatchmakingQueue,
     _valid_game_items: Map<Object, GameItemCategory> = Map::new(),
 
     set_game_items(game_items: GameItemCategory[]) {
@@ -17,8 +17,7 @@ export class BlazeWorld {
     }
 
     @OnWorldUpdate {
-        while self._matchmaking_queue.len() >= 2 {
-            let users = [self._matchmaking_queue.shift(), self._matchmaking_queue.shift()];
+        for users in self._matchmaking_queue.extract_groups() {
             let matchmaking_event = OnTriggerMatchmaking { ..evt, users };
 
             for user in users {
@@ -47,7 +46,15 @@ export class BlazeWorld {
 
     add_to_matchmaking(user: #USER_TYPE) {
         user.is_searching_for_game = true;
-        self._matchmaking_queue.push_unique(user);
+        self._matchmaking_queue.add([user]);
+    }
+
+    add_group_to_matchmaking(users: #USER_TYPE[]) {
+        for user in users {
+            user.is_searching_for_game = true;
+        }
+
+        self._matchmaking_queue.add(users);
     }
 
     remove_from_matchmaking(user: #USER_TYPE) {
