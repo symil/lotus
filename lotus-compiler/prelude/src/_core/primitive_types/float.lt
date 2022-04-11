@@ -1,3 +1,5 @@
+sys const INFINITY = 1f / 0f;
+
 export type(f32) float {
     __add(other: float) -> float {{ f32.add }}
     __sub(other: float) -> float {{ f32.sub }}
@@ -71,6 +73,10 @@ export type(f32) float {
     mix(other: float, t: float) -> float {
         self + (other - self) * t
     }
+
+    static infinity() -> float {{
+        (global.get $INFINITY)
+    }}
 
     static __default() -> float {{
         (f32.const 0)
