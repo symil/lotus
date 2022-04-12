@@ -3,13 +3,13 @@ export enum Font { Serif, SansSerif, Monospace, Cursive, Fantasy }
 export enum HorizontalAlign { Left, Center, Right }
 export enum VerticalAlign { Top, Middle, Bottom }
 export enum Cursor { Default, Pointer, Text, Grab, Grabbing }
-export enum Anchor { TopLeft, Top, TopRight, Left, Center, Right, BottomLeft, Bottom, BottomRight }
 
 const DEFAULT_TEXT_SIZE = 1h;
 
 export class Graphics {
     shape: Shape = Shape::Rectangle,
-    anchor: Anchor = Anchor::Center,
+    horizontal_anchor: HorizontalAlign = HorizontalAlign::Center,
+    vertical_anchor: VerticalAlign = VerticalAlign::Middle,
     offset_x: DisplaySize = none,
     offset_y: DisplaySize = none,
     border_radius: DisplaySize = none,
@@ -107,7 +107,8 @@ export class Graphics {
             width: width,
             height: height,
             angle: real_rect.angle,
-            anchor: self.anchor,
+            horizontal_anchor: self.horizontal_anchor,
+            vertical_anchor: self.vertical_anchor,
             shape: self.shape,
             border_color: self.border_color.mult_alpha(self.border_alpha),
             border_width: self.border_width.resolve(rect, virtual_to_real_ratio),

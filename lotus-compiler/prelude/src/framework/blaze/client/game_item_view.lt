@@ -39,11 +39,11 @@ pub class GameItemSelectionIcon {
         });
     }
 
-    @OnMakeTooltip {
-        evt.emit([self.item]);
+    // @OnMakeTooltip {
+    //     evt.emit([self.item]);
         
-        evt.view = View
-            // .background_color(Color::white())
-            // .set_size(400, 400);
-    }
+    //     evt.view = View
+    //         // .background_color(Color::white())
+    //         // .set_size(400, 400);
+    // }
 }

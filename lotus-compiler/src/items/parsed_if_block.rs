@@ -69,8 +69,10 @@ impl ParsedIfBlock {
             }
 
             context.pop_scope();
-        } else if !required_branch_type.is_undefined_or_void() {
-            context.errors.generic(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
+        } else if !required_branch_type.is_void() {
+            result = result.set_void(context);
+            required_branch_type = context.void_type();
+            // context.errors.generic(self, format!("missing `else` branch (because the `if` branch returns a non-void type)"));
         }
 
         result_var.set_type(required_branch_type.clone());

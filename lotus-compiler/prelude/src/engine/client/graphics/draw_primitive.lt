@@ -1,11 +1,13 @@
 pub class DrawPrimitive {
+    // The order of these fields MUST NOT BE CHANGED
     x: float,
     y: float,
     z: float,
     width: float,
     height: float,
     angle: float,
-    anchor: Anchor,
+    horizontal_anchor: HorizontalAlign,
+    vertical_anchor: VerticalAlign,
     shape: Shape,
     border_color: Color,
     border_width: float,

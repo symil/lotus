@@ -263,6 +263,10 @@ export class Client {
             local_data: self._local_data,
         };
         self._enabled_view_stack.emit(post_render_event);
+
+        for view in self._enabled_view_stack.views {
+            view.render_layouts();
+        }
     }
 
     _draw_frame() {
