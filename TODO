@@ -283,3 +283,5 @@
 [ ] Fix stringification of large objects
 [ ] Spread operator for arrays (e.g `let array = [1, ..other_array, 2, 3]`)
 [ ] Add support for f32 infinity
+[ ] Allow for better interchangability between `float` and `DisplaySize`
+[ ] Improve parsing error messages

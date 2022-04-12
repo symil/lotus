@@ -1,33 +1,33 @@
-const TOOLTIP_MARGIN = 10f;
+// const TOOLTIP_MARGIN = 10f;
 
-export class Tooltip {
-    @OnRender {
-        let target = evt.client.hovered_views().first();
-        check target && target.data();
+// export class Tooltip {
+//     @OnRender {
+//         let target = evt.client.hovered_views().first();
+//         check target && target.data();
 
-        let event = OnMakeTooltip;
-        event.emit([target.data()]);
-        let tooltip = event.view;
+//         let event = OnMakeTooltip;
+//         event.emit([target.data()]);
+//         let tooltip = event.view;
 
-        check tooltip;
+//         check tooltip;
 
-        let target_rect = target.rect();
-        let tooltip_rect = tooltip.rect();
-        let total_tooltip_width = tooltip_rect.width + TOOLTIP_MARGIN;
-        let total_tooltip_height = tooltip_rect.height + TOOLTIP_MARGIN;
-        let dx = target_rect.half_width() + TOOLTIP_MARGIN + tooltip_rect.half_width();
-        let y = target_rect.y;
+//         let target_rect = target.rect();
+//         let tooltip_rect = tooltip.rect();
+//         let total_tooltip_width = tooltip_rect.width + TOOLTIP_MARGIN;
+//         let total_tooltip_height = tooltip_rect.height + TOOLTIP_MARGIN;
+//         let dx = target_rect.half_width() + TOOLTIP_MARGIN + tooltip_rect.half_width();
+//         let y = target_rect.y;
 
-        if target_rect.x2() + total_tooltip_width > evt.client.window_with() {
-            dx *= -1;
-        }
+//         if target_rect.x2() + total_tooltip_width > evt.client.window_with() {
+//             dx *= -1;
+//         }
 
-        y = y.max(total_tooltip_height / 2);
-        y = y.min(evt.client.window_height() - total_tooltip_height / 2);
+//         y = y.max(total_tooltip_height / 2);
+//         y = y.min(evt.client.window_height() - total_tooltip_height / 2);
 
-        tooltip_rect.x = target_rect.x + dx;
-        tooltip_rect.y = y;
+//         tooltip_rect.x = target_rect.x + dx;
+//         tooltip_rect.y = y;
 
-        evt.view.render_child(tooltip, tooltip_rect);
-    }
-}
+//         evt.view.render_child(tooltip, tooltip_rect);
+//     }
+// }

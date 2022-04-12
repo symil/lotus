@@ -47,7 +47,7 @@ export class EventCallbackChain {
         }
 
         if at_beginning {
-            self.chain.extend_at(0, chain);
+            self.chain.extend_at(self.current_index + 1, chain);
         } else {
             self.chain.extend(chain);
         }

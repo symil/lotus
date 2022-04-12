@@ -1,5 +1,5 @@
 import { ImageLoader } from './image-loader';
-import { TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS, SHAPES, HORIZONTAL_ALIGNS, VERTICAL_ALIGNS, CURSORS, FONTS, ANCHORS } from './renderer-constants';
+import { TRIANGLE_POINTS, HORIZONTAL_HEXAGON_POINTS, VERTICAL_HEXAGON_POINTS, CURVE_POINTS, LINE_POINTS, SHAPES, HORIZONTAL_ALIGNS, VERTICAL_ALIGNS, CURSORS, FONTS } from './renderer-constants';
 import { formatText } from './text-formatting';
 import { colorToString, colorToU32, hashNumberList, hashString } from './utils';
 
@@ -43,7 +43,8 @@ export class Renderer {
         let width = primitive.readFloat();
         let height = primitive.readFloat();
         let angle = primitive.readFloat();
-        let anchor = primitive.readEnum(ANCHORS);
+        let horizontal_anchor = primitive.readEnum(HORIZONTAL_ALIGNS);
+        let vertical_anchor = primitive.readEnum(VERTICAL_ALIGNS);
         let shape = primitive.readEnum(SHAPES);
         let borderColor = primitive.readColor();
         let borderWidth = primitive.readFloat();
@@ -90,16 +91,16 @@ export class Renderer {
         let w = width / 2;
         let h = height / 2;
 
-        if (anchor.includes('left')) {
-            x -= w;
-        } else if (anchor.includes('right')) {
+        if (horizontal_anchor === 'left') {
             x += w;
+        } else if (horizontal_anchor === 'right') {
+            x -= w;
         }
 
-        if (anchor.includes('top')) {
-            y -= h;
-        } else if (anchor.includes('bottom')) {
-            y += h
+        if (vertical_anchor === 'top') {
+            y += h;
+        } else if (horizontal_anchor === 'bottom') {
+            y -= h
         }
 
         let x1 = x - w;

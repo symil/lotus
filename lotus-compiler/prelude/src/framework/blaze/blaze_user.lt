@@ -12,9 +12,13 @@ export class BlazeUser {
     }
 
     show_error(message: string) {
-        self.messages.push(BlazeMessage {
-            content: message,
-            kind: MessageKind::Error
-        });
+        let has_current_message = !!self.messages.find(msg => msg.content == message);
+
+        if !has_current_message {
+            self.messages.push(BlazeMessage {
+                content: message,
+                kind: MessageKind::Error
+            });
+        }
     }
 }

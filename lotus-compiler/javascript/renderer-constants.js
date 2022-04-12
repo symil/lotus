@@ -3,7 +3,7 @@ export const SHAPES = ['rectangle', 'circle', 'line'];
 export const FONTS = ['serif', 'Arial', 'monospace', 'cursive', 'fantasy'];
 export const HORIZONTAL_ALIGNS = ['left', 'center', 'right'];
 export const VERTICAL_ALIGNS = ['top', 'middle', 'bottom'];
-export const ANCHORS = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
+// export const ANCHORS = ['top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
 export const HORIZONTAL_ALIGN_TO_OFFSET_X = { left: 0, center: 0.5, right: 1 };
 export const VERTICAL_ALIGN_TO_OFFSET_Y = { top: 0, middle: 0.5, bottom: 1 };
