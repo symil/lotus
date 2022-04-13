@@ -480,6 +480,20 @@ export class Array<T> {
         self
     }
 
+    zip<U>(other: U[]) -> (T, U)[] {
+        let max = self.len().max(other.len());
+        let result = (T, U)[]::with_capacity(max);
+
+        for i in 0..max {
+            result.push((
+                self.get(i),
+                other.get(i)
+            ));
+        }
+
+        result
+    }
+
     get_random() -> T {
         self[Rng::int(0, self.len())]
     }
