@@ -12,6 +12,9 @@ export class EventCallbackChain {
     chain: EventCallbackChainEntry[] = [],
     current_index: int = 0,
     next_chain_id: int = 0,
+    pre_callback: fn(Object, Object, EventOptions) = () => {},
+    post_callback: fn(Object, Object, EventOptions) = () => {},
+    stack_counter: int = 0,
 
     is_empty() -> bool {
         self.chain.is_empty()
@@ -47,7 +50,13 @@ export class EventCallbackChain {
         }
 
         if at_beginning {
-            self.chain.extend_at(self.current_index + 1, chain);
+            let index = self.current_index;
+
+            if self.stack_counter > 0 {
+                index += 1;
+            }
+
+            self.chain.extend_at(index, chain);
         } else {
             self.chain.extend(chain);
         }
@@ -66,6 +75,7 @@ export class EventCallbackChain {
     }
 
     trigger(elapsed: float) -> float {
+        self.stack_counter += 1;
         let current_entry = self.chain.get(self.current_index);
 
         if !current_entry {
@@ -85,7 +95,9 @@ export class EventCallbackChain {
             options.elapsed = 0;
             options.ratio = 0;
             options.duration = 0;
+            (self.pre_callback)(event, target, options);
             (callback.start_callback)(target, event, options);
+            (self.post_callback)(event, target, options);
             current_entry.started = true;
         }
 
@@ -119,6 +131,12 @@ export class EventCallbackChain {
 
             elapsed = self.trigger(elapsed);
         }
+
+        self.stack_counter -= 1;
+
+        // if self.post_callback {
+        //     (self.post_callback)();
+        // }
 
         elapsed
     }
