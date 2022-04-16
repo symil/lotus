@@ -60,15 +60,19 @@ pub fn process_field_access(parent_type: &Type, field_kind: FieldKind, field_nam
         FieldKind::Regular => {
             if let Some(field_info) = parent_type.get_field(field_name.as_str()) {
                 let field_type = field_info.ty.replace_parameters(Some(parent_type), &[]);
+                let check_location = match context.root_tags.check_field_access {
+                    true => Some(&field_name.location),
+                    false => None,
+                };
                 let mut vasm = context.vasm()
                     .set_type(&field_type);
 
                 match access_type {
                     AccessType::Get => {
-                        vasm = vasm.get_field(&field_type, field_info.offset);
+                        vasm = vasm.get_field(&field_type, field_info.offset, check_location);
                     },
                     AccessType::Set(location) => {
-                        vasm = vasm.set_field(&field_type, field_info.offset, context.vasm().placeholder(location));
+                        vasm = vasm.set_field(&field_type, field_info.offset, check_location, context.vasm().placeholder(location));
                     },
                 };
 

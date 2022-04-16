@@ -47,7 +47,7 @@ impl ParsedObjectSpreadOperator {
                             field.name.to_string(),
                             context.vasm()
                                 .get_tmp_var(&var_info)
-                                .get_field(&actual_type, field.offset)
+                                .get_field(&actual_type, field.offset, None)
                         ));
                     }
                 }

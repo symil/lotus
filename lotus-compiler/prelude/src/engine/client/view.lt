@@ -223,6 +223,11 @@ export class View {
         self
     }
 
+    resize(width: float, height: float) -> Self {
+        self._rect = self._rect.resize(width, height);
+        self
+    }
+
     strip_to_match_aspect_ratio(aspect_ratio: float) -> Self {
         self._rect = self._rect.strip_to_match_aspect_ratio(aspect_ratio);
         self

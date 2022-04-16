@@ -118,7 +118,7 @@ pub fn instanciate_object(parsed_object_type: &ParsedType, initialization_items:
 
                 result = result
                     .get_tmp_var(&object_var)
-                    .set_field(&field_type, field_info.offset, init_vasm);
+                    .set_field(&field_type, field_info.offset, None, init_vasm);
             }
 
             result = result

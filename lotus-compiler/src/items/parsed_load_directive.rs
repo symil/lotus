@@ -114,7 +114,7 @@ impl ParsedLoadDirective {
                 if let Some(vasm) = init_vasm {
                     object_creation_vasm = object_creation_vasm
                         .get_tmp_var(&object_var)
-                        .set_field(&field.ty, field.offset, vasm);
+                        .set_field(&field.ty, field.offset, None, vasm);
                 } else if let Some(string) = init_values.get(field.name.as_str()) {
                     context.errors.generic(self, format!("cannot convert \"{}\" to `{}`", string, &field.ty));
                 }

@@ -16,6 +16,7 @@ impl ParsedRootTagDeclaration {
 
         match tag_name {
             ParsedRootTagName::DisableMainTypeChecks => context.root_tags.disable_main_type_checks = true,
+            ParsedRootTagName::CheckFieldAccess => context.root_tags.check_field_access = true,
         }
 
         Some(())

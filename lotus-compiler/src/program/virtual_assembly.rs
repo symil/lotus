@@ -265,20 +265,22 @@ impl VirtualAssembly {
         }))
     }
 
-    pub fn get_field(self, field_type: &Type, field_offset: usize) -> Self {
+    pub fn get_field(self, field_type: &Type, field_offset: usize, check_message: Option<&ItemLocation>) -> Self {
         self.instruction(|| VirtualInstruction::FieldAccess(VirtualAccessFieldInfo {
             acess_kind: FieldAccessKind::Get,
             field_type: field_type.clone(),
             field_offset,
+            check_location: check_message.cloned(),
             value: None,
         }))
     }
 
-    pub fn set_field(self, field_type: &Type, field_offset: usize, value: Vasm) -> Self {
+    pub fn set_field(self, field_type: &Type, field_offset: usize, check_message: Option<&ItemLocation>, value: Vasm) -> Self {
         self.instruction(|| VirtualInstruction::FieldAccess(VirtualAccessFieldInfo {
             acess_kind: FieldAccessKind::Set,
             field_type: field_type.clone(),
             field_offset,
+            check_location: check_message.cloned(),
             value: Some(value),
         }))
     }

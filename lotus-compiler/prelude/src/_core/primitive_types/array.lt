@@ -196,10 +196,15 @@ export class Array<T> {
         other.body().copy_to(new_body.add(index), other_length);
     }
 
+    append(other: Self) {
+        self.extend(other);
+        other.clear();
+    }
+
     insert_at(index: int, item: T) {
         let prev_length = self._add_length(1);
         let body = self._body;
-        index = index.clamp(0, prev_length);
+        index = (index || prev_length).clamp(0, prev_length);
         let moved_length = prev_length - index;
 
         body.add(index).copy_to(body.add(index + 1), moved_length);
