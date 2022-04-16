@@ -132,7 +132,7 @@ impl ParsedEventCallbackDeclaration {
                                             .if_then_else(None,
                                                 context.vasm()
                                                     .get_var(&event_var_info, current_function_level)
-                                                    .get_field(&field_info.ty, field_info.offset)
+                                                    .get_field(&field_info.ty, field_info.offset, None)
                                                     .get_var(&self_var_info, current_function_level)
                                                     .raw(wat!["i32.eq"]),
                                                 context.vasm(),

@@ -148,7 +148,7 @@ impl ParsedAction {
 
                                         Some(context.vasm()
                                             .get_var(&output_var, None)
-                                            .set_field(&intercepted_field_info.ty, intercepted_field_info.offset, context.vasm().int(1i32))
+                                            .set_field(&intercepted_field_info.ty, intercepted_field_info.offset, None, context.vasm().int(1i32))
                                             .return_value(context.vasm())
                                             .set_type(context.void_type())
                                         )
@@ -161,7 +161,7 @@ impl ParsedAction {
 
                                             Some(context.vasm()
                                                 .get_var(&output_var, None)
-                                                .get_field(&yielded_field_info.ty, yielded_field_info.offset)
+                                                .get_field(&yielded_field_info.ty, yielded_field_info.offset, None)
                                                 .call_regular_method(&yielded_field_info.ty, "push", &[], vec![vasm], context)
                                                 .drop(&yielded_field_info.ty)
                                                 .set_type(context.void_type())

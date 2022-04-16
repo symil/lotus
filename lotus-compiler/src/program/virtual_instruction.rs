@@ -76,7 +76,8 @@ pub struct VirtualAccessFieldInfo {
     pub acess_kind: FieldAccessKind,
     pub field_type: Type,
     pub field_offset: usize,
-    pub value: Option<Vasm>
+    pub value: Option<Vasm>,
+    pub check_location: Option<ItemLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -739,6 +740,7 @@ impl VirtualInstruction {
                 field_type: details.field_type.replace_parameters(this_type, function_parameters),
                 field_offset: details.field_offset,
                 value: details.value.as_ref().map(|vasm| vasm.replace_parameters(this_type, function_parameters)),
+                check_location: details.check_location.clone(),
             }),
             VirtualInstruction::FunctionCall(details) => VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
                 call: details.call.replace_parameters(this_type, function_parameters),

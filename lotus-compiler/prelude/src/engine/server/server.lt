@@ -208,7 +208,6 @@ pub class Server {
         let world = self._world;
         let user = #USER_TYPE::__default();
 
-        user.bot = bot;
         bot.user = user;
         self._objects_to_update.add(bot);
 
@@ -221,15 +220,17 @@ pub class Server {
         user
     }
 
-    disconnect_bot(user: #USER_TYPE) {
-        check user.bot;
+    disconnect_bot(bot: Bot) {
+        check bot.user;
 
+        let user = bot.user;
         let server = self;
         let world = self._world;
 
-        OnUserDisconnect { server, world, user }.emit([world, user.bot]);
+        OnUserDisconnect { server, world, user }.emit([world, bot]);
 
-        self._objects_to_update.delete(user.bot);
+        bot.user = none;
+        self._objects_to_update.delete(bot);
     }
 
     add_object_to_update(object: Object) {

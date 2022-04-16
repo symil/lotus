@@ -137,6 +137,10 @@ export class Map<K, V> {
         self.size
     }
 
+    is_empty() -> bool {
+        self.size == 0
+    }
+
     clear() {
         for i in 0..self.hash_table.len() {
             self.hash_table[i] = none;
