@@ -1,23 +1,3 @@
-pub fn lookup_line_col(_file_path: &str, file_content: &str, index: usize) -> (usize, usize) {
-    // let global_hashmap = unsafe { LINE_COL_LOOKUPS.get_or_insert_with(|| HashMap::new()) };
-
-    // match global_hashmap.get(file_path) {
-    //     Some(line_col_lookup) => line_col_lookup.get(index),
-    //     None => {
-    //         let line_col_lookup = LineColLookup::new(file_content);
-    //         let result = line_col_lookup.get(index);
-
-    //         global_hashmap.insert(file_path, line_col_lookup);
-    //         result
-    //     },
-    // }
-
-    // TODO: cache result
-    let line_col_lookup = LineColLookup::new(file_content);
-
-    line_col_lookup.get(index)
-}
-
 pub struct LineColLookup {
     pub lookup: Vec<(usize, usize)>
 }

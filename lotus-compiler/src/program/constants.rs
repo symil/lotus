@@ -16,6 +16,7 @@ pub const MEMORY_METADATA_SIZE : usize = MAX_VIRTUAL_PAGE_COUNT_PER_BLOCK_SIZE *
 
 pub const OBJECT_HEADER_SIZE : usize = 1;
 
+pub const CHECK_FIELD_ACCESS_FUNC_NAME : &'static str = "check_field_access";
 pub const INIT_GLOBALS_FUNC_NAME : &'static str = "init_globals";
 pub const INIT_STRING_LITERALS_FUNC_NAME : &'static str = "init_string_literals";
 pub const INIT_TYPES_FUNC_NAME : &'static str = "init_types";

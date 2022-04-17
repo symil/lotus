@@ -1,5 +1,5 @@
 use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, rc::Rc, fmt::Debug, path::{Path}};
-use crate::{line_col_lookup::{lookup_line_col}, file_info::FileInfo};
+use crate::{file_info::FileInfo, LineColLookup};
 
 #[derive(Clone, Default)]
 pub struct ItemLocation {
@@ -79,12 +79,8 @@ impl ItemLocation {
         &self.file.content[self.start..self.end]
     }
 
-    pub fn get_start_line_col(&self) -> (usize, usize) {
-        lookup_line_col(self.file.path.as_str(), self.file.content.as_str(), self.start)
-    }
-
-    pub fn get_end_line_col(&self) -> (usize, usize) {
-        lookup_line_col(self.file.path.as_str(), self.file.content.as_str(), self.end)
+    pub fn compute_lookup_index(&self) -> LineColLookup {
+        LineColLookup::new(&self.file.content)
     }
 
     pub fn length(&self) -> usize {
@@ -118,8 +114,9 @@ impl Eq for ItemLocation {
 
 impl Debug for ItemLocation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (start_line, start_col) = self.get_start_line_col();
-        let (end_line, end_col) = self.get_end_line_col();
+        let lookup = self.compute_lookup_index();
+        let (start_line, start_col) = lookup.get(self.start);
+        let (end_line, end_col) = lookup.get(self.end);
 
         write!(f, "{}: ({},{})->({}:{})", &self.file.path, start_line, start_col, end_line, end_col)
     }

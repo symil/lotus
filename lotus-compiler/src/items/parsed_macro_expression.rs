@@ -32,7 +32,7 @@ impl ParsedMacroExpression {
         match &self.token {
             MacroExpressionToken::Line => {
                 Some(context.vasm()
-                    .int(self.location.get_start_line_col().0)
+                    .int(context.line_col_index.lookup(&self.location).0)
                     .set_type(context.int_type())
                 )
             }

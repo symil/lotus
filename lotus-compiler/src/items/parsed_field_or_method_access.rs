@@ -264,8 +264,6 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
         });
     }
 
-
-
     match arg_vasms.len() == signature.argument_types.len() {
         true => {
             for (i, (arg_type, arg_vasm)) in signature.argument_types.iter().zip(arg_vasms.iter()).enumerate() {
@@ -297,15 +295,25 @@ pub fn process_function_call(function_identifier: Option<&Identifier>, mut funct
         false => signature.return_type.replace_parameters(caller_type.as_ref(), &function_parameters),
     };
 
+    let mut check_location = None;
+
+    if context.root_tags.check_field_access {
+        if signature.this_type.is_some() {
+            if let Some(identifier) = function_identifier {
+                check_location = Some(&identifier.location)
+            }
+        }
+    }
+
     let result = match function_call {
         FunctionCall::Named(details) => {
             context.vasm()
-                .call_function_named(details.caller_type.as_ref(), &details.function, &function_parameters, arg_vasms)
+                .call_function_named(check_location, details.caller_type.as_ref(), &details.function, &function_parameters, arg_vasms)
                 .set_type(return_type)
         },
         FunctionCall::Anonymous(details) => {
             context.vasm()
-                .call_function_anonymous(&details.signature, details.function_offset, arg_vasms, context)
+                .call_function_anonymous(check_location, &details.signature, details.function_offset, arg_vasms, context)
                 .set_type(return_type)
         },
     };

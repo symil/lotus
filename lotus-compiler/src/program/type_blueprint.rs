@@ -127,7 +127,7 @@ impl FieldInfo {
         let object_type = &object_var.ty();
         let field_type = self.ty.replace_parameters(Some(&object_type), &[]);
         let mut vasm = match &self.default_value {
-            Some(function_wrapped) => context.vasm().call_function_named(Some(&object_type), function_wrapped, &[], vec![
+            Some(function_wrapped) => context.vasm().call_function_named(None, Some(&object_type), function_wrapped, &[], vec![
                 context.vasm().get_tmp_var(&object_var)
             ]),
             None => context.vasm().call_static_method(&field_type, NONE_METHOD_NAME, &[], vec![], context),
