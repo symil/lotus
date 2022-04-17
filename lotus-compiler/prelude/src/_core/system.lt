@@ -119,3 +119,11 @@ sys type(void) system {
 fn trap() {{
     unreachable
 }}
+
+sys fn check_field_access(pointer: ptr, field_name: string, file_name: string, line_number: int, column_number: int) -> ptr {
+    if (pointer as int).eqz() {
+        @panic(`${file_name}:${line_number}:${column_number}: cannot access field '${field_name}' of none`);
+    }
+
+    pointer
+}

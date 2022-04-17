@@ -72,7 +72,7 @@ impl Identifier {
     }
 
     pub fn debug(&self) {
-        let (line, col) = self.location.get_start_line_col();
+        let (line, col) = self.location.compute_lookup_index().get(self.start);
         println!("{:?}:{}:{}:{}", &self.value, self.location.file.path, line, col);
     }
 }

@@ -202,7 +202,8 @@ function compileWat(inputPath, outputPath, inheritStdio) {
 async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let lines = [];
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
-    let instance = await initializeWasm(fse.readFileSync(wasmPath, null), { log });
+    let getProcess = () => process;
+    let instance = await initializeWasm(fse.readFileSync(wasmPath, null), { log, getProcess });
 
     instance.exports.main();
 

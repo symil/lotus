@@ -1,0 +1,13 @@
+@check_field_access
+
+class Foo {
+    a: int = 1
+}
+
+export fn main() {
+    let foo : Foo = none;
+
+    foo.a = 2;
+
+    @log(foo.a);
+}

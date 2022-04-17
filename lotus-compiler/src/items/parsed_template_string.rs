@@ -27,7 +27,7 @@ impl ParsedTemplateString {
                 }
 
                 Some(context.vasm()
-                    .call_function_named(None, &context.functions.get_by_name("join_strings").unwrap(), &[], vec![result])
+                    .call_function_named(None, None, &context.functions.get_by_name("join_strings").unwrap(), &[], vec![result])
                     .set_type(string_type)
                 )
             }

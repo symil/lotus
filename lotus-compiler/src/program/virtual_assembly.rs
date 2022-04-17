@@ -177,7 +177,7 @@ impl VirtualAssembly {
         self.tee_var(var_info, None, Vasm::undefined())
     }
 
-    pub fn call_function_named(self, caller_type: Option<&Type>, function: &Link<FunctionBlueprint>, parameters: &[Type], arguments: Vec<Vasm>) -> Self {
+    pub fn call_function_named(self, check_location: Option<&ItemLocation>, caller_type: Option<&Type>, function: &Link<FunctionBlueprint>, parameters: &[Type], arguments: Vec<Vasm>) -> Self {
         self.instruction(|| {
             VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
                 call: FunctionCall::Named(NamedFunctionCallDetails {
@@ -187,11 +187,12 @@ impl VirtualAssembly {
                 }),
                 function_index_var: None,
                 arguments,
+                check_location: check_location.cloned()
             })
         })
     }
 
-    pub fn call_function_anonymous(self, signature: &Signature, function_offset: usize, arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
+    pub fn call_function_anonymous(self, check_location: Option<&ItemLocation>, signature: &Signature, function_offset: usize, arguments: Vec<Vasm>, context: &ProgramContext) -> Self {
         self.instruction(|| {
             VirtualInstruction::FunctionCall(VirtualFunctionCallInfo {
                 call: FunctionCall::Anonymous(AnonymousFunctionCallDetails {
@@ -200,6 +201,7 @@ impl VirtualAssembly {
                 }),
                 function_index_var: Some(VariableInfo::tmp("function_index", context.int_type())),
                 arguments,
+                check_location: check_location.cloned()
             })
         })
     }
@@ -215,6 +217,7 @@ impl VirtualAssembly {
         };
 
         self.call_function_named(
+            None,
             Some(caller_type),
             &method_blueprint,
             parameters,
@@ -233,6 +236,7 @@ impl VirtualAssembly {
         };
 
         self.call_function_named(
+            None,
             Some(caller_type),
             &method_blueprint,
             parameters,
@@ -247,6 +251,7 @@ impl VirtualAssembly {
         };
 
         self.call_function_named(
+            None,
             None,
             &function_blueprint,
             parameters,

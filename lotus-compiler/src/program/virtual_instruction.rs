@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use parsable::ItemLocation;
 use crate::{items::{Identifier, make_string_value_from_literal, make_string_value_from_literal_unchecked}, program::{BuiltinType, CLOSURE_TMP_VAR_NAME, CLOSURE_VARIABLES_TMP_VAR_NAME, CLOSURE_VARIABLES_VAR_NAME, DUPLICATE_INT_WASM_FUNC_NAME, FieldKind, FunctionInstanceParameters, GeneratedItemIndex, ItemGenerator, LOAD_FLOAT_WASM_FUNC_NAME, LOAD_INT_WASM_FUNC_NAME, MEMORY_CELL_BYTE_SIZE, MEM_ALLOC_FUNC_NAME, NEW_METHOD_NAME, NONE_METHOD_NAME, OBJECT_HEADER_SIZE, RETAIN_METHOD_NAME, STORE_FLOAT_WASM_FUNC_NAME, STORE_INT_WASM_FUNC_NAME, SWAP_FLOAT_INT_WASM_FUNC_NAME, SWAP_INT_INT_WASM_FUNC_NAME, SELF_VAR_NAME, TMP_VAR_NAME, TypeInstanceHeader, TypeInstanceParameters}, utils::Link, wat};
-use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint, FunctionKind};
+use super::{FunctionBlueprint, FunctionCall, NamedFunctionCallDetails, ProgramContext, ToInt, Type, TypeBlueprint, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, function_blueprint, FunctionKind, CHECK_FIELD_ACCESS_FUNC_NAME};
 
 #[derive(Debug, Clone)]
 pub enum VirtualInstruction {
@@ -85,6 +85,7 @@ pub struct VirtualFunctionCallInfo {
     pub call: FunctionCall,
     pub function_index_var: Option<VariableInfo>,
     pub arguments: Vec<Vasm>,
+    pub check_location: Option<ItemLocation>,
 }
 
 #[derive(Debug, Clone)]
@@ -357,6 +358,10 @@ impl VirtualInstruction {
             VirtualInstruction::FieldAccess(info) => {
                 let mut content = vec![];
                 let field_type = info.field_type.resolve(type_index, context);
+
+                if let Some(check_location) = &info.check_location {
+                    add_field_access_check(check_location, &mut content, context);
+                }
 
                 if let Some(field_wasm_type) = field_type.wasm_type {
                     let wasm_instruction_name = match info.acess_kind {
@@ -746,6 +751,7 @@ impl VirtualInstruction {
                 call: details.call.replace_parameters(this_type, function_parameters),
                 function_index_var: details.function_index_var.clone(), // TODO
                 arguments: details.arguments.iter().map(|ty| ty.replace_parameters(this_type, function_parameters)).collect(),
+                check_location: details.check_location.clone(),
             }),
             VirtualInstruction::FunctionIndex(details) => VirtualInstruction::FunctionIndex(VirtualFunctionIndexInfo {
                 function: details.function.clone(),
@@ -773,4 +779,18 @@ impl VirtualInstruction {
             }),
         }
     }
+}
+
+fn add_field_access_check(check_location: &ItemLocation, content: &mut Vec<Wat>, context: &mut ProgramContext) {
+    let field_name_var = context.string_literals.add(&check_location.as_str());
+    let file_name_var = context.string_literals.add(&check_location.file.path[check_location.file.package_root_path.len()+1..]);
+    let (line, column) = context.line_col_index.lookup(check_location);
+
+    content.extend(vec![
+        Wat::get_global(&field_name_var.wasm_name()),
+        Wat::get_global(&file_name_var.wasm_name()),
+        Wat::const_i32(line),
+        Wat::const_i32(column),
+        Wat::call_from_stack(CHECK_FIELD_ACCESS_FUNC_NAME)
+    ]);
 }

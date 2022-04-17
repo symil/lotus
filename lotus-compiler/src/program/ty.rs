@@ -640,7 +640,7 @@ impl Type {
                         }
 
                         Some(context.vasm()
-                            .call_function_named(Some(self), &method_wrapped, &[], vec![])
+                            .call_function_named(None, Some(self), &method_wrapped, &[], vec![])
                             .set_type(return_type)
                         )
                     },

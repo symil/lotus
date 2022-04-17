@@ -65,6 +65,7 @@ mod root_tags;
 mod event_callback_step;
 mod event_callback;
 mod function_kind;
+mod line_col_index;
 
 pub use program_context::*;
 pub use utils::*;
@@ -132,3 +133,4 @@ pub use root_tags::*;
 pub use event_callback_step::*;
 pub use event_callback::*;
 pub use function_kind::*;
+pub use line_col_index::*;
