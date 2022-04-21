@@ -21,7 +21,7 @@ impl ParsedMainTypeDeclaration {
         let ty = unwrap_item(&self.ty, equal, context)?;
         let assigned_type = ty.process(true, None, context)?;
 
-        if context.root_tags.disable_main_type_checks {
+        if context.root_tags.check_main_types {
             context.main_types.set_unchecked(main_type, assigned_type);
         } else if let Err(expected_type) = context.main_types.set(main_type, assigned_type.clone()) {
             context.errors.type_mismatch(ty, &expected_type, &assigned_type);

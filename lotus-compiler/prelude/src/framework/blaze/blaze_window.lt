@@ -29,6 +29,12 @@ export class BlazeWindow {
         }
     }
 
+    @OnClientUpdate {
+        if evt.user.game {
+            evt.user.transitions.trigger(evt.user.current_time, evt.user.game);
+        }
+    }
+
     @OnKeyDown[-1] {
         check evt.alt_key;
         

@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, Default)]
 pub struct RootTags {
-    pub disable_main_type_checks: bool,
+    pub check_main_types: bool,
     pub check_field_access: bool,
 }
 

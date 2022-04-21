@@ -1,0 +1,31 @@
+pub enum Easing {
+    Linear,
+    QuadraticIn,
+    QuadraticOut,
+    QuadraticInOut,
+    CubicIn,
+    CubicOut,
+    CubicInOut,
+}
+
+pub fn apply_easing(easing: Easing, t: float) -> float {
+    let u = 1f - t;
+
+    match easing {
+        Easing::Linear => t,
+        Easing::QuadraticIn => t * t,
+        Easing::QuadraticOut => 1f - u * u,
+        Easing::QuadraticInOut => if t < 0.5 {
+            t * t
+        } else {
+            1f - u * u
+        },
+        Easing::CubicIn => t * t * t,
+        Easing::CubicOut => 1f - u * u * u,
+        Easing::CubicInOut => if t < 0.5 {
+            t * t * t
+        } else {
+            1f - u * u * u
+        },
+    }
+}

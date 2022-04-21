@@ -5,7 +5,9 @@ export class BlazeUser {
     is_connected: bool = false,
     is_searching_for_game: bool = false,
     selected_game_items: Map<GameItemCategory, Object[]> = Map::new(),
+    current_time: float = 0,
     game: #GAME_INSTANCE_TYPE = none,
+    transitions: TransitionList = TransitionList,
 
     is_logged() -> bool {
         !self.name.is_empty()

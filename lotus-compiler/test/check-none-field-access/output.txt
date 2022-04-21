@@ -1,0 +1,1 @@
+panic: main.lt:10:9: cannot access field 'a' of none

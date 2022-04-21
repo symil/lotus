@@ -2,6 +2,6 @@ use parsable::parsable;
 
 #[parsable]
 pub enum ParsedRootTagName {
-    DisableMainTypeChecks = "disable_main_type_checks",
-    CheckFieldAccess = "check_field_access"
+    DisableCheckMainType = "disable_check_main_type",
+    EnableCheckFieldAccess = "enable_check_field_access"
 }

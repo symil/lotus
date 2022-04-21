@@ -225,11 +225,12 @@ async function getWasmImportsObject(env) {
             },
 
             process_exit(code) {
-                if (env.getProcess) {
-                    env.getProcess().exit(code);
-                } else {
-                    throw new Error(`process aborted with code ${code}`);
-                }
+                throw new Error(`process aborted`);
+                // if (env.getProcess) {
+                //     env.getProcess().exit(code);
+                // } else {
+                //     throw new Error(`process aborted with code ${code}`);
+                // }
             },
 
             prompt(messageAddr, bufferAddr) {
