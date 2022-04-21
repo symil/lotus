@@ -1,0 +1,116 @@
+pub class TransitionList {
+    transitions: Transition[] = [],
+    last_transitions: Transition[] = [],
+    current_time: float = 0,
+
+    _add_transition(transition: Transition) -> Self {
+        transition.start_time = self.current_time;
+        self.last_transitions.push(transition);
+        self
+    }
+
+    flush() {
+        // let movement_synchronizer = MovementSynchronizer::from_transitions(self.last_transitions);
+
+        // if movement_synchronizer {
+        //     self.transitions.push(movement_synchronizer);
+        // }
+        let batch_duration = (self.last_transitions.reduce(0f, (acc, transition) => acc.max(transition.duration + transition.start_time)) - self.current_time).max(0);
+
+        self.current_time += batch_duration;
+        self.transitions.extend(self.last_transitions);
+        self.last_transitions.clear();
+    }
+
+    clear() {
+        self.transitions.clear();
+        self.last_transitions.clear();
+    }
+
+    duration(duration: float) -> Self {
+        for transition in self.last_transitions {
+            transition.duration = duration;
+        }
+
+        self
+    }
+
+    easing(easing: Easing) -> Self {
+        for transition in self.last_transitions {
+            transition.easing = easing;
+        }
+
+        self
+    }
+
+    delay(delay: float) -> Self {
+        for transition in self.last_transitions {
+            transition.start_time = self.current_time + delay;
+        }
+
+        self
+    }
+
+    incremental_delay(incremental_delay: float) -> Self {
+        let delay = 0f;
+
+        for transition in self.last_transitions {
+            transition.start_time = self.current_time + delay;
+            delay += incremental_delay;
+        }
+
+        self
+    }
+
+    then(delay: float = none) -> Self {
+        let current_time = self.current_time;
+        self.flush();
+
+        if delay {
+            self.current_time = current_time + delay;
+        }
+
+        self
+    }
+
+    wait(duration: float) -> Self {
+        self.then();
+        self._add_transition(Transition { duration });
+        self.then(duration)
+    }
+
+    trigger(current_time: float, game: #GAME_INSTANCE_TYPE) -> bool {
+        let all_triggered = true;
+        let events : TransitionEvent[] = [];
+
+        for transition in self.transitions.reverse() {
+            OnBeforeStart { transition, game, current_time: 0 }.emit([transition]);
+        }
+
+        for transition in self.transitions {
+            let raw_t = ((current_time - transition.start_time + float::epsilon()) / (transition.duration + float::epsilon()));
+            let clamped_t = raw_t.min(1);
+
+            if raw_t >= 0 {
+                let t = apply_easing(transition.easing, clamped_t);
+                
+                events.push(OnStart { transition, game, current_time: transition.start_time });
+                events.push(OnProgress { transition, game, current_time: transition.start_time + transition.duration * clamped_t, t });
+            }
+
+            if raw_t >= 1 {
+                events.push(OnComplete { transition, game, current_time: transition.start_time + transition.duration });
+            } else {
+                all_triggered = false;
+            }
+        }
+
+        events.sort_in_place((a, b) => (a.current_time - b.current_time).sign());
+
+        for event in events {
+            event.emit([event.transition]);
+        }
+
+        all_triggered
+    }
+}

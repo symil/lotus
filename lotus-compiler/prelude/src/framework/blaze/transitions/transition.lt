@@ -1,0 +1,27 @@
+pub class Transition {
+    start_time: float = 0,
+    duration: float = 0,
+    easing: Easing = Easing::Linear,
+}
+
+pub class TransitionEvent {
+    transition: Transition,
+    game: #GAME_INSTANCE_TYPE,
+    current_time: float,
+}
+
+pub class OnBeforeStart extends TransitionEvent {
+
+}
+
+pub class OnStart extends TransitionEvent {
+    
+}
+
+pub class OnProgress extends TransitionEvent {
+    t: float,
+}
+
+pub class OnComplete extends TransitionEvent {
+    
+}

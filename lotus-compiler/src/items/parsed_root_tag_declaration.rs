@@ -15,8 +15,8 @@ impl ParsedRootTagDeclaration {
         let tag_name = unwrap_item(&self.tag_name, self, context)?.process(context)?;
 
         match tag_name {
-            ParsedRootTagName::DisableMainTypeChecks => context.root_tags.disable_main_type_checks = true,
-            ParsedRootTagName::CheckFieldAccess => context.root_tags.check_field_access = true,
+            ParsedRootTagName::DisableCheckMainType => context.root_tags.check_main_types = true,
+            ParsedRootTagName::EnableCheckFieldAccess => context.root_tags.check_field_access = true,
         }
 
         Some(())

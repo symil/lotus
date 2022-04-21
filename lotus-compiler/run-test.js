@@ -7,6 +7,7 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import { initializeWasm } from './javascript/wasm-initialization';
+import { exit } from 'process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -202,10 +203,14 @@ function compileWat(inputPath, outputPath, inheritStdio) {
 async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let lines = [];
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
-    let getProcess = () => process;
+    let getProcess = () => ({ exit() {} });
     let instance = await initializeWasm(fse.readFileSync(wasmPath, null), { log, getProcess });
 
-    instance.exports.main();
+    try {
+        instance.exports.main();
+    } catch (e) {
+        
+    }
 
     if (displayMemory) {
         let memory = new Uint32Array(instance.exports.memory.buffer); 
