@@ -185,10 +185,7 @@
 [X] Split `Layout` into `Layout` and `ViewLayout`
 [X] Remove the `Event` class
 [X] Make `ViewLayout` use `Layout`
-[ ] Add runtime check on `none` objects
-[ ] Layout: reduce size of child items if their total size would exceed the container size
-[ ] Add icon support in text
-[ ] Add badge support in layout api
+[X] Add runtime check on `none` objects
 
 -- LATER --
 [ ] Allow manually specifying function parameters
@@ -287,3 +284,7 @@
 [ ] Improve parsing error messages
 [ ] Bring back `Event`
 [ ] Make so `let a = Self;` works
+[ ] Layout: reduce size of child items if their total size would exceed the container size
+[ ] Add icon support in text
+[ ] Add badge support in layout api
+[ ] Add a builtin way to create an object dif (something like `let dif = SET(foo.a, 4); APPLY_DIF(dif);` would be equivalent to `foo.a = 4`, but the dif can be passed around)

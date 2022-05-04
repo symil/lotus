@@ -16,6 +16,7 @@ const VIEW_METHODS = {
     shape: 'Shape',
     offset_x: 'DisplaySize',
     offset_y: 'DisplaySize',
+    z_index: 'float',
     horizontal_anchor: 'HorizontalAlign',
     vertical_anchor: 'VerticalAlign',
     border_radius: 'DisplaySize',
