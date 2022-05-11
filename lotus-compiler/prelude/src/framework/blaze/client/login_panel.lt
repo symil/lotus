@@ -1,12 +1,11 @@
 pub class LoginPanel {
     @OnRender {
         evt.view.layout()
-            .background_color(Color::hot_pink())
             .center_to_bottom()
             .inner_margin(20)
+            .child_height(0.15h)
+            .child_aspect_ratio(5)
             .push(evt.local_data.ui.username_textbox)
-            .height(.15h)
-            .aspect_ratio(5)
             .push(evt.local_data.ui.login_button)
     }
 }

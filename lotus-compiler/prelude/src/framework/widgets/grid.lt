@@ -79,7 +79,7 @@ export class Grid {
                 .text_font(self.title_font)
                 .text_color(self.title_color)
                 .text_size(self.title_size)
-                .background_color(Color::rebecca_purple())
+                // .background_color(Color::rebecca_purple())
             
             view.render_child(title);
         } else {

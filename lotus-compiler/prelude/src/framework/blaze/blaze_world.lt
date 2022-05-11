@@ -2,18 +2,13 @@ export class BlazeWorld {
     _game_items: GameItemCategory[] = [],
     _name_to_user: Map<string, #USER_TYPE> = Map::new(),
     _matchmaking_queue: MatchmakingQueue = MatchmakingQueue,
-    _valid_game_items: Map<Object, GameItemCategory> = Map::new(),
 
     set_game_items(game_items: GameItemCategory[]) {
         self._game_items = game_items.clone();
     }
 
     @OnWorldOpen {
-        for category in self._game_items {
-            for item in category.items {
-                self._valid_game_items.set(item, category);
-            }
-        }
+        
     }
 
     @OnWorldUpdate {
@@ -29,8 +24,13 @@ export class BlazeWorld {
     }
 
     @OnUserConnect {
-        for category in self._game_items {
-            evt.user.selected_game_items.set(category, []);
+        evt.user.game_items = self._game_items;
+        evt.user.selected_game_items = int[][]::from_fill_function(self._game_items.len(), () => []);
+
+        for [i, category] in self._game_items {
+            if category.required_selected_item_count == 1 && !category.items.is_empty() {
+                evt.user.selected_game_items[i].push(0);
+            }
         }
 
         evt.user.is_connected = true;

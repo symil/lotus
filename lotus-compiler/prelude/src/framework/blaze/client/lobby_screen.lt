@@ -9,7 +9,6 @@ export class LobbyScreen {
         };
 
         evt.view.layout()
-            .background_color(Color::light_green())
             .top_to_bottom()
             .push(LobbyHeader)
             .height(HEADER_SIZE)

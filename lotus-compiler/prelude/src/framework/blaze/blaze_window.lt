@@ -1,5 +1,6 @@
 export class BlazeWindow {
     title: string = "Game",
+    background_color: Color = Color::white()
 
     @OnRender {
         evt.local_data.game_name = self.title;
@@ -7,7 +8,7 @@ export class BlazeWindow {
         let screen = evt.user.game || LobbyScreen;
 
         evt.view
-            .background_color(Color::white())
+            .background_color(self.background_color)
             .render_child(screen)
             .render_children(evt.user.messages)
             // .render_child(Tooltip)

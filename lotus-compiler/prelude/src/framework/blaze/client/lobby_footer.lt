@@ -3,13 +3,13 @@ pub class LobbyFooter {
         check evt.user.is_logged();
         
         evt.view.layout()
-            .background_color(Color::green())
+            .background_color(Color::tan())
             .outer_margin(.1h)
-            .push(MatchmakingButton)
+            .push(evt.local_data.ui.matchmaking_button)
             .aspect_ratio(4)
             .reset()
             .bottom_right_to_left()
-            .push(LogoutButton)
+            .push(evt.local_data.ui.logout_button)
             .height(0.5h)
             .aspect_ratio(3)
     }

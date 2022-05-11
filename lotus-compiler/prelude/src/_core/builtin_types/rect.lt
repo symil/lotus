@@ -63,6 +63,26 @@ export class Rect {
         Self { x, y, width, height }
     }
 
+    static from_rect_list(rect_list: Rect[]) -> Self {
+        if rect_list.is_empty() {
+            return Self::empty();
+        }
+
+        let x1 = INFINITY;
+        let y1 = INFINITY;
+        let x2 = MINUS_INFINITY;
+        let y2 = MINUS_INFINITY;
+
+        for rect in rect_list {
+            x1 = x1.min(rect.x1());
+            y1 = y1.min(rect.y1());
+            x2 = x2.max(rect.x2());
+            y2 = y2.max(rect.y2());
+        }
+
+        Self::from_corners(x1, y1, x2, y2)
+    }
+
     x1() -> float {
         self.x - self.width / 2f
     }
@@ -87,20 +107,28 @@ export class Rect {
         self.height / 2
     }
 
-    set_x1(x1: float) {
+    set_x1(x1: float) -> Self {
         self.x = x1 + self.width / 2;
+        self
     }
 
-    set_y1(y1: float) {
+    set_y1(y1: float) -> Self {
         self.y = y1 + self.height / 2;
+        self
     }
 
-    set_x2(x2: float) {
+    set_x2(x2: float) -> Self {
         self.x = x2 - self.width / 2;
+        self
     }
 
-    set_y2(y2: float) {
+    set_y2(y2: float) -> Self {
         self.y = y2 - self.height / 2;
+        self
+    }
+
+    with_center(x: float, y: float) -> Self {
+        Self { ..self, x, y }
     }
 
     with_width(width: float) -> Self {
@@ -189,6 +217,15 @@ export class Rect {
             width: self.width * ratio,
             height: self.height * ratio,
         }
+    }
+
+    scale_towards(ratio: float, cx: float, cy: float) -> Self {
+        let x = cx + (self.x - cx) * ratio;
+        let y = cy + (self.y - cy) * ratio;
+        let width = self.width * ratio;
+        let height = self.height * ratio;
+
+        Self { x, y, width, height }
     }
 
     scale_width(ratio: float) -> Self {

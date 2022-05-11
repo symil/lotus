@@ -36,7 +36,7 @@ pub class TextBox {
             .text_size(self.text_size)
             .text_color(color)
             .text_horizontal_align(HorizontalAlign::Left)
-            .cursor(Cursor::Text)
+            .hover_cursor(Cursor::Text)
             .focus_border_width(border_width.scale(DEFAULT_FOCUSED_BORDER_WIDTH_MULTIPLIER))
             .focus_text_cursor_index(cursor_index)
     }

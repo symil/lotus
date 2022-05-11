@@ -15,7 +15,7 @@ export class Button {
             .hover_overlay_color(DEFAULT_HOVER_OVERLAY_COLOR)
             .hover_overlay_alpha(DEFAULT_HOVER_OVERLAY_ALPHA)
             .hover_cursor(Cursor::Pointer)
-            .focus_background_color(Color::orange())
+            .focus_border_width(DEFAULT_BORDER_WIDTH.scale(2))
     }
 
     @OnKeyDown {

@@ -288,3 +288,5 @@
 [ ] Add icon support in text
 [ ] Add badge support in layout api
 [ ] Add a builtin way to create an object dif (something like `let dif = SET(foo.a, 4); APPLY_DIF(dif);` would be equivalent to `foo.a = 4`, but the dif can be passed around)
+[ ] Find a solution to set global z_index on a view and its children
+[ ] Find a solution to properly have view persistance across multiple frames

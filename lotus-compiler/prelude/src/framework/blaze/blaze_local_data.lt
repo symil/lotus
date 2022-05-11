@@ -7,5 +7,6 @@ export class BlazeUiLocalData {
     username_textbox: UsernameTextBox = UsernameTextBox,
     login_button: LoginButton = LoginButton,
     logout_button: LogoutButton = LogoutButton,
+    matchmaking_button: MatchmakingButton = MatchmakingButton,
     game_item_grids: Grid[] = none
 }
