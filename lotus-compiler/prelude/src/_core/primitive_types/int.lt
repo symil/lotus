@@ -73,10 +73,7 @@ export type(i32) int {
     }
 
     to_string() -> string {
-        match self.__is_none() {
-            true => "none",
-            false => int_to_string(self, 10)
-        }
+        int_to_string(self, 10)
     }
 
     __to_debug_string(set: Set<ptr>) -> string {
@@ -195,6 +192,10 @@ fn get_char(n: int) -> char {
 }
 
 fn int_to_string(n: int, base: int) -> string {
+    if !n {
+        return "";
+    }
+
     if n == 0 {
         return "0";
     }

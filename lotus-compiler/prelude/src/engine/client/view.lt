@@ -20,14 +20,19 @@ export class View {
     _layouts: ViewLayout[] = []
 
     get_approximate_hash() -> int {
-        let rect = self._rect;
-        let graphics = self._graphics;
-
         let hash = self.__get_type_id()
-            .hash_from(rect.x.as_int())
-            .hash_from(rect.y.as_int())
-            .hash_from(rect.width.as_int())
-            .hash_from(rect.height.as_int())
+
+        if self._data {
+            hash = hash.hash_from(self._data.__as_ptr().__get_version());
+        } else {
+            let rect = self._rect;
+            
+            hash = hash
+                .hash_from(rect.x.as_int())
+                .hash_from(rect.y.as_int())
+                .hash_from(rect.width.as_int())
+                .hash_from(rect.height.as_int())
+        }
             
         hash
     }

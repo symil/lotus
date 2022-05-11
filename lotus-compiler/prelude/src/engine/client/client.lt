@@ -89,6 +89,10 @@ export class Client {
         self._virtual_height
     }
 
+    cursor() -> (float, float) {
+        (self._cursor_position.x, self._cursor_position.y)
+    }
+
     _start() {
         wasm_init_window(VIRTUAL_WIDTH / VIRTUAL_HEIGHT);
 
@@ -526,11 +530,10 @@ export class Client {
 
         for i in 0..chain_length {
             let index = (start_index + chain_length + d + i * d) % chain_length;
-            let object = self._focus_chain[index];
-            let view = self._object_to_view.get(object);
+            let view = self._focus_chain[index];
 
             if !view.is_disabled() {
-                self.focus(object);
+                self.focus(view);
                 return;
             }
         }

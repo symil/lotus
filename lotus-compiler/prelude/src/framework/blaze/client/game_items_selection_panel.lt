@@ -6,31 +6,31 @@ pub class GameItemSelectionPanel {
             grids = [];
             evt.local_data.ui.game_item_grids = grids;
 
-            for category in evt.user.selected_game_items.keys() {
+            for [i, category] in evt.user.game_items {
                 grids.push(Grid {
-                    items: [],
+                    items: category.items.map((item, j) => GameItemSelectionIcon { category_index: i, item_index: j }),
                     item_aspect_ratio: 1,
-                    background_color: Color::from_hash(category.name.hash()),
+                    background_color: Color::from_string_hash(category.name),
+                    border_color: Color::black(),
+                    border_radius: 10,
+                    border_width: 2,
                     margin: .25h,
                     title: `${category.name} @sub{(pick one)}`,
-                    title_size: 0.4h,
+                    title_size: 0.35h,
                     item_count_per_row: 3,
                     item_count_per_column: 3
                 });
             }
         }
 
-        for [i, category] in evt.user.selected_game_items.keys() {
-            grids[i].items = category.items.map(item => GameItemSelectionIcon { category, item });
-        }
-
         let master_grid = Grid {
             items: grids,
+            outer_margin: 20,
+            inner_margin: 20,
             item_count_per_column: 1,
         };
 
         evt.view
-            .background_color(Color::gray())
             .render_child(master_grid);
     }
 }

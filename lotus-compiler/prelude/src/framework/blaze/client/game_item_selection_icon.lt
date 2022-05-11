@@ -1,9 +1,9 @@
 pub class GameItemSelectionIcon {
-    category: GameItemCategory,
-    item: Object,
+    category_index: int,
+    item_index: int,
 
     _is_selected(user: BlazeUser) -> bool {
-        user.selected_game_items.get(self.category).includes(self.item)
+        user.selected_game_items[self.category_index].includes(self.item_index)
     }
 
     @OnRender {
@@ -14,18 +14,18 @@ pub class GameItemSelectionIcon {
         };
 
         evt.view
-            .render_child(self.item)
+            .render_child(evt.user.game_items[self.category_index].items[self.item_index])
             .last_child()
             .border_color(border_color)
             .border_width(.04h)
             .border_radius(0.1m)
-            .cursor(Cursor::Pointer)
+            .hover_cursor(Cursor::Pointer)
         
         // TODO: display selected count
     }
 
     @OnClick {
-        check evt.button == MouseButton::Left;
+        check evt.button == MouseButton::Left && !evt.user.is_searching_for_game;
 
         let is_selected = self._is_selected(evt.user);
         let count = match is_selected {
@@ -34,7 +34,8 @@ pub class GameItemSelectionIcon {
         };
 
         evt.client.send_request(SelectItemRequest {
-            item: self.item,
+            category_index: self.category_index,
+            item_index: self.item_index,
             count,
         });
     }

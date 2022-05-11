@@ -1,29 +1,41 @@
 pub class SelectItemRequest {
-    item: Object,
+    category_index: int,
+    item_index: int,
     count: int,
 
     @OnUserRequest {
         // check evt.world.valid_game_items.has(self.item);
 
-        let category = evt.world._valid_game_items.get(self.item);
+        let category = evt.world._game_items.get(self.category_index);
 
         if !category {
-            evt.user.show_error("invalid game item");
+            evt.user.show_error("invalid game item category index");
             return;
         }
 
-        if self.count >= 0 && self.count <= 1 {
-            let list = evt.user.selected_game_items.get(category);
-
-            if self.count > 0 {
-                list.push_unique(self.item);
-            } else {
-                list.remove(self.item);
-            }
-
-            if list.len() > category.required_selected_item_count {
-                list.shift();
-            }
+        if !category.items.get(self.item_index) {
+            evt.user.show_error("invalid game item index");
+            return;
         }
+
+        let list = evt.user.selected_game_items[self.category_index];
+
+        if !list.remove(self.item_index) {
+            list.push(self.item_index);
+        }
+
+        // if self.count >= 0 && self.count <= 1 {
+        //     let list = evt.user.selected_game_items.get(category);
+
+        //     if self.count > 0 {
+        //         list.push_unique(self.item);
+        //     } else {
+        //         list.remove(self.item);
+        //     }
+
+        //     if list.len() > category.required_selected_item_count {
+        //         list.shift();
+        //     }
+        // }
     }
 }

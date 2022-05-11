@@ -5,6 +5,5 @@ pub class TitleLabel extends Label {
         evt.view
             .text(evt.local_data.game_name)
             .text_size(TITLE_TEXT_SIZE)
-            .background_color(Color::orange())
     }
 }

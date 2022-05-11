@@ -98,6 +98,7 @@ export class Layout<T> {
         check self._current_container;
 
         self._current_container = self._current_container.parent || self._current_container;
+        self._current_item = self._current_container;
         self
     }
 
@@ -164,32 +165,32 @@ export class Layout<T> {
 
     child_width(width: DisplaySize) -> Self {
         self._init_root();
-        self._current_item.child_width = width.resolve(self._get_root_rect());
+        self._current_container.child_width = width.resolve(self._get_root_rect());
         self
     }
 
     child_height(height: DisplaySize) -> Self {
         self._init_root();
-        self._current_item.child_height = height.resolve(self._get_root_rect());
+        self._current_container.child_height = height.resolve(self._get_root_rect());
         self
     }
 
     child_aspect_ratio(aspect_ratio: float) -> Self {
         self._init_root();
-        self._current_item.child_aspect_ratio = aspect_ratio;
+        self._current_container.child_aspect_ratio = aspect_ratio;
         // TODO: unset width or height
         self
     }
 
     inner_margin(inner_margin: DisplaySize) -> Self {
         self._init_root();
-        self._current_item.inner_margin = inner_margin.resolve(self._get_root_rect());
+        self._current_container.inner_margin = inner_margin.resolve(self._get_root_rect());
         self
     }
 
     outer_margin(outer_margin: DisplaySize) -> Self {
         self._init_root();
-        self._current_item.outer_margin = outer_margin.resolve(self._get_root_rect());
+        self._current_container.outer_margin = outer_margin.resolve(self._get_root_rect());
         self
     }
 

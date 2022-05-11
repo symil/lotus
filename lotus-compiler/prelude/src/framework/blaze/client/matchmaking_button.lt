@@ -1,5 +1,13 @@
 pub class MatchmakingButton extends Button {
     @OnRender {
+        let disabled = false;
+
+        for [i, category] in evt.user.game_items {
+            if evt.user.selected_game_items[i].len() != category.required_selected_item_count {
+                disabled = true;
+            }
+        }
+
         let text = match evt.user.is_searching_for_game {
             true => "Cancel search",
             false => "Search for game",
@@ -8,6 +16,7 @@ pub class MatchmakingButton extends Button {
         evt.view
             .text(text)
             .text_size(0.4h)
+            .set_disabled(disabled)
     }
 
     @OnClick {
