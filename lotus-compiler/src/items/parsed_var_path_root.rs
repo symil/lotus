@@ -71,7 +71,7 @@ impl ParsedVarPathRoot {
             ParsedVarPathRoot::WhileBlock(_) => todo!(),
             ParsedVarPathRoot::ForBlock(_) => todo!(),
             ParsedVarPathRoot::Block(_) => todo!(),
-            ParsedVarPathRoot::TemplateString(_) => todo!(),
+            ParsedVarPathRoot::TemplateString(_) => {}, // TODO
             ParsedVarPathRoot::FunctionLiteral(_) => {},
             ParsedVarPathRoot::PrefixedVarRef(prefixed_var_ref) => prefixed_var_ref.collect_instancied_type_names(list, context),
             

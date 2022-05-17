@@ -2,15 +2,21 @@ pub class LobbyFooter {
     @OnRender {
         check evt.user.is_logged();
         
+        let matchmaking_buttons = [
+            evt.local_data.ui.matchmaking_button,
+            evt.local_data.ui.bot_button
+        ].filter(x => !!x);
+
         evt.view.layout()
             .background_color(Color::tan())
-            .outer_margin(.1h)
-            .push(evt.local_data.ui.matchmaking_button)
-            .aspect_ratio(4)
+            .center_to_right()
+            .margin(.1h)
+            .child_aspect_ratio(4)
+            .push_list(matchmaking_buttons)
             .reset()
             .bottom_right_to_left()
+            .child_height(0.5h)
+            .child_aspect_ratio(3)
             .push(evt.local_data.ui.logout_button)
-            .height(0.5h)
-            .aspect_ratio(3)
     }
 }

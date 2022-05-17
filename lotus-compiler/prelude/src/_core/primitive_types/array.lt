@@ -49,6 +49,24 @@ export class Array<T> {
         result
     }
 
+    static from_counts(items: (T, int)[]) -> Self {
+        let size = 0;
+
+        for (item, count) in items {
+            size += count;
+        }
+
+        let result = Self::with_capacity(size);
+
+        for (item, count) in items {
+            for i in 0..count {
+                result.push_unchecked(item);
+            }
+        }
+
+        result
+    }
+
     body() -> Pointer<T> {
         self._body
     }
