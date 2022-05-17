@@ -1,6 +1,7 @@
 export class BlazeWindow {
     title: string = "Game",
-    background_color: Color = Color::white()
+    background_color: Color = Color::white(),
+    make_opponent_bot: fn()(Bot) = none,
 
     @OnRender {
         evt.local_data.game_name = self.title;
@@ -17,6 +18,10 @@ export class BlazeWindow {
     }
 
     @OnClientStart {
+        if self.make_opponent_bot {
+            evt.local_data.ui.bot_button = MatchmakingButton { make_bot_opponent: self.make_opponent_bot };
+        }
+
         // evt.client.clear_local_storage();
         evt.client.set_local_storage_key_prefix(self.title + ":");
 

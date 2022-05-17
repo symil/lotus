@@ -4,8 +4,10 @@ pub class LobbyHeader {
             .push(TitleLabel)
             .reset()
             .right_to_left()
+            .outer_margin(10)
             .push(UsernameLabel)
             .width(.15w)
+            .height(.6h)
 
     }
 }

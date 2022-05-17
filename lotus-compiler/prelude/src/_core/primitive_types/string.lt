@@ -179,6 +179,10 @@ export type(i32) string {
         }
     }
 
+    ends_with(str: string) -> bool {
+        self.starts_with(str, self.len() - str.len())
+    }
+
     substring(start: int?, end: int?) -> string {
         let length = self.len();
 

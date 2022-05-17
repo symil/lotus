@@ -1,7 +1,7 @@
-pub class SelectItemRequest {
+export class SelectItemRequest {
     category_index: int,
     item_index: int,
-    count: int,
+    count: int = 1,
 
     @OnUserRequest {
         // check evt.world.valid_game_items.has(self.item);
@@ -22,6 +22,10 @@ pub class SelectItemRequest {
 
         if !list.remove(self.item_index) {
             list.push(self.item_index);
+        }
+
+        if list.len() > category.required_selected_item_count {
+            list.shift();
         }
 
         // if self.count >= 0 && self.count <= 1 {

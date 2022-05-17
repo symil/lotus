@@ -80,6 +80,7 @@ export class Renderer {
         if (text) {
             textPadding = Math.max(borderRadius, textPadding);
             let textMaxWidth = shrinkToFixText ? width : 0;
+            textMaxWidth = width;
             textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex);
 
             if (shrinkToFixText) {

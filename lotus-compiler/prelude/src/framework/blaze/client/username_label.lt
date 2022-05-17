@@ -1,5 +1,3 @@
-const USERNAME_TEXT_SIZE = .35h;
-
 pub class UsernameLabel extends Label {
     @OnRender {
         check evt.user.is_logged();
@@ -7,9 +5,10 @@ pub class UsernameLabel extends Label {
         evt.view
             .text(evt.user.name)
             .text_color(Color::dodger_blue())
-            .text_size(USERNAME_TEXT_SIZE)
+            .text_size(0.65h)
             // .border_color(Color::black())
             // .border_width(2r)
-            // .border_radius(0.5h)
+            .background_color(Color::white())
+            .border_radius(0.5h)
     }
 }
