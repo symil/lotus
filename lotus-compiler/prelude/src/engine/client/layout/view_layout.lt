@@ -112,6 +112,7 @@ pub class ViewLayout {
     text_bold(text_bold: bool) -> Self { self._get_last_view().text_bold(text_bold); self }
     text_italic(text_italic: bool) -> Self { self._get_last_view().text_italic(text_italic); self }
     text_cursor_index(text_cursor_index: int) -> Self { self._get_last_view().text_cursor_index(text_cursor_index); self }
+    text_fit(text_fit: bool) -> Self { self._get_last_view().text_fit(text_fit); self }
     shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._get_last_view().shrink_to_fit_text(shrink_to_fit_text); self }
     cursor(cursor: Cursor) -> Self { self._get_last_view().cursor(cursor); self }
 

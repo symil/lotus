@@ -44,6 +44,7 @@ export class Graphics {
     text_bold: bool = false,
     text_italic: bool = false,
     text_cursor_index: int = none,
+    text_fit: bool = false,
     shrink_to_fit_text: bool = false,
     cursor: Cursor = none,
 
@@ -135,6 +136,7 @@ export class Graphics {
             text_bold: self.text_bold,
             text_italic: self.text_italic,
             text_cursor_index: self.text_cursor_index,
+            text_fit: self.text_fit,
             shrink_to_fit_text: self.shrink_to_fit_text,
         }
     }

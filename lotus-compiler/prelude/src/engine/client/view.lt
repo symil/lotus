@@ -316,6 +316,7 @@ export class View {
     text_bold(text_bold: bool) -> Self { self._graphics.text_bold = text_bold; self }
     text_italic(text_italic: bool) -> Self { self._graphics.text_italic = text_italic; self }
     text_cursor_index(text_cursor_index: int) -> Self { self._graphics.text_cursor_index = text_cursor_index; self }
+    text_fit(text_fit: bool) -> Self { self._graphics.text_fit = text_fit; self }
     shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._graphics.shrink_to_fit_text = shrink_to_fit_text; self }
     cursor(cursor: Cursor) -> Self { self._graphics.cursor = cursor; self }
 
@@ -357,6 +358,7 @@ export class View {
     hover_text_bold(text_bold: bool) -> Self { self._hovered_graphics().text_bold = text_bold; self }
     hover_text_italic(text_italic: bool) -> Self { self._hovered_graphics().text_italic = text_italic; self }
     hover_text_cursor_index(text_cursor_index: int) -> Self { self._hovered_graphics().text_cursor_index = text_cursor_index; self }
+    hover_text_fit(text_fit: bool) -> Self { self._hovered_graphics().text_fit = text_fit; self }
     hover_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._hovered_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     hover_cursor(cursor: Cursor) -> Self { self._hovered_graphics().cursor = cursor; self }
 
@@ -398,6 +400,7 @@ export class View {
     focus_text_bold(text_bold: bool) -> Self { self._focused_graphics().text_bold = text_bold; self }
     focus_text_italic(text_italic: bool) -> Self { self._focused_graphics().text_italic = text_italic; self }
     focus_text_cursor_index(text_cursor_index: int) -> Self { self._focused_graphics().text_cursor_index = text_cursor_index; self }
+    focus_text_fit(text_fit: bool) -> Self { self._focused_graphics().text_fit = text_fit; self }
     focus_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._focused_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     focus_cursor(cursor: Cursor) -> Self { self._focused_graphics().cursor = cursor; self }
 
@@ -439,6 +442,7 @@ export class View {
     disabled_text_bold(text_bold: bool) -> Self { self._disabled_graphics().text_bold = text_bold; self }
     disabled_text_italic(text_italic: bool) -> Self { self._disabled_graphics().text_italic = text_italic; self }
     disabled_text_cursor_index(text_cursor_index: int) -> Self { self._disabled_graphics().text_cursor_index = text_cursor_index; self }
+    disabled_text_fit(text_fit: bool) -> Self { self._disabled_graphics().text_fit = text_fit; self }
     disabled_shrink_to_fit_text(shrink_to_fit_text: bool) -> Self { self._disabled_graphics().shrink_to_fit_text = shrink_to_fit_text; self }
     disabled_cursor(cursor: Cursor) -> Self { self._disabled_graphics().cursor = cursor; self }
 

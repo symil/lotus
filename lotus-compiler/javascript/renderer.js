@@ -70,6 +70,7 @@ export class Renderer {
         let textBold = primitive.read();
         let textItalic = primitive.read();
         let textCursorIndex = primitive.read();
+        let fitText = primitive.read();
         let shrinkToFixText = primitive.read();
 
         // let primitive = { x, y, z, shape, width, height, angle, borderColor, borderWidth, borderRadius, borderDashLength, borderGapLength, backgroundColor, overlayColor, imageUrl, imageWidth, imageHeight, text, textFont, textSize, textColor, textMargin, textMaxWidth, textMaxHeight, textBackgroundColor, textBorderColor, textHorizontalAlign, textVerticalAlign, textBold, textItalic, textCursorIndex };
@@ -79,8 +80,7 @@ export class Renderer {
 
         if (text) {
             textPadding = Math.max(borderRadius, textPadding);
-            let textMaxWidth = shrinkToFixText ? width : 0;
-            textMaxWidth = width;
+            let textMaxWidth = (shrinkToFixText || fitText) ? width : 0;
             textImage = this._getTextImageFromCache(text, textMaxWidth, textPadding, textSize, textColor, textFont, textBold, textItalic, textCursorIndex);
 
             if (shrinkToFixText) {

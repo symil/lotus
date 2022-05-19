@@ -119,7 +119,8 @@ impl CompletionItemList {
             .insert_text(insert_text)
             .position(position)
             .kind(CompletionItemKind::Field)
-            .description(field.ty.to_string());
+            .description(field.ty.to_string())
+            .filter_text(field_name.to_string());
     }
 
     pub fn add_enum_variant(&mut self, variant: Rc<EnumVariantInfo>, expected_type: Option<&Type>, show_owner: bool) {

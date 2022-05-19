@@ -50,6 +50,7 @@ const VIEW_METHODS = {
     text_bold: 'bool',
     text_italic: 'bool',
     text_cursor_index: 'int',
+    text_fit: 'bool',
     shrink_to_fit_text: 'bool',
     cursor: 'Cursor',
 };
