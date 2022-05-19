@@ -33,6 +33,7 @@ pub class DrawPrimitive {
     text_bold: bool,
     text_italic: bool,
     text_cursor_index: int,
+    text_fit: bool,
     shrink_to_fit_text: bool,
 
     write_to_buffer(buffer: Buffer) {
