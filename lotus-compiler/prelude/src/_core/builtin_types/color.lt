@@ -60,6 +60,10 @@ export class Color {
         (self.r << 24) + (self.g << 16) + (self.b << 8) + self.a
     }
 
+    luminance() -> float {
+        0.2126 * (self.r.to_float() / 255) + 0.7152 * (self.g.to_float() / 255) + 0.0722 * (self.b.to_float() / 255)
+    }
+
     static transparent() -> Color { Color::new(0, 0, 0, 0) }
     static alice_blue() -> Color { Color::new(240, 248, 255, 255) }
     static antique_white() -> Color { Color::new(250, 235, 215, 255) }
