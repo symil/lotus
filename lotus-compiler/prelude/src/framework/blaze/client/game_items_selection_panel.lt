@@ -10,7 +10,7 @@ pub class GameItemSelectionPanel {
                 grids.push(Grid {
                     items: category.items.map((item, j) => GameItemSelectionIcon { category_index: i, item_index: j }),
                     item_aspect_ratio: 1,
-                    background_color: Color::from_string_hash(category.name),
+                    background_color: Color::tan(),
                     border_color: Color::black(),
                     border_radius: 10,
                     border_width: 2,
