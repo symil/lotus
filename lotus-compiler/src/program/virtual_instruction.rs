@@ -784,7 +784,7 @@ impl VirtualInstruction {
 fn add_field_access_check(check_location: &ItemLocation, content: &mut Vec<Wat>, context: &mut ProgramContext) {
     let field_name_var = context.string_literals.add(&check_location.as_str());
     let file_name_var = context.string_literals.add(&check_location.file.path[check_location.file.package_root_path.len()+1..]);
-    let (line, column) = context.line_col_index.lookup(check_location);
+    let (line, column) = check_location.file.get_line_col(check_location.start).unwrap();
 
     content.extend(vec![
         Wat::get_global(&field_name_var.wasm_name()),

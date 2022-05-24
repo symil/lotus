@@ -10,15 +10,17 @@ pub struct Cursor {
 impl Cursor {
     pub fn new(cursor_location: &Option<CursorLocation>) -> Self {
         let location = match cursor_location {
-            Some(cursor_location) => Some(ItemLocation {
-                file: Rc::new(FileInfo {
-                    package_root_path: cursor_location.root_directory_path.clone(),
-                    path: cursor_location.file_path.clone(),
-                    content: String::new(),
-                }),
-                start: cursor_location.index,
-                end: cursor_location.index,
-            }),
+            Some(cursor_location) => {
+                let package_root_path = cursor_location.root_directory_path.clone();
+                let path = cursor_location.file_path.clone();
+                let content = String::new();
+
+                Some(ItemLocation {
+                    file: Rc::new(FileInfo::new(content, path, package_root_path)),
+                    start: cursor_location.index,
+                    end: cursor_location.index,
+                })
+            },
             None => None,
         };
 

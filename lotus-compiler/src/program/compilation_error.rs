@@ -78,7 +78,7 @@ impl CompilationError {
         match self.get_message() {
             Some(first_line) => {
                 let error_string = format!("{} {}", "error:".red().bold(), first_line);
-                let (line, col) = self.location.compute_lookup_index().get(self.location.start);
+                let (line, col) = self.location.file.get_line_col(self.location.start).unwrap();
                 let file_name = match self.location.file.path.starts_with(self.location.file.package_root_path.as_str()) {
                     true => &self.location.file.path[(self.location.file.package_root_path.len() + 1)..],
                     false => self.location.file.path.as_str(),

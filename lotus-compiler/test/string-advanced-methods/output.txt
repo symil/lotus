@@ -3,12 +3,12 @@
 hello
 ==> FIND
 0
-none
+
 0
-none
+
 2
 0
-none
+
 0
 ==> SUBSTRING
 hel
