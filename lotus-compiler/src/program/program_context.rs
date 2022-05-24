@@ -5,14 +5,13 @@ use enum_iterator::IntoEnumIterator;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal, init_color_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}, package::Package};
-use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectory, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OPTIONS_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex, RootTags, BinaryKind, CLI_EXPORTED_FUNCTION_NAME, APP_EXPORTED_FUNCTION_NAMES, NONE_METHOD_NAME, LineColIndex, CHECK_FIELD_ACCESS_FUNC_NAME};
+use super::{ActualTypeContent, BuiltinInterface, BuiltinType, ClosureDetails, CompilationError, CompilationErrorList, DEFAULT_INTERFACES, FunctionBlueprint, FunctionInstanceContent, FunctionInstanceHeader, FunctionInstanceParameters, FunctionInstanceWasmType, GeneratedItemIndex, GlobalItemIndex, GlobalVarBlueprint, GlobalVarInstance, Id, InterfaceBlueprint, InterfaceList, MainType, ResolvedSignature, Scope, ScopeKind, SELF_VAR_NAME, Type, TypeBlueprint, TypeInstanceContent, TypeInstanceHeader, TypeInstanceParameters, TypedefBlueprint, VariableInfo, VariableKind, Vasm, SORT_EVENT_CALLBACK_FUNC_NAME, GlobalItem, SourceDirectory, SOURCE_FILE_EXTENSION, SourceFileDetails, COMMENT_START_TOKEN, insert_in_vec_hashmap, EVENT_VAR_NAME, EVENT_OPTIONS_VAR_NAME, TypeContent, CursorLocation, FunctionBody, ProgramContextOptions, Cursor, ProgramContextMode, LiteralItemManager, RETAIN_METHOD_NAME, ANONYMOUS_FUNCTION_NAME, MainTypeIndex, RootTags, BinaryKind, CLI_EXPORTED_FUNCTION_NAME, APP_EXPORTED_FUNCTION_NAMES, NONE_METHOD_NAME, CHECK_FIELD_ACCESS_FUNC_NAME};
 
 pub struct ProgramContext {
     pub options: ProgramContextOptions,
     pub cursor_location: Option<ItemLocation>,
     pub source_file_list: Vec<SourceFileDetails>,
     pub parsed_source_files: Vec<Rc<ParsedSourceFile>>,
-    pub line_col_index: LineColIndex,
     pub errors: CompilationErrorList,
     pub root_tags: RootTags,
 
@@ -68,7 +67,6 @@ impl ProgramContext {
             cursor_location: None,
             source_file_list: vec![],
             parsed_source_files: vec![],
-            line_col_index: LineColIndex::new(),
             errors: Default::default(),
             root_tags: RootTags::new(),
             default_interfaces: Default::default(),
