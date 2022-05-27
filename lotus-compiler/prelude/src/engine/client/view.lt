@@ -234,7 +234,7 @@ export class View {
     }
 
     set_rect(rect: Rect) -> Self {
-        self._rect = rect.clone();
+        self._rect = rect && rect.clone();
         self
     }
 

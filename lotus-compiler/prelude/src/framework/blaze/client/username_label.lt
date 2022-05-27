@@ -6,8 +6,8 @@ pub class UsernameLabel extends Label {
             .text(evt.user.name)
             .text_color(Color::dodger_blue())
             .text_size(0.65h)
-            // .border_color(Color::black())
-            // .border_width(2r)
+            .border_color(Color::dodger_blue())
+            .border_width(3r)
             .background_color(Color::white())
             .border_radius(0.5h)
     }
