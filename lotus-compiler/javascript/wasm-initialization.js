@@ -45,6 +45,7 @@ async function getWasmImportsObject(env) {
     let fileSystemManager = new FileSystemManager(env);
     let keyboardManager = await KeyboardManager.new(env);
 
+    // Note: these method names are snake case to match Lotus' naming convention (because they will be called directly from the Lotus code)
     return {
         utils: {
             assert(line, value) {

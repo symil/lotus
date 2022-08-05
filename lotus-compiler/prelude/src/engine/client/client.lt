@@ -37,7 +37,6 @@ export class Client {
 
     // Interaction stuff
     _focus_chain: View[] = [],
-    _hash_to_view: Map<int, View> = Map::new(),
     _hovered_view_stack: ViewStack = ViewStack,
     _focused_view_stack: ViewStack = ViewStack,
     _pressed_view_stack: ViewStack = ViewStack,
