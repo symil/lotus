@@ -1,6 +1,6 @@
 ## Installation
 
-- Install Node.js & npm
+- Install Node.js & npm (tested with 17.9.1)
 - Install [Rust](https://www.rust-lang.org/tools/install)
 - Install [outpost](https://github.com/symil/outpost)
 - Run `install.sh`
