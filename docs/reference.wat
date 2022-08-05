@@ -1,3 +1,5 @@
+;; WebAssembly cheat sheet
+
 ;; Local variable
 (local $name i32) ;; Declare a local variable, must be declared before any instruction
 (local.set $name (i32.const 42)) ;; Set local variable
