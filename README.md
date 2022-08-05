@@ -5,7 +5,10 @@
 - Install [outpost](https://github.com/symil/outpost)
 - Run `install.sh`
 
-This script assumes you are running Ubuntu.
+Additional info:
+
+- This script assumes you are running Ubuntu, you might need to tweak it a little if you're using another destro.
+- It will switch your active Rust toolchain to nightly. This is necessary because this projects uses some nightly-only features.
 
 ## Usage
 
