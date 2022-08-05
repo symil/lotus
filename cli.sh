@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-TEST_GAME_PATH=$SCRIPT_DIR/../scaelya
+TEST_GAME_PATH=$SCRIPT_DIR/../mesys
 
 if [ "$1" == "-d" ] ; then
     rm -rf $TEST_GAME_PATH/build
