@@ -4,6 +4,8 @@ import { execSync } from 'child_process';
 import { readPackageDetails } from './package-details';
 import { runWasmCommandLine } from './command-line-entry-point';
 
+// This file is no longer necessary
+
 const REQUIRED_NODE_PACKAGES = ['ws', 'express'];
 const BUILD_DIRECTORY_NAME = 'build';
 const FORWARDED_OPTIONS = ['-b', '--build', '-u', '--upload', '--remote-start', '--remote-stop'];
@@ -21,7 +23,6 @@ async function main() {
     let rootPath = config.packageRootPath;
     let cachePath = path.join(rootPath, CACHE_DIR_NAME);
     let projectId = config.name;
-    let remoteHost = config.remote;
     let port = config.port;
     let clientFiles = config.clientFiles.map(name => path.join(rootPath, name));
     let windowTitle = `'${config.title}'`;

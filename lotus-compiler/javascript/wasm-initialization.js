@@ -14,10 +14,10 @@ export async function initializeWasm(wasm, userEnv) {
     let env = { ...userEnv, getMemory };
     let imports = await getWasmImportsObject(env);
 
-    if (WebAssembly.instantiateStreaming) {
-        instance = (await WebAssembly.instantiateStreaming(wasm, imports)).instance;
-    } else {
+    if (ArrayBuffer.isView(wasm)) {
         instance = (await WebAssembly.instantiate(wasm, imports)).instance;
+    } else {
+        instance = (await WebAssembly.instantiateStreaming(wasm, imports)).instance;
     }
 
     instance.exports.initialize();

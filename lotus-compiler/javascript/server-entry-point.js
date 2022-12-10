@@ -8,7 +8,7 @@ import { WebSocketServer } from 'ws';
 import { initializeWasm } from './wasm-initialization';
 import { SERVER_REFRESH_RATE } from './constants';
 
-const { HOME, OUTPOST_PORT, OUTPOST_CLIENT_DIR, OUTPOST_PROJECT_ID, OUTPOST_REMOTE_HOSTNAME } = process.env;
+const { HOME, OUTPOST_PORT, OUTPOST_CLIENT_DIR, OUTPOST_NAME, OUTPOST_REMOTE_HOSTNAME } = process.env;
 
 async function main() {
     let webSocketServerList = [];
@@ -16,7 +16,7 @@ async function main() {
     let port = parseInt(OUTPOST_PORT);
     let clientDirectory = OUTPOST_CLIENT_DIR;
     let hostname = OUTPOST_REMOTE_HOSTNAME;
-    let fileSystemRootPath = path.join(HOME, '.lotus-server-data', OUTPOST_PROJECT_ID);
+    let fileSystemRootPath = path.join(HOME, '.lotus-server-data', OUTPOST_NAME);
     let wasmPath = path.join(clientDirectory, 'module.wasm');
     let wasmEnv = makeWasmEnv({ fileSystemRootPath }, webSocketServerList);
     let wasmBytes = fs.readFileSync(wasmPath, null);
