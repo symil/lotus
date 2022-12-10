@@ -10,10 +10,7 @@ $ cd lotus
 $ ./install.sh
 ```
 
-Additional information:
-
-- The install script assumes you are running Ubuntu, you might need to tweak it a little if you're using another distribution.
-- It will switch your active Rust toolchain to nightly. This is necessary because this project uses some nightly-only features.
+Note: the install script assumes you are running Ubuntu, you might need to tweak it if you're using another distribution.
 
 ## Usage
 
