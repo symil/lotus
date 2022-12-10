@@ -26,6 +26,7 @@
     "chalk": "^5.0.1",
     "fs-extra": "^10.1.0",
     "googleapis": "^105.0.0",
+    "outpost": "file:../../outpost",
     "toml": "^3.0.0"
   }
 }
