@@ -1,5 +1,5 @@
 use core::panic;
-use std::{collections::{HashMap, HashSet}, hash::{Hasher}, mem::{take}, rc::{Rc}, fs::{DirBuilder, File}, path::Path, io::Write, process};
+use std::{collections::{HashMap, HashSet}, mem::take, rc::Rc, fs::{DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
 use enum_iterator::IntoEnumIterator;
 use colored::*;
@@ -1246,7 +1246,7 @@ impl ProgramContext {
             wasm_locals.extend(global_var.wasm_locals);
         }
 
-        let wasm_locals : Vec<(&str, &str)> = wasm_locals.iter().map(|(ty, name)| (name.as_str(), ty.clone())).collect();
+        let wasm_locals : Vec<(&str, &str)> = wasm_locals.iter().map(|(ty, name)| (name.as_str(), *ty)).collect();
 
         for (name, args, ret, locals, body) in HEADER_FUNCTIONS {
             content.push(Wat::declare_function(name, None, args.to_vec(), ret.to_vec(), locals.to_vec(), body()))

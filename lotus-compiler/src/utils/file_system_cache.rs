@@ -28,7 +28,7 @@ impl<T : Default, E> FileSystemCache<T, E> {
     }
 
     fn read_from_hook(&mut self, file_path: &str) -> Option<String> {
-        let take_from_hook = self.hook.as_ref().map(|(path, _)| path).contains(&file_path);
+        let take_from_hook = self.hook.as_ref().map(|(path, _)| path).is_some_and(|path| path == &file_path);
 
         match take_from_hook {
             true => Some(self.hook.take().unwrap().1),

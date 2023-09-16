@@ -7,7 +7,6 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import { initializeWasm } from './javascript/wasm-initialization';
-import { exit } from 'process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +17,7 @@ const BUILD_DIR = path.join(WORKSHOP_DIR, 'build');
 const SRC_DIR = path.join(WORKSHOP_DIR, 'src');
 
 const WAT2WASM_BINARY_PATH = 'wat2wasm';
-const WAT2WASM_OPTIONS = ['--enable-bulk-memory'];
+const WAT2WASM_OPTIONS = [];
 
 const MOCHA_BINARY_PATH = path.join(ROOT_DIR, 'node_modules', '.bin', 'mocha');
 

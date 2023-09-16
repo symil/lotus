@@ -313,7 +313,7 @@ impl VirtualInstruction {
                                     },
                                 };
 
-                                if info.access_level.contains(&var_info.declaration_level) {
+                                if info.access_level.as_ref().is_some_and(|content| content == &var_info.declaration_level) {
                                     content.push(Wat::get_local(&var_info.wasm_name));
                                     if wasm_type == "f32" {
                                         content.push(wat!["i32.reinterpret_f32"]);

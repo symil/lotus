@@ -16,7 +16,7 @@ export const SERVER_ENTRY_PATH = path.join(JAVASCRIPT_SRC_DIR_PATH, 'server-entr
 export const GOOGLE_APIS_CREDENTIALS_PATH = path.join(CREDENTIALS_DIR_PATH, 'googleapis-credentials.json');
 
 export const WAT2WASM_BINARY_PATH = 'wat2wasm';
-export const WAT2WASM_OPTIONS = ['--enable-bulk-memory', '--debug-names'];
+export const WAT2WASM_OPTIONS = ['--debug-names'];
 export const OUTPUT_WAT_FILE_NAME = 'module.wat';
 export const OUTPUT_WASM_FILE_NAME = 'module.wasm';
 
