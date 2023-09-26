@@ -7,11 +7,11 @@ import { openServer } from 'outpost';
 import { initializeWasm } from './wasm-initialization';
 import { SERVER_REFRESH_RATE } from './constants';
 
-const { HOME, OUTPOST_NAME, OUTPOST_CLIENT_DIR } = process.env;
+const { HOME, OUTPOST_APP_NAME, OUTPOST_CLIENT_DIR } = process.env;
 
 async function main() {
     let webSocketServerList = [];
-    let fileSystemRootPath = path.join(HOME, '.lotus-server-data', OUTPOST_NAME);
+    let fileSystemRootPath = path.join(HOME, '.lotus-server-data', OUTPOST_APP_NAME);
     let wasmPath = path.join(OUTPOST_CLIENT_DIR, 'module.wasm');
     let wasmEnv = makeWasmEnv({ fileSystemRootPath }, webSocketServerList);
     let wasmBytes = fs.readFileSync(wasmPath, null);
