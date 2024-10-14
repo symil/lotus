@@ -1,0 +1,8 @@
+pub class FireRequest {
+    target_x: float,
+    target_y: float,
+
+    @OnUserRequest {
+        evt.user.game.fire(evt.server.get_current_time(), evt.user.character, self.target_x, self.target_y);
+    }
+}

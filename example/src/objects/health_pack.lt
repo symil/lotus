@@ -1,0 +1,16 @@
+pub class HealthPack extends PhysicalObject {
+    self.width = HEALTH_PACK_WIDTH
+    self.height = HEALTH_PACK_HEIGHT
+    self.affected_by_gravity = true
+
+    dyn process_collision(other: PhysicalObject){
+        if other is Character(character) {
+            character.restore_health(HEALTH_PACK_REGEN);
+            self.alive = false;
+        }
+    }
+
+    @OnRender {
+        evt.view.image_url(HEALTH_PACK_IMAGE_URL)
+    }
+}

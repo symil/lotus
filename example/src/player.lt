@@ -1,0 +1,4 @@
+pub class Player {
+    game: Game = Game,
+    character: Character = none,
+}

@@ -1,0 +1,39 @@
+pub class Missile extends PhysicalObject {
+    shooter: Character,
+
+    self.speed = MISSILE_SPEED
+    self.width = MISSILE_WIDTH
+    self.height = MISSILE_HEIGHT
+    self.solid = false
+
+    dyn update_dyn(elapsed: float){
+        if self.y < (MAP_HEIGHT / 2).neg() {
+            self.alive = false;
+        }
+    }
+
+    dyn process_collision(other: PhysicalObject){
+        check other != self.shooter;
+        check !other is Explosion(_);
+
+        self.alive = false;
+        self.shooter.game.objects.push(Explosion {
+            x: self.x,
+            y: self.y,
+        });
+
+        if other is Character(character) {
+            if character.deal_damages(1) {
+                self.shooter.score += 1;
+            }
+        } else if other is HealthPack(pack) {
+            pack.alive = false;
+        }
+    }
+
+    @OnRender {
+        evt.view
+            .background_color(self.shooter.get_color())
+            .z_index(1)
+    }
+}

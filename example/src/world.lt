@@ -1,0 +1,43 @@
+pub class World {
+    game: Game = none,
+    last_update : float = none,
+
+    @OnWorldOpen {
+        self.last_update = evt.server.get_current_time();
+    }
+
+    @OnUserConnect {
+        if !self.game {
+            self.game = Game;
+        }
+
+        evt.user.game = self.game;
+    }
+
+    @OnUserDisconnect {
+        if evt.user.character {
+            self.game.remove_character(evt.user.character);
+            evt.user.character = none;
+        }
+
+        if evt.server.users().is_empty() {
+            self.game = none;
+        }
+    }
+
+    @OnWorldUpdate {
+        let current_time = evt.server.get_current_time();
+        let elapsed = current_time - self.last_update;
+        let time = self.last_update;
+
+        if self.game {
+            self.game.update(current_time);
+        }
+
+        self.last_update = current_time;
+    }
+
+    @OnUserRequest {
+        evt.emit([evt.request]);
+    }
+}

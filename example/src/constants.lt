@@ -1,0 +1,57 @@
+pub const MAP_WIDTH = 1600f;
+pub const MAP_HEIGHT = 900f;
+
+pub const CHARACTER_WIDTH = 60f;
+pub const CHARACTER_HEIGHT = 60f;
+pub const CHARACTER_SPEED = 400f;
+pub const CHARACTER_MAX_HEALTH = 3;
+
+pub const MISSILE_WIDTH = 30f;
+pub const MISSILE_HEIGHT = 15f;
+pub const MISSILE_SPEED = 1200f;
+
+pub const HEALTH_PACK_WIDTH = 45f;
+pub const HEALTH_PACK_HEIGHT = 45f;
+pub const HEALTH_PACK_REGEN = 2;
+pub const HEALTH_PACK_SPAWN_COOLDOWN = 8f;
+pub const HEALTH_PACK_MAX_COUNT = 5;
+
+pub const EXPLOSION_WIDTH = 100f;
+pub const EXPLOSION_HEIGHT = 100f;
+pub const EXPLOSION_DURATION = .5f;
+
+pub const GRAVITY_SPEED = 750f;
+pub const JUMP_STRENGTH = 1700f;
+pub const JUMP_DURATION = 1f;
+
+pub const SHOT_COOLDOWN = 0.25;
+
+pub const MIN_SPAWN_X = 100f;
+pub const MAX_SPAWN_X = MAP_WIDTH - MIN_SPAWN_X;
+
+pub const WALL_THICKNESS = 60f;
+pub const PLATFORMS = [
+    [.5, 1, MAP_WIDTH, WALL_THICKNESS],
+    [0, .5, WALL_THICKNESS, MAP_HEIGHT],
+    [1, .5, WALL_THICKNESS, MAP_HEIGHT],
+    [0.2, 0.73, 160, 54],
+    [0.75, 0.73, 160, 54],
+    [0.06, 0.925, 192, 135],
+    [0.94, 0.925, 192, 135],
+    [0.5, 0.825, 256, 45],
+    [0.5, 0.62, 320, 36],
+    [0.13, 0.34, 220, 50],
+    [0.87, 0.34, 220, 50],
+    [0.335, 0.455, 112, 27],
+    [0.665, 0.455, 112, 27],
+    [0.5, 0.275, 150, 90],
+    [0.97, 0.6, 50, 20],
+    [0.03, 0.6, 50, 20],
+];
+
+pub const BACKGROUND_COLOR = Color::light_blue();
+pub const GREEN_HEALTH_COLOR = #30AC59;
+pub const RED_HEALTH_COLOR = #FF4719;
+pub const PLATFORM_COLOR = Color::dim_gray();
+pub const HEALTH_PACK_IMAGE_URL = "assets/health.jpg";
+pub const EXPLOSION_IMAGE_URL = "assets/explosion.png";

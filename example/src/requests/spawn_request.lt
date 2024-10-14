@@ -1,0 +1,12 @@
+pub class SpawnRequest {
+    name: string,
+
+    @OnUserRequest {
+        check !evt.user.character;
+
+        let name = self.name || generate_random_name();
+        let character = evt.world.game.add_character(name);
+
+        evt.user.character = character;
+    }
+}
