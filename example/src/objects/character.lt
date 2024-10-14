@@ -1,0 +1,103 @@
+pub class Character extends PhysicalObject {
+    game: Game,
+    name: string,
+    score: int = 0,
+    move_orders: MoveDirection[] = [],
+    health: int = 0,
+    last_shot: float = 0,
+    respawned: bool = false,
+
+    self.x = none
+    self.y = none
+    self.width = CHARACTER_WIDTH
+    self.height = CHARACTER_HEIGHT
+    self.speed = CHARACTER_SPEED
+    self.affected_by_gravity = true
+
+    spawn() {
+        self.set_random_spawn_position();
+        self.health = CHARACTER_MAX_HEALTH;
+    }
+
+    restore_health(count: int) {
+        self.health = (self.health + count).min(CHARACTER_MAX_HEALTH);
+    }
+
+    deal_damages(count: int) -> bool {
+        self.health -= count;
+
+        if self.health <= 0 && !self.respawned {
+            self.respawned = true;
+            self.spawn();
+
+            return true;
+        }
+
+        false
+    }
+
+    dyn _compute_dx_dy() {
+        let dx = 0f;
+        let dy = 0f;
+
+        for direction in self.move_orders {
+            if direction == MoveDirection::Left {
+                dx -= 1;
+            } else if direction == MoveDirection::Right {
+                dx += 1;
+            } else if direction == MoveDirection::Down {
+                dy += 1;
+            } else if direction == MoveDirection::Up {
+                if self.is_on_ground {
+                    self.jump_remaining_duration = JUMP_DURATION;
+                }
+                self.move_orders.remove(direction);
+            }
+        }
+
+        self.dx = dx;
+        self.dy = dy;
+    }
+
+    dyn update_dyn(elapsed: float){
+        self.respawned = false;
+    }
+
+    get_color() -> Color {
+        Color::from_string_hash(self.name)
+    }
+
+    @OnRender {
+        let color = self.get_color();
+        let health_fragments : View[] = [];
+
+        for i in 0..CHARACTER_MAX_HEALTH {
+            let color = match i < self.health {
+                true => GREEN_HEALTH_COLOR,
+                false => RED_HEALTH_COLOR,
+            };
+
+            health_fragments.push(View.background_color(color));
+        }
+
+        evt.view
+            .background_color(color)
+            .layout()
+            .top_to_bottom()
+            .push()
+            .left_to_right()
+            .height(.2h)
+            .push_list(health_fragments)
+
+        let text = `${self.name} - ${self.score}`;
+        let size = 18f;
+        let text_view = View
+            .set_rect(Rect::new(self.x, self.y - self.height / 2 - size / 2, self.width, size))
+            .text(text)
+            .text_size(1h)
+            .text_font(Font::SansSerif)
+            .z_index(2)
+
+        evt.view.render_child(text_view);
+    }
+}

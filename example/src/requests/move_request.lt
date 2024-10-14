@@ -1,0 +1,35 @@
+pub class MoveRequest {
+    kind: MoveKind,
+    direction: MoveDirection,
+
+    @OnUserRequest {
+        check evt.user.character;
+
+        if self.kind == MoveKind::Start {
+            evt.user.character.move_orders.push_unique(self.direction);
+        } else {
+            evt.user.character.move_orders.remove(self.direction);
+        }
+    }
+}
+
+pub enum MoveKind {
+    Start,
+    Stop
+}
+
+pub enum MoveDirection {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+pub fn get_vector_from_direction(direction: MoveDirection) -> (float, float) {
+    match direction {
+        MoveDirection::Left => (-1, 0),
+        MoveDirection::Right => (1, 0),
+        MoveDirection::Up => (0, -1),
+        MoveDirection::Down => (0, 1),
+    }
+}

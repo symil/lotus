@@ -1,0 +1,24 @@
+pub class Explosion extends PhysicalObject {
+    lifetime: float = 0,
+
+    self.width = EXPLOSION_WIDTH
+    self.height = EXPLOSION_HEIGHT
+    self.solid = false
+
+    dyn update_dyn(elapsed: float) {
+        self.lifetime += elapsed;
+
+        if self.lifetime > EXPLOSION_DURATION {
+            self.alive = false;
+        }
+    }
+
+    @OnRender {
+        evt.view
+            .image_url(EXPLOSION_IMAGE_URL)
+            .image_layout(5, 5)
+            .animation_current_time(self.lifetime)
+            .animation_duration(EXPLOSION_DURATION)
+            .animation_start_time(0)
+    }
+}

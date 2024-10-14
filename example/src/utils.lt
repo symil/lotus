@@ -1,0 +1,42 @@
+pub fn normalize(x: float, y: float) -> (float, float) {
+    let length = (x * x + y * y).sqrt();
+
+    (x / length, y / length)
+}
+
+pub fn generate_random_name() -> string {
+    NAMES.get_random()
+}
+
+const NAMES = [
+    "Oneth",
+    "Dhunilorh",
+    "Uffyn",
+    "Marias",
+    "Aqinn",
+    "Irraneth",
+    "Urrildor",
+    "Dibaris",
+    "Haqinn",
+    "Awyn",
+    "Khirhan",
+    "Ivizahr",
+    "Prequam",
+    "Ceronin",
+    "Avolore",
+    "Aflyn",
+    "Ugejahr",
+    "Egrimaex",
+    "Uforn",
+    "Ebarin",
+    "Utubaris",
+    "Adyora",
+    "Agoris",
+    "Axone",
+    "Azora",
+    "Affea",
+    "Atazz",
+    "Enullaes",
+    "Urish",
+    "Adistrea",
+];

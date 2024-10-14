@@ -1,0 +1,154 @@
+pub class PhysicalObject {
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    dx: float = 0,
+    dy: float = 0,
+    speed: float = 0,
+    alive: bool = true,
+    fixed: bool = false,
+    solid: bool = true,
+    affected_by_gravity: bool = false,
+    is_on_ground: bool = false,
+    jump_remaining_duration: float = 0,
+    collisions: PhysicalObject[] = [],
+
+    x1() -> float { self.x - self.width / 2f }
+    y1() -> float { self.y - self.height / 2f }
+    x2() -> float { self.x + self.width / 2f }
+    y2() -> float { self.y + self.height / 2f }
+
+    dyn _compute_dx_dy() {
+
+    }
+
+    set_random_spawn_position() {
+        self.x = Rng::float(MIN_SPAWN_X, MAX_SPAWN_X);
+        self.y = 0;
+    }
+
+    update(elapsed: float, objects: PhysicalObject[]) {
+        if self.fixed {
+            return;
+        }
+
+        self.collisions.clear();
+        self._compute_dx_dy();
+
+        let dx_per_second = self.dx * self.speed;
+        let dy_per_second = self.dy * self.speed;
+
+        if self.affected_by_gravity {
+            dy_per_second += GRAVITY_SPEED;
+        }
+
+        if self.jump_remaining_duration > 0 {
+            let value = JUMP_STRENGTH * (self.jump_remaining_duration / JUMP_DURATION);
+            dy_per_second -= value;
+            self.jump_remaining_duration -= elapsed;
+        }
+
+        if !dx_per_second.is_zero() || !dy_per_second.is_zero() {
+            let dx = dx_per_second * elapsed;
+            let dy = dy_per_second * elapsed;
+            let left_movement = dx.min(0).neg();
+            let right_movement = dx.max(0);
+            let top_movement = dy.min(0).neg();
+            let bottom_movement = dy.max(0);
+
+            self._do_movement(left_movement, right_movement, top_movement, bottom_movement, objects);
+        }
+
+        self._detect_ground(objects);
+    }
+
+    _do_movement(left: float, right: float, top: float, bottom: float, objects: PhysicalObject[]) {
+        let final_left = left;
+        let final_right = right;
+        let final_top = top;
+        let final_bottom = bottom;
+
+        for object in objects {
+            if object == self {
+                continue;
+            }
+
+            let both_solid = self.solid && object.solid;
+            let collision = false;
+            let distance_left = self.x1() - object.x2();
+            let distance_right = object.x1() - self.x2();
+            let distance_top = self.y1() - object.y2();
+            let distance_bottom = object.y1() - self.y2();
+
+            let intersect_horizontally = distance_left < 0 && distance_right < 0;
+            let intersect_vertically = distance_top < 0 && distance_bottom < 0;
+
+            if intersect_horizontally {
+                if distance_top >= 0 && distance_top < top {
+                    collision = true;
+
+                    if both_solid {
+                        final_top = final_top.min(distance_top);
+                    }
+                }
+
+                if distance_bottom >= 0 && distance_bottom < bottom {
+                    collision = true;
+
+                    if both_solid {
+                        final_bottom = final_bottom.min(distance_bottom);
+                    }
+                }
+            }
+
+            if intersect_vertically {
+                if distance_left >= 0 && distance_left < left {
+                    collision = true;
+
+                    if both_solid {
+                        final_left = final_left.min(distance_left);
+                    }
+                }
+
+                if distance_right >= 0 && distance_right < right {
+                    collision = true;
+
+                    if both_solid {
+                        final_right = final_right.min(distance_right);
+                    }
+                }
+            }
+
+            if collision {
+                self.collisions.push_unique(object);
+            }
+        }
+
+        self.x += final_left.neg() + final_right;
+        self.y += final_top.neg() + final_bottom;
+    }
+
+    // TODO: merge this with collision detection
+    _detect_ground(objects: PhysicalObject[]) {
+        self.is_on_ground = false;
+
+        for object in objects {
+            if object.solid && self.x1() < object.x2() && self.x2() > object.x1() && (self.y2() - object.y1()).abs() < 1f {
+                self.is_on_ground = true;
+            }
+        }
+    }
+
+    dyn update_dyn(elapsed: float) {
+
+    }
+
+    dyn process_collision(other: Self) {
+
+    }
+
+    @OnRender {
+        evt.view.set_rect(Rect::new(self.x, self.y, self.width, self.height));
+    }
+}

@@ -1,0 +1,7 @@
+pub class Platform extends PhysicalObject {
+    self.fixed = true
+
+    @OnRender {
+        evt.view.background_color(PLATFORM_COLOR)
+    }
+}

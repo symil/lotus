@@ -1,0 +1,70 @@
+const USERNAME_KEY = "mesys-username";
+const MOVEMENT_KEYS = [Key::KeyW, Key::KeyA, Key::KeyS, Key::KeyD];
+
+pub class Window {
+    @OnRender {
+        evt.view
+            .background_color(BACKGROUND_COLOR)
+            .render_children(evt.user.game.objects)
+    }
+    
+    @OnClientStart {
+        let message = [
+            `- Move: ${MOVEMENT_KEYS.map(key => evt.client.get_key_value(key)).join(" / ")}`,
+            `- Shoot: left click`,
+            ``,
+            `Choose a name:`
+        ].join("\n");
+
+        let local_storage_name : string = evt.client.get_local_storage_item(USERNAME_KEY);
+        let name = local_storage_name || evt.client.prompt(message);
+
+        evt.client.set_local_storage_item(USERNAME_KEY, name);
+        evt.client.send_request(SpawnRequest { name });
+    }
+
+    @OnKeyDown {
+        check MOVEMENT_KEYS.includes(evt.key) && !evt.repeat;
+
+        let kind = MoveKind::Start;
+        let direction = match evt.key {
+            Key::KeyS => MoveDirection::Down,
+            Key::KeyW => MoveDirection::Up,
+            Key::KeyA => MoveDirection::Left,
+            Key::KeyD => MoveDirection::Right,
+        };
+
+        evt.client.send_request(MoveRequest { kind, direction });
+        intercept;
+    }
+
+    @OnKeyUp {
+        check MOVEMENT_KEYS.includes(evt.key) && !evt.repeat;
+
+        let kind = MoveKind::Stop;
+        let direction = match evt.key {
+            Key::KeyS => MoveDirection::Down,
+            Key::KeyW => MoveDirection::Up,
+            Key::KeyA => MoveDirection::Left,
+            Key::KeyD => MoveDirection::Right,
+        };
+
+        evt.client.send_request(MoveRequest { kind, direction });
+        intercept;
+    }
+
+    @OnKeyDown {
+        if evt.key == Key::KeyC && evt.alt_key {
+            evt.client.clear_local_storage();
+        }
+    }
+
+    @OnMouseDown {
+        check evt.button == MouseButton::Left;
+
+        evt.client.send_request(FireRequest {
+            target_x: evt.x,
+            target_y: evt.y,
+        });
+    }
+}

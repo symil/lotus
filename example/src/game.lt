@@ -1,0 +1,111 @@
+pub class Game {
+    initialized: bool = false,
+    objects: PhysicalObject[] = [],
+    last_update: float = 0,
+    last_health_pack_time : float = 0,
+
+    init() {
+        for platform in PLATFORMS {
+            self.objects.push(Platform {
+                x: platform[0] * MAP_WIDTH,
+                y: platform[1] * MAP_HEIGHT,
+                width: platform[2],
+                height: platform[3],
+            });
+        }
+    }
+
+    get_current_time() -> float {
+        self.last_update
+    }
+
+    update(current_time: float) {
+        if !self.initialized {
+            self.init();
+            self.last_update = current_time;
+            self.last_health_pack_time = current_time;
+            self.initialized = true;
+            return;
+        }
+
+        let elapsed = current_time - self.last_update;
+
+        if current_time - self.last_health_pack_time >= HEALTH_PACK_SPAWN_COOLDOWN {
+            let current_health_pack_count = self.objects.count(obj => obj is HealthPack(_));
+
+            if current_health_pack_count < HEALTH_PACK_MAX_COUNT {
+                self.objects.push(HealthPack {
+                    x: Rng::float(MIN_SPAWN_X, MAX_SPAWN_X),
+                    y: 0,
+                });
+            }
+
+            self.last_health_pack_time = current_time;
+        }
+
+        for object in self.objects {
+            object.update(elapsed, self.objects);
+            object.update_dyn(elapsed);
+        }
+
+        self._process_collisions();
+
+        self.objects = self.objects.filter(object => object.alive);
+
+        self.last_update = current_time;
+    }
+
+    _process_collisions() {
+        let pair_set : Set<int> = Set<int>::new();
+        let pairs : (PhysicalObject, PhysicalObject)[] = [];
+
+        for object in self.objects {
+            for other in object.collisions {
+                let hash = object.__hash() + other.__hash();
+
+                if pair_set.add(hash) {
+                    pairs.push((object, other));
+                }
+            }
+        }
+
+        for (object1, object2) in pairs {
+            if object1.alive && object2.alive {
+                object1.process_collision(object2);
+                object2.process_collision(object1);
+            }
+        }
+    }
+
+    add_character(name: string) -> Character {
+        let character = Character {
+            game: self,
+            name,
+        };
+
+        character.spawn();
+
+        self.objects.push(character);
+        character
+    }
+
+    remove_character(character: Character) {
+        self.objects.remove(character);
+    }
+
+    fire(current_time: float, character: Character, target_x: float, target_y: float) {
+        check character && current_time - character.last_shot > SHOT_COOLDOWN;
+
+        let (dx, dy) = normalize(target_x - character.x, target_y - character.y);
+
+        self.objects.push(Missile {
+            x: character.x,
+            y: character.y,
+            shooter: character,
+            dx,
+            dy
+        });
+
+        character.last_shot = current_time;
+    }
+}
