@@ -1,25 +1,57 @@
+# Lotus
+
+Lotus is specialized programming to create prototypes of multiplayer, 2D video games playable in the browser.
+It compiles a source directory into a WebAssembly module, and generates two javascript bundles (for server & client) that run the WebAssembly module.
+
+You can find an example of a game made with it in the `example` folder.
+
 ## Installation
 
-- Install Node.js & npm (tested with 17.9.1)
-- Install [rust](https://www.rust-lang.org/tools/install)
-- Install [outpost](https://github.com/symil/outpost)
-- Install the project with:
-```
-$ git clone git@github.com:symil/lotus.git
-$ cd lotus
-$ ./install.sh
+- Install [Node.js](https://nodejs.org/en).
+- Install [Rust](https://www.rust-lang.org/tools/install).
+- Clone the project.
+
+```sh
+git clone git@github.com:symil/lotus.git
 ```
 
-Note: the install script assumes you are running Ubuntu, you might need to tweak it if you're using another distribution.
+- Install the dependancies.
+
+```sh
+cd /path/to/lotus
+npm install
+```
+
+- Build the compiler.
+
+```sh
+cargo build --release
+```
+
+- (Optional) Install the compiler globally.
+
+```sh
+sudo npm link
+```
+
+- (Optional) Install the (VS code extension for Lotus)[https://github.com/symil/lotus-vscode].
 
 ## Usage
 
-Run the tests:
-
+- Compile the example directory.
+```sh
+lotus example/
+# Or alternatively, if you haven't installed it globally:
+# scripts/build-app.js example/
 ```
-$ ./test.sh -a
+
+- This generates a standalone `example/build` folder. You can then run the game server:
+```sh
+node example/build/server-bundle.js
 ```
 
-## Real example
+- Connect to `http://localhost:8000`. To try out the multipler, either ask someone else to join you or open multiple tabs.
 
-You can find a small, test game made with this project [here](https://github.com/symil/mesys).
+## Language specifications
+
+Coming one day.
