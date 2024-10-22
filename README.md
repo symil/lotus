@@ -34,7 +34,7 @@ cargo build --release
 npm link # Must be run as super user on Linux
 ```
 
-- (Optional) Install the (VS code extension for Lotus)[https://github.com/symil/lotus-vscode].
+- (Optional) Install the (VS code extension for Lotus)[https://github.com/symil/lotus-vscode] to have syntax highlighting and autocompletion.
 
 ## Usage
 
@@ -50,7 +50,7 @@ lotus example/
 node example/build/server-bundle.js
 ```
 
-- Connect to `http://localhost:8000`. To try out the multipler, either ask someone else to join you or open multiple tabs.
+- Connect to `http://localhost:8000`. To try out the multiplayer, either ask someone else to join you or open multiple tabs.
 
 ## Language specifications
 

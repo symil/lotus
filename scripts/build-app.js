@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import esbuild from 'esbuild';
+import wabt from 'wabt';
 import { ASSETS_DIR_NAME, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_EXTERNAL_MODULES } from '../javascript/constants.js';
 import { ROOT_DIR_PATH } from '../javascript/paths.js';
 
@@ -53,7 +54,7 @@ async function main() {
     runCommand(`${COMPILER_PATH} ${inputDir} ${watPath} --app --silent`);
 
     logStep(`Compiling WAT to WASM`);
-    runCommand(`wat2wasm --debug-names ${watPath} -o ${wasmPath}`);
+    await wat2wasm(watPath, wasmPath);
 
     logStep(`Compiling client bundle`);
     await buildBundle(CLIENT_ENTRY_PATH, clientOutputPath, false);
@@ -87,9 +88,21 @@ function logStep(message) {
 }
 
 function runCommand(command) {
-    execSync(command, { stdio: 'inherit' });
+    try {
+        execSync(command, { stdio: 'inherit' });
+    } catch (e) {
+        process.exit(1);
+    }
 }
 
+async function wat2wasm(inputPath, outputPath) {
+    let api = await wabt();
+    let wat = readFileSync(inputPath);
+    let module = api.parseWat('module', wat);
+    let { buffer } = module.toBinary({ write_debug_names: true });
+
+    writeFileSync(outputPath, buffer, 'binary');
+}
 
 async function buildBundle(inputPath, outputPath, isServer) {
     return esbuild
