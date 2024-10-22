@@ -115,9 +115,9 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "parsable"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f975300e09af414133a7074fb04030ee132fe6196751e4503877e9011d84263"
+checksum = "023463c69175533c6f1a653a4b60ec3b7e8349106f33fd32819b08300fdae374"
 dependencies = [
  "parsable-macro",
  "regex",
