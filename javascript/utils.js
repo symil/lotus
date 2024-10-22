@@ -106,3 +106,12 @@ export function decodeStringToUint32Array(string) {
 
     return Uint32Array.from(result);
 }
+
+/**
+ * 
+ * @param {WebAssembly.Instance} instance 
+ * @returns {any}
+ */
+export function getWasmExports(instance) {
+    return instance.exports;
+}

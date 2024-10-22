@@ -141,7 +141,7 @@ export class WindowManager {
             return;
         }
 
-        document.body.style.margin = 0;
+        document.body.style.margin = '0';
         document.body.style.backgroundColor = 'black';
 
         while (document.body.firstChild) {

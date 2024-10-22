@@ -21,6 +21,7 @@ const FIELDS = {
 
 export function readPackageDetails(packageRootPath) {
     let packageConfigFilePath = path.join(packageRootPath, PACKAGE_CONFIG_FILE_NAME);
+    /** @type {any} */
     let result = {};
 
     if (fs.existsSync(packageConfigFilePath)) {
@@ -57,7 +58,7 @@ function formatConfiguration(tomlConfig, packageRootPath) {
             type = makeEnum(type);
         }
 
-        if (value !== undefined && !type.check(value)) {
+        if (value !== undefined && typeof type === 'object' && !type.check(value)) {
             errors.push(`field \`${tomlKey}\`: expected ${type.name}, got ${JSON.stringify(value)}`);
             value = undefined;
         }

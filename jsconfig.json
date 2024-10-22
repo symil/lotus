@@ -1,0 +1,17 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "checkJs": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [ "DOM", "ESNext", "DOM.Iterable" ],
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports" : true,
+    "noEmit": true,
+  },
+  "include": [ "scripts/*.js", "javascript/*.js" ],
+  "exclude": ["node_modules", "build/**"]
+}

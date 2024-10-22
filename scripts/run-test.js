@@ -7,6 +7,7 @@ import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import { initializeWasm } from '../javascript/wasm-initialization.js';
+import { getWasmExports } from '../javascript/utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -208,15 +209,16 @@ async function runWasm(wasmPath, inheritStdio, displayMemory) {
     let log = inheritStdio ? console.log : value => lines.push(value.toString());
     let getProcess = () => ({ exit() {} });
     let instance = await initializeWasm(fse.readFileSync(wasmPath, null), { log, getProcess });
+    let exports = getWasmExports(instance);
 
     try {
-        instance.exports.main();
+        exports.main();
     } catch (e) {
         
     }
 
     if (displayMemory) {
-        let memory = new Uint32Array(instance.exports.memory.buffer); 
+        let memory = new Uint32Array(exports.memory.buffer); 
         
         for (let i = 0; i < 16; ++i) {
             console.log(`${i.toString().padStart(2, ' ')}: ${memory[i]}`);
@@ -263,6 +265,7 @@ async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, di
 function runCommand(command, inheritStdio) {
     let result = '';
     let success = false;
+    /** @type {any} */
     let options = {};
 
     if (inheritStdio) {
@@ -272,7 +275,7 @@ function runCommand(command, inheritStdio) {
     // console.log(command);
 
     try {
-        result = execSync(command, options)?.toString('utf8');
+        result = execSync(command, options)?.toString();
         success = true;
     } catch (error) {
         if (!inheritStdio) {
