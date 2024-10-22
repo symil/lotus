@@ -13,3 +13,5 @@ export const SERVER_CLIENT_FILES_PATH = '.';
 
 export const DEFAULT_ASSET_PROXY_BASE_PATH = '/proxy';
 export const DEFAULT_WEBSOCKET_UPGRADE_PATH = '/ws';
+
+export const ASSETS_DIR_NAME = 'assets';
