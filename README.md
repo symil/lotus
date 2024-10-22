@@ -31,7 +31,7 @@ cargo build --release
 - (Optional) Install the compiler globally.
 
 ```sh
-sudo npm link
+npm link # Must be run as super user on Linux
 ```
 
 - (Optional) Install the (VS code extension for Lotus)[https://github.com/symil/lotus-vscode].
