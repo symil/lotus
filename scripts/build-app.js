@@ -61,15 +61,14 @@ async function main() {
     logStep(`Compiling server bundle`);
     await buildBundle(SERVER_ENTRY_PATH, serverOutputPath, true);
 
-    logStep(`Creating html file`);
+    logStep(`Creating index.html`);
     createIndexHtml(HTML_ENTRY_PATH, htmlOutputPath);
+
+    logStep(`Creating package.json`);
+    createPackageJson(packageJsonPath);
 
     logStep(`Copying assets`);
     cpSync(join(inputDir, ASSETS_DIR_NAME), join(buildDir, ASSETS_DIR_NAME), { recursive: true });
-
-
-    logStep(`Creating package.json...`);
-    createPackageJson(packageJsonPath);
 
     if (!existsSync(join(buildDir, 'node_modules'))) {
         logStep('Installing external packages...');
