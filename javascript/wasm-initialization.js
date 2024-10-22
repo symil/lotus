@@ -20,7 +20,10 @@ export async function initializeWasm(wasm, userEnv) {
         instance = (await WebAssembly.instantiateStreaming(wasm, imports)).instance;
     }
 
-    instance.exports.initialize();
+    /** @type {any} */
+    let exports = instance.exports;
+
+    exports.initialize();
 
     return instance;
 }

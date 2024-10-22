@@ -40,7 +40,7 @@ export function formatText(parameters) {
     let currentLineWidth = 0;
     let longestLineWidth = 0;
     let currentLineHeight = textSize;
-    let lineHorizontalAlign = false;
+    let lineHorizontalAlign = 'left';
     let previousLineHeight = 0;
     let lastToken = { content: '' };
     let suffix = textCursorIndex > -1 ? ' \n' : '\n';

@@ -82,6 +82,7 @@ function generateCode(sourceFilePath, generateLinesFunctions) {
             let end = `\n${TAB}`;
             let separator = `\n${TAB}${TAB}`
             if (typeof fields === 'string') {
+                // @ts-ignore
                 fields = { [methodName] : fields};
             }
             let entries = Object.entries(fields);

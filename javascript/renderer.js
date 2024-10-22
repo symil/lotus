@@ -302,7 +302,7 @@ export class Renderer {
 
     _polygon(points, x, y, width, height) {
         this._ctx.beginPath();
-        this._ctx.moveTo(cx + points[0][0] * width, cy + points[0][1] * height);
+        this._ctx.moveTo(x + points[0][0] * width, y + points[0][1] * height);
 
         for (let i = 1; i < points.length; ++i) {
             let [px, py] = points[i];

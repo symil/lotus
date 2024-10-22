@@ -5,8 +5,10 @@ export async function runWasmCommandLine(wasmPath) {
     let wasmContent = fs.readFileSync(wasmPath, null);
     let wasmEnv = makeWasmEnv();
     let instance = await initializeWasm(wasmContent, wasmEnv);
+    /** @type {any} */
+    let exports = instance.exports;
 
-    instance.exports.main();
+    exports.main();
 }
 
 function makeWasmEnv() {
