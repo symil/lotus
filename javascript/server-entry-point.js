@@ -35,7 +35,7 @@ async function main() {
         server.on('upgrade', (request, socket, head) => {
             let { pathname } = url.parse(request.url);
 
-            if (pathname === '/ws') {
+            if (pathname === DEFAULT_WEBSOCKET_UPGRADE_PATH) {
                 for (let wsServer of webSocketServerList) {
                     wsServer.handleUpgrade(request, socket, head, (ws) => {
                         wsServer.emit('connection', ws, request);
@@ -136,9 +136,7 @@ async function openServer(options) {
 
     return new Promise(resolve => {
         server.httpServer.listen(parameters.port, () => {
-            if (parameters.logging) {
-                console.log(`=> listening on port ${parameters.port}...`);
-            }
+            console.log(`[INFO] Server open at http://localhost:${parameters.port}`);
             resolve(server);
         });
     });
