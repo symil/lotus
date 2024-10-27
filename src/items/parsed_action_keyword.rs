@@ -1,4 +1,4 @@
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::Sequence;
 use parsable::parsable;
 
 #[parsable]
@@ -7,7 +7,7 @@ pub struct ParsedActionKeyword {
 }
 
 #[parsable(impl_display=true)]
-#[derive(Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Sequence)]
 pub enum ParsedActionKeywordToken {
     Return = "return",
     Check = "check",

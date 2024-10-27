@@ -1,6 +1,6 @@
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::Sequence;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Sequence)]
 pub enum BuiltinType {
     Any,
     System,

@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-colored = "=2.0.0"
-indexmap = "=1.7.0"
-enum-iterator = "=0.7.0"
-toml = "=0.5.8"
-parsable = { path = "../parsable" }
+colored = "2.1.0"
+indexmap = "2.6.0"
+enum-iterator = "2.1.0"
+toml = "0.8.19"
+parsable = "1.0.0"

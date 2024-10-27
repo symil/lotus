@@ -1,7 +1,7 @@
 use core::panic;
 use std::{collections::{HashMap, HashSet}, mem::take, rc::Rc, fs::{DirBuilder, File}, path::Path, io::Write};
 use indexmap::{IndexMap, IndexSet};
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::all;
 use colored::*;
 use parsable::{ItemLocation, Parsable, ParseOptions, ParseError};
 use crate::{items::{ParsedEventCallbackQualifierKeyword, Identifier, ParsedSourceFile, ParsedTopLevelBlock, ParsedTypeDeclaration, init_string_literal, init_color_literal}, program::{AssociatedTypeContent, DUMMY_FUNC_NAME, END_INIT_TYPE_METHOD_NAME, ENTRY_POINT_FUNC_NAME, EVENT_CALLBACKS_GLOBAL_NAME, FunctionCall, HEADER_FUNCTIONS, HEADER_FUNC_TYPES, HEADER_GLOBALS, HEADER_IMPORTS, HEADER_MEMORIES, INIT_EVENTS_FUNC_NAME, INIT_GLOBALS_FUNC_NAME, INIT_TYPES_FUNC_NAME, INIT_TYPE_METHOD_NAME, INSERT_EVENT_CALLBACK_FUNC_NAME, ItemGenerator, NamedFunctionCallDetails, RETAIN_GLOBALS_FUNC_NAME, TypeIndex, Wat, typedef_blueprint}, utils::{Link, sort_dependancy_graph, read_directory_recursively, compute_hash, FileSystemCache, PerfTimer}, wat, language_server::{CompletionItemProvider, RenameProvider, HoverProvider, SignatureHelpProvider, CompletionItemGenerator, VariableCompletionDetails, FieldCompletionDetails, MatchItemCompletionDetails, TypeCompletionDetails, EventCompletionDetails, DefinitionProvider, CodeActionsProvider, InterfaceCompletionDetails}, package::Package};
@@ -128,7 +128,7 @@ impl ProgramContext {
             self.default_interfaces.push(interface);
         }
 
-        for builtin_type in BuiltinType::into_enum_iter() {
+        for builtin_type in all::<BuiltinType>() {
             let type_name = builtin_type.get_name();
 
             if let Some(type_wrapped) = self.types.get_by_name(type_name) {

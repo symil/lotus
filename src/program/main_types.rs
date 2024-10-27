@@ -1,7 +1,7 @@
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::Sequence;
 use super::BuiltinType;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, IntoEnumIterator)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Sequence)]
 pub enum MainType {
     World,
     User,

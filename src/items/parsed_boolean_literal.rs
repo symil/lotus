@@ -1,4 +1,4 @@
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::Sequence;
 use parsable::parsable;
 use crate::{program::{ProgramContext, Vasm}};
 
@@ -8,7 +8,7 @@ pub struct ParsedBooleanLiteral {
 }
 
 #[parsable]
-#[derive(IntoEnumIterator)]
+#[derive(Sequence)]
 pub enum ParsedBooleanLiteralToken {
     True = "true",
     False = "false"

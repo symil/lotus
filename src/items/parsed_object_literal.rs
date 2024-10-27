@@ -56,7 +56,7 @@ fn fill_class_fields(ty: &Type, initialization_items: &[ParsedObjectInitializati
 
     for field in initialization_items {
         if let ParsedObjectInitializationItem::FieldInitialization(field_initialization) = field {
-            field_names.remove(field_initialization.name.as_str());
+            field_names.shift_remove(field_initialization.name.as_str());
         }
     }
 

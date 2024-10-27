@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::all;
 use parsable::{ItemLocation, Parsable};
 use crate::{program::{Type, InterfaceBlueprint, VariableInfo, GlobalVarBlueprint, TypeBlueprint, TypedefBlueprint, FunctionBlueprint, FieldKind, SELF_TYPE_NAME, BuiltinType, NONE_LITERAL, EXPRESSION_KEYWORDS}, utils::Link, items::{ParsedBooleanLiteralToken, ParsedActionKeywordToken}};
 use super::{CompletionItem, CompletionItemList, FieldCompletionOptions};
@@ -217,12 +217,12 @@ impl CompletionItemGenerator {
                     }
                 }
 
-                for value in ParsedBooleanLiteralToken::into_enum_iter() {
+                for value in all::<ParsedBooleanLiteralToken>() {
                     items.add_literal(value.as_str());
                 }
                 items.add_literal(NONE_LITERAL);
 
-                for keyword in ParsedActionKeywordToken::into_enum_iter() {
+                for keyword in all::<ParsedActionKeywordToken>() {
                     let value = format!("{}", keyword);
 
                     items.add_keyword(&value);
@@ -234,7 +234,7 @@ impl CompletionItemGenerator {
             },
             Self::MatchItem(details) => {
                 if details.matched_type.is_bool() {
-                    for value in ParsedBooleanLiteralToken::into_enum_iter() {
+                    for value in all::<ParsedBooleanLiteralToken>() {
                         items.add_literal(value.as_str());
                     }
                 } else if details.matched_type.is_object() {

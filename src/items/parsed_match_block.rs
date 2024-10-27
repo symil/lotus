@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 
 use colored::Colorize;
-use enum_iterator::IntoEnumIterator;
+use enum_iterator::all;
 use indexmap::IndexSet;
 use parsable::{create_token_struct, parsable};
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent, MATCH_KEYWORD}, wat};
@@ -129,7 +129,7 @@ impl ParsedMatchBlock {
                     .map(|variant_info| format!("{}::{}", type_name, variant_info.name.as_str()))
                     .collect::<Vec<String>>()
             } else if matched_type.is_bool() {
-                ParsedBooleanLiteralToken::into_enum_iter()
+                all::<ParsedBooleanLiteralToken>()
                     .map(|value| value.as_str().to_string())
                     .collect::<Vec<String>>()
             } else {
@@ -139,7 +139,7 @@ impl ParsedMatchBlock {
 
             for branch in &body.branches.list {
                 if let Some(variant) = branch.item.get_variant_name() {
-                    variant_set.remove(&variant);
+                    variant_set.shift_remove(&variant);
                 }
             }
 
