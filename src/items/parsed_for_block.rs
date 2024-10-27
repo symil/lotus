@@ -1,13 +1,16 @@
 use std::borrow::Cow;
-use parsable::{parsable, Token};
+use parsable::{create_token_struct, parsable};
 use crate::{program::{BuiltinInterface, BuiltinType, GET_AT_INDEX_FUNC_NAME, GET_ITERABLE_LEN_FUNC_NAME, GET_ITERABLE_PTR_FUNC_NAME, ITERABLE_ASSOCIATED_TYPE_NAME, ProgramContext, ScopeKind, Type, TypeIndex, VariableInfo, VariableKind, Vasm, Wat, FOR_KEYWORD, IN_KEYWORD}, wat};
 use super::{ParsedExpression, Identifier, ParsedBlockExpression, ParsedVarDeclarationNames, ParsedOpeningSquareBracket, ParsedForIterator, unwrap_item};
 
+create_token_struct!(ForKeyword, FOR_KEYWORD);
+create_token_struct!(InKeyword, IN_KEYWORD);
+
 #[parsable(cascade=true)]
 pub struct ParsedForBlock {
-    pub for_keyword: Token<FOR_KEYWORD>,
+    pub for_keyword: ForKeyword,
     pub iterator: Option<ParsedForIterator>,
-    pub in_keyword: Option<Token<IN_KEYWORD>>,
+    pub in_keyword: Option<InKeyword>,
     #[parsable(declare_marker="no-object")]
     pub range_start: Option<ParsedExpression>,
     #[parsable(prefix="..", declare_marker="no-object")]

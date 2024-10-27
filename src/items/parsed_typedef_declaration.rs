@@ -1,11 +1,13 @@
-use parsable::{parsable, Token};
+use parsable::{create_token_struct, parsable};
 use crate::{program::{ProgramContext, TypedefBlueprint, Visibility, TYPE_KEYWORD}, utils::Link};
 use super::{ParsedType, Identifier, ParsedVisibilityToken, ParsedVisibility, ParsedEqualToken, ParsedSemicolonToken, unwrap_item};
+
+create_token_struct!(TypeKeyword, TYPE_KEYWORD);
 
 #[parsable]
 pub struct ParsedTypedefDeclaration {
     pub visibility: Option<ParsedVisibility>,
-    pub qualifier: Token<TYPE_KEYWORD>,
+    pub qualifier: TypeKeyword,
     pub name: Identifier,
     pub equal: ParsedEqualToken,
     pub target: Option<ParsedType>,

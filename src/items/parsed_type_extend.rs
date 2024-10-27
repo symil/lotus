@@ -1,10 +1,12 @@
 use parsable::{parsable, Parsable};
-use crate::program::{ProgramContext, Type, EXTENDS_KEYWORD};
-use super::{Identifier, ParsedType, unwrap_item, FlexKeyword};
+use crate::{create_flex_keyword_struct, program::{ProgramContext, Type, EXTENDS_KEYWORD}};
+use super::{Identifier, ParsedType, unwrap_item};
+
+create_flex_keyword_struct!(ExtendsKeyword, EXTENDS_KEYWORD);
 
 #[parsable]
 pub struct ParsedTypeExtend {
-    pub extends: FlexKeyword<EXTENDS_KEYWORD>,
+    pub extends: ExtendsKeyword,
     pub ty: Option<ParsedType>
 }
 

@@ -1,10 +1,12 @@
-use parsable::{parsable, Token};
+use parsable::{create_token_struct, parsable};
 use crate::program::{ProgramContext, Type, Vasm, SELF_VAR_NAME};
 use super::{ParsedDotToken, Identifier, ParsedEqualToken, ParsedExpression, unwrap_item, ParsedCommaToken, ParsedSemicolonToken};
 
+create_token_struct!(SelfKeyword, SELF_VAR_NAME);
+
 #[parsable(cascade = true)]
 pub struct ParsedSuperFieldDefaultValue {
-    pub self_keyword: Token<SELF_VAR_NAME>,
+    pub self_keyword: SelfKeyword,
     pub dot: Option<ParsedDotToken>,
     pub name: Option<Identifier>,
     pub equal: Option<ParsedEqualToken>,

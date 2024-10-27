@@ -24,6 +24,7 @@ const MOCHA_BINARY_PATH = path.join(ROOT_DIR, 'node_modules', '.bin', 'mocha');
 
 const SRC_DIR_NAME = 'src';
 const OUTPUT_FILE_NAME = 'output.txt';
+const DISABLED_FILE_NAME = 'skipped.txt';
 const WAT_FILE_NAME = 'module.wat';
 const WASM_FILE_NAME = 'module.wasm';
 
@@ -73,10 +74,12 @@ async function main() {
                 let dirPath = path.join(TEST_DIR, dirName);
                 let sourcePath = path.join(dirPath, SRC_DIR_NAME);
                 let expectedOutputPath = path.join(dirPath, OUTPUT_FILE_NAME);
+                let isSkipped = fse.existsSync(path.join(dirPath, DISABLED_FILE_NAME));
+                let itFunc = isSkipped ? it.skip : it;
 
-                it(testName, async () => {
+                itFunc(testName, async () => {
                     let actualOutput = await runTest(sourcePath, dirPath, { mode });
-                    let expectedOutput = fse.readFileSync(expectedOutputPath, 'utf8');
+                    let expectedOutput = fse.readFileSync(expectedOutputPath, 'utf8').replaceAll('\r', '');
 
                     if (validateOutput) {
                         fse.writeFileSync(expectedOutputPath, actualOutput, 'utf8');
@@ -259,7 +262,7 @@ async function runTest(sourceDirPath, buildDirectory, { inheritStdio = false, di
         }
     }
 
-    return actualOutput;
+    return actualOutput.replaceAll('\r', '');
 }
 
 function runCommand(command, inheritStdio) {

@@ -1,0 +1,2 @@
+For some reason, this specific test triggers a stack overflow at `src\program\ty.rs` line 891, when resolving global variables.
+This issue arises even if `main.lt` is empty. At the moment I have zero clue why this happens.

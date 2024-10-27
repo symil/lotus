@@ -1,5 +1,4 @@
-use parsable::{parsable, Token};
-use super::FlexKeyword;
+use parsable::{create_token_struct, parsable};
 
 #[parsable]
 pub struct ParsedDotToken {
@@ -7,22 +6,22 @@ pub struct ParsedDotToken {
     pub token: String,
 }
 
-pub type ParsedCommaToken = Token<",">;
-pub type ParsedSemicolonToken = Token<";">;
-pub type ParsedColonToken = Token<":">;
-pub type ParsedDoubleColonToken = Token<"::">;
-pub type ParsedArrowToken = Token<"=>">;
-pub type ParsedWildcardToken = Token<"_">;
-pub type ParsedDoubleDotToken = Token<"..">;
-pub type ParsedEqualToken = Token<"=">;
-pub type ParsedHashToken = Token<"#">;
-pub type ParsedAtToken = Token<"@">;
+create_token_struct!(ParsedCommaToken, ",");
+create_token_struct!(ParsedSemicolonToken, ";");
+create_token_struct!(ParsedColonToken, ":");
+create_token_struct!(ParsedDoubleColonToken, "::");
+create_token_struct!(ParsedArrowToken, "=>");
+create_token_struct!(ParsedWildcardToken, "_");
+create_token_struct!(ParsedDoubleDotToken, "..");
+create_token_struct!(ParsedEqualToken, "=");
+create_token_struct!(ParsedHashToken, "#");
+create_token_struct!(ParsedAtToken, "@");
 
-pub type ParsedOpeningRoundBracket = Token<"(">;
-pub type ParsedClosingRoundBracket = Token<")">;
-pub type ParsedOpeningCurlyBracket = Token<"{">;
-pub type ParsedClosingCurlyBracket = Token<"}">;
-pub type ParsedOpeningSquareBracket = Token<"[">;
-pub type ParsedClosingSquareBracket = Token<"]">;
-pub type ParsedOpeningAngleBracket = Token<"<">;
-pub type ParsedClosingAngleBracket = Token<">">;
+create_token_struct!(ParsedOpeningRoundBracket, "(");
+create_token_struct!(ParsedClosingRoundBracket, ")");
+create_token_struct!(ParsedOpeningCurlyBracket, "{");
+create_token_struct!(ParsedClosingCurlyBracket, "}");
+create_token_struct!(ParsedOpeningSquareBracket, "[");
+create_token_struct!(ParsedClosingSquareBracket, "]");
+create_token_struct!(ParsedOpeningAngleBracket, "<");
+create_token_struct!(ParsedClosingAngleBracket, ">");

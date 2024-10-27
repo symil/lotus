@@ -1,11 +1,13 @@
-use parsable::{parsable, Token};
+use parsable::{create_token_struct, parsable};
 use crate::{items::ParsedVisibilityToken, program::{ProgramContext, ScopeKind, VariableKind, Visibility, FN_KEYWORD}};
 use super::{ParsedType, ParsedFunctionOrMethodContent, ParsedFunctionSignature, Identifier, ParsedBlockExpression, ParsedVisibility};
+
+create_token_struct!(FnKeyword, FN_KEYWORD);
 
 #[parsable]
 pub struct ParsedFunctionDeclaration {
     pub visibility: Option<ParsedVisibility>,
-    pub fn_keyword: Token<FN_KEYWORD>,
+    pub fn_keyword: FnKeyword,
     pub content: ParsedFunctionOrMethodContent
 }
 

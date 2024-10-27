@@ -1,6 +1,3 @@
-#![allow(incomplete_features)]
-#![feature(adt_const_params)]
-#![feature(is_some_with)]
 #![allow(unused)]
 use std::{env, process, fmt::Binary};
 use colored::*;

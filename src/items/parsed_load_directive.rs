@@ -1,11 +1,13 @@
 use std::{fs, collections::HashMap};
-use parsable::{ItemLocation, parsable, Token};
+use parsable::{create_token_struct, parsable, ItemLocation};
 use crate::program::{ProgramContext, Vasm, Type, BuiltinType, PUSH_UNCHECKED_METHOD_NAME, PUSH_METHOD_NAME, NEW_METHOD_NAME, VariableInfo, OBJECT_CREATE_METHOD_NAME};
 use super::{ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedStringLiteral, Identifier, ParsedCommaToken, unwrap_item, ParsedType, ParsedObjectInitializationItem, ParsedObjectFieldInitialization, make_string_value_from_literal_unchecked};
 
+create_token_struct!(LoadKeyword, "#LOAD");
+
 #[parsable(cascade = true)]
 pub struct ParsedLoadDirective {
-    pub load_keyword: Token<"#LOAD">,
+    pub load_keyword: LoadKeyword,
     pub opening_bracket: Option<ParsedOpeningRoundBracket>,
     pub type_name: Option<ParsedType>,
     pub comma: Option<ParsedCommaToken>,
@@ -136,7 +138,7 @@ impl ParsedLoadDirective {
 }
 
 fn parse_tsv(content: &str) -> (Vec<String>, Vec<Vec<&str>>) {
-    let mut lines = content.split("\n");
+    let mut lines = content.lines();
     let keys : Vec<String> = lines.next().unwrap().split("\t")
         .map(|string| string.to_ascii_lowercase())
         .map(|string| string.replace(" ", "_"))

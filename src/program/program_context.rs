@@ -994,7 +994,7 @@ impl ProgramContext {
         let mut events_initialization = vec![];
         let mut exports = vec![];
 
-        for global_var in self.global_vars.get_all() {
+        for (i, global_var) in self.global_vars.get_all().into_iter().enumerate() {
             let global_var_instance = global_var.with_ref(|global_var_unwrapped| {
                 global_var_unwrapped.generate_instance(self)
             });

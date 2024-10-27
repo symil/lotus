@@ -3,13 +3,15 @@ use std::iter::FromIterator;
 use colored::Colorize;
 use enum_iterator::IntoEnumIterator;
 use indexmap::IndexSet;
-use parsable::{parsable, Token};
+use parsable::{create_token_struct, parsable};
 use crate::{program::{BuiltinInterface, INT_NONE_VALUE, IS_METHOD_NAME, IS_NONE_METHOD_NAME, NONE_LITERAL, NONE_METHOD_NAME, ProgramContext, ScopeKind, Type, TypeCategory, VariableInfo, VariableKind, Vasm, TypeContent, MATCH_KEYWORD}, wat};
 use super::{ParsedExpression, Identifier, ParsedType, ParsedTypeQualifier, ParsedDoubleColonToken, ParsedOpeningRoundBracket, ParsedClosingRoundBracket, ParsedArrowToken, ParsedNoneLiteral, ParsedNumberLiteral, ParsedStringLiteral, ParsedCharLiteral, ParsedMatchBranchItem, ParsedMatchBranchBody, ParsedVarDeclarationNames, ParsedOpeningCurlyBracket, ParsedClosingCurlyBracket, ParsedBooleanLiteralToken, unwrap_item};
 
+create_token_struct!(MatchKeyword, MATCH_KEYWORD);
+
 #[parsable]
 pub struct ParsedMatchBlock {
-    pub match_keyword: Token<MATCH_KEYWORD>,
+    pub match_keyword: MatchKeyword,
     #[parsable(declare_marker="no-object")]
     pub expression: Option<Box<ParsedExpression>>,
     pub body: Option<ParsedMatchBody>,
