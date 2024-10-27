@@ -1,7 +1,7 @@
 [package]
 name = "lotus-compiler"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 colored = "2.1.0"
