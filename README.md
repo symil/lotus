@@ -15,30 +15,30 @@ You can find an example of a game made with it in the `example` folder.
 git clone git@github.com:symil/lotus.git
 ```
 
-- Install the dependancies.
+- Install the dependancies:
 
 ```sh
 cd /path/to/lotus
 npm install
 ```
 
-- Build the compiler.
+- Build the compiler:
 
 ```sh
 cargo build --release
 ```
 
-- (Optional) Install the compiler globally.
+- (Optional) Install the compiler globally:
 
 ```sh
 npm link # Must be run as super user on Linux
 ```
 
-- (Optional) Install the (VS code extension for Lotus)[https://github.com/symil/lotus-vscode] to have syntax highlighting and autocompletion.
+- (Optional) Install the [VS code extension for Lotus](https://github.com/symil/lotus-vscode) to have syntax highlighting and autocompletion.
 
 ## Usage
 
-- Compile the example directory.
+- Compile the example directory:
 ```sh
 lotus example/
 # Or alternatively, if you haven't installed it globally:
