@@ -9,7 +9,7 @@ You can find an example of a game made with it in the `example` folder.
 
 - Install [Node.js](https://nodejs.org/en).
 - Install [Rust](https://www.rust-lang.org/tools/install).
-- Clone the project.
+- Clone the project:
 
 ```sh
 git clone git@github.com:symil/lotus.git
