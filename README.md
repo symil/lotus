@@ -1,6 +1,6 @@
 # Lotus
 
-Lotus is specialized programming to create prototypes of multiplayer, 2D video games playable in the browser.
+Lotus is specialized programming language to create prototypes of multiplayer, 2D video games playable in the browser.
 It compiles a source directory into a WebAssembly module, and generates two javascript bundles (for server & client) that run the WebAssembly module.
 
 You can find an example of a game made with it in the `example` folder.
