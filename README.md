@@ -52,6 +52,13 @@ node example/build/server-bundle.js
 
 - Connect to `http://localhost:8000`. To try out the multiplayer, either ask someone else to join you or open multiple tabs.
 
+## Tests
+
+- Run the tests with:
+```sh
+npm test
+```
+
 ## Language specifications
 
 Coming one day.
