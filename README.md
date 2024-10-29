@@ -63,7 +63,7 @@ npm test
 
 ## Repository
 
-Here are listed the most importants folders in the repository:
+Here are listed the most important folders in the repository:
 
 - `example/`: a simple multiplayer platform/shooter game made with Lotus.
 - `javascript/`: JavaScript code that wraps the generated WebAssembly.
