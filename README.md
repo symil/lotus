@@ -76,12 +76,9 @@ Here are listed the most importants folders in the repository:
 
 ### An important note
 
-This language has many unique features, many of then being related to its server/client and game aspects. Some are just personal taste.
+This language has many unique features, many of then being related to its server/client and game aspects. Among these features, some ended up being great and very useful, some of them ended up being straight up terrible.
 
-Among these features, some ended up being great and very useful. Some of them ended up being straight up terrible.
-Reading the rest of this section you may occasionally wonder "how the hell could anyone think this would be a good idea?". Hopefully you will also find a few ideas interesting.
-
-All in all this project is only really the first iteration towards a more complete tool that would allow anyone to turn a neat multiplayer game idea into a playable prototype within a few hours. It is no longer updated, but it still has the merit of setting the first foot in this very niche yet too little explored space.
+All in all this project is only really the first iteration towards a more complete tool that would allow anyone to turn a neat multiplayer game idea into a playable prototype within a few hours.
 
 ### Project structure
 
