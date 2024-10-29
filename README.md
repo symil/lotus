@@ -3,7 +3,7 @@
 Lotus is specialized programming language to create prototypes of multiplayer, 2D video games playable in the browser.
 It compiles a source directory into a WebAssembly module, and generates two javascript bundles (for server & client) that run the WebAssembly module.
 
-You can find an example of a game made with it in the `example` folder.
+You can find an example of a simple game made with it in the `example` folder.
 
 ## Installation
 
@@ -45,12 +45,14 @@ lotus example/
 # scripts/build-app.js example/
 ```
 
-- This generates a standalone `example/build` folder. You can then run the game server:
+- This generates a `example/build` folder. You can then run the game server:
 ```sh
 node example/build/server-bundle.js
 ```
 
 - Connect to `http://localhost:8000`. To try out the multiplayer, either ask someone else to join you or open multiple tabs.
+
+Note: the generated build folder is standalone. It can be deployed and used on any server with Node.js installed.
 
 ## Tests
 
@@ -59,6 +61,33 @@ node example/build/server-bundle.js
 npm test
 ```
 
-## Language specifications
+## Repository
 
-Coming one day.
+Here are listed the most importants folders in the repository:
+
+- `example/`: a simple multiplayer platform/shooter game made with Lotus.
+- `javascript/`: JavaScript code that wraps the generated WebAssembly.
+- `prelude/`: base Lotus code that is included in every project. Provides core features such as memory management.
+- `scripts/`: utility scripts, including `build-app.js` to build a project.
+- `src/`: source code for the compiler (in Rust).
+- `test/`: test files.
+
+## Language
+
+### An important note
+
+This language has many unique features, many of then being related to its server/client and game aspects. Some are just personal taste.
+
+Among these features, some ended up being great and very useful. Some of them ended up being straight up terrible.
+Reading the rest of this section you may occasionally wonder "how the hell could anyone think this would be a good idea?". Hopefully you will also find a few ideas interesting.
+
+All in all this project is only really the first iteration towards a more complete tool that would allow anyone to turn a neat multiplayer game idea into a playable prototype within a few hours. It is no longer updated, but it still has the merit of setting the first foot in this very niche yet too little explored space.
+
+### Project structure
+
+- The `assets/` directory is always copied into the build folder. Any image/sound/etc used by the game must go there.
+- The source code of a project *must* be located in the `src/` directory.
+
+### Syntax
+
+TODO

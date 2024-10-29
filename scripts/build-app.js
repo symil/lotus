@@ -44,6 +44,7 @@ async function main() {
         logStep('Cleaning build directory');
 
         for (let name of readdirSync(buildDir)) {
+            // Keep the `node_modules` folder to avoid `npm install` at each build.
             if (name !== 'node_modules') {
                 rmSync(join(buildDir, name), { recursive: true, force: true });
             }
