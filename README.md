@@ -87,4 +87,91 @@ All in all this project is only really the first iteration towards a more comple
 
 ### Syntax
 
-TODO
+Lotus is an object oriented language whose syntax is a mix between TypeScript and Rust.
+
+#### Example
+
+```
+// Declare an enum. The `pub` qualifier makes it usable from anywhere in the project.
+pub enum DamageKind {
+    Physical,
+    Magical,
+}
+
+// Declare a class. The `pub` qualifier makes it usable from anywhere in the project.
+pub class Character {
+    // Class fields. Fields are always public.
+    // Is init value is unspecified, it is set to the default value for the type (0 for numbers, empty string for strings, false for booleans).
+    name: string = "",
+    health: float = 0,
+    damages: float = 0,
+    armor: float = 0,
+    damage_kind: DamageKind = DamageKind::Physical,
+
+    // Class methods. Methods are always public.
+    deal_damages(target: Character) -> bool {
+        // Any value can always be `none`.
+        if (!target) {
+            return false;
+        }
+
+        // You can use `match` to account for the different possible values of an enum variable.
+        let damage_reduction = match target.damage_kind {
+            DamageKind::Physical => target.armor,
+            DamageKind::Magical => 0,
+        };
+
+        target.health -= (self.damages - damage_reduction);
+
+        // The last statement of a function or method is its return value.
+        // Here it indicates if the character kills its target.
+        target.health <= 0
+    }
+
+    // A child class can override a parent class' method if both prefix it with "dyn".
+    dyn special_ability(target: Character) {
+
+    }
+}
+
+pub class Magician extends Character {
+    // A child class can override the parent's fields at initialization and declare new ones.
+    self.name = get_magician_name()
+    self.health = 10
+    self.damages = 5
+    self.damage_kind = DamageKind::Magical
+
+    power: float = 10,
+
+    // Example of a static method
+    static make_super_magician() -> Magician {
+        // Instanciate an object. You can specify values to overrides some fields.
+        Magician {
+            health: 50,
+            damages: 20,
+            power: 20,
+        }
+    }
+
+    // Override a parent "dyn" method.
+    dyn special_ability(target: Character){
+        target.health += self.power;
+    }
+}
+
+// Declare a global constant. Prefix with `pub` to make it accessible from anywhere in the project.
+const MAGICIAN_NAMES = ["Anior", "Shuxius", "Ibeus", "Otior"];
+
+// Declare a function usable only in the file. Prefix with `pub` to make it accessible from anywhere in the project.
+fn get_magician_name() -> string {
+    MAGICIAN_NAMES.get_random()
+}
+```
+
+#### Primitive types
+
+- `int`: 32 bits integer
+- `float`: 32 bits floating number
+- `char`: 32 bits integer that represents a character
+
+ TODO
