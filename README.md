@@ -39,6 +39,7 @@ npm link # Must be run as super user on Linux
 ## Usage
 
 - Compile the example directory:
+
 ```sh
 lotus example/
 # Or alternatively, if you haven't installed it globally:
@@ -46,6 +47,7 @@ lotus example/
 ```
 
 - This generates a `example/build` folder. You can then run the game server:
+
 ```sh
 node example/build/server-bundle.js
 ```
@@ -57,6 +59,7 @@ Note: the generated build folder is standalone. It can be deployed and used on a
 ## Tests
 
 - Run the tests with:
+
 ```sh
 npm test
 ```
@@ -83,13 +86,13 @@ All in all this project is only really the first iteration towards a more comple
 ### Project structure
 
 - The `assets/` directory is always copied into the build folder. Any image/sound/etc used by the game must go there.
-- The source code of a project *must* be located in the `src/` directory.
+- The source code of a project _must_ be located in the `src/` directory.
 
-### Syntax
+### General
 
 Lotus is an object oriented language whose syntax is a mix between TypeScript and Rust.
 
-#### Example
+### Example
 
 ```
 // Declare an enum. The `pub` qualifier makes it usable from anywhere in the project.
@@ -168,10 +171,118 @@ fn get_magician_name() -> string {
 }
 ```
 
-#### Primitive types
+### Builtin types
+
+- `bool`: 32 bits value representing a boolean
+
+```
+let b: bool = false;
+```
 
 - `int`: 32 bits integer
+
+```
+let n: int = 5;
+```
+
 - `float`: 32 bits floating number
+
+```
+let f: float = 5;
+```
+
 - `char`: 32 bits integer that represents a character
 
- TODO
+```
+let c: char = 'A';
+```
+
+- `ptr`: 32 bits integer representing a pointer
+```
+// TODO
+```
+
+- `string`: immutable string of characters
+
+```
+let greeting: string = "Hello";
+// TODO: list builtin methods
+```
+
+- `array`: array of items
+
+```
+let numbers: Array<int> = [1, 2, 3];
+// TODO: list builtin methods
+```
+
+- `set`: set of items
+
+```
+let set: Set<int> = Set::new();
+// TODO: list builtin methods
+```
+
+- `map`: associate items with a value
+
+```
+let map: Map<string, int> = Map::new();
+// TODO: list builtin methods
+```
+
+- `Color`: represents a color with 4 channels r, g, b, a
+
+```
+let red = Color::new(255, 0, 0, 255);
+let red_hex = #FF0000; // Supports the hex notation out of the box
+// TODO: list builtin methods
+```
+
+- `DisplaySize`: TODO
+
+- `Rect`: TODO
+
+- `Buffer`: TODO
+
+### System functions
+
+System functions are prefixes with "@".
+
+```
+let a: int = @todo(); // Marks the code as not done yet, making it panic when it is reached
+@panic("Fatal error that should not happen"); // Make the program stop with the given error message
+
+@log(456); // Calls `.to_string()` on the value and logs the result.
+@dbg([1, 2, 3]); // Prints the structure of the given value, more suitable for debugging objects.
+@trace("Test"); // Log the given string and print the stacktrace
+
+// Returns the number of milliseconds elapsed since the start of the program (wrapper around performance.now()).
+let current_time = @get_current_time();
+
+// Wrapper around `console.time()`.
+@time_start("debug");
+
+// Wrapper around `console.timeEnd()`.
+@time_end("debug");
+
+// Serialize the specified value and returns the corresponding buffer.
+let buffer = @serialize([2, 4, 8]);
+
+// Attempts to deserialize the given buffer into `T`. Returns an instance of T if it was successful, and `none` otherwise.
+let object = @deserialize<Array<int>>(buffer);
+
+// Emit an event on a list of targets. More on that later.
+@emit(event, [target1, target2]);
+```
+
+### Events
+
+TODO
+
+### `none`
+
+TODO
+
+### Program entry point
+
+TODO
