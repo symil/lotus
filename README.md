@@ -89,14 +89,14 @@ Here are listed the most important folders in the repository:
 
 ### An important note
 
-This language has many unique features, many of then being related to its server/client and game aspects. Among these features, some ended up being great and very useful, some of them ended up being straight up terrible.
+This language has some unique features, many of then being related to its server/client and game aspects. Among these features, some ended up being great and very useful, some of them ended up being straight up terrible.
 
 All in all this project is only really the first iteration towards a more complete tool that would allow anyone to turn a neat multiplayer game idea into a playable prototype within a few hours.
 
 ### Project structure
 
 - The `assets/` directory is always copied into the build folder. Any image/sound/etc used by the game must go there.
-- The source code of a project _must_ be located in the `src/` directory.
+- The source code of a project must be located in the `src/` directory.
 
 ### General
 
