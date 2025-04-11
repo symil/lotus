@@ -1,6 +1,6 @@
 # Mesys
 
-Tiny free-for-all multiplayer platform game made with a custom programming language.
+Tiny free-for-all multiplayer platform game made with the experimental programming language **Lotus**.
 
 ## Controls
 
