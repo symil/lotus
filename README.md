@@ -13,12 +13,22 @@ You can find an example of a simple game made with it in the `example` folder.
 
 ```sh
 git clone git@github.com:symil/lotus.git
+cd lotus
 ```
+
+- Run the `fullinstall` command:
+
+```sh
+npm run fullinstall
+```
+
+### Troubleshooting
+
+If this command fails, you can run each step separately:
 
 - Install the dependancies:
 
 ```sh
-cd /path/to/lotus
 npm install
 ```
 
@@ -31,7 +41,7 @@ cargo build --release
 - (Optional) Install the compiler globally:
 
 ```sh
-npm link # Must be run as super user on Linux
+npm link
 ```
 
 - (Optional) Install the [VS code extension for Lotus](https://github.com/symil/lotus-vscode) to have syntax highlighting and autocompletion.
@@ -54,7 +64,7 @@ node example/build/server-bundle.js
 
 - Connect to `http://localhost:8000`. To try out the multiplayer, either ask someone else to join you or open multiple tabs.
 
-Note: the generated build folder is standalone. It can be deployed and used on any server with Node.js installed.
+The generated build folder is standalone. It can be deployed and used on any server with Node.js installed.
 
 ## Tests
 
@@ -68,12 +78,12 @@ npm test
 
 Here are listed the most important folders in the repository:
 
-- `example/`: a simple multiplayer platform/shooter game made with Lotus.
+- `example/`: A simple multiplayer platform/shooter game made with Lotus.
 - `javascript/`: JavaScript code that wraps the generated WebAssembly.
-- `prelude/`: base Lotus code that is included in every project. Provides core features such as memory management.
-- `scripts/`: utility scripts, including `build-app.js` to build a project.
-- `src/`: source code for the compiler (in Rust).
-- `test/`: test files.
+- `prelude/`: Base Lotus code that is included in every project. Provides core features such as memory management.
+- `scripts/`: Utility scripts, including `build-app.js` to build a project.
+- `src/`: Source code for the compiler (in Rust).
+- `test/`: Test files.
 
 ## Language
 

@@ -7,6 +7,7 @@ import esbuild from 'esbuild';
 import wabt from 'wabt';
 import { ASSETS_DIR_NAME, OUTPUT_WASM_FILE_NAME, OUTPUT_WAT_FILE_NAME, SERVER_EXTERNAL_MODULES } from '../javascript/constants.js';
 import { ROOT_DIR_PATH } from '../javascript/paths.js';
+import chalk from 'chalk';
 
 const COMPILER_PATH = join(ROOT_DIR_PATH, 'target', 'release', 'lotus-compiler');
 const CLIENT_ENTRY_PATH = join(ROOT_DIR_PATH, 'javascript', 'client-entry-point.js');
@@ -77,6 +78,9 @@ async function main() {
         process.chdir(buildDir);
         runCommand(`npm install`);
     }
+
+    console.log(chalk.bold(`Done! You can now run the server with:`));
+    console.log(`$ node ${join(inputDir, 'build', 'server-bundle.js')}`);
 }
 
 function exitWithError(message) {
