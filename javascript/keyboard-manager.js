@@ -19,7 +19,6 @@ export class KeyboardManager {
     }
 
     getKeyValue(key) {
-        console.log(key);
         if (this._layout) {
             return this._layout.get(key) || '';
         } else {
