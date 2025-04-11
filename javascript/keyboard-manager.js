@@ -10,13 +10,20 @@ export class KeyboardManager {
 
     async init() {
         if (this._window) {
-            this._layout = await this._window.navigator.keyboard.getLayoutMap();
+            try {
+                this._layout = await this._window.navigator.keyboard.getLayoutMap();
+            } catch {}
         }
 
         return this;
     }
 
     getKeyValue(key) {
-        return this._layout.get(key) || '';
+        console.log(key);
+        if (this._layout) {
+            return this._layout.get(key) || '';
+        } else {
+            return `Key${key}`;
+        }
     }
 }
