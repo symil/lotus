@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import { copyFile, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import esbuild from 'esbuild';
 import wabt from 'wabt';
@@ -13,6 +13,7 @@ const COMPILER_PATH = join(ROOT_DIR_PATH, 'target', 'release', 'lotus-compiler')
 const CLIENT_ENTRY_PATH = join(ROOT_DIR_PATH, 'javascript', 'client-entry-point.js');
 const SERVER_ENTRY_PATH = join(ROOT_DIR_PATH, 'javascript', 'server-entry-point.js');
 const HTML_ENTRY_PATH = join(ROOT_DIR_PATH, 'html', 'index.html');
+const RUN_SCRIPT_TEMPLATE_PATH = join(ROOT_DIR_PATH, 'templates', 'run.sh');
 
 async function main() {
     let argv = process.argv.slice(2);
@@ -31,32 +32,24 @@ async function main() {
     }
 
     let buildDir = resolve(inputDir, 'build');
+    let publicDir = resolve(buildDir, 'public');
     let watPath = join(buildDir, OUTPUT_WAT_FILE_NAME);
     let wasmPath = join(buildDir, OUTPUT_WASM_FILE_NAME);
-    let clientOutputPath = join(buildDir, 'client-bundle.js');
+    let clientOutputPath = join(publicDir, 'client-bundle.js');
     let serverOutputPath = join(buildDir, 'server-bundle.js');
-    let htmlOutputPath = join(buildDir, 'index.html');
+    let htmlOutputPath = join(publicDir, 'index.html');
     let packageJsonPath = join(buildDir, 'package.json');
+    let runScriptPath = join(buildDir, 'run.sh');
 
-    if (!existsSync(buildDir)) {
-        logStep(`Creating build directory`);
-        mkdirSync(buildDir);
-    } else {
-        logStep('Cleaning build directory');
-
-        for (let name of readdirSync(buildDir)) {
-            // Keep the `node_modules` folder to avoid `npm install` at each build.
-            if (name !== 'node_modules') {
-                rmSync(join(buildDir, name), { recursive: true, force: true });
-            }
-        }
-    }
+    logStep(`Creating build directory`);
+    mkdirSync(publicDir, { recursive: true });
 
     logStep(`Compiling source to WAT`);
     runCommand(`${COMPILER_PATH} ${inputDir} ${watPath} --app --silent`);
 
     logStep(`Compiling WAT to WASM`);
     await wat2wasm(watPath, wasmPath);
+    copyFileSync(wasmPath, join(publicDir, OUTPUT_WASM_FILE_NAME));
 
     logStep(`Compiling client bundle`);
     await buildBundle(CLIENT_ENTRY_PATH, clientOutputPath, false);
@@ -71,16 +64,17 @@ async function main() {
     createPackageJson(packageJsonPath);
 
     logStep(`Copying assets`);
-    cpSync(join(inputDir, ASSETS_DIR_NAME), join(buildDir, ASSETS_DIR_NAME), { recursive: true });
+    cpSync(join(inputDir, ASSETS_DIR_NAME), join(publicDir, ASSETS_DIR_NAME), { recursive: true });
 
-    if (!existsSync(join(buildDir, 'node_modules'))) {
-        logStep('Installing external packages...');
-        process.chdir(buildDir);
-        runCommand(`npm install`);
-    }
+    logStep(`Creating start script`);
+    cpSync(RUN_SCRIPT_TEMPLATE_PATH, runScriptPath);
+
+    logStep('Installing external packages');
+    process.chdir(buildDir);
+    runCommand(`bun install`);
 
     console.log(chalk.bold(`Done! You can now run the server with:`));
-    console.log(`$ node ${join(inputDir, 'build', 'server-bundle.js')}`);
+    console.log(`$ build/run.sh`);
 }
 
 function exitWithError(message) {

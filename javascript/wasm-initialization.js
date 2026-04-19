@@ -131,10 +131,6 @@ async function getWasmImportsObject(env) {
                 let port = window.location.port || 80;
                 let hostname = window.location.hostname;
 
-                if (+port === 8080) {
-                    port = window.OUTPOST_PORT;
-                }
-
                 if (window.location.protocol === 'https:') {
                     protocol = 'wss';
                     port = 443;
