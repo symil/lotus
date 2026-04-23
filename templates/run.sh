@@ -3,6 +3,6 @@
 set -a
 
 cd $(dirname "$0")
-source .env
+source build.env
 
 bun server-bundle.js
