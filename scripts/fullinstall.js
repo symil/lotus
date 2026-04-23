@@ -32,7 +32,7 @@ function main() {
         process.chdir(vsCodeExtensionsPath);
         runCommand('npm install');
         runCommand('npm run compile');
-        
+
         cpSync(compilerPath, join(vsCodeExtensionsPath, 'server', basename(compilerPath)));
     }
 
