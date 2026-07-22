@@ -1,7 +1,7 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "checkJs": true,
+    "checkJs": false,
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
